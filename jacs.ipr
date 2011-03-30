@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AntConfiguration">
+    <defaultAnt bundledAnt="true" />
+    <buildFile url="file://$PROJECT_DIR$/buildprocess/build-all.xml">
+      <additionalClassPath />
+      <antReference projectDefault="true" />
+      <customJdkName value="" />
+      <maximumHeapSize value="128" />
+      <maximumStackSize value="32" />
+      <properties />
+    </buildFile>
+    <buildFile url="file://$PROJECT_DIR$/jacs/build.xml">
+      <additionalClassPath>
+        <entry path="file://$PROJECT_DIR$/buildprocess/lib/orangevolt-ant-tasks-1.3.8.jar" />
+        <entry path="file://$PROJECT_DIR$/buildprocess/lib/roxes-win32forjava-1.1.1.jar" />
+      </additionalClassPath>
+      <antReference projectDefault="true" />
+      <customJdkName value="" />
+      <maximumHeapSize value="128" />
+      <maximumStackSize value="32" />
+      <properties />
+    </buildFile>
+    <buildFile url="file://$PROJECT_DIR$/compute/build.xml">
+      <additionalClassPath>
+        <entry path="file://$PROJECT_DIR$/buildprocess/lib/orangevolt-ant-tasks-1.3.8.jar" />
+        <entry path="file://$PROJECT_DIR$/buildprocess/lib/roxes-win32forjava-1.1.1.jar" />
+      </additionalClassPath>
+      <antReference projectDefault="true" />
+      <customJdkName value="" />
+      <maximumHeapSize value="128" />
+      <maximumStackSize value="32" />
+      <properties />
+    </buildFile>
+    <buildFile url="file://$PROJECT_DIR$/model/build.xml">
+      <additionalClassPath>
+        <entry path="file://$PROJECT_DIR$/buildprocess/lib/orangevolt-ant-tasks-1.3.8.jar" />
+        <entry path="file://$PROJECT_DIR$/buildprocess/lib/roxes-win32forjava-1.1.1.jar" />
+      </additionalClassPath>
+      <antReference projectDefault="true" />
+      <customJdkName value="" />
+      <maximumHeapSize value="128" />
+      <maximumStackSize value="32" />
+      <properties />
+    </buildFile>
+    <buildFile url="file://$PROJECT_DIR$/shared/build.xml">
+      <additionalClassPath>
+        <entry path="file://$PROJECT_DIR$/buildprocess/lib/orangevolt-ant-tasks-1.3.8.jar" />
+        <entry path="file://$PROJECT_DIR$/buildprocess/lib/roxes-win32forjava-1.1.1.jar" />
+      </additionalClassPath>
+      <antReference projectDefault="true" />
+      <customJdkName value="" />
+      <maximumHeapSize value="128" />
+      <maximumStackSize value="32" />
+      <properties />
+    </buildFile>
+  </component>
+  <component name="ArtifactManager">
+    <artifact type="exploded-war" name="Compute:Web exploded">
+      <root id="root">
+        <element id="javaee-facet-resources" facet="Compute/web/Web" />
+        <element id="directory" name="WEB-INF">
+          <element id="directory" name="classes">
+            <element id="javaee-facet-classes" facet="Compute/web/Web" />
+          </element>
+          <element id="directory" name="lib" />
+        </element>
+      </root>
+    </artifact>
+    <artifact type="exploded-war" name="Vics:Web exploded">
+      <root id="root">
+        <element id="javaee-facet-resources" facet="Vics/web/Web" />
+        <element id="directory" name="WEB-INF">
+          <element id="directory" name="classes">
+            <element id="javaee-facet-classes" facet="Vics/web/Web" />
+          </element>
+        </element>
+      </root>
+    </artifact>
+    <artifact type="exploded-ear" name="Compute:javaEEApplication exploded">
+      <root id="root">
+        <element id="javaee-facet-resources" facet="Compute/javaeeApplication/javaEEApplication" />
+      </root>
+    </artifact>
+  </component>
+  <component name="BuildJarProjectSettings">
+    <option name="BUILD_JARS_ON_MAKE" value="false" />
+  </component>
+  <component name="CVSRevisionGraphProjectComponent">
+    <option name="_useTwoTagConvention" value="true" />
+    <option name="_showTags" value="true" />
+    <option name="_tagNaming" value="TAG_$T_MERGE_$S_TO_$D" />
+    <option name="_tagFilter" value="" />
+    <option name="_branchFilter" />
+    <option name="_showRevisionFilter" value="false" />
+    <option name="_afterDateTimeFilter" value="false" />
+    <option name="_beforeDateTimeFilter" value="false" />
+    <option name="_afterDateTime" value="" />
+    <option name="_beforeDateTime" value="" />
+    <option name="_showTagFilter" value="false" />
+    <option name="_showBranchFilter" value="false" />
+  </component>
+  <component name="CodeStyleProjectProfileManger">
+    <option name="PROJECT_PROFILE" />
+    <option name="USE_PROJECT_LEVEL_SETTINGS" value="false" />
+  </component>
+  <component name="CompilerConfiguration">
+    <option name="DEFAULT_COMPILER" value="Javac" />
+    <resourceExtensions>
+      <entry name=".+\.(properties|xml|html|dtd|tld)" />
+      <entry name=".+\.(gif|png|jpeg|jpg)" />
+    </resourceExtensions>
+    <wildcardResourcePatterns>
+      <entry name="?*.properties" />
+      <entry name="?*.xml" />
+      <entry name="?*.gif" />
+      <entry name="?*.png" />
+      <entry name="?*.jpeg" />
+      <entry name="?*.jpg" />
+      <entry name="?*.html" />
+      <entry name="?*.dtd" />
+      <entry name="?*.tld" />
+    </wildcardResourcePatterns>
+    <annotationProcessing enabled="false" useClasspath="true" />
+  </component>
+  <component name="CopyrightManager" default="">
+    <module2copyright />
+  </component>
+  <component name="CppTools.Loader" reportImplicitCastToBool="false" version="2" compilerSelect="AUTO" />
+  <component name="DependenciesAnalyzeManager">
+    <option name="myForwardDirection" value="false" />
+  </component>
+  <component name="DependencyValidationManager">
+    <option name="SKIP_IMPORT_STATEMENTS" value="false" />
+  </component>
+  <component name="EclipseCompilerSettings">
+    <option name="GENERATE_NO_WARNINGS" value="true" />
+    <option name="DEPRECATION" value="false" />
+  </component>
+  <component name="EclipseEmbeddedCompilerSettings">
+    <option name="DEBUGGING_INFO" value="true" />
+    <option name="GENERATE_NO_WARNINGS" value="true" />
+    <option name="DEPRECATION" value="false" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
+    <option name="MAXIMUM_HEAP_SIZE" value="128" />
+  </component>
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
+  <component name="EntryPointsManager">
+    <entry_points version="2.0" />
+  </component>
+  <component name="IdProvider" IDEtalkID="B1B36B4D70CCA5A6FF873836AF99BC9E" />
+  <component name="InspectionProjectProfileManager">
+    <profiles>
+      <profile version="1.0" is_locked="false">
+        <option name="myName" value="Project Default" />
+        <option name="myLocal" value="false" />
+        <inspection_tool class="GWTStyleCheck" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="GwtInconsistentSerializableClass" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="JpaQueryApiInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="NonJREEmulationClassesInClientCode" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="SpellCheckingInspection" enabled="false" level="TYPO" enabled_by_default="false">
+          <option name="processCode" value="true" />
+          <option name="processLiterals" value="true" />
+          <option name="processComments" value="true" />
+        </inspection_tool>
+      </profile>
+    </profiles>
+    <option name="PROJECT_PROFILE" value="Project Default" />
+    <option name="USE_PROJECT_PROFILE" value="true" />
+    <version value="1.0" />
+    <list size="6">
+      <item index="0" class="java.lang.String" itemvalue="SERVER PROBLEM" />
+      <item index="1" class="java.lang.String" itemvalue="WEAK WARNING" />
+      <item index="2" class="java.lang.String" itemvalue="INFO" />
+      <item index="3" class="java.lang.String" itemvalue="TYPO" />
+      <item index="4" class="java.lang.String" itemvalue="WARNING" />
+      <item index="5" class="java.lang.String" itemvalue="ERROR" />
+    </list>
+  </component>
+  <component name="JavadocGenerationManager">
+    <option name="OUTPUT_DIRECTORY" />
+    <option name="OPTION_SCOPE" value="protected" />
+    <option name="OPTION_HIERARCHY" value="true" />
+    <option name="OPTION_NAVIGATOR" value="true" />
+    <option name="OPTION_INDEX" value="true" />
+    <option name="OPTION_SEPARATE_INDEX" value="true" />
+    <option name="OPTION_DOCUMENT_TAG_USE" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_VERSION" value="false" />
+    <option name="OPTION_DOCUMENT_TAG_DEPRECATED" value="true" />
+    <option name="OPTION_DEPRECATED_LIST" value="true" />
+    <option name="OTHER_OPTIONS" value="" />
+    <option name="HEAP_SIZE" />
+    <option name="LOCALE" />
+    <option name="OPEN_IN_BROWSER" value="true" />
+  </component>
+  <component name="Palette2">
+    <group name="Swing">
+      <item class="com.intellij.uiDesigner.HSpacer" tooltip-text="Horizontal Spacer" icon="/com/intellij/uiDesigner/icons/hspacer.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="1" hsize-policy="6" anchor="0" fill="1" />
+      </item>
+      <item class="com.intellij.uiDesigner.VSpacer" tooltip-text="Vertical Spacer" icon="/com/intellij/uiDesigner/icons/vspacer.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="1" anchor="0" fill="2" />
+      </item>
+      <item class="javax.swing.JPanel" icon="/com/intellij/uiDesigner/icons/panel.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="3" hsize-policy="3" anchor="0" fill="3" />
+      </item>
+      <item class="javax.swing.JScrollPane" icon="/com/intellij/uiDesigner/icons/scrollPane.png" removable="false" auto-create-binding="false" can-attach-label="true">
+        <default-constraints vsize-policy="7" hsize-policy="7" anchor="0" fill="3" />
+      </item>
+      <item class="javax.swing.JButton" icon="/com/intellij/uiDesigner/icons/button.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="3" anchor="0" fill="1" />
+        <initial-values>
+          <property name="text" value="Button" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JRadioButton" icon="/com/intellij/uiDesigner/icons/radioButton.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="3" anchor="8" fill="0" />
+        <initial-values>
+          <property name="text" value="RadioButton" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JCheckBox" icon="/com/intellij/uiDesigner/icons/checkBox.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="3" anchor="8" fill="0" />
+        <initial-values>
+          <property name="text" value="CheckBox" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JLabel" icon="/com/intellij/uiDesigner/icons/label.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="0" anchor="8" fill="0" />
+        <initial-values>
+          <property name="text" value="Label" />
+        </initial-values>
+      </item>
+      <item class="javax.swing.JTextField" icon="/com/intellij/uiDesigner/icons/textField.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+          <preferred-size width="150" height="-1" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JPasswordField" icon="/com/intellij/uiDesigner/icons/passwordField.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+          <preferred-size width="150" height="-1" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JFormattedTextField" icon="/com/intellij/uiDesigner/icons/formattedTextField.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+          <preferred-size width="150" height="-1" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTextArea" icon="/com/intellij/uiDesigner/icons/textArea.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTextPane" icon="/com/intellij/uiDesigner/icons/textPane.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JEditorPane" icon="/com/intellij/uiDesigner/icons/editorPane.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JComboBox" icon="/com/intellij/uiDesigner/icons/comboBox.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="0" hsize-policy="2" anchor="8" fill="1" />
+      </item>
+      <item class="javax.swing.JTable" icon="/com/intellij/uiDesigner/icons/table.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JList" icon="/com/intellij/uiDesigner/icons/list.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="2" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTree" icon="/com/intellij/uiDesigner/icons/tree.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3">
+          <preferred-size width="150" height="50" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JTabbedPane" icon="/com/intellij/uiDesigner/icons/tabbedPane.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
+          <preferred-size width="200" height="200" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JSplitPane" icon="/com/intellij/uiDesigner/icons/splitPane.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
+          <preferred-size width="200" height="200" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JSpinner" icon="/com/intellij/uiDesigner/icons/spinner.png" removable="false" auto-create-binding="true" can-attach-label="true">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1" />
+      </item>
+      <item class="javax.swing.JSlider" icon="/com/intellij/uiDesigner/icons/slider.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="8" fill="1" />
+      </item>
+      <item class="javax.swing.JSeparator" icon="/com/intellij/uiDesigner/icons/separator.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="6" anchor="0" fill="3" />
+      </item>
+      <item class="javax.swing.JProgressBar" icon="/com/intellij/uiDesigner/icons/progressbar.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="0" fill="1" />
+      </item>
+      <item class="javax.swing.JToolBar" icon="/com/intellij/uiDesigner/icons/toolbar.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="6" anchor="0" fill="1">
+          <preferred-size width="-1" height="20" />
+        </default-constraints>
+      </item>
+      <item class="javax.swing.JToolBar$Separator" icon="/com/intellij/uiDesigner/icons/toolbarSeparator.png" removable="false" auto-create-binding="false" can-attach-label="false">
+        <default-constraints vsize-policy="0" hsize-policy="0" anchor="0" fill="1" />
+      </item>
+      <item class="javax.swing.JScrollBar" icon="/com/intellij/uiDesigner/icons/scrollbar.png" removable="false" auto-create-binding="true" can-attach-label="false">
+        <default-constraints vsize-policy="6" hsize-policy="0" anchor="0" fill="2" />
+      </item>
+    </group>
+  </component>
+  <component name="ProjectDetails">
+    <option name="projectName" value="vics" />
+  </component>
+  <component name="ProjectKey">
+    <option name="state" value="http://svn/VICS/VICS/trunk/vics.ipr" />
+  </component>
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/compute/Compute.iml" filepath="$PROJECT_DIR$/compute/Compute.iml" />
+      <module fileurl="file://$PROJECT_DIR$/vics/Jacs.iml" filepath="$PROJECT_DIR$/vics/Jacs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/model/Model.iml" filepath="$PROJECT_DIR$/model/Model.iml" />
+      <module fileurl="file://$PROJECT_DIR$/shared/Shared.iml" filepath="$PROJECT_DIR$/shared/Shared.iml" />
+      <module fileurl="file://$PROJECT_DIR$/buildprocess/buildprocess.iml" filepath="$PROJECT_DIR$/buildprocess/buildprocess.iml" />
+    </modules>
+  </component>
+  <component name="ProjectResources">
+    <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.6" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/buildprocess/build" />
+  </component>
+  <component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="Tomcat - jacs" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 7">
+      <option name="OPEN_IN_BROWSER_URL" value="http://localhost:8880/jacs/gwt/Home/Home.htm" />
+      <option name="COMMON_VM_ARGUMENTS" value="-Djava.security.auth.login.config=$USER_HOME$/Devtools/apache-tomcat-7.0.5/conf/jaas.config" />
+      <option name="UPDATING_POLICY" value="restart-server" />
+      <deployment />
+      <server-settings>
+        <option name="DEPLOY_TOMCAT_APPS" value="false" />
+        <option name="BASE_DIRECTORY_NAME" value="tomcat_Unnamed_vicsc63fa42b" />
+      </server-settings>
+      <log_file path="/Documents and Settings/tsafford/.IntelliJIdea8x/system/tomcat/tomcat_Unnamed_vicsc63fa42b/logs/localhost*" checked="true" skipped="true" show_all="false" alias="Tomcat Log" />
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="3348" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
+      <RunnerSettings RunnerId="Profile CPU">
+        <option name="startFromMode" value="MAIN_CLASS" />
+        <option name="otherClassesToStartFrom" value="" />
+        <option name="profileNewRunnables" value="true" />
+        <option name="filteringMode" value="EXCLUDE" />
+        <option name="filterIncludeClasses" value="" />
+        <option name="filterExcludeClasses" value="java.*, javax.*,&#10;sun.*, sunw.*, com.sun.*" />
+      </RunnerSettings>
+      <RunnerSettings RunnerId="Profile Memory">
+        <option name="profileAllocMode" value="ALLOC_AND_GC" />
+        <option name="profileAllocInterval" value="10" />
+        <option name="recordAllocTraces" value="false" />
+      </RunnerSettings>
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Debug">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="/devtools/apache-tomcat-6.0.14/bin/catalina.bat" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value=" run" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="/devtools/apache-tomcat-6.0.14/bin/catalina.bat" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value=" stop" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Profile CPU">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="/devtools/apache-tomcat-6.0.14/bin/catalina.bat" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value=" run" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="/devtools/apache-tomcat-6.0.14/bin/catalina.bat" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value=" stop" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Profile Memory">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="/devtools/apache-tomcat-6.0.14/bin/catalina.bat" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value=" run" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="/devtools/apache-tomcat-6.0.14/bin/catalina.bat" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value=" stop" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Run">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="/devtools/apache-tomcat-6.0.14/bin/catalina.bat" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value=" run" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="/devtools/apache-tomcat-6.0.14/bin/catalina.bat" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value=" stop" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <method>
+        <option name="Make" enabled="false" />
+      </method>
+    </configuration>
+  </component>
+  <component name="RUBY_DOC_SETTINGS">
+    <RUBY_DOC NAME="DEFAULTS" VALUE="TRUE" />
+    <RUBY_DOC NAME="NUMBER" VALUE="0" />
+  </component>
+  <component name="ResourceManagerContainer">
+    <option name="myResourceBundles">
+      <value>
+        <list size="0" />
+      </value>
+    </option>
+  </component>
+  <component name="RubyDocSettings">
+    <RUBY_DOC NAME="DEFAULTS" VALUE="TRUE" />
+    <RUBY_DOC NAME="NUMBER" VALUE="0" />
+  </component>
+  <component name="SvnBranchConfigurationManager">
+    <option name="myConfigurationMap">
+      <map>
+        <entry key="$PROJECT_DIR$">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="branchMap">
+                <map>
+                  <entry key="http://isvn/CAMERA/camera/branches">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="http://isvn/CAMERA/camera/hooks">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                  <entry key="http://isvn/CAMERA/camera/tags">
+                    <value>
+                      <list />
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="branchUrls">
+                <list>
+                  <option value="http://isvn/CAMERA/camera/branches" />
+                  <option value="http://isvn/CAMERA/camera/hooks" />
+                  <option value="http://isvn/CAMERA/camera/tags" />
+                </list>
+              </option>
+              <option name="trunkUrl" value="http://isvn/CAMERA/camera/trunk" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="myVersion" value="124" />
+    <option name="mySupportsUserInfoFilter" value="true" />
+  </component>
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="svn" />
+    <mapping directory="$PROJECT_DIR$/../Copyofcamera" vcs="svn" />
+    <mapping directory="$PROJECT_DIR$/buildprocess" vcs="svn" />
+  </component>
+  <component name="WebServicesPlugin" addRequiredLibraries="true" />
+</project>
+
