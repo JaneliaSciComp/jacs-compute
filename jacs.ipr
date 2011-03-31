@@ -324,6 +324,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/compute/Compute.iml" filepath="$PROJECT_DIR$/compute/Compute.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jacs/Jacs.iml" filepath="$PROJECT_DIR$/jacs/Jacs.iml" />
       <module fileurl="file://$PROJECT_DIR$/vics/Jacs.iml" filepath="$PROJECT_DIR$/vics/Jacs.iml" />
       <module fileurl="file://$PROJECT_DIR$/model/Model.iml" filepath="$PROJECT_DIR$/model/Model.iml" />
       <module fileurl="file://$PROJECT_DIR$/shared/Shared.iml" filepath="$PROJECT_DIR$/shared/Shared.iml" />
