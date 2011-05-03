@@ -6,8 +6,8 @@
       <additionalClassPath />
       <antReference projectDefault="true" />
       <customJdkName value="" />
-      <maximumHeapSize value="128" />
-      <maximumStackSize value="32" />
+      <maximumHeapSize value="256" />
+      <maximumStackSize value="64" />
       <properties />
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/jacs/build.xml">
@@ -17,8 +17,8 @@
       </additionalClassPath>
       <antReference projectDefault="true" />
       <customJdkName value="" />
-      <maximumHeapSize value="128" />
-      <maximumStackSize value="32" />
+      <maximumHeapSize value="256" />
+      <maximumStackSize value="64" />
       <properties />
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/compute/build.xml">
@@ -28,8 +28,8 @@
       </additionalClassPath>
       <antReference projectDefault="true" />
       <customJdkName value="" />
-      <maximumHeapSize value="128" />
-      <maximumStackSize value="32" />
+      <maximumHeapSize value="256" />
+      <maximumStackSize value="64" />
       <properties />
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/model/build.xml">
@@ -39,8 +39,8 @@
       </additionalClassPath>
       <antReference projectDefault="true" />
       <customJdkName value="" />
-      <maximumHeapSize value="128" />
-      <maximumStackSize value="32" />
+      <maximumHeapSize value="256" />
+      <maximumStackSize value="64" />
       <properties />
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/shared/build.xml">
@@ -50,8 +50,8 @@
       </additionalClassPath>
       <antReference projectDefault="true" />
       <customJdkName value="" />
-      <maximumHeapSize value="128" />
-      <maximumStackSize value="32" />
+      <maximumHeapSize value="256" />
+      <maximumStackSize value="64" />
       <properties />
     </buildFile>
   </component>
@@ -495,5 +495,28 @@
     <mapping directory="$PROJECT_DIR$/buildprocess" vcs="svn" />
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
+  <component name="libraryTable">
+    <library name="GWT">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-java-math-1.0.9.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-api-checker.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-user.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-soyc-vis.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-benchmark-viewer.war!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-dev.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-sl-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-servlet.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-dnd-3.0.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-servlet-deps.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-widgets-0.2.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-maps.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/gwt-widgets-server-0.1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/validation-api-1.0.0.GA.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/GWT/validation-api-1.0.0.GA-sources.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+  </component>
 </project>
 
