@@ -234,6 +234,13 @@
     <option name="LOCALE" />
     <option name="OPEN_IN_BROWSER" value="true" />
   </component>
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/console/pom.xml" />
+      </list>
+    </option>
+  </component>
   <component name="Palette2">
     <group name="Swing">
       <item class="com.intellij.uiDesigner.HSpacer" tooltip-text="Horizontal Spacer" icon="/com/intellij/uiDesigner/icons/hspacer.png" removable="false" auto-create-binding="false" can-attach-label="false">
@@ -368,6 +375,7 @@
       <module fileurl="file://$PROJECT_DIR$/model/Model.iml" filepath="$PROJECT_DIR$/model/Model.iml" />
       <module fileurl="file://$PROJECT_DIR$/shared/Shared.iml" filepath="$PROJECT_DIR$/shared/Shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/buildprocess/buildprocess.iml" filepath="$PROJECT_DIR$/buildprocess/buildprocess.iml" />
+      <module fileurl="file://$PROJECT_DIR$/console/console.iml" filepath="$PROJECT_DIR$/console/console.iml" />
     </modules>
   </component>
   <component name="ProjectResources">
@@ -555,6 +563,17 @@
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+    </library>
+    <library name="Maven: junit:junit:3.8.1">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1-sources.jar!/" />
+      </SOURCES>
     </library>
   </component>
 </project>
