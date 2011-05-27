@@ -82,6 +82,19 @@
         <element id="javaee-facet-resources" facet="Compute/javaeeApplication/javaEEApplication" />
       </root>
     </artifact>
+    <artifact type="jar" name="console:jar">
+      <output-path>$PROJECT_DIR$/buildprocess/build/artifacts/console_jar</output-path>
+      <root id="archive" name="console.jar">
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/console/src/main/java/META-INF/MANIFEST.MF" />
+        </element>
+        <element id="module-output" name="console" />
+        <element id="dir-copy" path="$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA" />
+        <element id="extracted-dir" path="$PROJECT_DIR$/common/LOCI/loci_tools.jar" path-in-jar="/" />
+        <element id="extracted-dir" path="$PROJECT_DIR$/compute/build/jars/compute-client.jar" path-in-jar="/" />
+        <element id="extracted-dir" path="$PROJECT_DIR$/common/GWT/gwt-user.jar" path-in-jar="/" />
+      </root>
+    </artifact>
   </component>
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="false" />
