@@ -602,7 +602,7 @@
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="svn" />
-    <mapping directory="$PROJECT_DIR$/../Copyofcamera" vcs="svn" />
+    <mapping directory="$USER_HOME$/Copyofcamera" vcs="svn" />
     <mapping directory="$PROJECT_DIR$/buildprocess" vcs="svn" />
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
