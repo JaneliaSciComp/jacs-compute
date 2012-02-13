@@ -179,7 +179,7 @@
     <module2copyright />
   </component>
   <component name="CppTools.Loader" reportImplicitCastToBool="false" version="2" compilerSelect="AUTO" />
-  <component name="DataSourceManagerImpl" compressed="false" />
+  <component name="DataSourceManagerImpl" compressed="false" hash="0" />
   <component name="DependenciesAnalyzeManager">
     <option name="myForwardDirection" value="false" />
   </component>
@@ -397,6 +397,16 @@
       </item>
     </group>
   </component>
+  <component name="ProjectCodeStyleSettingsManager">
+    <option name="PER_PROJECT_SETTINGS">
+      <value>
+        <XML>
+          <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
+        </XML>
+      </value>
+    </option>
+    <option name="USE_PER_PROJECT_SETTINGS" value="true" />
+  </component>
   <component name="ProjectDetails">
     <option name="projectName" value="vics" />
   </component>
@@ -477,7 +487,6 @@
       <option name="UPDATING_POLICY" value="restart-server" />
       <deployment />
       <server-settings>
-        <option name="DEPLOY_TOMCAT_APPS" value="false" />
         <option name="BASE_DIRECTORY_NAME" value="tomcat_Unnamed_vicsc63fa42b" />
       </server-settings>
       <log_file path="/Documents and Settings/tsafford/.IntelliJIdea8x/system/tomcat/tomcat_Unnamed_vicsc63fa42b/logs/localhost*" checked="true" skipped="true" show_all="false" alias="Tomcat Log" />
@@ -587,25 +596,6 @@
         <entry key="$PROJECT_DIR$">
           <value>
             <SvnBranchConfiguration>
-              <option name="branchMap">
-                <map>
-                  <entry key="http://isvn/CAMERA/camera/branches">
-                    <value>
-                      <list />
-                    </value>
-                  </entry>
-                  <entry key="http://isvn/CAMERA/camera/hooks">
-                    <value>
-                      <list />
-                    </value>
-                  </entry>
-                  <entry key="http://isvn/CAMERA/camera/tags">
-                    <value>
-                      <list />
-                    </value>
-                  </entry>
-                </map>
-              </option>
               <option name="branchUrls">
                 <list>
                   <option value="http://isvn/CAMERA/camera/branches" />
