@@ -731,6 +731,15 @@
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/SAAJ" recursive="false" />
     </library>
+    <library name="Solrj">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Solrj" />
+        <root url="file://$PROJECT_DIR$/common/Solrj" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Solrj" recursive="false" />
+    </library>
     <library name="Spring">
       <CLASSES>
         <root url="file://$PROJECT_DIR$/common/Spring" />
