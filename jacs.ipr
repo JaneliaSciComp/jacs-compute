@@ -728,6 +728,15 @@
         <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1-sources.jar!/" />
       </SOURCES>
     </library>
+    <library name="MongoDB">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/MongoDB" />
+        <root url="file://$PROJECT_DIR$/common/MongoDB" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/MongoDB" recursive="false" />
+    </library>
     <library name="SAAJ">
       <CLASSES>
         <root url="file://$PROJECT_DIR$/common/SAAJ" />
