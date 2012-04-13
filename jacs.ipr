@@ -439,7 +439,7 @@
     <configuration default="false" name="Console App" type="Application" factoryName="Application">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
       <option name="MAIN_CLASS_NAME" value="org.janelia.it.FlyWorkstation.gui.application.ConsoleApp" />
-      <option name="VM_PARAMETERS" value="-Xms512m -Xmx1024m -XX:+UseParallelGC" />
+      <option name="VM_PARAMETERS" value="-Xms512m -Xmx2024m -XX:+UseParallelGC" />
       <option name="PROGRAM_PARAMETERS" value="" />
       <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
@@ -763,6 +763,15 @@
       <JAVADOC />
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/Spring" recursive="false" />
+    </library>
+    <library name="Spring-3">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Spring-3" />
+        <root url="file://$PROJECT_DIR$/common/Spring-3" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Spring-3" recursive="false" />
     </library>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
