@@ -653,6 +653,13 @@
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/Axis2-1.5.5" recursive="false" />
     </library>
+    <library name="GoogleAnalytics">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/compute/lib/JGoogleAnalytics_0.4.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
     <library name="GWT">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/common/GWT/gwt-java-math-1.0.9.jar!/" />
