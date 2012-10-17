@@ -626,6 +626,48 @@
             </SvnBranchConfiguration>
           </value>
         </entry>
+        <entry key="$PROJECT_DIR$/buildprocess">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="trunkUrl" value="https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/buildprocess" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/compute">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="trunkUrl" value="https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/compute" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/console">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="trunkUrl" value="https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/console" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/jacs">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="trunkUrl" value="https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/jacs" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/model">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="trunkUrl" value="https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/model" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/shared">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="trunkUrl" value="https://subversion.int.janelia.org/ScientificComputing/Projects/jacs/trunk/shared" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
       </map>
     </option>
     <option name="myVersion" value="124" />
@@ -756,6 +798,30 @@
       <JAVADOC />
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/MongoDB" recursive="false" />
+    </library>
+    <library name="RESTEasy-2.3.4">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/activation-1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/commons-codec-1.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/commons-logging-1.1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/httpclient-4.1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/httpcore-4.1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/javassist-3.12.1.GA.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/jaxb-api-2.2.3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/jaxb-impl-2.2.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/jaxrs-api-2.3.4.Final.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/jcip-annotations-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/jsr250-api-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/resteasy-jaxb-provider-2.3.4.Final.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/resteasy-jaxrs-2.3.4.Final.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/scannotation-1.0.3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/compute/lib/resteasy-2.3.4/stax-api-1.0-2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/jboss/resteasy/resteasy-jaxb-provider/2.3.4.Final/resteasy-jaxb-provider-2.3.4.Final-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/jboss/resteasy/jaxrs-api/2.3.4.Final/jaxrs-api-2.3.4.Final-sources.jar!/" />
+      </SOURCES>
     </library>
     <library name="SAAJ">
       <CLASSES>
