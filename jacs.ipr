@@ -704,6 +704,15 @@
       <JAVADOC />
       <SOURCES />
     </library>
+    <library name="Guava">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Guava" />
+        <root url="file://$PROJECT_DIR$/common/Guava" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Guava" recursive="false" />
+    </library>
     <library name="GWT">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/common/GWT/gwt-java-math-1.0.9.jar!/" />
@@ -769,6 +778,15 @@
       <JAVADOC />
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/LOCI" recursive="false" />
+    </library>
+    <library name="Logging">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Logging" />
+        <root url="file://$PROJECT_DIR$/common/Logging" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Logging" recursive="false" />
     </library>
     <library name="Lucene">
       <CLASSES>
