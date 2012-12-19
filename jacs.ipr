@@ -902,6 +902,7 @@
       <JAVADOC />
       <SOURCES>
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxb-xjc.jar!/1.0" />
+        <root url="jar://$MAVEN_REPOSITORY$/commons-httpclient/commons-httpclient/3.1/commons-httpclient-3.1-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="JUnit">
