@@ -783,7 +783,9 @@
         <root url="jar://$PROJECT_DIR$/common/Guava/guava-13.0.1.jar!/" />
       </CLASSES>
       <JAVADOC />
-      <SOURCES />
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/13.0.1/guava-13.0.1-sources.jar!/" />
+      </SOURCES>
     </library>
     <library name="GWT">
       <CLASSES>
