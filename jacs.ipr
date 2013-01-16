@@ -920,6 +920,14 @@
         <root url="jar://$MAVEN_REPOSITORY$/commons-httpclient/commons-httpclient/3.1/commons-httpclient-3.1-sources.jar!/" />
       </SOURCES>
     </library>
+    <library name="Jetty">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Jetty" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Jetty" recursive="false" />
+    </library>
     <library name="JUnit">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/common/JUnit-Lib-3.8.1/clover.jar!/" />
