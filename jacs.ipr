@@ -789,11 +789,10 @@
     <library name="Guava">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/common/Guava/guava-13.0.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Guava/gson-2.2.2.jar!/" />
       </CLASSES>
       <JAVADOC />
-      <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/13.0.1/guava-13.0.1-sources.jar!/" />
-      </SOURCES>
+      <SOURCES />
     </library>
     <library name="GWT">
       <CLASSES>
