@@ -935,6 +935,14 @@
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/Jetty" recursive="false" />
     </library>
+    <library name="JKtx">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/JKtx" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/JKtx" recursive="false" />
+    </library>
     <library name="JUnit">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/common/JUnit-Lib-3.8.1/clover.jar!/" />
@@ -974,6 +982,17 @@
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+    </library>
+    <library name="LZ4">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/LZ4" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="file://$PROJECT_DIR$/common/LZ4" />
+      </SOURCES>
+      <jarDirectory url="file://$PROJECT_DIR$/common/LZ4" recursive="false" />
+      <jarDirectory url="file://$PROJECT_DIR$/common/LZ4" recursive="false" type="SOURCES" />
     </library>
     <library name="Maven: junit:junit:3.8.1">
       <CLASSES>
@@ -1020,6 +1039,14 @@
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+    </library>
+    <library name="Snappy">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Snappy" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Snappy" recursive="false" />
     </library>
     <library name="Solrj">
       <CLASSES>
