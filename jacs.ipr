@@ -435,6 +435,7 @@
       <module fileurl="file://$PROJECT_DIR$/buildprocess/buildprocess.iml" filepath="$PROJECT_DIR$/buildprocess/buildprocess.iml" />
       <module fileurl="file://$PROJECT_DIR$/console/console.iml" filepath="$PROJECT_DIR$/console/console.iml" />
       <module fileurl="file://$PROJECT_DIR$/groovy/groovy.iml" filepath="$PROJECT_DIR$/groovy/groovy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/reports/reports.iml" filepath="$PROJECT_DIR$/reports/reports.iml" />
     </modules>
   </component>
   <component name="ProjectResources">
@@ -447,7 +448,7 @@
     <configuration default="false" name="Console App" type="Application" factoryName="Application">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
       <option name="MAIN_CLASS_NAME" value="org.janelia.it.FlyWorkstation.gui.application.ConsoleApp" />
-      <option name="VM_PARAMETERS" value="-Xms512m -Xmx2024m -XX:+UseParallelGC" />
+      <option name="VM_PARAMETERS" value="-Xms512m -Xmx2024m -XX:+UseParallelGC -Dsun.awt.disableMixing=true " />
       <option name="PROGRAM_PARAMETERS" value="" />
       <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
