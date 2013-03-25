@@ -12,7 +12,6 @@ import javax.swing.*;
 
 import org.janelia.it.FlyWorkstation.api.entity_model.management.EntitySelectionModel;
 import org.janelia.it.FlyWorkstation.api.entity_model.management.ModelMgr;
-import org.janelia.it.FlyWorkstation.api.entity_model.management.ModelMgrUtils;
 import org.janelia.it.FlyWorkstation.gui.framework.outline.EntitySelectionHistory;
 import org.janelia.it.FlyWorkstation.gui.framework.session_mgr.BrowserModel;
 import org.janelia.it.FlyWorkstation.gui.framework.session_mgr.SessionMgr;
@@ -22,16 +21,13 @@ import org.janelia.it.FlyWorkstation.gui.util.MouseForwarder;
 import org.janelia.it.FlyWorkstation.model.entity.RootedEntity;
 import org.janelia.it.FlyWorkstation.shared.workers.SimpleWorker;
 import org.janelia.it.jacs.model.entity.Entity;
-import org.janelia.it.jacs.model.entity.EntityConstants;
-import org.janelia.it.jacs.model.entity.EntityData;
-import org.janelia.it.jacs.shared.utils.EntityUtils;
 
 /**
- * This viewer displays Error entities.
+ * This viewer displays text. Override the getText method to define where the text comes from.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class ErrorViewer extends Viewer {
+public abstract class TextViewer extends Viewer {
 
 	protected ViewerToolbar toolbar;
 	protected JTextArea textArea;
@@ -39,7 +35,7 @@ public class ErrorViewer extends Viewer {
 	protected RootedEntity contextRootedEntity;
 	protected SessionModelListener sessionModelListener;
 	
-	public ErrorViewer(ViewerPane viewerPane) {
+	public TextViewer(ViewerPane viewerPane) {
 		super(viewerPane);
 		
 		setBorder(BorderFactory.createEmptyBorder());
@@ -75,7 +71,7 @@ public class ErrorViewer extends Viewer {
             @Override
             public void modelPropertyChanged(Object key, Object oldValue, Object newValue) {
                 if(key == "console.serverLogin"){
-                    ErrorViewer.this.clear();
+                    TextViewer.this.clear();
                 }
             }
         };
@@ -107,7 +103,7 @@ public class ErrorViewer extends Viewer {
 			}
 
 			protected void refresh() {
-				ErrorViewer.this.totalRefresh();
+				TextViewer.this.totalRefresh();
 			}
 			
 			protected JPopupMenu getPopupPathMenu() {
@@ -137,41 +133,71 @@ public class ErrorViewer extends Viewer {
 		this.updateUI();
 	}
 	
+	public void showViewer() {
+	    removeAll();
+
+        textArea.setCaretPosition(0);
+        
+        // Update back/forward navigation
+        EntitySelectionHistory history = getViewerPane().getEntitySelectionHistory();
+        toolbar.getPrevButton().setEnabled(history.isBackEnabled());
+        toolbar.getNextButton().setEnabled(history.isNextEnabled());
+        
+        add(toolbar, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+        this.updateUI();
+	}
+	
 	@Override
 	public void loadEntity(RootedEntity rootedEntity) {
 		loadEntity(rootedEntity, null);
 	}
 	
-	public synchronized void loadEntity(RootedEntity rootedEntity, final Callable<Void> success) {
+	public synchronized void loadEntity(final RootedEntity rootedEntity, final Callable<Void> success) {
 		
 		this.contextRootedEntity = rootedEntity;
 		if (contextRootedEntity==null) return;
 
 		showLoadingIndicator();
 		
-		Entity entity = contextRootedEntity.getEntity();
-		
-		List<EntityData> eds = entity.getOrderedEntityData();
-		List<EntityData> children = new ArrayList<EntityData>();
-		for(EntityData ed : eds) {
-			Entity child = ed.getChildEntity();
-			if (!EntityUtils.isHidden(ed) && child!=null) {
-				children.add(ed);
-			}
-		}
-		
-		textArea.setText(entity.getValueByAttributeName(EntityConstants.ATTRIBUTE_MESSAGE));
-		textArea.setCaretPosition(0);
+		SimpleWorker worker = new SimpleWorker() {
+            
+		    String text;
+		    
+            @Override
+            protected void doStuff() throws Exception {
+                this.text = getText(rootedEntity);
+            }
+            
+            @Override
+            protected void hadSuccess() {
+                
+                textArea.setText(text);
 
-		// Update back/forward navigation
-		EntitySelectionHistory history = getViewerPane().getEntitySelectionHistory();
-		toolbar.getPrevButton().setEnabled(history.isBackEnabled());
-		toolbar.getNextButton().setEnabled(history.isNextEnabled());
-
-		add(toolbar, BorderLayout.NORTH);
-		add(scrollPane, BorderLayout.CENTER);
+                showViewer();
+                
+                if (success!=null) {
+                    try {
+                        success.call();    
+                    }
+                    catch (Exception e) {
+                        hadError(e);
+                    }
+                }
+            }
+            
+            @Override
+            protected void hadError(Throwable error) {
+                SessionMgr.getSessionMgr().handleException(error);
+            }
+        };
+        
+       worker.execute();
+		
 	}
-	
+
+    public abstract String getText(RootedEntity rootedEntity) throws Exception;
+    
 	@Override
 	public void refresh() {
 		refresh(null);
