@@ -1,67 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="AntConfiguration">
-    <defaultAnt bundledAnt="true" />
     <buildFile url="file://$PROJECT_DIR$/buildprocess/build-all.xml">
-      <additionalClassPath />
-      <antReference projectDefault="true" />
-      <customJdkName value="" />
       <maximumHeapSize value="256" />
       <maximumStackSize value="64" />
-      <properties />
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/jacs/build.xml">
       <additionalClassPath>
         <entry path="file://$PROJECT_DIR$/buildprocess/lib/orangevolt-ant-tasks-1.3.8.jar" />
         <entry path="file://$PROJECT_DIR$/buildprocess/lib/roxes-win32forjava-1.1.1.jar" />
       </additionalClassPath>
-      <antReference projectDefault="true" />
-      <customJdkName value="" />
       <maximumHeapSize value="256" />
       <maximumStackSize value="64" />
-      <properties />
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/compute/build.xml">
       <additionalClassPath>
         <entry path="file://$PROJECT_DIR$/buildprocess/lib/orangevolt-ant-tasks-1.3.8.jar" />
         <entry path="file://$PROJECT_DIR$/buildprocess/lib/roxes-win32forjava-1.1.1.jar" />
       </additionalClassPath>
-      <antReference projectDefault="true" />
-      <customJdkName value="" />
       <maximumHeapSize value="256" />
       <maximumStackSize value="64" />
-      <properties />
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/model/build.xml">
       <additionalClassPath>
         <entry path="file://$PROJECT_DIR$/buildprocess/lib/orangevolt-ant-tasks-1.3.8.jar" />
         <entry path="file://$PROJECT_DIR$/buildprocess/lib/roxes-win32forjava-1.1.1.jar" />
       </additionalClassPath>
-      <antReference projectDefault="true" />
-      <customJdkName value="" />
       <maximumHeapSize value="256" />
       <maximumStackSize value="64" />
-      <properties />
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/shared/build.xml">
       <additionalClassPath>
         <entry path="file://$PROJECT_DIR$/buildprocess/lib/orangevolt-ant-tasks-1.3.8.jar" />
         <entry path="file://$PROJECT_DIR$/buildprocess/lib/roxes-win32forjava-1.1.1.jar" />
       </additionalClassPath>
-      <antReference projectDefault="true" />
-      <customJdkName value="" />
       <maximumHeapSize value="256" />
       <maximumStackSize value="64" />
-      <properties />
     </buildFile>
-    <buildFile url="file://$PROJECT_DIR$/console/build.xml">
-      <additionalClassPath />
-      <antReference projectDefault="true" />
-      <customJdkName value="" />
-      <maximumHeapSize value="128" />
-      <maximumStackSize value="2" />
-      <properties />
-    </buildFile>
+    <buildFile url="file://$PROJECT_DIR$/console/build.xml" />
   </component>
   <component name="ArtifactManager">
     <artifact type="exploded-war" name="Compute:Web exploded">
@@ -203,7 +179,21 @@
     <module2copyright />
   </component>
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
-  <component name="DataSourceManagerImpl" compressed="false" hash="0" />
+  <component name="DataSourceManagerImpl" format="xml" hash="0">
+    <data-source source="LOCAL" name="Data Source" product="MySQL" version="5.5.8-enterprise-commercial-advanced-log" jdbc-version="4.0" driver-name="" driver-version="mysql-connector-java-5.1.15 ( Revision: ${bzr.revision-id} )" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
+      <extra-name-characters>#@</extra-name-characters>
+      <identifier-quote-string>`</identifier-quote-string>
+      <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://dev-db:3306/flyportal</jdbc-url>
+      <user-name>flyportalAdmin</user-name>
+      <user-password>dfccdfc6dfd3dfdadf9adfd8dfdedfeadfc6dfebdfcedfc7df9bdfc4</user-password>
+      <libraries>
+        <library>
+          <url>file://$PROJECT_DIR$/common/MySQL/mysql-connector-java-5.1.15-bin.jar</url>
+        </library>
+      </libraries>
+    </data-source>
+  </component>
   <component name="DependenciesAnalyzeManager">
     <option name="myForwardDirection" value="false" />
   </component>
