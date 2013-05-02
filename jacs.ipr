@@ -225,6 +225,7 @@
         <option name="myLocal" value="false" />
         <inspection_tool class="GWTStyleCheck" enabled="true" level="WARNING" enabled_by_default="true" />
         <inspection_tool class="GwtInconsistentSerializableClass" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="JavadocReference" enabled="true" level="WARNING" enabled_by_default="true" />
         <inspection_tool class="JpaQueryApiInspection" enabled="true" level="WARNING" enabled_by_default="true" />
         <inspection_tool class="NonJREEmulationClassesInClientCode" enabled="true" level="WARNING" enabled_by_default="true" />
         <inspection_tool class="SpellCheckingInspection" enabled="false" level="TYPO" enabled_by_default="false">
