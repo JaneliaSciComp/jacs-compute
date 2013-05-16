@@ -409,7 +409,6 @@
         </codeStyleSettings>
       </value>
     </option>
-    <option name="USE_PER_PROJECT_SETTINGS" value="true" />
   </component>
   <component name="ProjectDetails">
     <option name="projectName" value="vics" />
@@ -784,7 +783,9 @@
         <root url="jar://$PROJECT_DIR$/common/Guava/gson-2.2.2.jar!/" />
       </CLASSES>
       <JAVADOC />
-      <SOURCES />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.ideaLibSources/gson-2.2.2-sources.jar!/" />
+      </SOURCES>
     </library>
     <library name="GWT">
       <CLASSES>
