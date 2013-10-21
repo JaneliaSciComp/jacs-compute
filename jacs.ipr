@@ -2,6 +2,7 @@
 <project version="4">
   <component name="AntConfiguration">
     <buildFile url="file://$PROJECT_DIR$/buildprocess/build-all.xml">
+      <customJdkName value="1.6" />
       <maximumHeapSize value="256" />
       <maximumStackSize value="64" />
     </buildFile>
@@ -785,6 +786,13 @@
     <library name="GoogleAnalytics">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/compute/lib/JGoogleAnalytics_0.4.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Groovy">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/groovy/lib/groovy-all-2.1.1.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
