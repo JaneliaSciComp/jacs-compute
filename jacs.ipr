@@ -214,6 +214,7 @@
   </component>
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
     <file url="file://$PROJECT_DIR$/buildprocess/deployment/templates/linux_template/workstation_128_icon.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/compute/test/org/janelia/it/jacs/compute/access/SageDAOTest.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/console" charset="UTF-8" />
   </component>
   <component name="EntryPointsManager">
@@ -781,6 +782,7 @@
       <JAVADOC />
       <SOURCES>
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-xjc-2.1.7.jar!/1.0" />
+        <root url="jar://$USER_HOME$/.ideaLibSources/commons-httpclient-3.1-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="GoogleAnalytics">
@@ -980,14 +982,11 @@
     </library>
     <library name="Logging">
       <CLASSES>
-        <root url="jar://$PROJECT_DIR$/common/Logging/logback-access-1.0.7.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Logging/logback-classic-1.0.7.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Logging/logback-core-1.0.7.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Logging/perf4j-0.9.16-logbackonly.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Logging/slf4j-api-1.6.6.jar!/" />
+        <root url="file://$PROJECT_DIR$/common/Logging" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Logging" recursive="false" />
     </library>
     <library name="Lucene">
       <CLASSES>
