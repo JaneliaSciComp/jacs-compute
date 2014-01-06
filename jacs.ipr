@@ -181,9 +181,8 @@
   </component>
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
   <component name="DataSourceManagerImpl" format="xml" hash="0">
-    <data-source source="LOCAL" name="Data Source" product="MySQL" version="5.5.8-enterprise-commercial-advanced-log" jdbc-version="4.0" driver-name="" driver-version="mysql-connector-java-5.1.15 ( Revision: ${bzr.revision-id} )" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
-      <extra-name-characters>#@</extra-name-characters>
-      <identifier-quote-string>`</identifier-quote-string>
+    <data-source source="LOCAL" name="Data Source" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
+      <driver-ref>mysql</driver-ref>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://dev-db:3306/flyportal</jdbc-url>
       <user-name>flyportalAdmin</user-name>
@@ -193,6 +192,14 @@
           <url>file://$PROJECT_DIR$/common/MySQL/mysql-connector-java-5.1.15-bin.jar</url>
         </library>
       </libraries>
+    </data-source>
+    <data-source source="LOCAL" name="conf:container_descriptor:hibernate.template.cfg.xml" uuid="99e36145-932a-441c-9294-98824635489c">
+      <driver-ref>mysql</driver-ref>
+      <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://clustrix:3306/flyportal</jdbc-url>
+      <user-name>val_flyportalApp</user-name>
+      <user-password>dfdcdfeadfc6dff5dfccdfc6dfd3dfdadf9adfd8dfdedfeadfc6dfebdfdadfda</user-password>
+      <libraries />
     </data-source>
   </component>
   <component name="DependenciesAnalyzeManager">
@@ -492,7 +499,7 @@
       <ConfigurationWrapper RunnerId="Run" />
       <method />
     </configuration>
-    <configuration default="false" name="Tomcat - jacs" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 7">
+    <configuration default="false" name="Tomcat - jacs" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 7" ALTERNATIVE_JRE_ENABLED="false">
       <option name="OPEN_IN_BROWSER_URL" value="http://saffordt-ws1:8880/jacs/gwt/Home/Home.htm" />
       <option name="COMMON_VM_ARGUMENTS" value="-Djava.security.auth.login.config=/groups/scicomp/jacsData/servers/saffordt-ws1/apache-tomcat-7.0.5/conf/jaas.config" />
       <option name="UPDATING_POLICY" value="restart-server" />
