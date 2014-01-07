@@ -442,7 +442,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.6" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/buildprocess/build" />
   </component>
   <component name="ProjectRunConfigurationManager">
@@ -965,10 +965,17 @@
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/JKtx" recursive="false" />
     </library>
-    <library name="JUnit">
+    <library name="JUnit-3.8">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/common/JUnit-Lib-3.8.1/clover.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JUnit-Lib-3.8.1/junit.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="JUnit-4.11">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/common/JUnit-Lib-4.11/junit-4.11.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
