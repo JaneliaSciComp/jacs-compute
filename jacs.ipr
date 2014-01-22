@@ -1034,7 +1034,7 @@
     </library>
     <library name="MongoDB">
       <CLASSES>
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongo-2.7.3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongo-java-driver-2.11.3.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
