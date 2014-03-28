@@ -220,7 +220,6 @@
     <option name="MAXIMUM_HEAP_SIZE" value="128" />
   </component>
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
-    <file url="file://$PROJECT_DIR$/buildprocess/deployment/templates/linux_template/workstation_128_icon.png" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/compute/test/org/janelia/it/jacs/compute/access/SageDAOTest.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/console" charset="UTF-8" />
   </component>
@@ -449,7 +448,7 @@
     <configuration default="false" name="Console App" type="Application" factoryName="Application">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
       <option name="MAIN_CLASS_NAME" value="org.janelia.it.FlyWorkstation.gui.application.ConsoleApp" />
-      <option name="VM_PARAMETERS" value="-Xms512m -Xmx8024m -XX:+UseParallelGC -Dsun.awt.disableMixing=true " />
+      <option name="VM_PARAMETERS" value="-Xms512m -Xmx32000m -XX:+UseParallelGC -Dsun.awt.disableMixing=true " />
       <option name="PROGRAM_PARAMETERS" value="" />
       <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
