@@ -40,47 +40,6 @@
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/console/build.xml" />
   </component>
-  <component name="ArtifactManager">
-    <artifact type="exploded-war" name="Compute:Web exploded">
-      <root id="root">
-        <element id="javaee-facet-resources" facet="Compute/web/Web" />
-        <element id="directory" name="WEB-INF">
-          <element id="directory" name="classes">
-            <element id="javaee-facet-classes" facet="Compute/web/Web" />
-          </element>
-          <element id="directory" name="lib" />
-        </element>
-      </root>
-    </artifact>
-    <artifact type="exploded-war" name="Vics:Web exploded">
-      <root id="root">
-        <element id="javaee-facet-resources" facet="Vics/web/Web" />
-        <element id="directory" name="WEB-INF">
-          <element id="directory" name="classes">
-            <element id="javaee-facet-classes" facet="Vics/web/Web" />
-          </element>
-        </element>
-      </root>
-    </artifact>
-    <artifact type="exploded-ear" name="Compute:javaEEApplication exploded">
-      <root id="root">
-        <element id="javaee-facet-resources" facet="Compute/javaeeApplication/javaEEApplication" />
-      </root>
-    </artifact>
-    <artifact type="jar" name="console:jar">
-      <output-path>$PROJECT_DIR$/buildprocess/build/artifacts/console_jar</output-path>
-      <root id="archive" name="console.jar">
-        <element id="directory" name="META-INF">
-          <element id="file-copy" path="$PROJECT_DIR$/console/src/main/java/META-INF/MANIFEST.MF" />
-        </element>
-        <element id="module-output" name="console" />
-        <element id="dir-copy" path="$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA" />
-        <element id="extracted-dir" path="$PROJECT_DIR$/common/LOCI/loci_tools.jar" path-in-jar="/" />
-        <element id="extracted-dir" path="$PROJECT_DIR$/compute/build/jars/compute-client.jar" path-in-jar="/" />
-        <element id="extracted-dir" path="$PROJECT_DIR$/common/GWT/gwt-user.jar" path-in-jar="/" />
-      </root>
-    </artifact>
-  </component>
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="false" />
   </component>
@@ -176,9 +135,7 @@
       </profile>
     </annotationProcessing>
   </component>
-  <component name="CopyrightManager" default="">
-    <module2copyright />
-  </component>
+  <component name="CopyrightManager" default="" />
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
   <component name="DataSourceManagerImpl" format="xml" hash="0">
     <data-source source="LOCAL" name="Data Source" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
@@ -202,9 +159,6 @@
       <libraries />
     </data-source>
   </component>
-  <component name="DependenciesAnalyzeManager">
-    <option name="myForwardDirection" value="false" />
-  </component>
   <component name="DependencyValidationManager">
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
@@ -225,6 +179,10 @@
   </component>
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
+    <list size="2">
+      <item index="0" class="java.lang.String" itemvalue="org.junit.After" />
+      <item index="1" class="java.lang.String" itemvalue="org.junit.Before" />
+    </list>
   </component>
   <component name="IdProvider" IDEtalkID="B1B36B4D70CCA5A6FF873836AF99BC9E" />
   <component name="InspectionProjectProfileManager">
@@ -442,7 +400,7 @@
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
-    <output url="file://$PROJECT_DIR$/buildprocess/build" />
+    <output url="file://$PROJECT_DIR$/buildprocess/intellij-make" />
   </component>
   <component name="ProjectRunConfigurationManager">
     <configuration default="false" name="Console App" type="Application" factoryName="Application">
@@ -468,7 +426,10 @@
       <ConfigurationWrapper RunnerId="Cover" />
       <ConfigurationWrapper RunnerId="Debug" />
       <ConfigurationWrapper RunnerId="Run" />
-      <method />
+      <method>
+        <option name="Make" enabled="false" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/buildprocess/build-all.xml" target="build-all" />
+      </method>
     </configuration>
     <configuration default="false" name="Dataview App" type="Application" factoryName="Application">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
@@ -496,7 +457,145 @@
       <RunnerSettings RunnerId="Run" />
       <ConfigurationWrapper RunnerId="Debug" />
       <ConfigurationWrapper RunnerId="Run" />
-      <method />
+      <method>
+        <option name="Make" enabled="false" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/buildprocess/build-all.xml" target="build-all" />
+      </method>
+    </configuration>
+    <configuration default="false" name="ModelModuleFastTestsSuite" type="JUnit" factoryName="JUnit" show_console_on_std_out="true" show_console_on_std_err="true">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <module name="Model" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="PACKAGE_NAME" value="org.janelia.it.jacs.model" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.jacs.model.ModelModuleFastTestsSuite" />
+      <option name="METHOD_NAME" value="" />
+      <option name="TEST_OBJECT" value="class" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="singleModule" />
+      </option>
+      <envs />
+      <dir value="$PROJECT_DIR$/model/test" />
+      <patterns />
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Run" />
+      <method>
+        <option name="Make" enabled="false" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/model/build.xml" target="compile-tests" />
+      </method>
+    </configuration>
+    <configuration default="false" name="ConsoleModuleFastTestsSuite" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
+        <pattern>
+          <option name="PATTERN" value="org.janelia.it.FlyWorkstation.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <module name="console" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="PACKAGE_NAME" value="org.janelia.it.FlyWorkstation" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.FlyWorkstation.ConsoleModuleFastTestsSuite" />
+      <option name="METHOD_NAME" value="" />
+      <option name="TEST_OBJECT" value="class" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="moduleWithDependencies" />
+      </option>
+      <envs />
+      <patterns />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Debug" />
+      <ConfigurationWrapper RunnerId="Run" />
+      <method>
+        <option name="Make" enabled="false" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/model/build.xml" target="compile-tests" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/console/build.xml" target="compile-tests" />
+      </method>
+    </configuration>
+    <configuration default="false" name="ComputeModuleIntegrationTestsSuite" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
+        <pattern>
+          <option name="PATTERN" value="org.janelia.it.jacs.compute.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <module name="Compute" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="PACKAGE_NAME" value="org.janelia.it.jacs.compute" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.jacs.compute.ComputeModuleIntegrationTestsSuite" />
+      <option name="METHOD_NAME" value="" />
+      <option name="TEST_OBJECT" value="class" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="moduleWithDependencies" />
+      </option>
+      <envs />
+      <patterns />
+      <RunnerSettings RunnerId="Cover" />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Cover" />
+      <ConfigurationWrapper RunnerId="Debug" />
+      <ConfigurationWrapper RunnerId="Run" />
+      <method>
+        <option name="Make" enabled="false" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/compute/build.xml" target="compile-tests" />
+      </method>
+    </configuration>
+    <configuration default="false" name="ComputeModuleFastTestsSuite" type="JUnit" factoryName="JUnit">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
+        <pattern>
+          <option name="PATTERN" value="org.janelia.it.jacs.compute.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <module name="Compute" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="PACKAGE_NAME" value="org.janelia.it.jacs.compute" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.jacs.compute.ComputeModuleFastTestsSuite" />
+      <option name="METHOD_NAME" value="" />
+      <option name="TEST_OBJECT" value="class" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="moduleWithDependencies" />
+      </option>
+      <envs />
+      <patterns />
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Run" />
+      <method>
+        <option name="Make" enabled="false" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/compute/build.xml" target="compile-tests" />
+      </method>
     </configuration>
     <configuration default="false" name="Tomcat - jacs" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 7" ALTERNATIVE_JRE_ENABLED="false" ALTERNATIVE_JRE_PATH="">
       <option name="OPEN_IN_BROWSER_URL" value="http://jacs:8880/jacs/gwt/Home/Home.htm" />
@@ -505,6 +604,7 @@
       <deployment />
       <server-settings>
         <option name="BASE_DIRECTORY_NAME" value="tomcat_Unnamed_vicsc63fa42b" />
+        <option name="HTTP_PORT" value="8080" />
       </server-settings>
       <log_file path="/Documents and Settings/tsafford/.IntelliJIdea8x/system/tomcat/tomcat_Unnamed_vicsc63fa42b/logs/localhost*" checked="true" skipped="true" show_all="false" alias="Tomcat Log" />
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
@@ -962,21 +1062,15 @@
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/JKtx" recursive="false" />
     </library>
-    <library name="JUnit-3.8">
-      <CLASSES>
-        <root url="jar://$PROJECT_DIR$/common/JUnit-Lib-3.8.1/clover.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/JUnit-Lib-3.8.1/junit.jar!/" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-    </library>
     <library name="JUnit-4.11">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/common/JUnit-Lib-4.11/junit-4.11.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JUnit-Lib-4.11/hamcrest-core-1.3.jar!/" />
       </CLASSES>
       <JAVADOC />
-      <SOURCES />
+      <SOURCES>
+        <root url="jar://$PROJECT_DIR$/common/JUnit-Lib-4.11/junit-4.11-src.jar!/" />
+      </SOURCES>
     </library>
     <library name="LOCI">
       <CLASSES>
@@ -1017,17 +1111,6 @@
       </SOURCES>
       <jarDirectory url="file://$PROJECT_DIR$/common/LZ4" recursive="false" />
       <jarDirectory url="file://$PROJECT_DIR$/common/LZ4" recursive="false" type="SOURCES" />
-    </library>
-    <library name="Maven: junit:junit:3.8.1">
-      <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1.jar!/" />
-      </CLASSES>
-      <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1-javadoc.jar!/" />
-      </JAVADOC>
-      <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/junit/junit/3.8.1/junit-3.8.1-sources.jar!/" />
-      </SOURCES>
     </library>
     <library name="MongoDB">
       <CLASSES>
@@ -1119,17 +1202,6 @@
         <root url="jar://$PROJECT_DIR$/common/Spring-3/geronimo-jta_1.1_spec-1.1.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Spring-3/jersey-bundle-1.12.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Spring-3/jsr311-api-1.1.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/lucene-core-3.5.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/neo4j-cypher-1.6.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/neo4j-graph-algo-1.6.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/neo4j-graph-matching-1.6.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/neo4j-jmx-1.6.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/neo4j-kernel-1.6.1-tests.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/neo4j-kernel-1.6.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/neo4j-lucene-index-1.6.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/neo4j-rest-api.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/neo4j-shell-1.6.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/neo4j-udc-1.6.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Spring-3/org.apache.servicemix.bundles.jline-0.9.94_1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Spring-3/org.springframework.aop-3.0.7.RELEASE.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Spring-3/org.springframework.asm-3.0.7.RELEASE.jar!/" />
@@ -1142,11 +1214,6 @@
         <root url="jar://$PROJECT_DIR$/common/Spring-3/org.springframework.transaction-3.0.7.RELEASE.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Spring-3/scala-library-2.9.0-1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Spring-3/server-api-1.6.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/spring-data-commons-core-1.2.1.RELEASE.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/spring-data-neo4j-2.1.0.M1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/spring-data-neo4j-aspects-2.1.0.M1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/spring-data-neo4j-cross-store-2.1.0.M1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Spring-3/spring-data-neo4j-rest-2.1.0.M1.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
