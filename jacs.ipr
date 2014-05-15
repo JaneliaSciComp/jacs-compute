@@ -41,6 +41,11 @@
       <maximumHeapSize value="256" />
       <maximumStackSize value="64" />
     </buildFile>
+    <buildFile url="file://$PROJECT_DIR$/ConsoleApplication/build-runner.xml">
+      <properties>
+        <property name="antexec" value="$USER_HOME$/tools/apache-ant-1.9.4/bin/ant" />
+      </properties>
+    </buildFile>
   </component>
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="false" />
@@ -391,10 +396,8 @@
   </component>
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/AlignmentBoardModule/AlignmentBoardModule.iml" filepath="$PROJECT_DIR$/AlignmentBoardModule/AlignmentBoardModule.iml" />
       <module fileurl="file://$PROJECT_DIR$/compute/Compute.iml" filepath="$PROJECT_DIR$/compute/Compute.iml" />
       <module fileurl="file://$PROJECT_DIR$/ConsoleApplication/ConsoleApplication.iml" filepath="$PROJECT_DIR$/ConsoleApplication/ConsoleApplication.iml" />
-      <module fileurl="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/ConsoleApplication/ConsoleModule.iml" filepath="$PROJECT_DIR$/ConsoleApplication/ConsoleModule/ConsoleApplication/ConsoleModule.iml" />
       <module fileurl="file://$PROJECT_DIR$/jacs/Jacs.iml" filepath="$PROJECT_DIR$/jacs/Jacs.iml" />
       <module fileurl="file://$PROJECT_DIR$/model/Model.iml" filepath="$PROJECT_DIR$/model/Model.iml" />
       <module fileurl="file://$PROJECT_DIR$/shared/Shared.iml" filepath="$PROJECT_DIR$/shared/Shared.iml" />
