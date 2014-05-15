@@ -416,16 +416,16 @@
   <component name="ProjectRunConfigurationManager">
     <configuration default="false" name="Console App" type="Application" factoryName="Application">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-      <option name="MAIN_CLASS_NAME" value="org.janelia.it.FlyWorkstation.gui.application.ConsoleApp" />
-      <option name="VM_PARAMETERS" value="-Xms512m -Xmx32000m -XX:+UseParallelGC -Dsun.awt.disableMixing=true " />
+      <option name="MAIN_CLASS_NAME" value="org.netbeans.Main" />
+      <option name="VM_PARAMETERS" value="-Xms512m -Xmx8192m -XX:+UseParallelGC -Dnetbeans.dirs=&quot;./build/cluster:./platform&quot; -Dnetbeans.home=&quot;./build/cluster&quot; -Dsun.awt.disableMixing=true " />
       <option name="PROGRAM_PARAMETERS" value="" />
-      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/ConsoleApplication" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" value="" />
       <option name="ENABLE_SWING_INSPECTOR" value="false" />
       <option name="ENV_VARIABLES" />
       <option name="PASS_PARENT_ENVS" value="true" />
-      <module name="console" />
+      <module name="ConsoleApplication" />
       <envs />
       <RunnerSettings RunnerId="Cover" />
       <RunnerSettings RunnerId="Debug">
@@ -439,7 +439,6 @@
       <ConfigurationWrapper RunnerId="Run" />
       <method>
         <option name="Make" enabled="false" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/buildprocess/build-all.xml" target="build-all" />
       </method>
     </configuration>
     <configuration default="false" name="Dataview App" type="Application" factoryName="Application">
