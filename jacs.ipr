@@ -5,6 +5,9 @@
       <customJdkName value="1.6" />
       <maximumHeapSize value="256" />
       <maximumStackSize value="64" />
+      <properties>
+        <property name="antexec" value="$USER_HOME$/tools/apache-ant-1.9.4/bin/ant" />
+      </properties>
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/jacs/build.xml">
       <additionalClassPath>
@@ -38,7 +41,6 @@
       <maximumHeapSize value="256" />
       <maximumStackSize value="64" />
     </buildFile>
-    <buildFile url="file://$PROJECT_DIR$/console/build.xml" />
   </component>
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="false" />
@@ -123,7 +125,8 @@
       <entry name="*.glsl" />
     </wildcardResourcePatterns>
     <annotationProcessing>
-      <profile default="true" name="Default" enabled="false">
+      <profile default="true" name="Default" enabled="true">
+        <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
       </profile>
       <profile default="false" name="Maven default annotation processors profile" enabled="true">
@@ -135,7 +138,9 @@
       </profile>
     </annotationProcessing>
   </component>
-  <component name="CopyrightManager" default="" />
+  <component name="CopyrightManager" default="">
+    <module2copyright />
+  </component>
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
   <component name="DataSourceManagerImpl" format="xml" hash="0">
     <data-source source="LOCAL" name="Data Source" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
@@ -386,7 +391,10 @@
   </component>
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/AlignmentBoardModule/AlignmentBoardModule.iml" filepath="$PROJECT_DIR$/AlignmentBoardModule/AlignmentBoardModule.iml" />
       <module fileurl="file://$PROJECT_DIR$/compute/Compute.iml" filepath="$PROJECT_DIR$/compute/Compute.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ConsoleApplication/ConsoleApplication.iml" filepath="$PROJECT_DIR$/ConsoleApplication/ConsoleApplication.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/ConsoleApplication/ConsoleModule.iml" filepath="$PROJECT_DIR$/ConsoleApplication/ConsoleModule/ConsoleApplication/ConsoleModule.iml" />
       <module fileurl="file://$PROJECT_DIR$/jacs/Jacs.iml" filepath="$PROJECT_DIR$/jacs/Jacs.iml" />
       <module fileurl="file://$PROJECT_DIR$/model/Model.iml" filepath="$PROJECT_DIR$/model/Model.iml" />
       <module fileurl="file://$PROJECT_DIR$/shared/Shared.iml" filepath="$PROJECT_DIR$/shared/Shared.iml" />
@@ -447,7 +455,7 @@
       <option name="ENABLE_SWING_INSPECTOR" value="false" />
       <option name="ENV_VARIABLES" />
       <option name="PASS_PARENT_ENVS" value="true" />
-      <module name="console" />
+      <module name="ConsoleModule" />
       <envs />
       <RunnerSettings RunnerId="Debug">
         <option name="DEBUG_PORT" value="50545" />
@@ -462,45 +470,18 @@
         <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/buildprocess/build-all.xml" target="build-all" />
       </method>
     </configuration>
-    <configuration default="false" name="ModelModuleFastTestsSuite" type="JUnit" factoryName="JUnit" show_console_on_std_out="true" show_console_on_std_err="true">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-      <module name="Model" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" value="" />
-      <option name="PACKAGE_NAME" value="org.janelia.it.jacs.model" />
-      <option name="MAIN_CLASS_NAME" value="org.janelia.it.jacs.model.ModelModuleFastTestsSuite" />
-      <option name="METHOD_NAME" value="" />
-      <option name="TEST_OBJECT" value="class" />
-      <option name="VM_PARAMETERS" value="-ea" />
-      <option name="PARAMETERS" value="" />
-      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="singleModule" />
-      </option>
-      <envs />
-      <dir value="$PROJECT_DIR$/model/test" />
-      <patterns />
-      <RunnerSettings RunnerId="Run" />
-      <ConfigurationWrapper RunnerId="Run" />
-      <method>
-        <option name="Make" enabled="false" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/model/build.xml" target="compile-tests" />
-      </method>
-    </configuration>
-    <configuration default="false" name="ConsoleModuleFastTestsSuite" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
+    <configuration default="false" name="ComputeModuleFastTestsSuite" type="JUnit" factoryName="JUnit">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
         <pattern>
-          <option name="PATTERN" value="org.janelia.it.FlyWorkstation.*" />
+          <option name="PATTERN" value="org.janelia.it.jacs.compute.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <module name="console" />
+      <module name="Compute" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" value="" />
-      <option name="PACKAGE_NAME" value="org.janelia.it.FlyWorkstation" />
-      <option name="MAIN_CLASS_NAME" value="org.janelia.it.FlyWorkstation.ConsoleModuleFastTestsSuite" />
+      <option name="PACKAGE_NAME" value="org.janelia.it.jacs.compute" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.jacs.compute.ComputeModuleFastTestsSuite" />
       <option name="METHOD_NAME" value="" />
       <option name="TEST_OBJECT" value="class" />
       <option name="VM_PARAMETERS" value="-ea" />
@@ -513,18 +494,11 @@
       </option>
       <envs />
       <patterns />
-      <RunnerSettings RunnerId="Debug">
-        <option name="DEBUG_PORT" value="" />
-        <option name="TRANSPORT" value="0" />
-        <option name="LOCAL" value="true" />
-      </RunnerSettings>
       <RunnerSettings RunnerId="Run" />
-      <ConfigurationWrapper RunnerId="Debug" />
       <ConfigurationWrapper RunnerId="Run" />
       <method>
         <option name="Make" enabled="false" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/model/build.xml" target="compile-tests" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/console/build.xml" target="compile-tests" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/compute/build.xml" target="compile-tests" />
       </method>
     </configuration>
     <configuration default="false" name="ComputeModuleIntegrationTestsSuite" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
@@ -566,18 +540,18 @@
         <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/compute/build.xml" target="compile-tests" />
       </method>
     </configuration>
-    <configuration default="false" name="ComputeModuleFastTestsSuite" type="JUnit" factoryName="JUnit">
+    <configuration default="false" name="ConsoleModuleFastTestsSuite" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
         <pattern>
-          <option name="PATTERN" value="org.janelia.it.jacs.compute.*" />
+          <option name="PATTERN" value="org.janelia.it.FlyWorkstation.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <module name="Compute" />
+      <module name="console" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" value="" />
-      <option name="PACKAGE_NAME" value="org.janelia.it.jacs.compute" />
-      <option name="MAIN_CLASS_NAME" value="org.janelia.it.jacs.compute.ComputeModuleFastTestsSuite" />
+      <option name="PACKAGE_NAME" value="org.janelia.it.FlyWorkstation" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.FlyWorkstation.ConsoleModuleFastTestsSuite" />
       <option name="METHOD_NAME" value="" />
       <option name="TEST_OBJECT" value="class" />
       <option name="VM_PARAMETERS" value="-ea" />
@@ -590,11 +564,45 @@
       </option>
       <envs />
       <patterns />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Debug" />
+      <ConfigurationWrapper RunnerId="Run" />
+      <method>
+        <option name="Make" enabled="false" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/model/build.xml" target="compile-tests" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/console/build.xml" target="compile-tests" />
+      </method>
+    </configuration>
+    <configuration default="false" name="ModelModuleFastTestsSuite" type="JUnit" factoryName="JUnit" show_console_on_std_out="true" show_console_on_std_err="true">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <module name="Model" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="PACKAGE_NAME" value="org.janelia.it.jacs.model" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.jacs.model.ModelModuleFastTestsSuite" />
+      <option name="METHOD_NAME" value="" />
+      <option name="TEST_OBJECT" value="class" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="singleModule" />
+      </option>
+      <envs />
+      <dir value="$PROJECT_DIR$/model/test" />
+      <patterns />
       <RunnerSettings RunnerId="Run" />
       <ConfigurationWrapper RunnerId="Run" />
       <method>
         <option name="Make" enabled="false" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/compute/build.xml" target="compile-tests" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/model/build.xml" target="compile-tests" />
       </method>
     </configuration>
     <configuration default="false" name="Tomcat - jacs" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 7" ALTERNATIVE_JRE_ENABLED="false" ALTERNATIVE_JRE_PATH="">
@@ -802,6 +810,169 @@
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
   <component name="libraryTable">
+    <library name="activation-1.1">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/activation-1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/antlr-2.7.6.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/antlr-2.7.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/apache-solr-solrj-3.5.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/asm.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axiom-api-1.2.11.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axiom-dom-1.2.11.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axiom-impl-1.2.11.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-adb-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-adb-codegen-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-ant-plugin-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-clustering-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-codegen-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-corba-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-fastinfoset-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-java2wsdl-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-jaxbri-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-jaxws-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-jibx-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-json-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-kernel-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-metadata-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-mtompolicy-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-saaj-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-soapmonitor-servlet-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-spring-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-transport-http-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-transport-local-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/axis2-xmlbeans-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/bcel-5.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/bio-formats.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/cglib-2.1.3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-codec-1.3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-codec-1.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-fileupload-1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-httpclient-3.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-io-1.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-logging-1.0.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/commons-logging-1.1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/compute-client.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/compute-drmaa.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/ehcache-core-2.5.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/forms-1.2.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-annotation_1.0_spec-1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-jaxws_2.1_spec-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-jta_1.1_spec-1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-saaj_1.3_spec-1.0.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-stax-api_1.0_spec-1.0.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-ws-metadata_2.0_spec-1.1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/gluegen-rt.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/groovy-all-1.8.6.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/gson-2.2.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/guava-13.0.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/gwt-serializable.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/hibernate-annotations.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/hibernate-entitymanager.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/hibernate3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/httpcore-4.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/ij-1.48c.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jackrabbit-webdav-2.5.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs-grid.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs-model.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs-shared.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jai_codec.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jai_core.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jalopy-1.5rc3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/javassist.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jaxb-api-2.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jaxb-impl-2.1.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jaxen-1.1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jbossall-client.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jdatepicker-1.3.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jettison-1.0-RC2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-continuation-8.1.8.v20121106.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-http-8.1.8.v20121106.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-io-8.1.8.v20121106.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-server-8.1.8.v20121106.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-servlet-8.1.8.v20121106.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jetty-util-8.1.8.v20121106.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jibx-bind-1.2.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jibx-run-1.2.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jktx-1.6.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jna.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jogl-all.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/JTattoo-1.6.10.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/juli-6.0.16.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jython.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/loci-common.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/loci_plugins.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/log4j-1.2.15.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/logback-access-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/logback-classic-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/logback-core-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/lz4-1.1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/mac_widgets-0.9.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/MagicApplet.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/mail-1.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/metakit.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/mex-1.5.5-impl.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/miglayout-4.0-swing.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/neethi-2.0.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/ome-io.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/ome-xml.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/ome_plugins.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/org-netbeans-swing-outline.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/owlapi-bin.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/pal-optimization.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/perf4j-0.9.16-logbackonly.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/platform.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/regexp-1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/saaj-impl-1.3.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/scifio.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/servlet-api-3.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/Simple_Neurite_Tracer-2.0.2-SNAPSHOT.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/slf4j-api-1.7.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/snappy-java-1.0.5-M3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/swingx-all-1.6.3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/synthetica.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaAluOxide.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlackEye.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlackMoon.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlackStar.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlueIce.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlueLight.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlueMoon.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaBlueSteel.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaClassy.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaGreenDream.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaMauveMetallic.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaOrangeMetallic.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaSilverMoon.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaSimple2D.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaSkyMetallic.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/syntheticaWhiteVision.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/tribes-6.0.16.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/vecmath.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/VIB-lib-2.0.0-SNAPSHOT.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/vlcj-1.3.0-b1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/woden-api-1.0M8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/woden-impl-dom-1.0M8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/workstation.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/wsdl4j-1.6.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/wstx-asl-3.2.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/wstx-asl-3.2.9.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/xalan-2.7.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/xercesImpl-2.8.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/xml-resolver-1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/xmlbeans-2.3.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/XmlSchema-1.4.3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/xuggle-xuggler-5.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jaxb-xjc-2.1.7.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs-grid.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs-model.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs-shared.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/lz4-1.1.1-sources.jar!/" />
+      </SOURCES>
+    </library>
     <library name="Apache Commons">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-codec-1.3.jar!/" />
@@ -888,6 +1059,91 @@
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-xjc-2.1.7.jar!/1.0" />
         <root url="jar://$USER_HOME$/.ideaLibSources/commons-httpclient-3.1-sources.jar!/" />
       </SOURCES>
+    </library>
+    <library name="core">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/core/core.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/core/org-openide-filesystems.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/lib/boot.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/lib/org-openide-modules.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/lib/org-openide-util-lookup.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/lib/org-openide-util.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/ext/felix-4.0.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/ext/jhall-2.0_05.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/ext/jna-3.4.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/ext/junit-4.10.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/ext/org.eclipse.osgi_3.8.0.v20120529-1548.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/ext/osgi.cmpn-4.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/ext/platform-3.4.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/ext/swing-layout-1.0.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/ext/testng-6.8.1-dist.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/ext/updater.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-api-annotations-common.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-api-progress.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-api-search.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-api-visual.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core-execution.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core-io-ui.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core-multitabs.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core-multiview.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core-nativeaccess.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core-netigso.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core-network.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core-osgi.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core-output2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core-ui.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core-windows.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-core.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-lib-uihandler.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-libs-jna.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-libs-jsr223.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-applemenu.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-autoupdate-cli.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-autoupdate-services.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-autoupdate-ui.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-editor-mimelookup-impl.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-editor-mimelookup.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-favorites.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-javahelp.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-keyring-fallback.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-keyring-impl.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-keyring.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-masterfs-linux.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-masterfs-macosx.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-masterfs-solaris.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-masterfs-windows.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-masterfs.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-netbinox.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-options-api.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-options-keymap.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-print.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-progress-ui.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-queries.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-sampler.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-sendopts.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-settings.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-spi-actions.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-modules-uihandler.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-spi-quicksearch.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-swing-outline.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-swing-plaf.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-netbeans-swing-tabcontrol.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-actions.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-awt.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-compat.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-dialogs.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-execution.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-explorer.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-io.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-loaders.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-nodes.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-options.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-text.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-util-enumerations.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/platform/modules/org-openide-windows.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
     </library>
     <library name="GoogleAnalytics">
       <CLASSES>
