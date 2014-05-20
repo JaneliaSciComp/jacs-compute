@@ -41,6 +41,11 @@
       <maximumHeapSize value="256" />
       <maximumStackSize value="64" />
     </buildFile>
+    <buildFile url="file://$PROJECT_DIR$/ConsoleApplication/build-runner.xml">
+      <properties>
+        <property name="antexec" value="$USER_HOME$/tools/apache-ant-1.9.4/bin/ant" />
+      </properties>
+    </buildFile>
   </component>
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="false" />
@@ -180,7 +185,6 @@
   </component>
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
     <file url="file://$PROJECT_DIR$/compute/test/org/janelia/it/jacs/compute/access/SageDAOTest.java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/console" charset="UTF-8" />
   </component>
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
@@ -391,10 +395,8 @@
   </component>
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/AlignmentBoardModule/AlignmentBoardModule.iml" filepath="$PROJECT_DIR$/AlignmentBoardModule/AlignmentBoardModule.iml" />
       <module fileurl="file://$PROJECT_DIR$/compute/Compute.iml" filepath="$PROJECT_DIR$/compute/Compute.iml" />
       <module fileurl="file://$PROJECT_DIR$/ConsoleApplication/ConsoleApplication.iml" filepath="$PROJECT_DIR$/ConsoleApplication/ConsoleApplication.iml" />
-      <module fileurl="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/ConsoleApplication/ConsoleModule.iml" filepath="$PROJECT_DIR$/ConsoleApplication/ConsoleModule/ConsoleApplication/ConsoleModule.iml" />
       <module fileurl="file://$PROJECT_DIR$/jacs/Jacs.iml" filepath="$PROJECT_DIR$/jacs/Jacs.iml" />
       <module fileurl="file://$PROJECT_DIR$/model/Model.iml" filepath="$PROJECT_DIR$/model/Model.iml" />
       <module fileurl="file://$PROJECT_DIR$/shared/Shared.iml" filepath="$PROJECT_DIR$/shared/Shared.iml" />
@@ -413,16 +415,16 @@
   <component name="ProjectRunConfigurationManager">
     <configuration default="false" name="Console App" type="Application" factoryName="Application">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-      <option name="MAIN_CLASS_NAME" value="org.janelia.it.FlyWorkstation.gui.application.ConsoleApp" />
-      <option name="VM_PARAMETERS" value="-Xms512m -Xmx32000m -XX:+UseParallelGC -Dsun.awt.disableMixing=true " />
+      <option name="MAIN_CLASS_NAME" value="org.netbeans.Main" />
+      <option name="VM_PARAMETERS" value="-Xms512m -Xmx8192m -XX:+UseParallelGC -Dnetbeans.dirs=&quot;./build/cluster/modules:./build/cluster:./platform&quot; -Dnetbeans.userdir=&quot;./tempuserdir -Dnetbeans.home=&quot;./build/cluster&quot; -Dsun.awt.disableMixing=true " />
       <option name="PROGRAM_PARAMETERS" value="" />
-      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/ConsoleApplication" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" value="" />
       <option name="ENABLE_SWING_INSPECTOR" value="false" />
       <option name="ENV_VARIABLES" />
       <option name="PASS_PARENT_ENVS" value="true" />
-      <module name="console" />
+      <module name="ConsoleApplication" />
       <envs />
       <RunnerSettings RunnerId="Cover" />
       <RunnerSettings RunnerId="Debug">
@@ -455,7 +457,7 @@
       <option name="ENABLE_SWING_INSPECTOR" value="false" />
       <option name="ENV_VARIABLES" />
       <option name="PASS_PARENT_ENVS" value="true" />
-      <module name="ConsoleModule" />
+      <module name="ConsoleApplication" />
       <envs />
       <RunnerSettings RunnerId="Debug">
         <option name="DEBUG_PORT" value="50545" />
@@ -810,7 +812,94 @@
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
   <component name="libraryTable">
-    <library name="activation-1.1">
+    <library name="Apache Commons">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-codec-1.3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-collections-2.1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-fileupload-1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-httpclient-3.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-io-2.0.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-logging-1.1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-net-2.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-vfs-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/log4j-1.2.15.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Axis2">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/activation-1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/antlr-2.7.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axiom-api-1.2.11.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axiom-dom-1.2.11.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axiom-impl-1.2.11.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-adb-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-adb-codegen-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-ant-plugin-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-clustering-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-codegen-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-corba-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-fastinfoset-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-java2wsdl-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-jaxbri-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-jaxws-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-jibx-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-json-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-kernel-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-metadata-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-mtompolicy-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-saaj-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-soapmonitor-servlet-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-spring-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-transport-http-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-transport-local-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-xmlbeans-1.5.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/bcel-5.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/commons-codec-1.3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/commons-fileupload-1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/commons-httpclient-3.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/commons-io-1.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/commons-logging-1.1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-annotation_1.0_spec-1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-jaxws_2.1_spec-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-jta_1.1_spec-1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-saaj_1.3_spec-1.0.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-stax-api_1.0_spec-1.0.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-ws-metadata_2.0_spec-1.1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/httpcore-4.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jalopy-1.5rc3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-api-2.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-impl-2.1.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-xjc-2.1.7.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxen-1.1.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jettison-1.0-RC2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jibx-bind-1.2.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jibx-run-1.2.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/juli-6.0.16.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/log4j-1.2.15.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/mail-1.4.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/mex-1.5.5-impl.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/neethi-2.0.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/regexp-1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/tribes-6.0.16.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/woden-api-1.0M8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/woden-impl-dom-1.0M8.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/wsdl4j-1.6.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/wstx-asl-3.2.9.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/xalan-2.7.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/xercesImpl-2.8.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/xml-resolver-1.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/xmlbeans-2.3.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/XmlSchema-1.4.3.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-xjc-2.1.7.jar!/1.0" />
+        <root url="jar://$USER_HOME$/.ideaLibSources/commons-httpclient-3.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Common External Libraries">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/activation-1.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/antlr-2.7.6.jar!/" />
@@ -971,93 +1060,6 @@
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs-model.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs-shared.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/lz4-1.1.1-sources.jar!/" />
-      </SOURCES>
-    </library>
-    <library name="Apache Commons">
-      <CLASSES>
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-codec-1.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-collections-2.1.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-fileupload-1.2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-httpclient-3.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-io-2.0.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-logging-1.1.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-net-2.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-vfs-1.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/log4j-1.2.15.jar!/" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-    </library>
-    <library name="Axis2">
-      <CLASSES>
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/activation-1.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/antlr-2.7.7.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axiom-api-1.2.11.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axiom-dom-1.2.11.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axiom-impl-1.2.11.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-adb-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-adb-codegen-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-ant-plugin-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-clustering-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-codegen-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-corba-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-fastinfoset-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-java2wsdl-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-jaxbri-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-jaxws-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-jibx-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-json-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-kernel-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-metadata-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-mtompolicy-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-saaj-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-soapmonitor-servlet-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-spring-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-transport-http-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-transport-local-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/axis2-xmlbeans-1.5.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/bcel-5.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/commons-codec-1.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/commons-fileupload-1.2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/commons-httpclient-3.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/commons-io-1.4.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/commons-logging-1.1.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-annotation_1.0_spec-1.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-jaxws_2.1_spec-1.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-jta_1.1_spec-1.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-saaj_1.3_spec-1.0.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-stax-api_1.0_spec-1.0.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/geronimo-ws-metadata_2.0_spec-1.1.2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/httpcore-4.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jalopy-1.5rc3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-api-2.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-impl-2.1.7.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-xjc-2.1.7.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxen-1.1.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jettison-1.0-RC2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jibx-bind-1.2.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jibx-run-1.2.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/juli-6.0.16.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/log4j-1.2.15.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/mail-1.4.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/mex-1.5.5-impl.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/neethi-2.0.5.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/regexp-1.2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/tribes-6.0.16.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/woden-api-1.0M8.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/woden-impl-dom-1.0M8.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/wsdl4j-1.6.2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/wstx-asl-3.2.9.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/xalan-2.7.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/xercesImpl-2.8.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/xml-resolver-1.2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/xmlbeans-2.3.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/XmlSchema-1.4.3.jar!/" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES>
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-xjc-2.1.7.jar!/1.0" />
-        <root url="jar://$USER_HOME$/.ideaLibSources/commons-httpclient-3.1-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="core">
