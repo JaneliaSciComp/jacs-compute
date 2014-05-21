@@ -416,7 +416,7 @@
     <configuration default="false" name="Console App" type="Application" factoryName="Application">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
       <option name="MAIN_CLASS_NAME" value="org.netbeans.Main" />
-      <option name="VM_PARAMETERS" value="-Xms512m -Xmx8192m -XX:+UseParallelGC -Dnetbeans.dirs=&quot;./build/cluster/modules:./build/cluster:./platform&quot; -Dnetbeans.userdir=&quot;./tempuserdir -Dnetbeans.home=&quot;./build/cluster&quot; -Dsun.awt.disableMixing=true " />
+      <option name="VM_PARAMETERS" value="-Xms512m -Xmx8192m -XX:+UseParallelGC -Dnetbeans.dirs=&quot;./build/cluster&quot;:&quot;./platform&quot; -Dnetbeans.home=&quot;./platform&quot; -Dsun.awt.disableMixing=true" />
       <option name="PROGRAM_PARAMETERS" value="" />
       <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/ConsoleApplication" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
@@ -438,7 +438,6 @@
       <ConfigurationWrapper RunnerId="Run" />
       <method>
         <option name="Make" enabled="false" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/buildprocess/build-all.xml" target="build-all" />
       </method>
     </configuration>
     <configuration default="false" name="Dataview App" type="Application" factoryName="Application">
