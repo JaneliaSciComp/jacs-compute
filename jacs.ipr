@@ -46,6 +46,7 @@
         <property name="antexec" value="$USER_HOME$/tools/apache-ant-1.9.4/bin/ant" />
       </properties>
     </buildFile>
+    <buildFile url="file://$PROJECT_DIR$/ConsoleApplication/harness/run.xml" />
   </component>
   <component name="BuildJarProjectSettings">
     <option name="BUILD_JARS_ON_MAKE" value="false" />
@@ -438,6 +439,7 @@
       <ConfigurationWrapper RunnerId="Run" />
       <method>
         <option name="Make" enabled="false" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/ConsoleApplication/build-runner.xml" target="prepare-for-run" />
       </method>
     </configuration>
     <configuration default="false" name="Dataview App" type="Application" factoryName="Application">
