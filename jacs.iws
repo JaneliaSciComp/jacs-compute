@@ -9,8 +9,6 @@
       <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ConsoleApplication/generated/org/janelia/it/workstation/gui/split_picking/Bundle.java" />
       <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ConsoleApplication/generated/org/janelia/it/workstation/gui/top_component/Bundle.java" />
       <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/ConsoleApplication/workstation.log" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/ConsoleApplication/ConsoleModule/src/org/janelia/it/workstation/run_config/EndPoint.java" afterPath="$PROJECT_DIR$/ConsoleApplication/ConsoleModule/test/unit/src/org/janelia/it/workstation/run_config/EndPoint.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/jacs.ipr" afterPath="$PROJECT_DIR$/jacs.ipr" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/jacs.iws" afterPath="$PROJECT_DIR$/jacs.iws" />
     </list>
     <ignored path="jacs.iws" />
@@ -667,7 +665,7 @@
       <workItem from="1400855204699" duration="387000" />
       <workItem from="1400855614213" duration="2837000" />
       <workItem from="1400858479693" duration="3737000" />
-      <workItem from="1400865666710" duration="887000" />
+      <workItem from="1400865666710" duration="975000" />
     </task>
     <task id="LOCAL-00001" summary="For FW-2471, more of the GUI is present now, if the prepare-for-run ant target is invoked prior to run.">
       <created>1400769143162</created>
@@ -681,11 +679,15 @@
       <created>1400785527757</created>
       <updated>1400785527757</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Moved EndPoint to tests area.">
+      <created>1400866646193</created>
+      <updated>1400866646193</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="33432000" />
+    <option name="totallyTimeSpent" value="33520000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="22" width="1920" height="1112" extended-state="6" />
@@ -773,7 +775,8 @@
     </option>
     <MESSAGE value="For FW-2471, more of the GUI is present now, if the prepare-for-run ant target is invoked prior to run." />
     <MESSAGE value="Added runner capabilities." />
-    <option name="LAST_COMMIT_MESSAGE" value="Added runner capabilities." />
+    <MESSAGE value="Moved EndPoint to tests area." />
+    <option name="LAST_COMMIT_MESSAGE" value="Moved EndPoint to tests area." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
