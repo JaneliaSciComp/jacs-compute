@@ -2,12 +2,8 @@
 <project version="4">
   <component name="AntConfiguration">
     <buildFile url="file://$PROJECT_DIR$/buildprocess/build-all.xml">
-      <customJdkName value="1.6" />
       <maximumHeapSize value="256" />
       <maximumStackSize value="64" />
-      <properties>
-        <property name="antexec" value="$USER_HOME$/tools/apache-ant-1.9.4/bin/ant" />
-      </properties>
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/jacs/build.xml">
       <additionalClassPath>
@@ -43,9 +39,6 @@
     </buildFile>
     <buildFile url="file://$PROJECT_DIR$/ConsoleApplication/build-runner.xml">
       <maximumHeapSize value="512" />
-      <properties>
-        <property name="antexec" value="$USER_HOME$/tools/apache-ant-1.9.4/bin/ant" />
-      </properties>
     </buildFile>
   </component>
   <component name="BuildJarProjectSettings">
@@ -144,7 +137,9 @@
       </profile>
     </annotationProcessing>
   </component>
-  <component name="CopyrightManager" default="" />
+  <component name="CopyrightManager" default="">
+    <module2copyright />
+  </component>
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
   <component name="DataSourceManagerImpl" format="xml" hash="0">
     <data-source source="LOCAL" name="Data Source" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
@@ -408,7 +403,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/buildprocess/intellij-make" />
   </component>
   <component name="ProjectRunConfigurationManager">
