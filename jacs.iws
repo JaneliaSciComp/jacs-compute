@@ -1,18 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0ebdda2e-3216-446a-b47e-cbbddf875b51" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs-grid.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs-model.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs-shared.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jacs.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/workstation.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ConsoleApplication/SharedModelComputeWrapper/release/modules/ext/jacs-model.jar" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ConsoleApplication/ConsoleApplication.iml" afterPath="$PROJECT_DIR$/ConsoleApplication/ConsoleApplication.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/jacs.ipr" afterPath="$PROJECT_DIR$/jacs.ipr" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/jacs.iws" afterPath="$PROJECT_DIR$/jacs.iws" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ConsoleApplication/SharedModelComputeWrapper/nbproject/project.properties" afterPath="$PROJECT_DIR$/ConsoleApplication/SharedModelComputeWrapper/nbproject/project.properties" />
-    </list>
+    <list default="true" id="0ebdda2e-3216-446a-b47e-cbbddf875b51" name="Default" comment="" />
     <ignored path="jacs.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -356,7 +345,7 @@
       <recent name="org.janelia.it.FlyWorkstation" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.Netbeans RCP App">
+  <component name="RunManager" selected="Remote.NetBeans RCP Launch">
     <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin" singleton="true">
       <module name="" />
       <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
@@ -691,7 +680,7 @@
       <workItem from="1400854868829" duration="265000" />
       <workItem from="1400855204699" duration="387000" />
       <workItem from="1400855614213" duration="2837000" />
-      <workItem from="1400858479693" duration="3467000" />
+      <workItem from="1400858479693" duration="3737000" />
     </task>
     <task id="LOCAL-00001" summary="For FW-2471, more of the GUI is present now, if the prepare-for-run ant target is invoked prior to run.">
       <created>1400769143162</created>
@@ -709,7 +698,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="32275000" />
+    <option name="totallyTimeSpent" value="32545000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="22" width="1920" height="1112" extended-state="6" />
