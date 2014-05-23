@@ -443,7 +443,7 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="MAIN_CLASS_NAME" value="org.janelia.it.FlyWorkstation.gui.dataview.DataviewApp" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.workstation.gui.dataview.DataviewApp" />
       <option name="VM_PARAMETERS" value="" />
       <option name="PROGRAM_PARAMETERS" value="" />
       <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
@@ -544,7 +544,7 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <module name="console" />
+      <module name="" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" value="" />
       <option name="PACKAGE_NAME" value="org.janelia.it.FlyWorkstation" />
