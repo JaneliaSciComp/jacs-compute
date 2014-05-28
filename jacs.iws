@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0ebdda2e-3216-446a-b47e-cbbddf875b51" name="Default" comment="">
+<<<<<<< Updated upstream
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
+=======
+>>>>>>> Stashed changes
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/jacs.iws" afterPath="$PROJECT_DIR$/jacs.iws" />
     </list>
     <ignored path="jacs.iws" />
@@ -70,7 +73,11 @@
       <file leaf-file-name="build-runner.xml" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ConsoleApplication/build-runner.xml">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
             <state line="22" column="87" selection-start="1061" selection-end="1061" vertical-scroll-proportion="-11.769231" vertical-offset="24" max-vertical-offset="2265">
+=======
+            <state line="51" column="87" selection-start="2435" selection-end="2435" vertical-scroll-proportion="0.0" vertical-offset="765" max-vertical-offset="2265">
+>>>>>>> Stashed changes
               <folding />
             </state>
           </provider>
@@ -79,6 +86,7 @@
       <file leaf-file-name="ComputeDAO.java" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/compute/src/org/janelia/it/jacs/compute/access/ComputeDAO.java">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
             <state line="818" column="77" selection-start="36204" selection-end="36204" vertical-scroll-proportion="4.0803947" vertical-offset="8792" max-vertical-offset="14655">
               <folding>
                 <marker date="1400690535000" expanded="true" signature="14737:14978" placeholder="select node_..node..." />
@@ -92,10 +100,44 @@
                 <marker date="1400690535000" expanded="true" signature="39625:39677" placeholder="select sum(c..accounting..." />
                 <marker date="1400690535000" expanded="true" signature="40264:40401" placeholder="select e.def..sequence_entity..." />
               </folding>
+=======
+            <state line="818" column="77" selection-start="36204" selection-end="36204" vertical-scroll-proportion="0.0" vertical-offset="12270" max-vertical-offset="15240">
+              <folding />
+>>>>>>> Stashed changes
             </state>
           </provider>
         </entry>
       </file>
+<<<<<<< Updated upstream
+=======
+      <file leaf-file-name="SubmitDrmaaJobService.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/compute/src/org/janelia/it/jacs/compute/service/common/grid/submit/sge/SubmitDrmaaJobService.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="49" column="63" selection-start="2096" selection-end="2096" vertical-scroll-proportion="0.0" vertical-offset="735" max-vertical-offset="8295">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="SubmitJobService.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/compute/src/org/janelia/it/jacs/compute/service/common/grid/submit/SubmitJobService.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="12" column="17" selection-start="308" selection-end="308" vertical-scroll-proportion="0.0" vertical-offset="180" max-vertical-offset="405">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="project.properties" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/nbproject/project.properties">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="108" column="0" selection-start="8830" selection-end="8830" vertical-scroll-proportion="0.0" vertical-offset="1620" max-vertical-offset="2505">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+>>>>>>> Stashed changes
     </leaf>
   </component>
   <component name="FindManager">
@@ -157,6 +199,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -177,7 +220,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="PackagesPane" />
       <pane id="Scope" />
     </panes>
   </component>
@@ -543,7 +585,12 @@
       <workItem from="1400855204699" duration="387000" />
       <workItem from="1400855614213" duration="2837000" />
       <workItem from="1400858479693" duration="3737000" />
+<<<<<<< Updated upstream
       <workItem from="1400865666710" duration="25850000" />
+=======
+      <workItem from="1400865666710" duration="23335000" />
+      <workItem from="1401283683732" duration="294000" />
+>>>>>>> Stashed changes
     </task>
     <task id="LOCAL-00001" summary="For FW-2471, more of the GUI is present now, if the prepare-for-run ant target is invoked prior to run.">
       <created>1400769143162</created>
@@ -585,7 +632,11 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
+<<<<<<< Updated upstream
     <option name="totallyTimeSpent" value="58395000" />
+=======
+    <option name="totallyTimeSpent" value="56174000" />
+>>>>>>> Stashed changes
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="22" width="1920" height="1112" extended-state="6" />
@@ -593,17 +644,25 @@
     <layout>
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="JavaEE:App" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="true" content_ui="tabs" />
+      <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Persistence" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.22364217" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="JavaEE:App" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="true" content_ui="tabs" />
+      <window_info id="Bean Validation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="13" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.22364217" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Java Enterprise" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="15" side_tool="false" content_ui="tabs" />
       <window_info id="Spring" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.43259558" sideWeight="0.5" order="10" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3993964" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="true" content_ui="tabs" />
       <window_info id="IDEtalk Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.43259558" sideWeight="0.5" order="10" side_tool="true" content_ui="tabs" />
       <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32997987" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4317269" sideWeight="0.5" order="14" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+<<<<<<< Updated upstream
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.22417465" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24547283" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -615,26 +674,32 @@
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3993964" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="true" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.43259558" sideWeight="0.5" order="14" side_tool="false" content_ui="tabs" />
+=======
+>>>>>>> Stashed changes
       <window_info id="Web" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="5" side_tool="true" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.22417465" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24397591" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32997987" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Persistence" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="JavaEE:App" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="true" content_ui="tabs" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Persistence" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.22364217" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Java Enterprise" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="15" side_tool="false" content_ui="tabs" />
       <window_info id="Spring" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="IDEtalk Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="true" content_ui="tabs" />
+      <window_info id="IDEtalk Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32997987" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -654,8 +719,8 @@
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.43259558" sideWeight="0.5" order="14" side_tool="false" content_ui="tabs" />
       <window_info id="Web" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="5" side_tool="true" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
     </layout-to-restore>
   </component>
@@ -900,11 +965,23 @@
     </buildFile>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/src/org/janelia/it/workstation/run_config/EndPoint.java">
+    <entry file="file://$PROJECT_DIR$/compute/src/org/janelia/it/jacs/compute/service/common/grid/submit/SubmitJobService.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="9" column="13" selection-start="343" selection-end="343" vertical-scroll-proportion="0.0" vertical-offset="135" max-vertical-offset="300">
+        <state line="12" column="17" selection-start="308" selection-end="308" vertical-scroll-proportion="0.0" vertical-offset="180" max-vertical-offset="405">
           <folding />
         </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/nbproject/project.properties">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="105" column="0" selection-start="8577" selection-end="8577" vertical-scroll-proportion="0.0" vertical-offset="1575" max-vertical-offset="2460">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/src/org/janelia/it/workstation/run_config/EndPoint.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="9" column="13" selection-start="343" selection-end="343" vertical-scroll-proportion="0.0" vertical-offset="135" max-vertical-offset="300" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/harness/jdk.xml">
@@ -930,9 +1007,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/src/org/janelia/it/workstation/run_config/EndPoint.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="9" column="13" selection-start="343" selection-end="343" vertical-scroll-proportion="0.0" vertical-offset="135" max-vertical-offset="300">
-          <folding />
-        </state>
+        <state line="9" column="13" selection-start="343" selection-end="343" vertical-scroll-proportion="0.0" vertical-offset="135" max-vertical-offset="300" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/harness/jdk.xml">
@@ -958,9 +1033,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/src/org/janelia/it/workstation/run_config/EndPoint.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="9" column="13" selection-start="343" selection-end="343" vertical-scroll-proportion="0.0" vertical-offset="135" max-vertical-offset="300">
-          <folding />
-        </state>
+        <state line="9" column="13" selection-start="343" selection-end="343" vertical-scroll-proportion="0.0" vertical-offset="135" max-vertical-offset="300" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/harness/jdk.xml">
@@ -1107,37 +1180,22 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/model/src/org/janelia/it/jacs/model/domain/PipelineResult.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="5" column="16" selection-start="106" selection-end="106" vertical-scroll-proportion="0.07763975" vertical-offset="0" max-vertical-offset="966">
-          <folding />
-        </state>
+        <state line="5" column="16" selection-start="106" selection-end="106" vertical-scroll-proportion="0.07763975" vertical-offset="0" max-vertical-offset="966" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/src/org/janelia/it/workstation/gui/framework/outline/EntityContextMenu.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="715" column="48" selection-start="33771" selection-end="33771" vertical-scroll-proportion="0.0" vertical-offset="9915" max-vertical-offset="29040">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ConsoleApplication/build/cluster/update_tracking/org-janelia-it-workstation.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="48" selection-start="328" selection-end="328" vertical-scroll-proportion="0.07317073" vertical-offset="0" max-vertical-offset="2610">
-          <folding />
-        </state>
+        <state line="715" column="48" selection-start="33771" selection-end="33771" vertical-scroll-proportion="0.0" vertical-offset="9915" max-vertical-offset="29040" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/src/org/janelia/it/workstation/gui/framework/navigation_tools/AutoNavigator.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="234" column="18" selection-start="11404" selection-end="11404" vertical-scroll-proportion="0.3328" vertical-offset="3242" max-vertical-offset="3900">
-          <folding />
-        </state>
+        <state line="234" column="18" selection-start="11404" selection-end="11404" vertical-scroll-proportion="0.3328" vertical-offset="3242" max-vertical-offset="3900" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/src/org/janelia/it/workstation/gui/framework/session_mgr/SessionMgr.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="19" column="57" selection-start="1214" selection-end="1214" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="13785">
-          <folding />
-        </state>
+        <state line="19" column="57" selection-start="1214" selection-end="1214" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="13785" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/nbproject/project.xml">
@@ -1147,55 +1205,49 @@
         </state>
       </provider>
     </entry>
+<<<<<<< Updated upstream
+=======
+    <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/nbproject/project.properties">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="108" column="0" selection-start="8830" selection-end="8830" vertical-scroll-proportion="0.0" vertical-offset="1620" max-vertical-offset="2505">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+>>>>>>> Stashed changes
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/src/org/janelia/it/workstation/gui/framework/console/nb_action/CallDeveloperDelegate.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="11" column="57" selection-start="400" selection-end="400" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="420">
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
+        <state line="11" column="57" selection-start="400" selection-end="400" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="420" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/compute/src/org/janelia/it/jacs/compute/access/mongodb/MongoDbImport.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="37" column="40" selection-start="1440" selection-end="1440" vertical-scroll-proportion="0.3322884" vertical-offset="343" max-vertical-offset="20085">
-          <folding />
-        </state>
+        <state line="37" column="40" selection-start="1440" selection-end="1440" vertical-scroll-proportion="0.3322884" vertical-offset="343" max-vertical-offset="20085" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/compute/src/org/janelia/it/jacs/compute/service/barcodeDesign/BarcodeDesignSubmitJobService.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="22" column="60" selection-start="825" selection-end="825" vertical-scroll-proportion="0.2682927" vertical-offset="0" max-vertical-offset="1470">
-          <folding />
-        </state>
+        <state line="22" column="60" selection-start="825" selection-end="825" vertical-scroll-proportion="0.2682927" vertical-offset="0" max-vertical-offset="1470" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/compute/src/org/janelia/it/jacs/compute/service/colorSeparator/ColorSeparatorSubmitJobService.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="82" column="52" selection-start="3434" selection-end="3434" vertical-scroll-proportion="0.0" vertical-offset="705" max-vertical-offset="1320">
-          <folding />
-        </state>
+        <state line="82" column="52" selection-start="3434" selection-end="3434" vertical-scroll-proportion="0.0" vertical-offset="705" max-vertical-offset="1320" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/model/src/org/janelia/it/jacs/model/common/SystemConfigurationProperties.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="33" column="13" selection-start="1433" selection-end="1433" vertical-scroll-proportion="0.0" vertical-offset="200" max-vertical-offset="6315">
-          <folding />
-        </state>
+        <state line="33" column="13" selection-start="1433" selection-end="1433" vertical-scroll-proportion="0.0" vertical-offset="200" max-vertical-offset="6315" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/shared/conf/jacs.properties">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="128" column="29" selection-start="5445" selection-end="5445" vertical-scroll-proportion="0.12" vertical-offset="1860" max-vertical-offset="12825">
-          <folding />
-        </state>
+        <state line="128" column="29" selection-start="5445" selection-end="5445" vertical-scroll-proportion="0.12" vertical-offset="1860" max-vertical-offset="12825" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/SharedModelComputeWrapper/src/jacs.properties">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="19" column="99" selection-start="895" selection-end="895" vertical-scroll-proportion="0.36380598" vertical-offset="90" max-vertical-offset="12825">
-          <folding />
-        </state>
+        <state line="19" column="99" selection-start="895" selection-end="895" vertical-scroll-proportion="0.36380598" vertical-offset="90" max-vertical-offset="12825" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/src/org/janelia/it/workstation/run_config/EndPoint.java">
@@ -1235,6 +1287,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/compute/src/org/janelia/it/jacs/compute/access/ComputeDAO.java">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
         <state line="818" column="77" selection-start="36204" selection-end="36204" vertical-scroll-proportion="4.0803947" vertical-offset="8792" max-vertical-offset="14655">
           <folding>
             <marker date="1400690535000" expanded="true" signature="14737:14978" placeholder="select node_..node..." />
@@ -1251,6 +1304,25 @@
         </state>
       </provider>
     </entry>
+=======
+        <state line="818" column="77" selection-start="36204" selection-end="36204" vertical-scroll-proportion="0.0" vertical-offset="10502" max-vertical-offset="14655">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ConsoleApplication/ConsoleModule/src/org/janelia/it/workstation/run_config/EndPoint.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="10" column="31" selection-start="385" selection-end="385" vertical-scroll-proportion="0.23510972" vertical-offset="0" max-vertical-offset="638" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ConsoleApplication/build-runner.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="51" column="87" selection-start="2435" selection-end="2435" vertical-scroll-proportion="0.0" vertical-offset="765" max-vertical-offset="2265">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+>>>>>>> Stashed changes
   </component>
   <component name="masterDetails">
     <states>
