@@ -137,9 +137,7 @@
       </profile>
     </annotationProcessing>
   </component>
-  <component name="CopyrightManager" default="">
-    <module2copyright />
-  </component>
+  <component name="CopyrightManager" default="" />
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
   <component name="DataSourceManagerImpl" format="xml" hash="0">
     <data-source source="LOCAL" name="Data Source" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
@@ -207,6 +205,7 @@
           <option name="processLiterals" value="true" />
           <option name="processComments" value="true" />
         </inspection_tool>
+        <inspection_tool class="StringBufferReplaceableByString" enabled="false" level="WARNING" enabled_by_default="false" />
         <inspection_tool class="UnnecessaryFullyQualifiedName" enabled="true" level="WARNING" enabled_by_default="true">
           <option name="m_ignoreJavadoc" value="false" />
         </inspection_tool>
@@ -443,18 +442,45 @@
         <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/ConsoleApplication/build-runner.xml" target="run" />
       </method>
     </configuration>
-    <configuration default="false" name="ComputeModuleFastTestsSuite" type="JUnit" factoryName="JUnit">
+    <configuration default="false" name="ModelModuleFastTestsSuite" type="JUnit" factoryName="JUnit" show_console_on_std_out="true" show_console_on_std_err="true">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <module name="Model" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="PACKAGE_NAME" value="org.janelia.it.jacs.model" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.jacs.model.ModelModuleFastTestsSuite" />
+      <option name="METHOD_NAME" value="" />
+      <option name="TEST_OBJECT" value="class" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="singleModule" />
+      </option>
+      <envs />
+      <dir value="$PROJECT_DIR$/model/test" />
+      <patterns />
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Run" />
+      <method>
+        <option name="Make" enabled="false" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/model/build.xml" target="compile-tests" />
+      </method>
+    </configuration>
+    <configuration default="false" name="ConsoleModuleFastTestsSuite" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
         <pattern>
-          <option name="PATTERN" value="org.janelia.it.jacs.compute.*" />
+          <option name="PATTERN" value="org.janelia.it.FlyWorkstation.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <module name="Compute" />
+      <module name="" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" value="" />
-      <option name="PACKAGE_NAME" value="org.janelia.it.jacs.compute" />
-      <option name="MAIN_CLASS_NAME" value="org.janelia.it.jacs.compute.ComputeModuleFastTestsSuite" />
+      <option name="PACKAGE_NAME" value="org.janelia.it.FlyWorkstation" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.FlyWorkstation.ConsoleModuleFastTestsSuite" />
       <option name="METHOD_NAME" value="" />
       <option name="TEST_OBJECT" value="class" />
       <option name="VM_PARAMETERS" value="-ea" />
@@ -467,11 +493,18 @@
       </option>
       <envs />
       <patterns />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
       <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Debug" />
       <ConfigurationWrapper RunnerId="Run" />
       <method>
         <option name="Make" enabled="false" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/compute/build.xml" target="compile-tests" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/model/build.xml" target="compile-tests" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/console/build.xml" target="compile-tests" />
       </method>
     </configuration>
     <configuration default="false" name="ComputeModuleIntegrationTestsSuite" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
@@ -513,18 +546,18 @@
         <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/compute/build.xml" target="compile-tests" />
       </method>
     </configuration>
-    <configuration default="false" name="ConsoleModuleFastTestsSuite" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
+    <configuration default="false" name="ComputeModuleFastTestsSuite" type="JUnit" factoryName="JUnit">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
         <pattern>
-          <option name="PATTERN" value="org.janelia.it.FlyWorkstation.*" />
+          <option name="PATTERN" value="org.janelia.it.jacs.compute.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <module name="" />
+      <module name="Compute" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" value="" />
-      <option name="PACKAGE_NAME" value="org.janelia.it.FlyWorkstation" />
-      <option name="MAIN_CLASS_NAME" value="org.janelia.it.FlyWorkstation.ConsoleModuleFastTestsSuite" />
+      <option name="PACKAGE_NAME" value="org.janelia.it.jacs.compute" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.jacs.compute.ComputeModuleFastTestsSuite" />
       <option name="METHOD_NAME" value="" />
       <option name="TEST_OBJECT" value="class" />
       <option name="VM_PARAMETERS" value="-ea" />
@@ -537,45 +570,11 @@
       </option>
       <envs />
       <patterns />
-      <RunnerSettings RunnerId="Debug">
-        <option name="DEBUG_PORT" value="" />
-        <option name="TRANSPORT" value="0" />
-        <option name="LOCAL" value="true" />
-      </RunnerSettings>
-      <RunnerSettings RunnerId="Run" />
-      <ConfigurationWrapper RunnerId="Debug" />
-      <ConfigurationWrapper RunnerId="Run" />
-      <method>
-        <option name="Make" enabled="false" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/model/build.xml" target="compile-tests" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/console/build.xml" target="compile-tests" />
-      </method>
-    </configuration>
-    <configuration default="false" name="ModelModuleFastTestsSuite" type="JUnit" factoryName="JUnit" show_console_on_std_out="true" show_console_on_std_err="true">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-      <module name="Model" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" value="" />
-      <option name="PACKAGE_NAME" value="org.janelia.it.jacs.model" />
-      <option name="MAIN_CLASS_NAME" value="org.janelia.it.jacs.model.ModelModuleFastTestsSuite" />
-      <option name="METHOD_NAME" value="" />
-      <option name="TEST_OBJECT" value="class" />
-      <option name="VM_PARAMETERS" value="-ea" />
-      <option name="PARAMETERS" value="" />
-      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="singleModule" />
-      </option>
-      <envs />
-      <dir value="$PROJECT_DIR$/model/test" />
-      <patterns />
       <RunnerSettings RunnerId="Run" />
       <ConfigurationWrapper RunnerId="Run" />
       <method>
         <option name="Make" enabled="false" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/model/build.xml" target="compile-tests" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/compute/build.xml" target="compile-tests" />
       </method>
     </configuration>
     <configuration default="false" name="Tomcat - jacs" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 7" ALTERNATIVE_JRE_ENABLED="false" ALTERNATIVE_JRE_PATH="">
@@ -787,9 +786,12 @@
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-net-2.0.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-vfs-1.0.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/log4j-1.2.15.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-compress-1.8.1.jar!/" />
       </CLASSES>
       <JAVADOC />
-      <SOURCES />
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.8.1/commons-compress-1.8.1-sources.jar!/" />
+      </SOURCES>
     </library>
     <library name="Axis2">
       <CLASSES>
@@ -1013,6 +1015,7 @@
       <JAVADOC />
       <SOURCES>
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/lz4-1.1.1-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.0.1/commons-io-2.0.1-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="core">
