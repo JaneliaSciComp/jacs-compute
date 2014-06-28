@@ -438,7 +438,6 @@
       <ConfigurationWrapper RunnerId="Run" />
       <method>
         <option name="Make" enabled="false" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/buildprocess/build-all.xml" target="build-all" />
         <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/ConsoleApplication/build-runner.xml" target="run" />
       </method>
     </configuration>
