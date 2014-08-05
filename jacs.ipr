@@ -137,9 +137,7 @@
       </profile>
     </annotationProcessing>
   </component>
-  <component name="CopyrightManager" default="">
-    <module2copyright />
-  </component>
+  <component name="CopyrightManager" default="" />
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
   <component name="DataSourceManagerImpl" format="xml" hash="0">
     <data-source source="LOCAL" name="Data Source" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
@@ -207,6 +205,7 @@
           <option name="processLiterals" value="true" />
           <option name="processComments" value="true" />
         </inspection_tool>
+        <inspection_tool class="StringBufferReplaceableByString" enabled="false" level="WARNING" enabled_by_default="false" />
         <inspection_tool class="UnnecessaryFullyQualifiedName" enabled="true" level="WARNING" enabled_by_default="true">
           <option name="m_ignoreJavadoc" value="false" />
         </inspection_tool>
@@ -414,6 +413,34 @@
     <output url="file://$PROJECT_DIR$/buildprocess/intellij-make" />
   </component>
   <component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="Netbeans RCP App" type="Application" factoryName="Application">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <option name="MAIN_CLASS_NAME" value="org.janelia.it.workstation.run_config.EndPoint" />
+      <option name="VM_PARAMETERS" value="" />
+      <option name="PROGRAM_PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/ConsoleApplication" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="ENABLE_SWING_INSPECTOR" value="false" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <module name="ConsoleApplication" />
+      <envs />
+      <RunnerSettings RunnerId="Cover" />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="51068" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Cover" />
+      <ConfigurationWrapper RunnerId="Debug" />
+      <ConfigurationWrapper RunnerId="Run" />
+      <method>
+        <option name="Make" enabled="false" />
+        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/ConsoleApplication/build-runner.xml" target="run" />
+      </method>
+    </configuration>
     <configuration default="false" name="ComputeModuleFastTestsSuite" type="JUnit" factoryName="JUnit">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
         <pattern>
@@ -547,35 +574,6 @@
       <method>
         <option name="Make" enabled="false" />
         <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/model/build.xml" target="compile-tests" />
-      </method>
-    </configuration>
-    <configuration default="false" name="Netbeans RCP App" type="Application" factoryName="Application">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-      <option name="MAIN_CLASS_NAME" value="org.janelia.it.workstation.run_config.EndPoint" />
-      <option name="VM_PARAMETERS" value="" />
-      <option name="PROGRAM_PARAMETERS" value="" />
-      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/ConsoleApplication" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" value="" />
-      <option name="ENABLE_SWING_INSPECTOR" value="false" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <module name="ConsoleApplication" />
-      <envs />
-      <RunnerSettings RunnerId="Cover" />
-      <RunnerSettings RunnerId="Debug">
-        <option name="DEBUG_PORT" value="51068" />
-        <option name="TRANSPORT" value="0" />
-        <option name="LOCAL" value="true" />
-      </RunnerSettings>
-      <RunnerSettings RunnerId="Run" />
-      <ConfigurationWrapper RunnerId="Cover" />
-      <ConfigurationWrapper RunnerId="Debug" />
-      <ConfigurationWrapper RunnerId="Run" />
-      <method>
-        <option name="Make" enabled="false" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/buildprocess/build-all.xml" target="build-all" />
-        <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/ConsoleApplication/build-runner.xml" target="run" />
       </method>
     </configuration>
     <configuration default="false" name="Tomcat - jacs" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 7" ALTERNATIVE_JRE_ENABLED="false" ALTERNATIVE_JRE_PATH="">
@@ -787,9 +785,12 @@
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-net-2.0.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-vfs-1.0.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/log4j-1.2.15.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-compress-1.8.1.jar!/" />
       </CLASSES>
       <JAVADOC />
-      <SOURCES />
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.8.1/commons-compress-1.8.1-sources.jar!/" />
+      </SOURCES>
     </library>
     <library name="Axis2">
       <CLASSES>
@@ -1013,6 +1014,7 @@
       <JAVADOC />
       <SOURCES>
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/lz4-1.1.1-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.0.1/commons-io-2.0.1-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="core">
@@ -1250,6 +1252,7 @@
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/wsdl4j.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/wstx.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/xmlsec.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-system.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES>
