@@ -144,8 +144,6 @@
       <driver-ref>mysql</driver-ref>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://dev-db:3306/flyportal</jdbc-url>
-      <user-name>flyportalAdmin</user-name>
-      <user-password>dfccdfc6dfd3dfdadf9adfd8dfdedfeadfc6dfebdfcedfc7df9bdfc4</user-password>
       <libraries>
         <library>
           <url>file://$PROJECT_DIR$/common/MySQL/mysql-connector-java-5.1.15-bin.jar</url>
@@ -156,8 +154,6 @@
       <driver-ref>mysql</driver-ref>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://clustrix:3306/flyportal</jdbc-url>
-      <user-name>val_flyportalApp</user-name>
-      <user-password>dfdcdfeadfc6dff5dfccdfc6dfd3dfdadf9adfd8dfdedfeadfc6dfebdfdadfda</user-password>
       <libraries />
     </data-source>
   </component>
@@ -409,7 +405,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" assert-keyword="true" jdk-15="true" project-jdk-name="jdk1.7.0_67.jdk" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/buildprocess/intellij-make" />
   </component>
   <component name="ProjectRunConfigurationManager">
@@ -773,6 +769,16 @@
     <mapping directory="" vcs="Git" />
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
+  <component name="dataSourceStorageLocal">
+    <data-source name="Data Source" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
+      <user-name>flyportalAdmin</user-name>
+      <user-password>dfccdfc6dfd3dfdadf9adfd8dfdedfeadfc6dfebdfcedfc7df9bdfc4</user-password>
+    </data-source>
+    <data-source name="conf:container_descriptor:hibernate.template.cfg.xml" uuid="99e36145-932a-441c-9294-98824635489c">
+      <user-name>val_flyportalApp</user-name>
+      <user-password>dfdcdfeadfc6dff5dfccdfc6dfd3dfdadf9adfd8dfdedfeadfc6dfebdfdadfda</user-password>
+    </data-source>
+  </component>
   <component name="libraryTable">
     <library name="Apache Commons">
       <CLASSES>
@@ -1660,4 +1666,3 @@
     </option>
   </component>
 </project>
-
