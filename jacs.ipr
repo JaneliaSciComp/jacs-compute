@@ -409,29 +409,9 @@
     <output url="file://$PROJECT_DIR$/buildprocess/intellij-make" />
   </component>
   <component name="ProjectRunConfigurationManager">
-    <configuration default="false" name="Netbeans RCP App" type="Application" factoryName="Application">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-      <option name="MAIN_CLASS_NAME" value="org.janelia.it.workstation.run_config.EndPoint" />
-      <option name="VM_PARAMETERS" value="" />
-      <option name="PROGRAM_PARAMETERS" value="" />
-      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/ConsoleApplication" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" value="" />
-      <option name="ENABLE_SWING_INSPECTOR" value="false" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <module name="ConsoleApplication" />
-      <envs />
-      <RunnerSettings RunnerId="Cover" />
-      <RunnerSettings RunnerId="Debug">
-        <option name="DEBUG_PORT" value="51068" />
-        <option name="TRANSPORT" value="0" />
-        <option name="LOCAL" value="true" />
-      </RunnerSettings>
-      <RunnerSettings RunnerId="Run" />
-      <ConfigurationWrapper RunnerId="Cover" />
-      <ConfigurationWrapper RunnerId="Debug" />
-      <ConfigurationWrapper RunnerId="Run" />
+    <configuration default="false" name="NetBeans Client" type="AntRunConfiguration" factoryName="Ant Target">
+      <RunnerSettings RunnerId="AntRunConfigurationRunner" />
+      <ConfigurationWrapper RunnerId="AntRunConfigurationRunner" />
       <method>
         <option name="Make" enabled="false" />
         <option name="AntTarget" enabled="true" antfile="file://$PROJECT_DIR$/ConsoleApplication/build-runner.xml" target="run" />
