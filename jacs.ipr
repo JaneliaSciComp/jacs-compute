@@ -139,21 +139,29 @@
   </component>
   <component name="CopyrightManager" default="" />
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
-  <component name="DataSourceManagerImpl" format="xml" hash="0">
-    <data-source source="LOCAL" name="Data Source" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
+  <component name="DataSourceManagerImpl" format="xml" hash="277395301">
+    <data-source source="LOCAL" name="FlyPortal DB" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
       <driver-ref>mysql</driver-ref>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://dev-db:3306/flyportal</jdbc-url>
       <libraries>
         <library>
-          <url>file://$PROJECT_DIR$/common/MySQL/mysql-connector-java-5.1.15-bin.jar</url>
+          <url>file://$PROJECT_DIR$/common/MySQL/mysql-connector-java-5.1.22-bin.jar</url>
         </library>
       </libraries>
     </data-source>
-    <data-source source="LOCAL" name="conf:container_descriptor:hibernate.template.cfg.xml" uuid="99e36145-932a-441c-9294-98824635489c">
+    <data-source source="LOCAL" name="Sage" uuid="393b6160-a5dc-414f-b482-05ed3eeac7a7">
       <driver-ref>mysql</driver-ref>
+      <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://clustrix:3306/flyportal</jdbc-url>
+      <jdbc-url>jdbc:mysql://sage-db:3306/sage</jdbc-url>
+      <driver-properties>
+        <property name="zeroDateTimeBehavior" value="convertToNull" />
+        <property name="tinyInt1isBit" value="false" />
+        <property name="characterEncoding" value="utf8" />
+        <property name="characterSetResults" value="utf8" />
+        <property name="yearIsDateType" value="false" />
+      </driver-properties>
       <libraries />
     </data-source>
   </component>
@@ -405,7 +413,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" assert-keyword="true" jdk-15="true" project-jdk-name="jdk1.7.0_67.jdk" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/buildprocess/intellij-make" />
   </component>
   <component name="ProjectRunConfigurationManager">
@@ -688,6 +696,16 @@
     <RUBY_DOC NAME="DEFAULTS" VALUE="TRUE" />
     <RUBY_DOC NAME="NUMBER" VALUE="0" />
   </component>
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/ConsoleApplication" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/buildprocess" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/compute" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/groovy" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/jacs" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/model" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/reports" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/shared" dialect="MySQL" />
+  </component>
   <component name="SvnBranchConfigurationManager">
     <option name="myConfigurationMap">
       <map>
@@ -750,13 +768,17 @@
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
   <component name="dataSourceStorageLocal">
-    <data-source name="Data Source" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
-      <user-name>flyportalAdmin</user-name>
-      <user-password>dfccdfc6dfd3dfdadf9adfd8dfdedfeadfc6dfebdfcedfc7df9bdfc4</user-password>
+    <data-source name="FlyPortal DB" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
+      <user-name>flyportalApp</user-name>
+      <user-password>dfccdfc6dfd3dfdadfc5dfd8dfdedfcbdfc6dfebdfdadfda</user-password>
+      <schema-pattern>flyportal.*</schema-pattern>
+      <default-schemas>flyportal.*</default-schemas>
     </data-source>
-    <data-source name="conf:container_descriptor:hibernate.template.cfg.xml" uuid="99e36145-932a-441c-9294-98824635489c">
-      <user-name>val_flyportalApp</user-name>
-      <user-password>dfdcdfeadfc6dff5dfccdfc6dfd3dfdadf9adfd8dfdedfeadfc6dfebdfdadfda</user-password>
+    <data-source name="Sage" uuid="393b6160-a5dc-414f-b482-05ed3eeac7a7">
+      <secret-storage>master_key</secret-storage>
+      <user-name>sageRead</user-name>
+      <schema-pattern>sage.*</schema-pattern>
+      <default-schemas>sage.*</default-schemas>
     </data-source>
   </component>
   <component name="libraryTable">
