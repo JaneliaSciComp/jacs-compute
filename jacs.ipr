@@ -760,7 +760,6 @@
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-collections-2.1.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-fileupload-1.2.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-httpclient-3.1.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-io-2.0.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-logging-1.1.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-net-2.0.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-vfs-1.0.jar!/" />
@@ -887,7 +886,6 @@
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-saaj_1.3_spec-1.0.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-stax-api_1.0_spec-1.0.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/geronimo-ws-metadata_2.0_spec-1.1.2.jar!/" />
-        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/gluegen-rt.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/groovy-all-1.8.6.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/gson-2.2.2.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/guava-13.0.1.jar!/" />
@@ -917,7 +915,6 @@
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jibx-run-1.2.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jktx-1.6.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jna.jar!/" />
-        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jogl-all.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/juli-6.0.16.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jython.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/loci-common.jar!/" />
