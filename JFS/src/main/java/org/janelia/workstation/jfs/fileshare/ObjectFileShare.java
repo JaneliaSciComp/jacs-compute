@@ -119,7 +119,7 @@ public class ObjectFileShare extends FileShare implements Runnable {
         propstat.setProp(prop);
         propstat.setStatus("HTTP/1.1 200 OK");
         fileMeta.setPropstat(propstat);
-        fileMeta.setHref(request.getRequestURI() + this.getMapping() + filepath);
+        fileMeta.setHref("/JFS/api/file" + this.getMapping() + filepath);
 
         ObjectMapper xmlMapper = new XmlMapper();
         String xml = null;

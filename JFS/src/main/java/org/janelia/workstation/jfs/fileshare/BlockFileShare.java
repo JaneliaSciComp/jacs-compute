@@ -74,7 +74,7 @@ public class BlockFileShare extends FileShare {
 
         prop.setGetContentLength(Long.toString(Files.size(file)));
         prop.setGetLastModified(Files.getLastModifiedTime(file).toString());
-        fileMeta.setHref(request.getRequestURI() + file.toString());
+        fileMeta.setHref("/JFS/api/file" + file.toString());
         if (Files.isDirectory(file)) {
             prop.setResourceType("collection");
             fileMeta.setHref(fileMeta.getHref() + "/");
