@@ -41,7 +41,7 @@ public class WebdavApplication extends ResourceConfig {
         beanConfig.setVersion("1.0.2");
         beanConfig.setSchemes(new String[]{"http"});
         beanConfig.setHost("jacs-jfs:8880");
-        beanConfig.setBasePath("/Webdav/api");
+        beanConfig.setBasePath("/JFS/api");
         beanConfig.setResourcePackage("org.janelia.workstation.jfs");
         beanConfig.setScan(true);
 
@@ -62,7 +62,7 @@ public class WebdavApplication extends ResourceConfig {
                                 return Response.status(Response.Status.UNAUTHORIZED).build();
                             }
                             xmlResponse = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-                                    mapping.propFind(headers, filepath);
+                                    mapping.propFind(request, headers, filepath);
                             return Response.status(207).entity(xmlResponse).build();
                         }
                         catch (PermissionsFailureException e) {

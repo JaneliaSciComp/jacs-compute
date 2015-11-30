@@ -60,7 +60,7 @@ public abstract class FileShare {
         return null;
     }
 
-    public String propFind (HttpHeaders headers, String filepath) throws FileNotFoundException, IOException {
+    public String propFind (HttpServletRequest request, HttpHeaders headers, String filepath) throws FileNotFoundException, IOException {
         return null;
     }
 
