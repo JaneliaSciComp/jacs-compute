@@ -41,7 +41,9 @@
         window.SwaggerTranslator.translate();
       }
       window.swaggerUi = new SwaggerUi({
-        url: "/Webdav/api/swagger.json",
+        url: "/JFS/api/swagger.json",
+        validatorUrl : null,
+        docExpansion: "list",
         dom_id: "swagger-ui-container",
         supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
         onComplete: function(swaggerApi, swaggerUi){
@@ -68,7 +70,6 @@
         onFailure: function(data) {
           log("Unable to Load SwaggerUI");
         },
-        docExpansion: "none",
         apisSorter: "alpha",
         showRequestHeaders: false
       });

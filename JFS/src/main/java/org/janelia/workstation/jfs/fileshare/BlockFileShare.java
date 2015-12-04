@@ -63,7 +63,7 @@ public class BlockFileShare extends FileShare {
     }
 
 
-    private PropfindResponse generatePropMetadata(java.nio.file.Path file) throws IOException {
+    private PropfindResponse generatePropMetadata(HttpServletRequest request, java.nio.file.Path file) throws IOException {
         PropfindResponse fileMeta = new PropfindResponse();
         Propstat propstat = new Propstat();
         Prop prop = new Prop();
@@ -74,7 +74,7 @@ public class BlockFileShare extends FileShare {
 
         prop.setGetContentLength(Long.toString(Files.size(file)));
         prop.setGetLastModified(Files.getLastModifiedTime(file).toString());
-        fileMeta.setHref("/Webdav" + file.toString());
+        fileMeta.setHref("/JFS/api/file" + file.toString());
         if (Files.isDirectory(file)) {
             prop.setResourceType("collection");
             fileMeta.setHref(fileMeta.getHref() + "/");
@@ -86,23 +86,23 @@ public class BlockFileShare extends FileShare {
         return fileMeta;
     }
 
-    private void discoverFiles(Multistatus container, java.nio.file.Path file,
+    private void discoverFiles(HttpServletRequest request, Multistatus container, java.nio.file.Path file,
                                int depth, int discoveryLevel) throws IOException {
         if (depth<discoveryLevel) {
             if (Files.isDirectory(file)) {
                 depth++;
                 try (DirectoryStream<java.nio.file.Path> directoryStream = Files.newDirectoryStream(file)) {
                     for (java.nio.file.Path subpath : directoryStream) {
-                        discoverFiles(container, subpath, depth, discoveryLevel);
+                        discoverFiles(request, container, subpath, depth, discoveryLevel);
                     }
                 }
             }
         }
-        container.getResponse().add(generatePropMetadata(file));
+        container.getResponse().add(generatePropMetadata(request, file));
     }
 
     @Override
-    public String propFind(HttpHeaders headers, String path) throws FileNotFoundException, IOException {
+    public String propFind(HttpServletRequest request, HttpHeaders headers, String path) throws FileNotFoundException, IOException {
         String filepath = "/" + path;
 
         // create Multistatus top level
@@ -121,7 +121,7 @@ public class BlockFileShare extends FileShare {
                     discoveryLevel = Integer.parseInt(depthValue);
                 }
             }
-            discoverFiles(propfindContainer, fileHandle, 0, discoveryLevel);
+            discoverFiles(request, propfindContainer, fileHandle, 0, discoveryLevel);
         } else {
             throw new FileNotFoundException("File does not exist");
         }

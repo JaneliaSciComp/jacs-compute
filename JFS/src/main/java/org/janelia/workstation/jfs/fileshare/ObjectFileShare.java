@@ -103,7 +103,7 @@ public class ObjectFileShare extends FileShare implements Runnable {
     }
 
     @Override
-    public String propFind(HttpHeaders headers, String path) throws FileNotFoundException, IOException {
+    public String propFind(HttpServletRequest request, HttpHeaders headers, String path) throws FileNotFoundException, IOException {
         // there is no hierarchical concept in Scality, so always only return existing file info
         String filepath = "/" + path;
 
@@ -119,7 +119,7 @@ public class ObjectFileShare extends FileShare implements Runnable {
         propstat.setProp(prop);
         propstat.setStatus("HTTP/1.1 200 OK");
         fileMeta.setPropstat(propstat);
-        fileMeta.setHref("/Webdav" + this.getMapping() + filepath);
+        fileMeta.setHref("/JFS/api/file" + this.getMapping() + filepath);
 
         ObjectMapper xmlMapper = new XmlMapper();
         String xml = null;
