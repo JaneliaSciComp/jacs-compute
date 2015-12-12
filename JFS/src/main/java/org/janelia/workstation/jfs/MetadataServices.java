@@ -1,11 +1,13 @@
 package org.janelia.workstation.jfs;
 
 
+import com.mongodb.DBObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.workstation.jfs.fileshare.FileShare;
+import org.janelia.workstation.jfs.fileshare.ObjectFileShare;
 import org.janelia.workstation.jfs.security.Permission;
 import org.janelia.workstation.jfs.exception.FileNotFoundException;
 import org.janelia.workstation.jfs.exception.FileUploadException;
@@ -17,6 +19,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.*;
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -165,22 +170,37 @@ public class MetadataServices {
     }
 
     @GET
-    @Path("/reports/{store:.*}")
+    @Path("/reports/usage")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Looks up usage data for a data store by owner",
-            notes = "Looks up usage data for a data store by owner")
+    @ApiOperation(value = "Looks up usage data for all scality data stores by object owner",
+            notes = "Looks up usage data for all scality data stores by object owner")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully found file and generated data"),
     })
-    public Map<String,String> generateOwnerUsageReports(@PathParam("store") String store) throws FileNotFoundException,PermissionsFailureException {
-        System.out.println("REPORTS " + store);
-
-        FileShare mapping = Common.checkPermissions(store, headers, request);
-        // check file share for info permissions
-        if (!mapping.getPermissions().contains(Permission.READ)) {
-            throw new PermissionsFailureException("Not permitted to generate reports for this fileshare");
+    public Map<String,String> generateOwnerUsageReports() throws FileNotFoundException,PermissionsFailureException {
+        // go through all mappings; if object, call mapping reports and append to common map, then return map
+        Map<String,Double> diskUsage = new HashMap<String,Double>();
+        Collection<FileShare> fileservices = ServicesConfiguration.getResourcesByMapping().values();
+        for (FileShare fileservice: fileservices) {
+            if (fileservice instanceof ObjectFileShare) {
+                Map<String,Double> subTotals = fileservice.generateUsageReports();
+                for (String key: subTotals.keySet()) {
+                    if (diskUsage.containsKey(key)) {
+                        diskUsage.put(key, new Double(subTotals.get(key).doubleValue()
+                                + diskUsage.get(key).doubleValue()));
+                    } else {
+                        diskUsage.put(key, subTotals.get(key));
+                    }
+                }
+            }
         }
 
-        return mapping.generateUsageReports(store);
+        DecimalFormat df = new DecimalFormat("0.0000 GB");
+        Map<String,String> formattedTotals = new HashMap<String,String>();
+        for (String key: diskUsage.keySet()) {
+            formattedTotals.put(key, df.format(diskUsage.get(key).doubleValue()));
+        }
+
+        return formattedTotals;
     }
 }
