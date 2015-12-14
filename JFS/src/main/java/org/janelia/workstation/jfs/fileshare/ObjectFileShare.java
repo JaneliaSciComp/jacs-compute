@@ -44,10 +44,11 @@ import javax.ws.rs.core.StreamingOutput;
 public class ObjectFileShare extends FileShare implements Runnable {
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 1024 * 2;
     private static final long MEGABYTE = 1000*1000;
+    private static final long GIGABYTE = 1000*MEGABYTE;
     private String ring;
     private ScalityProvider scality;
     private MongoConfiguration mongo;
-    private boolean syncDelete;
+    private boolean syncDelete = true;
 
     public ScalityProvider getScality() {
         return scality;
@@ -288,21 +289,6 @@ public class ObjectFileShare extends FileShare implements Runnable {
     }
 
     @Override
-    public Map<String,String> generateUsageReports (String store) throws FileNotFoundException {
-        List<DBObject> results = mongo.getObjectCollection().aggregate("{\"$group\" : {_id:\"$owner\", totalMb:{$sum:{$divide:[\"$numBytes\","+MEGABYTE + "]}}}}").as(DBObject.class);
-        Map<String,String> usage = new HashMap<>();
-
-        DecimalFormat df = new DecimalFormat("0.0000 MB");
-
-        for (DBObject result : results) {
-            Double sum = (Double)result.get("totalMb");
-            usage.put(result.get("_id").toString(), df.format(sum));
-        }
-
-        return usage;
-    }
-
-    @Override
     public void uploadMetadata (HttpServletRequest request, Map<String,String> metadata) throws FileNotFoundException {
         // check scality for file
         String key = metadata.get("key");
@@ -421,6 +407,27 @@ public class ObjectFileShare extends FileShare implements Runnable {
         return bulkReport;
     }
 
+
+    @Override
+    public Map<String,Double> generateUsageReports () throws FileNotFoundException {
+        List<DBObject> results = mongo.getObjectCollection().aggregate("{\"$group\" : {_id:\"$owner\", totalGb:{$sum:{$divide:[\"$numBytes\","+GIGABYTE + "]}}}}").as(DBObject.class);
+        Map<String,Double> usage = new HashMap<>();
+
+        for (DBObject result : results) {
+            System.out.println (result);
+            Double sum = (Double)result.get("totalGb");
+            String user;
+            if (result.get("_id")==null || result.get("_id").toString().equals("tester")) {
+                user = "null";
+            } else {
+                user = result.get("_id").toString();
+            }
+            usage.put(user, sum);
+        }
+
+        return usage;
+    }
+
     private String getFormattedPath(String path) {
         String formattedPath = path.endsWith("/") ? path.substring(0, path.length()-1) : path;
         return formattedPath;
@@ -428,11 +435,17 @@ public class ObjectFileShare extends FileShare implements Runnable {
 
     private String calculatePath (String path) {
         // if pathtype is KEY, strip out the fileservice namespace
+        String modpath = path;
         if (this.getPath().equals(Path.KEY)) {
-
-            return (path.substring(this.getMapping().length()));
+            modpath = path.substring(this.getMapping().length());
         }
-        return path;
+
+
+        // ensure no paths start with slashes since object keys can't start with forward separator
+        if (modpath.startsWith("/")) {
+            modpath = modpath.substring(1);
+        }
+        return modpath;
     }
 
     private String generateChecksum (InputStream is, String filepath) throws NoSuchAlgorithmException, IOException {
