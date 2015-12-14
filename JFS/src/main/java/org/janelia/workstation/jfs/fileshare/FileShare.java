@@ -91,7 +91,7 @@ public abstract class FileShare {
         return null;
     }
 
-    public Map<String,String> generateUsageReports (String store) throws FileNotFoundException {
+    public Map<String,Double> generateUsageReports () throws FileNotFoundException {
         return null;
     }
 
