@@ -279,6 +279,7 @@
   </component>
   <component name="FrameworkDetectionExcludesConfiguration">
     <file type="web" url="file://$PROJECT_DIR$" />
+    <type id="Spring" />
   </component>
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
