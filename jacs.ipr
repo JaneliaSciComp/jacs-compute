@@ -269,6 +269,7 @@
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
     <file url="file://$PROJECT_DIR$/compute/test/org/janelia/it/jacs/compute/access/SageDAOTest.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/webdav" charset="UTF-8" />
+    <file url="PROJECT" charset="UTF-8" />
   </component>
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
