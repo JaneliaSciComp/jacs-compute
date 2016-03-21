@@ -212,7 +212,7 @@
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
   <component name="DataSourceManagerImpl" format="xml" hash="277395301">
     <data-source source="LOCAL" name="FlyPortal DB" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
-      <driver-ref>c6475d3f-28b6-404a-be36-eb5181eeabb4</driver-ref>
+      <driver-ref>mysql</driver-ref>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://dev-db:3306/flyportal</jdbc-url>
       <libraries>
@@ -233,6 +233,7 @@
         <property name="characterSetResults" value="utf8" />
         <property name="yearIsDateType" value="false" />
       </driver-properties>
+      <libraries />
     </data-source>
   </component>
   <component name="DependencyValidationManager">
@@ -252,7 +253,6 @@
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
     <file url="file://$PROJECT_DIR$/compute/test/org/janelia/it/jacs/compute/access/SageDAOTest.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/webdav" charset="UTF-8" />
-    <file url="PROJECT" charset="UTF-8" />
   </component>
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
@@ -482,7 +482,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" default="false" assert-keyword="true" jdk-15="true" project-jdk-name="jdk1.7.0_67.jdk" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" default="true" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/buildprocess/intellij-make" />
   </component>
   <component name="ProjectRunConfigurationManager">
