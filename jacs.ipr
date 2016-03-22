@@ -228,7 +228,7 @@
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
   <component name="DataSourceManagerImpl" format="xml" hash="3146058086">
     <data-source source="LOCAL" name="FlyPortal DB" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
-      <driver-ref>mysql</driver-ref>
+      <driver-ref>c6475d3f-28b6-404a-be36-eb5181eeabb4</driver-ref>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://dev-db:3306/flyportal</jdbc-url>
       <libraries>
@@ -249,7 +249,6 @@
         <property name="characterSetResults" value="utf8" />
         <property name="yearIsDateType" value="false" />
       </driver-properties>
-      <libraries />
     </data-source>
   </component>
   <component name="DependencyValidationManager">
@@ -1113,14 +1112,28 @@
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/xmlbeans-2.3.0.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/XmlSchema-1.4.3.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/xuggle-xuggler-5.4.jar!/" />
-        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/jaxb-xjc-2.1.7.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/kd.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/protostuff-api-1.3.9-SNAPSHOT.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/protostuff-collectionschema-1.3.9-SNAPSHOT.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/protostuff-compiler-1.3.9-SNAPSHOT-jar-with-dependencies.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/protostuff-compiler-1.3.9-SNAPSHOT.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/protostuff-core-1.3.9-SNAPSHOT.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/protostuff-parser-1.3.9-SNAPSHOT.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/protostuff-runtime-1.3.9-SNAPSHOT.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/protostuff-runtime-md-1.3.9-SNAPSHOT.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/protostuff-runtime-registry-1.3.9-SNAPSHOT.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/protostuff-runtime-view-1.3.9-SNAPSHOT.jar!/" />
+        <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/protostuff-xml-1.3.9-SNAPSHOT.jar!/" />
+        <root url="file://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext" />
       </CLASSES>
       <JAVADOC />
       <SOURCES>
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/lz4-1.1.1-sources.jar!/" />
         <root url="jar://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext/kd.jar!/" />
+        <root url="file://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext" />
       </SOURCES>
+      <jarDirectory url="file://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext" recursive="false" />
+      <jarDirectory url="file://$PROJECT_DIR$/ConsoleApplication/ConsoleWrapper/release/modules/ext" recursive="false" type="SOURCES" />
     </library>
     <library name="core">
       <CLASSES>
@@ -2345,6 +2358,17 @@
         <root url="jar://$PROJECT_DIR$/common/MongoDB/jsr305-1.3.9.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/MongoDB/mongo-java-driver-2.11.3-sources.jar!/" />
       </SOURCES>
+    </library>
+    <library name="protostuff-1.3">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/protostuff-1.3.9" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="file://$PROJECT_DIR$/common/protostuff-1.3.9" />
+      </SOURCES>
+      <jarDirectory url="file://$PROJECT_DIR$/common/protostuff-1.3.9" recursive="false" />
+      <jarDirectory url="file://$PROJECT_DIR$/common/protostuff-1.3.9" recursive="false" type="SOURCES" />
     </library>
     <library name="RESTEasy-2.3.4">
       <CLASSES>
