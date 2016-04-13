@@ -943,7 +943,6 @@
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jalopy-1.5rc3.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-api-2.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-impl-2.1.7.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-xjc-2.1.7.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxen-1.1.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jettison-1.0-RC2.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jibx-bind-1.2.1.jar!/" />
@@ -1620,7 +1619,6 @@
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/javassist.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxb-api.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxb-impl.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxb-xjc.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxws-rt.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxws-tools.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-annotations-ejb3.jar!/" />
@@ -2345,18 +2343,20 @@
     </library>
     <library name="MongoDB">
       <CLASSES>
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongo-java-driver-2.11.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/bson4jackson-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-annotations-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-core-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-databind-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jongo-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/bson-3.1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/bson4jackson-2.4.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-annotations-2.4.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-core-2.4.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-databind-2.4.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jongo-1.2.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/MongoDB/jsr305-1.3.9.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongodb-driver-3.1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongodb-driver-core-3.1.0.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES>
         <root url="jar://$PROJECT_DIR$/common/MongoDB/jsr305-1.3.9.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongo-java-driver-2.11.3-sources.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongodb-driver-3.1.0-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="protostuff-1.3">
@@ -2483,6 +2483,14 @@
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+    </library>
+    <library name="swagger">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/swagger" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/swagger" recursive="false" />
     </library>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
