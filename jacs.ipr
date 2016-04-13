@@ -512,7 +512,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="false" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" default="false" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/buildprocess/intellij-make" />
   </component>
   <component name="ProjectRunConfigurationManager">
@@ -894,11 +894,12 @@
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-logging-1.1.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-net-2.0.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-vfs-1.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/log4j-1.2.15.jar!/" />
+        <root url="file://$PROJECT_DIR$/common/Apache-Commons" />
         <root url="file://$PROJECT_DIR$/common/Apache-Commons" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Apache-Commons" recursive="false" />
       <jarDirectory url="file://$PROJECT_DIR$/common/Apache-Commons" recursive="false" />
     </library>
     <library name="Axis2">
@@ -1723,11 +1724,15 @@
     </library>
     <library name="Logging">
       <CLASSES>
-        <root url="file://$PROJECT_DIR$/common/Logging" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/logback-access-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/logback-classic-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/logback-core-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/perf4j-0.9.16-logbackonly.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/slf4j-api-1.7.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/slf4j-log4j12-1.7.5.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
-      <jarDirectory url="file://$PROJECT_DIR$/common/Logging" recursive="false" />
     </library>
     <library name="Lucene">
       <CLASSES>
