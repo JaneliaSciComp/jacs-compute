@@ -220,9 +220,6 @@
         <module name="Webdav" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="Webdav" target="1.7" />
-    </bytecodeTargetLevel>
   </component>
   <component name="CopyrightManager" default="" />
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
@@ -2372,6 +2369,14 @@
       </SOURCES>
       <jarDirectory url="file://$PROJECT_DIR$/common/protostuff-1.3.9" recursive="false" />
       <jarDirectory url="file://$PROJECT_DIR$/common/protostuff-1.3.9" recursive="false" type="SOURCES" />
+    </library>
+    <library name="Reflections">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Reflections" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Reflections" recursive="false" />
     </library>
     <library name="RESTEasy-2.3.4">
       <CLASSES>
