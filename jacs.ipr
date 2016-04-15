@@ -220,15 +220,12 @@
         <module name="Webdav" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="Webdav" target="1.7" />
-    </bytecodeTargetLevel>
   </component>
   <component name="CopyrightManager" default="" />
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
   <component name="DataSourceManagerImpl" format="xml" hash="3146058086">
     <data-source source="LOCAL" name="FlyPortal DB" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
-      <driver-ref>mysql</driver-ref>
+      <driver-ref>fc88c2d0-75f2-42a3-8cff-367e42167e5a</driver-ref>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://dev-db:3306/flyportal</jdbc-url>
       <libraries>
@@ -249,7 +246,6 @@
         <property name="characterSetResults" value="utf8" />
         <property name="yearIsDateType" value="false" />
       </driver-properties>
-      <libraries />
     </data-source>
   </component>
   <component name="DependencyValidationManager">
@@ -513,7 +509,7 @@
   <component name="ProjectResources">
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="false" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" default="false" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/buildprocess/intellij-make" />
   </component>
   <component name="ProjectRunConfigurationManager">
@@ -895,11 +891,12 @@
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-logging-1.1.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-net-2.0.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-vfs-1.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/log4j-1.2.15.jar!/" />
+        <root url="file://$PROJECT_DIR$/common/Apache-Commons" />
         <root url="file://$PROJECT_DIR$/common/Apache-Commons" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Apache-Commons" recursive="false" />
       <jarDirectory url="file://$PROJECT_DIR$/common/Apache-Commons" recursive="false" />
     </library>
     <library name="Axis2">
@@ -946,7 +943,6 @@
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jalopy-1.5rc3.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-api-2.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-impl-2.1.7.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-xjc-2.1.7.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxen-1.1.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jettison-1.0-RC2.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jibx-bind-1.2.1.jar!/" />
@@ -1623,7 +1619,6 @@
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/javassist.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxb-api.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxb-impl.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxb-xjc.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxws-rt.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxws-tools.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-annotations-ejb3.jar!/" />
@@ -1724,11 +1719,15 @@
     </library>
     <library name="Logging">
       <CLASSES>
-        <root url="file://$PROJECT_DIR$/common/Logging" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/logback-access-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/logback-classic-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/logback-core-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/perf4j-0.9.16-logbackonly.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/slf4j-api-1.7.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/slf4j-log4j12-1.7.5.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
-      <jarDirectory url="file://$PROJECT_DIR$/common/Logging" recursive="false" />
     </library>
     <library name="Lucene">
       <CLASSES>
@@ -2344,18 +2343,20 @@
     </library>
     <library name="MongoDB">
       <CLASSES>
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongo-java-driver-2.11.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/bson4jackson-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-annotations-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-core-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-databind-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jongo-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/bson-3.1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/bson4jackson-2.4.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-annotations-2.4.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-core-2.4.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-databind-2.4.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jongo-1.2.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/MongoDB/jsr305-1.3.9.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongodb-driver-3.1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongodb-driver-core-3.1.0.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES>
         <root url="jar://$PROJECT_DIR$/common/MongoDB/jsr305-1.3.9.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongo-java-driver-2.11.3-sources.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongodb-driver-3.1.0-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="protostuff-1.3">
@@ -2368,6 +2369,14 @@
       </SOURCES>
       <jarDirectory url="file://$PROJECT_DIR$/common/protostuff-1.3.9" recursive="false" />
       <jarDirectory url="file://$PROJECT_DIR$/common/protostuff-1.3.9" recursive="false" type="SOURCES" />
+    </library>
+    <library name="Reflections">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Reflections" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Reflections" recursive="false" />
     </library>
     <library name="RESTEasy-2.3.4">
       <CLASSES>
@@ -2474,6 +2483,14 @@
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+    </library>
+    <library name="swagger">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/swagger" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/swagger" recursive="false" />
     </library>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
