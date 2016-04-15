@@ -502,6 +502,7 @@
       <module fileurl="file://$PROJECT_DIR$/shared/Shared.iml" filepath="$PROJECT_DIR$/shared/Shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/archive/archive.iml" filepath="$PROJECT_DIR$/archive/archive.iml" />
       <module fileurl="file://$PROJECT_DIR$/buildprocess/buildprocess.iml" filepath="$PROJECT_DIR$/buildprocess/buildprocess.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dashboard/dashboard.iml" filepath="$PROJECT_DIR$/dashboard/dashboard.iml" />
       <module fileurl="file://$PROJECT_DIR$/groovy/groovy.iml" filepath="$PROJECT_DIR$/groovy/groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/reports/reports.iml" filepath="$PROJECT_DIR$/reports/reports.iml" />
     </modules>
