@@ -1241,6 +1241,14 @@
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/Directory" recursive="false" />
     </library>
+    <library name="ehcache">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/ehcache" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/ehcache" recursive="false" />
+    </library>
     <library name="GoogleAnalytics">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/compute/lib/JGoogleAnalytics_0.4.jar!/" />
@@ -1597,12 +1605,28 @@
       <JAVADOC />
       <SOURCES />
     </library>
+    <library name="jama-1.0">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/jama-1.0.1" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/jama-1.0.1" recursive="false" />
+    </library>
     <library name="Jama-1.0.3">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/common/jama-1.0.1/Jama-1.0.3.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+    </library>
+    <library name="JAX-RS-2.0">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/JAX-RS-2.0.1" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/JAX-RS-2.0.1" recursive="false" />
     </library>
     <library name="JAXB">
       <CLASSES>
@@ -1694,6 +1718,33 @@
       <JAVADOC />
       <SOURCES />
     </library>
+    <library name="JBoss Minimal">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jbossall-client.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/antlr.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/concurrent.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/javassist.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-annotations-ejb3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-ejb3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-ejb3x.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/quartz.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-system.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Jetty/servlet-api-3.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Jersey-2">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Jersey-2.19" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="file://$PROJECT_DIR$/common/Jersey-2.19" />
+      </SOURCES>
+      <jarDirectory url="file://$PROJECT_DIR$/common/Jersey-2.19" recursive="false" />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Jersey-2.19" recursive="false" type="SOURCES" />
+    </library>
     <library name="Jetty">
       <CLASSES>
         <root url="file://$PROJECT_DIR$/common/Jetty" />
@@ -1709,6 +1760,14 @@
       <JAVADOC />
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/JKtx" recursive="false" />
+    </library>
+    <library name="JodaTime">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/JodaTime" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/JodaTime" recursive="false" />
     </library>
     <library name="JUnit-4.11">
       <CLASSES>
@@ -2508,6 +2567,14 @@
       <JAVADOC />
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/swagger" recursive="false" />
+    </library>
+    <library name="xstream">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/compute/lib/xstream" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/compute/lib/xstream" recursive="false" />
     </library>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
