@@ -1963,6 +1963,14 @@
       <JAVADOC />
       <SOURCES />
     </library>
+    <library name="WildFly-10.0.0.Final">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/WildFly-10.0.0.Final" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/WildFly-10.0.0.Final" recursive="false" />
+    </library>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
     <option name="annotationTypeSettings">
