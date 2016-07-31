@@ -471,6 +471,7 @@
   <component name="ProjectCodeStyleSettingsManager">
     <option name="PER_PROJECT_SETTINGS">
       <value>
+        <option name="LINE_SEPARATOR" value="&#10;" />
         <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="10" />
         <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="10" />
         <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
@@ -491,6 +492,7 @@
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
         </XML>
         <codeStyleSettings language="JAVA">
+          <option name="ELSE_ON_NEW_LINE" value="true" />
           <option name="CATCH_ON_NEW_LINE" value="true" />
           <option name="FINALLY_ON_NEW_LINE" value="true" />
           <option name="WHILE_BRACE_FORCE" value="3" />
