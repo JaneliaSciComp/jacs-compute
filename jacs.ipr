@@ -56,32 +56,26 @@
             <element id="module-output" name="Webdav" />
           </element>
           <element id="directory" name="lib">
+            <element id="library" level="project" name="Maven: org.glassfish.jersey.containers:jersey-container-servlet:2.22" />
+            <element id="library" level="project" name="Maven: org.glassfish.jersey.containers:jersey-container-servlet-core:2.22" />
+            <element id="library" level="project" name="Maven: org.glassfish.hk2.external:javax.inject:2.4.0-b31" />
+            <element id="library" level="project" name="Maven: org.glassfish.jersey.core:jersey-common:2.22" />
+            <element id="library" level="project" name="Maven: javax.annotation:javax.annotation-api:1.2" />
+            <element id="library" level="project" name="Maven: org.glassfish.jersey.bundles.repackaged:jersey-guava:2.22" />
+            <element id="library" level="project" name="Maven: org.glassfish.hk2:hk2-api:2.4.0-b31" />
+            <element id="library" level="project" name="Maven: org.glassfish.hk2:hk2-utils:2.4.0-b31" />
+            <element id="library" level="project" name="Maven: org.glassfish.hk2.external:aopalliance-repackaged:2.4.0-b31" />
+            <element id="library" level="project" name="Maven: org.glassfish.hk2:hk2-locator:2.4.0-b31" />
+            <element id="library" level="project" name="Maven: org.javassist:javassist:3.18.1-GA" />
+            <element id="library" level="project" name="Maven: org.glassfish.hk2:osgi-resource-locator:1.0.1" />
+            <element id="library" level="project" name="Maven: org.glassfish.jersey.core:jersey-server:2.22" />
+            <element id="library" level="project" name="Maven: org.glassfish.jersey.core:jersey-client:2.22" />
+            <element id="library" level="project" name="Maven: org.glassfish.jersey.media:jersey-media-jaxb:2.22" />
+            <element id="library" level="project" name="Maven: javax.validation:validation-api:1.1.0.Final" />
+            <element id="library" level="project" name="Maven: javax.ws.rs:javax.ws.rs-api:2.0.1" />
             <element id="library" level="project" name="Maven: commons-httpclient:commons-httpclient:3.1" />
             <element id="library" level="project" name="Maven: commons-logging:commons-logging:1.0.4" />
             <element id="library" level="project" name="Maven: commons-codec:commons-codec:1.2" />
-            <element id="library" level="project" name="Maven: org.glassfish.jersey.containers:jersey-container-servlet-core:2.18" />
-            <element id="library" level="project" name="Maven: org.glassfish.hk2.external:javax.inject:2.4.0-b12" />
-            <element id="library" level="project" name="Maven: org.glassfish.jersey.core:jersey-common:2.18" />
-            <element id="library" level="project" name="Maven: javax.annotation:javax.annotation-api:1.2" />
-            <element id="library" level="project" name="Maven: org.glassfish.jersey.bundles.repackaged:jersey-guava:2.18" />
-            <element id="library" level="project" name="Maven: org.glassfish.hk2:hk2-api:2.4.0-b12" />
-            <element id="library" level="project" name="Maven: org.glassfish.hk2:hk2-utils:2.4.0-b12" />
-            <element id="library" level="project" name="Maven: org.glassfish.hk2.external:aopalliance-repackaged:2.4.0-b12" />
-            <element id="library" level="project" name="Maven: org.glassfish.hk2:hk2-locator:2.4.0-b12" />
-            <element id="library" level="project" name="Maven: org.javassist:javassist:3.18.1-GA" />
-            <element id="library" level="project" name="Maven: org.glassfish.hk2:osgi-resource-locator:1.0.1" />
-            <element id="library" level="project" name="Maven: org.glassfish.jersey.core:jersey-server:2.18" />
-            <element id="library" level="project" name="Maven: org.glassfish.jersey.core:jersey-client:2.18" />
-            <element id="library" level="project" name="Maven: org.glassfish.jersey.media:jersey-media-jaxb:2.18" />
-            <element id="library" level="project" name="Maven: javax.validation:validation-api:1.1.0.Final" />
-            <element id="library" level="project" name="Maven: javax.ws.rs:javax.ws.rs-api:2.0.1" />
-            <element id="library" level="project" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.2.2" />
-            <element id="library" level="project" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.2.2" />
-            <element id="library" level="project" name="Maven: com.fasterxml.jackson.core:jackson-core:2.2.2" />
-            <element id="library" level="project" name="Maven: com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.2.2" />
-            <element id="library" level="project" name="Maven: com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.2.2" />
-            <element id="library" level="project" name="Maven: org.codehaus.woodstox:stax2-api:3.1.1" />
-            <element id="library" level="project" name="Maven: javax.xml.stream:stax-api:1.0-2" />
             <element id="library" level="project" name="Maven: org.apache.directory.api:api-all:1.0.0-M30" />
             <element id="library" level="project" name="Maven: org.slf4j:slf4j-api:1.7.10" />
             <element id="library" level="project" name="Maven: org.apache.servicemix.bundles:org.apache.servicemix.bundles.xpp3:1.1.4c_6" />
@@ -93,6 +87,28 @@
             <element id="library" level="project" name="Maven: commons-collections:commons-collections:3.2.1" />
             <element id="library" level="project" name="Maven: org.apache.servicemix.bundles:org.apache.servicemix.bundles.antlr:2.7.7_5" />
             <element id="library" level="project" name="Maven: commons-io:commons-io:2.4" />
+            <element id="library" level="project" name="Maven: io.swagger:swagger-jersey2-jaxrs:1.5.0" />
+            <element id="library" level="project" name="Maven: io.swagger:swagger-jaxrs:1.5.0" />
+            <element id="library" level="project" name="Maven: com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.4.2" />
+            <element id="library" level="project" name="Maven: com.fasterxml.jackson.core:jackson-core:2.4.2" />
+            <element id="library" level="project" name="Maven: com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.4.2" />
+            <element id="library" level="project" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.4.0" />
+            <element id="library" level="project" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.4.2" />
+            <element id="library" level="project" name="Maven: com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.4.2" />
+            <element id="library" level="project" name="Maven: org.codehaus.woodstox:stax2-api:3.1.4" />
+            <element id="library" level="project" name="Maven: io.swagger:swagger-core:1.5.0" />
+            <element id="library" level="project" name="Maven: org.apache.commons:commons-lang3:3.2.1" />
+            <element id="library" level="project" name="Maven: com.fasterxml.jackson.datatype:jackson-datatype-joda:2.4.2" />
+            <element id="library" level="project" name="Maven: joda-time:joda-time:2.2" />
+            <element id="library" level="project" name="Maven: io.swagger:swagger-models:1.5.0" />
+            <element id="library" level="project" name="Maven: io.swagger:swagger-annotations:1.5.0" />
+            <element id="library" level="project" name="Maven: org.reflections:reflections:0.9.9" />
+            <element id="library" level="project" name="Maven: com.google.guava:guava:15.0" />
+            <element id="library" level="project" name="Maven: com.google.code.findbugs:annotations:2.0.1" />
+            <element id="library" level="project" name="Maven: com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.4.2" />
+            <element id="library" level="project" name="Maven: com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.4.2" />
+            <element id="library" level="project" name="Maven: org.glassfish.jersey.media:jersey-media-multipart:2.1" />
+            <element id="library" level="project" name="Maven: org.jvnet.mimepull:mimepull:1.8" />
           </element>
         </element>
         <element id="directory" name="META-INF">
@@ -204,15 +220,12 @@
         <module name="Webdav" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="Webdav" target="1.7" />
-    </bytecodeTargetLevel>
   </component>
   <component name="CopyrightManager" default="" />
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
-  <component name="DataSourceManagerImpl" format="xml" hash="277395301">
+  <component name="DataSourceManagerImpl" format="xml" hash="3146058086">
     <data-source source="LOCAL" name="FlyPortal DB" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
-      <driver-ref>c6475d3f-28b6-404a-be36-eb5181eeabb4</driver-ref>
+      <driver-ref>mysql</driver-ref>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://dev-db:3306/flyportal</jdbc-url>
       <libraries>
@@ -251,7 +264,6 @@
   </component>
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
     <file url="file://$PROJECT_DIR$/compute/test/org/janelia/it/jacs/compute/access/SageDAOTest.java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/webdav" charset="UTF-8" />
     <file url="PROJECT" charset="UTF-8" />
   </component>
   <component name="EntryPointsManager">
@@ -262,7 +274,27 @@
     </list>
   </component>
   <component name="FrameworkDetectionExcludesConfiguration">
-    <file type="web" url="file://$PROJECT_DIR$/webdav" />
+    <file type="web" url="file://$PROJECT_DIR$" />
+    <type id="Spring" />
+  </component>
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="distributionType" value="LOCAL" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleHome" value="$USER_HOME$/gradle-2.5" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+          </set>
+        </option>
+        <option name="myModules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
   </component>
   <component name="IdProvider" IDEtalkID="B1B36B4D70CCA5A6FF873836AF99BC9E" />
   <component name="InspectionProjectProfileManager">
@@ -282,13 +314,14 @@
     <option name="PROJECT_PROFILE" value="Project Default" />
     <option name="USE_PROJECT_PROFILE" value="true" />
     <version value="1.0" />
-    <list size="6">
-      <item index="0" class="java.lang.String" itemvalue="SERVER PROBLEM" />
-      <item index="1" class="java.lang.String" itemvalue="WEAK WARNING" />
-      <item index="2" class="java.lang.String" itemvalue="INFO" />
-      <item index="3" class="java.lang.String" itemvalue="TYPO" />
-      <item index="4" class="java.lang.String" itemvalue="WARNING" />
-      <item index="5" class="java.lang.String" itemvalue="ERROR" />
+    <list size="7">
+      <item index="0" class="java.lang.String" itemvalue="UNUSED ENTRY" />
+      <item index="1" class="java.lang.String" itemvalue="SERVER PROBLEM" />
+      <item index="2" class="java.lang.String" itemvalue="WEAK WARNING" />
+      <item index="3" class="java.lang.String" itemvalue="INFO" />
+      <item index="4" class="java.lang.String" itemvalue="TYPO" />
+      <item index="5" class="java.lang.String" itemvalue="WARNING" />
+      <item index="6" class="java.lang.String" itemvalue="ERROR" />
     </list>
   </component>
   <component name="JavadocGenerationManager">
@@ -443,10 +476,28 @@
   <component name="ProjectCodeStyleSettingsManager">
     <option name="PER_PROJECT_SETTINGS">
       <value>
+        <option name="LINE_SEPARATOR" value="&#10;" />
+        <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="10" />
+        <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="10" />
+        <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
+          <value />
+        </option>
+        <option name="IMPORT_LAYOUT_TABLE">
+          <value>
+            <package name="java" withSubpackages="true" static="false" />
+            <emptyLine />
+            <package name="javax" withSubpackages="true" static="false" />
+            <emptyLine />
+            <package name="" withSubpackages="true" static="false" />
+            <emptyLine />
+            <package name="" withSubpackages="true" static="true" />
+          </value>
+        </option>
         <XML>
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
         </XML>
         <codeStyleSettings language="JAVA">
+          <option name="ELSE_ON_NEW_LINE" value="true" />
           <option name="CATCH_ON_NEW_LINE" value="true" />
           <option name="FINALLY_ON_NEW_LINE" value="true" />
           <option name="WHILE_BRACE_FORCE" value="3" />
@@ -472,7 +523,6 @@
       <module fileurl="file://$PROJECT_DIR$/jacs/Jacs.iml" filepath="$PROJECT_DIR$/jacs/Jacs.iml" />
       <module fileurl="file://$PROJECT_DIR$/model/Model.iml" filepath="$PROJECT_DIR$/model/Model.iml" />
       <module fileurl="file://$PROJECT_DIR$/shared/Shared.iml" filepath="$PROJECT_DIR$/shared/Shared.iml" />
-      <module fileurl="file://$PROJECT_DIR$/webdav/Webdav.iml" filepath="$PROJECT_DIR$/webdav/Webdav.iml" />
       <module fileurl="file://$PROJECT_DIR$/archive/archive.iml" filepath="$PROJECT_DIR$/archive/archive.iml" />
       <module fileurl="file://$PROJECT_DIR$/buildprocess/buildprocess.iml" filepath="$PROJECT_DIR$/buildprocess/buildprocess.iml" />
       <module fileurl="file://$PROJECT_DIR$/dashboard/dashboard.iml" filepath="$PROJECT_DIR$/dashboard/dashboard.iml" />
@@ -835,6 +885,10 @@
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
   <component name="dataSourceStorageLocal">
@@ -861,11 +915,12 @@
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-logging-1.1.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-net-2.0.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Apache-Commons/commons-vfs-1.0.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Apache-Commons/log4j-1.2.15.jar!/" />
+        <root url="file://$PROJECT_DIR$/common/Apache-Commons" />
         <root url="file://$PROJECT_DIR$/common/Apache-Commons" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Apache-Commons" recursive="false" />
       <jarDirectory url="file://$PROJECT_DIR$/common/Apache-Commons" recursive="false" />
     </library>
     <library name="Axis2">
@@ -912,7 +967,6 @@
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jalopy-1.5rc3.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-api-2.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-impl-2.1.7.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxb-xjc-2.1.7.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jaxen-1.1.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jettison-1.0-RC2.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Axis2-1.5.5/jibx-bind-1.2.1.jar!/" />
@@ -1186,12 +1240,322 @@
       <JAVADOC />
       <SOURCES />
     </library>
+    <library name="Directory">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Directory" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Directory" recursive="false" />
+    </library>
+    <library name="ehcache">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/ehcache" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/ehcache" recursive="false" />
+    </library>
     <library name="GoogleAnalytics">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/compute/lib/JGoogleAnalytics_0.4.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+    </library>
+    <library name="Gradle: antlr:antlr:2.7.7">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/antlr/antlr/2.7.7/83cd2cd674a217ade95a4bb83a8a14f351f48bd0/antlr-2.7.7.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Gradle: asm:asm-analysis:3.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/asm/asm-analysis/3.2/c624956db93975b7197699dcd7de6145ca7cf2c8/asm-analysis-3.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Gradle: asm:asm-commons:3.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/asm/asm-commons/3.2/e7a19b8c60589499e35f5d2068d09013030b8891/asm-commons-3.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Gradle: asm:asm-tree:3.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/asm/asm-tree/3.2/cd792e29c79d170c5d0bdd05adf5807cf6875c90/asm-tree-3.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Gradle: asm:asm-util:3.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/asm/asm-util/3.2/37ebfdad34d5f1f45109981465f311bbfbe82dcf/asm-util-3.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Gradle: asm:asm:3.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/asm/asm/3.2/9bc1511dec6adf302991ced13303e4140fdf9ab7/asm-3.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Gradle: cglib:cglib-nodep:2.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/cglib/cglib-nodep/2.2/59afed7ab65e7ec6585d5bc60556c3cbd203532b/cglib-nodep-2.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/cglib/cglib-nodep/2.2/962f2bbd66901a9d67b0bb3c8c4a64ce6de0a8c4/cglib-nodep-2.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.2.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-annotations/2.2.2/285cb9c666f0f0f3dd8a1be04e1f457eb7b15113/jackson-annotations-2.2.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-annotations/2.2.2/a6017c0c873de183cf2ed3b419e52829af67fbea/jackson-annotations-2.2.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: com.fasterxml.jackson.core:jackson-core:2.2.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-core/2.2.2/d20be6a5ddd6f8cfd36ebf6dea329873a1c41f1b/jackson-core-2.2.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-core/2.2.2/484301cc4a756b0c9f2d77448ec51d46d8905a25/jackson-core-2.2.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.2.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-databind/2.2.2/3c8f6018eaa72d43b261181e801e6f8676c16ef6/jackson-databind-2.2.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-databind/2.2.2/274324c17714564d64e566ebe8bdb0d225a67295/jackson-databind-2.2.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: javax.annotation:javax.annotation-api:1.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.annotation/javax.annotation-api/1.2/479c1e06db31c432330183f5cae684163f186146/javax.annotation-api-1.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.annotation/javax.annotation-api/1.2/ad18a02db08eaee697f812e333f692fc51129e4a/javax.annotation-api-1.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: javax.inject:javax.inject:1">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.inject/javax.inject/1/6975da39a7040257bd51d21a231b76c915872d38/javax.inject-1.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.inject/javax.inject/1/a00123f261762a7c5e0ec916a2c7c8298d29c400/javax.inject-1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: javax.validation:validation-api:1.1.0.Final">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.validation/validation-api/1.1.0.Final/8613ae82954779d518631e05daa73a6a954817d5/validation-api-1.1.0.Final.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.validation/validation-api/1.1.0.Final/7d49b53caed9bd81d172807c3e096d24f3c57090/validation-api-1.1.0.Final-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: javax.ws.rs:javax.ws.rs-api:2.0.1">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.ws.rs/javax.ws.rs-api/2.0.1/104e9c2b5583cfcfeac0402316221648d6d8ea6b/javax.ws.rs-api-2.0.1.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/javax.ws.rs/javax.ws.rs-api/2.0.1/a20db7429fd8dfff74335ec867472b71c345049b/javax.ws.rs-api-2.0.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: junit:junit-dep:4.10">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/junit/junit-dep/4.10/64417b3bafdecd366afa514bd5beeae6c1f85ece/junit-dep-4.10.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/junit/junit-dep/4.10/2c7dad0a5eb1602c6fe6b43abec8ea35805b3ae4/junit-dep-4.10-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.apache.httpcomponents:httpcore:4.4.1">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpcore/4.4.1/f5aa318bda4c6c8d688c9d00b90681dcd82ce636/httpcore-4.4.1.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpcore/4.4.1/9700be0d0a331691654a8e901943c9a74e33c5fc/httpcore-4.4.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.codehaus.groovy:groovy-all:1.8.8">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.codehaus.groovy/groovy-all/1.8.8/98a489343d3c30da817d36cbea5de11ed07bef31/groovy-all-1.8.8.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.codehaus.groovy/groovy-all/1.8.8/5f847ed18009f8a034bad3906e39f771c01728c1/groovy-all-1.8.8-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.codehaus.groovy:groovy:1.8.6">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.codehaus.groovy/groovy/1.8.6/553ca93e0407c94c89b058c482a404427ac7fc72/groovy-1.8.6.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.codehaus.groovy/groovy/1.8.6/2ac423ad404db3e3d9053c626d4c15a84cd18b73/groovy-1.8.6-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.hk2.external:aopalliance-repackaged:2.4.0-b25">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2.external/aopalliance-repackaged/2.4.0-b25/3316675bccd4e0ca9e58c2bf150c6410bc98910a/aopalliance-repackaged-2.4.0-b25.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2.external/aopalliance-repackaged/2.4.0-b25/34ce1e4e658691a18b7175b7ca137e290d438165/aopalliance-repackaged-2.4.0-b25-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.hk2.external:javax.inject:2.4.0-b25">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2.external/javax.inject/2.4.0-b25/e0ce2f6a86fcbec80acbf0d3aca9e348be74e950/javax.inject-2.4.0-b25.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2.external/javax.inject/2.4.0-b25/f9a0ec709db3d09e9b658d946ab71bb86ea0d997/javax.inject-2.4.0-b25-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.hk2:hk2-api:2.4.0-b25">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2/hk2-api/2.4.0-b25/be7693579fcb1184455e06238c8652a4c2645d95/hk2-api-2.4.0-b25.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2/hk2-api/2.4.0-b25/1e166b5690c8a90e86a05a6f745ff9fbce98c416/hk2-api-2.4.0-b25-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.hk2:hk2-locator:2.4.0-b25">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2/hk2-locator/2.4.0-b25/89ee38141b06c712f0f3caa1ca08590ce80c71f6/hk2-locator-2.4.0-b25.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2/hk2-locator/2.4.0-b25/133a6efa8757e54e05c40612099e0edcc7a66c6b/hk2-locator-2.4.0-b25-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.hk2:hk2-utils:2.4.0-b25">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2/hk2-utils/2.4.0-b25/da0631bf28e14381c117779bb3c518f366813481/hk2-utils-2.4.0-b25.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2/hk2-utils/2.4.0-b25/d1033f5b42674a3d9e79e6ebfbe2a52c97335537/hk2-utils-2.4.0-b25-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.hk2:osgi-resource-locator:1.0.1">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2/osgi-resource-locator/1.0.1/4ed2b2d4738aed5786cfa64cba5a332779c4c708/osgi-resource-locator-1.0.1.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.hk2/osgi-resource-locator/1.0.1/b5685f8eaa7d83351b185a82a92abcd1b8b87fc8/osgi-resource-locator-1.0.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.jersey.bundles.repackaged:jersey-guava:2.19">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.bundles.repackaged/jersey-guava/2.19/f0fd5ea29c2b6c614d9e7016a75fe7a01e4c9887/jersey-guava-2.19.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.bundles.repackaged/jersey-guava/2.19/f8cd62fbbe3b58ec92567831cdffd9c88fd6bc5c/jersey-guava-2.19-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.jersey.containers:jersey-container-servlet-core:2.19">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.containers/jersey-container-servlet-core/2.19/4da2f11fa267f6f6d0a7d0625b8ad24acaf12209/jersey-container-servlet-core-2.19.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.containers/jersey-container-servlet-core/2.19/51655516a837480ebe6f85550f340ca28b9b7bbf/jersey-container-servlet-core-2.19-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.jersey.core:jersey-client:2.19">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.core/jersey-client/2.19/b6bf1e6991be31e1067c6ac9672330c0a946116d/jersey-client-2.19.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.core/jersey-client/2.19/f8edee7f1248fcb0343010537096fb2f21928701/jersey-client-2.19-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.jersey.core:jersey-common:2.19">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.core/jersey-common/2.19/8f9cbcfa71d324d9004134a86c15a124fc22fabb/jersey-common-2.19.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.core/jersey-common/2.19/a760a9c15c646bd3e8659bb7c430365a53ddfba2/jersey-common-2.19-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.jersey.core:jersey-server:2.19">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.core/jersey-server/2.19/e8be95119e9cee86f9ddbc95827a023b65351a87/jersey-server-2.19.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.core/jersey-server/2.19/99cf0e84354eb69b29e2cce46dedda9950915599/jersey-server-2.19-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.glassfish.jersey.media:jersey-media-jaxb:2.19">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.media/jersey-media-jaxb/2.19/c4b4a3de6e6ae85473316c9395eb5913bfe90d1f/jersey-media-jaxb-2.19.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.glassfish.jersey.media/jersey-media-jaxb/2.19/b97fbd4e6ef8148b5db163b31b831588c84e3ec4/jersey-media-jaxb-2.19-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.hamcrest:hamcrest-core:1.3">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.hamcrest/hamcrest-core/1.3/42a25dc3219429f0e5d060061f71acb49bf010a0/hamcrest-core-1.3.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.hamcrest/hamcrest-core/1.3/1dc37250fbc78e23a65a67fbbaf71d2e9cbc3c0b/hamcrest-core-1.3-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.javassist:javassist:3.18.1-GA">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.javassist/javassist/3.18.1-GA/d9a09f7732226af26bf99f19e2cffe0ae219db5b/javassist-3.18.1-GA.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.javassist/javassist/3.18.1-GA/d8d089f3a8845cce22d3006e02ab1403dd73b5b6/javassist-3.18.1-GA-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.objenesis:objenesis:1.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.objenesis/objenesis/1.2/bfcb0539a071a4c5a30690388903ac48c0667f2a/objenesis-1.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.objenesis/objenesis/1.2/71909ee0264af468fe26f0a2467d01bcb85f6fa9/objenesis-1.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.spockframework:spock-core:0.7-groovy-1.8">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.spockframework/spock-core/0.7-groovy-1.8/3a677d19e8d3acf3bd296c4023356256d55da5a3/spock-core-0.7-groovy-1.8.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.spockframework/spock-core/0.7-groovy-1.8/4af8952e6bed87f15cf6a5077c85d1e45b68cb7f/spock-core-0.7-groovy-1.8-sources.jar!/" />
+      </SOURCES>
     </library>
     <library name="Groovy">
       <CLASSES>
@@ -1248,12 +1612,28 @@
       <JAVADOC />
       <SOURCES />
     </library>
+    <library name="jama-1.0">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/jama-1.0.1" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/jama-1.0.1" recursive="false" />
+    </library>
     <library name="Jama-1.0.3">
       <CLASSES>
         <root url="jar://$PROJECT_DIR$/common/jama-1.0.1/Jama-1.0.3.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+    </library>
+    <library name="JAX-RS-2.0">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/JAX-RS-2.0.1" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/JAX-RS-2.0.1" recursive="false" />
     </library>
     <library name="JAXB">
       <CLASSES>
@@ -1287,7 +1667,6 @@
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/javassist.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxb-api.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxb-impl.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxb-xjc.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxws-rt.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jaxws-tools.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-annotations-ejb3.jar!/" />
@@ -1346,6 +1725,33 @@
       <JAVADOC />
       <SOURCES />
     </library>
+    <library name="JBoss Minimal">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jbossall-client.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/antlr.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/concurrent.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/javassist.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-annotations-ejb3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-ejb3.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-ejb3x.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/quartz.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/JBoss-Server-4.2.3.GA/jboss-system.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Jetty/servlet-api-3.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="Jersey-2">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Jersey-2.19" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="file://$PROJECT_DIR$/common/Jersey-2.19" />
+      </SOURCES>
+      <jarDirectory url="file://$PROJECT_DIR$/common/Jersey-2.19" recursive="false" />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Jersey-2.19" recursive="false" type="SOURCES" />
+    </library>
     <library name="Jetty">
       <CLASSES>
         <root url="file://$PROJECT_DIR$/common/Jetty" />
@@ -1361,6 +1767,14 @@
       <JAVADOC />
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/JKtx" recursive="false" />
+    </library>
+    <library name="JodaTime">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/JodaTime" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/JodaTime" recursive="false" />
     </library>
     <library name="JUnit-4.11">
       <CLASSES>
@@ -1388,11 +1802,15 @@
     </library>
     <library name="Logging">
       <CLASSES>
-        <root url="file://$PROJECT_DIR$/common/Logging" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/logback-access-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/logback-classic-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/logback-core-1.0.13.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/perf4j-0.9.16-logbackonly.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/slf4j-api-1.7.5.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Logging/slf4j-log4j12-1.7.5.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
-      <jarDirectory url="file://$PROJECT_DIR$/common/Logging" recursive="false" />
     </library>
     <library name="Lucene">
       <CLASSES>
@@ -1412,59 +1830,125 @@
       <jarDirectory url="file://$PROJECT_DIR$/common/LZ4" recursive="false" />
       <jarDirectory url="file://$PROJECT_DIR$/common/LZ4" recursive="false" type="SOURCES" />
     </library>
-    <library name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.2.2">
+    <library name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.4.0">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.2.2/jackson-annotations-2.2.2.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.4.0/jackson-annotations-2.4.0.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.2.2/jackson-annotations-2.2.2-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.4.0/jackson-annotations-2.4.0-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.2.2/jackson-annotations-2.2.2-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.4.0/jackson-annotations-2.4.0-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: com.fasterxml.jackson.core:jackson-core:2.2.2">
+    <library name="Maven: com.fasterxml.jackson.core:jackson-core:2.4.2">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.2.2/jackson-core-2.2.2.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.4.2/jackson-core-2.4.2.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.2.2/jackson-core-2.2.2-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.4.2/jackson-core-2.4.2-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.2.2/jackson-core-2.2.2-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.4.2/jackson-core-2.4.2-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: com.fasterxml.jackson.core:jackson-databind:2.2.2">
+    <library name="Maven: com.fasterxml.jackson.core:jackson-databind:2.4.2">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.2.2/jackson-databind-2.2.2.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.4.2/jackson-databind-2.4.2.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.2.2/jackson-databind-2.2.2-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.4.2/jackson-databind-2.4.2-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.2.2/jackson-databind-2.2.2-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.4.2/jackson-databind-2.4.2-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.2.2">
+    <library name="Maven: com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.4.2">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.2.2/jackson-dataformat-xml-2.2.2.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.4.2/jackson-dataformat-xml-2.4.2.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.2.2/jackson-dataformat-xml-2.2.2-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.4.2/jackson-dataformat-xml-2.4.2-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.2.2/jackson-dataformat-xml-2.2.2-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.4.2/jackson-dataformat-xml-2.4.2-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.2.2">
+    <library name="Maven: com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.4.2">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.2.2/jackson-module-jaxb-annotations-2.2.2.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.4.2/jackson-dataformat-yaml-2.4.2.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.2.2/jackson-module-jaxb-annotations-2.2.2-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.4.2/jackson-dataformat-yaml-2.4.2-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.2.2/jackson-module-jaxb-annotations-2.2.2-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.4.2/jackson-dataformat-yaml-2.4.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: com.fasterxml.jackson.datatype:jackson-datatype-joda:2.4.2">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.4.2/jackson-datatype-joda-2.4.2.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.4.2/jackson-datatype-joda-2.4.2-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.4.2/jackson-datatype-joda-2.4.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:2.4.2">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jaxrs/jackson-jaxrs-base/2.4.2/jackson-jaxrs-base-2.4.2.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jaxrs/jackson-jaxrs-base/2.4.2/jackson-jaxrs-base-2.4.2-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jaxrs/jackson-jaxrs-base/2.4.2/jackson-jaxrs-base-2.4.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.4.2">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jaxrs/jackson-jaxrs-json-provider/2.4.2/jackson-jaxrs-json-provider-2.4.2.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jaxrs/jackson-jaxrs-json-provider/2.4.2/jackson-jaxrs-json-provider-2.4.2-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jaxrs/jackson-jaxrs-json-provider/2.4.2/jackson-jaxrs-json-provider-2.4.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.4.2">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.4.2/jackson-module-jaxb-annotations-2.4.2.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.4.2/jackson-module-jaxb-annotations-2.4.2-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.4.2/jackson-module-jaxb-annotations-2.4.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: com.google.code.findbugs:annotations:2.0.1">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/annotations/2.0.1/annotations-2.0.1.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/annotations/2.0.1/annotations-2.0.1-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/annotations/2.0.1/annotations-2.0.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: com.google.guava:guava:15.0">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/15.0/guava-15.0.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/15.0/guava-15.0-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/15.0/guava-15.0-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="Maven: commons-codec:commons-codec:1.2">
@@ -1544,6 +2028,61 @@
         <root url="jar://$MAVEN_REPOSITORY$/commons-pool/commons-pool/1.6/commons-pool-1.6-sources.jar!/" />
       </SOURCES>
     </library>
+    <library name="Maven: io.swagger:swagger-annotations:1.5.0">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-annotations/1.5.0/swagger-annotations-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-annotations/1.5.0/swagger-annotations-1.5.0-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-annotations/1.5.0/swagger-annotations-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: io.swagger:swagger-core:1.5.0">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-core/1.5.0/swagger-core-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-core/1.5.0/swagger-core-1.5.0-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-core/1.5.0/swagger-core-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: io.swagger:swagger-jaxrs:1.5.0">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-jaxrs/1.5.0/swagger-jaxrs-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-jaxrs/1.5.0/swagger-jaxrs-1.5.0-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-jaxrs/1.5.0/swagger-jaxrs-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: io.swagger:swagger-jersey2-jaxrs:1.5.0">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-jersey2-jaxrs/1.5.0/swagger-jersey2-jaxrs-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-jersey2-jaxrs/1.5.0/swagger-jersey2-jaxrs-1.5.0-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-jersey2-jaxrs/1.5.0/swagger-jersey2-jaxrs-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: io.swagger:swagger-models:1.5.0">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-models/1.5.0/swagger-models-1.5.0.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-models/1.5.0/swagger-models-1.5.0-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/io/swagger/swagger-models/1.5.0/swagger-models-1.5.0-sources.jar!/" />
+      </SOURCES>
+    </library>
     <library name="Maven: javax.annotation:javax.annotation-api:1.2">
       <CLASSES>
         <root url="jar://$MAVEN_REPOSITORY$/javax/annotation/javax.annotation-api/1.2/javax.annotation-api-1.2.jar!/" />
@@ -1588,15 +2127,26 @@
         <root url="jar://$MAVEN_REPOSITORY$/javax/ws/rs/javax.ws.rs-api/2.0.1/javax.ws.rs-api-2.0.1-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: javax.xml.stream:stax-api:1.0-2">
+    <library name="Maven: joda-time:joda-time:2.2">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/javax/xml/stream/stax-api/1.0-2/stax-api-1.0-2.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.2/joda-time-2.2.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/javax/xml/stream/stax-api/1.0-2/stax-api-1.0-2-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.2/joda-time-2.2-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/javax/xml/stream/stax-api/1.0-2/stax-api-1.0-2-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.2/joda-time-2.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: org.apache.commons:commons-lang3:3.2.1">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.2.1/commons-lang3-3.2.1.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.2.1/commons-lang3-3.2.1-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.2.1/commons-lang3-3.2.1-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="Maven: org.apache.directory.api:api-all:1.0.0-M30">
@@ -1654,70 +2204,70 @@
         <root url="jar://$MAVEN_REPOSITORY$/org/apache/servicemix/bundles/org.apache.servicemix.bundles.xpp3/1.1.4c_6/org.apache.servicemix.bundles.xpp3-1.1.4c_6-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.codehaus.woodstox:stax2-api:3.1.1">
+    <library name="Maven: org.codehaus.woodstox:stax2-api:3.1.4">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/3.1.1/stax2-api-3.1.1.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/3.1.4/stax2-api-3.1.4.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/3.1.1/stax2-api-3.1.1-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/3.1.4/stax2-api-3.1.4-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/3.1.1/stax2-api-3.1.1-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/3.1.4/stax2-api-3.1.4-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.glassfish.hk2.external:aopalliance-repackaged:2.4.0-b12">
+    <library name="Maven: org.glassfish.hk2.external:aopalliance-repackaged:2.4.0-b31">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/aopalliance-repackaged/2.4.0-b12/aopalliance-repackaged-2.4.0-b12.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/aopalliance-repackaged/2.4.0-b31/aopalliance-repackaged-2.4.0-b31.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/aopalliance-repackaged/2.4.0-b12/aopalliance-repackaged-2.4.0-b12-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/aopalliance-repackaged/2.4.0-b31/aopalliance-repackaged-2.4.0-b31-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/aopalliance-repackaged/2.4.0-b12/aopalliance-repackaged-2.4.0-b12-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/aopalliance-repackaged/2.4.0-b31/aopalliance-repackaged-2.4.0-b31-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.glassfish.hk2.external:javax.inject:2.4.0-b12">
+    <library name="Maven: org.glassfish.hk2.external:javax.inject:2.4.0-b31">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/javax.inject/2.4.0-b12/javax.inject-2.4.0-b12.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/javax.inject/2.4.0-b31/javax.inject-2.4.0-b31.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/javax.inject/2.4.0-b12/javax.inject-2.4.0-b12-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/javax.inject/2.4.0-b31/javax.inject-2.4.0-b31-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/javax.inject/2.4.0-b12/javax.inject-2.4.0-b12-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/external/javax.inject/2.4.0-b31/javax.inject-2.4.0-b31-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.glassfish.hk2:hk2-api:2.4.0-b12">
+    <library name="Maven: org.glassfish.hk2:hk2-api:2.4.0-b31">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-api/2.4.0-b12/hk2-api-2.4.0-b12.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-api/2.4.0-b31/hk2-api-2.4.0-b31.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-api/2.4.0-b12/hk2-api-2.4.0-b12-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-api/2.4.0-b31/hk2-api-2.4.0-b31-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-api/2.4.0-b12/hk2-api-2.4.0-b12-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-api/2.4.0-b31/hk2-api-2.4.0-b31-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.glassfish.hk2:hk2-locator:2.4.0-b12">
+    <library name="Maven: org.glassfish.hk2:hk2-locator:2.4.0-b31">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-locator/2.4.0-b12/hk2-locator-2.4.0-b12.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-locator/2.4.0-b31/hk2-locator-2.4.0-b31.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-locator/2.4.0-b12/hk2-locator-2.4.0-b12-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-locator/2.4.0-b31/hk2-locator-2.4.0-b31-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-locator/2.4.0-b12/hk2-locator-2.4.0-b12-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-locator/2.4.0-b31/hk2-locator-2.4.0-b31-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.glassfish.hk2:hk2-utils:2.4.0-b12">
+    <library name="Maven: org.glassfish.hk2:hk2-utils:2.4.0-b31">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-utils/2.4.0-b12/hk2-utils-2.4.0-b12.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-utils/2.4.0-b31/hk2-utils-2.4.0-b31.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-utils/2.4.0-b12/hk2-utils-2.4.0-b12-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-utils/2.4.0-b31/hk2-utils-2.4.0-b31-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-utils/2.4.0-b12/hk2-utils-2.4.0-b12-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/hk2-utils/2.4.0-b31/hk2-utils-2.4.0-b31-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="Maven: org.glassfish.hk2:osgi-resource-locator:1.0.1">
@@ -1731,70 +2281,92 @@
         <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/hk2/osgi-resource-locator/1.0.1/osgi-resource-locator-1.0.1-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.glassfish.jersey.bundles.repackaged:jersey-guava:2.18">
+    <library name="Maven: org.glassfish.jersey.bundles.repackaged:jersey-guava:2.22">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/bundles/repackaged/jersey-guava/2.18/jersey-guava-2.18.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/bundles/repackaged/jersey-guava/2.22/jersey-guava-2.22.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/bundles/repackaged/jersey-guava/2.18/jersey-guava-2.18-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/bundles/repackaged/jersey-guava/2.22/jersey-guava-2.22-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/bundles/repackaged/jersey-guava/2.18/jersey-guava-2.18-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/bundles/repackaged/jersey-guava/2.22/jersey-guava-2.22-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.glassfish.jersey.containers:jersey-container-servlet-core:2.18">
+    <library name="Maven: org.glassfish.jersey.containers:jersey-container-servlet-core:2.22">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/containers/jersey-container-servlet-core/2.18/jersey-container-servlet-core-2.18.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/containers/jersey-container-servlet-core/2.22/jersey-container-servlet-core-2.22.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/containers/jersey-container-servlet-core/2.18/jersey-container-servlet-core-2.18-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/containers/jersey-container-servlet-core/2.22/jersey-container-servlet-core-2.22-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/containers/jersey-container-servlet-core/2.18/jersey-container-servlet-core-2.18-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/containers/jersey-container-servlet-core/2.22/jersey-container-servlet-core-2.22-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.glassfish.jersey.core:jersey-client:2.18">
+    <library name="Maven: org.glassfish.jersey.containers:jersey-container-servlet:2.22">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-client/2.18/jersey-client-2.18.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/containers/jersey-container-servlet/2.22/jersey-container-servlet-2.22.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-client/2.18/jersey-client-2.18-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/containers/jersey-container-servlet/2.22/jersey-container-servlet-2.22-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-client/2.18/jersey-client-2.18-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/containers/jersey-container-servlet/2.22/jersey-container-servlet-2.22-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.glassfish.jersey.core:jersey-common:2.18">
+    <library name="Maven: org.glassfish.jersey.core:jersey-client:2.22">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-common/2.18/jersey-common-2.18.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-client/2.22/jersey-client-2.22.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-common/2.18/jersey-common-2.18-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-client/2.22/jersey-client-2.22-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-common/2.18/jersey-common-2.18-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-client/2.22/jersey-client-2.22-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.glassfish.jersey.core:jersey-server:2.18">
+    <library name="Maven: org.glassfish.jersey.core:jersey-common:2.22">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-server/2.18/jersey-server-2.18.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-common/2.22/jersey-common-2.22.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-server/2.18/jersey-server-2.18-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-common/2.22/jersey-common-2.22-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-server/2.18/jersey-server-2.18-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-common/2.22/jersey-common-2.22-sources.jar!/" />
       </SOURCES>
     </library>
-    <library name="Maven: org.glassfish.jersey.media:jersey-media-jaxb:2.18">
+    <library name="Maven: org.glassfish.jersey.core:jersey-server:2.22">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/media/jersey-media-jaxb/2.18/jersey-media-jaxb-2.18.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-server/2.22/jersey-server-2.22.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/media/jersey-media-jaxb/2.18/jersey-media-jaxb-2.18-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-server/2.22/jersey-server-2.22-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/media/jersey-media-jaxb/2.18/jersey-media-jaxb-2.18-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/core/jersey-server/2.22/jersey-server-2.22-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: org.glassfish.jersey.media:jersey-media-jaxb:2.22">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/media/jersey-media-jaxb/2.22/jersey-media-jaxb-2.22.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/media/jersey-media-jaxb/2.22/jersey-media-jaxb-2.22-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/media/jersey-media-jaxb/2.22/jersey-media-jaxb-2.22-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: org.glassfish.jersey.media:jersey-media-multipart:2.1">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/media/jersey-media-multipart/2.1/jersey-media-multipart-2.1.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/media/jersey-media-multipart/2.1/jersey-media-multipart-2.1-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/glassfish/jersey/media/jersey-media-multipart/2.1/jersey-media-multipart-2.1-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="Maven: org.javassist:javassist:3.18.1-GA">
@@ -1806,6 +2378,28 @@
       </JAVADOC>
       <SOURCES>
         <root url="jar://$MAVEN_REPOSITORY$/org/javassist/javassist/3.18.1-GA/javassist-3.18.1-GA-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: org.jvnet.mimepull:mimepull:1.8">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/mimepull/mimepull/1.8/mimepull-1.8.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/mimepull/mimepull/1.8/mimepull-1.8-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/mimepull/mimepull/1.8/mimepull-1.8-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: org.reflections:reflections:0.9.9">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/reflections/reflections/0.9.9/reflections-0.9.9.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/org/reflections/reflections/0.9.9/reflections-0.9.9-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/reflections/reflections/0.9.9/reflections-0.9.9-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="Maven: org.slf4j:slf4j-api:1.7.10">
@@ -1832,18 +2426,19 @@
     </library>
     <library name="MongoDB">
       <CLASSES>
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongo-java-driver-2.11.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/bson4jackson-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-annotations-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-core-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-databind-2.2.3.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/jongo-1.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/bson4jackson-2.4.0.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-annotations-2.4.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-core-2.4.1.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jackson-databind-2.4.1.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/MongoDB/jsr305-1.3.9.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/bson-3.2.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongodb-driver-3.2.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongodb-driver-core-3.2.2.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/MongoDB/jongo-1.3.0.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES>
         <root url="jar://$PROJECT_DIR$/common/MongoDB/jsr305-1.3.9.jar!/" />
-        <root url="jar://$PROJECT_DIR$/common/MongoDB/mongo-java-driver-2.11.3-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="protostuff-1.3">
@@ -1856,6 +2451,14 @@
       </SOURCES>
       <jarDirectory url="file://$PROJECT_DIR$/common/protostuff-1.3.9" recursive="false" />
       <jarDirectory url="file://$PROJECT_DIR$/common/protostuff-1.3.9" recursive="false" type="SOURCES" />
+    </library>
+    <library name="Reflections">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/Reflections" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/Reflections" recursive="false" />
     </library>
     <library name="RESTEasy-2.3.4">
       <CLASSES>
@@ -1962,6 +2565,22 @@
       </CLASSES>
       <JAVADOC />
       <SOURCES />
+    </library>
+    <library name="swagger">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/common/swagger" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/common/swagger" recursive="false" />
+    </library>
+    <library name="xstream">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/compute/lib/xstream" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/compute/lib/xstream" recursive="false" />
     </library>
     <library name="WildFly-10.0.0.Final">
       <CLASSES>
