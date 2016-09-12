@@ -225,7 +225,7 @@
   <component name="CppTools.Loader" reportImplicitCastToBool="false" reportNameReferencedOnce="false" warnedAboutFileOutOfSourceRoot="true" version="3" compilerSelect="AUTO" />
   <component name="DataSourceManagerImpl" format="xml" hash="3146058086">
     <data-source source="LOCAL" name="FlyPortal DB" uuid="36a8a5cf-e8c3-4d85-ae1a-4aac271c843f">
-      <driver-ref>mysql</driver-ref>
+      <driver-ref>c6475d3f-28b6-404a-be36-eb5181eeabb4</driver-ref>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://dev-db:3306/flyportal</jdbc-url>
       <libraries>
@@ -885,9 +885,6 @@
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
@@ -2574,14 +2571,6 @@
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/swagger" recursive="false" />
     </library>
-    <library name="xstream">
-      <CLASSES>
-        <root url="file://$PROJECT_DIR$/compute/lib/xstream" />
-      </CLASSES>
-      <JAVADOC />
-      <SOURCES />
-      <jarDirectory url="file://$PROJECT_DIR$/compute/lib/xstream" recursive="false" />
-    </library>
     <library name="WildFly-10.0.0.Final">
       <CLASSES>
         <root url="file://$PROJECT_DIR$/common/WildFly-10.0.0.Final" />
@@ -2589,6 +2578,14 @@
       <JAVADOC />
       <SOURCES />
       <jarDirectory url="file://$PROJECT_DIR$/common/WildFly-10.0.0.Final" recursive="false" />
+    </library>
+    <library name="xstream">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/compute/lib/xstream" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/compute/lib/xstream" recursive="false" />
     </library>
   </component>
   <component name="org.twodividedbyzero.idea.findbugs">
