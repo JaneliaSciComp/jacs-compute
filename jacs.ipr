@@ -1428,6 +1428,7 @@
         <root url="jar://$PROJECT_DIR$/common/Wildfly-10/jboss-ejb3-ext-api-2.2.0.Final.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Wildfly-10/jboss-interceptors-api_1.2_spec-1.0.0.Final.jar!/" />
         <root url="jar://$PROJECT_DIR$/common/Wildfly-10/jboss-jms-api_2.0_spec-1.0.0.Final.jar!/" />
+        <root url="jar://$PROJECT_DIR$/common/Wildfly-10/jboss-client.jar!/" />
       </CLASSES>
       <JAVADOC />
       <SOURCES />
