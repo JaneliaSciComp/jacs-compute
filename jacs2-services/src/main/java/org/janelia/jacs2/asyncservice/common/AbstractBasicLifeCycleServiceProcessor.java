@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
 public abstract class AbstractBasicLifeCycleServiceProcessor<T> extends AbstractServiceProcessor<T> {
 
@@ -28,12 +30,17 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<T> extends Abstract
 
     @Override
     public ServiceComputation<T> process(JacsServiceData jacsServiceData) {
-        JacsServiceData currentServiceData = this.prepareProcessing(jacsServiceData);
-        this.submitServiceDependencies(currentServiceData);
-        return computationFactory.newCompletedComputation(currentServiceData)
-                .thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(currentServiceData)) // suspend until all dependencies complete
+        JacsServiceData[] currentServiceDataHolder = new JacsServiceData[1]; // this will enclose the service data with the changes made by the prepareProcessing method in case there are any
+        return computationFactory.newCompletedComputation(jacsServiceData)
+                .thenApply(sd -> {
+                    currentServiceDataHolder[0] = this.prepareProcessing(sd);
+                    this.submitServiceDependencies(currentServiceDataHolder[0]);
+                    return currentServiceDataHolder[0];
+                })
+                .thenApply(this::prepareProcessing)
+                .thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(currentServiceDataHolder[0])) // suspend until all dependencies complete
                 .thenCompose(this::processing)
-                .thenSuspendUntil(() -> this.isResultReady(currentServiceData)) // wait until the result becomes available
+                .thenSuspendUntil(() -> this.isResultReady(currentServiceDataHolder[0])) // wait until the result becomes available
                 .thenApply(sd -> {
                     T r = this.getResultHandler().collectResult(sd);
                     this.getResultHandler().updateServiceDataResult(sd, r);
@@ -48,11 +55,6 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<T> extends Abstract
                         success(jacsServiceData);
                     }
                 });
-    }
-
-    @Override
-    public ServiceErrorChecker getErrorChecker() {
-        return new DefaultServiceErrorChecker(logger);
     }
 
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
@@ -188,6 +190,38 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<T> extends Abstract
         } else {
             jacsServiceDataPersistence.saveHierarchy(dependency);
             return dependency;
+        }
+    }
+
+    protected void sleep(long millis) {
+        sleep(millis, new CyclicBarrier(2));
+    }
+
+    protected void sleep(long millis, CyclicBarrier barrier) {
+        long startTime = System.currentTimeMillis();
+        long sleepUntil = startTime + millis;
+        ServiceComputation<Void> sc = computationFactory.<Void>newCompletedComputation(null)
+                .thenSuspendUntil(() -> {
+                    long currentTime = System.currentTimeMillis();
+                    return currentTime >= sleepUntil;
+                })
+                .thenApply(r -> {
+                    try {
+                        barrier.await();
+                    } catch (InterruptedException e) {
+                        return null;
+                    } catch (BrokenBarrierException e) {
+                        return null;
+                    }
+                    return null;
+                })
+                ;
+        try {
+            barrier.await();
+        } catch (InterruptedException e) {
+            return;
+        } catch (BrokenBarrierException e) {
+            return;
         }
     }
 }
