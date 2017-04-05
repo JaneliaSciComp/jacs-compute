@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.janelia.cont.Suspendable;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
@@ -11,8 +12,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
 
 public abstract class AbstractBasicLifeCycleServiceProcessor<T> extends AbstractServiceProcessor<T> {
 
@@ -193,35 +192,9 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<T> extends Abstract
         }
     }
 
+    @Suspendable
     protected void sleep(long millis) {
-        sleep(millis, new CyclicBarrier(2));
+        // // TODO
     }
 
-    protected void sleep(long millis, CyclicBarrier barrier) {
-        long startTime = System.currentTimeMillis();
-        long sleepUntil = startTime + millis;
-        ServiceComputation<Void> sc = computationFactory.<Void>newCompletedComputation(null)
-                .thenSuspendUntil(() -> {
-                    long currentTime = System.currentTimeMillis();
-                    return currentTime >= sleepUntil;
-                })
-                .thenApply(r -> {
-                    try {
-                        barrier.await();
-                    } catch (InterruptedException e) {
-                        return null;
-                    } catch (BrokenBarrierException e) {
-                        return null;
-                    }
-                    return null;
-                })
-                ;
-        try {
-            barrier.await();
-        } catch (InterruptedException e) {
-            return;
-        } catch (BrokenBarrierException e) {
-            return;
-        }
-    }
 }

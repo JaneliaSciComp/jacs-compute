@@ -274,7 +274,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
                 logger) {
             @Override
             protected ServiceComputation<JacsServiceData> processing(JacsServiceData jacsServiceData) {
-                sleep(500, new CyclicBarrier(1));
+                sleep(500);
                 return super.processing(jacsServiceData);
             }
         };

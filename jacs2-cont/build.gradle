@@ -1,0 +1,21 @@
+project(":jacs2-cont") {
+
+    apply plugin: "maven"
+
+    dependencies {
+        compile gradleApi(),
+                ASM_ALL_LIB,
+                COMMONS_COMPRESS_LIB,
+                COMMONS_IO_LIB,
+                COMMONS_JXPATH_LIB
+    }
+
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                repository(url: uri('../repo'))
+            }
+        }
+    }
+}
+

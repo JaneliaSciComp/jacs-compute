@@ -1,8 +1,11 @@
 package org.janelia.jacs2.asyncservice.demo;
 
 import com.beust.jcommander.Parameter;
-import org.janelia.jacs2.asyncservice.JacsServiceEngine;
-import org.janelia.jacs2.asyncservice.common.*;
+import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceComputation;
+import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -11,24 +14,19 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-/**
- * Created by murphys on 3/29/17.
- */
 
 @Named("level2ComputeTest")
 public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Long> {
 
-    private static final int DEFAULT_COUNT=5;
+    private static final int DEFAULT_COUNT = 5;
 
     public static class Level2ComputeTestArgs extends ServiceArgs {
-        @Parameter(names="-levelCount", description="Number of concurrent child level tests", required=false)
-        Integer levelCount=DEFAULT_COUNT;
-        @Parameter(names = "-testName", description = "Optional unique test name", required=false)
-        String testName="Level2ComputeTest";
+        @Parameter(names = "-levelCount", description = "Number of concurrent child level tests", required = false)
+        Integer levelCount = DEFAULT_COUNT;
+        @Parameter(names = "-testName", description = "Optional unique test name", required = false)
+        String testName = "Level2ComputeTest";
     }
 
     private long resultComputationTime;
@@ -42,11 +40,11 @@ public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
     @Inject
     public Level2ComputeTestProcessor(ServiceComputationFactory computationFactory,
                                       JacsServiceDataPersistence jacsServiceDataPersistence,
-                                      @PropertyValue(name="service.DefaultWorkingDir") String defaultWorkingDir,
+                                      @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                       Logger logger,
                                       Level1ComputeTestProcessor level1ComputeTestProcessor) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.level1ComputeTestProcessor=level1ComputeTestProcessor;
+        this.level1ComputeTestProcessor = level1ComputeTestProcessor;
     }
 
     @Override
@@ -55,32 +53,8 @@ public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
     }
 
     @Override
-    public ServiceResultHandler<Long> getResultHandler() {
-        return new ServiceResultHandler<Long>() {
-            @Override
-            public boolean isResultReady(JacsServiceData jacsServiceData) {
-                return true;
-            }
-
-            @Override
-            public Long collectResult(JacsServiceData jacsServiceData) {
-                return null;
-            }
-
-            @Override
-            public void updateServiceDataResult(JacsServiceData jacsServiceData, Long result) {
-
-            }
-
-            @Override
-            public Long getServiceDataResult(JacsServiceData jacsServiceData) {
-                return null;
-            }
-        };
-    }
-
-    @Override
     public ServiceComputation<JacsServiceData> processing(JacsServiceData jacsServiceData) {
+        sleep(120000);
         String serviceName = getArgs(jacsServiceData).testName;
         logger.info(serviceName + " start processing");
         long startTime = new Date().getTime();

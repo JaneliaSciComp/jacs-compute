@@ -16,6 +16,9 @@ dependencies {
         CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
+        // ASM
+        ASM_ALL_LIB = "org.ow2.asm:asm-debug-all:5.2"
+
         // database drivers
         MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:3.4.2"
 
@@ -24,6 +27,10 @@ dependencies {
         COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:${COMMONS_LANG_VERSION}"
         COMMONS_COLLECTIONS_VERSION = "4.1"
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:${COMMONS_COLLECTIONS_VERSION}"
+        COMMONS_COMPRESS_LIB = "org.apache.commons:commons-compress:1.13"
+	COMMONS_IO_LIB = "commons-io:commons-io:2.5"
+
+        COMMONS_JXPATH_LIB = "commons-jxpath:commons-jxpath:1.3"
 
         // JAX-RS API
         JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.0.1"

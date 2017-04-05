@@ -34,6 +34,7 @@ public abstract class AbstractMongoDaoITest<T extends HasIdentifier> extends Abs
     protected TimebasedIdentifierGenerator idGenerator = new TimebasedIdentifierGenerator(0);
     protected Random dataGenerator = new Random();
 
+    @SuppressWarnings("unchecked")
     @BeforeClass
     public static void setUpMongoClient() throws IOException {
         CodecRegistry codecRegistry = CodecRegistries.fromRegistries(
