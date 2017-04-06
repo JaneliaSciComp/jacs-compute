@@ -1,3 +1,14 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath group: 'net.tascalate.javaflow',  name: 'net.tascalate.javaflow.tools.ant',  version: '2.0'
+        classpath group: 'net.tascalate.javaflow',  name: 'net.tascalate.javaflow.tools.jar',  version: '2.0'
+    }
+}
+
 allprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
@@ -31,12 +42,18 @@ subprojects {
         compile.extendsFrom provided
         integrationTestCompile.extendsFrom testCompile
         integrationTestRuntime.extendsFrom testRuntime
+//	instrumentTask
     }
 
     repositories {
         mavenLocal()
         mavenCentral()
     }
+
+//    dependencies {
+//        instrumentTask 'net.tascalate.javaflow:net.tascalate.javaflow.tools.ant:2.0',
+//	               'net.tascalate.javaflow:net.tascalate.javaflow.tools.jar:2.0'
+//    }
 
     eclipse {
         classpath {

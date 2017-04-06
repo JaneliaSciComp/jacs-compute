@@ -1,7 +1,10 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.janelia.cont.Suspendable;
+import org.apache.commons.javaflow.api.Continuation;
+import org.apache.commons.javaflow.api.continuable;
+import org.apache.commons.javaflow.extras.ContinuableRunnable;
+import org.apache.commons.javaflow.extras.Continuations;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
@@ -192,9 +195,34 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<T> extends Abstract
         }
     }
 
-    @Suspendable
-    protected void sleep(long millis) {
+    private static class Sleeper implements Runnable {
+        @Override
+        public @continuable void run() {
+            Continuation.suspend();
+        }
+    }
+
+    protected @continuable void sleep(long millis) {
+        long sleepUntil = System.currentTimeMillis() + millis;
+        ContinuationCond cond = () -> {
+            long currentTime = System.currentTimeMillis();
+            return currentTime >= sleepUntil;
+        };
+        ServiceComputation<Void> sc = computationFactory.<Void>newCompletedComputation(null)
+                .thenSuspendUntil(cond)
+                .thenApply(r -> {
+                    System.out.println("!!!!!!!DONE");
+                    return null;
+                })
+                ;
+        Continuation cc = Continuation.startWith(new Sleeper());
+        if (!sc.isDone()) {
+            throw new SuspendedException(cc, cond);
+        }
+        cc.terminate();
+        System.out.println("!!!!!!!DONE SLEEPING");
         // // TODO
     }
+
 
 }

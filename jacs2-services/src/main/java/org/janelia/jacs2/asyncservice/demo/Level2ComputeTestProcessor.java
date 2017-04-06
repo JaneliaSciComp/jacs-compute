@@ -54,7 +54,7 @@ public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
 
     @Override
     public ServiceComputation<JacsServiceData> processing(JacsServiceData jacsServiceData) {
-        sleep(120000);
+        sleep(30000);
         String serviceName = getArgs(jacsServiceData).testName;
         logger.info(serviceName + " start processing");
         long startTime = new Date().getTime();

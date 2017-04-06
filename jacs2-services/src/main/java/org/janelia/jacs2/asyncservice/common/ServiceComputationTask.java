@@ -1,6 +1,8 @@
 package org.janelia.jacs2.asyncservice.common;
 
 
+import org.apache.commons.javaflow.api.Continuation;
+
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
@@ -73,6 +75,8 @@ class ServiceComputationTask<T> implements Runnable {
     private ComputeResult<T> result;
     private volatile boolean suspended;
     private volatile boolean canceled;
+    private Continuation cont;
+    private ContinuationCond contCond;
 
     ServiceComputationTask(ServiceComputation<?> dep) {
         push(dep);
@@ -108,9 +112,17 @@ class ServiceComputationTask<T> implements Runnable {
         for (;;) {
             if (isReady()) {
                 if (resultSupplier != null) {
+                    if (cont != null) {
+                        cont = cont.resume();
+                        cont = null;
+                    }
                     try {
                         complete(resultSupplier.get());
                     } catch (SuspendedException e) {
+                        if (cont == null && e.getCont() != null) {
+                            cont = e.getCont();
+                            contCond = e.getContCond();
+                        }
                         return;
                     } catch (Exception e) {
                         completeExceptionally(e);
@@ -133,6 +145,9 @@ class ServiceComputationTask<T> implements Runnable {
     boolean isReady() {
         if (isCanceled()) {
             return true;
+        }
+        if (contCond != null && !contCond.checkCond()) {
+            return false;
         }
         for (ServiceComputation<?> dep = depStack.top(); ;) {
             if (dep == null) {

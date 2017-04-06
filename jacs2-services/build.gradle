@@ -1,18 +1,42 @@
+import org.apache.commons.javaflow.spi.ResourceTransformer
+import org.apache.commons.javaflow.tools.RewritingUtils
+
 project(":jacs2-services") {
 
     dependencies {
-        compile project(":jacs2-cont"),
-	        CDI_API_LIB,
+        compile CDI_API_LIB,
                 CMDLINE_ARG_LIB,
-		COMMONS_IO_LIB,
-                COMMONS_JXPATH_LIB,
-                DRMAA1_LIB,
+		JAVAFLOW_LIB,
+		JAVAFLOW_EXTRAS_LIB,
+		DRMAA1_LIB,
                 JACKSON_ANNOTATIONS_LIB,
                 JACKSON_CORE_LIB,
                 JACKSON_DATABIND_LIB,
                 JACKSON_DATATYPE_JODA_LIB,
                 MONGODB_DRIVER_LIB,
                 REFLECTIONS_LIB
+
+	runtime JAVAFLOW_AGENT_LIB,
+                JAVAFLOW_CDI_AGENT_LIB
     }
+
+    // task instrument1 {
+    //      File srcDir = new File("${project.buildDir}/classes/main")
+    //      def cpURLsSet = [srcDir.toURI().toURL()]
+    // 	 configurations.compile.files.each {
+    // 	     cpURLsSet.add(it.toURI().toURL())
+    // 	 }
+    // 	 java.net.URL[] cpURLs = cpURLsSet.toArray()
+    // 	 ResourceTransformer dirTransformer = RewritingUtils.createTransformer(cpURLs)
+    //      def collection = fileTree(dir: srcDir, include: "**/*.class")
+    // 	 collection.collect { f ->
+    //          println "Instrument 1 $f"
+    //          RewritingUtils.rewriteClassFile(f, dirTransformer, f)
+    // 	}
+    // }
+
+//    compileJava.doLast {
+//        tasks.instrument.execute()
+//    }
 
 }

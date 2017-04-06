@@ -54,7 +54,7 @@ public class FloatComputeTestProcessor extends AbstractBasicLifeCycleServiceProc
 
     @Override
     public ServiceComputation<JacsServiceData> processing(JacsServiceData jacsServiceData) {
-        sleep(120000);
+        sleep(30000);
         String serviceName = getArgs(jacsServiceData).testName;
         logger.debug(serviceName + " start");
         FloatComputeTestArgs args = getArgs(jacsServiceData);
