@@ -196,31 +196,45 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<T> extends Abstract
     }
 
     private static class Sleeper implements Runnable {
+        private long sleepUntil;
+        private ContinuationCond cond;
+        private ServiceComputation<Void> sleepComputation;
+
+        Sleeper(long sleepMillis, ServiceComputationFactory computationFactory) {
+            sleepUntil = System.currentTimeMillis() + sleepMillis;
+            cond = () -> {
+                long currentTime = System.currentTimeMillis();
+                return currentTime >= sleepUntil;
+            };
+            sleepComputation = computationFactory.<Void>newCompletedComputation(null)
+                    .thenSuspendUntil(cond)
+                    .thenApply(r -> {
+                        System.out.println("!!!!!!!DONE " + this);
+                        Continuation.cancel();
+                        return null;
+                    })
+                    ;
+
+        }
         @Override
         public @continuable void run() {
             Continuation.suspend();
         }
     }
 
-    protected @continuable void sleep(long millis) {
-        long sleepUntil = System.currentTimeMillis() + millis;
-        ContinuationCond cond = () -> {
-            long currentTime = System.currentTimeMillis();
-            return currentTime >= sleepUntil;
-        };
-        ServiceComputation<Void> sc = computationFactory.<Void>newCompletedComputation(null)
-                .thenSuspendUntil(cond)
-                .thenApply(r -> {
-                    System.out.println("!!!!!!!DONE");
-                    return null;
-                })
-                ;
-        Continuation cc = Continuation.startWith(new Sleeper());
-        if (!sc.isDone()) {
-            throw new SuspendedException(cc, cond);
+    private Sleeper sleeperInstance;
+
+    protected void sleep(long millis) {
+        if (sleeperInstance == null) {
+            sleeperInstance = new Sleeper(millis, computationFactory);
         }
-        cc.terminate();
-        System.out.println("!!!!!!!DONE SLEEPING");
+        Continuation cc = Continuation.startWith(sleeperInstance);
+        System.out.println("!!!!! IN MAIN LOOP " + this + " " + sleeperInstance + " " + cc);
+        if (!sleeperInstance.sleepComputation.isDone()) {
+            throw new SuspendedException(cc, sleeperInstance.cond);
+        }
+        System.out.println("!!!!! DONE SLEEPING " + this + " " + sleeperInstance + " " + cc);
+        sleeperInstance = null;
         // // TODO
     }
 

@@ -109,13 +109,14 @@ class ServiceComputationTask<T> implements Runnable {
         if (isDone()) {
             return;
         }
+        if (cont != null) {
+            System.out.println("!!!!!!!!!!! RESUME 1 " + cont);
+            cont = cont.resume();
+            return;
+        }
         for (;;) {
             if (isReady()) {
                 if (resultSupplier != null) {
-                    if (cont != null) {
-                        cont = cont.resume();
-                        cont = null;
-                    }
                     try {
                         complete(resultSupplier.get());
                     } catch (SuspendedException e) {
@@ -126,6 +127,10 @@ class ServiceComputationTask<T> implements Runnable {
                         return;
                     } catch (Exception e) {
                         completeExceptionally(e);
+                    }
+                    if (cont != null) {
+                        System.out.println("!!!!!!!!!!! RESUME 2 " + cont);
+                        cont = cont.resume();
                     }
                     return;
                 } else {
