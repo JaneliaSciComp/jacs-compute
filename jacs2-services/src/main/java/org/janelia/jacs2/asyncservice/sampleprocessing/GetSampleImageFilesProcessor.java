@@ -85,8 +85,7 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
             }
 
             public List<SampleImageFile> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<SampleImageFile>>() {
-                });
+                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<SampleImageFile>>() {});
             }
         };
     }
