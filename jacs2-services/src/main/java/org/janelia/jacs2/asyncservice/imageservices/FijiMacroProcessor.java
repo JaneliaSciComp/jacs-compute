@@ -86,7 +86,8 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
                 "Cannot write XdndAware property",
                 "java.rmi.ConnectException",
                 "java.net.ConnectException",
-                "java.lang.IllegalArgumentException: Cannot handle app name in ij.gui.YesNoCancelDialog",
+                "java.lang.NullPointerException", // strangely there are a lot of this in Fiji logs
+                "java.lang.IllegalArgumentException: Cannot handle app name",
                 "javassist.CannotCompileException: No code replaced"
         };
         return new DefaultServiceErrorChecker(logger) {
