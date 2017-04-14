@@ -1,10 +1,12 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
@@ -72,6 +74,10 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
             public List<SampleImageMetadataFile> collectResult(JacsServiceResult<?> depResults) {
                 GetSampleLsmsMetadataIntermediateResult result = (GetSampleLsmsMetadataIntermediateResult) depResults.getResult();
                 return result.sampleImageFileWithMetadata;
+            }
+
+            public List<SampleImageMetadataFile> getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<SampleImageMetadataFile>>() {});
             }
         };
     }

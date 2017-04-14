@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 @Named("fijiMacro")
 public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
@@ -81,18 +82,27 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
 
     @Override
     public ServiceErrorChecker getErrorChecker() {
+        final String[] acceptableExceptions = new String[] {
+                "Error while executing the main() method",
+                "Cannot write XdndAware property",
+                "java.rmi.ConnectException",
+                "java.net.ConnectException",
+                "java.lang.NullPointerException", // strangely there are a lot of this in Fiji logs
+                "java.lang.IllegalArgumentException: Cannot handle app name",
+                "javassist.CannotCompileException: No code replaced"
+        };
         return new DefaultServiceErrorChecker(logger) {
             @Override
             protected boolean hasErrors(String l) {
                 if (StringUtils.isNotBlank(l) && l.matches("(?i:.*(error|exception).*)")) {
-                    if (l.contains("Cannot write XdndAware property") ||
-                            l.contains("java.rmi.ConnectException") ||
-                            l.contains("java.net.ConnectException")) {
+                    if (Stream.of(acceptableExceptions).filter(l::contains).findAny().isPresent()) {
+                        // the line contains an acceptable exception - so don't treat it as an error
                         logger.warn(l);
                         return false;
+                    } else {
+                        logger.error(l);
+                        return true;
                     }
-                    logger.error(l);
-                    return true;
                 } else {
                     return false;
                 }

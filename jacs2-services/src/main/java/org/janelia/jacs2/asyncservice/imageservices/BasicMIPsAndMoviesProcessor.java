@@ -31,7 +31,7 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 @Named("basicMIPsAndMovies")
-public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, List<File>> {
+public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServiceProcessor<JacsServiceData, List<File>> {
 
     static class BasicMIPsAndMoviesArgs extends ServiceArgs {
         @Parameter(names = "-imgFile", description = "The name of the image file", required = true)
@@ -114,10 +114,10 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
     }
 
     @Override
-    protected JacsServiceResult<Void> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    protected JacsServiceResult<JacsServiceData> submitServiceDependencies(JacsServiceData jacsServiceData) {
         BasicMIPsAndMoviesArgs args = getArgs(jacsServiceData);
-        submitFijiService(args, jacsServiceData);
-        return new JacsServiceResult<>(jacsServiceData);
+        JacsServiceData fijiServiceData = submitFijiService(args, jacsServiceData);
+        return new JacsServiceResult<>(jacsServiceData, fijiServiceData);
     }
 
     private JacsServiceData submitFijiService(BasicMIPsAndMoviesArgs args, JacsServiceData jacsServiceData) {
@@ -160,19 +160,24 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
+    protected ServiceComputation<JacsServiceResult<JacsServiceData>> processing(JacsServiceResult<JacsServiceData> depResults) {
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
                     List<File> fileResults = getResultHandler().collectResult(pd);
                     fileResults.stream()
                             .filter(f -> f.getName().endsWith(".avi"))
-                            .forEach(f -> submitMpegConverterService(f, pd.getJacsServiceData()));
+                            .forEach(f -> submitMpegConverterService(f, "Convert AVI to MPEG", pd.getJacsServiceData(), pd.getResult()));
                     return pd;
                 });
     }
 
-    private JacsServiceData submitMpegConverterService(File aviFile, JacsServiceData jacsServiceData) {
-        JacsServiceData mpegConverterService = mpegConverterProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData), new ServiceArg("-input", aviFile.getAbsolutePath()));
+    private JacsServiceData submitMpegConverterService(File aviFile, String description, JacsServiceData jacsServiceData, JacsServiceData dep) {
+        JacsServiceData mpegConverterService = mpegConverterProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                .description(description)
+                .waitFor(dep)
+                .build(),
+                new ServiceArg("-input", aviFile.getAbsolutePath())
+        );
         jacsServiceDataPersistence.saveHierarchy(mpegConverterService);
         return mpegConverterService;
     }

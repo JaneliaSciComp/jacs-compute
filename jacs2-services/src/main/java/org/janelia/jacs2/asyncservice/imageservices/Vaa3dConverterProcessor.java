@@ -30,8 +30,6 @@ import java.util.StringJoiner;
 public class Vaa3dConverterProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
 
     static class Vaa3dConverterArgs extends ServiceArgs {
-        @Parameter(names = "-convertCmd", description = "Convert command. Valid values are: []")
-        String convertCmd = "-convert";
         @Parameter(names = "-input", description = "Input file", required = true)
         String inputFileName;
         @Parameter(names = "-output", description = "Output file", required = true)
@@ -109,7 +107,7 @@ public class Vaa3dConverterProcessor extends AbstractBasicLifeCycleServiceProces
 
     private JacsServiceData createVaa3dCmdService(Vaa3dConverterArgs args, JacsServiceData jacsServiceData) {
         StringJoiner vaa3dCmdArgs = new StringJoiner(" ")
-                .add(args.convertCmd)
+                .add("-convert")
                 .add(args.inputFileName)
                 .add(args.outputFileName);
         return vaa3dCmdProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
