@@ -19,7 +19,7 @@ import java.util.List;
  * Created by murphys on 3/22/17.
  */
 @Named("level1ComputeTest")
-public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Long> {
+public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Long, Long> {
 
     private static final int DEFAULT_INTEGER_SERVICES=10;
     private static final int DEFAULT_FLOAT_SERVICES=5;
@@ -60,37 +60,13 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
     }
 
     @Override
-    public ServiceResultHandler<Long> getResultHandler() {
-        return new ServiceResultHandler<Long>() {
-            @Override
-            public boolean isResultReady(JacsServiceData jacsServiceData) {
-                return true;
-            }
-
-            @Override
-            public Long collectResult(JacsServiceData jacsServiceData) {
-                return null;
-            }
-
-            @Override
-            public void updateServiceDataResult(JacsServiceData jacsServiceData, Long result) {
-            }
-
-            @Override
-            public Long getServiceDataResult(JacsServiceData jacsServiceData) {
-                return null;
-            }
-        };
-    }
-
-    @Override
-    public ServiceComputation<JacsServiceData> processing(JacsServiceData jacsServiceData) {
+    public ServiceComputation<Long> process(JacsServiceData jacsServiceData) {
         String serviceName=getArgs(jacsServiceData).testName;
         logger.info(serviceName+" start processing");
         long startTime=new Date().getTime();
         Level1ComputeTestArgs args=getArgs(jacsServiceData);
 
-        return computationFactory.newCompletedComputation(jacsServiceData)
+        computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(jsd -> {
                     logger.info("Beginning loop to create IntegerTests and save to queue");
                     for (int i=0;i<args.integerServiceCount;i++) {
@@ -116,18 +92,29 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     return jsd;
                 }).thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(jacsServiceData))
                 .thenApply(jsd -> {
-                    logger.info("All tests complete for service "+serviceName);
-                    long endTime=new Date().getTime();
-                    resultComputationTime=endTime-startTime;
-                    logger.info(serviceName+" end processing, processing time= "+resultComputationTime);
+                    logger.info("All tests complete for service " + serviceName);
+                    long endTime = new Date().getTime();
+                    resultComputationTime = endTime - startTime;
+                    logger.info(serviceName + " end processing, processing time= " + resultComputationTime);
                     return jsd;
                 });
+        return computationFactory.newCompletedComputation(resultComputationTime);
 
     }
 
     @Override
-    protected List<JacsServiceData> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    protected ServiceComputation<JacsServiceResult<Long>> processing(JacsServiceResult depsResult) {
         return null;
+    }
+
+    @Override
+    public ServiceResultHandler<Long> getResultHandler() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ServiceErrorChecker getErrorChecker() {
+        throw new UnsupportedOperationException();
     }
 
 }

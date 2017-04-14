@@ -30,6 +30,8 @@ public class IntegerComputeTestProcessor extends AbstractServiceProcessor<Long> 
         Integer matrixSize = DEFAULT_MATRIX_SIZE;
         @Parameter(names = "-iterations", description = "Iterations per matrix multiply", required = false)
         Integer iterations = DEFAULT_ITERATIONS;
+        @Parameter(names = "-testName", description = "Optional unique test name", required = false)
+        String testName="IntegerComputeTest";
     }
 
     private long resultComputationTime;

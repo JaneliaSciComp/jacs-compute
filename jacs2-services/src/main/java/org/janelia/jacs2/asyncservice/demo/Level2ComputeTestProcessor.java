@@ -20,7 +20,7 @@ import java.util.List;
  */
 
 @Named("level2ComputeTest")
-public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Long> {
+public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Long, Long> {
 
     private static final int DEFAULT_COUNT=5;
 
@@ -55,38 +55,13 @@ public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
     }
 
     @Override
-    public ServiceResultHandler<Long> getResultHandler() {
-        return new ServiceResultHandler<Long>() {
-            @Override
-            public boolean isResultReady(JacsServiceData jacsServiceData) {
-                return true;
-            }
-
-            @Override
-            public Long collectResult(JacsServiceData jacsServiceData) {
-                return null;
-            }
-
-            @Override
-            public void updateServiceDataResult(JacsServiceData jacsServiceData, Long result) {
-
-            }
-
-            @Override
-            public Long getServiceDataResult(JacsServiceData jacsServiceData) {
-                return null;
-            }
-        };
-    }
-
-    @Override
-    public ServiceComputation<JacsServiceData> processing(JacsServiceData jacsServiceData) {
+    public ServiceComputation<Long> process(JacsServiceData jacsServiceData) {
         String serviceName = getArgs(jacsServiceData).testName;
         logger.info(serviceName + " start processing");
         long startTime = new Date().getTime();
         Level2ComputeTestArgs args = getArgs(jacsServiceData);
 
-        return computationFactory.newCompletedComputation(jacsServiceData)
+        computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(jsd -> {
                     for (int i = 0; i < args.levelCount; i++) {
                         String testName = args.testName + ".Level1Test" + i;
@@ -107,12 +82,25 @@ public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     return jsd;
                 });
 
+        return computationFactory.newCompletedComputation(resultComputationTime);
+
     }
 
     @Override
-    protected List<JacsServiceData> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    protected ServiceComputation<JacsServiceResult<Long>> processing(JacsServiceResult depsResult) {
         return null;
     }
+
+    @Override
+    public ServiceResultHandler<Long> getResultHandler() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ServiceErrorChecker getErrorChecker() {
+        throw new UnsupportedOperationException();
+    }
+
 
 }
 

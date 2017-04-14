@@ -20,7 +20,7 @@ import java.util.stream.DoubleStream;
  * Created by murphys on 3/2/17.
  */
 @Named("floatComputeTest")
-public class FloatComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Long> {
+public class FloatComputeTestProcessor extends AbstractServiceProcessor<Long> {
 
     private final static int DEFAULT_MATRIX_SIZE=700;
     private final static int DEFAULT_ITERATIONS=10;
@@ -54,38 +54,7 @@ public class FloatComputeTestProcessor extends AbstractBasicLifeCycleServiceProc
     }
 
     @Override
-    public ServiceResultHandler<Long> getResultHandler() {
-        return new ServiceResultHandler<Long>() {
-            @Override
-            public boolean isResultReady(JacsServiceData jacsServiceData) {
-                return true;
-            }
-
-            @Override
-            public Long collectResult(JacsServiceData jacsServiceData) {
-                return null;
-            }
-
-            @Override
-            public void updateServiceDataResult(JacsServiceData jacsServiceData, Long result) {
-
-            }
-
-            @Override
-            public Long getServiceDataResult(JacsServiceData jacsServiceData) {
-                return null;
-            }
-        };
-    }
-
-
-    @Override
-    protected List<JacsServiceData> submitServiceDependencies(JacsServiceData jacsServiceData) {
-        return null;
-    }
-
-    @Override
-    public ServiceComputation<JacsServiceData> processing(JacsServiceData jacsServiceData) {
+    public ServiceComputation<Long> process(JacsServiceData jacsServiceData) {
         String serviceName=getArgs(jacsServiceData).testName;
         logger.debug(serviceName +" start");
         FloatComputeTestArgs args=getArgs(jacsServiceData);
@@ -135,7 +104,17 @@ public class FloatComputeTestProcessor extends AbstractBasicLifeCycleServiceProc
         long doneTime=new Date().getTime();
         resultComputationTime=doneTime-startTime;
         logger.debug(serviceName+" end, elapsed time ms="+resultComputationTime);
-        return computationFactory.newCompletedComputation(jacsServiceData);
+        return computationFactory.newCompletedComputation(resultComputationTime);
+    }
+
+    @Override
+    public ServiceResultHandler<Long> getResultHandler() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ServiceErrorChecker getErrorChecker() {
+        throw new UnsupportedOperationException();
     }
 
 }
