@@ -83,6 +83,7 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
     @Override
     public ServiceErrorChecker getErrorChecker() {
         final String[] acceptableExceptions = new String[] {
+                "Error while executing the main() method",
                 "Cannot write XdndAware property",
                 "java.rmi.ConnectException",
                 "java.net.ConnectException",
