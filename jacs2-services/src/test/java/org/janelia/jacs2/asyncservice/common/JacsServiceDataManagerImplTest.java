@@ -57,7 +57,7 @@ public class JacsServiceDataManagerImplTest {
         JacsServiceData sd = new JacsServiceData();
         sd.setId(TEST_ID);
         sd.setName(name);
-        sd.setState(state);
+        sd.updateState(state);
         sd.setPriority(priority);
         return sd;
     }

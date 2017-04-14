@@ -38,7 +38,7 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
             return null;
         }
         if (serviceData.getState() != null) {
-            existingService.setState(serviceData.getState());
+            existingService.updateState(serviceData.getState());
         }
         if (serviceData.getServiceTimeout() != null) {
             existingService.setServiceTimeout(serviceData.getServiceTimeout());

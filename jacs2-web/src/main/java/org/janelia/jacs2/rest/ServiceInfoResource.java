@@ -52,9 +52,9 @@ public class ServiceInfoResource {
         pattern.setOwner(serviceOwner);
         try {
             if (StringUtils.isNotBlank(serviceState)) {
-                pattern.setState(JacsServiceState.valueOf(serviceState));
+                pattern.updateState(JacsServiceState.valueOf(serviceState));
             } else {
-                pattern.setState(null);
+                pattern.updateState(null);
             }
         } catch (Exception e) {
             logger.error("Invalid state filter {}", serviceState, e);

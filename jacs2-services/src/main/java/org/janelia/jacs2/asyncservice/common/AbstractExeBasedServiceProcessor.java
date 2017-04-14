@@ -51,7 +51,7 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
                     }
                     if (errorMessage != null) {
                         pd.getJacsServiceData().addEvent(JacsServiceEventTypes.FAILED, errorMessage);
-                        pd.getJacsServiceData().setState(JacsServiceState.ERROR);
+                        pd.getJacsServiceData().updateState(JacsServiceState.ERROR);
                         updateServiceData(pd.getJacsServiceData());
                         throw new ComputationException(pd.getJacsServiceData(), errorMessage);
                     }

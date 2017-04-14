@@ -8,6 +8,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
 import org.janelia.jacs2.model.BaseEntity;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -413,4 +414,25 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         });
     }
 
+    public void updateState(@Nullable JacsServiceState newState) {
+        if (hasCompleted()) {
+            if (newState != JacsServiceState.QUEUED && newState != getState()) {
+                throw new IllegalStateException("Attempt to overwrite a completed stated " + getState() +
+                        " with " + newState + " for " + getId() + ":" + getName());
+            }
+        }
+        setState(newState);
+    }
+
+    /**
+     * Copy some service info fields from the specified argument.
+     * @param src
+     */
+    public void refreshServiceInfoFrom(JacsServiceData src) {
+        this.state = src.state;
+        this.priority = src.priority;
+        this.owner = src.owner;
+        this.stringifiedResult = src.stringifiedResult;
+        this.events = src.events;
+    }
 }

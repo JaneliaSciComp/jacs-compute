@@ -35,7 +35,7 @@ public class ExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
                               JacsServiceData serviceContext) {
         logger.debug("Begin DRMAA job invocation for {}", serviceContext);
         String processingScript = createProcessingScript(externalCode, workingDirName, serviceContext);
-        serviceContext.setState(JacsServiceState.RUNNING);
+        serviceContext.updateState(JacsServiceState.RUNNING);
         this.jacsServiceDataPersistence.update(serviceContext);
         JobTemplate jt = null;
         File outputFile;
@@ -77,7 +77,7 @@ public class ExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
             jt = null;
             return new DrmaaJobInfo(drmaaSession, jobId, processingScript);
         } catch (Exception e) {
-            serviceContext.setState(JacsServiceState.ERROR);
+            serviceContext.updateState(JacsServiceState.ERROR);
             serviceContext.addEvent(JacsServiceEventTypes.DRMAA_JOB_ERROR, String.format("Error creating DRMAA job %s - %s", serviceContext.getName(), e.getMessage()));
             logger.error("Error creating a DRMAA job {} for {}", processingScript, serviceContext, e);
             throw new ComputationException(serviceContext, e);

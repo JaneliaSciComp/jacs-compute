@@ -58,7 +58,7 @@ public class JacsServiceDispatcher {
                     .supply(() -> {
                         JacsServiceData service = queuedService;
                         logger.debug("Submit {}", service);
-                        service.setState(JacsServiceState.SUBMITTED);
+                        service.updateState(JacsServiceState.SUBMITTED);
                         updateServiceData(service);
                         return service;
                     })
@@ -91,7 +91,7 @@ public class JacsServiceDispatcher {
             logger.warn("Attempted to overwrite failed state with success for {}", jacsServiceData);
             return;
         }
-        jacsServiceData.setState(JacsServiceState.SUCCESSFUL);
+        jacsServiceData.updateState(JacsServiceState.SUCCESSFUL);
         jacsServiceData.addEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully");
         updateServiceData(jacsServiceData);
     }
@@ -106,7 +106,7 @@ public class JacsServiceDispatcher {
         if (jacsServiceData.hasCompletedSuccessfully()) {
             logger.warn("Service {} has failed after has already been markes as successfully completed", jacsServiceData);
         }
-        jacsServiceData.setState(JacsServiceState.ERROR);
+        jacsServiceData.updateState(JacsServiceState.ERROR);
         jacsServiceData.addEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage()));
         updateServiceData(jacsServiceData);
     }

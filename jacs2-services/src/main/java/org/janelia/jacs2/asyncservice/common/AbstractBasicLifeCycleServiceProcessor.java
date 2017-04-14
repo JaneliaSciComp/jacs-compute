@@ -90,14 +90,14 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
         }
         if (areAllDependenciesDone(jacsServiceData)) {
             if (jacsServiceData.hasBeenSuspended()) {
-                jacsServiceData.setState(JacsServiceState.RUNNING);
+                jacsServiceData.updateState(JacsServiceState.RUNNING);
                 updateServiceData(jacsServiceData);
             }
             return false;
         } else {
             if (!jacsServiceData.hasBeenSuspended()) {
                 // if the service has not completed yet and it's not already suspended - update the state to suspended
-                jacsServiceData.setState(JacsServiceState.SUSPENDED);
+                jacsServiceData.updateState(JacsServiceState.SUSPENDED);
                 updateServiceData(jacsServiceData);
             }
             return true;
@@ -111,6 +111,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
         if (jacsServiceDataHierarchy == null) {
             return true;
         }
+        jacsServiceData.refreshServiceInfoFrom(jacsServiceDataHierarchy);
         jacsServiceDataHierarchy.serviceHierarchyStream()
                 .filter(sd -> !sd.getId().equals(jacsServiceData.getId()))
                 .forEach(sd -> {
@@ -121,7 +122,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
                     }
                 });
         if (CollectionUtils.isNotEmpty(failed)) {
-            jacsServiceData.setState(JacsServiceState.CANCELED);
+            jacsServiceData.updateState(JacsServiceState.CANCELED);
             jacsServiceData.addEvent(JacsServiceEventTypes.CANCELED,
                     String.format("Canceled because one or more service dependencies finished unsuccessfully: %s", failed));
             updateServiceData(jacsServiceData);
@@ -138,7 +139,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
     protected void  verifyTimeOut(JacsServiceData jacsServiceData) {
         long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
         if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
-            jacsServiceData.setState(JacsServiceState.TIMEOUT);
+            jacsServiceData.updateState(JacsServiceState.TIMEOUT);
             jacsServiceData.addEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart));
             jacsServiceDataPersistence.update(jacsServiceData);
             logger.warn("Service {} timed out after {}ms", jacsServiceData, timeSinceStart);

@@ -30,7 +30,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                               JacsServiceData serviceContext) {
         logger.debug("Begin local process invocation for {}", serviceContext);
         String processingScript = createProcessingScript(externalCode, workingDirName, serviceContext);
-        serviceContext.setState(JacsServiceState.RUNNING);
+        serviceContext.updateState(JacsServiceState.RUNNING);
         this.jacsServiceDataPersistence.update(serviceContext);
         File outputFile;
         File errorFile;
@@ -71,7 +71,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
             logger.info("Started process {} for {}", processingScript, serviceContext);
             return new LocalExeJobInfo(localProcess, processingScript);
         } catch (Exception e) {
-            serviceContext.setState(JacsServiceState.ERROR);
+            serviceContext.updateState(JacsServiceState.ERROR);
             logger.error("Error starting the computation process {} for {}", processingScript, serviceContext, e);
             serviceContext.addEvent(JacsServiceEventTypes.START_PROCESS_ERROR, String.format("Error starting %s - %s", processingScript, e.getMessage()));
             throw new ComputationException(serviceContext, e);

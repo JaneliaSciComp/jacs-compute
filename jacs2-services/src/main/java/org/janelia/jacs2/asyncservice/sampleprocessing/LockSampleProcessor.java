@@ -93,7 +93,7 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
                     if (StringUtils.isBlank(lockKey)) {
                         if (!jacsServiceData.hasBeenSuspended()) {
                             // if the service has not completed yet and it's not already suspended - update the state to suspended
-                            jacsServiceData.setState(JacsServiceState.SUSPENDED);
+                            jacsServiceData.updateState(JacsServiceState.SUSPENDED);
                             updateServiceData(jacsServiceData);
                         }
                         return false;

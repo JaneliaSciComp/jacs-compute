@@ -134,7 +134,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
                 logger.debug("Enqueued service {}", jacsServiceData);
                 waitingServicesSet.add(jacsServiceData.getId());
                 if (jacsServiceData.getState() == JacsServiceState.CREATED) {
-                    jacsServiceData.setState(JacsServiceState.QUEUED);
+                    jacsServiceData.updateState(JacsServiceState.QUEUED);
                     jacsServiceDataPersistence.update(jacsServiceData);
                 }
             }

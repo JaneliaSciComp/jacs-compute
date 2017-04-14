@@ -158,12 +158,12 @@ public class JacsServiceDispatcherTest {
 
         if (exc == null) {
             when(testProcessor.process(any(JacsServiceData.class))).thenAnswer(invocation -> {
-                testServiceData.setState(JacsServiceState.SUCCESSFUL);
+                testServiceData.updateState(JacsServiceState.SUCCESSFUL);
                 return serviceComputationFactory.newCompletedComputation(null);
             });
         } else {
             when(testProcessor.process(any(JacsServiceData.class))).thenAnswer(invocation -> {
-                testServiceData.setState(JacsServiceState.ERROR);
+                testServiceData.updateState(JacsServiceState.ERROR);
                 return serviceComputationFactory.newFailedComputation(exc);
             });
         }

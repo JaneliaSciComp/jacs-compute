@@ -42,7 +42,7 @@ public class JacsServiceDataBuilder {
     }
 
     public JacsServiceDataBuilder setState(JacsServiceState state) {
-        serviceData.setState(state);
+        serviceData.updateState(state);
         return this;
     }
 
