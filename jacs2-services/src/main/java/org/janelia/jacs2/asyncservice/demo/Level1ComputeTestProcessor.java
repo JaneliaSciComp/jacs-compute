@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.demo;
 
 import com.beust.jcommander.Parameter;
-import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -14,7 +13,7 @@ import javax.inject.Named;
 import java.util.Date;
 
 @Named("level1ComputeTest")
-public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Long, Long> {
+public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, Long> {
 
     private static final int DEFAULT_INTEGER_SERVICES=10;
     private static final int DEFAULT_FLOAT_SERVICES=5;
@@ -98,7 +97,7 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Long>> processing(JacsServiceResult depsResult) {
+    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult depsResult) {
         return null;
     }
 
