@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.demo;
 
 import com.beust.jcommander.Parameter;
-import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -11,13 +10,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-
-/**
- * Created by murphys on 3/29/17.
- */
 
 @Named("level2ComputeTest")
 public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Long, Long> {

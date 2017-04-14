@@ -11,13 +11,8 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
-/**
- * Created by murphys on 3/22/17.
- */
 @Named("level1ComputeTest")
 public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Long, Long> {
 

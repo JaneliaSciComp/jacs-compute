@@ -52,11 +52,6 @@ public class IntegerComputeTestProcessor extends AbstractServiceProcessor<Long> 
     public ServiceComputation<Long> process(JacsServiceData jacsServiceData) {
         logger.debug("process() start");
         IntegerComputeTestArgs args = getArgs(jacsServiceData);
-        if (args==null) {
-            logger.error("args NULL");
-        } else {
-            logger.debug("retrieved args");
-        }
         int matrixSize = args.matrixSize;
         int iterations = args.iterations;
         logger.debug("matrixSize=" + matrixSize + ", iterations=" + iterations);

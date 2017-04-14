@@ -210,7 +210,6 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
                 });
         verify(successful).accept(any());
         verify(failure, never()).accept(any());
-        assertThat(testJacsServiceData.getState(), equalTo(JacsServiceState.SUCCESSFUL));
     }
 
     @Test

@@ -11,14 +11,10 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Date;
-import java.util.List;
 import java.util.PrimitiveIterator;
 import java.util.Random;
 import java.util.stream.DoubleStream;
 
-/**
- * Created by murphys on 3/2/17.
- */
 @Named("floatComputeTest")
 public class FloatComputeTestProcessor extends AbstractServiceProcessor<Long> {
 
@@ -27,9 +23,9 @@ public class FloatComputeTestProcessor extends AbstractServiceProcessor<Long> {
 
     static class FloatComputeTestArgs extends ServiceArgs {
         @Parameter(names = "-matrixSize", description = "Size of matrix NxN", required = false)
-        Integer matrixSize=DEFAULT_MATRIX_SIZE;
+        Integer matrixSize = DEFAULT_MATRIX_SIZE;
         @Parameter(names = "-iterations", description = "Iterations per matrix multiply", required = false)
-        Integer iterations=DEFAULT_ITERATIONS;
+        Integer iterations = DEFAULT_ITERATIONS;
         @Parameter(names = "-testName", description = "Optional unique test name", required = false)
         String testName="FloatComputeTest";
     }
@@ -57,8 +53,8 @@ public class FloatComputeTestProcessor extends AbstractServiceProcessor<Long> {
     public ServiceComputation<Long> process(JacsServiceData jacsServiceData) {
         String serviceName=getArgs(jacsServiceData).testName;
         logger.debug(serviceName +" start");
-        FloatComputeTestArgs args=getArgs(jacsServiceData);
-        int matrixSize=DEFAULT_MATRIX_SIZE;
+        FloatComputeTestArgs args = getArgs(jacsServiceData);
+        int matrixSize = DEFAULT_MATRIX_SIZE;
         if (args.matrixSize!=null) {
             matrixSize=args.matrixSize;
         }

@@ -1,9 +1,10 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
+import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -58,21 +59,59 @@ public class JacsServiceDispatcher {
                         JacsServiceData service = queuedService;
                         logger.debug("Submit {}", service);
                         service.setState(JacsServiceState.SUBMITTED);
-                        updateServiceInfo(service);
+                        updateServiceData(service);
                         return service;
                     })
                     .thenCompose(sd -> serviceProcessor.process(sd))
                     .whenComplete((r, exc) -> {
-                        if (!queuedService.hasParentServiceId()) {
+                        JacsServiceData service = jacsServiceDataPersistence.findById(queuedService.getId());
+                        if (exc != null) {
+                            fail(service, exc);
+                        } else {
+                            success(service);
+                        }
+                        if (!service.hasParentServiceId()) {
                             // release the slot acquired before the service was started
                             jacsServiceEngine.releaseSlot();
                         }
-                        jacsServiceQueue.completeService(queuedService);
+                        jacsServiceQueue.completeService(service);
                     });
         }
     }
 
-    private void updateServiceInfo(JacsServiceData jacsServiceData) {
+    private void success(JacsServiceData jacsServiceData) {
+        logger.error("Processing successful {}:{}", jacsServiceData.getId(), jacsServiceData.getName());
+        if (jacsServiceData.hasCompletedSuccessfully()) {
+            // nothing to do
+            logger.info("Service {} has already been marked as successful", jacsServiceData);
+            return;
+        }
+        logger.error("Processing successful {}:{}", jacsServiceData.getId(), jacsServiceData.getName());
+        if (jacsServiceData.hasCompletedUnsuccessfully()) {
+            logger.warn("Attempted to overwrite failed state with success for {}", jacsServiceData);
+            return;
+        }
+        jacsServiceData.setState(JacsServiceState.SUCCESSFUL);
+        jacsServiceData.addEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully");
+        updateServiceData(jacsServiceData);
+    }
+
+    private void fail(JacsServiceData jacsServiceData, Throwable exc) {
+        if (jacsServiceData.hasCompletedUnsuccessfully()) {
+            // nothing to do
+            logger.info("Service {} has already been marked as failed", jacsServiceData);
+            return;
+        }
+        logger.error("Processing error executing {}:{}", jacsServiceData.getId(), jacsServiceData.getName(), exc);
+        if (jacsServiceData.hasCompletedSuccessfully()) {
+            logger.warn("Service {} has failed after has already been markes as successfully completed", jacsServiceData);
+        }
+        jacsServiceData.setState(JacsServiceState.ERROR);
+        jacsServiceData.addEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage()));
+        updateServiceData(jacsServiceData);
+    }
+
+    private void updateServiceData(JacsServiceData jacsServiceData) {
         jacsServiceDataPersistence.update(jacsServiceData);
     }
 

@@ -49,13 +49,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
                     return new JacsServiceResult<>(pd.getJacsServiceData(), r);
                 })
                 .thenApply(this::postProcessing)
-                .whenComplete((r, exc) -> {
-                    if (exc != null) {
-                        fail(processDataHolder.getData().getJacsServiceData(), exc);
-                    } else {
-                        success(processDataHolder.getData().getJacsServiceData());
-                    }
-                });
+                ;
     }
 
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
@@ -156,37 +150,6 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
 
     protected T postProcessing(JacsServiceResult<T> sr) {
         return sr.getResult();
-    }
-
-    protected void success(JacsServiceData jacsServiceData) {
-        if (jacsServiceData.hasCompletedSuccessfully()) {
-            // nothing to do
-            logger.info("Service {} has already been marked as successful", jacsServiceData);
-            return;
-        }
-        logger.error("Processing successful {}:{}", jacsServiceData.getId(), jacsServiceData.getName());
-        if (jacsServiceData.hasCompletedUnsuccessfully()) {
-            logger.warn("Attempted to overwrite failed state with success for {}", jacsServiceData);
-            return;
-        }
-        jacsServiceData.setState(JacsServiceState.SUCCESSFUL);
-        jacsServiceData.addEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully");
-        updateServiceData(jacsServiceData);
-    }
-
-    protected void fail(JacsServiceData jacsServiceData, Throwable exc) {
-        if (jacsServiceData.hasCompletedUnsuccessfully()) {
-            // nothing to do
-            logger.info("Service {} has already been marked as failed", jacsServiceData);
-            return;
-        }
-        logger.error("Processing error executing {}:{}", jacsServiceData.getId(), jacsServiceData.getName(), exc);
-        if (jacsServiceData.hasCompletedSuccessfully()) {
-            logger.warn("Service {} has failed after has already been markes as successfully completed", jacsServiceData);
-        }
-        jacsServiceData.setState(JacsServiceState.ERROR);
-        jacsServiceData.addEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage()));
-        updateServiceData(jacsServiceData);
     }
 
     protected JacsServiceData submitDependencyIfNotPresent(JacsServiceData jacsServiceData, JacsServiceData dependency) {
