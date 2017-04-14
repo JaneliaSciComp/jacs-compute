@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
@@ -24,7 +23,7 @@ import javax.inject.Named;
 import java.util.Map;
 
 @Named("vaa3dCmd")
-public class Vaa3dCmdProcessor extends AbstractExeBasedServiceProcessor<Void> {
+public class Vaa3dCmdProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
 
     static class Vaa3dCmdArgs extends ServiceArgs {
         @Parameter(names = "-vaa3dCmd", description = "Vaa3d headless command", required = true)

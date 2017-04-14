@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
@@ -29,7 +30,7 @@ import java.util.List;
  * AlignmentVerificationMovieProcessor generates the alignment verification movie.
  */
 @Named("alignmentVerificationMovie")
-public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleServiceProcessor<File> {
+public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
 
     static class AlignmentVerificationMoviewArgs extends ServiceArgs {
         @Parameter(names = {"-s", "-subject"}, description = "Subject file", required = true)
@@ -72,13 +73,13 @@ public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleS
         return new AbstractSingleFileServiceResultHandler() {
 
             @Override
-            public boolean isResultReady(JacsServiceData jacsServiceData) {
-                return getOutputFile(getArgs(jacsServiceData)).toFile().exists();
+            public boolean isResultReady(JacsServiceResult<?> depResults) {
+                return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile().exists();
             }
 
             @Override
-            public File collectResult(JacsServiceData jacsServiceData) {
-                return getOutputFile(getArgs(jacsServiceData)).toFile();
+            public File collectResult(JacsServiceResult<?> depResults) {
+                return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile();
             }
         };
     }
@@ -95,15 +96,14 @@ public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleS
     }
 
     @Override
-    protected List<JacsServiceData> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    protected JacsServiceResult<Void> submitServiceDependencies(JacsServiceData jacsServiceData) {
         AlignmentVerificationMoviewArgs args = getArgs(jacsServiceData);
-        JacsServiceData jacsServiceDataHierarchy = jacsServiceDataPersistence.findServiceHierarchy(jacsServiceData.getId());
 
-        Path workingSubjectFile = FileUtils.getFilePath(getWorkingDirectory(jacsServiceDataHierarchy), args.subjectFile); // => SUB
+        Path workingSubjectFile = FileUtils.getFilePath(getWorkingDirectory(jacsServiceData), args.subjectFile); // => SUB
 
         JacsServiceData createWorkingSubjectFile = invocationHelper.linkData(getSubjectFile(args), workingSubjectFile,
                 "Create link for working subject file",
-                jacsServiceDataHierarchy);
+                jacsServiceData);
 
         // $Vaa3D -x ireg -f splitColorChannels -i $SUB
         JacsServiceData splitChannelsServiceData =
@@ -112,17 +112,17 @@ public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleS
                         ImmutableList.of(),
                         "ireg", "splitColorChannels", null,
                         "Split channels",
-                        jacsServiceDataHierarchy,
+                        jacsServiceData,
                         createWorkingSubjectFile);
 
         Path targetFile = getTargetFile(args);
         Path refChannelFile = invocationHelper.getChannelFilePath(
-                getWorkingDirectory(jacsServiceDataHierarchy),
+                getWorkingDirectory(jacsServiceData),
                 args.referenceChannel - 1,
                 args.subjectFile,
                 ".v3draw");
         Path temporaryMergedFile = FileUtils.getFilePath(
-                getWorkingDirectory(jacsServiceDataHierarchy),
+                getWorkingDirectory(jacsServiceData),
                 null,
                 args.outputFile,
                 "temporaryMergedOut",
@@ -136,25 +136,24 @@ public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleS
                         "mergeColorChannels",
                         null,
                         "Split channels",
-                        jacsServiceDataHierarchy,
+                        jacsServiceData,
                         splitChannelsServiceData);
 
         Path outputFile = getOutputFile(args);
         // $Vaa3D -cmd image-loader -convert $WORKDIR/out.v3draw $OUTPUT_FILE
-        JacsServiceData convertToMovieServiceData =
-                invocationHelper.convertFile(
+        invocationHelper.convertFile(
                         temporaryMergedFile,
                         outputFile,
                         "Generate movie",
-                        jacsServiceDataHierarchy,
+                        jacsServiceData,
                         mergeChannelsServiceData);
 
-        return ImmutableList.of(convertToMovieServiceData);
+        return new JacsServiceResult<>(jacsServiceData);
     }
 
     @Override
-    protected ServiceComputation<JacsServiceData> processing(JacsServiceData jacsServiceData) {
-        return computationFactory.newCompletedComputation(jacsServiceData);
+    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
+        return computationFactory.newCompletedComputation(depResults);
     }
 
     private AlignmentVerificationMoviewArgs getArgs(JacsServiceData jacsServiceData) {

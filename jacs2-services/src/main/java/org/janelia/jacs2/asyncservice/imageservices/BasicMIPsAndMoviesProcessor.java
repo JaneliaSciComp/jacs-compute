@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -32,7 +31,7 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 @Named("basicMIPsAndMovies")
-public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServiceProcessor<List<File>> {
+public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, List<File>> {
 
     static class BasicMIPsAndMoviesArgs extends ServiceArgs {
         @Parameter(names = "-imgFile", description = "The name of the image file", required = true)
@@ -85,14 +84,17 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
             final String resultsPattern = "glob:**/*.{png,avi,mp4}";
 
             @Override
-            public boolean isResultReady(JacsServiceData jacsServiceData) {
-                BasicMIPsAndMoviesArgs args = getArgs(jacsServiceData);
+            public boolean isResultReady(JacsServiceResult<?> depResults) {
+                if (!areAllDependenciesDone(depResults.getJacsServiceData())) {
+                    return false;
+                }
+                BasicMIPsAndMoviesArgs args = getArgs(depResults.getJacsServiceData());
                 return FileUtils.lookupFiles(getResultsDir(args), 1, resultsPattern).count() > 0;
             }
 
             @Override
-            public List<File> collectResult(JacsServiceData jacsServiceData) {
-                BasicMIPsAndMoviesArgs args = getArgs(jacsServiceData);
+            public List<File> collectResult(JacsServiceResult<?> depResults) {
+                BasicMIPsAndMoviesArgs args = getArgs(depResults.getJacsServiceData());
                 return FileUtils.lookupFiles(getResultsDir(args), 1, resultsPattern)
                         .map(fp -> fp.toFile())
                         .collect(Collectors.toList());
@@ -112,9 +114,10 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
     }
 
     @Override
-    protected List<JacsServiceData> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    protected JacsServiceResult<Void> submitServiceDependencies(JacsServiceData jacsServiceData) {
         BasicMIPsAndMoviesArgs args = getArgs(jacsServiceData);
-        return ImmutableList.of(submitFijiService(args, jacsServiceData));
+        submitFijiService(args, jacsServiceData);
+        return new JacsServiceResult<>(jacsServiceData);
     }
 
     private JacsServiceData submitFijiService(BasicMIPsAndMoviesArgs args, JacsServiceData jacsServiceData) {
@@ -157,17 +160,15 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
     }
 
     @Override
-    protected ServiceComputation<JacsServiceData> processing(JacsServiceData jacsServiceData) {
-        return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenSuspendUntil(() -> this.isResultReady(jacsServiceData))
-                .thenApply(sd -> {
-                    List<File> fileResults = getResultHandler().collectResult(sd);
+    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
+        return computationFactory.newCompletedComputation(depResults)
+                .thenApply(pd -> {
+                    List<File> fileResults = getResultHandler().collectResult(pd);
                     fileResults.stream()
                             .filter(f -> f.getName().endsWith(".avi"))
-                            .forEach(f -> submitMpegConverterService(f, sd));
-                    return sd;
-                })
-                .thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(jacsServiceData));
+                            .forEach(f -> submitMpegConverterService(f, pd.getJacsServiceData()));
+                    return pd;
+                });
     }
 
     private JacsServiceData submitMpegConverterService(File aviFile, JacsServiceData jacsServiceData) {
