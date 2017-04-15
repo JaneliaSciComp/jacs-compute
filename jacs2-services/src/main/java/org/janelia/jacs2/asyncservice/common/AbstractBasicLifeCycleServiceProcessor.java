@@ -109,7 +109,9 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
     }
 
     /**
-     * @return a function whose application upd
+     * This function is related to the state monad bind operator in which a state is a function from a
+     * state to a (state, value) pair.
+     * @return a function from a servicedata to a service data. The function's application updates the service data.
      */
     private Function<JacsServiceData, JacsServiceResult<Boolean>> areAllDependenciesDoneFunc() {
         return sdp -> {
