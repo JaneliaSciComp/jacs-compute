@@ -1,8 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.asyncservice.utils.DataHolder;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -93,8 +91,8 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
         }
         return areAllDependenciesDoneFunc()
                 .andThen(pd -> {
-                    JacsServiceData sd = pd.getLeft();
-                    boolean depsCompleted = pd.getRight();
+                    JacsServiceData sd = pd.getJacsServiceData();
+                    boolean depsCompleted = pd.getResult();
                     if (depsCompleted) {
                         resumeSuspendedService(sd);
                         return false;
@@ -107,16 +105,19 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
     }
 
     protected boolean areAllDependenciesDone(JacsServiceData jacsServiceData) {
-        return areAllDependenciesDoneFunc().apply(jacsServiceData).getRight();
+        return areAllDependenciesDoneFunc().apply(jacsServiceData).getResult();
     }
 
-    private Function<JacsServiceData, Pair<JacsServiceData, Boolean>> areAllDependenciesDoneFunc() {
+    /**
+     * @return a function whose application upd
+     */
+    private Function<JacsServiceData, JacsServiceResult<Boolean>> areAllDependenciesDoneFunc() {
         return sdp -> {
             List<JacsServiceData> running = new ArrayList<>();
             List<JacsServiceData> failed = new ArrayList<>();
             JacsServiceData jacsServiceData = jacsServiceDataPersistence.findServiceHierarchy(sdp.getId());
             if (jacsServiceData == null) {
-                return new ImmutablePair<>(sdp, true);
+                return new JacsServiceResult<>(sdp, true);
             }
             jacsServiceData.serviceHierarchyStream()
                     .filter(sd -> !sd.getId().equals(jacsServiceData.getId()))
@@ -136,10 +137,10 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
                 throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " canceled");
             }
             if (CollectionUtils.isEmpty(running)) {
-                return new ImmutablePair<>(jacsServiceData, true);
+                return new JacsServiceResult<>(jacsServiceData, true);
             }
             verifyTimeOut(jacsServiceData);
-            return new ImmutablePair<>(jacsServiceData, false);
+            return new JacsServiceResult<>(jacsServiceData, false);
         };
     }
 

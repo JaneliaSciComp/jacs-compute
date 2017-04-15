@@ -60,7 +60,7 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
         long startTime=new Date().getTime();
         Level1ComputeTestArgs args=getArgs(jacsServiceData);
 
-        computationFactory.newCompletedComputation(jacsServiceData)
+        return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(jsd -> {
                     logger.info("Beginning loop to create IntegerTests and save to queue");
                     for (int i=0;i<args.integerServiceCount;i++) {
@@ -95,7 +95,6 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     return endTime;
                 })
                 ;
-        return computationFactory.newCompletedComputation(resultComputationTime);
     }
 
     @Override
