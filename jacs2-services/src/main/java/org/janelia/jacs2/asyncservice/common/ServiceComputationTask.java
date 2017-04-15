@@ -166,6 +166,9 @@ class ServiceComputationTask<T> implements Runnable {
     }
 
     void complete(T result) {
+        if (this.result != null && this.result.exc != null) {
+            throw new CompletionException("Task has already been completed with an exception before", this.result.exc);
+        }
         this.result = new ComputeResult<>(result, null);
         done.countDown();
         this.resume();

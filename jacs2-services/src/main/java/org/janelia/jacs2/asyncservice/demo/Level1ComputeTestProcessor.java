@@ -60,7 +60,7 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
         long startTime=new Date().getTime();
         Level1ComputeTestArgs args=getArgs(jacsServiceData);
 
-        return computationFactory.newCompletedComputation(jacsServiceData)
+        computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(jsd -> {
                     logger.info("Beginning loop to create IntegerTests and save to queue");
                     for (int i=0;i<args.integerServiceCount;i++) {
@@ -72,7 +72,8 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                         jacsServiceDataPersistence.saveHierarchy(j);
                     }
                     return jsd;
-                }).thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(jacsServiceData))
+                })
+                .thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(jacsServiceData))
                 .thenApply(jsd -> {
                     logger.info("Beginning loop to create FloatTests and save to queue");
                     for (int i=0;i<args.floatServiceCount;i++) {
@@ -84,14 +85,17 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                         jacsServiceDataPersistence.saveHierarchy(j);
                     }
                     return jsd;
-                }).thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(jacsServiceData))
+                })
+                .thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(jacsServiceData))
                 .thenApply(jsd -> {
                     logger.info("All tests complete for service " + serviceName);
                     long endTime = new Date().getTime();
                     resultComputationTime = endTime - startTime;
                     logger.info(serviceName + " end processing, processing time= " + resultComputationTime);
                     return endTime;
-                });
+                })
+                ;
+        return computationFactory.newCompletedComputation(resultComputationTime);
     }
 
     @Override

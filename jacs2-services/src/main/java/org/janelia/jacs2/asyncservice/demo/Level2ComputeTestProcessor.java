@@ -54,7 +54,7 @@ public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
         long startTime = new Date().getTime();
         Level2ComputeTestArgs args = getArgs(jacsServiceData);
 
-        return computationFactory.newCompletedComputation(jacsServiceData)
+        computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(jsd -> {
                     for (int i = 0; i < args.levelCount; i++) {
                         String testName = args.testName + ".Level1Test" + i;
@@ -73,8 +73,9 @@ public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     resultComputationTime = endTime - startTime;
                     logger.info(serviceName + " end processing, time=" + resultComputationTime);
                     return endTime;
-                });
-
+                })
+                ;
+        return computationFactory.newCompletedComputation(resultComputationTime);
     }
 
     @Override

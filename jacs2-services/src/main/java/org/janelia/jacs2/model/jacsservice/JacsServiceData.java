@@ -417,6 +417,8 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     public void updateState(@Nullable JacsServiceState newState) {
         if (hasCompleted()) {
             if (newState != JacsServiceState.QUEUED && newState != getState()) {
+                setState(JacsServiceState.ERROR);
+                addEvent(JacsServiceEventTypes.FAILED, "Attempt to overwrite a completed state");
                 throw new IllegalStateException("Attempt to overwrite a completed stated " + getState() +
                         " with " + newState + " for " + getId() + ":" + getName());
             }

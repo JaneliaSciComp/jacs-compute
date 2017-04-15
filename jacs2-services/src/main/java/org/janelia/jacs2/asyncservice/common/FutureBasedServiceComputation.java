@@ -218,18 +218,25 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
         ServiceComputationTask<T> nextTask = new ServiceComputationTask<>(waitFor);
         FutureBasedServiceComputation<T> next = new FutureBasedServiceComputation<>(computationQueue, logger, nextTask);
         waitFor.submit(() -> {
-            if (fn.checkCond()) { // checks the condition based on the enclosed state
-                logger.debug("Resume {}", nextTask);
-                nextTask.resume();
-                waitFor.complete(true);
-                return true;
-            } else {
-                if (!nextTask.isSuspended()) {
-                    logger.debug("Suspend {}", nextTask);
-                    nextTask.suspend();
+            try {
+                if (fn.checkCond()) { // checks the condition based on the enclosed state
+                    logger.debug("Resume {}", nextTask);
+                    waitFor.complete(true);
+                    nextTask.resume();
+                } else {
+                    if (!nextTask.isSuspended()) {
+                        logger.debug("Suspend {}", nextTask);
+                        nextTask.suspend();
+                    }
+                    throw new SuspendedException();
                 }
-                throw new SuspendedException();
+            } catch (SuspendedException e) {
+                throw e;
+            } catch (Exception e) {
+                waitFor.completeExceptionally(e);
+                nextTask.resume();
             }
+            return waitFor.get();
         });
         next.submit(() -> {
             try {
