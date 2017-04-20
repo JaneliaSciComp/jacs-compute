@@ -27,17 +27,17 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Named("getSampleLsmMetadata")
-public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServiceProcessor<GetSampleLsmsMetadataProcessor.GetSampleLsmsMetadataIntermediateResult, List<SampleImageMetadataFile>> {
+public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServiceProcessor<GetSampleLsmsMetadataProcessor.GetSampleLsmsMetadataIntermediateResult, List<SampleImageFile>> {
 
     static class GetSampleLsmsMetadataIntermediateResult {
         final Number getSampleLsmsServiceDataId;
-        final List<SampleImageMetadataFile> sampleImageFileWithMetadata = new LinkedList<>();
+        final List<SampleImageFile> sampleImageFileWithMetadata = new LinkedList<>();
 
-        public GetSampleLsmsMetadataIntermediateResult(Number getSampleLsmsServiceDataId) {
+        GetSampleLsmsMetadataIntermediateResult(Number getSampleLsmsServiceDataId) {
             this.getSampleLsmsServiceDataId = getSampleLsmsServiceDataId;
         }
 
-        public void addSampleImageMetadataFile(SampleImageMetadataFile simf) {
+        void addSampleImageMetadataFile(SampleImageFile simf) {
             sampleImageFileWithMetadata.add(simf);
         }
     }
@@ -63,21 +63,21 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
     }
 
     @Override
-    public ServiceResultHandler<List<SampleImageMetadataFile>> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<List<SampleImageMetadataFile>>() {
+    public ServiceResultHandler<List<SampleImageFile>> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<List<SampleImageFile>>() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
             @Override
-            public List<SampleImageMetadataFile> collectResult(JacsServiceResult<?> depResults) {
+            public List<SampleImageFile> collectResult(JacsServiceResult<?> depResults) {
                 GetSampleLsmsMetadataIntermediateResult result = (GetSampleLsmsMetadataIntermediateResult) depResults.getResult();
                 return result.sampleImageFileWithMetadata;
             }
 
-            public List<SampleImageMetadataFile> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<SampleImageMetadataFile>>() {});
+            public List<SampleImageFile> getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<SampleImageFile>>() {});
             }
         };
     }
@@ -94,6 +94,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
         JacsServiceData getSampleLsmsServiceRef = getSampleImageFilesProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-objective", args.sampleObjective),
+                new ServiceArg("-area", args.sampleArea),
                 new ServiceArg("-sampleDataDir", args.sampleDataDir)
         );
         JacsServiceData getSampleLsmsService = submitDependencyIfNotPresent(jacsServiceData, getSampleLsmsServiceRef);
@@ -111,18 +112,17 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
                             .forEach(sif -> {
                                 File lsmImageFile = new File(sif.getWorkingFilePath());
                                 File lsmMetadataFile = SampleServicesUtils.getImageMetadataFile(args.sampleDataDir, lsmImageFile);
-
-                                JacsServiceData lsmMetadataService = lsmFileMetadataProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
-                                            .waitFor(getSampleLsmsService)
-                                            .build(),
-                                    new ServiceArg("-inputLSM", lsmImageFile.getAbsolutePath()),
-                                    new ServiceArg("-outputLSMMetadata", lsmMetadataFile.getAbsolutePath())
-                                );
-                                submitDependencyIfNotPresent(depResults.getJacsServiceData(), lsmMetadataService);
-                                SampleImageMetadataFile sampleImageMetadataFile = new SampleImageMetadataFile();
-                                sampleImageMetadataFile.setSampleImageFile(sif);
-                                sampleImageMetadataFile.setMetadataFilePath(lsmMetadataFile.getAbsolutePath());
-                                depResults.getResult().addSampleImageMetadataFile(sampleImageMetadataFile);
+                                if (!lsmMetadataFile.exists()) {
+                                    JacsServiceData lsmMetadataService = lsmFileMetadataProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
+                                                    .waitFor(getSampleLsmsService)
+                                                    .build(),
+                                            new ServiceArg("-inputLSM", lsmImageFile.getAbsolutePath()),
+                                            new ServiceArg("-outputLSMMetadata", lsmMetadataFile.getAbsolutePath())
+                                    );
+                                    submitDependencyIfNotPresent(depResults.getJacsServiceData(), lsmMetadataService);
+                                }
+                                sif.setMetadataFilePath(lsmMetadataFile.getAbsolutePath());
+                                depResults.getResult().addSampleImageMetadataFile(sif);
                             });
                     return pd;
                 });

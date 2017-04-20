@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing.zeiss;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 

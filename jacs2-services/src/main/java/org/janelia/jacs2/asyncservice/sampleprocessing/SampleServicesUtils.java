@@ -9,21 +9,20 @@ import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.jacs2.model.DomainModelUtils;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class SampleServicesUtils {
 
-    static File getImageFile(Path destDir, Image image) {
+    static File getImageFile(String destDirName, Image image) {
         String fileName = new File(image.getFilepath()).getName();
         if (fileName.endsWith(".bz2")) {
             fileName = fileName.substring(0, fileName.length() - ".bz2".length());
         } else if (fileName.endsWith(".gz")) {
             fileName = fileName.substring(0, fileName.length() - ".gz".length());
         }
-        return new File(destDir.toFile(), fileName);
+        return new File(destDirName, fileName);
     }
 
     static File getImageMetadataFile(String destDirName, File imageFile) {

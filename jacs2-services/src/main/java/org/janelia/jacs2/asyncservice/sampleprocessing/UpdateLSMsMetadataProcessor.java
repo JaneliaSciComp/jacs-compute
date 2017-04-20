@@ -11,13 +11,13 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
+import org.janelia.jacs2.asyncservice.imageservices.tools.LSMProcessingTools;
 import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMDetectionChannel;
 import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMMetadata;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,44 +79,39 @@ public class UpdateLSMsMetadataProcessor extends AbstractBasicLifeCycleServicePr
         return computationFactory.newCompletedComputation(depResults)
             .thenApply(pd -> {
                 JacsServiceData getSampleLsmsMetadatService = jacsServiceDataPersistence.findById(depResults.getResult());
-                List<SampleImageMetadataFile> sampleImageMetadataFiles = getSampleLsmsMetadataProcessor.getResultHandler().getServiceDataResult(getSampleLsmsMetadatService);
-                sampleImageMetadataFiles.forEach(simdf -> {
-                    // read the metadata from the metadata file
-                    try {
-                        LSMMetadata lsmMetadata = LSMMetadata.fromFile(new File(simdf.getMetadataFilePath()));
-                        List<String> colors = new ArrayList<>();
-                        List<String> dyeNames = new ArrayList<>();
-                        if (CollectionUtils.isNotEmpty(lsmMetadata.getChannels())) {
-                            lsmMetadata.getChannels().forEach(channel -> {
-                                colors.add(channel.getColor());
-                                LSMDetectionChannel detection = lsmMetadata.getDetectionChannel(channel);
-                                if (detection != null) {
-                                    dyeNames.add(detection.getDyeName());
-                                } else {
-                                    dyeNames.add("Unknown");
-                                }
-                            });
+                List<SampleImageFile> sampleImageFiles = getSampleLsmsMetadataProcessor.getResultHandler().getServiceDataResult(getSampleLsmsMetadatService);
+                sampleImageFiles.forEach(simdf -> {
+                    LSMMetadata lsmMetadata = LSMProcessingTools.getLSMMetadata(simdf.getMetadataFilePath());
+                    List<String> colors = new ArrayList<>();
+                    List<String> dyeNames = new ArrayList<>();
+                    if (CollectionUtils.isNotEmpty(lsmMetadata.getChannels())) {
+                        lsmMetadata.getChannels().forEach(channel -> {
+                            colors.add(channel.getColor());
+                            LSMDetectionChannel detection = lsmMetadata.getDetectionChannel(channel);
+                            if (detection != null) {
+                                dyeNames.add(detection.getDyeName());
+                            } else {
+                                dyeNames.add("Unknown");
+                            }
+                        });
+                    }
+                    LSMImage lsmImage = sampleDataService.getLSMsByIds(pd.getJacsServiceData().getOwner(), ImmutableList.of(simdf.getId())).stream().findFirst().orElse(null);
+                    if (lsmImage == null) {
+                        logger.warn("No LSM IMAGE found for sample {} with id = {}", simdf.getSampleId(), simdf.getId());
+                    } else {
+                        boolean lsmUpdated = false;
+                        if (CollectionUtils.isNotEmpty(colors)) {
+                            lsmImage.setChannelColors(Joiner.on(',').join(colors));
+                            lsmUpdated = true;
                         }
-                        LSMImage lsmImage = sampleDataService.getLSMsByIds(pd.getJacsServiceData().getOwner(), ImmutableList.of(simdf.getSampleImageFile().getId())).stream().findFirst().orElse(null);
-                        if (lsmImage == null) {
-                            logger.warn("No LSM IMAGE found for sample {} with id = {}", simdf.getSampleImageFile().getSampleId(), simdf.getSampleImageFile().getId());
-                        } else {
-                            boolean lsmUpdated = false;
-                            if (CollectionUtils.isNotEmpty(colors)) {
-                                lsmImage.setChannelColors(Joiner.on(',').join(colors));
-                                lsmUpdated = true;
-                            }
-                            if (CollectionUtils.isNotEmpty(dyeNames)) {
-                                lsmImage.setChannelDyeNames(Joiner.on(',').join(dyeNames));
-                                lsmUpdated = true;
-                            }
-                            if (lsmUpdated) {
-                                sampleDataService.updateLSM(lsmImage);
-                            }
-                            sampleDataService.updateLSMMetadataFile(lsmImage, simdf.getMetadataFilePath());
+                        if (CollectionUtils.isNotEmpty(dyeNames)) {
+                            lsmImage.setChannelDyeNames(Joiner.on(',').join(dyeNames));
+                            lsmUpdated = true;
                         }
-                    } catch (IOException e) {
-                        throw new ComputationException(depResults.getJacsServiceData(), e);
+                        if (lsmUpdated) {
+                            sampleDataService.updateLSM(lsmImage);
+                        }
+                        sampleDataService.updateLSMMetadataFile(lsmImage, simdf.getMetadataFilePath());
                     }
                 });
                 return pd;

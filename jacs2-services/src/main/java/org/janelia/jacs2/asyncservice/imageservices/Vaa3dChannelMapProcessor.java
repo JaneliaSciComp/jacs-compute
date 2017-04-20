@@ -200,7 +200,6 @@ public class Vaa3dChannelMapProcessor extends AbstractBasicLifeCycleServiceProce
             return args.channelMapping;
         } else {
             List<String> sourceChannels = Splitter.on(',').trimResults().splitToList(args.sourceChannelSpec);
-            ;
             Map<String, Integer> sourceChanPos = new LinkedHashMap<>();
             int sourceChanIndex = 0;
             for (String chanSpec : sourceChannels) sourceChanPos.put(chanSpec, sourceChanIndex++);

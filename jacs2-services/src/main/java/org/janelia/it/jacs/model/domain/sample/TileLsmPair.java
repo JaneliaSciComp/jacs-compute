@@ -34,6 +34,10 @@ public class TileLsmPair {
         this.secondLsm = secondLsm;
     }
 
+    public boolean hasTwoLsms() {
+        return secondLsm != null;
+    }
+
     @JsonIgnore
     public List<LSMImage> getLsmFiles() {
         ImmutableList.Builder<LSMImage> lsmFileListBuilder = ImmutableList.<LSMImage>builder().add(firstLsm);

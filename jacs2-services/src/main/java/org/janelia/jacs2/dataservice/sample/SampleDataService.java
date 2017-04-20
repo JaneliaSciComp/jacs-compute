@@ -1,7 +1,9 @@
 package org.janelia.jacs2.dataservice.sample;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.jacs2.dao.SampleDao;
 import org.janelia.jacs2.dao.ImageDao;
@@ -78,6 +80,14 @@ public class SampleDataService {
     }
 
     public List<AnatomicalArea> getAnatomicalAreasBySampleIdAndObjective(String subjectName, Number sampleId, String objective) {
+        return getAnatomicalAreasBySampleIdAndObjective(subjectName, sampleId, objective, Optional.<String>empty());
+    }
+
+    public List<AnatomicalArea> getAnatomicalAreasBySampleIdObjectiveAndArea(String subjectName, Number sampleId, String objective, String anatomicalAreaName) {
+        return getAnatomicalAreasBySampleIdAndObjective(subjectName, sampleId, objective, Optional.of(StringUtils.defaultIfBlank(anatomicalAreaName, "")));
+    }
+
+    private List<AnatomicalArea> getAnatomicalAreasBySampleIdAndObjective(String subjectName, Number sampleId, String objective, Optional<String> anatomicalAreaName) {
         Preconditions.checkArgument(sampleId != null, "Sample ID must be specified for anatomical area retrieval");
         Subject subject = null;
         Sample sample = getSampleById(subjectName, sampleId);
@@ -91,32 +101,70 @@ public class SampleDataService {
         final Subject currentSubject = subject;
         Map<String, LSMImage> indexedLsms = new LinkedHashMap<>();
         Predicate<ObjectiveSample> objectiveFilter = objectiveSample -> {
-            if (StringUtils.isBlank(objective)) {
-                return true;
-            } else {
-                return objective.equals(objectiveSample.getObjective());
-            }
+            return StringUtils.isBlank(objective) || objective.equals(objectiveSample.getObjective());
         };
         sample.getObjectiveSamples().stream()
                 .filter(objectiveFilter)
                 .flatMap(objectiveSample -> streamAllLSMs(currentSubject, objectiveSample))
+                .filter(lsm -> {
+                    if (anatomicalAreaName.isPresent()) {
+                        return anatomicalAreaName.get().equals(lsm.getAnatomicalArea());
+                    } else {
+                        return true;
+                    }
+                })
                 .forEach(lsm -> indexedLsms.put(lsm.getEntityRefId(), lsm));
 
-        return sample.getObjectiveSamples().stream()
+        Map<String, AnatomicalArea> anatomicalAreaMap = new LinkedHashMap<>();
+        sample.getObjectiveSamples().stream()
                 .filter(objectiveFilter)
-                .map(objectiveSample -> {
-                        AnatomicalArea anatomicalArea = new AnatomicalArea();
-                        anatomicalArea.setName(sample.getName());
-                        anatomicalArea.setSampleId(sample.getId());
-                        anatomicalArea.setObjective(objectiveSample.getObjective());
-                        objectiveSample.getTiles().stream()
-                                .forEach(t -> {
-                                    TileLsmPair lsmPair = getTileLsmPair(sample, objectiveSample, t, indexedLsms::get);
-                                    anatomicalArea.addLsmPair(lsmPair);
-                                });
-                        return anatomicalArea;
-                    })
-                .collect(Collectors.toList());
+                .forEach(objectiveSample -> {
+                    objectiveSample.getTiles().stream()
+                            .filter(t -> {
+                                return !anatomicalAreaName.isPresent() || anatomicalAreaName.get().equals(t.getAnatomicalArea());
+                            })
+                            .forEach(t -> {
+                                Reference firstLsmRef = t.getLsmReferenceAt(0);
+                                if (firstLsmRef == null) {
+                                    logger.error("No LSMs set for tile {} in sample {} objective {}", t, sample, objectiveSample);
+                                    throw new IllegalStateException("No LSMs set for tile " + t + " in sample " + sample + " objective " + objectiveSample);
+                                }
+                                LSMImage firstLSM = indexedLsms.get(firstLsmRef.getTargetRefId());
+                                if (firstLSM == null) {
+                                    logger.error("No LSM found for {} - first LSM for tile {} in sample {} objective {}",
+                                            firstLsmRef.getTargetRefId(), t, sample, objectiveSample);
+                                    throw new IllegalStateException("No LSM found for " + firstLsmRef.getTargetRefId());
+                                }
+                                Reference secondLsmRef = t.getLsmReferenceAt(1);
+                                LSMImage secondLSM = null;
+                                if (secondLsmRef != null) {
+                                    secondLSM = indexedLsms.get(secondLsmRef.getTargetRefId());
+                                    if (secondLSM == null) {
+                                        logger.error("No LSM found for {} - second LSM for tile {} in sample {} objective {}",
+                                                secondLsmRef.getTargetRefId(), t, sample, objectiveSample);
+                                        throw new IllegalStateException("No LSM found for " + secondLsmRef.getTargetRefId());
+                                    }
+                                    if (Optional.ofNullable(firstLSM.getNumChannels()).orElse(0) == 2) {
+                                        // Switch the LSMs so that the 3 channel image always comes first
+                                        LSMImage tmp = firstLSM;
+                                        firstLSM = secondLSM;
+                                        secondLSM = tmp;
+                                    }
+                                }
+                                String tileAnatomicalArea = getTileAnatomicalArea(t, firstLSM);
+                                AnatomicalArea anatomicalArea = anatomicalAreaMap.get(tileAnatomicalArea);
+                                if (anatomicalArea == null) {
+                                    anatomicalArea = new AnatomicalArea();
+                                    anatomicalArea.setName(tileAnatomicalArea);
+                                    anatomicalArea.setSampleId(sample.getId());
+                                    anatomicalArea.setObjective(objectiveSample.getObjective());
+                                    anatomicalArea.setDefaultChanSpec(objectiveSample.getChanSpec());
+                                    anatomicalAreaMap.put(tileAnatomicalArea, anatomicalArea);
+                                }
+                                anatomicalArea.addLsmPair(getTileLsmPair(t.getName(), firstLSM, secondLSM));
+                            });
+                });
+        return ImmutableList.copyOf(anatomicalAreaMap.values());
     }
 
     private Stream<LSMImage> streamAllLSMs(Subject subject, ObjectiveSample sampleObjective) {
@@ -125,36 +173,14 @@ public class SampleDataService {
                 .map(dobj -> (LSMImage) dobj);
     }
 
-    private TileLsmPair getTileLsmPair(Sample sample, ObjectiveSample sampleObjective, SampleTile tile, Function<String, LSMImage> lsmByRefIdRetriever) {
-        Reference firstLsmRef = tile.getLsmReferenceAt(0);
-        Reference secondLsmRef = tile.getLsmReferenceAt(1);
-        if (firstLsmRef == null) {
-            logger.error("No LSMs set for tile {} in sample {} objective {}", tile, sample, sampleObjective);
-            throw new IllegalStateException("No LSMs set for tile " + tile + " in sample " + sample + " objective " + sampleObjective);
-        }
-        LSMImage firstLSM = lsmByRefIdRetriever.apply(firstLsmRef.getTargetRefId());
-        if (firstLSM == null) {
-            logger.error("No LSM found for {} - first LSM for tile {} in sample {} objective {}",
-                    firstLsmRef.getTargetRefId(), tile, sample, sampleObjective);
-            throw new IllegalStateException("No LSM found for " + firstLsmRef.getTargetRefId());
-        }
-        LSMImage secondLSM = null;
-        if (secondLsmRef != null) {
-            secondLSM = lsmByRefIdRetriever.apply(secondLsmRef.getTargetRefId());
-            if (secondLSM == null) {
-                logger.error("No LSM found for {} - second LSM for tile {} in sample {} objective {}",
-                        secondLsmRef.getTargetRefId(), tile, sample, sampleObjective);
-                throw new IllegalStateException("No LSM found for " + secondLsmRef.getTargetRefId());
-            }
-            if (Optional.ofNullable(firstLSM.getNumChannels()).orElse(0) == 2) {
-                // Switch the LSMs so that the 3 channel image always comes first
-                LSMImage tmp = firstLSM;
-                firstLSM = secondLSM;
-                secondLSM = tmp;
-            }
-        }
+    private String getTileAnatomicalArea(SampleTile tile, LSMImage lsmImage) {
+        return StringUtils.defaultIfBlank(lsmImage.getAnatomicalArea(),
+                StringUtils.defaultIfBlank(tile.getAnatomicalArea(), ""));
+    }
+
+    private TileLsmPair getTileLsmPair(String name, LSMImage firstLSM, LSMImage secondLSM) {
         TileLsmPair lsmPair = new TileLsmPair();
-        lsmPair.setTileName(tile.getName());
+        lsmPair.setTileName(name);
         lsmPair.setFirstLsm(firstLSM);
         lsmPair.setSecondLsm(secondLSM);
         return lsmPair;

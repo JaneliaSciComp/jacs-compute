@@ -141,7 +141,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
                         .description(description)
                         .build(),
                 new ServiceArg("-inputDir", inputDir.toString()),
-                new ServiceArg("-refchannel", referenceChannel),
+                new ServiceArg("-refchannel", String.valueOf(referenceChannel)),
                 new ServiceArg("-pluginParams", String.join(" ", additionalPluginParams))
         );
         return submitDependencyIfNotPresent(jacsServiceData, stitchServiceData);

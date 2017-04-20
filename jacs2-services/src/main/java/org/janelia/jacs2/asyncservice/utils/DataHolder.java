@@ -17,4 +17,8 @@ public class DataHolder<T> {
     public void setData(T data) {
         this.data = data;
     }
+
+    public boolean isPresent() {
+        return data != null;
+    }
 }

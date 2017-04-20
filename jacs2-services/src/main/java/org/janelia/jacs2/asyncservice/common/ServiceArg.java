@@ -1,17 +1,14 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import java.util.Arrays;
 
 public class ServiceArg {
     private final String flag;
     private final int arity;
     private final String[] values;
-
-    public ServiceArg(String flag, int arity, String... values) {
-        this.flag = flag;
-        this.arity = arity;
-        this.values = values;
-    }
 
     public ServiceArg(String flag, String value) {
         if (StringUtils.isBlank(value)) {
@@ -25,8 +22,30 @@ public class ServiceArg {
         }
     }
 
+    public ServiceArg(String flag, String value1, String... values) {
+        this.flag = flag;
+        this.arity = values.length + 1;
+        this.values = new String[values.length + 1];
+        this.values[0] = value1;
+        System.arraycopy(values, 0, this.values, 1, values.length);
+    }
+
     public ServiceArg(String flag) {
-        this(flag, 0);
+        this.flag = flag;
+        this.arity = 0;
+        this.values = new String[0];
+    }
+
+    public ServiceArg(String flag, boolean flagValue) {
+        if (flagValue) {
+            this.flag = flag;
+            this.arity = 0;
+            this.values = new String[0];
+        } else {
+            this.flag = null;
+            this.arity = 0;
+            this.values = null;
+        }
     }
 
     public String[] toStringArray() {
@@ -49,5 +68,10 @@ public class ServiceArg {
             }
             return args;
         }
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this).append(this.toStringArray()).build();
     }
 }

@@ -7,6 +7,7 @@ public class SampleImageFile {
     private Number sampleId;
     private String archiveFilePath;
     private String workingFilePath;
+    private String metadataFilePath;
     private String chanSpec;
     private String colorSpec;
     private String divSpec;
@@ -45,6 +46,14 @@ public class SampleImageFile {
 
     public void setWorkingFilePath(String workingFilePath) {
         this.workingFilePath = workingFilePath;
+    }
+
+    public String getMetadataFilePath() {
+        return metadataFilePath;
+    }
+
+    public void setMetadataFilePath(String metadataFilePath) {
+        this.metadataFilePath = metadataFilePath;
     }
 
     public String getChanSpec() {

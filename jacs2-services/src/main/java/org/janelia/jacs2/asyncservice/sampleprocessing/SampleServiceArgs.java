@@ -10,6 +10,10 @@ class SampleServiceArgs extends ServiceArgs {
             description = "Optional sample objective. If specified it retrieves all sample image files, otherwise it only retrieves the ones for the given objective",
             required = false)
     String sampleObjective;
+    @Parameter(names = "-area",
+            description = "Optional sample area. If specified it filters images by the specified area",
+            required = false)
+    String sampleArea;
     @Parameter(names = "-sampleDataDir", description = "Sample data directory", required = false)
     String sampleDataDir;
 }

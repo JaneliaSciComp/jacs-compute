@@ -569,9 +569,9 @@ public class RawFilesAlignmentProcessor extends AbstractBasicLifeCycleServicePro
                 new ServiceArg("-ref", targetFile.toString()),
                 new ServiceArg("-omat", rotationsMatFile.toString()),
                 new ServiceArg("-cost", "mutualinfo"),
-                new ServiceArg("-searchrx", 2, "-180", "180"),
-                new ServiceArg("-searchry", 2, "-180", "180"),
-                new ServiceArg("-searchrz", 2, "-180", "180"),
+                new ServiceArg("-searchrx", "-180", "180"),
+                new ServiceArg("-searchry", "-180", "180"),
+                new ServiceArg("-searchrz", "-180", "180"),
                 new ServiceArg("-dof", "12"),
                 new ServiceArg("-datatype", "char"),
                 new ServiceArg("-fslOutputType", fslOutputType)
@@ -717,7 +717,7 @@ public class RawFilesAlignmentProcessor extends AbstractBasicLifeCycleServicePro
                         .build(),
                 new ServiceArg("-subject", subjectFile.toString()),
                 new ServiceArg("-target", targetFile.toString()),
-                new ServiceArg("-reference", referenceChannel),
+                new ServiceArg("-reference", String.valueOf(referenceChannel)),
                 new ServiceArg("-output", outputFile.toString())
         );
         return submitDependencyIfNotPresent(jacsServiceData, movieServiceData);

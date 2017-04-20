@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
@@ -27,6 +28,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,11 +41,9 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
 
     static class GetSampleImageIntermediateData {
         private final SampleImageFile sampleImageFile;
-        private final JacsServiceData fileCopyServiceData;
 
-        public GetSampleImageIntermediateData(SampleImageFile sampleImageFile, JacsServiceData fileCopyServiceData) {
+        GetSampleImageIntermediateData(SampleImageFile sampleImageFile) {
             this.sampleImageFile = sampleImageFile;
-            this.fileCopyServiceData = fileCopyServiceData;
         }
     }
 
@@ -110,15 +110,8 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
     @Override
     protected JacsServiceResult<List<GetSampleImageIntermediateData>> submitServiceDependencies(JacsServiceData jacsServiceData) {
         SampleServiceArgs args = getArgs(jacsServiceData);
-        Path destinationDirectory = Paths.get(args.sampleDataDir);
-
         List<AnatomicalArea> anatomicalAreas =
-                sampleDataService.getAnatomicalAreasBySampleIdAndObjective(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective);
-        if (anatomicalAreas.isEmpty()) {
-            throw new ComputationException(jacsServiceData, "No anatomical areas found for " + args.sampleId +
-                            (StringUtils.isBlank(args.sampleObjective) ? "" : "-" + args.sampleObjective));
-        }
-
+                sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective, args.sampleArea);
         // invoke child file copy services for all LSM files
         List<GetSampleImageIntermediateData> getSampleServiceData = anatomicalAreas.stream()
                 .flatMap(ar -> ar.getTileLsmPairs()
@@ -129,18 +122,23 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
                             sif.setSampleId(args.sampleId);
                             sif.setId(lsmf.getId());
                             sif.setArchiveFilePath(lsmf.getFilepath());
-                            sif.setWorkingFilePath(SampleServicesUtils.getImageFile(destinationDirectory, lsmf).getAbsolutePath());
+                            sif.setWorkingFilePath(SampleServicesUtils.getImageFile(args.sampleDataDir, lsmf).getAbsolutePath());
                             sif.setArea(ar.getName());
                             sif.setChanSpec(lsmf.getChanSpec());
                             sif.setColorSpec(lsmf.getChannelColors());
                             sif.setObjective(ar.getObjective());
+                            sif.setMetadataFilePath(lsmf.getFileName(FileType.LsmMetadata));
                             return sif;
                         }))
                 .map(sif -> {
-                    JacsServiceData fileCopyService = fileCopyProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData).processingLocation(ProcessingLocation.CLUSTER).build(),
-                            new ServiceArg("-src", sif.getArchiveFilePath()),
-                            new ServiceArg("-dst", sif.getWorkingFilePath()));
-                    return new GetSampleImageIntermediateData(sif, submitDependencyIfNotPresent(jacsServiceData, fileCopyService));
+                    File imageWorkingFile = new File(sif.getWorkingFilePath());
+                    if (!imageWorkingFile.exists()) {
+                        JacsServiceData fileCopyService = fileCopyProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData).processingLocation(ProcessingLocation.CLUSTER).build(),
+                                new ServiceArg("-src", sif.getArchiveFilePath()),
+                                new ServiceArg("-dst", sif.getWorkingFilePath()));
+                        submitDependencyIfNotPresent(jacsServiceData, fileCopyService);
+                    }
+                    return new GetSampleImageIntermediateData(sif);
                 })
                 .collect(Collectors.toList());
         return new JacsServiceResult<>(jacsServiceData, getSampleServiceData);

@@ -33,7 +33,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 @Named("mergeChannels")
-public class ChannelMergeProcessor extends AbstractExeBasedServiceProcessor<Void, File> {
+public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Void, File> {
 
     static class ChannelMergeArgs extends ServiceArgs {
         @Parameter(names = "-chInput1", description = "File containing the first set of channels", required = true)
@@ -42,8 +42,8 @@ public class ChannelMergeProcessor extends AbstractExeBasedServiceProcessor<Void
         String chInput2;
         @Parameter(names = "-multiscanVersion", description = "Multiscan blend version", required = false)
         String multiscanBlendVersion;
-        @Parameter(names = "-resultDir", description = "Result directory", required = true)
-        String resultDir;
+        @Parameter(names = "-output", description = "Result directory", required = true)
+        String output;
     }
 
     private static final String DEFAULT_MERGE_RESULT_FILE_NAME = "merged.v3draw";
@@ -52,14 +52,14 @@ public class ChannelMergeProcessor extends AbstractExeBasedServiceProcessor<Void
     private final String libraryPath;
 
     @Inject
-    ChannelMergeProcessor(ServiceComputationFactory computationFactory,
-                          JacsServiceDataPersistence jacsServiceDataPersistence,
-                          @Any Instance<ExternalProcessRunner> serviceRunners,
-                          @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                          @PropertyValue(name = "Executables.ModuleBase") String executablesBaseDir,
-                          @PropertyValue(name = "LSMMerge.ScriptPath") String lsmMergeScript,
-                          @PropertyValue(name = "VAA3D.Library.Path") String libraryPath,
-                          Logger logger) {
+    MergeChannelsProcessor(ServiceComputationFactory computationFactory,
+                           JacsServiceDataPersistence jacsServiceDataPersistence,
+                           @Any Instance<ExternalProcessRunner> serviceRunners,
+                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                           @PropertyValue(name = "Executables.ModuleBase") String executablesBaseDir,
+                           @PropertyValue(name = "LSMMerge.ScriptPath") String lsmMergeScript,
+                           @PropertyValue(name = "VAA3D.Library.Path") String libraryPath,
+                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, executablesBaseDir, logger);
         this.lsmMergeScript = lsmMergeScript;
         this.libraryPath = libraryPath;
@@ -76,13 +76,12 @@ public class ChannelMergeProcessor extends AbstractExeBasedServiceProcessor<Void
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                File outputFile = getMergedLsmResultFile(depResults.getJacsServiceData());
-                return outputFile.exists();
+                return getMergedLsmResultFile(getArgs(depResults.getJacsServiceData())).exists();
             }
 
             @Override
             public File collectResult(JacsServiceResult<?> depResults) {
-                return getMergedLsmResultFile(depResults.getJacsServiceData());
+                return getMergedLsmResultFile(getArgs(depResults.getJacsServiceData()));
             }
         };
     }
@@ -125,7 +124,7 @@ public class ChannelMergeProcessor extends AbstractExeBasedServiceProcessor<Void
         try {
             Path workingDir = getWorkingDirectory(jacsServiceData);
             X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
-            File resultDir = new File(args.resultDir);
+            File resultDir = getMergedLsmResultDir(args);
             Files.createDirectories(resultDir.toPath());
             scriptWriter.addWithArgs(getExecutable())
                     .addArgs("-o", resultDir.getAbsolutePath());
@@ -148,9 +147,19 @@ public class ChannelMergeProcessor extends AbstractExeBasedServiceProcessor<Void
         return getFullExecutableName(lsmMergeScript);
     }
 
-    private File getMergedLsmResultFile(JacsServiceData jacsServiceData) {
-        ChannelMergeArgs args = getArgs(jacsServiceData);
-        return new File(args.resultDir, DEFAULT_MERGE_RESULT_FILE_NAME);
+//    private File getMergedLsmResultFile(JacsServiceData jacsServiceData) {
+//        ChannelMergeArgs args = getArgs(jacsServiceData);
+//    }
+
+    private File getMergedLsmResultFile(ChannelMergeArgs args) {
+        if ("v3draw".equals(com.google.common.io.Files.getFileExtension(args.output))) {
+            return new File(args.output);
+        } else {
+            return new File(args.output, DEFAULT_MERGE_RESULT_FILE_NAME);
+        }
     }
 
+    private File getMergedLsmResultDir(ChannelMergeArgs args) {
+        return getMergedLsmResultFile(args).getParentFile();
+    }
 }

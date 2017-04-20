@@ -12,7 +12,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
-import org.janelia.jacs2.asyncservice.imageservices.ChannelMergeProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.MergeChannelsProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.DistortionCorrectionProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -52,18 +52,18 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
     }
 
     private final DistortionCorrectionProcessor distortionCorrectionProcessor;
-    private final ChannelMergeProcessor channelMergeProcessor;
+    private final MergeChannelsProcessor mergeChannelsProcessor;
 
     @Inject
     MergeLsmPairProcessor(ServiceComputationFactory computationFactory,
                           JacsServiceDataPersistence jacsServiceDataPersistence,
                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                           DistortionCorrectionProcessor distortionCorrectionProcessor,
-                          ChannelMergeProcessor channelMergeProcessor,
+                          MergeChannelsProcessor mergeChannelsProcessor,
                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.distortionCorrectionProcessor = distortionCorrectionProcessor;
-        this.channelMergeProcessor = channelMergeProcessor;
+        this.mergeChannelsProcessor = mergeChannelsProcessor;
     }
 
     @Override
@@ -129,8 +129,8 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
             mergeInput2 = getLsm2(args);
             distortionCorrectionServiceData = ImmutableList.of();
         }
-        Path mergeOutput = getOutputDir(args);
-        mergeChannels(mergeInput1, mergeInput2, mergeOutput, args.multiscanBlendVersion,
+        Path mergeOutputFile = getOutputFile(args);
+        mergeChannels(mergeInput1, mergeInput2, mergeOutputFile, args.multiscanBlendVersion,
                 "Merge channels",
                 jacsServiceData,
                 distortionCorrectionServiceData.toArray(new JacsServiceData[distortionCorrectionServiceData.size()]));
@@ -150,14 +150,14 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
     }
 
     private JacsServiceData mergeChannels(Path input1, Path input2, Path output, String multiscanBlendVersion, String description, JacsServiceData jacsServiceData, JacsServiceData... deps) {
-        JacsServiceData mergeServiceData = channelMergeProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+        JacsServiceData mergeServiceData = mergeChannelsProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .waitFor(deps)
                         .description(description)
                         .build(),
                 new ServiceArg("-chInput1", input1.toString()),
                 new ServiceArg("-chInput2", input2.toString()),
                 new ServiceArg("-multiscanVersion", multiscanBlendVersion),
-                new ServiceArg("-resultDir", output.toString())
+                new ServiceArg("-output", output.toString())
         );
         return submitDependencyIfNotPresent(jacsServiceData, mergeServiceData);
     }

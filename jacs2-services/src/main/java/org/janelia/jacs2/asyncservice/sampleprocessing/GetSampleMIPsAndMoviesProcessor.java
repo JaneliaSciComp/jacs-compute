@@ -36,15 +36,14 @@ import java.util.List;
 @Named("getSampleMIPsAndMovies")
 public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServiceProcessor<GetSampleMIPsAndMoviesProcessor.GetSampleMIPsIntermediateResult, List<SampleImageMIPsFile>> {
 
-    static class GetSampleMIPsIntermediateResult {
-        final Number getSampleLsmsServiceDataId;
+    static class GetSampleMIPsIntermediateResult extends GetSampleLsmsIntermediateResult {
         final List<SampleImageMIPsFile> sampleImageFileWithMips = new LinkedList<>();
 
-        public GetSampleMIPsIntermediateResult(Number getSampleLsmsServiceDataId) {
-            this.getSampleLsmsServiceDataId = getSampleLsmsServiceDataId;
+        GetSampleMIPsIntermediateResult(Number getSampleLsmsServiceDataId) {
+            super(getSampleLsmsServiceDataId);
         }
 
-        public void addSampleImageMipsFile(SampleImageMIPsFile simf) {
+        void addSampleImageMipsFile(SampleImageMIPsFile simf) {
             sampleImageFileWithMips.add(simf);
         }
     }

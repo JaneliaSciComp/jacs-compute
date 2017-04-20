@@ -68,7 +68,6 @@ public class FijiUtils {
         Iterator<Integer> chanIterator = chanSpec.chars().iterator();
         List<FijiColor> colors = new ArrayList<>();
         for (; chanIterator.hasNext();) {
-
             int chanValue = chanIterator.next();
             char chan = (char) chanValue;
             if (chan == 'r') {

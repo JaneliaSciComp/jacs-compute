@@ -9,6 +9,7 @@ public class AnatomicalArea {
     private String objective;
     private String name;
     private List<TileLsmPair> tileLsmPairs = new ArrayList<>();
+    private String defaultChanSpec;
 
     public Number getSampleId() {
         return sampleId;
@@ -44,5 +45,13 @@ public class AnatomicalArea {
 
     public void addLsmPair(TileLsmPair tileLsmPair) {
         tileLsmPairs.add(tileLsmPair);
+    }
+
+    public String getDefaultChanSpec() {
+        return defaultChanSpec;
+    }
+
+    public void setDefaultChanSpec(String defaultChanSpec) {
+        this.defaultChanSpec = defaultChanSpec;
     }
 }
