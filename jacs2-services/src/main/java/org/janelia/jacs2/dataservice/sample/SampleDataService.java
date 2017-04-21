@@ -81,7 +81,7 @@ public class SampleDataService {
     }
 
     public List<AnatomicalArea> getAnatomicalAreasBySampleIdObjectiveAndArea(String subjectName, Number sampleId, String objective, String anatomicalAreaName) {
-        return getAnatomicalAreasBySampleIdAndObjective(subjectName, sampleId, objective, Optional.of(StringUtils.defaultIfBlank(anatomicalAreaName, "")));
+        return getAnatomicalAreasBySampleIdAndObjective(subjectName, sampleId, objective, StringUtils.isBlank(anatomicalAreaName) ? Optional.<String>empty() : Optional.of(anatomicalAreaName.trim()));
     }
 
     private List<AnatomicalArea> getAnatomicalAreasBySampleIdAndObjective(String subjectName, Number sampleId, String objective, Optional<String> anatomicalAreaName) {
