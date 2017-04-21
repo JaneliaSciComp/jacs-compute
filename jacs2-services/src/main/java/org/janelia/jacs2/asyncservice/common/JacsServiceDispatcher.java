@@ -56,11 +56,10 @@ public class JacsServiceDispatcher {
             ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(queuedService);
             serviceComputationFactory.<JacsServiceData>newComputation()
                     .supply(() -> {
-                        JacsServiceData service = queuedService;
-                        logger.debug("Submit {}", service);
-                        service.updateState(JacsServiceState.SUBMITTED);
-                        updateServiceData(service);
-                        return service;
+                        logger.debug("Submit {}", queuedService);
+                        queuedService.updateState(JacsServiceState.SUBMITTED);
+                        updateServiceData(queuedService);
+                        return queuedService;
                     })
                     .thenCompose(sd -> serviceProcessor.process(sd))
                     .exceptionally(exc -> {

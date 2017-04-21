@@ -178,8 +178,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
                 .build(),
                 new ServiceArg("-input", aviFile.getAbsolutePath())
         );
-        jacsServiceDataPersistence.saveHierarchy(mpegConverterService);
-        return mpegConverterService;
+        return submitDependencyIfNotPresent(jacsServiceData, mpegConverterService);
     }
 
     @Override
