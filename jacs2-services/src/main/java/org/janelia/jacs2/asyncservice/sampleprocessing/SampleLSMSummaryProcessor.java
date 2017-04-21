@@ -205,7 +205,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                 .flatMap(group -> group.getFiles().entrySet().stream())
                 .map(fileTypeEntry -> {
                     DomainModelUtils.setPathForFileType(lsmImage, fileTypeEntry.getKey(), fileTypeEntry.getValue());
-                    return false;
+                    return true;
                 })
                 .reduce((r1, r2) -> r1 || r2)
                 .orElse(false);
