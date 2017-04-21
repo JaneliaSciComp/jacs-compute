@@ -210,7 +210,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                 .reduce((r1, r2) -> r1 || r2)
                 .orElse(false);
         if (lsmWasUpdated) {
-            sampleDataService.updateLSM(lsmImage);
+            sampleDataService.updateLSMFiles(lsmImage);
         }
     }
 }

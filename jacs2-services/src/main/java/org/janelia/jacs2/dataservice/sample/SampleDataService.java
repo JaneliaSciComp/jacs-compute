@@ -181,8 +181,7 @@ public class SampleDataService {
         return lsmPair;
     }
 
-    public void updateLSMMetadataFile(LSMImage lsmImage, String lsmMetadata) {
-        DomainModelUtils.setPathForFileType(lsmImage, FileType.LsmMetadata, lsmMetadata);
+    public void updateLSMFiles(LSMImage lsmImage) {
         imageDao.updateImageFiles(lsmImage);
     }
 
