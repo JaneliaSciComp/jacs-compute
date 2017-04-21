@@ -57,6 +57,10 @@ public class FileUtils {
         });
     }
 
+    public static String getFilenameOnly(Path fp) {
+        return com.google.common.io.Files.getNameWithoutExtension(fp.toString());
+    }
+
     public static Path getFilePath(Path dir, String fileName) {
         return dir.resolve(new File(fileName).getName());
     }

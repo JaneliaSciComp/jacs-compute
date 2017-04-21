@@ -3,12 +3,16 @@ package org.janelia.jacs2.asyncservice.common;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import java.util.Arrays;
-
 public class ServiceArg {
     private final String flag;
     private final int arity;
     private final String[] values;
+
+    public ServiceArg(String flag) {
+        this.flag = flag;
+        this.arity = 0;
+        this.values = new String[0];
+    }
 
     public ServiceArg(String flag, String value) {
         if (StringUtils.isBlank(value)) {
@@ -30,14 +34,8 @@ public class ServiceArg {
         System.arraycopy(values, 0, this.values, 1, values.length);
     }
 
-    public ServiceArg(String flag) {
-        this.flag = flag;
-        this.arity = 0;
-        this.values = new String[0];
-    }
-
-    public ServiceArg(String flag, boolean flagValue) {
-        if (flagValue) {
+    public ServiceArg(String flag, boolean value) {
+        if (value) {
             this.flag = flag;
             this.arity = 0;
             this.values = new String[0];
@@ -46,6 +44,12 @@ public class ServiceArg {
             this.arity = 0;
             this.values = null;
         }
+    }
+
+    public ServiceArg(String flag, int value) {
+        this.flag = flag;
+        this.arity = 1;
+        this.values = new String[] { String.valueOf(value) };
     }
 
     public String[] toStringArray() {

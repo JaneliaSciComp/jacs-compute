@@ -43,12 +43,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
                 .thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(processDataHolder.getData().getJacsServiceData())) // suspend until all dependencies complete
                 .thenCompose(this::processing)
                 .thenSuspendUntil(() -> this.isResultReady(processDataHolder.getData())) // wait until the result becomes available
-                .thenApply(pd -> {
-                    T r = this.getResultHandler().collectResult(pd);
-                    this.getResultHandler().updateServiceDataResult(pd.getJacsServiceData(), r);
-                    updateServiceData(pd.getJacsServiceData());
-                    return new JacsServiceResult<>(pd.getJacsServiceData(), r);
-                })
+                .thenApply(this::updateServiceResult)
                 .thenApply(this::postProcessing)
                 ;
     }
@@ -70,14 +65,6 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
      */
     protected JacsServiceResult<S> submitServiceDependencies(JacsServiceData jacsServiceData) {
         return new JacsServiceResult<>(jacsServiceData);
-    }
-
-    protected boolean isResultReady(JacsServiceResult<S> depsResults) {
-        if (getResultHandler().isResultReady(depsResults)) {
-            return true;
-        }
-        verifyTimeOut(depsResults.getJacsServiceData());
-        return false;
     }
 
     /**
@@ -180,6 +167,21 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
     }
 
     protected abstract ServiceComputation<JacsServiceResult<S>> processing(JacsServiceResult<S> depsResult);
+
+    protected boolean isResultReady(JacsServiceResult<S> depsResults) {
+        if (getResultHandler().isResultReady(depsResults)) {
+            return true;
+        }
+        verifyTimeOut(depsResults.getJacsServiceData());
+        return false;
+    }
+
+    protected JacsServiceResult<T> updateServiceResult(JacsServiceResult<S> depsResult) {
+        T r = this.getResultHandler().collectResult(depsResult);
+        this.getResultHandler().updateServiceDataResult(depsResult.getJacsServiceData(), r);
+        updateServiceData(depsResult.getJacsServiceData());
+        return new JacsServiceResult<>(depsResult.getJacsServiceData(), r);
+    }
 
     protected T postProcessing(JacsServiceResult<T> sr) {
         return sr.getResult();

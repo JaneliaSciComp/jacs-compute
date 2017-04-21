@@ -23,24 +23,10 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
-import java.util.LinkedList;
 import java.util.List;
 
 @Named("getSampleLsmMetadata")
-public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServiceProcessor<GetSampleLsmsMetadataProcessor.GetSampleLsmsMetadataIntermediateResult, List<SampleImageFile>> {
-
-    static class GetSampleLsmsMetadataIntermediateResult {
-        final Number getSampleLsmsServiceDataId;
-        final List<SampleImageFile> sampleImageFileWithMetadata = new LinkedList<>();
-
-        GetSampleLsmsMetadataIntermediateResult(Number getSampleLsmsServiceDataId) {
-            this.getSampleLsmsServiceDataId = getSampleLsmsServiceDataId;
-        }
-
-        void addSampleImageMetadataFile(SampleImageFile simf) {
-            sampleImageFileWithMetadata.add(simf);
-        }
-    }
+public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServiceProcessor<GetSampleLsmsIntermediateResult, List<SampleImageFile>> {
 
     private final GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private final LsmFileMetadataProcessor lsmFileMetadataProcessor;
@@ -72,8 +58,8 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
 
             @Override
             public List<SampleImageFile> collectResult(JacsServiceResult<?> depResults) {
-                GetSampleLsmsMetadataIntermediateResult result = (GetSampleLsmsMetadataIntermediateResult) depResults.getResult();
-                return result.sampleImageFileWithMetadata;
+                GetSampleLsmsIntermediateResult result = (GetSampleLsmsIntermediateResult) depResults.getResult();
+                return result.sampleImageFiles;
             }
 
             public List<SampleImageFile> getServiceDataResult(JacsServiceData jacsServiceData) {
@@ -88,7 +74,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
     }
 
     @Override
-    protected JacsServiceResult<GetSampleLsmsMetadataIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    protected JacsServiceResult<GetSampleLsmsIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         SampleServiceArgs args = getArgs(jacsServiceData);
 
         JacsServiceData getSampleLsmsServiceRef = getSampleImageFilesProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
@@ -98,11 +84,11 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
                 new ServiceArg("-sampleDataDir", args.sampleDataDir)
         );
         JacsServiceData getSampleLsmsService = submitDependencyIfNotPresent(jacsServiceData, getSampleLsmsServiceRef);
-        return new JacsServiceResult<>(jacsServiceData, new GetSampleLsmsMetadataIntermediateResult(getSampleLsmsService.getId()));
+        return new JacsServiceResult<>(jacsServiceData, new GetSampleLsmsIntermediateResult(getSampleLsmsService.getId()));
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<GetSampleLsmsMetadataIntermediateResult>> processing(JacsServiceResult<GetSampleLsmsMetadataIntermediateResult> depResults) {
+    protected ServiceComputation<JacsServiceResult<GetSampleLsmsIntermediateResult>> processing(JacsServiceResult<GetSampleLsmsIntermediateResult> depResults) {
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
                     SampleServiceArgs args = getArgs(pd.getJacsServiceData());
@@ -122,7 +108,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
                                     submitDependencyIfNotPresent(depResults.getJacsServiceData(), lsmMetadataService);
                                 }
                                 sif.setMetadataFilePath(lsmMetadataFile.getAbsolutePath());
-                                depResults.getResult().addSampleImageMetadataFile(sif);
+                                depResults.getResult().addSampleImageFile(sif);
                             });
                     return pd;
                 });

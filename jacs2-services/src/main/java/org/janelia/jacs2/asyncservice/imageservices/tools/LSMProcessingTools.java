@@ -1,5 +1,10 @@
 package org.janelia.jacs2.asyncservice.imageservices.tools;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMChannel;
 import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMMetadata;
 
@@ -7,10 +12,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class LSMProcessingTools {
@@ -39,6 +47,14 @@ public class LSMProcessingTools {
         return chanSpecBuilder.toString();
     }
 
+    public static String createChanSpec(List<String> channelDyeNames, Collection<String> referenceDyes) {
+        StringBuilder chanSpecBuilder = new StringBuilder();
+        channelDyeNames.stream()
+                .map(dye -> referenceDyes.contains(dye) ? REFERENCE : SIGNAL)
+                .forEach(chanSpecBuilder::append);
+        return chanSpecBuilder.toString();
+    }
+
     /**
      * Convert from a channel specification (e.g. "ssr") to a list of unique channel identifiers (e.g. ["s0","s1","r0"])
      * @param chanSpec a channel specification (e.g. "ssr")
@@ -52,11 +68,11 @@ public class LSMProcessingTools {
             char imageChanCode = chanSpec.charAt(sourceIndex);
             switch (imageChanCode) {
                 case SIGNAL:
-                    channelList.add(SIGNAL+""+s);
+                    channelList.add(SIGNAL + "" + s);
                     s++;
                     break;
                 case REFERENCE:
-                    channelList.add(REFERENCE+""+r);
+                    channelList.add(REFERENCE + "" + r);
                     r++;
                     break;
                 default:
@@ -159,5 +175,29 @@ public class LSMProcessingTools {
         channelComponents.referenceChannelsPos = referenceChannelBuilder.toString();
         channelComponents.signalChannelsPos = signalChannelBuilder.toString();
         return channelComponents;
+    }
+
+    public static Pair<Multimap<String, String>, Map<String, String>> parseChannelDyeSpec(String channelDyeSpec) {
+        Iterable<String> channels = Splitter.on(';').trimResults().omitEmptyStrings().split(channelDyeSpec);
+
+        Multimap<String,String> channelTagToDyesMap = LinkedHashMultimap.create();
+        Map<String,String> dyeToTagMap = new HashMap<String,String>();
+        for(String channel : channels) {
+            String[] parts = channel.split("=");
+            String channelTag = parts[0];
+            Iterable<String> channelDyes = parseChannelDyes(parts[1]);
+            for(String dye : channelDyes) {
+                channelTagToDyesMap.put(channelTag, dye);
+                if (dyeToTagMap.containsKey(dye)) {
+                    throw new IllegalArgumentException("Dye "+dye+" is already mapped as "+dyeToTagMap.get(dye));
+                }
+                dyeToTagMap.put(dye, channelTag);
+            }
+        }
+        return new ImmutablePair<>(channelTagToDyesMap, dyeToTagMap);
+    }
+
+    public static List<String> parseChannelDyes(String channelDyeNames) {
+        return Splitter.on(',').trimResults().omitEmptyStrings().splitToList(channelDyeNames);
     }
 }

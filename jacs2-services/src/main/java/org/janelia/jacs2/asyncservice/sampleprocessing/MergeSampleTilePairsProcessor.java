@@ -185,7 +185,7 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
 
         if (StringUtils.isNotBlank(args.channelDyeSpec) && StringUtils.isNotBlank(args.outputChannelOrder)) {
             // if it uses the channel dye spec and the output channel order is specified use the dye spec to deternine the ordering
-            Pair<Multimap<String, String>, Map<String, String>> channelDyesMapData = getDyesPerChannel(args.channelDyeSpec);
+            Pair<Multimap<String, String>, Map<String, String>> channelDyesMapData = LSMProcessingTools.parseChannelDyeSpec(args.channelDyeSpec);
             List<String> outputChannels = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(args.outputChannelOrder);
             channelMappingFunc = (ar, tp) -> determineChannelMappingUsingDyeSpec(tp, channelDyesMapData, outputChannels);
         } else {
@@ -263,26 +263,6 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
 
     private ConvertTileToImageArgs getArgs(JacsServiceData jacsServiceData) {
         return SampleServiceArgs.parse(jacsServiceData.getArgsArray(), new ConvertTileToImageArgs());
-    }
-
-    private Pair<Multimap<String, String>, Map<String, String>> getDyesPerChannel(String channelDyeSpec) {
-        Iterable<String> channels = Splitter.on(';').trimResults().omitEmptyStrings().split(channelDyeSpec);
-
-        Multimap<String,String> channelTagToDyesMap = LinkedHashMultimap.create();
-        Map<String,String> dyeToTagMap = new HashMap<String,String>();
-        for(String channel : channels) {
-            String[] parts = channel.split("=");
-            String channelTag = parts[0];
-            Iterable<String> channelDyes = Splitter.on(',').trimResults().omitEmptyStrings().split(parts[1]);
-            for(String dye : channelDyes) {
-                channelTagToDyesMap.put(channelTag, dye);
-                if (dyeToTagMap.containsKey(dye)) {
-                    throw new IllegalArgumentException("Dye "+dye+" is already mapped as "+dyeToTagMap.get(dye));
-                }
-                dyeToTagMap.put(dye, channelTag);
-            }
-        }
-        return new ImmutablePair<>(channelTagToDyesMap, dyeToTagMap);
     }
 
     private MergeChannelsData determineChannelMappingUsingDyeSpec(TileLsmPair tilePair,

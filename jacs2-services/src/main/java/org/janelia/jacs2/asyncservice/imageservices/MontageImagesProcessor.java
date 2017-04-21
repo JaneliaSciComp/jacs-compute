@@ -22,32 +22,23 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Create a square montage from PNGs in a given directory.
+ * Create a square montage from given PNGs assuming a tile pattern with the given number of tiles per side. If the number of tiles per side is not specified
+ * it tries to form a square from the list of provided images.
  */
 @Named("montageImages")
 public class MontageImagesProcessor extends AbstractExeBasedServiceProcessor<Void, File> {
 
     static class MontageImagesArgs extends ServiceArgs {
-        @Parameter(names = "-inputFolder", description = "Input folder", required = true)
-        String inputFolder;
-        @Parameter(names = "-size", description = "The size of the montage", required = true)
-        int size;
-        @Parameter(names = "-target", description = "Name of the target montage")
-        String target;
-        @Parameter(names = "-imageFilePattern", description = "The extension of the image files from the input folder")
-        String imageFilePattern = "glob:**/*.png";
+        @Parameter(names = "-inputFiles", description = "List of input files to be montaged together. As a note this file will not try to group the provided inputs.", required = true)
+        List<String> inputFiles;
+        @Parameter(names = "-tilesPerSide", description = "Number of tiles per side", required = false)
+        int tilesPerSide = 0;
+        @Parameter(names = "-output", description = "Name of the output montage")
+        String output;
     }
 
     private final String montageToolLocation;
@@ -81,15 +72,12 @@ public class MontageImagesProcessor extends AbstractExeBasedServiceProcessor<Voi
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                MontageImagesArgs args = getArgs(depResults.getJacsServiceData());
-                File targetImage = getTargetImage(args);
-                return targetImage.exists();
+                return getMontageOutput(getArgs(depResults.getJacsServiceData())).exists();
             }
 
             @Override
             public File collectResult(JacsServiceResult<?> depResults) {
-                MontageImagesArgs args = getArgs(depResults.getJacsServiceData());
-                return getTargetImage(args);
+                return getMontageOutput(getArgs(depResults.getJacsServiceData()));
             }
         };
     }
@@ -97,19 +85,8 @@ public class MontageImagesProcessor extends AbstractExeBasedServiceProcessor<Voi
     @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
         MontageImagesArgs args = getArgs(jacsServiceData);
-        Path inputPath = Paths.get(args.inputFolder);
-        List<String> inputFiles = new ArrayList<>();
-        try {
-            PathMatcher inputFileMatcher =
-                    FileSystems.getDefault().getPathMatcher(args.imageFilePattern);
-            Files.find(inputPath, 1, (p, a) -> inputFileMatcher.matches(p)).forEach(p -> inputFiles.add(p.toString()));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        if (inputFiles.isEmpty()) {
-            throw new IllegalArgumentException("No image file found in " + args.inputFolder + " that matches the given pattern: " + args.imageFilePattern);
-        }
-        logger.info("Montage {}", inputFiles);
+        int tilesPerSide = args.tilesPerSide > 0 ? args.tilesPerSide : (int) Math.ceil(Math.sqrt(args.inputFiles.size()));
+        logger.info("Montage {}", args.inputFiles);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         externalScriptCode.getCodeWriter()
                 .addWithArgs(getExecutable())
@@ -118,9 +95,9 @@ public class MontageImagesProcessor extends AbstractExeBasedServiceProcessor<Voi
                 .addArg("-geometry")
                 .addArg("'300x300>'")
                 .addArg("-tile")
-                .addArg(String.format("%dx%d", args.size, args.size))
-                .addArgs(inputFiles)
-                .endArgs(args.target);
+                .addArg(String.format("%dx%d", tilesPerSide, tilesPerSide))
+                .addArgs(args.inputFiles)
+                .endArgs(args.output);
         return externalScriptCode;
     }
 
@@ -135,8 +112,8 @@ public class MontageImagesProcessor extends AbstractExeBasedServiceProcessor<Voi
         return args;
     }
 
-    private File getTargetImage(MontageImagesArgs args) {
-        return new File(args.target);
+    private File getMontageOutput(MontageImagesArgs args) {
+        return new File(args.output);
     }
 
     private String getExecutable() {

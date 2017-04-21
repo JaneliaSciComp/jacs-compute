@@ -81,7 +81,7 @@ public class StitchGroupingProcessor extends AbstractBasicLifeCycleServiceProces
     @Override
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
         try {
-            StitchGroupingArgs  args = getArgs(jacsServiceData);
+            StitchGroupingArgs args = getArgs(jacsServiceData);
             Files.createDirectories(Paths.get(args.resultDir));
         } catch (Exception e) {
             throw new ComputationException(jacsServiceData, e);

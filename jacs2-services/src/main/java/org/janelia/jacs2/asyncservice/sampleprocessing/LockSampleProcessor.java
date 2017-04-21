@@ -26,7 +26,7 @@ import javax.inject.Named;
 @Named("lockSample")
 public class LockSampleProcessor extends AbstractServiceProcessor<String> {
 
-    class LockSampleArgs extends ServiceArgs {
+    static class LockSampleArgs extends ServiceArgs {
         @Parameter(names = "-sampleId", description = "Sample ID", required = true)
         Long sampleId;
     }
