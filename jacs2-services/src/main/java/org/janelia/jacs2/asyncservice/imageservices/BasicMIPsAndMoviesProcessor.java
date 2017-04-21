@@ -139,8 +139,8 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
         if (colors.isEmpty()) {
             colors = FijiUtils.getDefaultColorSpec(args.chanSpec, "RGB", '1');
         }
-        String colorSpec = colors.stream().map(c -> String.valueOf(c.getCode())).collect(Collectors.joining(","));
-        String divSpec = colors.stream().map(c -> String.valueOf(c.getDivisor())).collect(Collectors.joining(","));
+        String colorSpec = colors.stream().map(c -> String.valueOf(c.getCode())).collect(Collectors.joining(""));
+        String divSpec = colors.stream().map(c -> String.valueOf(c.getDivisor())).collect(Collectors.joining(""));
         StringJoiner builder = new StringJoiner(",");
         builder.add(outputDir.toString()); // output directory
         builder.add(com.google.common.io.Files.getNameWithoutExtension(args.imageFile)); // output prefix 1
