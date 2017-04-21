@@ -3,7 +3,6 @@ package org.janelia.jacs2.dataservice.sample;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.jacs2.dao.SampleDao;
 import org.janelia.jacs2.dao.ImageDao;
