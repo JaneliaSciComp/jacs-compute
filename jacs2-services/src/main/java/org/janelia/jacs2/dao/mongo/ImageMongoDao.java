@@ -1,6 +1,5 @@
 package org.janelia.jacs2.dao.mongo;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Updates;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;

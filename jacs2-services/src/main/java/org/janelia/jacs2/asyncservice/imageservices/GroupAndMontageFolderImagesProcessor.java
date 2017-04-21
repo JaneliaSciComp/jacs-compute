@@ -207,7 +207,11 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
     }
 
     private Path getMontageOutput(MontageFolderImagesArgs args, String suffix) {
-        return FileUtils.getFilePath(getOutputDir(args), args.montageBaseName, "montage", suffix, ".png");
+        String prefix = StringUtils.defaultIfBlank(args.montageBaseName, "");
+        if ("montage".equalsIgnoreCase(prefix)) {
+            prefix = "";
+        }
+        return FileUtils.getFilePath(getOutputDir(args), prefix, "montage", suffix, "png");
     }
 
 }

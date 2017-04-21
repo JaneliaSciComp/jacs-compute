@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.domain.sample;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.FileReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
@@ -81,6 +82,7 @@ public class Image extends AbstractDomainObject implements HasRelativeFiles {
         filesImpl.removeFileName(fileType);
     }
 
+    @JsonProperty
     public List<FileReference> getDeprecatedFiles() {
         return filesImpl.getDeprecatedFiles();
     }

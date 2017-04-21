@@ -8,6 +8,7 @@ import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -21,6 +22,7 @@ import org.janelia.jacs2.asyncservice.imageservices.tools.LSMProcessingTools;
 import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMDetectionChannel;
 import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMMetadata;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.model.DomainModelUtils;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
@@ -136,23 +138,17 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
                 }
             });
         }
-        boolean lsmUpdated = false;
         if (CollectionUtils.isNotEmpty(colors)) {
             lsm.setChannelColors(Joiner.on(',').join(colors));
-            lsmUpdated = true;
         }
         if (CollectionUtils.isNotEmpty(dyeNames)) {
             lsm.setChannelDyeNames(Joiner.on(',').join(dyeNames));
-            lsmUpdated = true;
         }
         if (StringUtils.isBlank(lsm.getChanSpec())) {
             updateChanSpec(lsm, channelDyeSpec);
-            lsmUpdated = true;
         }
-        if (lsmUpdated) {
-            sampleDataService.updateLSM(lsm);
-        }
-        sampleDataService.updateLSMMetadataFile(lsm, lsmMetadataFilePath);
+        DomainModelUtils.setPathForFileType(lsm, FileType.LsmMetadata, lsmMetadataFilePath);
+        sampleDataService.updateLSM(lsm);
    }
 
     private void updateChanSpec(LSMImage lsm, String channelDyeSpec) {

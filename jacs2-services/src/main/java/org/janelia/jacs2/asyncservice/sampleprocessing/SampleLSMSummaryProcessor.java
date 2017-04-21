@@ -3,6 +3,9 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -18,6 +21,7 @@ import org.janelia.jacs2.asyncservice.imageservices.GroupAndMontageFolderImagesP
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.jacs2.model.DomainModelUtils;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
@@ -110,12 +114,13 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                     lsmSummary.setMontageResultsByType(groupAndMontageFolderImagesProcessor.getResultHandler().getServiceDataResult(montageServiceData));
                     return lsmSummary;
                 })
-                .collect(Collectors.toList());
+                        .collect(Collectors.toList());
             }
 
             @Override
             public List<LSMSummary> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<LSMSummary>>() {});
+                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<LSMSummary>>() {
+                });
             }
         };
     }
@@ -170,7 +175,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                                 MontageParameters montageCall = new MontageParameters(montageService.getId(), sif);
                                 pd.getResult().addMontage(montageCall);
                             })
-                            ;
+                    ;
                     return pd;
                 })
                 ;
@@ -195,6 +200,17 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
 
     private void updateLSM(LSMImage lsmImage, LSMSummary lsmSummary) {
         logger.info("Update LSM {} with {}", lsmImage, lsmSummary);
-        // FIXME
+        List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(lsmImage, lsmSummary.getMips());
+        boolean lsmWasUpdated = fGroups.stream()
+                .flatMap(group -> group.getFiles().entrySet().stream())
+                .map(fileTypeEntry -> {
+                    DomainModelUtils.setPathForFileType(lsmImage, fileTypeEntry.getKey(), fileTypeEntry.getValue());
+                    return false;
+                })
+                .reduce((r1, r2) -> r1 || r2)
+                .orElse(false);
+        if (lsmWasUpdated) {
+            sampleDataService.updateLSM(lsmImage);
+        }
     }
 }
