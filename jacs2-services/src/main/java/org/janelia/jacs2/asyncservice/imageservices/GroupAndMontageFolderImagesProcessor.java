@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +15,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
@@ -102,6 +104,11 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
                 List<MontageFolderIntermediateResult> results = (List<MontageFolderIntermediateResult>) depResults.getResult();
                 return results.stream().collect(Collectors.toMap(r -> r.groupedFilesType, r -> r.montageName));
             }
+
+            @Override
+            public Map<String, String> getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<Map<String, String>>>() {});
+            }
         };
     }
 
@@ -177,7 +184,8 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
     /**
      * Groups the files by the suffix which is the last group separated by '_' from the file name.
      * @param files input file list
-     * @return
+     * @return the list of files grouped by suffix for example all files ending in '_signal{.someextension}' will be in one group and '_reference{.extension}'
+     * will be in another group.
      */
     private Multimap<String, Path> groupFilesBySuffix(List<Path> files) {
         ImmutableListMultimap.Builder<String, Path> builder = ImmutableListMultimap.builder();

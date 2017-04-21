@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -9,6 +10,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
@@ -27,7 +29,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
@@ -99,6 +100,11 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
                         .map(Path::toFile)
                         .forEach(result::addFile);
                 return result;
+            }
+
+            @Override
+            public BasicMIPsAndMoviesResult getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<BasicMIPsAndMoviesResult>() {});
             }
         };
     }

@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
@@ -9,6 +10,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
@@ -109,6 +111,11 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                     return lsmSummary;
                 })
                 .collect(Collectors.toList());
+            }
+
+            @Override
+            public List<LSMSummary> getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<LSMSummary>>() {});
             }
         };
     }
