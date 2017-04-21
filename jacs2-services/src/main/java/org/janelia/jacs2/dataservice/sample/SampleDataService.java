@@ -30,9 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SampleDataService {
@@ -120,9 +118,7 @@ public class SampleDataService {
                 .filter(objectiveFilter)
                 .forEach(objectiveSample -> {
                     objectiveSample.getTiles().stream()
-                            .filter(t -> {
-                                return !anatomicalAreaName.isPresent() || anatomicalAreaName.get().equals(t.getAnatomicalArea());
-                            })
+                            .filter(t -> !anatomicalAreaName.isPresent() || anatomicalAreaName.get().equals(t.getAnatomicalArea()))
                             .forEach(t -> {
                                 Reference firstLsmRef = t.getLsmReferenceAt(0);
                                 if (firstLsmRef == null) {
