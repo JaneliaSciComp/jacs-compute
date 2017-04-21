@@ -11,7 +11,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -27,11 +27,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 @Named("basicMIPsAndMovies")
-public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServiceProcessor<JacsServiceData, List<File>> {
+public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServiceProcessor<JacsServiceData, BasicMIPsAndMoviesResult> {
 
     static class BasicMIPsAndMoviesArgs extends ServiceArgs {
         @Parameter(names = "-imgFile", description = "The name of the image file", required = true)
@@ -79,8 +80,8 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
     }
 
     @Override
-    public ServiceResultHandler<List<File>> getResultHandler() {
-        return new AbstractFileListServiceResultHandler() {
+    public ServiceResultHandler<BasicMIPsAndMoviesResult> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<BasicMIPsAndMoviesResult>() {
             final String resultsPattern = "glob:**/*.{png,avi,mp4}";
 
             @Override
@@ -90,11 +91,14 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
             }
 
             @Override
-            public List<File> collectResult(JacsServiceResult<?> depResults) {
+            public BasicMIPsAndMoviesResult collectResult(JacsServiceResult<?> depResults) {
                 BasicMIPsAndMoviesArgs args = getArgs(depResults.getJacsServiceData());
-                return FileUtils.lookupFiles(getResultsDir(args), 1, resultsPattern)
-                        .map(fp -> fp.toFile())
-                        .collect(Collectors.toList());
+                BasicMIPsAndMoviesResult result = new BasicMIPsAndMoviesResult();
+                result.setResultsDir(getResultsDir(args).toString());
+                FileUtils.lookupFiles(getResultsDir(args), 1, resultsPattern)
+                        .map(Path::toFile)
+                        .forEach(result::addFile);
+                return result;
             }
         };
     }
@@ -160,8 +164,8 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
     protected ServiceComputation<JacsServiceResult<JacsServiceData>> processing(JacsServiceResult<JacsServiceData> depResults) {
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
-                    List<File> fileResults = getResultHandler().collectResult(pd);
-                    fileResults.stream()
+                    BasicMIPsAndMoviesResult result = getResultHandler().collectResult(pd);
+                    result.getFileList().stream()
                             .filter(f -> f.getName().endsWith(".avi"))
                             .forEach(f -> submitMpegConverterService(f, "Convert AVI to MPEG", pd.getJacsServiceData(), pd.getResult()));
                     return pd;
@@ -179,7 +183,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
     }
 
     @Override
-    protected List<File> postProcessing(JacsServiceResult<List<File>> sr) {
+    protected BasicMIPsAndMoviesResult postProcessing(JacsServiceResult<BasicMIPsAndMoviesResult> sr) {
         try {
             Path temporaryOutputDir = getServicePath(scratchLocation, sr.getJacsServiceData());
             FileUtils.deletePath(temporaryOutputDir);

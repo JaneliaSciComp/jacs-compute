@@ -15,6 +15,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -30,21 +31,24 @@ import javax.inject.Named;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Named("getSampleMIPsAndMovies")
 public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServiceProcessor<GetSampleMIPsAndMoviesProcessor.GetSampleMIPsIntermediateResult, List<SampleImageMIPsFile>> {
 
     static class GetSampleMIPsIntermediateResult extends GetSampleLsmsIntermediateResult {
-        final List<SampleImageMIPsFile> sampleImageFileWithMips = new LinkedList<>();
+        // sampleImageFileWithMips holds the correspondence between MIPsAndMovies service id and the corresponding results
+        final Map<Number, SampleImageMIPsFile> sampleImageFileWithMips = new LinkedHashMap<>();
 
         GetSampleMIPsIntermediateResult(Number getSampleLsmsServiceDataId) {
             super(getSampleLsmsServiceDataId);
         }
 
-        void addSampleImageMipsFile(SampleImageMIPsFile simf) {
-            sampleImageFileWithMips.add(simf);
+        void addSampleImageMipsFile(Number basicMipsAndMoviesServiceId, SampleImageMIPsFile simf) {
+            sampleImageFileWithMips.put(basicMipsAndMoviesServiceId, simf);
         }
     }
 
@@ -78,8 +82,6 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
     @Override
     public ServiceResultHandler<List<SampleImageMIPsFile>> getResultHandler() {
         return new AbstractAnyServiceResultHandler<List<SampleImageMIPsFile>>() {
-            final String resultsPattern = "glob:**/*.{png,avi,mp4}";
-
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
@@ -88,13 +90,17 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
             @Override
             public List<SampleImageMIPsFile> collectResult(JacsServiceResult<?> depResults) {
                 GetSampleMIPsIntermediateResult result = (GetSampleMIPsIntermediateResult) depResults.getResult();
-                result.sampleImageFileWithMips.stream()
-                        .forEach(simf -> {
-                            Path mipsResultsDir = Paths.get(simf.getMipsResultsDir());
-                            FileUtils.lookupFiles(mipsResultsDir, 1, resultsPattern)
-                                    .forEach(p -> simf.addMipFile(p.toString()));
-                        });
-                return result.sampleImageFileWithMips;
+                return result.sampleImageFileWithMips.entrySet().stream()
+                        .map(simfEntry -> {
+                            JacsServiceData basicMipsAndMoviesServiceData = jacsServiceDataPersistence.findById(simfEntry.getKey());
+
+                            BasicMIPsAndMoviesResult basicMIPsAndMoviesResult = basicMIPsAndMoviesProcessor.getResultHandler().getServiceDataResult(basicMipsAndMoviesServiceData);
+                            SampleImageMIPsFile simf = simfEntry.getValue();
+                            simf.setMipsResultsDir(basicMIPsAndMoviesResult.getResultsDir());
+                            basicMIPsAndMoviesResult.getFileList().stream().forEach(f -> simf.addMipFile(f.getAbsolutePath()));
+                            return simf;
+                        })
+                        .collect(Collectors.toList());
             }
 
             public List<SampleImageMIPsFile> getServiceDataResult(JacsServiceData jacsServiceData) {
@@ -147,11 +153,12 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
                                         new ServiceArg("-options", args.options),
                                         new ServiceArg("-resultsDir", resultsDir.toString())
                                 );
-                                submitDependencyIfNotPresent(depResults.getJacsServiceData(), basicMipMapsService);
+                                basicMipMapsService = submitDependencyIfNotPresent(depResults.getJacsServiceData(), basicMipMapsService);
+
                                 SampleImageMIPsFile sampleImageMIPsFile = new SampleImageMIPsFile();
                                 sampleImageMIPsFile.setSampleImageFile(sif);
-                                sampleImageMIPsFile.setMipsResultsDir(resultsDir.toString());
-                                depResults.getResult().addSampleImageMipsFile(sampleImageMIPsFile);
+
+                                depResults.getResult().addSampleImageMipsFile(basicMipMapsService.getId(), sampleImageMIPsFile);
                             });
                     return pd;
                 });
