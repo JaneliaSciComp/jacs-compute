@@ -85,11 +85,8 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                if (!areAllDependenciesDone(depResults.getJacsServiceData())) {
-                    return false;
-                }
-                BasicMIPsAndMoviesArgs args = getArgs(depResults.getJacsServiceData());
-                return FileUtils.lookupFiles(getResultsDir(args), 1, resultsPattern).count() > 0;
+                // don't count the files because this locks if there are no results
+                return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
             @Override
