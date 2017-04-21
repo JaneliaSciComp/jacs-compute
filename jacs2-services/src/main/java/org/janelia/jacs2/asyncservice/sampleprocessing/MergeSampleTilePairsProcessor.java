@@ -220,8 +220,14 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                     mergeChannelsService = mergeLsmPairProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                                                     .waitFor(getSampleLsmsService)
                                                     .build(),
-                                            new ServiceArg("-lsm1", SampleServicesUtils.getImageFile(args.sampleDataDir, mcd.tilePair.getFirstLsm()).getAbsolutePath()),
-                                            new ServiceArg("-lsm2", SampleServicesUtils.getImageFile(args.sampleDataDir, mcd.tilePair.getSecondLsm()).getAbsolutePath()),
+                                            new ServiceArg("-lsm1", SampleServicesUtils.getImageFile(args.sampleDataDir,
+                                                    ar.getObjective(),
+                                                    ar.getName(),
+                                                    mcd.tilePair.getFirstLsm()).toString()),
+                                            new ServiceArg("-lsm2", SampleServicesUtils.getImageFile(args.sampleDataDir,
+                                                    ar.getObjective(),
+                                                    ar.getName(),
+                                                    mcd.tilePair.getSecondLsm()).toString()),
                                             new ServiceArg("-microscope1", mcd.tilePair.getFirstLsm().getMicroscope()),
                                             new ServiceArg("-microscope2", mcd.tilePair.getSecondLsm().getMicroscope()),
                                             new ServiceArg("-distortionCorrection", args.applyDistortionCorrection),
@@ -230,7 +236,10 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                     );
                                     mergeChannelsService = submitDependencyIfNotPresent(jacsServiceData, mergeChannelsService);
                                 } else {
-                                    mergedFileName = SampleServicesUtils.getImageFile(args.sampleDataDir, mcd.tilePair.getFirstLsm()).getAbsolutePath();
+                                    mergedFileName = SampleServicesUtils.getImageFile(args.sampleDataDir,
+                                            ar.getObjective(),
+                                            ar.getName(),
+                                            mcd.tilePair.getFirstLsm()).toString();
                                 }
                                 if (mcd.isNonEmptyMapping()) {
                                     // since the channels were in the right order no re-ordering of the channels is necessary

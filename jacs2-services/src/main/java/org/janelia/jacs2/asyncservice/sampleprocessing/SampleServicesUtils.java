@@ -9,24 +9,34 @@ import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.jacs2.model.DomainModelUtils;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class SampleServicesUtils {
 
-    static File getImageFile(String destDirName, Image image) {
+    static Path getImageFile(String destDirName, String objective, String area, Image image) {
         String fileName = new File(image.getFilepath()).getName();
         if (fileName.endsWith(".bz2")) {
             fileName = fileName.substring(0, fileName.length() - ".bz2".length());
         } else if (fileName.endsWith(".gz")) {
             fileName = fileName.substring(0, fileName.length() - ".gz".length());
         }
-        return new File(destDirName, fileName);
+        return Paths.get(destDirName,
+                StringUtils.defaultIfBlank(objective, ""),
+                StringUtils.defaultIfBlank(area, ""),
+                fileName
+        );
     }
 
-    static File getImageMetadataFile(String destDirName, File imageFile) {
-        return new File(destDirName, imageFile.getName().replaceAll("\\s+", "_") + ".json");
+    static Path getImageMetadataFile(String destDirName, String objective, String area, File imageFile) {
+        return Paths.get(destDirName,
+                StringUtils.defaultIfBlank(objective, ""),
+                StringUtils.defaultIfBlank(area, ""),
+                imageFile.getName().replaceAll("\\s+", "_") + ".json"
+        );
     }
 
     public static List<FileGroup> createFileGroups(HasFilepath parent, List<String> filepaths) {

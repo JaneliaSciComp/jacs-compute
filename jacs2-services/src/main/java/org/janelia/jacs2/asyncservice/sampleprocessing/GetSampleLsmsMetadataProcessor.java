@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 @Named("getSampleLsmMetadata")
@@ -97,7 +98,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
                     sampleImageFiles.stream()
                             .forEach(sif -> {
                                 File lsmImageFile = new File(sif.getWorkingFilePath());
-                                File lsmMetadataFile = SampleServicesUtils.getImageMetadataFile(args.sampleDataDir, lsmImageFile);
+                                File lsmMetadataFile = SampleServicesUtils.getImageMetadataFile(args.sampleDataDir, sif.getObjective(), sif.getArea(), lsmImageFile).toFile();
                                 if (!lsmMetadataFile.exists()) {
                                     JacsServiceData lsmMetadataService = lsmFileMetadataProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
                                                     .waitFor(getSampleLsmsService)

@@ -98,7 +98,7 @@ public class MergeSampleTilePairsProcessorTest {
                 objective,
                 area);
         when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
-                .thenReturn(ImmutableList.of(createTestAnatomicalArea("a1", null,
+                .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, null,
                         createTestLsmPair(
                                 TEST_LSM1_METADATA, null, 0,
                                 TEST_LSM2_METADATA, null, 0))));
@@ -118,8 +118,8 @@ public class MergeSampleTilePairsProcessorTest {
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.signalChannelsPos, equalTo("0 1 2"));
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.referenceChannelsPos, equalTo("3"));
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, "lsm1").toFile().getAbsolutePath()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, "lsm2").toFile().getAbsolutePath()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope1", "m1"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
@@ -147,7 +147,7 @@ public class MergeSampleTilePairsProcessorTest {
                 objective,
                 area);
         when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
-                .thenReturn(ImmutableList.of(createTestAnatomicalArea("a1", null,
+                .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, null,
                         createTestLsmPair(
                                 TEST_LSM1_METADATA, null, 0,
                                 TEST_LSM2_METADATA, null, 0))));
@@ -167,8 +167,8 @@ public class MergeSampleTilePairsProcessorTest {
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.signalChannelsPos, equalTo("0 1 2"));
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.referenceChannelsPos, equalTo("3"));
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, "lsm1").toFile().getAbsolutePath()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, "lsm2").toFile().getAbsolutePath()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope1", "m1"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
@@ -193,7 +193,7 @@ public class MergeSampleTilePairsProcessorTest {
                 objective,
                 area);
         when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
-                .thenReturn(ImmutableList.of(createTestAnatomicalArea("a1", "sssr",
+                .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, "sssr",
                         createTestLsmPair(
                                 TEST_LSM1_METADATA, "ssr", 0,
                                 TEST_LSM2_METADATA, "sr", 0))));
@@ -213,8 +213,8 @@ public class MergeSampleTilePairsProcessorTest {
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.signalChannelsPos, equalTo("0 1 2"));
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.referenceChannelsPos, equalTo("3"));
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, "lsm1").toFile().getAbsolutePath()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, "lsm2").toFile().getAbsolutePath()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope1", "m1"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
@@ -239,7 +239,7 @@ public class MergeSampleTilePairsProcessorTest {
                 objective,
                 area);
         when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
-                .thenReturn(ImmutableList.of(createTestAnatomicalArea("a1", "sssr",
+                .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, "sssr",
                         createTestLsmPair(
                                 TEST_LSM1_METADATA, null, 3,
                                 TEST_LSM2_METADATA, null, 2))));
@@ -259,8 +259,8 @@ public class MergeSampleTilePairsProcessorTest {
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.signalChannelsPos, equalTo("0 1 2"));
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.referenceChannelsPos, equalTo("3"));
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, "lsm1").toFile().getAbsolutePath()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, "lsm2").toFile().getAbsolutePath()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope1", "m1"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
@@ -293,11 +293,12 @@ public class MergeSampleTilePairsProcessorTest {
         return testServiceDataBuilder.build();
     }
 
-    private AnatomicalArea createTestAnatomicalArea(String name, String chanSpec, TileLsmPair tp) {
+    private AnatomicalArea createTestAnatomicalArea(String objective, String name, String chanSpec, TileLsmPair tp) {
         AnatomicalArea a = new AnatomicalArea();
         a.setDefaultChanSpec(chanSpec);
         a.setSampleId(TEST_SAMPLE_ID);
         a.setName(name);
+        a.setObjective(objective);
         a.addLsmPair(tp);
         return a;
     }

@@ -122,7 +122,7 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
                             sif.setSampleId(args.sampleId);
                             sif.setId(lsmf.getId());
                             sif.setArchiveFilePath(lsmf.getFilepath());
-                            sif.setWorkingFilePath(SampleServicesUtils.getImageFile(args.sampleDataDir, lsmf).getAbsolutePath());
+                            sif.setWorkingFilePath(SampleServicesUtils.getImageFile(args.sampleDataDir, ar.getObjective(), ar.getName(), lsmf).toString());
                             sif.setArea(ar.getName());
                             sif.setChanSpec(lsmf.getChanSpec());
                             sif.setColorSpec(lsmf.getChannelColors());

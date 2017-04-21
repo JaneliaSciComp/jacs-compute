@@ -3,8 +3,6 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
-import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
