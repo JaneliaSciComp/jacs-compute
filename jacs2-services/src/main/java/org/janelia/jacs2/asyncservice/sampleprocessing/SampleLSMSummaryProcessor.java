@@ -184,6 +184,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
             if (!lsmImage.isPresent()) {
                 throw new IllegalStateException("No LSM image found for " + lsmSummary.getSampleImageFile().getId());
             }
+            updateLSM(lsmImage.get(), lsmSummary);
         });
         return result;
     }
@@ -193,7 +194,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
     }
 
     private void updateLSM(LSMImage lsmImage, LSMSummary lsmSummary) {
-        logger.info("Update LSM with {}", lsmSummary);
+        logger.info("Update LSM {} with {}", lsmImage, lsmSummary);
         // FIXME
     }
 }
