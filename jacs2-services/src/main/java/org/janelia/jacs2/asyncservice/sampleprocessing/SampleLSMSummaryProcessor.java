@@ -103,15 +103,16 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
             @Override
             public List<LSMSummary> collectResult(JacsServiceResult<?> depResults) {
                 SampleLSMSummaryIntermediateResult result = (SampleLSMSummaryIntermediateResult) depResults.getResult();
-                return result.montageCalls.stream().map(mc -> {
-                    JacsServiceData montageServiceData = jacsServiceDataPersistence.findById(mc.montageServiceId);
-                    LSMSummary lsmSummary = new LSMSummary();
-                    lsmSummary.setSampleImageFile(mc.montageData.getSampleImageFile());
-                    lsmSummary.setMipsResultsDir(mc.montageData.getMipsResultsDir());
-                    lsmSummary.setMips(mc.montageData.getMips());
-                    lsmSummary.setMontageResultsByType(groupAndMontageFolderImagesProcessor.getResultHandler().getServiceDataResult(montageServiceData));
-                    return lsmSummary;
-                })
+                return result.montageCalls.stream()
+                        .map(mc -> {
+                            JacsServiceData montageServiceData = jacsServiceDataPersistence.findById(mc.montageServiceId);
+                            LSMSummary lsmSummary = new LSMSummary();
+                            lsmSummary.setSampleImageFile(mc.montageData.getSampleImageFile());
+                            lsmSummary.setMipsResultsDir(mc.montageData.getMipsResultsDir());
+                            lsmSummary.setMips(mc.montageData.getMips());
+                            lsmSummary.setMontageResultsByType(groupAndMontageFolderImagesProcessor.getResultHandler().getServiceDataResult(montageServiceData));
+                            return lsmSummary;
+                        })
                         .collect(Collectors.toList());
             }
 
@@ -126,13 +127,13 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
     @Override
     protected JacsServiceResult<SampleLSMSummaryIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         SampleLSMSummaryArgs args = getArgs(jacsServiceData);
-        // update samp[lpe
+        // update sample's LSMs
         JacsServiceData updateSampleLsmMetadataService = updateSampleLSMMetadataProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Update sample LSM metadata")
                         .build(),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
-                new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),
+                new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
                 new ServiceArg("-sampleDataDir", args.sampleDataDir)
         );
@@ -142,8 +143,8 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                         .waitFor(updateSampleLsmMetadataService)
                         .build(),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
-                new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),
+                new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-options", args.basicMipMapsOptions),
                 new ServiceArg("-sampleDataDir", args.sampleDataDir)
         );

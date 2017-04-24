@@ -2,13 +2,13 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
+import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dChannelMapProcessor;
@@ -19,7 +19,6 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.slf4j.Logger;
 
 import java.nio.file.Paths;
@@ -28,6 +27,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,20 +42,6 @@ public class MergeSampleTilePairsProcessorTest {
 
     private static final Long TEST_ID = 1L;
     private static final Long TEST_SAMPLE_ID = 100L;
-
-    private static class ServiceArgMatcher implements ArgumentMatcher<ServiceArg> {
-
-        private ServiceArg matcher;
-
-        public ServiceArgMatcher(ServiceArg matcher) {
-            this.matcher = matcher;
-        }
-
-        @Override
-        public boolean matches(ServiceArg argument) {
-            return new EqualsBuilder().append(matcher.toStringArray(), argument.toStringArray()).build();
-        }
-    }
 
     private SampleDataService sampleDataService;
     private GetSampleLsmsMetadataProcessor getSampleLsmsMetadataProcessor;
@@ -74,6 +60,12 @@ public class MergeSampleTilePairsProcessorTest {
         sampleDataService = mock(SampleDataService.class);
         Logger logger = mock(Logger.class);
 
+        doAnswer(invocation -> {
+            JacsServiceData jacsServiceData = invocation.getArgument(0);
+            jacsServiceData.setId(TEST_ID);
+            return null;
+        }).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
+
         mergeSampleTilePairsProcessor = new MergeSampleTilePairsProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 TEST_WORKING_DIR,
@@ -86,17 +78,18 @@ public class MergeSampleTilePairsProcessorTest {
 
     @Test
     public void submitDependenciesWithDyeSpecThatDoesNotRequireReordering() {
-        String objective = "objective";
         String area = "area";
+        String objective = "objective";
         JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+                area,
+                objective,
                 "FLYLIGHT_ORDERED",
                 "reference=Alexa Fluor 488,Cy2;" +
                         "membrane_ha=,ATTO 647,Alexa Fluor 633,Alexa Fluor 647,Cy5;" +
                         "membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;" +
                         "membrane_flag=Alexa Fluor 594",
-                "membrane_ha,membrane_v5,membrane_flag,reference",
-                objective,
-                area);
+                "membrane_ha,membrane_v5,membrane_flag,reference"
+        );
         when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
                 .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, null,
                         createTestLsmPair(
@@ -109,7 +102,6 @@ public class MergeSampleTilePairsProcessorTest {
                 any(ServiceArg.class)
         )).thenAnswer(invocation -> {
             JacsServiceData sd = new JacsServiceData();
-            sd.setId(TEST_ID);
             return sd;
         });
         JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
@@ -135,17 +127,18 @@ public class MergeSampleTilePairsProcessorTest {
 
     @Test
     public void submitDependenciesWithDyeSpecThatRequiresReordering() {
-        String objective = "objective";
         String area = "area";
+        String objective = "objective";
         JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+                area,
+                objective,
                 "FLYLIGHT_ORDERED",
                 "reference=Alexa Fluor 488,Cy2;" +
                         "membrane_ha=,ATTO 647,Alexa Fluor 633,Alexa Fluor 647,Cy5;" +
                         "membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;" +
                         "membrane_flag=Alexa Fluor 594",
-                "membrane_flag,membrane_ha,membrane_v5,reference",
-                objective,
-                area);
+                "membrane_flag,membrane_ha,membrane_v5,reference"
+        );
         when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
                 .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, null,
                         createTestLsmPair(
@@ -184,14 +177,15 @@ public class MergeSampleTilePairsProcessorTest {
 
     @Test
     public void submitDependenciesWithChanSpecUsingFlylightOrderedAlgorithm() {
-        String objective = "objective";
         String area = "area";
+        String objective = "objective";
         JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+                area,
+                objective,
                 "FLYLIGHT_ORDERED",
                 null,
-                null,
-                objective,
-                area);
+                null
+        );
         when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
                 .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, "sssr",
                         createTestLsmPair(
@@ -230,14 +224,9 @@ public class MergeSampleTilePairsProcessorTest {
 
     @Test
     public void submitDependenciesWithChanSpecUsingFlylightAlgorithm() {
-        String objective = "objective";
         String area = "area";
-        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
-                null,
-                null,
-                null,
-                objective,
-                area);
+        String objective = "objective";
+        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID, area, objective, null, null, null);
         when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
                 .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, "sssr",
                         createTestLsmPair(
@@ -274,9 +263,12 @@ public class MergeSampleTilePairsProcessorTest {
         );
     }
 
-    private JacsServiceData createTestServiceData(long sampleId, String mergeAlgorithm, String channelDyeSpec, String outputChannelOrder, String objective, String area) {
+    private JacsServiceData createTestServiceData(long sampleId, String area, String objective, String mergeAlgorithm, String channelDyeSpec, String outputChannelOrder) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
-                .addArg("-sampleId", String.valueOf(sampleId));
+                .addArg("-sampleId", String.valueOf(sampleId))
+                .addArg("-area", area)
+                .addArg("-objective", objective)
+                .addArg("-sampleDataDir", TEST_WORKING_DIR);
 
         if (StringUtils.isNotBlank(mergeAlgorithm))
             testServiceDataBuilder.addArg("-mergeAlgorithm", mergeAlgorithm);
@@ -287,9 +279,6 @@ public class MergeSampleTilePairsProcessorTest {
         if (StringUtils.isNotBlank(outputChannelOrder))
             testServiceDataBuilder.addArg("-outputChannelOrder", outputChannelOrder);
 
-        testServiceDataBuilder.addArg("-objective", objective)
-                .addArg("-area", area)
-                .addArg("-sampleDataDir", TEST_WORKING_DIR);
         return testServiceDataBuilder.build();
     }
 
