@@ -69,7 +69,7 @@ public class ExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
             if (StringUtils.isNotBlank(nativeSpec)) {
                 jt.setNativeSpecification(nativeSpec);
             }
-            logger.debug("Start {} using {} with content={}; env={}", serviceContext, processingScript, externalCode, env);
+            logger.info("Start {} for {} using  env {}", processingScript, serviceContext, env);
             String jobId = drmaaSession.runJob(jt);
             logger.info("Submitted job {} for {}", jobId, serviceContext);
             serviceContext.addEvent(JacsServiceEventTypes.DRMAA_SUBMIT, String.format("Submitted job %s {%s} running: %s", serviceContext.getName(), jobId, processingScript));
