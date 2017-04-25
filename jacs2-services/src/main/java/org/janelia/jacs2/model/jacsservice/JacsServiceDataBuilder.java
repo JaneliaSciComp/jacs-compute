@@ -36,6 +36,11 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
+    public JacsServiceDataBuilder setOwner(String owner) {
+        serviceData.setOwner(owner);
+        return this;
+    }
+
     public JacsServiceDataBuilder setProcessingLocation(ProcessingLocation processingLocation) {
         serviceData.setProcessingLocation(processingLocation);
         return this;

@@ -1,6 +1,9 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.hamcrest.beans.HasPropertyWithValue;
+import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
@@ -12,10 +15,17 @@ import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -26,9 +36,12 @@ import static org.mockito.Mockito.when;
 
 public class SampleLSMSummaryProcessorTest {
     private static final String TEST_WORKING_DIR = "testdir";
+    private static final String TEST_MIPS_DIR = "testmipsdir";
     private static final Long TEST_ID = 10L;
     private static final Long TEST_SAMPLE_ID = 100L;
+    private static final String TEST_OWNER = "testOwner";
 
+    private SampleDataService sampleDataService;
     private UpdateSampleLSMMetadataProcessor updateSampleLSMMetadataProcessor;
     private GetSampleMIPsAndMoviesProcessor getSampleMIPsAndMoviesProcessor;
     private SampleLSMSummaryProcessor sampleLSMSummaryProcessor;
@@ -37,7 +50,7 @@ public class SampleLSMSummaryProcessorTest {
     public void setUp() {
         ServiceComputationFactory computationFactory = mock(ServiceComputationFactory.class);
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
-        SampleDataService sampleDataService = mock(SampleDataService.class);
+        sampleDataService = mock(SampleDataService.class);
         updateSampleLSMMetadataProcessor = mock(UpdateSampleLSMMetadataProcessor.class);
         getSampleMIPsAndMoviesProcessor = mock(GetSampleMIPsAndMoviesProcessor.class);
         GroupAndMontageFolderImagesProcessor groupAndMontageFolderImagesProcessor = mock(GroupAndMontageFolderImagesProcessor.class);
@@ -48,6 +61,15 @@ public class SampleLSMSummaryProcessorTest {
             jacsServiceData.setId(TEST_ID);
             return null;
         }).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
+
+        when(jacsServiceDataPersistence.findById(any(Number.class))).thenAnswer(invocation -> {
+            Number serviceId = invocation.getArgument(0);
+            JacsServiceData sd = new JacsServiceData();
+            sd.setId(serviceId);
+            return sd;
+        });
+
+        when(groupAndMontageFolderImagesProcessor.getResultHandler()).thenCallRealMethod();
 
         sampleLSMSummaryProcessor = new SampleLSMSummaryProcessor(computationFactory,
                 jacsServiceDataPersistence,
@@ -106,6 +128,7 @@ public class SampleLSMSummaryProcessorTest {
 
     private JacsServiceData createTestServiceData(long sampleId, String area, String objective, String channelDyeSpec) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
+                .setOwner(TEST_OWNER)
                 .addArg("-sampleId", String.valueOf(sampleId))
                 .addArg("-area", area)
                 .addArg("-objective", objective)
@@ -114,5 +137,72 @@ public class SampleLSMSummaryProcessorTest {
             testServiceDataBuilder.addArg("-channelDyeSpec", channelDyeSpec);
 
         return testServiceDataBuilder.build();
+    }
+
+    @Test
+    public void updateServiceResult() {
+        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+                "area",
+                "objective",
+                null
+        );
+        JacsServiceResult<SampleLSMSummaryProcessor.SampleLSMSummaryIntermediateResult> testDependenciesResult = new JacsServiceResult<>(
+                testServiceData,
+                new SampleLSMSummaryProcessor.SampleLSMSummaryIntermediateResult(TEST_ID, TEST_ID + 1)
+        );
+        Long lsmId = TEST_ID;
+        SampleLSMSummaryProcessor.MontageParameters montageParameters = createTestMontageParams(lsmId, TEST_ID + 1);
+        testDependenciesResult.getResult().addMontage(montageParameters);
+        LSMImage lsm = createLSMImage(lsmId);
+        when(sampleDataService.getLSMsByIds(TEST_OWNER, ImmutableList.of(lsmId))).thenReturn(ImmutableList.of(lsm));
+
+        JacsServiceResult<List<LSMSummary>> testResult = sampleLSMSummaryProcessor.updateServiceResult(testDependenciesResult);
+        assertThat(
+                testResult.getResult(),
+                allOf(
+                        hasItem(new HasPropertyWithValue<>("sampleImageFile", equalTo(montageParameters.montageData.getSampleImageFile()))),
+                        hasItem(new HasPropertyWithValue<>("mipsResultsDir", equalTo(montageParameters.montageData.getMipsResultsDir())))
+                )
+        );
+        verify(sampleDataService).updateLSMFiles(lsm);
+    }
+
+    @Test
+    public void illegalStateWhenUpdateServiceResult() {
+        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+                "area",
+                "objective",
+                null
+        );
+        JacsServiceResult<SampleLSMSummaryProcessor.SampleLSMSummaryIntermediateResult> testDependenciesResult = new JacsServiceResult<>(
+                testServiceData,
+                new SampleLSMSummaryProcessor.SampleLSMSummaryIntermediateResult(TEST_ID, TEST_ID + 1)
+        );
+        Long lsmId = TEST_ID;
+        SampleLSMSummaryProcessor.MontageParameters montageParameters = createTestMontageParams(lsmId, TEST_ID + 1);
+        testDependenciesResult.getResult().addMontage(montageParameters);
+        assertThatThrownBy(() -> sampleLSMSummaryProcessor.updateServiceResult(testDependenciesResult))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("No LSM image found for " + lsmId);
+    }
+
+    private LSMImage createLSMImage(Number lsmId) {
+        LSMImage lsmImage = new LSMImage();
+        lsmImage.setId(lsmId);
+        return lsmImage;
+    }
+
+    private SampleLSMSummaryProcessor.MontageParameters createTestMontageParams(Long lsmId, Long montageServiceId) {
+        SampleImageMIPsFile sif = new SampleImageMIPsFile();
+        sif.setSampleImageFile(createSampleImage(lsmId));
+        sif.setMipsResultsDir(TEST_MIPS_DIR);
+        sif.setMips(ImmutableList.of("i1_signal.png", "i1_reference.png"));
+        return new SampleLSMSummaryProcessor.MontageParameters(montageServiceId, sif);
+    }
+
+    private SampleImageFile createSampleImage(long lsmId) {
+        SampleImageFile sif = new SampleImageFile();
+        sif.setId(lsmId);
+        return sif;
     }
 }
