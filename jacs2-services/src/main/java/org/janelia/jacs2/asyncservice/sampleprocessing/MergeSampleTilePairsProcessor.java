@@ -44,6 +44,7 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -216,7 +217,10 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                 JacsServiceData mergeChannelsService = null;
                                 String mergedFileName;
                                 if (mcd.tilePair.hasTwoLsms()) {
-                                    mergedFileName = FileUtils.getFilePath(Paths.get(args.sampleDataDir), mcd.tilePair.getTileName(), "vaa3d").toString();
+                                    mergedFileName = FileUtils.getFilePath(
+                                            SampleServicesUtils.getImageDataPath(args.sampleDataDir, ar.getObjective(), ar.getName()),
+                                            mcd.tilePair.getTileName(),
+                                            "vaa3d").toString();
                                     mergeChannelsService = mergeLsmPairProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                                                     .waitFor(getSampleLsmsService)
                                                     .build(),
@@ -232,7 +236,7 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                             new ServiceArg("-microscope2", mcd.tilePair.getSecondLsm().getMicroscope()),
                                             new ServiceArg("-distortionCorrection", args.applyDistortionCorrection),
                                             new ServiceArg("-multiscanVersion", multiscanBlendVersion),
-                                            new ServiceArg("-output", args.sampleDataDir)
+                                            new ServiceArg("-output", mergedFileName.toString())
                                     );
                                     mergeChannelsService = submitDependencyIfNotPresent(jacsServiceData, mergeChannelsService);
                                 } else {
@@ -241,13 +245,16 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                             ar.getName(),
                                             mcd.tilePair.getFirstLsm()).toString();
                                 }
+                                JacsServiceData mapChannelsService = null;
+                                Path mappedChannelFilePath = SampleServicesUtils.getImageDataPath(args.sampleDataDir, ar.getObjective(), ar.getName());
+                                Path mappedChannelFileName = FileUtils.getFilePath(mappedChannelFilePath, mcd.tilePair.getTileName(), "vaa3d");
                                 if (mcd.isNonEmptyMapping()) {
                                     // since the channels were in the right order no re-ordering of the channels is necessary
-                                    JacsServiceData mapChannelsService = vaa3dChannelMapProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                                    mapChannelsService = vaa3dChannelMapProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                                                     .waitFor(getSampleLsmsService, mergeChannelsService)
                                                     .build(),
                                             new ServiceArg("-input", mergedFileName),
-                                            new ServiceArg("-output", mergedFileName),
+                                            new ServiceArg("-output", mappedChannelFileName.toString()),
                                             new ServiceArg("-channelMapping", mcd.mapping)
                                     );
                                     submitDependencyIfNotPresent(jacsServiceData, mapChannelsService);

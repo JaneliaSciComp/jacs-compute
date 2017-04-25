@@ -116,7 +116,7 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-output", TEST_WORKING_DIR)))
+                argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString())))
         );
         verify(vaa3dChannelMapProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
@@ -166,11 +166,11 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-output", TEST_WORKING_DIR)))
+                argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString())))
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-input", TEST_WORKING_DIR + "/" + TEST_TILE_NAME + ".vaa3d"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-output", TEST_WORKING_DIR + "/" + TEST_TILE_NAME + ".vaa3d"))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-input", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "2,0,0,1,1,2,3,3")))
         );
     }
@@ -213,7 +213,7 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-output", TEST_WORKING_DIR)))
+                argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString())))
         );
         verify(vaa3dChannelMapProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
@@ -254,7 +254,7 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", null))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-output", TEST_WORKING_DIR)))
+                argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString())))
         );
         verify(vaa3dChannelMapProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),

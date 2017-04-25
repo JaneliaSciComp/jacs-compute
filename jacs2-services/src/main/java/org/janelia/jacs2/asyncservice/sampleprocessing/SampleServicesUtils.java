@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
@@ -17,6 +18,14 @@ import java.util.Map;
 
 public class SampleServicesUtils {
 
+    static Path getImageDataPath(String destDirName, String objective, String area) {
+        Path imageDataPath = Paths.get(destDirName,
+                StringUtils.defaultIfBlank(objective, ""),
+                StringUtils.defaultIfBlank(area, "")
+        );
+        return imageDataPath;
+    }
+
     static Path getImageFile(String destDirName, String objective, String area, Image image) {
         String fileName = new File(image.getFilepath()).getName();
         if (fileName.endsWith(".bz2")) {
@@ -24,19 +33,11 @@ public class SampleServicesUtils {
         } else if (fileName.endsWith(".gz")) {
             fileName = fileName.substring(0, fileName.length() - ".gz".length());
         }
-        return Paths.get(destDirName,
-                StringUtils.defaultIfBlank(objective, ""),
-                StringUtils.defaultIfBlank(area, ""),
-                fileName
-        );
+        return getImageDataPath(destDirName, objective, area).resolve(fileName);
     }
 
     static Path getImageMetadataFile(String destDirName, String objective, String area, File imageFile) {
-        return Paths.get(destDirName,
-                StringUtils.defaultIfBlank(objective, ""),
-                StringUtils.defaultIfBlank(area, ""),
-                imageFile.getName().replaceAll("\\s+", "_") + ".json"
-        );
+        return getImageDataPath(destDirName, objective, area).resolve(imageFile.getName().replaceAll("\\s+", "_") + ".json");
     }
 
     public static List<FileGroup> createFileGroups(HasFilepath parent, List<String> filepaths) {

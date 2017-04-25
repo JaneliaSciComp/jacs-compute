@@ -97,9 +97,7 @@ public class SampleDataService {
         }
         final Subject currentSubject = subject;
         Map<String, LSMImage> indexedLsms = new LinkedHashMap<>();
-        Predicate<ObjectiveSample> objectiveFilter = objectiveSample -> {
-            return StringUtils.isBlank(objective) || objective.equals(objectiveSample.getObjective());
-        };
+        Predicate<ObjectiveSample> objectiveFilter = objectiveSample -> StringUtils.isBlank(objective) || objective.equals(objectiveSample.getObjective());
         sample.getObjectiveSamples().stream()
                 .filter(objectiveFilter)
                 .flatMap(objectiveSample -> streamAllLSMs(currentSubject, objectiveSample))
