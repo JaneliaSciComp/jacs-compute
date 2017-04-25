@@ -1,14 +1,7 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
-import org.janelia.it.jacs.model.domain.sample.FileGroup;
-import org.janelia.it.jacs.model.domain.sample.LSMImage;
-import org.janelia.it.jacs.model.domain.sample.SampleTile;
-import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -21,7 +14,6 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceRe
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.model.DomainModelUtils;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
@@ -29,7 +21,6 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.List;
-import java.util.Optional;
 
 @Named("flylight")
 public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProcessor<FlylightSampleProcessor.FlylightProcessingIntermediateResult, Void> {
