@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T> {
@@ -45,7 +46,8 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
             jacsServiceDataBuilder.setName(smd.getServiceName());
         }
         if (executionContext.getParentServiceData() != null) {
-            jacsServiceDataBuilder.setWorkspace(getWorkingDirectory(executionContext.getParentServiceData()).toString());
+            Path parentWorkingDir = getWorkingDirectory(executionContext.getParentServiceData());
+            jacsServiceDataBuilder.setWorkspace(Objects.toString(parentWorkingDir, null));
         }
         jacsServiceDataBuilder.addArg(Stream.of(args).flatMap(arg -> Stream.of(arg.toStringArray())).toArray(String[]::new));
         if (executionContext.getServiceState() != null) {

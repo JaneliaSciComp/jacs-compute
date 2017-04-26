@@ -30,9 +30,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 @Named("mergeLsms")
-public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcessor<MergeLsmPairProcessor.MergeLsmIntermediateResult, File> {
+
+    static class MergeLsmIntermediateResult {
+        final Number mergeChannelsServiceId;
+
+        public MergeLsmIntermediateResult(Number mergeChannelsServiceId) {
+            this.mergeChannelsServiceId = mergeChannelsServiceId;
+        }
+    }
 
     static class MergeLsmPairArgs extends ServiceArgs {
         @Parameter(names = "-lsm1", description = "First LSM input file", required = true)
@@ -76,12 +85,19 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
         return new AbstractSingleFileServiceResultHandler() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile().exists();
+                return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
             @Override
             public File collectResult(JacsServiceResult<?> depResults) {
-                return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile();
+                MergeLsmIntermediateResult result = (MergeLsmIntermediateResult) depResults.getResult();
+                JacsServiceData mergeChannelsServiceData = jacsServiceDataPersistence.findById(result.mergeChannelsServiceId);
+                return mergeChannelsProcessor.getResultHandler().getServiceDataResult(mergeChannelsServiceData);
+            }
+
+            @Override
+            public Optional<File> getExpectedServiceResult(JacsServiceData jacsServiceData) {
+                return Optional.of(MergeChannelsProcessor.getMergedLsmResultFile(getOutputDir(getArgs(jacsServiceData)).toString()));
             }
         };
     }
@@ -98,7 +114,7 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
     }
 
     @Override
-    protected JacsServiceResult<Void> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    protected JacsServiceResult<MergeLsmIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         MergeLsmPairArgs args = getArgs(jacsServiceData);
 
         List<JacsServiceData> distortionCorrectionServiceData;
@@ -130,11 +146,11 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
             distortionCorrectionServiceData = ImmutableList.of();
         }
         Path mergeOutputFile = getOutputFile(args);
-        mergeChannels(mergeInput1, mergeInput2, mergeOutputFile, args.multiscanBlendVersion,
+        JacsServiceData mergeChannelsService = mergeChannels(mergeInput1, mergeInput2, mergeOutputFile, args.multiscanBlendVersion,
                 "Merge channels",
                 jacsServiceData,
                 distortionCorrectionServiceData.toArray(new JacsServiceData[distortionCorrectionServiceData.size()]));
-        return new JacsServiceResult<>(jacsServiceData);
+        return new JacsServiceResult<>(jacsServiceData, new MergeLsmIntermediateResult(mergeChannelsService.getId()));
     }
 
     private JacsServiceData applyCorrection(Path input, Path output, String microscope, String description, JacsServiceData jacsServiceData, JacsServiceData... deps) {
@@ -163,7 +179,7 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
+    protected ServiceComputation<JacsServiceResult<MergeLsmIntermediateResult>> processing(JacsServiceResult<MergeLsmIntermediateResult> depResults) {
         return computationFactory.newCompletedComputation(depResults);
     }
 

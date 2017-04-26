@@ -31,9 +31,14 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 @Named("mergeChannels")
 public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Void, File> {
+
+    public static File getMergedLsmResultFile(String outputDir) {
+        return new File(outputDir, DEFAULT_MERGE_RESULT_FILE_NAME);
+    }
 
     static class ChannelMergeArgs extends ServiceArgs {
         @Parameter(names = "-chInput1", description = "File containing the first set of channels", required = true)
@@ -76,12 +81,17 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Voi
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return getMergedLsmResultFile(getArgs(depResults.getJacsServiceData())).exists();
+                return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
             @Override
             public File collectResult(JacsServiceResult<?> depResults) {
-                return getMergedLsmResultFile(getArgs(depResults.getJacsServiceData()));
+                return getMergedLsmResultFile(getArgs(depResults.getJacsServiceData()).output);
+            }
+
+            @Override
+            public Optional<File> getExpectedServiceResult(JacsServiceData jacsServiceData) {
+                return Optional.of(getMergedLsmResultFile(getArgs(jacsServiceData).output));
             }
         };
     }
@@ -147,19 +157,7 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Voi
         return getFullExecutableName(lsmMergeScript);
     }
 
-//    private File getMergedLsmResultFile(JacsServiceData jacsServiceData) {
-//        ChannelMergeArgs args = getArgs(jacsServiceData);
-//    }
-
-    private File getMergedLsmResultFile(ChannelMergeArgs args) {
-        if ("v3draw".equals(com.google.common.io.Files.getFileExtension(args.output))) {
-            return new File(args.output);
-        } else {
-            return new File(args.output, DEFAULT_MERGE_RESULT_FILE_NAME);
-        }
-    }
-
     private File getMergedLsmResultDir(ChannelMergeArgs args) {
-        return getMergedLsmResultFile(args).getParentFile();
+        return getMergedLsmResultFile(args.output).getParentFile();
     }
 }

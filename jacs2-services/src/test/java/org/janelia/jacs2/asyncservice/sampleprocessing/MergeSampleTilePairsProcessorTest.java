@@ -66,6 +66,19 @@ public class MergeSampleTilePairsProcessorTest {
             return null;
         }).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
 
+        when(mergeLsmPairProcessor.getResultHandler()).thenCallRealMethod();
+        when(mergeLsmPairProcessor.getMetadata()).thenCallRealMethod();
+        when(mergeLsmPairProcessor.createServiceData(any(ServiceExecutionContext.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class)
+                )
+        ).thenCallRealMethod();
+
         mergeSampleTilePairsProcessor = new MergeSampleTilePairsProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 TEST_WORKING_DIR,
@@ -169,7 +182,7 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString())))
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-input", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-input", Paths.get(TEST_WORKING_DIR, objective, area, "merged.v3draw").toAbsolutePath().toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "2,0,0,1,1,2,3,3")))
         );
@@ -268,7 +281,8 @@ public class MergeSampleTilePairsProcessorTest {
                 .addArg("-sampleId", String.valueOf(sampleId))
                 .addArg("-area", area)
                 .addArg("-objective", objective)
-                .addArg("-sampleDataDir", TEST_WORKING_DIR);
+                .addArg("-sampleDataDir", TEST_WORKING_DIR)
+                .setWorkspace(TEST_WORKING_DIR);
 
         if (StringUtils.isNotBlank(mergeAlgorithm))
             testServiceDataBuilder.addArg("-mergeAlgorithm", mergeAlgorithm);

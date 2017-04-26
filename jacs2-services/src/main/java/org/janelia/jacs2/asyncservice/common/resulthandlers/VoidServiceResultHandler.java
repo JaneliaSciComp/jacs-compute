@@ -4,6 +4,8 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 
+import java.util.Optional;
+
 public class VoidServiceResultHandler implements ServiceResultHandler<Void> {
     @Override
     public boolean isResultReady(JacsServiceResult<?> depResults) {
@@ -23,5 +25,10 @@ public class VoidServiceResultHandler implements ServiceResultHandler<Void> {
     @Override
     public Void getServiceDataResult(JacsServiceData jacsServiceData) {
         return null;
+    }
+
+    @Override
+    public Optional<Void> getExpectedServiceResult(JacsServiceData jacsServiceData) {
+        return Optional.ofNullable(null);
     }
 }
