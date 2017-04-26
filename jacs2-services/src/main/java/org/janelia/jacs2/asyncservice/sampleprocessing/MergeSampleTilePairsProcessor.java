@@ -255,7 +255,7 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                             new ServiceArg("-microscope2", mcd.tilePair.getSecondLsm().getMicroscope()),
                                             new ServiceArg("-distortionCorrection", args.applyDistortionCorrection),
                                             new ServiceArg("-multiscanVersion", multiscanBlendVersion),
-                                            new ServiceArg("-output", mergedResultDir.toString())
+                                            new ServiceArg("-outputDir", mergedResultDir.toString())
                                     );
                                     mergeLsmPairsService = submitDependencyIfNotPresent(jacsServiceData, mergeLsmPairsService);
                                     Optional<File> expectedMergedFile = mergeLsmPairProcessor.getResultHandler().getExpectedServiceResult(mergeLsmPairsService);
@@ -282,8 +282,8 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                     mapChannelsService = vaa3dChannelMapProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                                                     .waitFor(getSampleLsmsService, mergeLsmPairsService)
                                                     .build(),
-                                            new ServiceArg("-input", mergedResultFileName),
-                                            new ServiceArg("-output", mappedChannelFileName.toString()),
+                                            new ServiceArg("-inputFile", mergedResultFileName),
+                                            new ServiceArg("-outputFile", mappedChannelFileName.toString()),
                                             new ServiceArg("-channelMapping", mcd.mapping)
                                     );
                                     submitDependencyIfNotPresent(jacsServiceData, mapChannelsService);

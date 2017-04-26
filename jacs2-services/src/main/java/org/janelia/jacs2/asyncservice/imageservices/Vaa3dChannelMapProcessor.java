@@ -41,9 +41,9 @@ import java.util.UUID;
 public class Vaa3dChannelMapProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
 
     static class Vaa3dChannelMapArgs extends ServiceArgs {
-        @Parameter(names = "-input", description = "Input file", required = true)
+        @Parameter(names = "-inputFile", description = "Input file", required = true)
         String inputFileName;
-        @Parameter(names = "-output", description = "Output file", required = true)
+        @Parameter(names = "-outputFile", description = "Output file", required = true)
         String outputFileName;
         @Parameter(names = "-channelMapping",
                 description = "Channel mapping - the mapping is a comma delimited list of mappings from <sourceChanIndex>, <targetChanIndex>. e.g." +

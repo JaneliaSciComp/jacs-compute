@@ -35,14 +35,13 @@ public class JacsServiceDispatcher {
     }
 
     void dispatchServices() {
-        logger.debug("Dispatch services");
         for (int i = 0; i < DISPATCH_BATCH_SIZE; i++) {
             JacsServiceData queuedService = jacsServiceQueue.dequeService();
-            logger.debug("Dequeued service {}", queuedService);
             if (queuedService == null) {
                 // nothing to do
                 return;
             }
+            logger.debug("Dequeued service {}", queuedService);
             if (!queuedService.hasParentServiceId()) {
                 // if this is a root service, i.e. no other currently running service depends on it
                 // then try to acquire a slot otherwise let this pass through

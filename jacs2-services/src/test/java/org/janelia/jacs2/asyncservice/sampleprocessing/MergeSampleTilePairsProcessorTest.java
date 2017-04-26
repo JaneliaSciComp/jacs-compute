@@ -68,6 +68,14 @@ public class MergeSampleTilePairsProcessorTest {
             return null;
         }).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
 
+        when(getSampleLsmsMetadataProcessor.getMetadata()).thenCallRealMethod();
+        when(getSampleLsmsMetadataProcessor.createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class)
+        )).thenCallRealMethod();
+
         when(mergeLsmPairProcessor.getResultHandler()).thenCallRealMethod();
         when(mergeLsmPairProcessor.getMetadata()).thenCallRealMethod();
         when(mergeLsmPairProcessor.createServiceData(any(ServiceExecutionContext.class),
@@ -75,6 +83,14 @@ public class MergeSampleTilePairsProcessorTest {
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class)
+                )
+        ).thenCallRealMethod();
+
+        when(vaa3dChannelMapProcessor.getMetadata()).thenCallRealMethod();
+        when(vaa3dChannelMapProcessor.createServiceData(any(ServiceExecutionContext.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class)
@@ -110,15 +126,7 @@ public class MergeSampleTilePairsProcessorTest {
                         createTestLsmPair(
                                 TEST_LSM1_METADATA, null, 0,
                                 TEST_LSM2_METADATA, null, 0))));
-        when(getSampleLsmsMetadataProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
-        )).thenAnswer(invocation -> {
-            JacsServiceData sd = new JacsServiceData();
-            return sd;
-        });
+
         JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
         assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("1,2,4,0"));
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("sssr"));
@@ -131,7 +139,7 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + "-merge").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + "-merge").toString())))
         );
         verify(vaa3dChannelMapProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
@@ -159,16 +167,7 @@ public class MergeSampleTilePairsProcessorTest {
                         createTestLsmPair(
                                 TEST_LSM1_METADATA, null, 0,
                                 TEST_LSM2_METADATA, null, 0))));
-        when(getSampleLsmsMetadataProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
-        )).thenAnswer(invocation -> {
-            JacsServiceData sd = new JacsServiceData();
-            sd.setId(TEST_ID);
-            return sd;
-        });
+
         JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
         assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("4,1,2,0"));
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("sssr"));
@@ -181,11 +180,11 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + "-merge").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + "-merge").toString())))
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-input", Paths.get(TEST_WORKING_DIR, objective, area, "merged.v3draw").toAbsolutePath().toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + "-merge", "merged.v3draw").toAbsolutePath().toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "2,0,0,1,1,2,3,3")))
         );
     }
@@ -206,16 +205,7 @@ public class MergeSampleTilePairsProcessorTest {
                         createTestLsmPair(
                                 TEST_LSM1_METADATA, "ssr", 0,
                                 TEST_LSM2_METADATA, "sr", 0))));
-        when(getSampleLsmsMetadataProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
-        )).thenAnswer(invocation -> {
-            JacsServiceData sd = new JacsServiceData();
-            sd.setId(TEST_ID);
-            return sd;
-        });
+
         JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
         assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("0,1,3,2"));
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("sssr"));
@@ -228,7 +218,7 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + "-merge").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + "-merge").toString())))
         );
         verify(vaa3dChannelMapProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
@@ -247,16 +237,7 @@ public class MergeSampleTilePairsProcessorTest {
                         createTestLsmPair(
                                 TEST_LSM1_METADATA, null, 3,
                                 TEST_LSM2_METADATA, null, 2))));
-        when(getSampleLsmsMetadataProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
-        )).thenAnswer(invocation -> {
-            JacsServiceData sd = new JacsServiceData();
-            sd.setId(TEST_ID);
-            return sd;
-        });
+
         JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
         assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("4,2,1,0"));
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("sssr"));
@@ -269,7 +250,7 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", null))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + "-merge").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + "-merge").toString())))
         );
         verify(vaa3dChannelMapProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
@@ -288,16 +269,7 @@ public class MergeSampleTilePairsProcessorTest {
                         createTestLsmPair(
                                 TEST_LSM1_METADATA, null, 3,
                                 null, null, 0))));
-        when(getSampleLsmsMetadataProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
-        )).thenAnswer(invocation -> {
-            JacsServiceData sd = new JacsServiceData();
-            sd.setId(TEST_ID);
-            return sd;
-        });
+
         JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
         assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("0,1"));
         assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("rs"));
@@ -313,8 +285,8 @@ public class MergeSampleTilePairsProcessorTest {
                 any(ServiceArg.class)
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-input", Paths.get(TEST_WORKING_DIR, objective, area, TEST_LSM_1).toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-output", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, TEST_LSM_1).toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, TEST_TILE_NAME + ".vaa3d").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "2,0,0,1")))
         );
     }

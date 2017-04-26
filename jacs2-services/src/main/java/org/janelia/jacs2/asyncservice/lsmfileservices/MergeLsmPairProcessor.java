@@ -48,8 +48,8 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
         String lsm1;
         @Parameter(names = "-lsm2", description = "Second LSM input file", required = true)
         String lsm2;
-        @Parameter(names = "-output", description = "Output file", required = true)
-        String output;
+        @Parameter(names = "-outputDir", description = "Output directory", required = true)
+        String outputDir;
         @Parameter(names = "-microscope1", description = "Microscope name used for acquiring the first lsm", required = true)
         String microscope1;
         @Parameter(names = "-microscope2", description = "Microscope name used for acquiring the second lsm", required = false)
@@ -145,8 +145,8 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
             mergeInput2 = getLsm2(args);
             distortionCorrectionServiceData = ImmutableList.of();
         }
-        Path mergeOutputFile = getOutputFile(args);
-        JacsServiceData mergeChannelsService = mergeChannels(mergeInput1, mergeInput2, mergeOutputFile, args.multiscanBlendVersion,
+        Path mergeOutputDir = getOutputDir(args);
+        JacsServiceData mergeChannelsService = mergeChannels(mergeInput1, mergeInput2, mergeOutputDir, args.multiscanBlendVersion,
                 "Merge channels",
                 jacsServiceData,
                 distortionCorrectionServiceData.toArray(new JacsServiceData[distortionCorrectionServiceData.size()]));
@@ -165,7 +165,7 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
         return submitDependencyIfNotPresent(jacsServiceData, correctionServiceData);
     }
 
-    private JacsServiceData mergeChannels(Path input1, Path input2, Path output, String multiscanBlendVersion, String description, JacsServiceData jacsServiceData, JacsServiceData... deps) {
+    private JacsServiceData mergeChannels(Path input1, Path input2, Path outputDir, String multiscanBlendVersion, String description, JacsServiceData jacsServiceData, JacsServiceData... deps) {
         JacsServiceData mergeServiceData = mergeChannelsProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .waitFor(deps)
                         .description(description)
@@ -173,7 +173,7 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
                 new ServiceArg("-chInput1", input1.toString()),
                 new ServiceArg("-chInput2", input2.toString()),
                 new ServiceArg("-multiscanVersion", multiscanBlendVersion),
-                new ServiceArg("-output", output.toString())
+                new ServiceArg("-outputDir", outputDir.toString())
         );
         return submitDependencyIfNotPresent(jacsServiceData, mergeServiceData);
     }
@@ -195,12 +195,8 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
         return Paths.get(args.lsm2);
     }
 
-    private Path getOutputFile(MergeLsmPairArgs args) {
-        return Paths.get(args.output);
-    }
-
     private Path getOutputDir(MergeLsmPairArgs args) {
-        return getOutputFile(args).getParent();
+        return Paths.get(args.outputDir);
     }
 
     private Path getCorrectionResult(Path lsmFile) {

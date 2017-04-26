@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 
@@ -47,8 +48,8 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Voi
         String chInput2;
         @Parameter(names = "-multiscanVersion", description = "Multiscan blend version", required = false)
         String multiscanBlendVersion;
-        @Parameter(names = "-output", description = "Result directory", required = true)
-        String output;
+        @Parameter(names = "-outputDir", description = "Result directory", required = true)
+        String outputDir;
     }
 
     private static final String DEFAULT_MERGE_RESULT_FILE_NAME = "merged.v3draw";
@@ -86,12 +87,12 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Voi
 
             @Override
             public File collectResult(JacsServiceResult<?> depResults) {
-                return getMergedLsmResultFile(getArgs(depResults.getJacsServiceData()).output);
+                return getMergedLsmResultFile(getArgs(depResults.getJacsServiceData()).outputDir);
             }
 
             @Override
             public Optional<File> getExpectedServiceResult(JacsServiceData jacsServiceData) {
-                return Optional.of(getMergedLsmResultFile(getArgs(jacsServiceData).output));
+                return Optional.of(getMergedLsmResultFile(getArgs(jacsServiceData).outputDir));
             }
         };
     }
@@ -134,10 +135,10 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Voi
         try {
             Path workingDir = getWorkingDirectory(jacsServiceData);
             X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
-            File resultDir = getMergedLsmResultDir(args);
-            Files.createDirectories(resultDir.toPath());
+            Path resultDir = getMergedLsmResultDir(args);
+            Files.createDirectories(resultDir);
             scriptWriter.addWithArgs(getExecutable())
-                    .addArgs("-o", resultDir.getAbsolutePath());
+                    .addArgs("-o", resultDir.toAbsolutePath().toString());
             if (StringUtils.isNotBlank(args.multiscanBlendVersion)) {
                 scriptWriter.addArgs("-m", args.multiscanBlendVersion);
             }
@@ -157,7 +158,7 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Voi
         return getFullExecutableName(lsmMergeScript);
     }
 
-    private File getMergedLsmResultDir(ChannelMergeArgs args) {
-        return getMergedLsmResultFile(args.output).getParentFile();
+    private Path getMergedLsmResultDir(ChannelMergeArgs args) {
+        return Paths.get(args.outputDir);
     }
 }
