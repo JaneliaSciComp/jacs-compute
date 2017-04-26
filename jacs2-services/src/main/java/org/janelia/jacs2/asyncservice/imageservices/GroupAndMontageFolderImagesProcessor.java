@@ -190,7 +190,7 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
     private Multimap<String, Path> groupFilesBySuffix(List<Path> files) {
         ImmutableListMultimap.Builder<String, Path> builder = ImmutableListMultimap.builder();
         files.stream()
-                .map(fp -> new ImmutablePair<>(FileUtils.getFilenameOnly(fp), fp))
+                .map(fp -> new ImmutablePair<>(FileUtils.getFileNameOnly(fp), fp))
                 .filter(namePathPair -> namePathPair.getLeft().indexOf('_') >= 0)
                 .map(namePathPair -> {
                     int separatorIndex = namePathPair.getLeft().lastIndexOf('_');
@@ -211,7 +211,7 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
         if ("montage".equalsIgnoreCase(prefix)) {
             prefix = "";
         }
-        return FileUtils.getFilePath(getOutputDir(args), prefix, "montage", suffix, "png");
+        return FileUtils.getFilePath(getOutputDir(args), prefix, "montage", suffix, ".png");
     }
 
 }

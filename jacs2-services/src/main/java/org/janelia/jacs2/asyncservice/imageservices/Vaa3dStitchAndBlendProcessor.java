@@ -124,7 +124,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
                 stitchServiceData
         );
         Path outputFile = getOutputFile(args);
-        if ("v3draw".equals(com.google.common.io.Files.getFileExtension(args.outputFile))) {
+        if (".v3draw".equals(FileUtils.getFileExtensionOnly(args.outputFile))) {
             // if the output is a v3draw move the result
             mv(temporaryBlendOutput, outputFile, "Moving temporary output results", jacsServiceData, blendServiceData);
         } else {

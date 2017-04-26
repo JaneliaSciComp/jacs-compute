@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
+import ch.qos.logback.core.util.FileUtil;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
@@ -131,7 +132,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
         if (StringUtils.isBlank(args.chanSpec)) {
             throw new ComputationException(jacsServiceData,  "No channel spec for " + args.imageFile);
         }
-        Path temporaryOutputDir = getServicePath(scratchLocation, jacsServiceData, com.google.common.io.Files.getNameWithoutExtension(args.imageFile));
+        Path temporaryOutputDir = getServicePath(scratchLocation, jacsServiceData, FileUtils.getFileNameOnly(args.imageFile));
         JacsServiceData fijiMacroService = fijiMacroProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
                 new ServiceArg("-macro", basicMIPsAndMoviesMacro),
                 new ServiceArg("-macroArgs", getBasicMIPsAndMoviesArgs(args, temporaryOutputDir)),
@@ -153,7 +154,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
         String divSpec = colors.stream().map(c -> String.valueOf(c.getDivisor())).collect(Collectors.joining(""));
         StringJoiner builder = new StringJoiner(",");
         builder.add(outputDir.toString()); // output directory
-        builder.add(com.google.common.io.Files.getNameWithoutExtension(args.imageFile)); // output prefix 1
+        builder.add(FileUtils.getFileNameOnly(args.imageFile)); // output prefix 1
         builder.add(""); // output prefix 2
         builder.add(args.imageFile); // input file 1
         builder.add(""); // input file 2
@@ -204,7 +205,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
     }
 
     private Path getResultsDir(BasicMIPsAndMoviesArgs args) {
-        return Paths.get(args.resultsDir, com.google.common.io.Files.getNameWithoutExtension(args.imageFile));
+        return Paths.get(args.resultsDir, FileUtils.getFileNameOnly(args.imageFile));
     }
 
 }

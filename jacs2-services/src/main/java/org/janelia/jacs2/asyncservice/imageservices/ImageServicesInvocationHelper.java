@@ -7,12 +7,14 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.fileservices.LinkDataProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.align.AlignmentConfiguration;
 import org.janelia.jacs2.asyncservice.imageservices.align.ImageCoordinates;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -28,9 +30,9 @@ class ImageServicesInvocationHelper {
 
     static Path getChannelFilePath(Path dir, int channelNumber, String fileName, String fileExt) {
         String channelFileName = String.format("%s_c%d.%s",
-                com.google.common.io.Files.getNameWithoutExtension(fileName),
+                FileUtils.getFileNameOnly(fileName),
                 channelNumber,
-                StringUtils.defaultIfBlank(fileExt, com.google.common.io.Files.getFileExtension(fileName))
+                StringUtils.defaultIfBlank(fileExt, FileUtils.getFileExtensionOnly(fileName))
         );
         return dir.resolve(channelFileName);
     }
@@ -104,7 +106,7 @@ class ImageServicesInvocationHelper {
                         .waitFor(deps)
                         .build(),
                 new ServiceArg("-input", input.toString()),
-                new ServiceArg("-output", output == null ? null : output.toString()) // generate the default output
+                new ServiceArg("-output", Objects.toString(output, "")) // generate the default output
         );
         return submitNewServiceDependency(jacsServiceData, niftiConverterServiceData);
     }

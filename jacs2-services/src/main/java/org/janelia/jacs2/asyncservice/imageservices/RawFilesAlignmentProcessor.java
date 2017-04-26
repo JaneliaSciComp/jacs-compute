@@ -505,7 +505,7 @@ public class RawFilesAlignmentProcessor extends AbstractBasicLifeCycleServicePro
     private JacsServiceData convertNeuronsFileToRawFormat(Path inputFile, Path outputFile,
                                                           String description,
                                                           JacsServiceData jacsServiceData) {
-        if ("v3draw".equals(com.google.common.io.Files.getFileExtension(inputFile.toString()))) {
+        if (".v3draw".equals(FileUtils.getFileExtensionOnly(inputFile))) {
             return invocationHelper.linkData(inputFile, outputFile, description, jacsServiceData);
         } else {
             return invocationHelper.convertFile(inputFile, outputFile, description, jacsServiceData);
@@ -794,7 +794,7 @@ public class RawFilesAlignmentProcessor extends AbstractBasicLifeCycleServicePro
     }
 
     private Path getResultsDir(AlignmentArgs args) {
-        return Paths.get(args.resultsDir, com.google.common.io.Files.getNameWithoutExtension(args.input1File));
+        return Paths.get(args.resultsDir, FileUtils.getFileNameOnly(args.input1File));
     }
 
     private Path getBrainResultsDir(AlignmentArgs args) {
@@ -826,7 +826,7 @@ public class RawFilesAlignmentProcessor extends AbstractBasicLifeCycleServicePro
     }
 
     private Path getWorkingFile(String inputFileName, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(inputFileName) + ".v3draw");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(inputFileName) + ".v3draw");
     }
 
     private List<Path> getNiftiChannelsFiles(Path fp, int nchannels, JacsServiceData jacsServiceData) {
@@ -837,87 +837,87 @@ public class RawFilesAlignmentProcessor extends AbstractBasicLifeCycleServicePro
     }
 
     private Path getNiftiChannelFile(Path fp, int channelNo, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) +String.format("_c%d.nii", channelNo));
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) +String.format("_c%d.nii", channelNo));
     }
 
     private Path getNiftiDownsampledFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_ds.nii");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_ds.nii");
     }
 
     private Path getIsotropicFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_is.v3draw");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_is.v3draw");
     }
 
     private Path getResizedFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_rs.v3draw");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_rs.v3draw");
     }
 
     private Path getScaledFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_scaled.v3draw");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_scaled.v3draw");
     }
 
     private Path getRotatedFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_rotated.v3draw");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_rotated.v3draw");
     }
 
     private Path getRefChannelFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_refChn.v3draw");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_refChn.v3draw");
     }
 
     private Path getRotationsMatrixFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_rotations.mat");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_rotations.mat");
     }
 
     private Path getInsightRotationsMatrixFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_rotations.txt");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_rotations.txt");
     }
 
     private Path getAffineRotationsMatrixFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_rotationsAffine.txt");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_rotationsAffine.txt");
     }
 
     private Path getGlobalAlignedFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_globalAligned.v3draw");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_globalAligned.v3draw");
     }
 
     private Path getGlobalSymmetricTransformFilePrefix(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_txmi");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_txmi");
     }
 
     private Path getLocalSymmetricTransformFilePrefix(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_ccmi");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_ccmi");
     }
 
     private Path getAffineTransformFile(Path prefix, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(prefix.toString()) + "Affine.txt");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(prefix) + "Affine.txt");
     }
 
     private Path getWarpTransformFile(Path prefix, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(prefix.toString()) + "Warp.nii.gz");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(prefix) + "Warp.nii.gz");
     }
 
     private Path getInverseWarpTransformFile(Path prefix, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(prefix.toString()) + "InverseWarp.nii.gz");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(prefix) + "InverseWarp.nii.gz");
     }
 
     private Path getAlignedFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_aligned.v3draw");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_aligned.v3draw");
     }
 
     private Path getDeformedNiftiFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_deformed.nii");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_deformed.nii");
     }
 
     private Path getYFlippedFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_yflip.v3draw");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_yflip.v3draw");
     }
 
     private Path getZFlippedFile(Path fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp.toString()) + "_zflip.v3draw");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_zflip.v3draw");
     }
 
     private Path getAlignmentQualityFile(String fp, JacsServiceData jacsServiceData) {
-        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), com.google.common.io.Files.getNameWithoutExtension(fp) + "_AlignmentQuality.txt");
+        return Paths.get(getWorkingDirectory(jacsServiceData).toString(), FileUtils.getFileNameOnly(fp) + "_AlignmentQuality.txt");
     }
 
 }

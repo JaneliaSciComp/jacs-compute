@@ -127,9 +127,9 @@ public class Vaa3dChannelMapProcessor extends AbstractBasicLifeCycleServiceProce
                 }
                 vaa3dCmdOutput = FileUtils.getFilePath(input.getParent(),
                         "channelMapping",
-                        com.google.common.io.Files.getNameWithoutExtension(input.toString()),
+                        input.toString(),
                         suffix,
-                        com.google.common.io.Files.getFileExtension(input.toString()));
+                        FileUtils.getFileExtensionOnly(input));
                 sameFile = true;
             } else {
                 vaa3dCmdOutput = output;

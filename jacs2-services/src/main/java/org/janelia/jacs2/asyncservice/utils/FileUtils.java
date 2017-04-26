@@ -57,8 +57,32 @@ public class FileUtils {
         });
     }
 
-    public static String getFilenameOnly(Path fp) {
-        return com.google.common.io.Files.getNameWithoutExtension(fp.toString());
+    public static String getFileNameOnly(Path fp) {
+        return getFileNameOnly(fp.toString());
+    }
+
+    public static String getFileNameOnly(String fn) {
+        return StringUtils.isBlank(fn) ? "" : com.google.common.io.Files.getNameWithoutExtension(fn);
+    }
+
+    public static String getFileExtensionOnly(Path fp) {
+        return getFileExtensionOnly(fp.toString());
+    }
+
+    public static String getFileExtensionOnly(String fn) {
+        return StringUtils.isBlank(fn) ? "" : createExtension(com.google.common.io.Files.getFileExtension(fn));
+    }
+
+    private static String createExtension(String ext) {
+        if (StringUtils.isBlank(ext)) {
+            return "";
+        } else {
+            if (StringUtils.startsWith(ext, ".")) {
+                return ext;
+            } else {
+                return "." + ext;
+            }
+        }
     }
 
     public static Path getFilePath(Path dir, String fileName) {
@@ -74,11 +98,11 @@ public class FileUtils {
     }
 
     public static Path getFilePath(Path dir, String prefix, String fileName, String suffix, String fileExt) {
-        String actualFileName = String.format("%s%s%s.%s",
+        String actualFileName = String.format("%s%s%s%s",
                 StringUtils.defaultIfBlank(prefix, ""),
-                com.google.common.io.Files.getNameWithoutExtension(fileName),
+                FileUtils.getFileNameOnly(fileName),
                 StringUtils.defaultIfBlank(suffix, ""),
-                fileExt);
+                createExtension(fileExt));
         return dir.resolve(actualFileName);
     }
 }

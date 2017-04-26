@@ -172,7 +172,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
         if (StringUtils.isNotBlank(area)) {
             pathCompBuilder.add(area);
         }
-        pathCompBuilder.add(com.google.common.io.Files.getNameWithoutExtension(lsmImageFile.getAbsolutePath()));
+        pathCompBuilder.add(FileUtils.getFileNameOnly(lsmImageFile.getName()));
         pathCompBuilder.add(args.mipsSubDir);
         ImmutableList<String> pathComps = pathCompBuilder.build();
         return Paths.get(args.sampleDataDir, pathComps.toArray(new String[pathComps.size()]));

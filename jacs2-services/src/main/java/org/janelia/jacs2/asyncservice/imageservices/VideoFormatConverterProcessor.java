@@ -9,6 +9,7 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -25,6 +26,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 
 @Named("mpegConverter")
@@ -42,8 +44,7 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
 
         String getOutputName() {
             if (StringUtils.isBlank(output)) {
-                String extension = com.google.common.io.Files.getFileExtension(input);
-                return input.replace("." + extension, DEFAULT_OUTPUT_EXT);
+                return FileUtils.replaceFileExt(Paths.get(input), DEFAULT_OUTPUT_EXT).toString();
             }
             return output;
         }
