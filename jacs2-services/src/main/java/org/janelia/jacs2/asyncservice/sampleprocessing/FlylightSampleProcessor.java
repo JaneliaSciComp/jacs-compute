@@ -1,6 +1,10 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
@@ -20,6 +24,7 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.nio.file.Path;
@@ -171,6 +176,32 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                     return pd;
                 })
                 ;
+    }
+
+    private void submitGroupTiles(JacsServiceResult<FlylightProcessingIntermediateResult> depResults) {
+        List<MergeTilePairResult> allMergeTilePairResults = depResults.getResult().mergeTilePairServiceIds.stream()
+                .flatMap(mtpsId -> {
+                    JacsServiceData mergeTilePairService = jacsServiceDataPersistence.findById(mtpsId);
+                    List<MergeTilePairResult> mergeTilePairResults = mergeSampleTilePairsProcessor.getResultHandler().getServiceDataResult(mergeTilePairService);
+                    return mergeTilePairResults.stream();
+                })
+                .filter(mtp -> {
+                    if (StringUtils.isBlank(mtp.getAnatomicalArea()) && StringUtils.isBlank(mtp.getObjective())) {
+                        logger.warn("Ignore tile {} from stitching because it does not have a specified area or objective: area -> {}, objective -> {}",
+                                mtp.getTileName(), mtp.getAnatomicalArea(), mtp.getObjective());
+                        return false;
+                    } else {
+                        return true;
+                    }
+                })
+                .collect(Collectors.toList());
+        Multimap<String, MergeTilePairResult> grouppedResultsByAreaAndObjective = Multimaps.index(allMergeTilePairResults, new Function<MergeTilePairResult, String>() {
+                    @Nullable
+                    @Override
+                    public String apply(MergeTilePairResult mergeTilePairResult) {
+                        return mergeTilePairResult.getObjective() + "/" + mergeTilePairResult.getAnatomicalArea();
+                    }
+                });
     }
 
     private FlylightPipelineArgs getArgs(JacsServiceData jacsServiceData) {

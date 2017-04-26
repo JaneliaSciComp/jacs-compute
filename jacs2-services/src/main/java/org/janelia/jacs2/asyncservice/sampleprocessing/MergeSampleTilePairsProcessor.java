@@ -274,9 +274,12 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                             mcd.tilePair.getFirstLsm()).toString();
                                 }
                                 JacsServiceData mapChannelsService = null;
-                                Path mappedChannelFilePath = SampleServicesUtils.getImageDataPath(args.sampleDataDir, ar.getObjective(), ar.getName());
-                                Path mappedChannelFileName = FileUtils.getFilePath(mappedChannelFilePath, mcd.tilePair.getTileName(), "vaa3d");
                                 if (mcd.isNonEmptyMapping()) {
+                                    Path mappedChannelsResultsDir = FileUtils.getFilePath(
+                                            SampleServicesUtils.getImageDataPath(args.sampleDataDir, ar.getObjective(), ar.getName()),
+                                            mcd.tilePair.getTileName() + "-remapped",
+                                            null);
+                                    Path mappedChannelFileName = FileUtils.getFilePath(mappedChannelsResultsDir, mcd.tilePair.getTileName(), "v3draw");
                                     logger.info("Map channels {} + {} -> {}", mergedResultFileName, mcd.mapping, mappedChannelFileName);
                                     // since the channels were in the right order no re-ordering of the channels is necessary
                                     mapChannelsService = vaa3dChannelMapProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
@@ -300,6 +303,8 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                 cmFromMcd.channelMapping = LSMProcessingTools.generateOutputChannelReordering(mcd.unmergedInputChannels, mcd.outputChannels);
                                 cmFromMcd.outputChannelComponents = LSMProcessingTools.extractChannelComponents(mcd.outputChannels);
                                 MergeTilePairResult mergeResult = new MergeTilePairResult();
+                                mergeResult.setAnatomicalArea(ar.getName());
+                                mergeResult.setObjective(ar.getObjective());
                                 mergeResult.setTileName(mcd.tilePair.getTileName());
                                 mergeResult.setMergeResultFile(mcd.mergeTileFile);
                                 mergeResult.setChannelMapping(mcd.mapping);

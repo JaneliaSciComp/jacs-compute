@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Named("vaa3dStitchGrouping")
 public class Vaa3dStitchGroupingProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
@@ -74,6 +75,11 @@ public class Vaa3dStitchGroupingProcessor extends AbstractBasicLifeCycleServiceP
             public File collectResult(JacsServiceResult<?> depResults) {
                 return getGroupsFile(getArgs(depResults.getJacsServiceData())).toFile();
             }
+
+            @Override
+            public Optional<File> getExpectedServiceResult(JacsServiceData jacsServiceData) {
+                return Optional.of(getGroupsFile(getArgs(jacsServiceData)).toFile());
+            }
         };
     }
 
@@ -110,7 +116,7 @@ public class Vaa3dStitchGroupingProcessor extends AbstractBasicLifeCycleServiceP
                 new ServiceArg("-plugin", "imageStitch.so"),
                 new ServiceArg("-pluginFunc", "istitch-grouping"),
                 new ServiceArg("-input", args.inputDir),
-                new ServiceArg("-output", args.outputDir),
+                new ServiceArg("-output", getGroupsFile(args).toString()),
                 new ServiceArg("-pluginParams", String.format("#c %d", args.referenceChannel)),
                 new ServiceArg("-pluginParams", String.join(",", args.pluginParams))
         );
