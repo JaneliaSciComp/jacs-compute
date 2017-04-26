@@ -77,7 +77,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
 
     @Override
     public void refreshServiceQueue() {
-        logger.debug("Sync the waiting queue");
+        logger.trace("Sync the waiting queue");
         // check for newly created services and queue them based on their priorities
         enqueueAvailableServices(EnumSet.of(JacsServiceState.CREATED));
     }
