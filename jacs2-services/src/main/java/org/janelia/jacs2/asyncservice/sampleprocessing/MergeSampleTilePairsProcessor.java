@@ -2,7 +2,6 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
@@ -204,7 +203,7 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
         if (StringUtils.isNotBlank(args.channelDyeSpec) && StringUtils.isNotBlank(args.outputChannelOrder)) {
             // if it uses the channel dye spec and the output channel order is specified use the dye spec to deternine the ordering
             Pair<Multimap<String, String>, Map<String, String>> channelDyesMapData = LSMProcessingTools.parseChannelDyeSpec(args.channelDyeSpec);
-            List<String> outputChannels = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(args.outputChannelOrder);
+            List<String> outputChannels = LSMProcessingTools.parseChannelComponents(args.outputChannelOrder);
             channelMappingFunc = (ar, tp) -> determineChannelMappingUsingDyeSpec(tp, channelDyesMapData, outputChannels);
         } else {
             // otherwise use the channel spec and the merge algorithm
@@ -480,7 +479,6 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
             }
             if (blueTag == null) {
                 blueTag = tag;
-                continue;
             }
         }
         List<String> inputChannelList = ImmutableList.of(
@@ -502,21 +500,13 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
      * Convert the dyes back to tags using the mapping created during the parsing.
      * @param dyes collection of dyes
      * @param dyeToTagMap mapping of dyes to channel tags
-     * @return
+     * @return the corresponding collection of channel tags
      */
     private Collection<String> convertDyesToChannelTags(Collection<String> dyes, Map<String, String> dyeToTagMap) {
         return dyes.stream()
                 .filter(dyeToTagMap::containsKey)
                 .map(dyeToTagMap::get)
                 .collect(Collectors.toList());
-    }
-
-    private List<String> getOutputChannelOrder(String outputChannelOrder) {
-        if (StringUtils.isBlank(outputChannelOrder)) {
-            return ImmutableList.of();
-        } else {
-            return Splitter.on(',').splitToList(outputChannelOrder);
-        }
     }
 
     private MergeAlgorithm getMergeAlgorithm(String mergeAlgorithmName) {

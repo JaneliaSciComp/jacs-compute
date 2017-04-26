@@ -18,7 +18,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class LSMProcessingTools {
@@ -185,7 +184,7 @@ public class LSMProcessingTools {
         for(String channel : channels) {
             String[] parts = channel.split("=");
             String channelTag = parts[0];
-            Iterable<String> channelDyes = parseChannelDyes(parts[1]);
+            Iterable<String> channelDyes = parseChannelComponents(parts[1]);
             for(String dye : channelDyes) {
                 channelTagToDyesMap.put(channelTag, dye);
                 if (dyeToTagMap.containsKey(dye)) {
@@ -197,7 +196,7 @@ public class LSMProcessingTools {
         return new ImmutablePair<>(channelTagToDyesMap, dyeToTagMap);
     }
 
-    public static List<String> parseChannelDyes(String channelDyeNames) {
-        return Splitter.on(',').trimResults().omitEmptyStrings().splitToList(channelDyeNames);
+    public static List<String> parseChannelComponents(String channelComponents) {
+        return Splitter.on(',').trimResults().omitEmptyStrings().splitToList(channelComponents);
     }
 }

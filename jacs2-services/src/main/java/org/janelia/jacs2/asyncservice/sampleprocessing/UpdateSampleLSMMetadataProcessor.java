@@ -170,13 +170,13 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
                     numChannels = lsm.getNumChannels();
                 }
             } else {
-                List<String> channelDyeNames = LSMProcessingTools.parseChannelDyes(lsm.getChannelDyeNames());
+                List<String> channelDyeNames = LSMProcessingTools.parseChannelComponents(lsm.getChannelDyeNames());
                 numChannels = channelDyeNames.size();
             }
             // For legacy LSMs without chanspec or dyespec, we assume that the reference is the first channel and the rest are signal
             lsm.setChanSpec(LSMProcessingTools.createChanSpec(numChannels, 1));
         } else {
-            List<String> channelDyeNames = LSMProcessingTools.parseChannelDyes(lsm.getChannelDyeNames());
+            List<String> channelDyeNames = LSMProcessingTools.parseChannelComponents(lsm.getChannelDyeNames());
             lsm.setChanSpec(LSMProcessingTools.createChanSpec(channelDyeNames, referenceDyes));
         }
     }
