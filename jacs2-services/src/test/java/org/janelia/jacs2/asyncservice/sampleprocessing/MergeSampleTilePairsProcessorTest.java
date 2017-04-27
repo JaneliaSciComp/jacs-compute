@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -157,7 +158,7 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString())))
         );
         verify(linkDataProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
@@ -202,15 +203,15 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString())))
         );
         verify(linkDataProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class)
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "2,0,0,1,1,2,3,3")))
         );
     }
@@ -244,7 +245,7 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString())))
         );
         verify(linkDataProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
@@ -280,7 +281,7 @@ public class MergeSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", null))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString())))
         );
         verify(linkDataProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
@@ -320,12 +321,65 @@ public class MergeSampleTilePairsProcessorTest {
         );
         verify(linkDataProcessor).createServiceData(any(ServiceExecutionContext.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-source", Paths.get(TEST_WORKING_DIR, objective, area, TEST_LSM_1).toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-target", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-target", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString())))
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "2,0,0,1")))
+        );
+    }
+
+    @Test
+    public void submitDependenciesWhenTileNamesAreNotUnique() {
+        String area = "area";
+        String objective = "objective";
+        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+                area,
+                objective,
+                "FLYLIGHT_ORDERED",
+                "reference=Alexa Fluor 488,Cy2;" +
+                        "membrane_ha=,ATTO 647,Alexa Fluor 633,Alexa Fluor 647,Cy5;" +
+                        "membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;" +
+                        "membrane_flag=Alexa Fluor 594",
+                "membrane_ha,membrane_v5,membrane_flag,reference"
+        );
+        AnatomicalArea testAnatomicalArea = createTestAnatomicalArea(objective, area, null,
+                createTestLsmPair(
+                        TEST_LSM1_METADATA, null, 0,
+                        TEST_LSM2_METADATA, null, 0),
+                createTestLsmPair(
+                        TEST_LSM1_METADATA, null, 0,
+                        TEST_LSM2_METADATA, null, 0),
+                createTestLsmPair(
+                        TEST_LSM1_METADATA, null, 0,
+                        TEST_LSM2_METADATA, null, 0)
+        );
+        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
+                .thenReturn(ImmutableList.of(testAnatomicalArea));
+
+        JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
+        assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("1,2,4,0"));
+        assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("sssr"));
+        assertThat(result.getResult().getChannelMapping().outputChannelComponents.signalChannelsPos, equalTo("0 1 2"));
+        assertThat(result.getResult().getChannelMapping().outputChannelComponents.referenceChannelsPos, equalTo("3"));
+        verify(mergeLsmPairProcessor, times(testAnatomicalArea.getTileLsmPairs().size())).createServiceData(any(ServiceExecutionContext.class),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-microscope1", "m1"))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString())))
+        );
+        verify(linkDataProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class)
+        );
+        verify(vaa3dChannelMapProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class)
         );
     }
 
@@ -349,13 +403,15 @@ public class MergeSampleTilePairsProcessorTest {
         return testServiceDataBuilder.build();
     }
 
-    private AnatomicalArea createTestAnatomicalArea(String objective, String name, String chanSpec, TileLsmPair tp) {
+    private AnatomicalArea createTestAnatomicalArea(String objective, String name, String chanSpec, TileLsmPair... tps) {
         AnatomicalArea a = new AnatomicalArea();
         a.setDefaultChanSpec(chanSpec);
         a.setSampleId(TEST_SAMPLE_ID);
         a.setName(name);
         a.setObjective(objective);
-        a.addLsmPair(tp);
+        for (TileLsmPair tp : tps) {
+            a.addLsmPair(tp);
+        }
         return a;
     }
 

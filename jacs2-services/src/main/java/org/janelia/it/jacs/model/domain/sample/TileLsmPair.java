@@ -41,7 +41,7 @@ public class TileLsmPair {
 
     @JsonIgnore
     public String getNonNullableTileName() {
-        return StringUtils.defaultIfBlank(tileName, "");
+        return StringUtils.defaultIfBlank(tileName, "").replace(' ', '_');
     }
 
     @JsonIgnore
