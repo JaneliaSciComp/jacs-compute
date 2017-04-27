@@ -32,6 +32,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -195,8 +196,8 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                             .findFirst()
                             .orElse(null);
                     String anatomicalArea = groupedTiles.getValue().stream()
-                            .filter(mtpr -> StringUtils.isNotBlank(mtpr.getChannelComponents().referenceChannelNumbers))
-                            .map(mtpr -> mtpr.getChannelComponents().referenceChannelNumbers)
+                            .filter(mtpr -> StringUtils.isNotBlank(mtpr.getAnatomicalArea()))
+                            .map(mtpr -> mtpr.getAnatomicalArea())
                             .findFirst()
                             .orElse("");
                     JacsServiceData groupingService = vaa3dStitchGroupingProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
