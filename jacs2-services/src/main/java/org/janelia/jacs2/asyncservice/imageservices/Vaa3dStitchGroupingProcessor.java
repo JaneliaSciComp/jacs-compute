@@ -84,8 +84,8 @@ public class Vaa3dStitchGroupingProcessor extends AbstractBasicLifeCycleServiceP
 
     @Override
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
-        Vaa3dStitchGroupingArgs args = getArgs(jacsServiceData);
         try {
+            Vaa3dStitchGroupingArgs args = getArgs(jacsServiceData);
             Files.createDirectories(getOutputDir(args));
         } catch (IOException e) {
             throw new UncheckedIOException(e);

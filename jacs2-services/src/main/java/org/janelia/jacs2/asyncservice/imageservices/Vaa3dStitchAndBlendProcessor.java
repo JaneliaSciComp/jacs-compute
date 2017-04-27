@@ -95,8 +95,8 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
 
     @Override
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
-        Vaa3dStitchAndBlendArgs args = getArgs(jacsServiceData);
         try {
+            Vaa3dStitchAndBlendArgs args = getArgs(jacsServiceData);
             Files.createDirectories(getOutputFile(args).getParent());
         } catch (IOException e) {
             throw new UncheckedIOException(e);

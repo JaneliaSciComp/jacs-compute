@@ -203,7 +203,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                     JacsServiceData groupingService = vaa3dStitchGroupingProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
                                     .build(),
                             new ServiceArg("-inputDir", input.toString()),
-                            new ServiceArg("-outputFile", groupOutput.toString()),
+                            new ServiceArg("-outputDir", groupOutput.toString()),
                             new ServiceArg("-refchannel", referenceChannelNumber)
                     );
                     groupingService = submitDependencyIfNotPresent(depResults.getJacsServiceData(), groupingService);
@@ -213,7 +213,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                                     .waitFor(groupingService)
                                     .build(),
                             new ServiceArg("-inputDir", groupOutput.toString()),
-                            new ServiceArg("-outputDir", stichOutputFile.toString()),
+                            new ServiceArg("-outputFile", stichOutputFile.toString()),
                             new ServiceArg("-refchannel", referenceChannelNumber)
                     );
                     stitchingService = submitDependencyIfNotPresent(depResults.getJacsServiceData(), stitchingService);
