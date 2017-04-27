@@ -30,7 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 
 @Named("mergeLsms")
 public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcessor<MergeLsmPairProcessor.MergeLsmIntermediateResult, File> {
@@ -93,11 +92,6 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
                 MergeLsmIntermediateResult result = (MergeLsmIntermediateResult) depResults.getResult();
                 JacsServiceData mergeChannelsServiceData = jacsServiceDataPersistence.findById(result.mergeChannelsServiceId);
                 return mergeChannelsProcessor.getResultHandler().getServiceDataResult(mergeChannelsServiceData);
-            }
-
-            @Override
-            public Optional<File> getExpectedServiceResult(JacsServiceData jacsServiceData) {
-                return Optional.of(getOutputFile(getArgs(jacsServiceData)).toFile());
             }
         };
     }

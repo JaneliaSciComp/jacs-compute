@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Merge sample tile pairs.
+ * Merge sample tile pairs  (see jacsV1 Vaa3DConvertToSampleImageService).
  */
 @Named("mergeSampleTilePairs")
 public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleServiceProcessor<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult, List<MergeTilePairResult>> {
@@ -247,7 +247,7 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                         SampleServicesUtils.getImageDataPath(args.sampleDataDir, ar.getObjective(), ar.getName()),
                                         MERGE_DIRNAME,
                                         null);
-                                Path mergedResultFileName = mergedResultDir.resolve(mcd.tilePair.getNonNullableTileName() + "tile-" + idGenerator.generateId());
+                                Path mergedResultFileName = FileUtils.getFilePath(mergedResultDir, mcd.tilePair.getNonNullableTileName() + "tile-" + idGenerator.generateId(), ".v3draw");
                                 if (mcd.tilePair.hasTwoLsms()) {
                                     mergeLsmPairsService = mergeLsmPairProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                                                     .waitFor(getSampleLsmsService)

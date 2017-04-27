@@ -5,11 +5,20 @@ import java.util.List;
 
 public class AnatomicalArea {
 
+    private String datasetName;
     private Number sampleId;
     private String objective;
     private String name;
     private List<TileLsmPair> tileLsmPairs = new ArrayList<>();
     private String defaultChanSpec;
+
+    public String getDatasetName() {
+        return datasetName;
+    }
+
+    public void setDatasetName(String datasetName) {
+        this.datasetName = datasetName;
+    }
 
     public Number getSampleId() {
         return sampleId;

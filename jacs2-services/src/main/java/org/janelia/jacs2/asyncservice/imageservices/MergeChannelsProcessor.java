@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -39,16 +40,13 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
  * Merge paired LSMs into a v3draw (see jacsV1 Vaa3DBulkMergeService).
  */
 @Named("mergeChannels")
-public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Path, File> {
-
-    private static final String TEMP_MERGE_DIR = "TempMergeDirectory";
+public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Void, File> {
 
     static class ChannelMergeArgs extends ServiceArgs {
         @Parameter(names = "-chInput1", description = "File containing the first set of channels", required = true)
@@ -91,17 +89,15 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Pat
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile().exists();
+                ChannelMergeArgs args = getArgs(depResults.getJacsServiceData());
+                Path outputFile = getOutputFile(args);
+                Path tmpMergeFile = getMergeDir(outputFile).resolve(DEFAULT_MERGE_RESULT_FILE_NAME);
+                return outputFile.toFile().exists() || tmpMergeFile.toFile().exists();
             }
 
             @Override
             public File collectResult(JacsServiceResult<?> depResults) {
                 return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile();
-            }
-
-            @Override
-            public Optional<File> getExpectedServiceResult(JacsServiceData jacsServiceData) {
-                return Optional.of(getOutputFile(getArgs(jacsServiceData)).toFile());
             }
         };
     }
@@ -127,12 +123,12 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Pat
 
     @Override
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
-        ChannelMergeArgs args = getArgs(jacsServiceData);
-        Path outputDir = getOutputDir(args);
         try {
+            ChannelMergeArgs args = getArgs(jacsServiceData);
+            Path outputFile = getOutputFile(args);
+            Path mergeDir = getMergeDir(outputFile);
             final FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute( PosixFilePermissions.fromString("rwxrwxr--"));
-            Files.createDirectories(outputDir, attr);
-            createMergeDir(jacsServiceData, args);
+            Files.createDirectories(mergeDir, attr);
         } catch (IOException e) {
             throw new ComputationException(jacsServiceData, e);
         }
@@ -140,47 +136,34 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Pat
     }
 
     @Override
-    protected JacsServiceResult<Path> submitServiceDependencies(JacsServiceData jacsServiceData) {
-        Path mergeDir = getMergeDir(jacsServiceData).orElse(createMergeDir(jacsServiceData, getArgs(jacsServiceData)));
-        return new JacsServiceResult<>(jacsServiceData, mergeDir);
-    }
-
-    @Override
-    protected ServiceComputation<JacsServiceResult<Path>> processing(JacsServiceResult<Path> depsResult) {
+    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) {
+        ChannelMergeArgs args = getArgs(depsResult.getJacsServiceData());
+        Path outputFile = getOutputFile(args);
+        Path outputDir = outputFile.getParent();
+        Path mergeDir = getMergeDir(outputFile);
+        Path tmpMergeFile = getMergeDir(mergeDir).resolve(DEFAULT_MERGE_RESULT_FILE_NAME);
         /**
          * The underlying script creates merged.v3draw in the temporary merge directory and that has to be moved over.
          */
         return super.processing(depsResult)
+                .thenSuspendUntil(() -> tmpMergeFile.toFile().exists())
                 .thenApply(pd -> {
                     try {
-                        ChannelMergeArgs args = getArgs(pd.getJacsServiceData());
-                        Path source = pd.getResult().resolve(DEFAULT_MERGE_RESULT_FILE_NAME);
-                        Path target = getOutputFile(args);
-                        if (!Files.isSameFile(source, target)) {
-                            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+                        Path source;
+                        if (mergeDir.toAbsolutePath().toString().equals(outputFile.toAbsolutePath().toString())) {
+                            // the output file has no extension
+                            Path tmpDir = outputDir.resolve(RandomStringUtils.random(6, true, true));
+                            Files.move(mergeDir, tmpDir, StandardCopyOption.ATOMIC_MOVE);
+                            source = tmpDir.resolve(DEFAULT_MERGE_RESULT_FILE_NAME);
+                        } else {
+                            source = tmpMergeFile;
                         }
+                        Files.move(source, outputFile, StandardCopyOption.REPLACE_EXISTING);
                         return pd;
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
                 });
-    }
-
-    @Override
-    protected File postProcessing(JacsServiceResult<File> sr) {
-        Optional<Path> tempMergeDir = getMergeDir(sr.getJacsServiceData());
-        tempMergeDir
-                .filter(mergePath -> mergePath.toFile().exists())
-                .filter(mergePath -> !sr.getResult().toPath().toAbsolutePath().startsWith(mergePath.toAbsolutePath()))
-                .ifPresent(mergePath -> {
-                    try {
-                        FileUtils.deletePath(mergePath);
-                        sr.getJacsServiceData().getResources().remove(TEMP_MERGE_DIR);
-                    } catch (IOException e) {
-                        logger.warn("Error deleting temporary path {}", mergePath, e);
-                    }
-                });
-        return super.postProcessing(sr);
     }
 
     @Override
@@ -202,10 +185,7 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Pat
         try {
             Path workingDir = getWorkingDirectory(jacsServiceData);
             X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
-            Optional<Path> resultDirResource = getMergeDir(jacsServiceData);
-            Path resultDir = resultDirResource.orElse(createMergeDir(jacsServiceData, args));
-            if (resultDirResource.isPresent())
-            Files.createDirectories(resultDir);
+            Path resultDir = getMergeDir(getOutputFile(args));
             scriptWriter.addWithArgs(getExecutable())
                     .addArgs("-o", resultDir.toAbsolutePath().toString());
             if (StringUtils.isNotBlank(args.multiscanBlendVersion)) {
@@ -231,28 +211,8 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Pat
         return Paths.get(args.outputFile).toAbsolutePath();
     }
 
-    private Path getOutputDir(ChannelMergeArgs args) {
-        return getOutputFile(args).getParent();
+    private Path getMergeDir(Path outputFile) {
+        return FileUtils.getFilePath(outputFile.getParent(), FileUtils.getFileNameOnly(outputFile), null);
     }
 
-    private Optional<Path> getMergeDir(JacsServiceData jacsServiceData) {
-        String mergeDirResource = jacsServiceData.getResources().get(TEMP_MERGE_DIR);
-        if (StringUtils.isNotBlank(mergeDirResource)) {
-            return Optional.of(Paths.get(mergeDirResource));
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    private Path createMergeDir(JacsServiceData jacsServiceData, ChannelMergeArgs args) {
-        Path outputDir = getOutputDir(args);
-        try {
-            final FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute( PosixFilePermissions.fromString("rwxrwxr--"));
-            Path tempMergeDirectory = Files.createTempDirectory(outputDir, "merge", attr);
-            jacsServiceData.addToResources(TEMP_MERGE_DIR, tempMergeDirectory.toString());
-            return tempMergeDirectory;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
 }

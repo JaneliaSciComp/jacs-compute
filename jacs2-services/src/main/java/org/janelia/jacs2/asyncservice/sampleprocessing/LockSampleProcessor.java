@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Optional;
 
 @Named("lockSample")
 public class LockSampleProcessor extends AbstractServiceProcessor<String> {
@@ -73,11 +72,6 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
             @Override
             public String getServiceDataResult(JacsServiceData jacsServiceData) {
                 return jacsServiceData.getStringifiedResult();
-            }
-
-            @Override
-            public Optional<String> getExpectedServiceResult(JacsServiceData jacsServiceData) {
-                return Optional.empty();
             }
         };
     }

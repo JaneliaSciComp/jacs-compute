@@ -5,7 +5,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 
 import java.io.File;
-import java.util.Optional;
 
 public abstract class AbstractSingleFileServiceResultHandler implements ServiceResultHandler<File> {
 
@@ -18,10 +17,4 @@ public abstract class AbstractSingleFileServiceResultHandler implements ServiceR
     public File getServiceDataResult(JacsServiceData jacsServiceData) {
         return ServiceDataUtils.stringToFile(jacsServiceData.getStringifiedResult());
     }
-
-    @Override
-    public Optional<File> getExpectedServiceResult(JacsServiceData jacsServiceData) {
-        return Optional.empty();
-    }
-
 }

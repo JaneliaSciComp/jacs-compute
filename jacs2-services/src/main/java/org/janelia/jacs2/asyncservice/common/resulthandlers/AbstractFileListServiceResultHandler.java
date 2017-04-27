@@ -6,7 +6,6 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 
 import java.io.File;
 import java.util.List;
-import java.util.Optional;
 
 public abstract class AbstractFileListServiceResultHandler implements ServiceResultHandler<List<File>> {
 
@@ -20,8 +19,4 @@ public abstract class AbstractFileListServiceResultHandler implements ServiceRes
         return ServiceDataUtils.stringToFileList(jacsServiceData.getStringifiedResult());
     }
 
-    @Override
-    public Optional<List<File>> getExpectedServiceResult(JacsServiceData jacsServiceData) {
-        return Optional.empty();
-    }
 }

@@ -16,9 +16,11 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchGroupingProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -37,7 +39,8 @@ import java.util.stream.Collectors;
 @Named("flylight")
 public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProcessor<FlylightSampleProcessor.FlylightProcessingIntermediateResult, Void> {
 
-    private static final java.lang.String GROUP_DIRNAME = "group";
+    private static final String GROUP_DIRNAME = "group";
+    private static final String STITCH_DIRNAME = "stitch";
 
     static class FlylightProcessingIntermediateResult extends GetSampleLsmsIntermediateResult {
 
@@ -69,6 +72,8 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     private final GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private final MergeSampleTilePairsProcessor mergeSampleTilePairsProcessor;
     private final Vaa3dStitchGroupingProcessor vaa3dStitchGroupingProcessor;
+    private final Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor;
+    private final TimebasedIdentifierGenerator identifierGenerator;
 
     @Inject
     FlylightSampleProcessor(ServiceComputationFactory computationFactory,
@@ -78,12 +83,16 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                             GetSampleImageFilesProcessor getSampleImageFilesProcessor,
                             MergeSampleTilePairsProcessor mergeSampleTilePairsProcessor,
                             Vaa3dStitchGroupingProcessor vaa3dStitchGroupingProcessor,
+                            Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor,
+                            TimebasedIdentifierGenerator identifierGenerator,
                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sampleDataService = sampleDataService;
         this.getSampleImageFilesProcessor = getSampleImageFilesProcessor;
         this.mergeSampleTilePairsProcessor = mergeSampleTilePairsProcessor;
         this.vaa3dStitchGroupingProcessor = vaa3dStitchGroupingProcessor;
+        this.vaa3dStitchAndBlendProcessor = vaa3dStitchAndBlendProcessor;
+        this.identifierGenerator = identifierGenerator;
     }
 
     @Override
@@ -179,19 +188,35 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                 .filter(groupedTiles -> groupedTiles.getValue().size() > 1) // only stitch if there are more than 1 tile
                 .map(groupedTiles -> {
                     Path input = Paths.get(groupedTiles.getKey()); // the key is the tile directory name
-                    Path output = input.getParent().resolve(GROUP_DIRNAME);
+                    Path groupOutput = input.getParent().resolve(GROUP_DIRNAME);
                     String referenceChannelNumber = groupedTiles.getValue().stream()
                             .filter(mtpr -> StringUtils.isNotBlank(mtpr.getChannelComponents().referenceChannelNumbers))
                             .map(mtpr -> mtpr.getChannelComponents().referenceChannelNumbers)
                             .findFirst()
                             .orElse(null);
-                    JacsServiceData stichingAndGroupingService = vaa3dStitchGroupingProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
+                    String anatomicalArea = groupedTiles.getValue().stream()
+                            .filter(mtpr -> StringUtils.isNotBlank(mtpr.getChannelComponents().referenceChannelNumbers))
+                            .map(mtpr -> mtpr.getChannelComponents().referenceChannelNumbers)
+                            .findFirst()
+                            .orElse("");
+                    JacsServiceData groupingService = vaa3dStitchGroupingProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
                                     .build(),
                             new ServiceArg("-inputDir", input.toString()),
-                            new ServiceArg("-outputDir", output.toString()),
+                            new ServiceArg("-outputFile", groupOutput.toString()),
                             new ServiceArg("-refchannel", referenceChannelNumber)
                     );
-                    return submitDependencyIfNotPresent(depResults.getJacsServiceData(), stichingAndGroupingService);
+                    groupingService = submitDependencyIfNotPresent(depResults.getJacsServiceData(), groupingService);
+                    Path stitchOutputDir = input.getParent().resolve(STITCH_DIRNAME);
+                    Path stichOutputFile = stitchOutputDir.resolve(anatomicalArea + "stitch-" + identifierGenerator.generateId());
+                    JacsServiceData stitchingService =  vaa3dStitchAndBlendProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
+                                    .waitFor(groupingService)
+                                    .build(),
+                            new ServiceArg("-inputDir", groupOutput.toString()),
+                            new ServiceArg("-outputDir", stichOutputFile.toString()),
+                            new ServiceArg("-refchannel", referenceChannelNumber)
+                    );
+                    stitchingService = submitDependencyIfNotPresent(depResults.getJacsServiceData(), stitchingService);
+                    return stitchingService;
                 })
                 .collect(Collectors.toList())
                 ;

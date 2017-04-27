@@ -148,6 +148,7 @@ public class SampleDataService {
                                 AnatomicalArea anatomicalArea = anatomicalAreaMap.get(tileAnatomicalArea);
                                 if (anatomicalArea == null) {
                                     anatomicalArea = new AnatomicalArea();
+                                    anatomicalArea.setDatasetName(sample.getDataSet());
                                     anatomicalArea.setName(tileAnatomicalArea);
                                     anatomicalArea.setSampleId(sample.getId());
                                     anatomicalArea.setObjective(objectiveSample.getObjective());
