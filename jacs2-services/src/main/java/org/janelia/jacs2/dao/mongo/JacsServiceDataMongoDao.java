@@ -68,7 +68,10 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
             }
         });
         fullServiceHierachy.forEach((k, sd) -> {
-            sd.getDependenciesIds().forEach(id -> sd.addServiceDependency(fullServiceHierachy.get(id)));
+            sd.getDependenciesIds()
+                    .stream()
+                    .filter(fullServiceHierachy::containsKey)
+                    .forEach(id -> sd.addServiceDependency(fullServiceHierachy.get(id)));
         });
 
         return fullServiceHierachy.get(serviceId);
