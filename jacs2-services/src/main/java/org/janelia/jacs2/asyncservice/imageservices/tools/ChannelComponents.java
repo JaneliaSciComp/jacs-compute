@@ -8,6 +8,7 @@ public class ChannelComponents {
     public String channelSpec;
     public String referenceChannelsPos;
     public String signalChannelsPos;
+    public String referenceChannelNumbers;
 
     @Override
     public boolean equals(Object o) {

@@ -2,6 +2,7 @@ package org.janelia.it.jacs.model.domain.sample;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
@@ -36,6 +37,11 @@ public class TileLsmPair {
 
     public boolean hasTwoLsms() {
         return secondLsm != null;
+    }
+
+    @JsonIgnore
+    public String getNonNullableTileName() {
+        return StringUtils.defaultIfBlank(tileName, "");
     }
 
     @JsonIgnore

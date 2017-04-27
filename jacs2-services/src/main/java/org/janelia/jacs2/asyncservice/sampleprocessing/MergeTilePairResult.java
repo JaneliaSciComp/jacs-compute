@@ -6,6 +6,7 @@ public class MergeTilePairResult {
     private String anatomicalArea;
     private String objective;
     private String tileName;
+    private String mergeResultDir;
     private String mergeResultFile;
     private String channelMapping;
     private ChannelComponents channelComponents;
@@ -32,6 +33,14 @@ public class MergeTilePairResult {
 
     public void setTileName(String tileName) {
         this.tileName = tileName;
+    }
+
+    public String getMergeResultDir() {
+        return mergeResultDir;
+    }
+
+    public void setMergeResultDir(String mergeResultDir) {
+        this.mergeResultDir = mergeResultDir;
     }
 
     public String getMergeResultFile() {

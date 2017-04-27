@@ -17,6 +17,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchGroupingProcessor;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
@@ -35,6 +36,8 @@ import java.util.stream.Collectors;
 
 @Named("flylight")
 public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProcessor<FlylightSampleProcessor.FlylightProcessingIntermediateResult, Void> {
+
+    private static final java.lang.String GROUP_DIRNAME = "group";
 
     static class FlylightProcessingIntermediateResult extends GetSampleLsmsIntermediateResult {
 
@@ -149,59 +152,49 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
 
     @Override
     protected ServiceComputation<JacsServiceResult<FlylightProcessingIntermediateResult>> processing(JacsServiceResult<FlylightProcessingIntermediateResult> depResults) {
-        JacsServiceData jacsServiceData = depResults.getJacsServiceData();
-        FlylightPipelineArgs args = getArgs(jacsServiceData);
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
-                    pd.getResult().mergeTilePairServiceIds.stream()
-                            .flatMap(mtpsId -> {
-                                JacsServiceData mergeTilePairService = jacsServiceDataPersistence.findById(mtpsId);
-                                List<MergeTilePairResult> mergeTilePairResults = mergeSampleTilePairsProcessor.getResultHandler().getServiceDataResult(mergeTilePairService);
-                                return mergeTilePairResults.stream();
-                            })
-                            .map(tpResult -> {
-                                Path input = Paths.get(tpResult.getMergeResultFile());
-                                Path output = input.getParent().resolve("group");
-                                JacsServiceData stichingAndGroupingService = vaa3dStitchGroupingProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
-                                                .build(),
-                                        new ServiceArg("-inputDir", input.toString()),
-                                        new ServiceArg("-outputDir", output.toString()),
-                                        new ServiceArg("-refchannel", tpResult.getChannelComponents().referenceChannelsPos)
-                                );
-                                submitDependencyIfNotPresent(jacsServiceData, stichingAndGroupingService);
-                                return output;
-                            })
-                            .forEach(o -> {});
-                            ;
+                    submitGroupTiles(pd);
                     return pd;
                 })
                 ;
     }
 
-    private void submitGroupTiles(JacsServiceResult<FlylightProcessingIntermediateResult> depResults) {
+    private List<JacsServiceData> submitGroupTiles(JacsServiceResult<FlylightProcessingIntermediateResult> depResults) {
         List<MergeTilePairResult> allMergeTilePairResults = depResults.getResult().mergeTilePairServiceIds.stream()
                 .flatMap(mtpsId -> {
                     JacsServiceData mergeTilePairService = jacsServiceDataPersistence.findById(mtpsId);
                     List<MergeTilePairResult> mergeTilePairResults = mergeSampleTilePairsProcessor.getResultHandler().getServiceDataResult(mergeTilePairService);
                     return mergeTilePairResults.stream();
                 })
-                .filter(mtp -> {
-                    if (StringUtils.isBlank(mtp.getAnatomicalArea()) && StringUtils.isBlank(mtp.getObjective())) {
-                        logger.warn("Ignore tile {} from stitching because it does not have a specified area or objective: area -> {}, objective -> {}",
-                                mtp.getTileName(), mtp.getAnatomicalArea(), mtp.getObjective());
-                        return false;
-                    } else {
-                        return true;
-                    }
-                })
                 .collect(Collectors.toList());
-        Multimap<String, MergeTilePairResult> grouppedResultsByAreaAndObjective = Multimaps.index(allMergeTilePairResults, new Function<MergeTilePairResult, String>() {
+        Multimap<String, MergeTilePairResult> groupedResultsByDir = Multimaps.index(allMergeTilePairResults, new Function<MergeTilePairResult, String>() {
                     @Nullable
                     @Override
                     public String apply(MergeTilePairResult mergeTilePairResult) {
-                        return mergeTilePairResult.getObjective() + "/" + mergeTilePairResult.getAnatomicalArea();
+                        return mergeTilePairResult.getMergeResultDir();
                     }
                 });
+        return groupedResultsByDir.asMap().entrySet().stream()
+                .filter(groupedTiles -> groupedTiles.getValue().size() > 1) // only stitch if there are more than 1 tile
+                .map(groupedTiles -> {
+                    Path input = Paths.get(groupedTiles.getKey()); // the key is the tile directory name
+                    Path output = input.getParent().resolve(GROUP_DIRNAME);
+                    String referenceChannelNumber = groupedTiles.getValue().stream()
+                            .filter(mtpr -> StringUtils.isNotBlank(mtpr.getChannelComponents().referenceChannelNumbers))
+                            .map(mtpr -> mtpr.getChannelComponents().referenceChannelNumbers)
+                            .findFirst()
+                            .orElse(null);
+                    JacsServiceData stichingAndGroupingService = vaa3dStitchGroupingProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
+                                    .build(),
+                            new ServiceArg("-inputDir", input.toString()),
+                            new ServiceArg("-outputDir", output.toString()),
+                            new ServiceArg("-refchannel", referenceChannelNumber)
+                    );
+                    return submitDependencyIfNotPresent(depResults.getJacsServiceData(), stichingAndGroupingService);
+                })
+                .collect(Collectors.toList())
+                ;
     }
 
     private FlylightPipelineArgs getArgs(JacsServiceData jacsServiceData) {

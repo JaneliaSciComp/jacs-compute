@@ -24,6 +24,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.fileservices.LinkDataProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dChannelMapProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
 import org.janelia.jacs2.asyncservice.imageservices.tools.LSMProcessingTools;
@@ -34,6 +35,7 @@ import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMMetadata;
 import org.janelia.jacs2.asyncservice.utils.DataHolder;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -42,7 +44,6 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,7 +51,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
@@ -85,6 +85,7 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
         List<String> mergedInputChannels;
         List<String> outputChannels;
         String mapping;
+        String mergeTileDir;
         String mergeTileFile;
 
         MergeChannelsData(TileLsmPair tilePair, List<String> unmergedInputChannels, List<String> mergedInputChannels, List<String> outputChannels) {
@@ -123,10 +124,14 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
         boolean applyDistortionCorrection;
     }
 
+    private static final String MERGE_DIRNAME = "merge";
+
     private final GetSampleLsmsMetadataProcessor getSampleLsmsMetadataProcessor;
     private final MergeLsmPairProcessor mergeLsmPairProcessor;
     private final Vaa3dChannelMapProcessor vaa3dChannelMapProcessor;
+    private final LinkDataProcessor linkDataProcessor;
     private final SampleDataService sampleDataService;
+    private final TimebasedIdentifierGenerator idGenerator;
 
     @Inject
     MergeSampleTilePairsProcessor(ServiceComputationFactory computationFactory,
@@ -135,13 +140,17 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                   GetSampleLsmsMetadataProcessor getSampleLsmsMetadataProcessor,
                                   MergeLsmPairProcessor mergeLsmPairProcessor,
                                   Vaa3dChannelMapProcessor vaa3dChannelMapProcessor,
+                                  LinkDataProcessor linkDataProcessor,
                                   SampleDataService sampleDataService,
+                                  TimebasedIdentifierGenerator idGenerator,
                                   Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.getSampleLsmsMetadataProcessor = getSampleLsmsMetadataProcessor;
         this.mergeLsmPairProcessor = mergeLsmPairProcessor;
         this.vaa3dChannelMapProcessor = vaa3dChannelMapProcessor;
+        this.linkDataProcessor = linkDataProcessor;
         this.sampleDataService = sampleDataService;
+        this.idGenerator = idGenerator;
     }
 
     @Override
@@ -234,12 +243,12 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                 logger.info("Merge channel info for tile {} -> unmerged channels: {}, merged channels: {}, output: {}, mapping: {}",
                                         mcd.tilePair.getTileName(), mcd.unmergedInputChannels, mcd.mergedInputChannels, mcd.outputChannels, mcd.mapping);
                                 JacsServiceData mergeLsmPairsService = null;
-                                String mergedResultFileName;
+                                Path mergedResultDir = FileUtils.getFilePath(
+                                        SampleServicesUtils.getImageDataPath(args.sampleDataDir, ar.getObjective(), ar.getName()),
+                                        MERGE_DIRNAME,
+                                        null);
+                                Path mergedResultFileName = mergedResultDir.resolve(mcd.tilePair.getNonNullableTileName() + "tile-" + idGenerator.generateId());
                                 if (mcd.tilePair.hasTwoLsms()) {
-                                    Path mergedResultDir = FileUtils.getFilePath(
-                                            SampleServicesUtils.getImageDataPath(args.sampleDataDir, ar.getObjective(), ar.getName()),
-                                            mcd.tilePair.getTileName() + "-merge",
-                                            null);
                                     mergeLsmPairsService = mergeLsmPairProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                                                     .waitFor(getSampleLsmsService)
                                                     .build(),
@@ -255,47 +264,38 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                             new ServiceArg("-microscope2", mcd.tilePair.getSecondLsm().getMicroscope()),
                                             new ServiceArg("-distortionCorrection", args.applyDistortionCorrection),
                                             new ServiceArg("-multiscanVersion", multiscanBlendVersion),
-                                            new ServiceArg("-outputDir", mergedResultDir.toString())
+                                            new ServiceArg("-outputFile", mergedResultFileName.toString())
                                     );
-                                    mergeLsmPairsService = submitDependencyIfNotPresent(jacsServiceData, mergeLsmPairsService);
-                                    Optional<File> expectedMergedFile = mergeLsmPairProcessor.getResultHandler().getExpectedServiceResult(mergeLsmPairsService);
-                                    if (expectedMergedFile.isPresent()) {
-                                        mergedResultFileName = expectedMergedFile.get().getAbsolutePath();
-                                    } else {
-                                        logger.warn("Merge result name could not be read for {} -> {}, so this may result in a potential FileNotFoundException",
-                                                mcd.tilePair.getTileName(), mergedResultDir);
-                                        mergedResultFileName = mergedResultDir.resolve("merged.v3draw").toString();
-                                    }
                                 } else {
-                                    // no merge is necessary so the result is the tile's LSM
-                                    mergedResultFileName = SampleServicesUtils.getImageFile(args.sampleDataDir,
-                                            ar.getObjective(),
-                                            ar.getName(),
-                                            mcd.tilePair.getFirstLsm()).toString();
+                                    // no merge is necessary so the result is the tile's LSM but create a link in the merge directory
+                                    mergeLsmPairsService = linkDataProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                                                    .waitFor(getSampleLsmsService)
+                                                    .build(),
+                                            new ServiceArg("-source", SampleServicesUtils.getImageFile(args.sampleDataDir,
+                                                    ar.getObjective(),
+                                                    ar.getName(),
+                                                    mcd.tilePair.getFirstLsm()).toString()),
+                                            new ServiceArg("-target", mergedResultFileName.toString())
+                                    );
                                 }
+                                mergeLsmPairsService = submitDependencyIfNotPresent(jacsServiceData, mergeLsmPairsService);
                                 JacsServiceData mapChannelsService = null;
                                 if (mcd.isNonEmptyMapping()) {
-                                    Path mappedChannelsResultsDir = FileUtils.getFilePath(
-                                            SampleServicesUtils.getImageDataPath(args.sampleDataDir, ar.getObjective(), ar.getName()),
-                                            mcd.tilePair.getTileName() + "-remapped",
-                                            null);
-                                    Path mappedChannelFileName = FileUtils.getFilePath(mappedChannelsResultsDir, mcd.tilePair.getTileName(), "v3draw");
-                                    logger.info("Map channels {} + {} -> {}", mergedResultFileName, mcd.mapping, mappedChannelFileName);
+                                    logger.info("Map channels {} + {} -> {}", mergedResultFileName, mcd.mapping, mergedResultFileName);
                                     // since the channels were in the right order no re-ordering of the channels is necessary
                                     mapChannelsService = vaa3dChannelMapProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                                                     .waitFor(getSampleLsmsService, mergeLsmPairsService)
                                                     .build(),
-                                            new ServiceArg("-inputFile", mergedResultFileName),
-                                            new ServiceArg("-outputFile", mappedChannelFileName.toString()),
+                                            new ServiceArg("-inputFile", mergedResultFileName.toString()),
+                                            new ServiceArg("-outputFile", mergedResultFileName.toString()),
                                             new ServiceArg("-channelMapping", mcd.mapping)
                                     );
                                     submitDependencyIfNotPresent(jacsServiceData, mapChannelsService);
-                                    mcd.mergeTileFile = mappedChannelFileName.toString();
                                 } else {
                                     logger.info("No mapping necessary for {} - channels were in the expected order: {}", mergedResultFileName, mcd.mapping);
-                                    // channels were in the right order so the result is the result of the merge
-                                    mcd.mergeTileFile = mergedResultFileName;
                                 }
+                                mcd.mergeTileDir = mergedResultDir.toString();
+                                mcd.mergeTileFile = mergedResultFileName.toString();
                                 return mcd;
                             })
                             .reduce(new ChannelMappingsConsesus(), (ac, mcd) -> {
@@ -306,6 +306,7 @@ public class MergeSampleTilePairsProcessor extends AbstractBasicLifeCycleService
                                 mergeResult.setAnatomicalArea(ar.getName());
                                 mergeResult.setObjective(ar.getObjective());
                                 mergeResult.setTileName(mcd.tilePair.getTileName());
+                                mergeResult.setMergeResultDir(mcd.mergeTileDir);
                                 mergeResult.setMergeResultFile(mcd.mergeTileFile);
                                 mergeResult.setChannelMapping(mcd.mapping);
                                 mergeResult.setChannelComponents(cmFromMcd.outputChannelComponents);

@@ -150,14 +150,16 @@ public class LSMProcessingTools {
     }
 
     public static ChannelComponents extractChannelComponents(List<String> channelTagList) {
-        StringJoiner referenceChannelBuilder = new StringJoiner(" ");
+        StringJoiner referenceChannelPosBuilder = new StringJoiner(" ");
+        StringJoiner referenceChannelNumberBuilder = new StringJoiner(" ");
         StringJoiner signalChannelBuilder = new StringJoiner(" ");
         StringBuilder chanSpecBuilder = new StringBuilder();
         int tagIndex = 0;
         int nReferenceChannels = 0;
         for (String chanTag : channelTagList) {
             if ("reference".equals(chanTag) || chanTag.matches("r\\d+")) {
-                referenceChannelBuilder.add(String.valueOf(tagIndex));
+                referenceChannelPosBuilder.add(String.valueOf(tagIndex));
+                referenceChannelNumberBuilder.add(String.valueOf(tagIndex + 1));
                 chanSpecBuilder.append(REFERENCE);
                 nReferenceChannels++;
                 if (nReferenceChannels > 1) {
@@ -171,8 +173,9 @@ public class LSMProcessingTools {
         }
         ChannelComponents channelComponents = new ChannelComponents();
         channelComponents.channelSpec = chanSpecBuilder.toString();
-        channelComponents.referenceChannelsPos = referenceChannelBuilder.toString();
+        channelComponents.referenceChannelsPos = referenceChannelPosBuilder.toString();
         channelComponents.signalChannelsPos = signalChannelBuilder.toString();
+        channelComponents.referenceChannelNumbers = referenceChannelNumberBuilder.toString();
         return channelComponents;
     }
 
