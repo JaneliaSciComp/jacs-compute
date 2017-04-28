@@ -219,7 +219,7 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
         FutureBasedServiceComputation<T> next = new FutureBasedServiceComputation<>(computationQueue, logger, nextTask);
         waitFor.submit(() -> {
             try {
-                if (fn.checkCond()) { // checks the condition based on the enclosed state
+                if (this.isCompletedExceptionally() || fn.checkCond()) { // checks the condition based on the enclosed state
                     logger.debug("Resume {}", nextTask);
                     waitFor.complete(true);
                     nextTask.resume();
