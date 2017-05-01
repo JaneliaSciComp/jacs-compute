@@ -3,7 +3,6 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
-import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -217,5 +216,4 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     private FlylightPipelineArgs getArgs(JacsServiceData jacsServiceData) {
         return SampleServiceArgs.parse(jacsServiceData.getArgsArray(), new FlylightPipelineArgs());
     }
-
 }
