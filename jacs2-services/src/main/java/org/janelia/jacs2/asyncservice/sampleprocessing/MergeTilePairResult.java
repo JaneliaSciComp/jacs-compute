@@ -3,29 +3,10 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
 
 public class MergeTilePairResult {
-    private String anatomicalArea;
-    private String objective;
     private String tileName;
-    private String mergeResultDir;
     private String mergeResultFile;
     private String channelMapping;
     private ChannelComponents channelComponents;
-
-    public String getAnatomicalArea() {
-        return anatomicalArea;
-    }
-
-    public void setAnatomicalArea(String anatomicalArea) {
-        this.anatomicalArea = anatomicalArea;
-    }
-
-    public String getObjective() {
-        return objective;
-    }
-
-    public void setObjective(String objective) {
-        this.objective = objective;
-    }
 
     public String getTileName() {
         return tileName;
@@ -33,14 +14,6 @@ public class MergeTilePairResult {
 
     public void setTileName(String tileName) {
         this.tileName = tileName;
-    }
-
-    public String getMergeResultDir() {
-        return mergeResultDir;
-    }
-
-    public void setMergeResultDir(String mergeResultDir) {
-        this.mergeResultDir = mergeResultDir;
     }
 
     public String getMergeResultFile() {

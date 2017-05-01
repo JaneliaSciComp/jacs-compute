@@ -13,6 +13,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.fileservices.LinkDataProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dChannelMapProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchGroupingProcessor;
 import org.janelia.jacs2.asyncservice.lsmfileservices.MergeLsmPairProcessor;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -36,9 +37,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class MergeSampleTilePairsProcessorTest {
+public class MergeAndGroupSampleTilePairsProcessorTest {
 
     private static final String MERGE_DIRNAME = "merge";
+    private static final String GROUP_DIRNAME = "group";
 
     private static final String TEST_WORKING_DIR = "testdir";
     private static final String TEST_TILE_NAME = "tileForTest";
@@ -55,7 +57,8 @@ public class MergeSampleTilePairsProcessorTest {
     private MergeLsmPairProcessor mergeLsmPairProcessor;
     private Vaa3dChannelMapProcessor vaa3dChannelMapProcessor;
     private LinkDataProcessor linkDataProcessor;
-    private MergeSampleTilePairsProcessor mergeSampleTilePairsProcessor;
+    private Vaa3dStitchGroupingProcessor vaa3dStitchGroupingProcessor;
+    private MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor;
 
     @Before
     public void setUp() {
@@ -67,6 +70,7 @@ public class MergeSampleTilePairsProcessorTest {
         mergeLsmPairProcessor = mock(MergeLsmPairProcessor.class);
         vaa3dChannelMapProcessor = mock(Vaa3dChannelMapProcessor.class);
         linkDataProcessor = mock(LinkDataProcessor.class);
+        vaa3dStitchGroupingProcessor = mock(Vaa3dStitchGroupingProcessor.class);
         sampleDataService = mock(SampleDataService.class);
 
         Logger logger = mock(Logger.class);
@@ -114,13 +118,14 @@ public class MergeSampleTilePairsProcessorTest {
                 )
         ).thenCallRealMethod();
 
-        mergeSampleTilePairsProcessor = new MergeSampleTilePairsProcessor(computationFactory,
+        mergeAndGroupSampleTilePairsProcessor = new MergeAndGroupSampleTilePairsProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 TEST_WORKING_DIR,
                 getSampleLsmsMetadataProcessor,
                 mergeLsmPairProcessor,
                 vaa3dChannelMapProcessor,
                 linkDataProcessor,
+                vaa3dStitchGroupingProcessor,
                 sampleDataService,
                 idGenerator,
                 logger);
@@ -146,11 +151,14 @@ public class MergeSampleTilePairsProcessorTest {
                                 TEST_LSM1_METADATA, null, 0,
                                 TEST_LSM2_METADATA, null, 0))));
 
-        JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
-        assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("1,2,4,0"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("sssr"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.signalChannelsPos, equalTo("0 1 2"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.referenceChannelsPos, equalTo("3"));
+        JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
+        result.getResult().getAreasResults()
+                .forEach(ar -> {
+                    assertThat(ar.areaChannelMapping, equalTo("1,2,4,0"));
+                    assertThat(ar.areaChannelComponents.channelSpec, equalTo("sssr"));
+                    assertThat(ar.areaChannelComponents.signalChannelsPos, equalTo("0 1 2"));
+                    assertThat(ar.areaChannelComponents.referenceChannelsPos, equalTo("3"));
+                });
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
@@ -191,11 +199,14 @@ public class MergeSampleTilePairsProcessorTest {
                                 TEST_LSM1_METADATA, null, 0,
                                 TEST_LSM2_METADATA, null, 0))));
 
-        JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
-        assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("4,1,2,0"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("sssr"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.signalChannelsPos, equalTo("0 1 2"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.referenceChannelsPos, equalTo("3"));
+        JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
+        result.getResult().getAreasResults()
+                .forEach(ar -> {
+                    assertThat(ar.areaChannelMapping, equalTo("4,1,2,0"));
+                    assertThat(ar.areaChannelComponents.channelSpec, equalTo("sssr"));
+                    assertThat(ar.areaChannelComponents.signalChannelsPos, equalTo("0 1 2"));
+                    assertThat(ar.areaChannelComponents.referenceChannelsPos, equalTo("3"));
+                });
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
@@ -233,11 +244,14 @@ public class MergeSampleTilePairsProcessorTest {
                                 TEST_LSM1_METADATA, "ssr", 0,
                                 TEST_LSM2_METADATA, "sr", 0))));
 
-        JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
-        assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("0,1,3,2"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("sssr"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.signalChannelsPos, equalTo("0 1 2"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.referenceChannelsPos, equalTo("3"));
+        JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
+        result.getResult().getAreasResults()
+                .forEach(ar -> {
+                    assertThat(ar.areaChannelMapping, equalTo("0,1,3,2"));
+                    assertThat(ar.areaChannelComponents.channelSpec, equalTo("sssr"));
+                    assertThat(ar.areaChannelComponents.signalChannelsPos, equalTo("0 1 2"));
+                    assertThat(ar.areaChannelComponents.referenceChannelsPos, equalTo("3"));
+                });
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
@@ -269,11 +283,14 @@ public class MergeSampleTilePairsProcessorTest {
                                 TEST_LSM1_METADATA, null, 3,
                                 TEST_LSM2_METADATA, null, 2))));
 
-        JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
-        assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("4,2,1,0"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("sssr"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.signalChannelsPos, equalTo("0 1 2"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.referenceChannelsPos, equalTo("3"));
+        JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
+        result.getResult().getAreasResults()
+                .forEach(ar -> {
+                    assertThat(ar.areaChannelMapping, equalTo("4,2,1,0"));
+                    assertThat(ar.areaChannelComponents.channelSpec, equalTo("sssr"));
+                    assertThat(ar.areaChannelComponents.signalChannelsPos, equalTo("0 1 2"));
+                    assertThat(ar.areaChannelComponents.referenceChannelsPos, equalTo("3"));
+                });
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
@@ -305,11 +322,14 @@ public class MergeSampleTilePairsProcessorTest {
                                 TEST_LSM1_METADATA, null, 3,
                                 null, null, 0))));
 
-        JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
-        assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("0,1"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("rs"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.signalChannelsPos, equalTo("1"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.referenceChannelsPos, equalTo("0"));
+        JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
+        result.getResult().getAreasResults()
+                .forEach(ar -> {
+                    assertThat(ar.areaChannelMapping, equalTo("0,1"));
+                    assertThat(ar.areaChannelComponents.channelSpec, equalTo("rs"));
+                    assertThat(ar.areaChannelComponents.signalChannelsPos, equalTo("1"));
+                    assertThat(ar.areaChannelComponents.referenceChannelsPos, equalTo("0"));
+                });
         verify(mergeLsmPairProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
@@ -358,11 +378,14 @@ public class MergeSampleTilePairsProcessorTest {
         when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
                 .thenReturn(ImmutableList.of(testAnatomicalArea));
 
-        JacsServiceResult<MergeSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
-        assertThat(result.getResult().getChannelMapping().channelMapping, equalTo("1,2,4,0"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.channelSpec, equalTo("sssr"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.signalChannelsPos, equalTo("0 1 2"));
-        assertThat(result.getResult().getChannelMapping().outputChannelComponents.referenceChannelsPos, equalTo("3"));
+        JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
+        result.getResult().getAreasResults()
+                .forEach(ar -> {
+                    assertThat(ar.areaChannelMapping, equalTo("1,2,4,0"));
+                    assertThat(ar.areaChannelComponents.channelSpec, equalTo("sssr"));
+                    assertThat(ar.areaChannelComponents.signalChannelsPos, equalTo("0 1 2"));
+                    assertThat(ar.areaChannelComponents.referenceChannelsPos, equalTo("3"));
+                });
         verify(mergeLsmPairProcessor, times(testAnatomicalArea.getTileLsmPairs().size())).createServiceData(any(ServiceExecutionContext.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
@@ -380,6 +403,11 @@ public class MergeSampleTilePairsProcessorTest {
                 any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class)
+        );
+        verify(vaa3dStitchGroupingProcessor).createServiceData(any(ServiceExecutionContext.class),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME).toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", Paths.get(TEST_WORKING_DIR, objective, area, GROUP_DIRNAME).toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", "4")))
         );
     }
 
