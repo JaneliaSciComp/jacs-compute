@@ -125,7 +125,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         String mergeDir;
         String groupDir;
         List<MergeTilePairResult> mergeResults = new LinkedList<>();
-        List<MergeTilePairResult> stitchableTiles = new LinkedList<>();
+        List<MergeTilePairResult> groupedTiles = new LinkedList<>();
         List<JacsServiceData> mergeTileServiceList = new LinkedList<>();
         JacsServiceData groupService;
     }
@@ -200,7 +200,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                             areaResult.setConsensusChannelMapping(tmpAreaResult.areaChannelMapping);
                             areaResult.setConsensusChannelComponents(tmpAreaResult.areaChannelComponents);
                             areaResult.setMergeResults(tmpAreaResult.mergeResults);
-                            areaResult.setStitchableTiles(tmpAreaResult.stitchableTiles);
+                            areaResult.setGroupResults(tmpAreaResult.groupedTiles);
                             return areaResult;
                         })
                         .collect(Collectors.toList());
@@ -421,14 +421,19 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
                     pd.getResult().getAreasResults().stream()
-                            .filter(areaResult -> areaResult.groupService != null)
-                            .forEach(this::updateTilePairs)
+                            .forEach(areaResult -> {
+                                if (areaResult.groupService != null) {
+                                    this.groupTilesForStitching(areaResult);
+                                } else {
+                                    areaResult.mergeResults.forEach(tp -> areaResult.groupedTiles.add(tp));
+                                }
+                            })
                             ;
                     return pd;
                 });
     }
 
-    private void updateTilePairs(MergedAndGroupedAreaTiles areaTiles) {
+    private void groupTilesForStitching(MergedAndGroupedAreaTiles areaTiles) {
         JacsServiceData groupServiceData = jacsServiceDataPersistence.findById(areaTiles.groupService.getId());
         File groupsFile = vaa3dStitchGroupingProcessor.getResultHandler().getServiceDataResult(groupServiceData);
         List<List<String>> tileGroups = readGroups(groupsFile.toPath());
@@ -457,7 +462,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                         newTilePair.setMergeResultFile(tileMergedFileLink.toString());
                         newTilePair.setChannelMapping(tp.getChannelMapping());
                         newTilePair.setChannelComponents(tp.getChannelComponents());
-                        areaTiles.stitchableTiles.add(newTilePair);
+                        areaTiles.groupedTiles.add(newTilePair);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
@@ -467,8 +472,8 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     private List<List<String>> readGroups(Path groupsFile) {
         try {
             List<String> groupsFileContent = Files.readAllLines(groupsFile);
-            List<List<String>> groups = new ArrayList<List<String>>();
-            List<String> currGroup = new ArrayList<String>();
+            List<List<String>> groups = new ArrayList<>();
+            List<String> currGroup = new ArrayList<>();
             groupsFileContent.stream()
                     .map(String::trim)
                     .filter(StringUtils::isNotEmpty)

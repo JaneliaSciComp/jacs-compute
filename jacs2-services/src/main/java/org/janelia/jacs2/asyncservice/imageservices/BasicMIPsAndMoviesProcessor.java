@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
-import ch.qos.logback.core.util.FileUtil;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;

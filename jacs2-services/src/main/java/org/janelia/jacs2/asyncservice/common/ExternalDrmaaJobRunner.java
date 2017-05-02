@@ -121,9 +121,10 @@ public class ExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
         if (StringUtils.isNotBlank(jobResources.get("gridAccountId"))) {
             nativeSpecBuilder.append("-A ").append(jobResources.get("gridAccountId")).append(' ');
         }
-        // append processing environment
-        if (StringUtils.isNotBlank(jobResources.get("gridBatch"))) {
-            nativeSpecBuilder.append("-pe batch ").append(jobResources.get("gridBatch")).append(' ');
+        int nProcessingSlots = ProcessorHelper.getProcessingSlots(serviceContext);
+        if (nProcessingSlots > 1) {
+            // append processing environment
+            nativeSpecBuilder.append("-pe batch ").append(nProcessingSlots).append(' ');
         }
         // append grid queue
         if (StringUtils.isNotBlank(jobResources.get("gridQueue"))) {

@@ -12,7 +12,7 @@ public class MergedAndGroupedAreaResult {
     private String consensusChannelMapping;
     private ChannelComponents consensusChannelComponents;
     private List<MergeTilePairResult> mergeResults;
-    private List<MergeTilePairResult> stitchableTiles;
+    private List<MergeTilePairResult> groupResults;
 
     public String getAnatomicalArea() {
         return anatomicalArea;
@@ -70,11 +70,11 @@ public class MergedAndGroupedAreaResult {
         this.mergeResults = mergeResults;
     }
 
-    public List<MergeTilePairResult> getStitchableTiles() {
-        return stitchableTiles;
+    public List<MergeTilePairResult> getGroupResults() {
+        return groupResults;
     }
 
-    public void setStitchableTiles(List<MergeTilePairResult> stitchableTiles) {
-        this.stitchableTiles = stitchableTiles;
+    public void setGroupResults(List<MergeTilePairResult> groupResults) {
+        this.groupResults = groupResults;
     }
 }

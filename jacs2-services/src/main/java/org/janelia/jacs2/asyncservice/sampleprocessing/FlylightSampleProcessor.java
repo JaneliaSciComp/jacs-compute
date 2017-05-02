@@ -12,6 +12,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.imageservices.MIPGenerationProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
@@ -26,6 +27,7 @@ import javax.inject.Named;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -33,6 +35,7 @@ import java.util.stream.Collectors;
 public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProcessor<FlylightSampleProcessor.FlylightProcessingIntermediateResult, Void> {
 
     private static final String STITCH_DIRNAME = "stitch";
+    private static final String MIPS_DIRNAME = "mips";
 
     static class FlylightProcessingIntermediateResult extends GetSampleLsmsIntermediateResult {
 
@@ -58,12 +61,15 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         String outputChannelOrder;
         @Parameter(names = "-distortionCorrection", description = "If specified apply distortion correction", required = false)
         boolean applyDistortionCorrection;
+        @Parameter(names = "persistResults", description = "If specified it generates the mips and persists the result", required = false)
+        boolean persistResults;
     }
 
     private final SampleDataService sampleDataService;
     private final GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private final MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor;
     private final Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor;
+    private final MIPGenerationProcessor mipGenerationProcessor;
     private final TimebasedIdentifierGenerator identifierGenerator;
 
     @Inject
@@ -74,6 +80,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                             GetSampleImageFilesProcessor getSampleImageFilesProcessor,
                             MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor,
                             Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor,
+                            MIPGenerationProcessor mipGenerationProcessor,
                             TimebasedIdentifierGenerator identifierGenerator,
                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
@@ -81,6 +88,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         this.getSampleImageFilesProcessor = getSampleImageFilesProcessor;
         this.mergeAndGroupSampleTilePairsProcessor = mergeAndGroupSampleTilePairsProcessor;
         this.vaa3dStitchAndBlendProcessor = vaa3dStitchAndBlendProcessor;
+        this.mipGenerationProcessor = mipGenerationProcessor;
         this.identifierGenerator = identifierGenerator;
     }
 
@@ -158,7 +166,8 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                 ;
     }
 
-    private List<JacsServiceData> stitchTiles(JacsServiceResult<FlylightProcessingIntermediateResult> depResults) {
+    private void stitchTiles(JacsServiceResult<FlylightProcessingIntermediateResult> depResults) {
+        FlylightPipelineArgs args = getArgs(depResults.getJacsServiceData());
         List<MergedAndGroupedAreaResult> allGroupedAreasResults = depResults.getResult().mergeTilePairServiceIds.stream()
                 .flatMap(mtpsId -> {
                     JacsServiceData mergeTilePairService = jacsServiceDataPersistence.findById(mtpsId);
@@ -177,25 +186,32 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         } else {
             stitchedFileNameGenerator = groupedArea -> "stitched-" + identifierGenerator.generateId();
         }
-        return allGroupedAreasResults.stream()
-                .filter(groupedArea -> groupedArea.getStitchableTiles().size() > 1) // only stitch if there is more than 1 tile
-                .map(groupedArea -> {
-                    Path groupDir = Paths.get(groupedArea.getGroupDir());
-                    String referenceChannelNumber = groupedArea.getConsensusChannelComponents().referenceChannelNumbers;
-                    Path stitchingDir = groupDir.getParent().resolve(STITCH_DIRNAME);
-                    Path stitchingFile = stitchingDir.resolve(stitchedFileNameGenerator.apply(groupedArea));
-                    JacsServiceData stitchingService = vaa3dStitchAndBlendProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
-                                    .description("Stitch tiles")
-                                    .build(),
-                            new ServiceArg("-inputDir", groupDir.toString()),
-                            new ServiceArg("-outputFile", stitchingFile.toString()),
-                            new ServiceArg("-refchannel", referenceChannelNumber)
-                    );
-                    stitchingService = submitDependencyIfNotPresent(depResults.getJacsServiceData(), stitchingService);
-                    return stitchingService;
+        allGroupedAreasResults.stream()
+                .forEach(groupedArea -> {
+                    JacsServiceData stitichingService = null;
+                    Optional<Path> tileFile;
+                    if (groupedArea.getGroupResults().size() > 1) {
+                        Path groupDir = Paths.get(groupedArea.getGroupDir());
+                        Path stitchingDir = groupDir.getParent().resolve(STITCH_DIRNAME);
+                        Path stitchingFile = stitchingDir.resolve(stitchedFileNameGenerator.apply(groupedArea));
+                        String referenceChannelNumber = groupedArea.getConsensusChannelComponents().referenceChannelNumbers;
+                        stitichingService = stitchTilesFromArea(depResults.getJacsServiceData(), groupDir, stitchingFile, referenceChannelNumber);
+                        tileFile = Optional.of(stitchingFile);
+                    } else {
+                        tileFile = groupedArea.getGroupResults().stream()
+                                .map(tp -> Paths.get(tp.getMergeResultFile()))
+                                .findFirst();
+                    }
+                    if (args.persistResults && tileFile.isPresent()) {
+                        Path groupDir = Paths.get(groupedArea.getGroupDir());
+                        Path mipsDir = groupDir.getParent().resolve(MIPS_DIRNAME);
+                        generateMips(depResults.getJacsServiceData(), tileFile.get(), mipsDir,
+                                groupedArea.getConsensusChannelComponents().signalChannelsPos,
+                                groupedArea.getConsensusChannelComponents().referenceChannelsPos,
+                                stitichingService);
+                    }
                 })
-                .collect(Collectors.toList())
-                ;
+        ;
     }
 
     private boolean canUseAreaNameAsMergeFile(List<MergedAndGroupedAreaResult> groupedAreas) {
@@ -210,7 +226,30 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                 .collect(Collectors.toSet())
                 .size();
         return groupedAreas.size() == uniqueGroupedAreasCount;
+    }
 
+    private JacsServiceData stitchTilesFromArea(JacsServiceData jacsServiceData, Path inputDir, Path outputFile, String referenceChannelNumber) {
+        JacsServiceData stitchingService = vaa3dStitchAndBlendProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Stitch tiles")
+                        .build(),
+                new ServiceArg("-inputDir", inputDir.toString()),
+                new ServiceArg("-outputFile", outputFile.toString()),
+                new ServiceArg("-refchannel", referenceChannelNumber)
+        );
+        return submitDependencyIfNotPresent(jacsServiceData, stitchingService);
+    }
+
+    private JacsServiceData generateMips(JacsServiceData jacsServiceData, Path tileFile, Path outputDir, String signalChannels, String referenceChannel, JacsServiceData... deps) {
+        JacsServiceData mipsService = mipGenerationProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Generate mips")
+                        .build(),
+                new ServiceArg("-inputFile", tileFile.toString()),
+                new ServiceArg("-outputDir", outputDir.toString()),
+                new ServiceArg("-signalChannels", signalChannels),
+                new ServiceArg("-referenceChannel", referenceChannel),
+                new ServiceArg("-imgFormat", "png")
+        );
+        return submitDependencyIfNotPresent(jacsServiceData, mipsService);
     }
 
     private FlylightPipelineArgs getArgs(JacsServiceData jacsServiceData) {
