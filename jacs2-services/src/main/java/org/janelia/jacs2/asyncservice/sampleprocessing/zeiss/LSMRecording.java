@@ -14,7 +14,7 @@ public class LSMRecording {
     @JsonProperty("RECORDING_ENTRY_CAMERA_OFFSETY")
     private Integer cameraOffsetY;
     @JsonProperty("RECORDING_ENTRY_CAMERA_SUPERSAMPLING")
-    private Integer cameraSuperSampling;
+    private Double cameraSuperSampling;
     @JsonProperty("RECORDING_ENTRY_DESCRIPTION")
     private String entryDescription;
     @JsonProperty("RECORDING_ENTRY_IMAGES_HEIGHT")
@@ -42,55 +42,55 @@ public class LSMRecording {
     @JsonProperty("RECORDING_ENTRY_NUMBER_OF_STACKS")
     private Integer numberOfStacks;
     @JsonProperty("RECORDING_ENTRY_NUTATION")
-    private Integer entryMutation;
+    private Double entryMutation;
     @JsonProperty("RECORDING_ENTRY_OBJECTIVE")
     private String entryObjective;
     @JsonProperty("RECORDING_ENTRY_ORIGINAL_SCAN_DATA")
-    private Integer originalScanData;
+    private Double originalScanData;
     @JsonProperty("RECORDING_ENTRY_PLANES_PER_VOLUME")
-    private Integer planesPerVolume;
+    private Double planesPerVolume;
     @JsonProperty("RECORDING_ENTRY_PLANE_SPACING")
-    private Integer planeSpacing;
+    private Double planeSpacing;
     @JsonProperty("RECORDING_ENTRY_POSITIONBCCORRECTION1")
     private Double positionBCorrection1;
     @JsonProperty("RECORDING_ENTRY_POSITIONBCCORRECTION2")
     private Double positionBCorrection2;
     @JsonProperty("RECORDING_ENTRY_PRECESSION")
-    private Integer precession;
+    private Double precession;
     @JsonProperty("RECORDING_ENTRY_PRESCAN")
-    private Integer prescan;
+    private Double prescan;
     @JsonProperty("RECORDING_ENTRY_ROTATION")
-    private Integer rotation;
+    private Double rotation;
     @JsonProperty("RECORDING_ENTRY_RT_BINNING")
-    private Integer rtBinning;
+    private Double rtBinning;
     @JsonProperty("RECORDING_ENTRY_RT_FRAME_HEIGHT")
-    private Integer rtFrameHeight;
+    private Double rtFrameHeight;
     @JsonProperty("RECORDING_ENTRY_RT_FRAME_WIDTH")
-    private Integer rtFrameWidth;
+    private Double rtFrameWidth;
     @JsonProperty("RECORDING_ENTRY_RT_LINEPERIOD")
-    private Integer rtLinePeriod;
+    private Double rtLinePeriod;
     @JsonProperty("RECORDING_ENTRY_RT_OFFSETX")
-    private Integer rtOffsetX;
+    private Double rtOffsetX;
     @JsonProperty("RECORDING_ENTRY_RT_OFFSETY")
-    private Integer rtOffsetY;
+    private Double rtOffsetY;
     @JsonProperty("RECORDING_ENTRY_RT_REGION_HEIGHT")
-    private Integer rtRegionHeight;
+    private Double rtRegionHeight;
     @JsonProperty("RECORDING_ENTRY_RT_REGION_WIDTH")
-    private Integer rtRegionWidth;
+    private Double rtRegionWidth;
     @JsonProperty("RECORDING_ENTRY_RT_SUPERSAMPLING")
-    private Integer rtSupersampling;
+    private Double rtSupersampling;
     @JsonProperty("RECORDING_ENTRY_RT_ZOOM")
-    private Integer rtZoom;
+    private Double rtZoom;
     @JsonProperty("RECORDING_ENTRY_SAMPLES_PER_LINE")
-    private Integer samplesPerLine;
+    private Double samplesPerLine;
     @JsonProperty("RECORDING_ENTRY_SAMPLE_0TIME")
     private Double sample0Time;
     @JsonProperty("RECORDING_ENTRY_SAMPLE_0X")
-    private Integer sample0X;
+    private Double sample0X;
     @JsonProperty("RECORDING_ENTRY_SAMPLE_0Y")
-    private Integer sample0Y;
+    private Double sample0Y;
     @JsonProperty("RECORDING_ENTRY_SAMPLE_0Z")
-    private Integer sample0Z;
+    private Double sample0Z;
     @JsonProperty("RECORDING_ENTRY_SAMPLE_SPACING")
     private Double sampleSpacing;
     @JsonProperty("RECORDING_ENTRY_SCAN_DIRECTION")
@@ -156,7 +156,7 @@ public class LSMRecording {
         return cameraOffsetY;
     }
 
-    public Integer getCameraSuperSampling() {
+    public Double getCameraSuperSampling() {
         return cameraSuperSampling;
     }
 
@@ -212,7 +212,7 @@ public class LSMRecording {
         return numberOfStacks;
     }
 
-    public Integer getEntryMutation() {
+    public Double getEntryMutation() {
         return entryMutation;
     }
 
@@ -220,15 +220,15 @@ public class LSMRecording {
         return entryObjective;
     }
 
-    public Integer getOriginalScanData() {
+    public Double getOriginalScanData() {
         return originalScanData;
     }
 
-    public Integer getPlanesPerVolume() {
+    public Double getPlanesPerVolume() {
         return planesPerVolume;
     }
 
-    public Integer getPlaneSpacing() {
+    public Double getPlaneSpacing() {
         return planeSpacing;
     }
 
@@ -240,59 +240,59 @@ public class LSMRecording {
         return positionBCorrection2;
     }
 
-    public Integer getPrecession() {
+    public Double getPrecession() {
         return precession;
     }
 
-    public Integer getPrescan() {
+    public Double getPrescan() {
         return prescan;
     }
 
-    public Integer getRotation() {
+    public Double getRotation() {
         return rotation;
     }
 
-    public Integer getRtBinning() {
+    public Double getRtBinning() {
         return rtBinning;
     }
 
-    public Integer getRtFrameHeight() {
+    public Double getRtFrameHeight() {
         return rtFrameHeight;
     }
 
-    public Integer getRtFrameWidth() {
+    public Double getRtFrameWidth() {
         return rtFrameWidth;
     }
 
-    public Integer getRtLinePeriod() {
+    public Double getRtLinePeriod() {
         return rtLinePeriod;
     }
 
-    public Integer getRtOffsetX() {
+    public Double getRtOffsetX() {
         return rtOffsetX;
     }
 
-    public Integer getRtOffsetY() {
+    public Double getRtOffsetY() {
         return rtOffsetY;
     }
 
-    public Integer getRtRegionHeight() {
+    public Double getRtRegionHeight() {
         return rtRegionHeight;
     }
 
-    public Integer getRtRegionWidth() {
+    public Double getRtRegionWidth() {
         return rtRegionWidth;
     }
 
-    public Integer getRtSupersampling() {
+    public Double getRtSupersampling() {
         return rtSupersampling;
     }
 
-    public Integer getRtZoom() {
+    public Double getRtZoom() {
         return rtZoom;
     }
 
-    public Integer getSamplesPerLine() {
+    public Double getSamplesPerLine() {
         return samplesPerLine;
     }
 
@@ -300,15 +300,15 @@ public class LSMRecording {
         return sample0Time;
     }
 
-    public Integer getSample0X() {
+    public Double getSample0X() {
         return sample0X;
     }
 
-    public Integer getSample0Y() {
+    public Double getSample0Y() {
         return sample0Y;
     }
 
-    public Integer getSample0Z() {
+    public Double getSample0Z() {
         return sample0Z;
     }
 
