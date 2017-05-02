@@ -64,7 +64,7 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Voi
                            @Any Instance<ExternalProcessRunner> serviceRunners,
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                            @PropertyValue(name = "Executables.ModuleBase") String executablesBaseDir,
-                           @PropertyValue(name = "MipCreator.Path") String executable,
+                           @PropertyValue(name = "MipCreator.ScriptPath") String executable,
                            @PropertyValue(name = "VAA3D.Library.Path") String libraryPath,
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, executablesBaseDir, logger);

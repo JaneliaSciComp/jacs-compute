@@ -3,7 +3,6 @@ package org.janelia.jacs2.dataservice.sample;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.jacs2.dao.SampleDao;
 import org.janelia.jacs2.dao.ImageDao;
 import org.janelia.jacs2.dao.SubjectDao;
@@ -15,11 +14,11 @@ import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
+import org.janelia.jacs2.dataservice.subject.SubjectService;
 import org.janelia.jacs2.model.DataInterval;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.dataservice.DomainObjectService;
-import org.janelia.jacs2.model.DomainModelUtils;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -35,26 +34,26 @@ import java.util.stream.Stream;
 public class SampleDataService {
 
     private final DomainObjectService domainObjectService;
+    private final SubjectService subjectService;
     private final SampleDao sampleDao;
-    private final SubjectDao subjectDao;
     private final ImageDao imageDao;
     private final Logger logger;
 
     @Inject
-    public SampleDataService(DomainObjectService domainObjectService, SampleDao sampleDao, SubjectDao subjectDao, ImageDao imageDao, Logger logger) {
+    public SampleDataService(DomainObjectService domainObjectService, SubjectService subjectService, SampleDao sampleDao, ImageDao imageDao, Logger logger) {
         this.domainObjectService = domainObjectService;
+        this.subjectService = subjectService;
         this.sampleDao = sampleDao;
-        this.subjectDao = subjectDao;
         this.imageDao = imageDao;
         this.logger = logger;
     }
 
     public Sample getSampleById(String subjectName, Number sampleId) {
-        Subject subject = null;
-        if (StringUtils.isNotBlank(subjectName)) {
-            subject = subjectDao.findByName(subjectName);
-            Preconditions.checkArgument(subject != null);
-        }
+        Subject subject = subjectService.getSubjectByName(subjectName);
+        return getSampleById(subject, sampleId);
+    }
+
+    private Sample getSampleById(Subject subject, Number sampleId) {
         Sample sample = sampleDao.findById(sampleId);
         if (subject != null) {
             if (sample != null && subject.canRead(sample)) {
@@ -68,11 +67,7 @@ public class SampleDataService {
     }
 
     public List<LSMImage> getLSMsByIds(String subjectName, List<Number> lsmIds) {
-        Subject subject = null;
-        if (StringUtils.isNotBlank(subjectName)) {
-            subject = subjectDao.findByName(subjectName);
-            Preconditions.checkArgument(subject != null);
-        }
+        Subject subject = subjectService.getSubjectByName(subjectName);
         return imageDao.findSubtypesByIds(subject, lsmIds, LSMImage.class);
     }
 
@@ -86,16 +81,12 @@ public class SampleDataService {
 
     private List<AnatomicalArea> getAnatomicalAreasBySampleIdAndObjective(String subjectName, Number sampleId, String objective, Optional<String> anatomicalAreaName) {
         Preconditions.checkArgument(sampleId != null, "Sample ID must be specified for anatomical area retrieval");
-        Subject subject = null;
-        Sample sample = getSampleById(subjectName, sampleId);
+        Subject currentSubject = subjectService.getSubjectByName(subjectName);
+        Sample sample = getSampleById(currentSubject, sampleId);
         if (sample == null) {
             logger.info("Invalid sampleId {} or subject {} has no access", sampleId, subjectName);
             return Collections.emptyList();
         }
-        if (StringUtils.isNotBlank(subjectName)) {
-            subject = subjectDao.findByName(subjectName);
-        }
-        final Subject currentSubject = subject;
         Map<String, LSMImage> indexedLsms = new LinkedHashMap<>();
         Predicate<ObjectiveSample> objectiveFilter = objectiveSample -> StringUtils.isBlank(objective) || objective.equals(objectiveSample.getObjective());
         sample.getObjectiveSamples().stream()
@@ -185,14 +176,9 @@ public class SampleDataService {
     }
 
     public PageResult<Sample> searchSamples(String subjectName, Sample pattern, DataInterval<Date> tmogInterval, PageRequest pageRequest) {
-        Subject subject = null;
-        if (StringUtils.isNotBlank(subjectName)) {
-            subject = subjectDao.findByName(subjectName);
-            Preconditions.checkArgument(subject != null);
-        }
+        Subject subject = subjectService.getSubjectByName(subjectName);
         return sampleDao.findMatchingSamples(subject, pattern, tmogInterval, pageRequest);
     }
-
 
     public void updateLSM(LSMImage lsmImage) {
         imageDao.update(lsmImage);

@@ -1,6 +1,7 @@
 package org.janelia.jacs2.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
+import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.jacs2.dao.DatasetDao;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.jacs2.model.page.PageRequest;
@@ -25,6 +26,7 @@ import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.same;
 
@@ -83,7 +85,7 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
 
     @Test
     public void persistDataset() {
-        DataSet testDataset = createTestDataset("ds1");
+        DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(), ImmutableList.of());
         testDao.save(testDataset);
         DataSet retrievedDatasets = testDao.findById(testDataset.getId());
         assertThat(retrievedDatasets, not(isNull(DataSet.class)));
@@ -96,24 +98,57 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
 
     @Test
     public void updateDataset() {
-        DataSet testDataset = createTestDataset("ds1", "subject:verify");
+        DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(), ImmutableList.of("subject:verify"));
         testDao.save(testDataset);
         testDataset.setOwnerKey("subject:verify");
         testDao.update(testDataset);
-        DataSet retrievedDataSet = testDao.findById(testDataset.getId());
-        assertThat(retrievedDataSet, hasProperty("ownerKey", equalTo("subject:verify")));
-        assertThat(retrievedDataSet, hasProperty("name", equalTo(testDataset.getName())));
+        DataSet retrievedDataset = testDao.findById(testDataset.getId());
+        assertThat(retrievedDataset, hasProperty("ownerKey", equalTo("subject:verify")));
+        assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
+    }
+
+    @Test
+    public void findByNameWithNoSubjectArg() {
+        DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of("subject:verify"), ImmutableList.of());
+        testDao.save(testDataset);
+        DataSet retrievedDataset = testDao.findByName(null, "ds1");
+        assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
+    }
+
+    @Test
+    public void findByNameWithSubjectArg() {
+        String subjectName = "user:findByNameWithSubjectArg";
+        Subject subject = new Subject();
+        subject.setKey(subjectName);
+
+        DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(subjectName), ImmutableList.of());
+        testDao.save(testDataset);
+        DataSet retrievedDataset = testDao.findByName(subject, "ds1");
+        assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
+        assertThat(retrievedDataset, hasProperty("ownerKey", equalTo(TEST_OWNER_KEY)));
+    }
+
+    @Test
+    public void findByNameWithWrongSubject() {
+        String subjectName = "user:wrongSubject";
+        Subject subject = new Subject();
+        subject.setKey(subjectName);
+
+        DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(), ImmutableList.of());
+        testDao.save(testDataset);
+        DataSet retrievedDataset = testDao.findByName(subject, "ds1");
+        assertNull(retrievedDataset);
     }
 
     protected List<DataSet> createMultipleTestItems(int nItems) {
         List<DataSet> testItems = new ArrayList<>();
         for (int i = 0; i < nItems; i++) {
-            testItems.add(createTestDataset("ds" + (i + 1)));
+            testItems.add(createTestDataset("ds" + (i + 1), TEST_OWNER_KEY, ImmutableList.of(), ImmutableList.of()));
         }
         return testItems;
     }
 
-    private DataSet createTestDataset(String dataset, String... writers) {
+    private DataSet createTestDataset(String dataset, String owner, List<String> readers, List<String> writers) {
         DataSet testDataset = new DataSet();
         Date currentTime = new Date();
         testDataset.setIdentifier(dataset + "Id");
@@ -121,7 +156,10 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
         testDataset.setSageConfigPath(dataset);
         testDataset.setSageGrammarPath(dataset);
         testDataset.setCreationDate(currentTime);
-        testDataset.setOwnerKey(TEST_OWNER_KEY);
+        testDataset.setOwnerKey(owner);
+        for (String reader : readers) {
+            testDataset.addReader(reader);
+        }
         for (String writer : writers) {
             testDataset.addWriter(writer);
         }

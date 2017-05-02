@@ -13,6 +13,7 @@ import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.jacs2.dataservice.DomainObjectService;
+import org.janelia.jacs2.dataservice.subject.SubjectService;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ public class SampleDataServiceTest {
     private static final String TEST_OBJECTIVE = "testObjective";
 
     private SampleDao sampleDao;
-    private SubjectDao subjectDao;
+    private SubjectService subjectService;
     private ImageDao imageDao;
 
     private SampleDataService testService;
@@ -44,11 +45,11 @@ public class SampleDataServiceTest {
     public void setUp() {
         Logger logger = mock(Logger.class);
         sampleDao = mock(SampleDao.class);
-        subjectDao = mock(SubjectDao.class);
+        subjectService = mock(SubjectService.class);
         DaoFactory daoFactory = mock(DaoFactory.class);
         imageDao = mock(ImageDao.class);
         DomainObjectService domainObjectService = new DomainObjectService(daoFactory);
-        testService = new SampleDataService(domainObjectService, sampleDao, subjectDao, imageDao, logger);
+        testService = new SampleDataService(domainObjectService, subjectService, sampleDao, imageDao, logger);
         when(daoFactory.createDomainObjectDao("LSMImage")).thenAnswer(invocation -> imageDao);
     }
 
@@ -62,7 +63,7 @@ public class SampleDataServiceTest {
     @Test
     public void retrieveSampleWhenSubjectDoesNotHaveReadPerms() {
         when(sampleDao.findById(TEST_SAMPLE_ID)).thenReturn(createTestSample());
-        when(subjectDao.findByName(TEST_SUBJECT)).thenReturn(createTestSubject("other"));
+        when(subjectService.getSubjectByName(TEST_SUBJECT)).thenReturn(createTestSubject("other"));
         assertThatThrownBy(() -> testService.getSampleById(TEST_SUBJECT, TEST_SAMPLE_ID))
                 .isInstanceOf(SecurityException.class)
                 .hasMessage("Subject user:other does not have read access to sample: " + TEST_SAMPLE_ID);
@@ -71,7 +72,7 @@ public class SampleDataServiceTest {
     @Test
     public void retrieveSampleWhenSubjectHasReadPerms() {
         when(sampleDao.findById(TEST_SAMPLE_ID)).thenReturn(createTestSample());
-        when(subjectDao.findByName(TEST_SUBJECT)).thenReturn(createTestSubject("other", "testGroup"));
+        when(subjectService.getSubjectByName(TEST_SUBJECT)).thenReturn(createTestSubject("other", "testGroup"));
         Sample testSample = testService.getSampleById(TEST_SUBJECT, TEST_SAMPLE_ID);
         assertNotNull(testSample);
     }
