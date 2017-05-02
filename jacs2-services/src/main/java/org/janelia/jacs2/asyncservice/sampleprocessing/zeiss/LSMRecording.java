@@ -28,13 +28,13 @@ public class LSMRecording {
     @JsonProperty("RECORDING_ENTRY_IMAGES_NUMBER_STACKS")
     private Integer imagesNumberStacks;
     @JsonProperty("RECORDING_ENTRY_INTERPOLATIONY")
-    private Integer interpolation;
+    private Double interpolation;
     @JsonProperty("RECORDING_ENTRY_LINES_PER_PLANE")
-    private Integer linesPerPlane;
+    private Double linesPerPlane;
     @JsonProperty("RECORDING_ENTRY_LINE_SPACING")
-    private Integer lineSpacing;
+    private Double lineSpacing;
     @JsonProperty("RECORDING_ENTRY_LINSCAN_XY_SIZE")
-    private Integer lineScanXYSize;
+    private Double lineScanXYSize;
     @JsonProperty("RECORDING_ENTRY_NAME")
     private String entryName;
     @JsonProperty("RECORDING_ENTRY_NOTES")
@@ -184,19 +184,19 @@ public class LSMRecording {
         return imagesNumberStacks;
     }
 
-    public Integer getInterpolation() {
+    public Double getInterpolation() {
         return interpolation;
     }
 
-    public Integer getLinesPerPlane() {
+    public Double getLinesPerPlane() {
         return linesPerPlane;
     }
 
-    public Integer getLineSpacing() {
+    public Double getLineSpacing() {
         return lineSpacing;
     }
 
-    public Integer getLineScanXYSize() {
+    public Double getLineScanXYSize() {
         return lineScanXYSize;
     }
 
