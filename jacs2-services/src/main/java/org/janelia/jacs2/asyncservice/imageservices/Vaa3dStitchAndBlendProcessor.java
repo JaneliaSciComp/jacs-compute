@@ -118,7 +118,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
         JacsServiceData blendServiceData = blend(
                 getInputDir(args),
                 temporaryBlendOutput,
-                ImmutableList.<String>builder().add("#si 1").addAll(args.otherBlendPluginParams).build(),
+                ImmutableList.<String>builder().add("#s 1").addAll(args.otherBlendPluginParams).build(),
                 "Blend results",
                 jacsServiceData,
                 stitchServiceData
