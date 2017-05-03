@@ -93,7 +93,7 @@ public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<Vo
                         Path sourcePath = getSourceFile(args);
                         Path targetPath = getTargetFile(args);
                         if (!sourcePath.toAbsolutePath().startsWith(targetPath.toAbsolutePath())) {
-                            Files.createSymbolicLink(sourcePath, targetPath);
+                            Files.createSymbolicLink(targetPath, sourcePath);
                         }
                         return pd;
                     } catch (IOException e) {
