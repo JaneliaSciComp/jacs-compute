@@ -4,7 +4,7 @@ import org.janelia.jacs2.model.BaseEntity;
 
 import java.util.Date;
 
-public class SageImage implements BaseEntity {
+public class SlideImage implements BaseEntity {
     private Integer id;
     private String name;
     private String url;

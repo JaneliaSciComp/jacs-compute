@@ -1,4 +1,4 @@
-package org.janelia.jacs2.rest;
+package org.janelia.jacs2.rest.async;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.model.DataInterval;

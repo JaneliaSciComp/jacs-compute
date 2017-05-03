@@ -23,11 +23,11 @@ import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
 
 /**
- * This is the bootstrap application.
+ * This is the bootstrap application for asynchronous services.
  */
-public class Application {
+public class AsyncServicesApp {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Application.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AsyncServicesApp.class);
 
     private Undertow server;
 
@@ -35,11 +35,11 @@ public class Application {
         @Parameter(names = "-b", description = "Binding IP", required = false)
         private String host = "localhost";
         @Parameter(names = "-p", description = "Listner port number", required = false)
-        private int portNumber = 8080;
+        private int portNumber = 9080;
         @Parameter(names = "-name", description = "Deployment name", required = false)
-        private String deployment = "jacs";
+        private String deployment = "jacs-async";
         @Parameter(names = "-context-path", description = "Base context path", required = false)
-        private String baseContextPath = "jacs";
+        private String baseContextPath = "jacs-async";
         @Parameter(names = "-h", description = "Display help", arity = 0, required = false)
         private boolean displayUsage = false;
     }
@@ -50,25 +50,25 @@ public class Application {
         if (appArgs.displayUsage) {
             cmdline.usage();
         } else {
-            Application app = createApp(appArgs);
+            AsyncServicesApp app = createApp(appArgs);
             app.run();
         }
     }
 
-    private static Application createApp(AppArgs appArgs) throws ServletException {
-        Application app = new Application();
+    private static AsyncServicesApp createApp(AppArgs appArgs) throws ServletException {
+        AsyncServicesApp app = new AsyncServicesApp();
 
         String contextPath = "/" + appArgs.baseContextPath;
 
         ServletInfo restApiServlet =
             servlet("restApiServlet", ServletContainer.class)
                 .setLoadOnStartup(1)
-                .addInitParam("javax.ws.rs.Application", JAXAppConfig.class.getName())
+                .addInitParam("javax.ws.rs.Application", JAXAsyncAppConfig.class.getName())
                 .addMapping("/jacs-api/*");
 
         DeploymentInfo servletBuilder =
             Servlets.deployment()
-                    .setClassLoader(Application.class.getClassLoader())
+                    .setClassLoader(AsyncServicesApp.class.getClassLoader())
                     .setContextPath(contextPath)
                     .setDeploymentName(appArgs.deployment)
                     .addFilter(new FilterInfo("corsFilter", CORSResponseFilter.class))

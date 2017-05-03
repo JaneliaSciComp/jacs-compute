@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-public interface JacsServiceDataDao extends Dao<JacsServiceData, Number> {
+public interface JacsServiceDataDao extends ReadWriteDao<JacsServiceData, Number> {
     List<JacsServiceData> findChildServices(Number serviceId);
     /**
      * Returns the service hierarchy for the service identified by <code>serviceId</code>

@@ -18,6 +18,7 @@ import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.dao.AbstractDao;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
+import org.janelia.jacs2.dao.ReadWriteDao;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.page.SortCriteria;
@@ -40,7 +41,7 @@ import static com.mongodb.client.model.Filters.eq;
  *
  * @param <T> type of the element
  */
-public abstract class AbstractMongoDao<T extends HasIdentifier> extends AbstractDao<T, Number> {
+public abstract class AbstractMongoDao<T extends HasIdentifier> extends AbstractDao<T, Number> implements ReadWriteDao<T, Number> {
 
     private final ObjectMapper objectMapper;
     protected final TimebasedIdentifierGenerator idGenerator;

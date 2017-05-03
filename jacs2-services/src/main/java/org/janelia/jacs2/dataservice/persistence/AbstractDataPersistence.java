@@ -1,10 +1,10 @@
 package org.janelia.jacs2.dataservice.persistence;
 
-import org.janelia.jacs2.dao.Dao;
+import org.janelia.jacs2.dao.ReadWriteDao;
 
 import javax.enterprise.inject.Instance;
 
-public class AbstractDataPersistence<D extends Dao<T, I>, T, I> {
+public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
     protected Instance<D> daoSource;
 
     AbstractDataPersistence(Instance<D> daoSource) {

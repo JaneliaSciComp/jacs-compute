@@ -9,7 +9,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.jacs2.AbstractITest;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
-import org.janelia.jacs2.dao.Dao;
+import org.janelia.jacs2.dao.ReadWriteDao;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.jacs2.dao.mongo.utils.BigIntegerCodec;
 import org.janelia.jacs2.dao.mongo.utils.DomainCodecProvider;
@@ -56,13 +56,13 @@ public abstract class AbstractMongoDaoITest<T extends HasIdentifier> extends Abs
         testMongoDatabase = testMongoClient.getDatabase(integrationTestsConfig.getProperty("MongoDB.Database"));
     }
 
-    protected void deleteAll(Dao<T, Number> dao, List<T> es) {
+    protected void deleteAll(ReadWriteDao<T, Number> dao, List<T> es) {
         for (T e : es) {
             delete(dao, e);
         }
     }
 
-    protected void delete(Dao<T, Number> dao, T e) {
+    protected void delete(ReadWriteDao<T, Number> dao, T e) {
         if (e.getId() != null) {
             dao.delete(e);
         }
