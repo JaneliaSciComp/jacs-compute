@@ -69,18 +69,18 @@ Note that 'installDist' target will not run any unit tests or integration tests.
 
 ### Run the application
 
-To run with the default settings which assume a Mongo database instance running on the same machine where the web server is running:
+To run the async services with the default settings which assume a Mongo database instance running on the same machine where the web server is running:
 
-`jacs2-web/build/install/jacs2-web/bin/jacs2-web`
+`jacs2-asyncweb/build/install/jacs2-asyncweb/bin/jacs2-asyncweb`
 
 If you want to debug the application you can start the application with the debug agent as below:
 
-`JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" jacs2-web/build/install/jacs2-web/bin/jacs2-web`
+`JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" jacs2-asyncweb/build/install/jacs2-asyncweb/bin/jacs2-asyncweb`
 
 The default settings could be overwritten with your own settings in a java properties file that contains only the updated properties
 and then use JACS2_CONFIG environment variable to reference the settings file, e.g.
 
-`JACS2_CONFIG=/usr/local/etc/myjacs2-config.properties jacs2-web/build/install/jacs2-web/bin/jacs2-web`
+`JACS2_CONFIG=/usr/local/etc/myjacs2-config.properties jacs2-asyncweb/build/install/jacs2-asyncweb/bin/jacs2-asyncweb`
 
 ### Run the admin dashboard
 

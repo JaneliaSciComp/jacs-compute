@@ -91,7 +91,7 @@ public class Vaa3dBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<
                         .setOutputPath(jacsServiceData.getOutputPath())
                         .state(JacsServiceState.RUNNING).build(),
                 new ServiceArg("-plugin", "ifusion.so"),
-                new ServiceArg("-pluginFunc", "blender"),
+                new ServiceArg("-pluginFunc", "iblender"),
                 new ServiceArg("-input", args.inputDir),
                 new ServiceArg("-output", args.outputFile),
                 new ServiceArg("-pluginParams", String.join(",", args.pluginParams))

@@ -1,8 +1,5 @@
-package org.janelia.jacs2.app;
+package org.janelia.jacs2.filter;
 
-/**
- * Created by schauderd on 2/27/17.
- */
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

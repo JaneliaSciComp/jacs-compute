@@ -1,0 +1,9 @@
+apply plugin: 'application'
+
+mainClassName = 'org.janelia.jacs2.app.SyncServicesApp'
+
+project(":jacs2-syncweb") {
+    dependencies {
+        compile project(":jacs2-commonweb")
+    }
+}

@@ -1,5 +1,7 @@
 rootProject.name = 'jacs2'
 
 include 'jacs2-services'
-include 'jacs2-web'
+include 'jacs2-commonweb'
+include 'jacs2-asyncweb'
+include 'jacs2-syncweb'
 include 'jacs2-admin' 
