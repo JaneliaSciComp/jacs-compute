@@ -1,5 +1,6 @@
 package org.janelia.jacs2.dao.jdbc;
 
+import org.janelia.jacs2.cdi.qualifier.Sage;
 import org.janelia.jacs2.dao.SageDao;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
@@ -14,7 +15,7 @@ public class SageJdbcDao implements SageDao {
     private Connection connection;
 
     @Inject
-    public SageJdbcDao(Connection connection) {
+    public SageJdbcDao(@Sage Connection connection) {
         this.connection = connection;
     }
 
