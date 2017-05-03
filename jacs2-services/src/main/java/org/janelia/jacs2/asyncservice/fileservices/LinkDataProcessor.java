@@ -92,7 +92,7 @@ public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<Vo
                         LinkDataArgs args = getArgs(pd.getJacsServiceData());
                         Path sourcePath = getSourceFile(args);
                         Path targetPath = getTargetFile(args);
-                        if (!Files.isSameFile(sourcePath, targetPath)) {
+                        if (!sourcePath.toAbsolutePath().startsWith(targetPath.toAbsolutePath())) {
                             Files.createSymbolicLink(sourcePath, targetPath);
                         }
                         return pd;

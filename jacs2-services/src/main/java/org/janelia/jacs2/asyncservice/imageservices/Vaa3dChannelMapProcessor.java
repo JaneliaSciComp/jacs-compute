@@ -118,7 +118,7 @@ public class Vaa3dChannelMapProcessor extends AbstractBasicLifeCycleServiceProce
         Path vaa3dCmdOutput;
         try {
             boolean sameFile = false;
-            if (Files.isSameFile(input, output)) {
+            if (input.toAbsolutePath().startsWith(output.toAbsolutePath())) {
                 String suffix;
                 if (depResults.getJacsServiceData().hasId()) {
                     suffix = depResults.getJacsServiceData().getId().toString();

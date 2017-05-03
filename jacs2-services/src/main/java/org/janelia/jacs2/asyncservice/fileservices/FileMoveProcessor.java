@@ -92,7 +92,7 @@ public class FileMoveProcessor extends AbstractBasicLifeCycleServiceProcessor<Vo
                         FileMoveArgs args = getArgs(pd.getJacsServiceData());
                         Path sourcePath = getSourceFile(args);
                         Path targetPath = getTargetFile(args);
-                        if (!Files.isSameFile(sourcePath, targetPath)) {
+                        if (!sourcePath.toAbsolutePath().startsWith(targetPath.toAbsolutePath())) {
                             Files.move(sourcePath, targetPath);
                         }
                         return pd;

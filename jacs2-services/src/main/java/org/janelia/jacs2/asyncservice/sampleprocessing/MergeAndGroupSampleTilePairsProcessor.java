@@ -454,7 +454,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                     try {
                         Path tileMergedFile = Paths.get(tp.getMergeResultFile());
                         Path tileMergedFileLink = FileUtils.getFilePath(Paths.get(areaTiles.groupDir), tp.getMergeResultFile());
-                        if (!Files.isSameFile(tileMergedFile, tileMergedFileLink)) {
+                        if (!tileMergedFile.toAbsolutePath().startsWith(tileMergedFileLink.toAbsolutePath())) {
                             Files.createSymbolicLink(tileMergedFile, tileMergedFileLink);
                         }
                         MergeTilePairResult newTilePair = new MergeTilePairResult();
