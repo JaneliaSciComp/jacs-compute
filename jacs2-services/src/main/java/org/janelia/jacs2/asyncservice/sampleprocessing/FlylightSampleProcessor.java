@@ -14,6 +14,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.MIPGenerationProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -193,7 +194,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                     if (groupedArea.getGroupResults().size() > 1) {
                         Path groupDir = Paths.get(groupedArea.getGroupDir());
                         Path stitchingDir = groupDir.getParent().resolve(STITCH_DIRNAME);
-                        Path stitchingFile = stitchingDir.resolve(stitchedFileNameGenerator.apply(groupedArea));
+                        Path stitchingFile = FileUtils.getFilePath(stitchingDir, stitchedFileNameGenerator.apply(groupedArea), ".v3draw");
                         String referenceChannelNumber = groupedArea.getConsensusChannelComponents().referenceChannelNumbers;
                         stitichingService = stitchTilesFromArea(depResults.getJacsServiceData(), groupDir, stitchingFile, referenceChannelNumber);
                         tileFile = Optional.of(stitchingFile);

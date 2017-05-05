@@ -13,6 +13,8 @@ public class SlideImage implements BaseEntity {
     private Date captureDate;
     private String createdBy;
     private Date createDate;
+    private String dataset;
+    private String lineName;
 
     public Integer getId() {
         return id;
@@ -76,5 +78,21 @@ public class SlideImage implements BaseEntity {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    public String getDataset() {
+        return dataset;
+    }
+
+    public void setDataset(String dataset) {
+        this.dataset = dataset;
+    }
+
+    public String getLineName() {
+        return lineName;
+    }
+
+    public void setLineName(String lineName) {
+        this.lineName = lineName;
     }
 }

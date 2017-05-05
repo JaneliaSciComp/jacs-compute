@@ -74,7 +74,7 @@ public class PersistenceProducer {
 
     public void closeSageConnection(@Disposes @Sage Connection connection) {
         try {
-            connection.close();
+            if (connection != null && !connection.isClosed()) connection.close();
         } catch (SQLException ignore) {
         }
     }

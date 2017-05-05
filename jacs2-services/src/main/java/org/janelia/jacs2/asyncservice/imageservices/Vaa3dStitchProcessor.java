@@ -10,7 +10,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -20,11 +20,16 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 @Named("vaa3dStitch")
-public class Vaa3dStitchProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, Void> {
+public class Vaa3dStitchProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+
+    private static final String STITCHED_IMAGE_INFO_FILENAME = "stitched_image.tc";
 
     static class Vaa3dStitchArgs extends ServiceArgs {
         @Parameter(names = "-inputDir", description = "Input directory", required = true)
@@ -53,8 +58,19 @@ public class Vaa3dStitchProcessor extends AbstractBasicLifeCycleServiceProcessor
     }
 
     @Override
-    public ServiceResultHandler<Void> getResultHandler() {
-        return new VoidServiceResultHandler();
+    public ServiceResultHandler<File> getResultHandler() {
+        return new AbstractSingleFileServiceResultHandler() {
+
+            @Override
+            public boolean isResultReady(JacsServiceResult<?> depResults) {
+                return areAllDependenciesDone(depResults.getJacsServiceData());
+            }
+
+            @Override
+            public File collectResult(JacsServiceResult<?> depResults) {
+                return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile();
+            }
+        };
     }
 
     @Override
@@ -88,4 +104,7 @@ public class Vaa3dStitchProcessor extends AbstractBasicLifeCycleServiceProcessor
         return ServiceArgs.parse(jacsServiceData.getArgsArray(), new Vaa3dStitchArgs());
     }
 
+    private Path getOutputFile(Vaa3dStitchArgs args) {
+        return Paths.get(args.inputDir).resolve(STITCHED_IMAGE_INFO_FILENAME);
+    }
 }
