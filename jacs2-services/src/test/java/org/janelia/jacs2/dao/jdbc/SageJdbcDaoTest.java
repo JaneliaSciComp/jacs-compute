@@ -6,7 +6,9 @@ import org.janelia.jacs2.model.sage.ControlledVocabulary;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.stubbing.OngoingStubbing;
+import org.slf4j.Logger;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -33,13 +35,16 @@ public class SageJdbcDaoTest {
 
     @Before
     public void setUp() throws SQLException {
+        DataSource testDs = mock(DataSource.class);
+        Logger testLogger = mock(Logger.class);
         testConnection = mock(Connection.class);
         testPstmt = mock(PreparedStatement.class);
         testRs = mock(ResultSet.class);
 
+        when(testDs.getConnection()).thenReturn(testConnection);
         when(testConnection.prepareStatement(anyString())).thenReturn(testPstmt);
         when(testPstmt.executeQuery()).thenReturn(testRs);
-        testDao = new SageJdbcDao(testConnection);
+        testDao = new SageJdbcDao(testDs, testLogger);
     }
 
     @Test
@@ -71,7 +76,7 @@ public class SageJdbcDaoTest {
         verify(testConnection).prepareStatement(
                 "select distinct cv.id as cv_id,cv.name as cv_name,cv_term.id cv_term_id,cv_term.name cv_term_name " +
                         "from cv_term join cv on cv.id = cv_term.cv_id join image_property ip on ip.type_id = cv_term.id " +
-                        "join (select ip1.image_id image_id from image_property ip1 join cv_term ds_term on ds_term.id = ip1.type_id and ds_term.name = 'data_set' " +
+                        "join (select ip1.image_id image_id, ip1.value as dsprop_value from image_property ip1 join cv_term ds_term on ds_term.id = ip1.type_id and ds_term.name = 'data_set' " +
                         "where ip1.value = ?) ds_ims on ds_ims.image_id = ip.image_id ");
         verify(testPstmt).setString(1, "wangk11_kw_mcfo_images");
         verify(testPstmt).close();
@@ -88,7 +93,7 @@ public class SageJdbcDaoTest {
         verify(testConnection).prepareStatement(
                 "select distinct cv.id as cv_id,cv.name as cv_name,cv_term.id cv_term_id,cv_term.name cv_term_name " +
                         "from cv_term join cv on cv.id = cv_term.cv_id join image_property ip on ip.type_id = cv_term.id " +
-                        "join (select ip1.image_id image_id from image_property ip1 join cv_term ds_term on ds_term.id = ip1.type_id and ds_term.name = 'data_set' " +
+                        "join (select ip1.image_id image_id, ip1.value as dsprop_value from image_property ip1 join cv_term ds_term on ds_term.id = ip1.type_id and ds_term.name = 'data_set' " +
                         "where ip1.value = ?) ds_ims on ds_ims.image_id = ip.image_id join image im on im.id = ip.image_id " +
                         "where im.name in (?,?,?)");
         verify(testPstmt).setString(1, testDataset);
@@ -150,11 +155,13 @@ public class SageJdbcDaoTest {
         );
         testDao.findSlideImagesByDatasetAndLsmNames("wangk11_kw_mcfo_images", Collections.<String>emptyList(), 10, 0);
         verify(testConnection).prepareStatement("select " +
-                        "im.name,im.id im_id,im.name im_name,im.url im_url,im.path im_path,im.jfs_path im_jfs_path,im.line_id im_line_id,im.family_id im_family_id," +
+                        "im.id im_id,im.name im_name,im.url im_url,im.path im_path,im.jfs_path im_jfs_path,im.line_id im_line_id,im.family_id im_family_id," +
                         "im.capture_date im_capture_date,im.representative im_representative,im.created_by im_created_by,im.create_date im_create_date,ln.id ln_id," +
-                        "ln.name ln_name,ln.lab_id ln_lab_id,ln.gene_id ln_gene_id,ln.organism_id ln_organism_id,ln.genotype ln_genotype," +
-                        "max(IF(lp.type_id = ?, lp.value, null)) ln_light_imagery_vt_line ,max(IF(lp.type_id = ?, lp.value, null)) ln_line_genotype ," +
-                        "max(IF(lp.type_id = ?, lp.value, null)) ln_line_chromosome ,max(IF(lp.type_id = ?, lp.value, null)) ln_line_flycore_permission ," +
+                        "ln.name ln_name,ln.lab_id ln_lab_id,ln.gene_id ln_gene_id,ln.organism_id ln_organism_id,ln.genotype ln_genotype,ds_ims.dsprop_value as dsprop_value," +
+                        "max(IF(lp.type_id = ?, lp.value, null)) lp_light_imagery_vt_line ," +
+                        "max(IF(lp.type_id = ?, lp.value, null)) lp_line_genotype ," +
+                        "max(IF(lp.type_id = ?, lp.value, null)) lp_line_chromosome ," +
+                        "max(IF(lp.type_id = ?, lp.value, null)) lp_line_flycore_permission ," +
                         "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_imaging_project ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_data_set ," +
                         "max(IF(ip.type_id = ?, ip.value, null)) ip_fly_cross_barcode ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_renamed_by ," +
                         "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_microscope_filename ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_tissue_orientation ," +
@@ -168,7 +175,7 @@ public class SageJdbcDaoTest {
                         "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_tile ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_screen_state ," +
                         "max(IF(ip.type_id = ?, ip.value, null)) ip_fly_effector ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_slide_code  " +
                         "from image im join line ln on ln.id = im.line_id join line_property lp on lp.line_id = im.line_id join image_property ip on ip.image_id = im.id " +
-                        "join (select ip1.image_id image_id from image_property ip1 join cv_term ds_term on ds_term.id = ip1.type_id and ds_term.name = 'data_set' where ip1.value = ?) ds_ims " +
+                        "join (select ip1.image_id image_id, ip1.value as dsprop_value from image_property ip1 join cv_term ds_term on ds_term.id = ip1.type_id and ds_term.name = 'data_set' where ip1.value = ?) ds_ims " +
                         "on ds_ims.image_id = im.id " +
                         "group by ln.id, im.id ",
                 ResultSet.TYPE_FORWARD_ONLY,
@@ -228,26 +235,28 @@ public class SageJdbcDaoTest {
         testDao.findSlideImagesByDatasetAndLsmNames("wangk11_kw_mcfo_images",
                 ImmutableList.of("20170501/FLFL_20170503155545197_286220.lsm", "20170501/FLFL_20170503155558312_286224.lsm", "20170501/FLFL_20170503155511097_286213.lsm"), 1, 2);
         verify(testConnection).prepareStatement("select " +
-                "im.name,im.id im_id,im.name im_name,im.url im_url,im.path im_path,im.jfs_path im_jfs_path,im.line_id im_line_id,im.family_id im_family_id," +
-                "im.capture_date im_capture_date,im.representative im_representative,im.created_by im_created_by,im.create_date im_create_date,ln.id ln_id," +
-                "ln.name ln_name,ln.lab_id ln_lab_id,ln.gene_id ln_gene_id,ln.organism_id ln_organism_id,ln.genotype ln_genotype," +
-                "max(IF(lp.type_id = ?, lp.value, null)) ln_light_imagery_vt_line ,max(IF(lp.type_id = ?, lp.value, null)) ln_line_genotype ," +
-                "max(IF(lp.type_id = ?, lp.value, null)) ln_line_chromosome ,max(IF(lp.type_id = ?, lp.value, null)) ln_line_flycore_permission ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_imaging_project ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_data_set ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_fly_cross_barcode ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_renamed_by ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_microscope_filename ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_tissue_orientation ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_annotated_by ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_area ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_mounting_protocol ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_age ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_gender ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_lsm_illumination_channel_1_power_bc ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_lsm_illumination_channel_2_name ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_lsm_illumination_channel_1_name ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_lsm_detection_channel_1_detector_ga ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_channel_spec ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_objective ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_hostname ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_tile ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_screen_state ," +
-                "max(IF(ip.type_id = ?, ip.value, null)) ip_fly_effector ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_slide_code  " +
-                "from image im join line ln on ln.id = im.line_id join line_property lp on lp.line_id = im.line_id join image_property ip on ip.image_id = im.id " +
-                "join (select ip1.image_id image_id from image_property ip1 join cv_term ds_term on ds_term.id = ip1.type_id and ds_term.name = 'data_set' where ip1.value = ?) ds_ims " +
-                "on ds_ims.image_id = im.id where im.name in (?,?,?) group by ln.id, im.id limit ? offset ?",
+                        "im.id im_id,im.name im_name,im.url im_url,im.path im_path,im.jfs_path im_jfs_path,im.line_id im_line_id,im.family_id im_family_id," +
+                        "im.capture_date im_capture_date,im.representative im_representative,im.created_by im_created_by,im.create_date im_create_date,ln.id ln_id," +
+                        "ln.name ln_name,ln.lab_id ln_lab_id,ln.gene_id ln_gene_id,ln.organism_id ln_organism_id,ln.genotype ln_genotype,ds_ims.dsprop_value as dsprop_value," +
+                        "max(IF(lp.type_id = ?, lp.value, null)) lp_light_imagery_vt_line ," +
+                        "max(IF(lp.type_id = ?, lp.value, null)) lp_line_genotype ," +
+                        "max(IF(lp.type_id = ?, lp.value, null)) lp_line_chromosome ," +
+                        "max(IF(lp.type_id = ?, lp.value, null)) lp_line_flycore_permission ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_imaging_project ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_data_set ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_fly_cross_barcode ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_renamed_by ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_microscope_filename ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_tissue_orientation ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_annotated_by ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_area ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_mounting_protocol ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_age ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_gender ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_lsm_illumination_channel_1_power_bc ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_lsm_illumination_channel_2_name ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_lsm_illumination_channel_1_name ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_lsm_detection_channel_1_detector_ga ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_channel_spec ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_objective ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_hostname ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_tile ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_screen_state ," +
+                        "max(IF(ip.type_id = ?, ip.value, null)) ip_fly_effector ,max(IF(ip.type_id = ?, ip.value, null)) ip_light_imagery_slide_code  " +
+                        "from image im join line ln on ln.id = im.line_id join line_property lp on lp.line_id = im.line_id join image_property ip on ip.image_id = im.id " +
+                        "join (select ip1.image_id image_id, ip1.value as dsprop_value from image_property ip1 join cv_term ds_term on ds_term.id = ip1.type_id and ds_term.name = 'data_set' where ip1.value = ?) ds_ims " +
+                        "on ds_ims.image_id = im.id where im.name in (?,?,?) group by ln.id, im.id limit ? offset ?",
                 ResultSet.TYPE_FORWARD_ONLY,
                 ResultSet.CONCUR_READ_ONLY);
         verify(testRs, never()).absolute(10);

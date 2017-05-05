@@ -4,6 +4,13 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
+import org.apache.commons.dbcp2.ConnectionFactory;
+import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp2.PoolableConnection;
+import org.apache.commons.dbcp2.PoolableConnectionFactory;
+import org.apache.commons.dbcp2.PoolingDataSource;
+import org.apache.commons.pool2.ObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.it.jacs.model.domain.enums.FileType;
@@ -21,6 +28,7 @@ import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -64,32 +72,16 @@ public class PersistenceProducer {
     }
 
     @Sage
+    @Singleton
     @Produces
-    public Connection createSageConnection(@Sage Driver driver,
-                                           @PropertyValue(name = "sage.db.url") String dbUrl,
+    public DataSource createSageDatasource(@PropertyValue(name = "sage.db.url") String dbUrl,
                                            @PropertyValue(name = "sage.db.user") String dbUser,
                                            @PropertyValue(name = "sage.db.password") String dbPassword) throws SQLException {
-        return DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(dbUrl, dbUser, dbPassword);
+        PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
+        ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
+        poolableConnectionFactory.setPool(connectionPool);
+        return new PoolingDataSource<>(connectionPool);
     }
 
-    public void closeSageConnection(@Disposes @Sage Connection connection) {
-        try {
-            if (connection != null && !connection.isClosed()) connection.close();
-        } catch (SQLException ignore) {
-        }
-    }
-
-    @Sage
-    @ApplicationScoped
-    @Produces
-    public Driver createJdbcDriver(@PropertyValue(name = "sage.db.driver") String dbDriver) {
-        try {
-            Class<Driver> driverClass = (Class<Driver>) Class.forName(dbDriver);
-            Driver driver = driverClass.newInstance();
-            DriverManager.registerDriver(driver);
-            return driver;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
 }

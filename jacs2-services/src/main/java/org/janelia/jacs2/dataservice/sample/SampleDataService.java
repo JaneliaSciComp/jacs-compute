@@ -19,6 +19,7 @@ import org.janelia.jacs2.model.DataInterval;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.dataservice.DomainObjectService;
+import org.janelia.jacs2.model.sage.SlideImage;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;

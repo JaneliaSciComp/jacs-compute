@@ -1,5 +1,6 @@
 package org.janelia.jacs2.model.sage;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.model.BaseEntity;
 
 public class ControlledVocabulary implements BaseEntity {
@@ -38,5 +39,10 @@ public class ControlledVocabulary implements BaseEntity {
 
     public void setVocabularyTerm(String vocabularyTerm) {
         this.vocabularyTerm = vocabularyTerm;
+    }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
     }
 }

@@ -5,12 +5,12 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.cdi.qualifier.Sage;
 import org.janelia.jacs2.dao.SageDao;
-import org.janelia.jacs2.model.page.PageRequest;
-import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.sage.ControlledVocabulary;
 import org.janelia.jacs2.model.sage.SlideImage;
+import org.slf4j.Logger;
 
 import javax.inject.Inject;
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,43 +18,17 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 public class SageJdbcDao implements SageDao {
 
-    private Connection connection;
+    private DataSource dataSource;
+    private Logger logger;
 
     @Inject
-    public SageJdbcDao(@Sage Connection connection) {
-        this.connection = connection;
-    }
-
-    public long countAll() {
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            pstmt = connection.prepareStatement("select count(1) from image");
-            rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return rs.getLong(1);
-            } else {
-                throw new IllegalStateException("Empty result set for count image query");
-            }
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (Exception ignore) {
-                }
-            }
-            if (pstmt != null) {
-                try {
-                    pstmt.close();
-                } catch (Exception ignore) {
-                }
-            }
-        }
+    public SageJdbcDao(@Sage DataSource dataSource, Logger logger) {
+        this.dataSource = dataSource;
+        this.logger = logger;
     }
 
     @Override
@@ -64,39 +38,28 @@ public class SageJdbcDao implements SageDao {
         List<ControlledVocabulary> lineCvs = findAllUsedLineVocabularyTerms(ImmutableList.of("line", "light_imagery"));
         List<ControlledVocabulary> dsCvs = findAllUsedDatasetVocabularyTerms(dataset, lsmNames);
 
+        Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
+            conn = dataSource.getConnection();
             StringBuilder queryBuilder = new StringBuilder();
             ImmutableList.Builder<String> fieldListBuilder = ImmutableList.builder();
-            fieldListBuilder.add("im.name")
+            fieldListBuilder
                     .addAll(IMAGE_ATTR)
-                    .addAll(LINE_ATTR);
+                    .addAll(LINE_ATTR)
+                    .add("ds_ims.dsprop_value as dsprop_value");
             ImmutableList.Builder<Integer> cvFieldValuesBuilder = ImmutableList.builder();
+
+            Function<ControlledVocabulary, String> lnTermFieldNameGenerator = cv -> "lp_" + cv.getVocabularyName() + "_" + cv.getVocabularyTerm();
             lineCvs.forEach(cv -> {
-                StringBuilder fieldNameBuilder = new StringBuilder();
-                String fieldAlias = "ln_" + cv.getVocabularyName() + "_" + cv.getVocabularyTerm();
-                fieldNameBuilder
-                        .append("max")
-                        .append("(")
-                        .append("IF(lp.type_id = ?, lp.value, null)")
-                        .append(") ")
-                        .append(fieldAlias)
-                        .append(' ');
-                fieldListBuilder.add(fieldNameBuilder.toString());
+                fieldListBuilder.add("max" + "(" + "IF(lp.type_id = ?, lp.value, null)" + ") " + lnTermFieldNameGenerator.apply(cv) + ' ');
                 cvFieldValuesBuilder.add(cv.getTermId());
             });
+
+            Function<ControlledVocabulary, String> imTermFieldNameGenerator = cv -> "ip_" + cv.getVocabularyName() + "_" + cv.getVocabularyTerm();
             dsCvs.forEach(cv -> {
-                StringBuilder fieldNameBuilder = new StringBuilder();
-                String fieldAlias = "ip_" + cv.getVocabularyName() + "_" + cv.getVocabularyTerm();
-                fieldNameBuilder
-                        .append("max")
-                        .append("(")
-                        .append("IF(ip.type_id = ?, ip.value, null)")
-                        .append(") ")
-                        .append(fieldAlias)
-                        .append(' ');
-                fieldListBuilder.add(fieldNameBuilder.toString());
+                fieldListBuilder.add("max" + "(" + "IF(ip.type_id = ?, ip.value, null)" + ") " + imTermFieldNameGenerator.apply(cv) + ' ');
                 cvFieldValuesBuilder.add(cv.getTermId());
             });
 
@@ -133,7 +96,9 @@ public class SageJdbcDao implements SageDao {
                 queryBuilder.append("limit ?");
             }
 
-            pstmt = connection.prepareStatement(queryBuilder.toString(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+            String queryString = queryBuilder.toString();
+
+            pstmt = conn.prepareStatement(queryString, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 
             int fieldIndex = 1;
             for (Integer cvFieldValue : cvFieldValues) {
@@ -148,6 +113,8 @@ public class SageJdbcDao implements SageDao {
             } else if (length > 0) {
                 pstmt.setInt(fieldIndex++, length);
             }
+
+            logger.debug("Slide image query: {}, {}, {}", queryString, lineCvs, dsCvs);
 
             rs = pstmt.executeQuery();
 
@@ -167,6 +134,8 @@ public class SageJdbcDao implements SageDao {
                 si.setCreateDate(rs.getTimestamp("im_create_date"));
                 si.setDataset(rs.getString("dsprop_value"));
                 si.setLineName(rs.getString("ln_name"));
+                populateProperties(lineCvs, rs, lnTermFieldNameGenerator, si);
+                populateProperties(dsCvs, rs, imTermFieldNameGenerator, si);
                 slideImages.add(si);
             }
         } catch (Exception e) {
@@ -184,16 +153,38 @@ public class SageJdbcDao implements SageDao {
                 } catch (Exception ignore) {
                 }
             }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception ignore) {
+                }
+            }
         }
         return slideImages;
+    }
+
+    private void populateProperties(List<ControlledVocabulary> cvs, ResultSet rs, Function<ControlledVocabulary, String> lnTermFieldNameGenerator, SlideImage si)
+            throws SQLException {
+        cvs.forEach(cv -> {
+            String fieldAlias = lnTermFieldNameGenerator.apply(cv);
+            try {
+                si.addProperty(fieldAlias, rs.getString(fieldAlias));
+            } catch (Exception e) {
+                logger.error("Error reading field: {}", fieldAlias, e);
+                throw new IllegalStateException("Failure reading " + fieldAlias, e);
+            }
+        });
     }
 
     public List<ControlledVocabulary> findAllUsedDatasetVocabularyTerms (String dataset, List<String> lsmNames) {
         List<ControlledVocabulary> cvs = new ArrayList<>();
 
+        Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
+            conn = dataSource.getConnection();
+
             StringBuilder queryBuilder = new StringBuilder();
             queryBuilder.append("select distinct ")
                     .append("cv.id as cv_id,")
@@ -217,7 +208,7 @@ public class SageJdbcDao implements SageDao {
                         .append(Joiner.on(',').join(Collections.nCopies(lsmNames.size(), '?')))
                         .append(')');
             }
-            pstmt = connection.prepareStatement(queryBuilder.toString());
+            pstmt = conn.prepareStatement(queryBuilder.toString());
             int fieldIndex = 1;
             pstmt.setString(fieldIndex++, dataset);
             for (String lsmName : lsmNames) pstmt.setString(fieldIndex++, lsmName);
@@ -242,6 +233,12 @@ public class SageJdbcDao implements SageDao {
                 } catch (Exception ignore) {
                 }
             }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception ignore) {
+                }
+            }
         }
         return cvs;
     }
@@ -251,10 +248,13 @@ public class SageJdbcDao implements SageDao {
 
         if (CollectionUtils.isEmpty(vocabularyNames)) return cvs;
 
+        Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            pstmt = connection.prepareStatement("select distinct "
+            conn = dataSource.getConnection();
+
+            pstmt = conn.prepareStatement("select distinct "
                             + "cv.id as cv_id,"
                             + "cv.name as cv_name,"
                             + "cv_term.id cv_term_id,"
@@ -290,6 +290,12 @@ public class SageJdbcDao implements SageDao {
                 } catch (Exception ignore) {
                 }
             }
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception ignore) {
+                }
+            }
         }
         return cvs;
     }
@@ -318,7 +324,7 @@ public class SageJdbcDao implements SageDao {
                     .build();
 
     private static final String ALL_IMAGE_IDS_FOR_DATASET_QUERY =
-            "select ip1.image_id image_id " +
+            "select ip1.image_id image_id, ip1.value as dsprop_value " +
             "from image_property ip1 " +
             "join cv_term ds_term on ds_term.id = ip1.type_id and ds_term.name = 'data_set' " +
             "where ip1.value = ?";

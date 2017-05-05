@@ -2,11 +2,13 @@ package org.janelia.jacs2.rest.sync;
 
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.model.DataInterval;
 import org.janelia.jacs2.model.page.ListResult;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.jacs2.model.sage.SlideImage;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -17,6 +19,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -27,6 +30,7 @@ public class SampleDataResource {
     private static final int DEFAULT_PAGE_SIZE = 100;
 
     @Inject private SampleDataService sampleDataService;
+    @Inject private SageDataService sageDataService;
 
     @GET
     public Response getAllSamples(
@@ -85,6 +89,28 @@ public class SampleDataResource {
         return Response
                 .status(Response.Status.OK)
                 .entity(new ListResult<>(anatomicalAreas))
+                .build();
+    }
+
+    @GET
+    @Path("/sage/{dataset}")
+    public Response getSageImages(@HeaderParam("authToken") String authToken, @PathParam("dataset") String dataset,
+                                  @QueryParam("lsm") List<String> lsmNames,
+                                  @QueryParam("page") Integer pageNumber,
+                                  @QueryParam("length") Integer pageLength) {
+        PageRequest pageRequest = new PageRequest();
+        if (pageNumber != null) {
+            pageRequest.setPageNumber(pageNumber);
+        }
+        if (pageLength != null) {
+            pageRequest.setPageSize(pageLength);
+        } else {
+            pageRequest.setPageSize(DEFAULT_PAGE_SIZE);
+        }
+        List<SlideImage> slideImages = sageDataService.getSlideImagesByDatasetAndLsmNames(dataset, lsmNames, pageRequest);
+        return Response
+                .status(Response.Status.OK)
+                .entity(new ListResult<>(slideImages))
                 .build();
     }
 

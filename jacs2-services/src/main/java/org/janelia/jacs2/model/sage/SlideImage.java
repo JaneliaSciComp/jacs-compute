@@ -1,8 +1,11 @@
 package org.janelia.jacs2.model.sage;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.model.BaseEntity;
 
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class SlideImage implements BaseEntity {
     private Integer id;
@@ -15,6 +18,7 @@ public class SlideImage implements BaseEntity {
     private Date createDate;
     private String dataset;
     private String lineName;
+    private Map<String, String> properties = new LinkedHashMap<>();
 
     public Integer getId() {
         return id;
@@ -94,5 +98,17 @@ public class SlideImage implements BaseEntity {
 
     public void setLineName(String lineName) {
         this.lineName = lineName;
+    }
+
+    public Map<String, String> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, String> properties) {
+        this.properties = properties;
+    }
+
+    public void addProperty(String name, String value) {
+        if (StringUtils.isNotBlank(value)) this.properties.put(name, value);
     }
 }

@@ -3,6 +3,7 @@ project(":jacs2-services") {
         compile CDI_API_LIB,
                 CMDLINE_ARG_LIB,
                 DRMAA1_LIB,
+                DBCP_LIB,
                 JACKSON_ANNOTATIONS_LIB,
                 JACKSON_CORE_LIB,
                 JACKSON_DATABIND_LIB,
