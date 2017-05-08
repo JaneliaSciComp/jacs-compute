@@ -2,9 +2,8 @@ package org.janelia.jacs2.dataservice.sample;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.dao.DaoFactory;
+import org.janelia.jacs2.dao.LSMImageDao;
 import org.janelia.jacs2.dao.SampleDao;
-import org.janelia.jacs2.dao.ImageDao;
-import org.janelia.jacs2.dao.SubjectDao;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
@@ -37,7 +36,7 @@ public class SampleDataServiceTest {
 
     private SampleDao sampleDao;
     private SubjectService subjectService;
-    private ImageDao imageDao;
+    private LSMImageDao lsmImageDao;
 
     private SampleDataService testService;
 
@@ -47,10 +46,10 @@ public class SampleDataServiceTest {
         sampleDao = mock(SampleDao.class);
         subjectService = mock(SubjectService.class);
         DaoFactory daoFactory = mock(DaoFactory.class);
-        imageDao = mock(ImageDao.class);
+        lsmImageDao = mock(LSMImageDao.class);
         DomainObjectService domainObjectService = new DomainObjectService(daoFactory);
-        testService = new SampleDataService(domainObjectService, subjectService, sampleDao, imageDao, logger);
-        when(daoFactory.createDomainObjectDao("LSMImage")).thenAnswer(invocation -> imageDao);
+        testService = new SampleDataService(domainObjectService, subjectService, sampleDao, lsmImageDao, logger);
+        when(daoFactory.createDomainObjectDao("LSMImage")).thenAnswer(invocation -> lsmImageDao);
     }
 
     @Test
@@ -83,7 +82,7 @@ public class SampleDataServiceTest {
         assertThatThrownBy(() -> testService.getAnatomicalAreasBySampleIdAndObjective(null, TEST_SAMPLE_ID, TEST_OBJECTIVE))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("No LSM found for LSMImage#1");
-        when(imageDao.findByIds(null, new ArrayList<>(ImmutableList.of(1L, 2L)))).thenReturn(ImmutableList.of(createLSMImage(1L, null)));
+        when(lsmImageDao.findByIds(null, new ArrayList<>(ImmutableList.of(1L, 2L)))).thenReturn(ImmutableList.of(createLSMImage(1L, null)));
         assertThatThrownBy(() -> testService.getAnatomicalAreasBySampleIdAndObjective(null, TEST_SAMPLE_ID, TEST_OBJECTIVE))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("No LSM found for LSMImage#2");
@@ -95,7 +94,7 @@ public class SampleDataServiceTest {
                 createSampleTile(1L, 2L),
                 createSampleTile(3L),
                 createSampleTile(5L, 6L)));
-        when(imageDao.findByIds(null, new ArrayList<>(ImmutableList.of(1L, 2L, 3L, 5L, 6L))))
+        when(lsmImageDao.findByIds(null, new ArrayList<>(ImmutableList.of(1L, 2L, 3L, 5L, 6L))))
                 .thenReturn(
                         ImmutableList.of(
                                 createLSMImage(1L, null),

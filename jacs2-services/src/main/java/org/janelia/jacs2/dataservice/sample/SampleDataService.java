@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.sample;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.dao.LSMImageDao;
 import org.janelia.jacs2.dao.SampleDao;
 import org.janelia.jacs2.dao.ImageDao;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -35,15 +36,15 @@ public class SampleDataService {
     private final DomainObjectService domainObjectService;
     private final SubjectService subjectService;
     private final SampleDao sampleDao;
-    private final ImageDao imageDao;
+    private final LSMImageDao lsmImageDao;
     private final Logger logger;
 
     @Inject
-    public SampleDataService(DomainObjectService domainObjectService, SubjectService subjectService, SampleDao sampleDao, ImageDao imageDao, Logger logger) {
+    public SampleDataService(DomainObjectService domainObjectService, SubjectService subjectService, SampleDao sampleDao, LSMImageDao lsmImageDao, Logger logger) {
         this.domainObjectService = domainObjectService;
         this.subjectService = subjectService;
         this.sampleDao = sampleDao;
-        this.imageDao = imageDao;
+        this.lsmImageDao = lsmImageDao;
         this.logger = logger;
     }
 
@@ -67,7 +68,7 @@ public class SampleDataService {
 
     public List<LSMImage> getLSMsByIds(String subjectName, List<Number> lsmIds) {
         Subject subject = subjectService.getSubjectByName(subjectName);
-        return imageDao.findSubtypesByIds(subject, lsmIds, LSMImage.class);
+        return lsmImageDao.findSubtypesByIds(subject, lsmIds, LSMImage.class);
     }
 
     public List<AnatomicalArea> getAnatomicalAreasBySampleIdAndObjective(String subjectName, Number sampleId, String objective) {
@@ -171,7 +172,7 @@ public class SampleDataService {
     }
 
     public void updateLSMFiles(LSMImage lsmImage) {
-        imageDao.updateImageFiles(lsmImage);
+        lsmImageDao.updateImageFiles(lsmImage);
     }
 
     public PageResult<Sample> searchSamples(String subjectName, Sample pattern, DataInterval<Date> tmogInterval, PageRequest pageRequest) {
@@ -180,6 +181,6 @@ public class SampleDataService {
     }
 
     public void updateLSM(LSMImage lsmImage) {
-        imageDao.update(lsmImage);
+        lsmImageDao.update(lsmImage);
     }
 }
