@@ -11,9 +11,9 @@ import javax.inject.Inject;
 
 import static com.mongodb.client.model.Filters.eq;
 
-public class ImageMongoDao extends AbstractDomainObjectDao<Image> implements ImageDao {
+public class AbstractImageMongoDao<T extends Image> extends AbstractDomainObjectDao<T> implements ImageDao<T> {
     @Inject
-    public ImageMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
+    public AbstractImageMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
         super(mongoDatabase, idGenerator, objectMapperFactory);
     }
 

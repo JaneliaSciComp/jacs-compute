@@ -24,13 +24,13 @@ import static org.hamcrest.collection.IsIn.isIn;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertThat;
 
-public class ImageMongoDaoITest extends AbstractDomainObjectDaoITest<Image> {
+public class AbstractImageMongoDaoITest extends AbstractDomainObjectDaoITest<Image> {
     private List<Image> testData = new ArrayList<>();
-    private ImageDao testDao;
+    private ImageDao<Image> testDao;
 
     @Before
     public void setUp() {
-        testDao = new ImageMongoDao(testMongoDatabase, idGenerator, testObjectMapperFactory);
+        testDao = new AbstractImageMongoDao<Image>(testMongoDatabase, idGenerator, testObjectMapperFactory){};
     }
 
     @After
@@ -40,18 +40,17 @@ public class ImageMongoDaoITest extends AbstractDomainObjectDaoITest<Image> {
     }
 
     @Test
-    public void persistLSMWithSmallerFileSize() {
-        LSMImage testImage = createLSM("line", "area");
-        testImage.setFileSize(100L);
+    public void persistImagesWithSmallerFileSize() {
+        Image testImage = createImage("line", "area", 100L);
         testDao.save(testImage);
         Image retrievedImage = testDao.findById(testImage.getId());
         assertThat(retrievedImage, equalTo(testImage));
     }
 
     @Test
-    public void persistLSMs() {
-        List<Image> testLSMs = createMultipleTestItems(10);
-        testLSMs.forEach(si -> testDao.save(si));
+    public void persistImages() {
+        List<Image> testImages = createMultipleTestItems(10);
+        testImages.forEach(testDao::save);
         PageRequest pageRequest = new PageRequest();
         pageRequest.setSortCriteria(ImmutableList.of(
                 new SortCriteria("line", SortDirection.ASC)));
@@ -59,8 +58,8 @@ public class ImageMongoDaoITest extends AbstractDomainObjectDaoITest<Image> {
 
         assertThat(res.getResultList(), everyItem(
                 allOf(
-                        Matchers.<Image>instanceOf(LSMImage.class),
-                        isIn(testLSMs)
+                        Matchers.<Image>instanceOf(Image.class),
+                        isIn(testImages)
                 )));
     }
 
@@ -81,26 +80,26 @@ public class ImageMongoDaoITest extends AbstractDomainObjectDaoITest<Image> {
 
     @Test
     public void updateImageFiles() {
-        Image testLSM = createLSM("line", "area");
-        testDao.save(testLSM);
-        testLSM.setFileName(FileType.ChanFile, "chan");
-        testLSM.setFileName(FileType.MaskFile, "mask");
-        testDao.updateImageFiles(testLSM);
-        Image retrievedLSM = testDao.findById(testLSM.getId());
-        assertThat(retrievedLSM.getFiles(), hasEntry(FileType.ChanFile, "chan"));
-        assertThat(retrievedLSM.getFiles(), hasEntry(FileType.MaskFile, "mask"));
+        Image testImage = createImage("line", "area");
+        testDao.save(testImage);
+        testImage.setFileName(FileType.ChanFile, "chan");
+        testImage.setFileName(FileType.MaskFile, "mask");
+        testDao.updateImageFiles(testImage);
+        Image retrievedImages = testDao.findById(testImage.getId());
+        assertThat(retrievedImages.getFiles(), hasEntry(FileType.ChanFile, "chan"));
+        assertThat(retrievedImages.getFiles(), hasEntry(FileType.MaskFile, "mask"));
     }
 
     @Override
     protected List<Image> createMultipleTestItems(int nItems) {
         List<Image> testItems = new ArrayList<>();
         for (int i = 0; i < nItems; i++) {
-            testItems.add(createLSM("l" + (i + 1), "a" + (i + 1)));
+            testItems.add(createImage("l" + (i + 1), "a" + (i + 1)));
         }
         return testItems;
     }
 
-    private LSMImage createLSM(String line, String area) {
+    private Image createImage(String line, String area, long fileSize) {
         LSMImage lsmImage = new LSMImage();
         lsmImage.setChannelColors("cygkrgb");
         lsmImage.setChannelDyeNames("dye");
@@ -109,8 +108,12 @@ public class ImageMongoDaoITest extends AbstractDomainObjectDaoITest<Image> {
         lsmImage.setLine(line);
         lsmImage.setAnatomicalArea(area);
         lsmImage.setOwnerKey(TEST_OWNER_KEY);
-        lsmImage.setFileSize(8234568900000000000L);
+        lsmImage.setFileSize(fileSize);
         testData.add(lsmImage);
         return lsmImage;
+    }
+
+    private Image createImage(String line, String area) {
+        return createImage(line, area, 8234568900000000000L);
     }
 }

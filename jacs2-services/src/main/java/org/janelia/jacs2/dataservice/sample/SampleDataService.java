@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dao.SampleDao;
 import org.janelia.jacs2.dao.ImageDao;
-import org.janelia.jacs2.dao.SubjectDao;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
@@ -19,7 +18,6 @@ import org.janelia.jacs2.model.DataInterval;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.dataservice.DomainObjectService;
-import org.janelia.jacs2.model.sage.SlideImage;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
