@@ -18,6 +18,10 @@ public class SlideImage implements BaseEntity {
     private Date createDate;
     private String dataset;
     private String lineName;
+    private String slideCode;
+    private String area;
+    private String objective;
+    private String tile;
     private Map<String, String> properties = new LinkedHashMap<>();
 
     public Integer getId() {
@@ -98,6 +102,38 @@ public class SlideImage implements BaseEntity {
 
     public void setLineName(String lineName) {
         this.lineName = lineName;
+    }
+
+    public String getSlideCode() {
+        return slideCode;
+    }
+
+    public void setSlideCode(String slideCode) {
+        this.slideCode = slideCode;
+    }
+
+    public String getArea() {
+        return area;
+    }
+
+    public void setArea(String area) {
+        this.area = area;
+    }
+
+    public String getObjective() {
+        return objective;
+    }
+
+    public void setObjective(String objective) {
+        this.objective = objective;
+    }
+
+    public String getTile() {
+        return tile;
+    }
+
+    public void setTile(String tile) {
+        this.tile = tile;
     }
 
     public Map<String, String> getProperties() {

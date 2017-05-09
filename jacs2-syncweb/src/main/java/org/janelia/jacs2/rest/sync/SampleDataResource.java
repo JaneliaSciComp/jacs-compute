@@ -19,7 +19,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -93,8 +92,11 @@ public class SampleDataResource {
     }
 
     @GET
-    @Path("/sage/{dataset}")
-    public Response getSageImages(@HeaderParam("authToken") String authToken, @PathParam("dataset") String dataset,
+    @Path("/sage")
+    public Response getSageImages(@HeaderParam("authToken") String authToken,
+                                  @QueryParam("dataset") String dataset,
+                                  @QueryParam("line") String line,
+                                  @QueryParam("slide-code") List<String> slideCodes,
                                   @QueryParam("lsm") List<String> lsmNames,
                                   @QueryParam("page") Integer pageNumber,
                                   @QueryParam("length") Integer pageLength) {
@@ -107,7 +109,7 @@ public class SampleDataResource {
         } else {
             pageRequest.setPageSize(DEFAULT_PAGE_SIZE);
         }
-        List<SlideImage> slideImages = sageDataService.getSlideImagesByDatasetAndLsmNames(dataset, lsmNames, pageRequest);
+        List<SlideImage> slideImages = sageDataService.getMatchingImages(dataset, line, slideCodes, lsmNames, pageRequest);
         return Response
                 .status(Response.Status.OK)
                 .entity(new ListResult<>(slideImages))

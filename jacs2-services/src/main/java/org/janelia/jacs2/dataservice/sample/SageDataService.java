@@ -16,7 +16,8 @@ public class SageDataService {
         this.sageDao = sageDao;
     }
 
-    public List<SlideImage> getSlideImagesByDatasetAndLsmNames(String dataset, List<String> lsmNames, PageRequest pageRequest) {
-        return sageDao.findSlideImagesByDatasetAndLsmNames(dataset, lsmNames, (int) pageRequest.getOffset(), pageRequest.getPageSize());
+    public List<SlideImage> getMatchingImages(String dataset, String line, List<String> slideCodes, List<String> lsmNames, PageRequest pageRequest) {
+        return sageDao.findMatchingSlideImages(dataset, line, slideCodes, lsmNames, (int) pageRequest.getOffset(), pageRequest.getPageSize());
     }
+
 }

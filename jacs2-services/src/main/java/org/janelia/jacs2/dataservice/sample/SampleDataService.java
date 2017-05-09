@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dao.LSMImageDao;
 import org.janelia.jacs2.dao.SampleDao;
-import org.janelia.jacs2.dao.ImageDao;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
