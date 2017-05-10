@@ -5,6 +5,8 @@ import org.janelia.jacs2.model.DomainModelUtils;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
+import java.util.LinkedList;
+import java.util.List;
 
 public class DaoFactory {
 
@@ -28,13 +30,22 @@ public class DaoFactory {
 
     public DomainObjectDao<?> createDomainObjectDao(String entityName) {
         Class<?> entityClass = DomainModelUtils.getBasePersistedEntityClass(entityName);
+        List<Dao<?, Number>> assignableDaos = new LinkedList<>();
         for (Dao<?, Number> dao : daosSource) {
             Class<?> daoParameter = DomainModelUtils.getGenericParameterType(dao.getClass(), 0);
             if (entityClass.equals(daoParameter) && dao instanceof DomainObjectDao) {
                 return (DomainObjectDao) dao;
+            } else if (entityClass.isAssignableFrom(daoParameter) && dao instanceof DomainObjectDao) {
+                assignableDaos.add(dao);
             }
         }
-        throw new IllegalArgumentException("Unknown or not a domain entity: " + entityName);
+        if (assignableDaos.isEmpty()) {
+            throw new IllegalArgumentException("Unknown or not a domain entity: " + entityName);
+        } else if (assignableDaos.size() == 1) {
+            return (DomainObjectDao) assignableDaos.get(0);
+        } else {
+            throw new IllegalArgumentException("Too many assignable DAOs found for: " + entityName);
+        }
     }
 
 }
