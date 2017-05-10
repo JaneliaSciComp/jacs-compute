@@ -62,7 +62,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         String outputChannelOrder;
         @Parameter(names = "-distortionCorrection", description = "If specified apply distortion correction", required = false)
         boolean applyDistortionCorrection;
-        @Parameter(names = "persistResults", description = "If specified it generates the mips and persists the result", required = false)
+        @Parameter(names = "-persistResults", description = "If specified it generates the mips and persists the result", required = false)
         boolean persistResults;
     }
 
