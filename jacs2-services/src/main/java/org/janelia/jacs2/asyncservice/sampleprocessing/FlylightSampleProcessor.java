@@ -49,7 +49,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
 
     }
 
-    static class FlylightPipelineArgs extends SampleServiceArgs {
+    static class FlylightSampleArgs extends SampleServiceArgs {
         @Parameter(names = "-mergeAlgorithm", description = "Merge algorithm", required = false)
         String mergeAlgorithm;
         @Parameter(names = "-stitchAlgorithm", description = "Stitching algorithm", required = false)
@@ -95,7 +95,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new SampleServiceArgs());
+        return ServiceArgs.getMetadata(this.getClass(), new FlylightSampleArgs());
     }
 
     @Override
@@ -120,7 +120,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
 
     @Override
     protected JacsServiceResult<FlylightProcessingIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
-        FlylightPipelineArgs args = getArgs(jacsServiceData);
+        FlylightSampleArgs args = getArgs(jacsServiceData);
         // get sample's LSMs
         JacsServiceData getSampleLsmMetadataServiceRef = getSampleImageFilesProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
@@ -168,7 +168,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     }
 
     private void stitchTiles(JacsServiceResult<FlylightProcessingIntermediateResult> depResults) {
-        FlylightPipelineArgs args = getArgs(depResults.getJacsServiceData());
+        FlylightSampleArgs args = getArgs(depResults.getJacsServiceData());
         List<MergedAndGroupedAreaResult> allGroupedAreasResults = depResults.getResult().mergeTilePairServiceIds.stream()
                 .flatMap(mtpsId -> {
                     JacsServiceData mergeTilePairService = jacsServiceDataPersistence.findById(mtpsId);
@@ -253,7 +253,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         return submitDependencyIfNotPresent(jacsServiceData, mipsService);
     }
 
-    private FlylightPipelineArgs getArgs(JacsServiceData jacsServiceData) {
-        return SampleServiceArgs.parse(jacsServiceData.getArgsArray(), new FlylightPipelineArgs());
+    private FlylightSampleArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new FlylightSampleArgs());
     }
 }
