@@ -170,8 +170,9 @@ public class SampleDataService {
         return lsmPair;
     }
 
-    public void updateLSMFiles(LSMImage lsmImage) {
-        lsmImageDao.updateImageFiles(lsmImage);
+    public PageResult<LSMImage> searchLsms(String subjectName, LSMImage pattern, PageRequest pageRequest) {
+        Subject subject = subjectService.getSubjectByName(subjectName);
+        return lsmImageDao.findMatchingLSMs(subject, pattern, pageRequest);
     }
 
     public PageResult<Sample> searchSamples(String subjectName, Sample pattern, DataInterval<Date> tmogInterval, PageRequest pageRequest) {
@@ -183,12 +184,19 @@ public class SampleDataService {
         lsmImageDao.save(lsmImage);
     }
 
+    public void createSample(Sample sample) {
+        sampleDao.save(sample);
+    }
+
     public void updateLSM(LSMImage lsmImage) {
         lsmImageDao.update(lsmImage);
     }
 
-    public PageResult<LSMImage> searchLsms(String subjectName, LSMImage pattern, PageRequest pageRequest) {
-        Subject subject = subjectService.getSubjectByName(subjectName);
-        return lsmImageDao.findMatchingLSMs(subject, pattern, pageRequest);
+    public void updateLSMFiles(LSMImage lsmImage) {
+        lsmImageDao.updateImageFiles(lsmImage);
+    }
+
+    public void updateSample(Sample sample) {
+        sampleDao.update(sample);
     }
 }

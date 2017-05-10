@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.domain.FileReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
+import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 
 import java.util.List;
 import java.util.Map;
@@ -14,14 +15,16 @@ import java.util.Map;
 @MongoMapping(collectionName="image", label="Image")
 public class Image extends AbstractDomainObject implements HasRelativeFiles {
     private String filepath;
+    @SAGEAttribute(cvName="jacs_calculated", termName="image_size")
     private String imageSize;
+    @SAGEAttribute(cvName="jacs_calculated", termName="optical_resolution")
     private String opticalResolution;
     private String objective;
+    @SAGEAttribute(cvName="light_imagery", termName="channels")
     private Integer numChannels;
     // files are in fact alternate representations of this image instance
     @JsonIgnore
     private HasFileImpl filesImpl = new HasFileImpl();
-
 
     public String getFilepath() {
         return filepath;

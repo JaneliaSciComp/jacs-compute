@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.domain.sample;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.Reference;
+import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 
 import java.util.Date;
 
@@ -14,81 +15,160 @@ public class LSMImage extends Image {
     private String brightnessCompensation;
     private Date completionDate;
 
-    // SAGE Terms
+    // SAGE Attributes
+    @SAGEAttribute(cvName="image_query", termName="create_date")
     private Date tmogDate;
+    @SAGEAttribute(cvName="image_query", termName="id")
     private Integer sageId;
+    @SAGEAttribute(cvName="image_query", termName="line")
     private String line;
+    @SAGEAttribute(cvName="light_imagery", termName="publishing_name")
+    private String publishingName;
+    @SAGEAttribute(cvName="light_imagery", termName="published_externally")
+    private String publishedExternally;
+    @SAGEAttribute(cvName="light_imagery", termName="representative")
     private Boolean representative;
+    @SAGEAttribute(cvName="light_imagery", termName="age")
     private String age;
+    @SAGEAttribute(cvName="light_imagery", termName="annotated_by")
     private String annotatedBy;
+    @SAGEAttribute(cvName="light_imagery", termName="area")
     private String anatomicalArea;
+    @SAGEAttribute(cvName="light_imagery", termName="bc_correction1")
     private String bcCorrection1;
+    @SAGEAttribute(cvName="light_imagery", termName="bc_correction2")
     private String bcCorrection2;
+    @SAGEAttribute(cvName="light_imagery", termName="bits_per_sample")
     private Integer bitsPerSample;
+    @SAGEAttribute(cvName="light_imagery", termName="capture_date")
     private Date captureDate;
+    @SAGEAttribute(cvName="light_imagery", termName="channel_spec")
     private String chanSpec;
+    @SAGEAttribute(cvName="light_imagery", termName="lsm_detection_channel_1_detector_gain")
     private String detectionChannel1DetectorGain;
+    @SAGEAttribute(cvName="light_imagery", termName="lsm_detection_channel_2_detector_gain")
     private String detectionChannel2DetectorGain;
+    @SAGEAttribute(cvName="light_imagery", termName="lsm_detection_channel_3_detector_gain")
     private String detectionChannel3DetectorGain;
+    @SAGEAttribute(cvName="light_imagery", termName="driver")
     private String driver;
+    @SAGEAttribute(cvName="light_imagery", termName="file_size")
     private Long fileSize;
+    @SAGEAttribute(cvName="fly", termName="effector")
     private String effector;
+    @SAGEAttribute(cvName="fly", termName="cross_barcode")
     private Integer crossBarcode;
+    @SAGEAttribute(cvName="light_imagery", termName="gender")
     private String gender;
+    @SAGEAttribute(cvName="light_imagery", termName="full_age")
     private String fullAge;
+    @SAGEAttribute(cvName="light_imagery", termName="mounting_protocol")
     private String mountingProtocol;
+    @SAGEAttribute(cvName="light_imagery", termName="heat_shock_hour")
     private String heatShockHour;
+    @SAGEAttribute(cvName="light_imagery", termName="heat_shock_interval")
     private String heatShockInterval;
+    @SAGEAttribute(cvName="light_imagery", termName="heat_shock_minutes")
     private String heatShockMinutes;
+    @SAGEAttribute(cvName="light_imagery", termName="lsm_illumination_channel_1_name")
     private String illuminationChannel1Name;
+    @SAGEAttribute(cvName="light_imagery", termName="lsm_illumination_channel_2_name")
     private String illuminationChannel2Name;
+    @SAGEAttribute(cvName="light_imagery", termName="lsm_illumination_channel_3_name")
     private String illuminationChannel3Name;
+    @SAGEAttribute(cvName="light_imagery", termName="lsm_illumination_channel_1_power_bc_1")
     private String illuminationChannel1PowerBC1;
+    @SAGEAttribute(cvName="light_imagery", termName="lsm_illumination_channel_2_power_bc_1")
     private String illuminationChannel2PowerBC1;
+    @SAGEAttribute(cvName="light_imagery", termName="lsm_illumination_channel_3_power_bc_1")
     private String illuminationChannel3PowerBC1;
+    @SAGEAttribute(cvName="light_imagery", termName="family")
     private String imageFamily;
+    @SAGEAttribute(cvName="light_imagery", termName="created_by")
     private String createdBy;
+    @SAGEAttribute(cvName="light_imagery", termName="data_set")
     private String dataSet;
+    @SAGEAttribute(cvName="light_imagery", termName="imaging_project")
     private String imagingProject;
+    @SAGEAttribute(cvName="light_imagery", termName="interpolation_elapsed")
     private String interpolationElapsed;
+    @SAGEAttribute(cvName="light_imagery", termName="interpolation_start")
     private Integer interpolationStart;
+    @SAGEAttribute(cvName="light_imagery", termName="interpolation_stop")
     private Integer interpolationStop;
+    @SAGEAttribute(cvName="light_imagery", termName="microscope")
     private String microscope;
+    @SAGEAttribute(cvName="light_imagery", termName="microscope_filename")
     private String microscopeFilename;
+    @SAGEAttribute(cvName="light_imagery", termName="mac_address")
     private String macAddress;
+    @SAGEAttribute(cvName="light_imagery", termName="objective")
     private String objectiveName;
+    @SAGEAttribute(cvName="light_imagery", termName="sample_0time")
     private String sampleZeroTime;
+    @SAGEAttribute(cvName="light_imagery", termName="sample_0z")
     private String sampleZeroZ;
+    @SAGEAttribute(cvName="light_imagery", termName="scan_start")
     private Integer scanStart;
+    @SAGEAttribute(cvName="light_imagery", termName="scan_stop")
     private Integer scanStop;
+    @SAGEAttribute(cvName="light_imagery", termName="scan_type")
     private String scanType;
+    @SAGEAttribute(cvName="light_imagery", termName="screen_state")
     private String screenState;
+    @SAGEAttribute(cvName="light_imagery", termName="slide_code")
     private String slideCode;
+    @SAGEAttribute(cvName="light_imagery", termName="tile")
     private String tile;
+    @SAGEAttribute(cvName="light_imagery", termName="tissue_orientation")
     private String tissueOrientation;
+    @SAGEAttribute(cvName="light_imagery", termName="total_pixels")
     private String totalPixels;
+    @SAGEAttribute(cvName="light_imagery", termName="tracks")
     private Integer tracks;
+    @SAGEAttribute(cvName="light_imagery", termName="voxel_size_x")
     private String voxelSizeX;
+    @SAGEAttribute(cvName="light_imagery", termName="voxel_size_y")
     private String voxelSizeY;
+    @SAGEAttribute(cvName="light_imagery", termName="voxel_size_z")
     private String voxelSizeZ;
+    @SAGEAttribute(cvName="light_imagery", termName="dimension_x")
     private String dimensionX;
+    @SAGEAttribute(cvName="light_imagery", termName="dimension_y")
     private String dimensionY;
+    @SAGEAttribute(cvName="light_imagery", termName="dimension_z")
     private String dimensionZ;
+    @SAGEAttribute(cvName="light_imagery", termName="zoom_x")
     private String zoomX;
+    @SAGEAttribute(cvName="light_imagery", termName="zoom_y")
     private String zoomY;
+    @SAGEAttribute(cvName="light_imagery", termName="zoom_z")
     private String zoomZ;
+    @SAGEAttribute(cvName="light_imagery", termName="vt_line")
     private String vtLine;
+    @SAGEAttribute(cvName="light_imagery", termName="qi")
     private String qiScore;
+    @SAGEAttribute(cvName="light_imagery", termName="qm")
     private String qmScore;
+    @SAGEAttribute(cvName="line_query", termName="organism")
     private String organism;
+    @SAGEAttribute(cvName="line", termName="genotype")
     private String genotype;
+    @SAGEAttribute(cvName="line", termName="flycore_id")
     private Integer flycoreId;
+    @SAGEAttribute(cvName="line", termName="flycore_alias")
     private String flycoreAlias;
+    @SAGEAttribute(cvName="line", termName="flycore_lab")
     private String flycoreLabId;
+    @SAGEAttribute(cvName="line", termName="flycore_landing_site")
     private String flycoreLandingSite;
+    @SAGEAttribute(cvName="line", termName="flycore_permission")
     private String flycorePermission;
+    @SAGEAttribute(cvName="line", termName="flycore_project")
     private String flycoreProject;
+    @SAGEAttribute(cvName="line", termName="flycore_project_subcat")
     private String flycorePSubcategory;
+    @SAGEAttribute(cvName="line", termName="hide")
     private String lineHide;
 
     public Reference getSampleRef() {
@@ -161,6 +241,22 @@ public class LSMImage extends Image {
 
     public void setLine(String line) {
         this.line = line;
+    }
+
+    public String getPublishingName() {
+        return publishingName;
+    }
+
+    public void setPublishingName(String publishingName) {
+        this.publishingName = publishingName;
+    }
+
+    public String getPublishedExternally() {
+        return publishedExternally;
+    }
+
+    public void setPublishedExternally(String publishedExternally) {
+        this.publishedExternally = publishedExternally;
     }
 
     public Boolean getRepresentative() {

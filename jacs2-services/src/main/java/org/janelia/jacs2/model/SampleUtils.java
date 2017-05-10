@@ -3,7 +3,11 @@ package org.janelia.jacs2.model;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.jacs2.model.sage.SlideImage;
+import org.janelia.jacs2.model.sage.SlideImageGroup;
+
+import java.util.Collection;
 
 public class SampleUtils {
     public static LSMImage createLSMFromSlideImage(SlideImage slideImage) {
@@ -96,6 +100,8 @@ public class SampleUtils {
     }
 
     public static void updateLsmAttributes(LSMImage src, LSMImage dst) {
+        if (src.getPublishingName() != null) dst.setPublishingName(src.getPublishingName());
+        if (src.getPublishedExternally() != null) dst.setPublishedExternally(src.getPublishedExternally());
         if (src.getRepresentative() != null) dst.setRepresentative(src.getRepresentative());
         if (src.getAge() != null) dst.setAge(src.getAge());
         if (src.getAnnotatedBy() != null) dst.setAnnotatedBy(src.getAnnotatedBy());
@@ -162,5 +168,10 @@ public class SampleUtils {
         if (src.getFlycoreProject() != null) dst.setFlycoreProject(src.getFlycoreProject());
         if (src.getFlycorePSubcategory() != null) dst.setFlycorePSubcategory(src.getFlycorePSubcategory());
         if (src.getLineHide() != null) dst.setLineHide(src.getLineHide());
+    }
+
+    public static boolean updateSampleAttributes(Sample sample, Collection<SlideImageGroup> objectiveGroups) {
+        // TODO
+        return false; // !!!! FIXME
     }
 }
