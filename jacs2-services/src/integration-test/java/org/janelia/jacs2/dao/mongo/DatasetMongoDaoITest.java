@@ -108,10 +108,33 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
     }
 
     @Test
+    public void findByIdentifierWithNoSubjectArg() {
+        DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of("subject:verify"), ImmutableList.of());
+        testDao.save(testDataset);
+        DataSet retrievedDataset = testDao.findByNameOrIdentifier(null, "ds1Id");
+        assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
+        assertThat(retrievedDataset, hasProperty("identifier", equalTo(testDataset.getIdentifier())));
+    }
+
+    @Test
+    public void findByIdentifierWithSubjectArg() {
+        String subjectName = "user:findByIdentifierWithSubjectArg";
+        Subject subject = new Subject();
+        subject.setKey(subjectName);
+
+        DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(subjectName), ImmutableList.of());
+        testDao.save(testDataset);
+        DataSet retrievedDataset = testDao.findByNameOrIdentifier(subject, "ds1Id");
+        assertThat(retrievedDataset, hasProperty("identifier", equalTo(testDataset.getIdentifier())));
+        assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
+        assertThat(retrievedDataset, hasProperty("ownerKey", equalTo(TEST_OWNER_KEY)));
+    }
+
+    @Test
     public void findByNameWithNoSubjectArg() {
         DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of("subject:verify"), ImmutableList.of());
         testDao.save(testDataset);
-        DataSet retrievedDataset = testDao.findByName(null, "ds1");
+        DataSet retrievedDataset = testDao.findByNameOrIdentifier(null, "ds1");
         assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
     }
 
@@ -123,7 +146,7 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
 
         DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(subjectName), ImmutableList.of());
         testDao.save(testDataset);
-        DataSet retrievedDataset = testDao.findByName(subject, "ds1");
+        DataSet retrievedDataset = testDao.findByNameOrIdentifier(subject, "ds1");
         assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
         assertThat(retrievedDataset, hasProperty("ownerKey", equalTo(TEST_OWNER_KEY)));
     }
@@ -136,7 +159,7 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
 
         DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(), ImmutableList.of());
         testDao.save(testDataset);
-        DataSet retrievedDataset = testDao.findByName(subject, "ds1");
+        DataSet retrievedDataset = testDao.findByNameOrIdentifier(subject, "ds1");
         assertNull(retrievedDataset);
     }
 

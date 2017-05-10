@@ -1,4 +1,4 @@
-package org.janelia.jacs2.asyncservice.sampleprocessing;
+package org.janelia.jacs2.asyncservice.dataimport;
 
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;

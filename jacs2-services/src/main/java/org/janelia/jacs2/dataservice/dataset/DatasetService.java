@@ -18,8 +18,8 @@ public class DatasetService {
         this.subjectService = subjectService;
     }
 
-    public DataSet getDatasetByName(String subjectName, String datasetName) {
+    public DataSet getDatasetByNameOrIdentifier(String subjectName, String datasetNameOrIdentifier) {
         Subject subject = subjectService.getSubjectByName(subjectName);
-        return datasetDao.findByName(subject, datasetName);
+        return datasetDao.findByNameOrIdentifier(subject, datasetNameOrIdentifier);
     }
 }

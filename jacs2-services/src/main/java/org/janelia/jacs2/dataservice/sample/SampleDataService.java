@@ -179,7 +179,16 @@ public class SampleDataService {
         return sampleDao.findMatchingSamples(subject, pattern, tmogInterval, pageRequest);
     }
 
+    public void createLSM(LSMImage lsmImage) {
+        lsmImageDao.save(lsmImage);
+    }
+
     public void updateLSM(LSMImage lsmImage) {
         lsmImageDao.update(lsmImage);
+    }
+
+    public PageResult<LSMImage> searchLsms(String subjectName, LSMImage pattern, PageRequest pageRequest) {
+        Subject subject = subjectService.getSubjectByName(subjectName);
+        return lsmImageDao.findMatchingLSMs(subject, pattern, pageRequest);
     }
 }

@@ -1,5 +1,8 @@
 package org.janelia.jacs2.model.page;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.util.List;
 
 public class PageResult<T> {
@@ -58,5 +61,10 @@ public class PageResult<T> {
 
     public void setResultList(List<T> resultList) {
         this.resultList = resultList;
+    }
+
+    @JsonIgnore
+    public boolean isEmpty() {
+        return CollectionUtils.isEmpty(resultList);
     }
 }

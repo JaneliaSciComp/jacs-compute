@@ -55,6 +55,7 @@ public class SageJdbcDao implements SageDao {
             fieldListBuilder
                     .addAll(IMAGE_ATTR)
                     .addAll(LINE_ATTR)
+                    .add("lab_term.name as lab_value")
                     .add("ds_ip.value as ds_value")
                     .add("sc_ip.value as sc_value")
                     .add("area_ip.value as area_value")
@@ -87,6 +88,7 @@ public class SageJdbcDao implements SageDao {
                     .append("join line ln on ln.id = im.line_id ")
                     .append("join line_property lp on lp.line_id = im.line_id ")
                     .append("join image_property ip on ip.image_id = im.id ")
+                    .append("join cv_term lab_term on ln.lab_id = lab_term.id ")
                     .append(imagePropertyJoin("ds", "data_set"))
                     .append(imagePropertyJoin("sc", "slide_code"))
                     .append(imagePropertyJoin("area", "area"))
@@ -229,8 +231,9 @@ public class SageJdbcDao implements SageDao {
         si.setCaptureDate(rs.getTimestamp("im_capture_date"));
         si.setCreatedBy(rs.getString("im_created_by"));
         si.setCreateDate(rs.getTimestamp("im_create_date"));
-        si.setLineName(rs.getString("ln_name"));
+        si.setLab(rs.getString("lab_value"));
         si.setDataset(rs.getString("ds_value"));
+        si.setLineName(rs.getString("ln_name"));
         si.setSlideCode(rs.getString("sc_value"));
         si.setArea(rs.getString("area_value"));
         si.setObjective(rs.getString("objective_value"));
@@ -242,8 +245,9 @@ public class SageJdbcDao implements SageDao {
             throws SQLException {
         cvs.forEach(cv -> {
             String fieldAlias = lnTermFieldNameGenerator.apply(cv);
+            String fieldKey = cv.getVocabularyName() + "_" + cv.getVocabularyTerm();
             try {
-                si.addProperty(fieldAlias, rs.getString(fieldAlias));
+                si.addProperty(fieldKey, rs.getString(fieldAlias));
             } catch (Exception e) {
                 logger.error("Error reading field: {}", fieldAlias, e);
                 throw new IllegalStateException("Failure reading " + fieldAlias, e);

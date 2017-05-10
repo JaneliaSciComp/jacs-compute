@@ -119,6 +119,7 @@ public class SageJdbcDaoTest {
                         "im.id im_id,im.name im_name,im.url im_url,im.path im_path,im.jfs_path im_jfs_path,im.line_id im_line_id,im.family_id im_family_id," +
                         "im.capture_date im_capture_date,im.representative im_representative,im.created_by im_created_by,im.create_date im_create_date,ln.id ln_id," +
                         "ln.name ln_name,ln.lab_id ln_lab_id,ln.gene_id ln_gene_id,ln.organism_id ln_organism_id,ln.genotype ln_genotype," +
+                        "lab_term.name as lab_value," +
                         "ds_ip.value as ds_value," +
                         "sc_ip.value as sc_value," +
                         "area_ip.value as area_value," +
@@ -144,6 +145,7 @@ public class SageJdbcDaoTest {
                         "join line ln on ln.id = im.line_id " +
                         "join line_property lp on lp.line_id = im.line_id " +
                         "join image_property ip on ip.image_id = im.id " +
+                        "join cv_term lab_term on ln.lab_id = lab_term.id " +
                         imagePropertyJoin("ds", "data_set") +
                         imagePropertyJoin("sc", "slide_code") +
                         imagePropertyJoin("area", "area") +
@@ -191,6 +193,7 @@ public class SageJdbcDaoTest {
                         "im.id im_id,im.name im_name,im.url im_url,im.path im_path,im.jfs_path im_jfs_path,im.line_id im_line_id,im.family_id im_family_id," +
                         "im.capture_date im_capture_date,im.representative im_representative,im.created_by im_created_by,im.create_date im_create_date,ln.id ln_id," +
                         "ln.name ln_name,ln.lab_id ln_lab_id,ln.gene_id ln_gene_id,ln.organism_id ln_organism_id,ln.genotype ln_genotype," +
+                        "lab_term.name as lab_value," +
                         "ds_ip.value as ds_value," +
                         "sc_ip.value as sc_value," +
                         "area_ip.value as area_value," +
@@ -206,6 +209,7 @@ public class SageJdbcDaoTest {
                         "join line ln on ln.id = im.line_id " +
                         "join line_property lp on lp.line_id = im.line_id " +
                         "join image_property ip on ip.image_id = im.id " +
+                        "join cv_term lab_term on ln.lab_id = lab_term.id " +
                         imagePropertyJoin("ds", "data_set") +
                         imagePropertyJoin("sc", "slide_code") +
                         imagePropertyJoin("area", "area") +
@@ -261,6 +265,7 @@ public class SageJdbcDaoTest {
                         "im.id im_id,im.name im_name,im.url im_url,im.path im_path,im.jfs_path im_jfs_path,im.line_id im_line_id,im.family_id im_family_id," +
                         "im.capture_date im_capture_date,im.representative im_representative,im.created_by im_created_by,im.create_date im_create_date,ln.id ln_id," +
                         "ln.name ln_name,ln.lab_id ln_lab_id,ln.gene_id ln_gene_id,ln.organism_id ln_organism_id,ln.genotype ln_genotype," +
+                        "lab_term.name as lab_value," +
                         "ds_ip.value as ds_value," +
                         "sc_ip.value as sc_value," +
                         "area_ip.value as area_value," +
@@ -276,6 +281,7 @@ public class SageJdbcDaoTest {
                         "join line ln on ln.id = im.line_id " +
                         "join line_property lp on lp.line_id = im.line_id " +
                         "join image_property ip on ip.image_id = im.id " +
+                        "join cv_term lab_term on ln.lab_id = lab_term.id " +
                         imagePropertyJoin("ds", "data_set") +
                         imagePropertyJoin("sc", "slide_code") +
                         imagePropertyJoin("area", "area") +
