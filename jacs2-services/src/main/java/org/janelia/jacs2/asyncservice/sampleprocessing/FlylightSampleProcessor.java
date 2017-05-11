@@ -191,9 +191,11 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                 .forEach(groupedArea -> {
                     JacsServiceData stitichingService = null;
                     Optional<Path> tileFile;
+                    Path mipsDir;
                     if (groupedArea.getGroupResults().size() > 1) {
                         Path groupDir = Paths.get(groupedArea.getGroupDir());
                         Path stitchingDir = groupDir.getParent().resolve(STITCH_DIRNAME);
+                        mipsDir = groupDir.getParent().resolve(MIPS_DIRNAME);
                         Path stitchingFile = FileUtils.getFilePath(stitchingDir, stitchedFileNameGenerator.apply(groupedArea), ".v3draw");
                         String referenceChannelNumber = groupedArea.getConsensusChannelComponents().referenceChannelNumbers;
                         stitichingService = stitchTilesFromArea(depResults.getJacsServiceData(), groupDir, stitchingFile, referenceChannelNumber);
@@ -202,10 +204,11 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                         tileFile = groupedArea.getGroupResults().stream()
                                 .map(tp -> Paths.get(tp.getMergeResultFile()))
                                 .findFirst();
+                        mipsDir = tileFile
+                                    .map(fp -> fp.getParent().getParent().resolve(MIPS_DIRNAME))
+                                    .orElse(null);
                     }
                     if (args.persistResults && tileFile.isPresent()) {
-                        Path groupDir = Paths.get(groupedArea.getGroupDir());
-                        Path mipsDir = groupDir.getParent().resolve(MIPS_DIRNAME);
                         generateMips(depResults.getJacsServiceData(), tileFile.get(), mipsDir,
                                 groupedArea.getConsensusChannelComponents().signalChannelsPos,
                                 groupedArea.getConsensusChannelComponents().referenceChannelsPos,
