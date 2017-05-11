@@ -15,7 +15,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.asyncservice.utils.X11Utils;
@@ -125,6 +124,7 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Voi
             scriptWriter.addWithArgs(getExecutable())
                     .addArg(getOutputDir(args).toString())
                     .addArg(args.imgFormat)
+                    .addArg(args.inputFile)
                     .addArg(StringUtils.wrap(getSignalChannels(args), '"'))
                     .addArg(StringUtils.wrap(StringUtils.defaultIfBlank(args.referenceChannel, ""), '"'))
                     .endArgs("");
