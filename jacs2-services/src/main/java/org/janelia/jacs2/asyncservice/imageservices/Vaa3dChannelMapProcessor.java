@@ -135,14 +135,12 @@ public class Vaa3dChannelMapProcessor extends AbstractBasicLifeCycleServiceProce
                 vaa3dCmdOutput = output;
             }
             String channelMapping = getChannelMappingParameters(args);
-            if (checkMappingForIdentityMap(channelMapping)) {
-                if (!sameFile) {
-                    // if the channel mapping is the id but the output is different then simply copy the input to the output
-                    // otherwise there's nothing to do.
-                    Files.copy(input, output);
-                }
+            if (sameFile && checkMappingForIdentityMap(channelMapping)) {
+                // if it's the same file and the channels are in the right order then simply copy the input to the output
+                Files.copy(input, output);
                 return computationFactory.newCompletedComputation(depResults);
             } else {
+                // a format conversion and/or a channel mapping is needed
                 boolean renameResult = sameFile;
                 JacsServiceData vaa3dService = createVaa3dCmdService(input, vaa3dCmdOutput, channelMapping, depResults.getJacsServiceData());
                 return vaa3dCmdProcessor.process(vaa3dService)

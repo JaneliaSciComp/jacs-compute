@@ -177,10 +177,10 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                 any(ServiceArg.class),
                 any(ServiceArg.class)
         );
-        verify(vaa3dChannelMapProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
+        verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "0,0,1,1,2,2,3,3")))
         );
     }
 
@@ -270,10 +270,10 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                 any(ServiceArg.class),
                 any(ServiceArg.class)
         );
-        verify(vaa3dChannelMapProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
+        verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "0,0,1,1,2,2,3,3")))
         );
     }
 
@@ -309,10 +309,10 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                 any(ServiceArg.class),
                 any(ServiceArg.class)
         );
-        verify(vaa3dChannelMapProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
+        verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "0,0,1,1,2,2,3,3")))
         );
     }
 
@@ -346,10 +346,10 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
         );
         verify(linkDataProcessor).createServiceData(any(ServiceExecutionContext.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-source", Paths.get(TEST_WORKING_DIR, objective, area, TEST_LSM_1).toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-target", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-target", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_LSM_1).toString())))
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_LSM_1).toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "2,0,0,1")))
         );
@@ -404,10 +404,10 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                 any(ServiceArg.class),
                 any(ServiceArg.class)
         );
-        verify(vaa3dChannelMapProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
+        verify(vaa3dChannelMapProcessor, times(testAnatomicalArea.getTileLsmPairs().size())).createServiceData(any(ServiceExecutionContext.class),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "0,0,1,1,2,2,3,3")))
         );
         verify(vaa3dStitchGroupingProcessor).createServiceData(any(ServiceExecutionContext.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME).toString()))),
