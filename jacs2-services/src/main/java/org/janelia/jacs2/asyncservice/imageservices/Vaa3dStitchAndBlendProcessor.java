@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -8,8 +9,10 @@ import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
 import org.janelia.jacs2.asyncservice.fileservices.FileMoveProcessor;
 import org.janelia.jacs2.asyncservice.fileservices.FileRemoveProcessor;
@@ -32,9 +35,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Named("vaa3dStitchAndBlend")
-public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<Vaa3dStitchAndBlendProcessor.StitchAndBlendIntermediateResult, StitchAndBlendResult> {
 
     private static final java.lang.String DEFAULT_BLEND_OUTPUT = "output.v3draw";
+
+    static class StitchAndBlendIntermediateResult {
+        private final Number stichingServiceId;
+
+        public StitchAndBlendIntermediateResult(Number stichingServiceId) {
+            this.stichingServiceId = stichingServiceId;
+        }
+    }
 
     static class Vaa3dStitchAndBlendArgs extends ServiceArgs {
         @Parameter(names = "-inputDir", description = "Input file", required = true)
@@ -79,16 +90,30 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
     }
 
     @Override
-    public ServiceResultHandler<File> getResultHandler() {
-        return new AbstractSingleFileServiceResultHandler() {
+    public ServiceResultHandler<StitchAndBlendResult> getResultHandler() {
+
+        return new AbstractAnyServiceResultHandler<StitchAndBlendResult>() {
+            final String resultsPattern = "glob:**/*.{png,avi,mp4}";
+
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile().exists();
             }
 
             @Override
-            public File collectResult(JacsServiceResult<?> depResults) {
-                return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile();
+            public StitchAndBlendResult collectResult(JacsServiceResult<?> depResults) {
+                StitchAndBlendIntermediateResult intermediateResult = (StitchAndBlendIntermediateResult) depResults.getResult();
+                JacsServiceData stitchServiceData = jacsServiceDataPersistence.findById(intermediateResult.stichingServiceId);
+                StitchAndBlendResult result = new StitchAndBlendResult();
+                result.setStitchedImageInfoFile(vaa3dStitchProcessor.getResultHandler().getServiceDataResult(stitchServiceData));
+                result.setStitchedFile(getOutputFile(getArgs(depResults.getJacsServiceData())).toFile());
+                return result;
+            }
+
+            @Override
+            public StitchAndBlendResult getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<StitchAndBlendResult>() {
+                });
             }
         };
     }
@@ -105,7 +130,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
     }
 
     @Override
-    protected JacsServiceResult<Void> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    protected JacsServiceResult<StitchAndBlendIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         Vaa3dStitchAndBlendArgs args = getArgs(jacsServiceData);
         JacsServiceData stitchServiceData = stitch(
                 getInputDir(args),
@@ -132,7 +157,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
             JacsServiceData convertResultServiceData = convert(temporaryBlendOutput, outputFile, "Convert temporary output results", jacsServiceData, blendServiceData);
             rm(temporaryBlendOutput, "Removing temporary output results", jacsServiceData, convertResultServiceData);
         }
-        return new JacsServiceResult<>(jacsServiceData);
+        return new JacsServiceResult<>(jacsServiceData, new StitchAndBlendIntermediateResult(stitchServiceData.getId()));
     }
 
     private JacsServiceData stitch(Path inputDir, int referenceChannel, List<String> additionalPluginParams, String description, JacsServiceData jacsServiceData, JacsServiceData... deps) {
@@ -192,7 +217,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
+    protected ServiceComputation<JacsServiceResult<StitchAndBlendIntermediateResult>> processing(JacsServiceResult<StitchAndBlendIntermediateResult> depResults) {
         return computationFactory.newCompletedComputation(depResults);
     }
 

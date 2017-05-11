@@ -9,6 +9,7 @@ public class MergedAndGroupedAreaResult {
     private String objective;
     private String mergeDir;
     private String groupDir;
+    private String mipsDir;
     private String consensusChannelMapping;
     private ChannelComponents consensusChannelComponents;
     private List<MergeTilePairResult> mergeResults;
