@@ -11,6 +11,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.utils.DataHolder;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.DomainObjectService;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -85,7 +86,7 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
     public ServiceComputation<String> process(JacsServiceData jacsServiceData) {
         LockSampleArgs args = getArgs(jacsServiceData);
 
-        String[] lockHolder = new String[1];
+        DataHolder<String> lockHolder = new DataHolder<>();
         Sample sample = sampleDataService.getSampleById(null, args.sampleId);
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenSuspendUntil(() -> {
@@ -98,11 +99,11 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
                         }
                         return false;
                     }
-                    lockHolder[0] = lockKey;
+                    lockHolder.setData(lockKey);
                     return true;
                 })
                 .thenApply(sd -> {
-                    String lockKey = lockHolder[0];
+                    String lockKey = lockHolder.getData();
                     this.getResultHandler().updateServiceDataResult(sd, lockKey);
                     updateServiceData(sd);
                     return lockKey;
