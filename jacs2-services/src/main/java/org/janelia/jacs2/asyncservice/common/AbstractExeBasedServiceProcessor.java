@@ -64,7 +64,7 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
             return true;
         }
         try {
-            verifyTimeOut(jacsServiceData);
+            verifyAndFailIfTimeOut(jacsServiceData);
         } catch (ComputationException e) {
             jobInfo.terminate();
             throw e;

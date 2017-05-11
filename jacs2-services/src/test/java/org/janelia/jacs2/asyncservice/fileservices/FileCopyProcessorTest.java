@@ -1,13 +1,12 @@
 package org.janelia.jacs2.asyncservice.fileservices;
 
 import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
-import org.janelia.jacs2.asyncservice.common.ServiceComputationQueue;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -16,7 +15,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Instance;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -24,15 +22,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
 public class FileCopyProcessorTest {
@@ -40,10 +35,7 @@ public class FileCopyProcessorTest {
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();
 
-    private ServiceComputationQueue computationQueue;
-    private ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
-    private Instance<ExternalProcessRunner> serviceRunners;
     private String libraryPath = "testLibrary";
     private String scriptName = "testScript";
     private String defaultWorkingDir = "testWorking";
@@ -56,18 +48,11 @@ public class FileCopyProcessorTest {
     public void setUp() throws IOException {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         Logger logger = mock(Logger.class);
-        ExecutorService executor = mock(ExecutorService.class);
-        doAnswer(invocation -> {
-            Runnable r = invocation.getArgument(0);
-            r.run();
-            return null;
-        }).when(executor).execute(any(Runnable.class));
-        computationQueue = new ServiceComputationQueue(executor, executor);
-        serviceComputationFactory = new ServiceComputationFactory(computationQueue, logger);
+        ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
 
         testProcessor = new FileCopyProcessor(serviceComputationFactory,
                 jacsServiceDataPersistence,
-                serviceRunners,
+                null, // serviceRunners are not essential for these unit tests
                 defaultWorkingDir,
                 executablesBaseDir,
                 libraryPath,

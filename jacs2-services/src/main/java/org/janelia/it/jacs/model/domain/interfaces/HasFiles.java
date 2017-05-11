@@ -12,6 +12,10 @@ import java.util.Map;
 public interface HasFiles {
     Map<FileType, String> getFiles();
     String getFileName(FileType fileType);
+    default boolean hasFileName(FileType fileType) {
+        String fn = getFileName(fileType);
+        return fn != null && fn.trim().length() > 0;
+    }
     void setFileName(FileType fileType, String fileName);
     void removeFileName(FileType fileType);
 }

@@ -128,7 +128,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
             if (CollectionUtils.isEmpty(running)) {
                 return new JacsServiceResult<>(jacsServiceData, true);
             }
-            verifyTimeOut(jacsServiceData);
+            verifyAndFailIfTimeOut(jacsServiceData);
             return new JacsServiceResult<>(jacsServiceData, false);
         };
     }
@@ -155,7 +155,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
         }
     }
 
-    protected void  verifyTimeOut(JacsServiceData jacsServiceData) {
+    protected void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
         long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
         if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
             jacsServiceData.updateState(JacsServiceState.TIMEOUT);
@@ -172,7 +172,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
         if (getResultHandler().isResultReady(depsResults)) {
             return true;
         }
-        verifyTimeOut(depsResults.getJacsServiceData());
+        verifyAndFailIfTimeOut(depsResults.getJacsServiceData());
         return false;
     }
 

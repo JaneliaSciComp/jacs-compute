@@ -93,21 +93,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
     @Before
     public void setUp() {
         logger = mock(Logger.class);
-        ServiceComputationQueue serviceComputationQueue = mock(ServiceComputationQueue.class);
-        doAnswer(invocation -> {
-            ServiceComputationTask task = invocation.getArgument(0);
-            if (task != null) {
-                for (;;) {
-                    ServiceComputationQueue.runTask(task);
-                    if (task.isDone()) {
-                        break;
-                    }
-                    Thread.sleep(10L);
-                }
-            }
-            return null;
-        }).when(serviceComputationQueue).submit(any(ServiceComputationTask.class));
-        serviceComputationFactory = new ServiceComputationFactory(serviceComputationQueue, logger);
+        serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
 
         testJacsServiceData = new JacsServiceData();
         testJacsServiceData.setName("test");

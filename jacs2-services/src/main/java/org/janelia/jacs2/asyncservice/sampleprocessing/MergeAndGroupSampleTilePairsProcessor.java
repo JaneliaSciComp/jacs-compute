@@ -15,6 +15,7 @@ import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -230,10 +231,24 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         );
         JacsServiceData sampleLsmsMetadataService = submitDependencyIfNotPresent(jacsServiceData, updateSampleLSMMetadataServiceRef);
 
-        List<MergedAndGroupedAreaTiles> mergedAndGroupedAreas = mergeAndGroupAllTilePairs(jacsServiceData, sampleLsmsMetadataService);
-        MergeSampleTilePairsIntermediateResult result = new MergeSampleTilePairsIntermediateResult(sampleLsmsMetadataService.getId());
-        result.setAreasResults(mergedAndGroupedAreas);
-        return new JacsServiceResult<>(jacsServiceData, result);
+        // the LSM metadata is required for generating the merge tile commands so I am waiting until update completes
+        return computationFactory.newCompletedComputation(sampleLsmsMetadataService)
+                .thenSuspendUntil(() -> {
+                    verifyAndFailIfTimeOut(jacsServiceData);
+                    return sampleLsmsMetadataService.hasCompleted();
+                })
+                .thenApply(lsmMD -> {
+                    if (lsmMD.hasCompletedUnsuccessfully()) {
+                        logger.error("Abandon the rest of the merge process because it could not generate/update sample LSMs metadata");
+                        throw new ComputationException(jacsServiceData, "LSM metadata is required for tile merge");
+                    }
+                    List<MergedAndGroupedAreaTiles> mergedAndGroupedAreas = mergeAndGroupAllTilePairs(jacsServiceData, sampleLsmsMetadataService);
+                    MergeSampleTilePairsIntermediateResult result = new MergeSampleTilePairsIntermediateResult(sampleLsmsMetadataService.getId());
+                    result.setAreasResults(mergedAndGroupedAreas);
+                    return new JacsServiceResult<>(jacsServiceData, result);
+                })
+                .get()
+                ;
     }
 
     private List<MergedAndGroupedAreaTiles> mergeAndGroupAllTilePairs(JacsServiceData jacsServiceData, JacsServiceData sampleLsmsMetadataService) {

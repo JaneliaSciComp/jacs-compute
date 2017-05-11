@@ -66,22 +66,8 @@ public class AbstractExeBasedServiceProcessorTest {
 
     @Before
     public void setUp() {
-        ServiceComputationQueue serviceComputationQueue = mock(ServiceComputationQueue.class);
-        doAnswer(invocation -> {
-            ServiceComputationTask task = invocation.getArgument(0);
-            if (task != null) {
-                for (;;) {
-                    ServiceComputationQueue.runTask(task);
-                    if (task.isDone()) {
-                        break;
-                    }
-                    Thread.sleep(10L);
-                }
-            }
-            return null;
-        }).when(serviceComputationQueue).submit(any(ServiceComputationTask.class));
         Logger logger = mock(Logger.class);
-        ServiceComputationFactory serviceComputationFactory = new ServiceComputationFactory(serviceComputationQueue, logger);
+        ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         Instance<ExternalProcessRunner> serviceRunners = mock(Instance.class);
         processRunner = mock(ExternalProcessRunner.class);

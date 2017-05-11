@@ -6,6 +6,7 @@ import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
+import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
@@ -20,6 +21,7 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
+import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -62,7 +64,10 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
 
     @Before
     public void setUp() {
-        ServiceComputationFactory computationFactory = mock(ServiceComputationFactory.class);
+        Logger logger = mock(Logger.class);
+
+        ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         TimebasedIdentifierGenerator idGenerator = mock(TimebasedIdentifierGenerator.class);
 
@@ -73,11 +78,10 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
         vaa3dStitchGroupingProcessor = mock(Vaa3dStitchGroupingProcessor.class);
         sampleDataService = mock(SampleDataService.class);
 
-        Logger logger = mock(Logger.class);
-
         doAnswer(invocation -> {
             JacsServiceData jacsServiceData = invocation.getArgument(0);
             jacsServiceData.setId(TEST_ID);
+            jacsServiceData.setState(JacsServiceState.SUCCESSFUL); // mark the service as completed otherwise the computation doesn't return
             return null;
         }).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
 

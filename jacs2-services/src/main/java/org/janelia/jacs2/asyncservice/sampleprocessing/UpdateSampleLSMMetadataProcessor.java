@@ -45,6 +45,8 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
     static class UpdateLSMsMetadataArgs extends SampleServiceArgs {
         @Parameter(names = "-channelDyeSpec", description = "Channel dye spec", required = false)
         String channelDyeSpec;
+        @Parameter(names = "-overwrite", description = "Overwrite the metadata if it exists, otherwise the LSM metadata will not be overwritten", required = false)
+        boolean overwrite;
     }
 
     private final SampleDataService sampleDataService;
@@ -112,7 +114,9 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
                     if (lsmImage == null) {
                         throw new IllegalStateException("No LSM found for " + sif.getSampleId() + ":" + sif.getId());
                     }
-                    updateLSM(lsmImage, sif.getMetadataFilePath(), args.channelDyeSpec);
+                    if (!lsmImage.hasFileName(FileType.LsmMetadata) || args.overwrite) {
+                        updateLSM(lsmImage, sif.getMetadataFilePath(), args.channelDyeSpec);
+                    }
                     pd.getResult().addSampleImageFile(sif);
                 });
                 return pd;

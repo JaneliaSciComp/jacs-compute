@@ -44,15 +44,7 @@ public class JacsServiceDispatcherTest {
     @Before
     public void setUp() {
         logger = mock(Logger.class);
-        ServiceComputationQueue serviceComputationQueue = mock(ServiceComputationQueue.class);
-        doAnswer((invocation -> {
-            ServiceComputationTask task = invocation.getArgument(0);
-            if (task != null) {
-                ServiceComputationQueue.runTask(task);
-            }
-            return null;
-        })).when(serviceComputationQueue).submit(any(ServiceComputationTask.class));
-        serviceComputationFactory = new ServiceComputationFactory(serviceComputationQueue, logger);
+        serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
 
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         serviceRegistrarSource = mock(Instance.class);
