@@ -22,7 +22,7 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
 
     @Override
     public JacsServiceData retrieveServiceById(Number instanceId) {
-        return jacsServiceDataPersistence.findById(instanceId);
+        return jacsServiceDataPersistence.findServiceHierarchy(instanceId);
     }
 
     @Override

@@ -20,6 +20,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 
@@ -77,8 +78,8 @@ public class ServiceInfoResource {
 
     @GET
     @Path("/{service-instance-id}")
-    public Response getServiceInfo(@PathParam("service-instance-id") long instanceId) {
-        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(instanceId);
+    public Response getServiceInfo(@PathParam("service-instance-id") Long instanceId) {
+        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
         if (serviceData == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -93,7 +94,7 @@ public class ServiceInfoResource {
 
     @PUT
     @Path("/{service-instance-id}")
-    public Response updateServiceInfo(@PathParam("service-instance-id") long instanceId, JacsServiceData si) {
+    public Response updateServiceInfo(@PathParam("service-instance-id") Long instanceId, JacsServiceData si) {
         JacsServiceData serviceData = jacsServiceDataManager.updateService(instanceId, si);
         if (serviceData == null) {
             return Response

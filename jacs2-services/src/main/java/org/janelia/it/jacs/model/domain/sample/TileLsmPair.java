@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.domain.sample;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.List;
 
@@ -51,5 +52,10 @@ public class TileLsmPair {
             lsmFileListBuilder.add(secondLsm);
         }
         return lsmFileListBuilder.build();
+    }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
     }
 }

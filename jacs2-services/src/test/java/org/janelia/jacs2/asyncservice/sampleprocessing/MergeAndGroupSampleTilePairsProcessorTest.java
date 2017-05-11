@@ -53,7 +53,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     private static final Long TEST_SAMPLE_ID = 100L;
 
     private SampleDataService sampleDataService;
-    private GetSampleLsmsMetadataProcessor getSampleLsmsMetadataProcessor;
+    private UpdateSampleLSMMetadataProcessor updateSampleLSMMetadataProcessor;
     private MergeLsmPairProcessor mergeLsmPairProcessor;
     private Vaa3dChannelMapProcessor vaa3dChannelMapProcessor;
     private LinkDataProcessor linkDataProcessor;
@@ -66,7 +66,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         TimebasedIdentifierGenerator idGenerator = mock(TimebasedIdentifierGenerator.class);
 
-        getSampleLsmsMetadataProcessor = mock(GetSampleLsmsMetadataProcessor.class);
+        updateSampleLSMMetadataProcessor = mock(UpdateSampleLSMMetadataProcessor.class);
         mergeLsmPairProcessor = mock(MergeLsmPairProcessor.class);
         vaa3dChannelMapProcessor = mock(Vaa3dChannelMapProcessor.class);
         linkDataProcessor = mock(LinkDataProcessor.class);
@@ -83,8 +83,9 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
 
         when(idGenerator.generateId()).thenReturn(TEST_ID);
 
-        when(getSampleLsmsMetadataProcessor.getMetadata()).thenCallRealMethod();
-        when(getSampleLsmsMetadataProcessor.createServiceData(any(ServiceExecutionContext.class),
+        when(updateSampleLSMMetadataProcessor.getMetadata()).thenCallRealMethod();
+        when(updateSampleLSMMetadataProcessor.createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
@@ -121,7 +122,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
         mergeAndGroupSampleTilePairsProcessor = new MergeAndGroupSampleTilePairsProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 TEST_WORKING_DIR,
-                getSampleLsmsMetadataProcessor,
+                updateSampleLSMMetadataProcessor,
                 mergeLsmPairProcessor,
                 vaa3dChannelMapProcessor,
                 linkDataProcessor,

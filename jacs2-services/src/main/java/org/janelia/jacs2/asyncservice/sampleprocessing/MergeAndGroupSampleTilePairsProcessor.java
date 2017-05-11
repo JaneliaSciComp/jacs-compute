@@ -76,8 +76,8 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
 
         private List<MergedAndGroupedAreaTiles> areasResults;
 
-        MergeSampleTilePairsIntermediateResult(Number getSampleLsmsServiceDataId) {
-            super(getSampleLsmsServiceDataId);
+        MergeSampleTilePairsIntermediateResult(Number sampleLsmsServiceDataId) {
+            super(sampleLsmsServiceDataId);
         }
 
         public List<MergedAndGroupedAreaTiles> getAreasResults() {
@@ -144,7 +144,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     private static final String MERGE_DIRNAME = "merge";
     private static final String GROUP_DIRNAME = "group";
 
-    private final GetSampleLsmsMetadataProcessor getSampleLsmsMetadataProcessor;
+    private final UpdateSampleLSMMetadataProcessor updateSampleLSMMetadataProcessor;
     private final MergeLsmPairProcessor mergeLsmPairProcessor;
     private final Vaa3dChannelMapProcessor vaa3dChannelMapProcessor;
     private final LinkDataProcessor linkDataProcessor;
@@ -156,7 +156,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     MergeAndGroupSampleTilePairsProcessor(ServiceComputationFactory computationFactory,
                                           JacsServiceDataPersistence jacsServiceDataPersistence,
                                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                          GetSampleLsmsMetadataProcessor getSampleLsmsMetadataProcessor,
+                                          UpdateSampleLSMMetadataProcessor updateSampleLSMMetadataProcessor,
                                           MergeLsmPairProcessor mergeLsmPairProcessor,
                                           Vaa3dChannelMapProcessor vaa3dChannelMapProcessor,
                                           LinkDataProcessor linkDataProcessor,
@@ -165,7 +165,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                                           TimebasedIdentifierGenerator identifierGenerator,
                                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.getSampleLsmsMetadataProcessor = getSampleLsmsMetadataProcessor;
+        this.updateSampleLSMMetadataProcessor = updateSampleLSMMetadataProcessor;
         this.mergeLsmPairProcessor = mergeLsmPairProcessor;
         this.vaa3dChannelMapProcessor = vaa3dChannelMapProcessor;
         this.linkDataProcessor = linkDataProcessor;
@@ -221,21 +221,22 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     protected JacsServiceResult<MergeSampleTilePairsIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         ConvertTileToImageArgs args = getArgs(jacsServiceData);
 
-        JacsServiceData getSampleLsmsServiceRef = getSampleLsmsMetadataProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
+        JacsServiceData updateSampleLSMMetadataServiceRef = updateSampleLSMMetadataProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),
-                new ServiceArg("-sampleDataDir", args.sampleDataDir)
+                new ServiceArg("-sampleDataDir", args.sampleDataDir),
+                new ServiceArg("-channelDyeSpec", args.channelDyeSpec)
         );
-        JacsServiceData getSampleLsmsService = submitDependencyIfNotPresent(jacsServiceData, getSampleLsmsServiceRef);
+        JacsServiceData sampleLsmsMetadataService = submitDependencyIfNotPresent(jacsServiceData, updateSampleLSMMetadataServiceRef);
 
-        List<MergedAndGroupedAreaTiles> mergedAndGroupedAreas = mergeAndGroupAllTilePairs(jacsServiceData, getSampleLsmsService);
-        MergeSampleTilePairsIntermediateResult result = new MergeSampleTilePairsIntermediateResult(getSampleLsmsService.getId());
+        List<MergedAndGroupedAreaTiles> mergedAndGroupedAreas = mergeAndGroupAllTilePairs(jacsServiceData, sampleLsmsMetadataService);
+        MergeSampleTilePairsIntermediateResult result = new MergeSampleTilePairsIntermediateResult(sampleLsmsMetadataService.getId());
         result.setAreasResults(mergedAndGroupedAreas);
         return new JacsServiceResult<>(jacsServiceData, result);
     }
 
-    private List<MergedAndGroupedAreaTiles> mergeAndGroupAllTilePairs(JacsServiceData jacsServiceData, JacsServiceData getSampleLsmsService) {
+    private List<MergedAndGroupedAreaTiles> mergeAndGroupAllTilePairs(JacsServiceData jacsServiceData, JacsServiceData sampleLsmsMetadataService) {
         ConvertTileToImageArgs args = getArgs(jacsServiceData);
         List<AnatomicalArea> anatomicalAreas =
                 sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective, args.sampleArea);
@@ -280,7 +281,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         }
         return anatomicalAreas.stream()
                 .map(ar -> mergeChannelsForAllTilesFromAnArea(ar, multiscanBlendVersion, channelMappingFunc, mergeFileNameGenerator,
-                        channelMappingConsensusCombiner, jacsServiceData, args, getSampleLsmsService))
+                        channelMappingConsensusCombiner, jacsServiceData, args, sampleLsmsMetadataService))
                 .map(atr -> {
                     // if there is more than one tile in the current area then group the tiles for stitching
                     if (atr.mergeResults.size() > 1) {
@@ -505,6 +506,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     private MergeChannelsData determineChannelMappingUsingDyeSpec(TileLsmPair tilePair,
                                                                   Pair<Multimap<String, String>, Map<String, String>> channelDyesMapData,
                                                                   List<String> outputChannels) {
+        logger.info("Determine channel mapping using dye spec for {}", tilePair);
         Collection<String> referenceDyes = channelDyesMapData.getLeft().get("reference");
         Map<String, String> dyesToTagMap = channelDyesMapData.getRight();
 
@@ -539,6 +541,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     }
 
     private MergeChannelsData determineChannelMappingsUsingChanSpec(TileLsmPair tilePair, String outputChannelSpec, MergeAlgorithm mergeAlgorithm) {
+        logger.info("Determine channel mapping using channel spec for {}", tilePair);
         LSMImage lsm1 = tilePair.getFirstLsm();
         LSMMetadata lsm1Metadata = LSMProcessingTools.getLSMMetadata(lsm1.getFileName(FileType.LsmMetadata));
         LSMImage lsm2 = tilePair.getSecondLsm();
