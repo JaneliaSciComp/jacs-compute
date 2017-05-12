@@ -104,7 +104,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
 
             @Override
             public BasicMIPsAndMoviesResult getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<BasicMIPsAndMoviesResult>() {});
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<BasicMIPsAndMoviesResult>() {});
             }
         };
     }

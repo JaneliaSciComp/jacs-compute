@@ -208,7 +208,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             }
 
             public List<SampleAreaResult> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<SampleAreaResult>>() {});
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<SampleAreaResult>>() {});
             }
         };
     }

@@ -118,7 +118,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
 
             @Override
             public List<LSMSummary> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<LSMSummary>>() {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<LSMSummary>>() {
                 });
             }
         };

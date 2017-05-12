@@ -67,12 +67,12 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
 
             @Override
             public void updateServiceDataResult(JacsServiceData jacsServiceData, String result) {
-                jacsServiceData.setStringifiedResult(result);
+                jacsServiceData.setSerializableResult(result);
             }
 
             @Override
             public String getServiceDataResult(JacsServiceData jacsServiceData) {
-                return jacsServiceData.getStringifiedResult();
+                return (String) jacsServiceData.getSerializableResult();
             }
         };
     }

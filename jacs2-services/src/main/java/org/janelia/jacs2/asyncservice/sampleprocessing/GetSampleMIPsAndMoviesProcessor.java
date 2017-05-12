@@ -104,7 +104,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
             }
 
             public List<SampleImageMIPsFile> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<SampleImageMIPsFile>>() {});
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<SampleImageMIPsFile>>() {});
             }
         };
     }

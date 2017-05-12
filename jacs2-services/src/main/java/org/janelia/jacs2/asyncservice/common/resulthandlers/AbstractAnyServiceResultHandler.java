@@ -8,7 +8,7 @@ public abstract class AbstractAnyServiceResultHandler<T> implements ServiceResul
 
     @Override
     public void updateServiceDataResult(JacsServiceData jacsServiceData, T result) {
-        jacsServiceData.setStringifiedResult(ServiceDataUtils.anyToString(result));
+        jacsServiceData.setSerializableResult(ServiceDataUtils.anyToSerializableObject(result));
     }
 
 }

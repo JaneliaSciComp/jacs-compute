@@ -107,7 +107,7 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
 
             @Override
             public Map<String, String> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<Map<String, String>>() {});
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<Map<String, String>>() {});
             }
         };
     }

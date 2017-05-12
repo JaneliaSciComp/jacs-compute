@@ -18,11 +18,10 @@ public class ServiceDataUtils {
 
     private static ObjectMapper MAPPER = ObjectMapperFactory.instance().getDefaultObjectMapper();
 
-    public static List<File> stringToFileList(String s) {
-        if (StringUtils.isNotBlank(s)) {
-            return Splitter.on(",").omitEmptyStrings().trimResults()
-                    .splitToList(s)
-                    .stream()
+    public static List<File> serializableObjectToFileList(Object o) {
+        if (o != null) {
+            List<String> filePathsList = MAPPER.convertValue(o, new TypeReference<List<String>>() {});
+            return filePathsList.stream()
                     .map(File::new)
                     .collect(Collectors.toList());
         } else {
@@ -30,26 +29,26 @@ public class ServiceDataUtils {
         }
     }
 
-    public static String fileListToString(List<File> fileList) {
+    public static Object fileListToSerializableObject(List<File> fileList) {
         if (CollectionUtils.isNotEmpty(fileList)) {
             return fileList.stream()
                     .filter(r -> r != null)
                     .map(File::getAbsolutePath)
-                    .collect(Collectors.joining(","));
+                    .collect(Collectors.toList());
         } else {
             return null;
         }
     }
 
-    public static File stringToFile(String s) {
-        if (StringUtils.isNotBlank(s)) {
-            return new File(s);
+    public static File serializableObjectToFile(Object o) {
+        if (o instanceof String && StringUtils.isNotBlank((String) o)) {
+            return new File((String) o);
         } else {
             return null;
         }
     }
 
-    public static String fileToString(File result) {
+    public static Object fileToSerializableObject(File result) {
         if (result != null) {
             return result.getAbsolutePath();
         } else {
@@ -57,22 +56,14 @@ public class ServiceDataUtils {
         }
     }
 
-    public  static <T> T stringToAny(String s, TypeReference typeRef) {
-        try {
-            if (StringUtils.isBlank(s))
-                return null;
-            else
-                return MAPPER.readValue(s, typeRef);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    public  static <T> T serializableObjectToAny(Object o, TypeReference typeRef) {
+        if (o == null)
+            return null;
+        else
+            return MAPPER.convertValue(o, typeRef);
     }
 
-    public static <T> String anyToString(T any) {
-        try {
-            return any == null ? null : MAPPER.writeValueAsString(any);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    public static <T> Object anyToSerializableObject(T any) {
+        return any == null ? null : MAPPER.valueToTree(any);
     }
 }

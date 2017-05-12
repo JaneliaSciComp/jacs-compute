@@ -112,7 +112,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
 
             @Override
             public StitchAndBlendResult getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<StitchAndBlendResult>() {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<StitchAndBlendResult>() {
                 });
             }
         };

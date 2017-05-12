@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
 import org.janelia.jacs2.model.BaseEntity;
@@ -36,7 +37,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private List<String> args = new ArrayList<>();
     private Map<String, String> env = new LinkedHashMap<>();
     private Map<String, String> resources = new LinkedHashMap<>(); // this could/should be used for grid jobs resources
-    private String stringifiedResult;
+    private Object serializableResult;
     private String workspace;
     private Number parentServiceId;
     private Number rootServiceId;
@@ -261,12 +262,12 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.resources.clear();
     }
 
-    public String getStringifiedResult() {
-        return stringifiedResult;
+    public Object getSerializableResult() {
+        return serializableResult;
     }
 
-    public void setStringifiedResult(String stringifiedResult) {
-        this.stringifiedResult = stringifiedResult;
+    public void setSerializableResult(Object serializableResult) {
+        this.serializableResult = serializableResult;
     }
 
     public void addEvent(JacsServiceEventTypes name, String value) {
@@ -359,7 +360,11 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     @Override
     public String toString() {
-        return ReflectionToStringBuilder.toStringExclude(this, ImmutableList.of("dependencies"));
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("name", name)
+                .append("args", args)
+                .toString();
     }
 
     public boolean hasNeverBeenProcessed() {
@@ -426,15 +431,4 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         setState(newState);
     }
 
-    /**
-     * Copy some service info fields from the specified argument.
-     * @param src
-     */
-    public void refreshServiceInfoFrom(JacsServiceData src) {
-        this.state = src.state;
-        this.priority = src.priority;
-        this.owner = src.owner;
-        this.stringifiedResult = src.stringifiedResult;
-        this.events = src.events;
-    }
 }

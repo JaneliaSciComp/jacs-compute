@@ -11,12 +11,12 @@ public abstract class AbstractFileListServiceResultHandler implements ServiceRes
 
     @Override
     public void updateServiceDataResult(JacsServiceData jacsServiceData, List<File> result) {
-        jacsServiceData.setStringifiedResult(ServiceDataUtils.fileListToString(result));
+        jacsServiceData.setSerializableResult(ServiceDataUtils.fileListToSerializableObject(result));
     }
 
     @Override
     public List<File> getServiceDataResult(JacsServiceData jacsServiceData) {
-        return ServiceDataUtils.stringToFileList(jacsServiceData.getStringifiedResult());
+        return ServiceDataUtils.serializableObjectToFileList(jacsServiceData.getSerializableResult());
     }
 
 }

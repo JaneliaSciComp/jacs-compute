@@ -10,11 +10,11 @@ public abstract class AbstractSingleFileServiceResultHandler implements ServiceR
 
     @Override
     public void updateServiceDataResult(JacsServiceData jacsServiceData, File result) {
-        jacsServiceData.setStringifiedResult(ServiceDataUtils.fileToString(result));
+        jacsServiceData.setSerializableResult(ServiceDataUtils.fileToSerializableObject(result));
     }
 
     @Override
     public File getServiceDataResult(JacsServiceData jacsServiceData) {
-        return ServiceDataUtils.stringToFile(jacsServiceData.getStringifiedResult());
+        return ServiceDataUtils.serializableObjectToFile(jacsServiceData.getSerializableResult());
     }
 }
