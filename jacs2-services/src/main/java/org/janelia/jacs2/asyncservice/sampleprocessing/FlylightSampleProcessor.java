@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
@@ -9,10 +10,12 @@ import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.MIPGenerationProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.StitchAndBlendResult;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -25,28 +28,41 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Named("flylight")
-public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProcessor<FlylightSampleProcessor.FlylightProcessingIntermediateResult, Void> {
+public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProcessor<FlylightSampleProcessor.FlylightProcessingIntermediateResult, List<SampleAreaResult>> {
 
     private static final String STITCH_DIRNAME = "stitch";
     private static final String MIPS_DIRNAME = "mips";
 
     static class FlylightProcessingIntermediateResult extends GetSampleLsmsIntermediateResult {
-
         private final List<Number> mergeTilePairServiceIds;
+        private final List<AreaStitchingIntermediateResult> stitchedAreasResults = new ArrayList<>();
 
         FlylightProcessingIntermediateResult(Number getSampleLsmsServiceDataId, List<Number> mergeTilePairServiceIds) {
             super(getSampleLsmsServiceDataId);
             this.mergeTilePairServiceIds = mergeTilePairServiceIds;
         }
+    }
 
+    static class AreaStitchingIntermediateResult {
+        private final SampleAreaResult sampleAreaResult;
+        private Optional<Number> stichingServiceId;
+        private Optional<Number> mipsServiceId;
+
+        public AreaStitchingIntermediateResult(SampleAreaResult sampleAreaResult, Optional<Number> stichingServiceId, Optional<Number> mipsServiceId) {
+            this.sampleAreaResult = sampleAreaResult;
+            this.stichingServiceId = stichingServiceId;
+            this.mipsServiceId = mipsServiceId;
+        }
     }
 
     static class FlylightSampleArgs extends SampleServiceArgs {
@@ -99,21 +115,23 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     }
 
     @Override
-    public ServiceResultHandler<Void> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<Void>() {
+    public ServiceResultHandler<List<SampleAreaResult>> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<List<SampleAreaResult>>() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
             @Override
-            public Void collectResult(JacsServiceResult<?> depResults) {
-                return null;
+            public List<SampleAreaResult> collectResult(JacsServiceResult<?> depResults) {
+                FlylightProcessingIntermediateResult result = (FlylightProcessingIntermediateResult) depResults.getResult();
+                return result.stitchedAreasResults.stream()
+                        .map(ar -> ar.sampleAreaResult)
+                        .collect(Collectors.toList());
             }
 
-            @Override
-            public Void getServiceDataResult(JacsServiceData jacsServiceData) {
-                return null;
+            public List<SampleAreaResult> getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<SampleAreaResult>>() {});
             }
         };
     }
@@ -161,22 +179,29 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     protected ServiceComputation<JacsServiceResult<FlylightProcessingIntermediateResult>> processing(JacsServiceResult<FlylightProcessingIntermediateResult> depResults) {
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
-                    stitchTiles(pd);
+                    pd.getResult().stitchedAreasResults.addAll(stitchTiles(pd));
+                    return pd;
+                })
+                .thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(depResults.getJacsServiceData()))
+                .thenApply(pd -> {
+                    pd.getResult().stitchedAreasResults.stream()
+                            .forEach(this::updateStitchingResult)
+                            ;
                     return pd;
                 })
                 ;
     }
 
-    private void stitchTiles(JacsServiceResult<FlylightProcessingIntermediateResult> depResults) {
+    private List<AreaStitchingIntermediateResult> stitchTiles(JacsServiceResult<FlylightProcessingIntermediateResult> depResults) {
         FlylightSampleArgs args = getArgs(depResults.getJacsServiceData());
-        List<MergedAndGroupedAreaResult> allGroupedAreasResults = depResults.getResult().mergeTilePairServiceIds.stream()
+        List<SampleAreaResult> allGroupedAreasResults = depResults.getResult().mergeTilePairServiceIds.stream()
                 .flatMap(mtpsId -> {
                     JacsServiceData mergeTilePairService = jacsServiceDataPersistence.findById(mtpsId);
-                    List<MergedAndGroupedAreaResult> mergeTilePairResults = mergeAndGroupSampleTilePairsProcessor.getResultHandler().getServiceDataResult(mergeTilePairService);
+                    List<SampleAreaResult> mergeTilePairResults = mergeAndGroupSampleTilePairsProcessor.getResultHandler().getServiceDataResult(mergeTilePairService);
                     return mergeTilePairResults.stream();
                 })
                 .collect(Collectors.toList());
-        Function<MergedAndGroupedAreaResult, String> stitchedFileNameGenerator;
+        Function<SampleAreaResult, String> stitchedFileNameGenerator;
         if (canUseAreaNameAsMergeFile(allGroupedAreasResults)) {
             stitchedFileNameGenerator = groupedArea -> {
                 StringBuilder nameBuilder = new StringBuilder("stitched-");
@@ -187,10 +212,12 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         } else {
             stitchedFileNameGenerator = groupedArea -> "stitched-" + identifierGenerator.generateId();
         }
-        allGroupedAreasResults.stream()
-                .forEach(groupedArea -> {
+        return allGroupedAreasResults.stream()
+                .map(groupedArea -> {
                     JacsServiceData stitichingService = null;
                     Optional<Path> tileFile;
+                    Optional<Number> stitchingServiceId;
+                    Optional<Number> mipsServiceId;
                     Path mipsDir;
                     if (groupedArea.getGroupResults().size() > 1) {
                         Path groupDir = Paths.get(groupedArea.getGroupDir());
@@ -200,25 +227,34 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                         String referenceChannelNumber = groupedArea.getConsensusChannelComponents().referenceChannelNumbers;
                         stitichingService = stitchTilesFromArea(depResults.getJacsServiceData(), groupDir, stitchingFile, referenceChannelNumber);
                         tileFile = Optional.of(stitchingFile);
+                        groupedArea.setStitchDir(stitchingDir.toString());
+                        stitchingServiceId = Optional.of(stitichingService.getId());
                     } else {
                         tileFile = groupedArea.getGroupResults().stream()
                                 .map(tp -> Paths.get(tp.getMergeResultFile()))
                                 .findFirst();
                         mipsDir = tileFile
-                                    .map(fp -> fp.getParent().getParent().resolve(MIPS_DIRNAME))
-                                    .orElse(null);
+                                .map(fp -> fp.getParent().getParent().resolve(MIPS_DIRNAME))
+                                .orElse(null);
+                        stitchingServiceId = Optional.empty();
                     }
                     if (args.persistResults && tileFile.isPresent()) {
-                        generateMips(depResults.getJacsServiceData(), tileFile.get(), mipsDir,
+                        JacsServiceData mipsService = generateMips(depResults.getJacsServiceData(), tileFile.get(), mipsDir,
                                 groupedArea.getConsensusChannelComponents().signalChannelsPos,
                                 groupedArea.getConsensusChannelComponents().referenceChannelsPos,
                                 stitichingService);
+                        groupedArea.setMipsDir(mipsDir.toString());
+                        mipsServiceId = Optional.of(mipsService.getId());
+                    } else {
+                        mipsServiceId = Optional.empty();
                     }
+                    return new AreaStitchingIntermediateResult(groupedArea, stitchingServiceId, mipsServiceId);
                 })
+                .collect(Collectors.toList())
         ;
     }
 
-    private boolean canUseAreaNameAsMergeFile(List<MergedAndGroupedAreaResult> groupedAreas) {
+    private boolean canUseAreaNameAsMergeFile(List<SampleAreaResult> groupedAreas) {
         long uniqueGroupedAreasCount = groupedAreas.stream()
                 .map(groupedArea -> {
                     StringBuilder nameBuilder = new StringBuilder();
@@ -254,6 +290,20 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                 new ServiceArg("-imgFormat", "png")
         );
         return submitDependencyIfNotPresent(jacsServiceData, mipsService);
+    }
+
+    private void updateStitchingResult(AreaStitchingIntermediateResult areaResults) {
+        areaResults.stichingServiceId.ifPresent(serviceId -> {
+            JacsServiceData sd = jacsServiceDataPersistence.findById(serviceId);
+            StitchAndBlendResult stitchResult = vaa3dStitchAndBlendProcessor.getResultHandler().getServiceDataResult(sd);
+            areaResults.sampleAreaResult.setStitchInfoFile(stitchResult.getStitchedImageInfoFile().getAbsolutePath());
+            areaResults.sampleAreaResult.setStichFile(stitchResult.getStitchedFile().getAbsolutePath());
+        });
+        areaResults.mipsServiceId.ifPresent(serviceId -> {
+            JacsServiceData sd = jacsServiceDataPersistence.findById(serviceId);
+            List<File> mips = mipGenerationProcessor.getResultHandler().getServiceDataResult(sd);
+            areaResults.sampleAreaResult.addMips(mips.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
+        });
     }
 
     private FlylightSampleArgs getArgs(JacsServiceData jacsServiceData) {

@@ -71,7 +71,7 @@ import java.util.stream.Stream;
  * Merge and group sample tile pairs  (see jacsV1 Vaa3DConvertToSampleImageService + jacsV1 Vaa3dStichAndGroupingService).
  */
 @Named("mergeAndGroupSampleTilePairs")
-public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycleServiceProcessor<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult, List<MergedAndGroupedAreaResult>> {
+public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycleServiceProcessor<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult, List<SampleAreaResult>> {
 
     static class MergeSampleTilePairsIntermediateResult extends GetSampleLsmsIntermediateResult {
 
@@ -181,19 +181,19 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     }
 
     @Override
-    public ServiceResultHandler<List<MergedAndGroupedAreaResult>> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<List<MergedAndGroupedAreaResult>>() {
+    public ServiceResultHandler<List<SampleAreaResult>> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<List<SampleAreaResult>>() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
             @Override
-            public List<MergedAndGroupedAreaResult> collectResult(JacsServiceResult<?> depResults) {
+            public List<SampleAreaResult> collectResult(JacsServiceResult<?> depResults) {
                 MergeSampleTilePairsIntermediateResult result = (MergeSampleTilePairsIntermediateResult) depResults.getResult();
                 return result.getAreasResults().stream()
                         .map(tmpAreaResult -> {
-                            MergedAndGroupedAreaResult areaResult = new MergedAndGroupedAreaResult();
+                            SampleAreaResult areaResult = new SampleAreaResult();
                             areaResult.setObjective(tmpAreaResult.objective);
                             areaResult.setAnatomicalArea(tmpAreaResult.anatomicalArea);
                             areaResult.setMergeDir(tmpAreaResult.mergeDir);
@@ -207,8 +207,8 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                         .collect(Collectors.toList());
             }
 
-            public List<MergedAndGroupedAreaResult> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<MergedAndGroupedAreaResult>>() {});
+            public List<SampleAreaResult> getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.stringToAny(jacsServiceData.getStringifiedResult(), new TypeReference<List<SampleAreaResult>>() {});
             }
         };
     }

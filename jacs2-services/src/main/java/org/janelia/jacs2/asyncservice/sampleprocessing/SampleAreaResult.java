@@ -2,14 +2,19 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class MergedAndGroupedAreaResult {
+public class SampleAreaResult {
     private String anatomicalArea;
     private String objective;
     private String mergeDir;
     private String groupDir;
+    private String stitchInfoFile;
+    private String stitchDir;
+    private String stichFile;
     private String mipsDir;
+    private List<String> mipsFileList = new ArrayList<>();
     private String consensusChannelMapping;
     private ChannelComponents consensusChannelComponents;
     private List<MergeTilePairResult> mergeResults;
@@ -45,6 +50,50 @@ public class MergedAndGroupedAreaResult {
 
     public void setGroupDir(String groupDir) {
         this.groupDir = groupDir;
+    }
+
+    public String getStitchInfoFile() {
+        return stitchInfoFile;
+    }
+
+    public void setStitchInfoFile(String stitchInfoFile) {
+        this.stitchInfoFile = stitchInfoFile;
+    }
+
+    public String getStitchDir() {
+        return stitchDir;
+    }
+
+    public void setStitchDir(String stitchDir) {
+        this.stitchDir = stitchDir;
+    }
+
+    public String getStichFile() {
+        return stichFile;
+    }
+
+    public void setStichFile(String stichFile) {
+        this.stichFile = stichFile;
+    }
+
+    public String getMipsDir() {
+        return mipsDir;
+    }
+
+    public void setMipsDir(String mipsDir) {
+        this.mipsDir = mipsDir;
+    }
+
+    public List<String> getMipsFileList() {
+        return mipsFileList;
+    }
+
+    public void setMipsFileList(List<String> mipsFileList) {
+        this.mipsFileList = mipsFileList;
+    }
+
+    public void addMips(List<String> mipsFileList) {
+        this.mipsFileList.addAll(mipsFileList);
     }
 
     public String getConsensusChannelMapping() {
