@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.utils;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -12,6 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class FileUtils {
@@ -105,4 +108,25 @@ public class FileUtils {
                 createExtension(fileExt));
         return dir.resolve(actualFileName);
     }
+
+    public static List<String> getTreePathComponentsForId(Number id) {
+        return id == null ? Collections.emptyList() : getTreePathComponentsForId(id.toString());
+    }
+
+    public static List<String> getTreePathComponentsForId(String id) {
+        if (StringUtils.isBlank(id)) {
+            return Collections.emptyList();
+        }
+        String trimmedId = id.trim();
+        int idLength = trimmedId.length();
+        if (idLength < 7) {
+            return ImmutableList.of(trimmedId);
+        } else {
+            return ImmutableList.of(
+                    trimmedId.substring(idLength - 6, idLength - 3),
+                    trimmedId.substring(idLength - 3),
+                    trimmedId);
+        }
+    }
+
 }

@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.hamcrest.Matchers;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -21,6 +22,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
@@ -96,7 +99,6 @@ public class SampleStitchProcessorTest {
     public void submitDependencies() {
         String area = "area";
         String objective = "objective";
-        String stitchAlgorithm = "Any stitch algorithm";
         String mergeAlgorithm = "FLYLIGHT_ORDERED";
         String channelDyeSpec = "reference=Alexa Fluor 488,Cy2;" +
                 "membrane_ha=,ATTO 647,Alexa Fluor 633,Alexa Fluor 647,Cy5;" +
@@ -107,7 +109,6 @@ public class SampleStitchProcessorTest {
         JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
-                stitchAlgorithm,
                 mergeAlgorithm,
                 channelDyeSpec,
                 outputChannelOrder,
@@ -141,7 +142,9 @@ public class SampleStitchProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", SampleProcessorTestUtils.TEST_WORKING_DIR)))
         );
 
-        verify(mergeAndGroupSampleTilePairsProcessor, times(2)).createServiceData(any(ServiceExecutionContext.class),
+        int mergeInvocations = 2;
+
+        verify(mergeAndGroupSampleTilePairsProcessor, times(mergeInvocations)).createServiceData(any(ServiceExecutionContext.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
@@ -152,11 +155,14 @@ public class SampleStitchProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true)))
         );
 
+        assertThat(result.getResult().sampleImageFiles, Matchers.empty());
+        assertThat(result.getResult().getSampleLsmsServiceDataId, notNullValue());
+        assertThat(result.getResult().getMergeTilePairServiceIds(), Matchers.hasSize(mergeInvocations));
     }
 
 
     private JacsServiceData createTestServiceData(long sampleId, String area, String objective,
-                                                  String stitchAlgorithm, String mergeAlgorithm,
+                                                  String mergeAlgorithm,
                                                   String channelDyeSpec, String outputChannelOrder,
                                                   boolean useDistortionCorrection,
                                                   boolean generateMips) {
@@ -166,9 +172,6 @@ public class SampleStitchProcessorTest {
                 .addArg("-objective", objective)
                 .addArg("-sampleDataDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
                 .setWorkspace(SampleProcessorTestUtils.TEST_WORKING_DIR);
-
-        if (StringUtils.isNotBlank(stitchAlgorithm))
-            testServiceDataBuilder.addArg("-stitchAlgorithm", stitchAlgorithm);
 
         if (StringUtils.isNotBlank(mergeAlgorithm))
             testServiceDataBuilder.addArg("-mergeAlgorithm", mergeAlgorithm);
