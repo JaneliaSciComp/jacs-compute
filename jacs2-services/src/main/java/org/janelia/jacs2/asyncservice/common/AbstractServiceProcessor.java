@@ -46,7 +46,9 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         } else {
             jacsServiceDataBuilder.setName(smd.getServiceName());
         }
-        if (executionContext.getParentServiceData() != null) {
+        if (executionContext.getWorkingDirectory() != null) {
+            jacsServiceDataBuilder.setWorkspace(executionContext.getWorkingDirectory());
+        } else if (executionContext.getParentServiceData() != null) {
             Path parentWorkingDir = getWorkingDirectory(executionContext.getParentServiceData());
             jacsServiceDataBuilder.setWorkspace(Objects.toString(parentWorkingDir, null));
         }

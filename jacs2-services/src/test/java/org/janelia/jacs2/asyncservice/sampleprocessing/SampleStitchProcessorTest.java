@@ -22,6 +22,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -160,6 +162,36 @@ public class SampleStitchProcessorTest {
         assertThat(result.getResult().getMergeTilePairServiceIds(), Matchers.hasSize(mergeInvocations));
     }
 
+    @Test
+    public void processingWhenThereAreMultipleTiles() {
+        String area = "area";
+        String objective = "objective";
+        String mergeAlgorithm = "FLYLIGHT_ORDERED";
+        String channelDyeSpec = "reference=Alexa Fluor 488,Cy2;" +
+                "membrane_ha=,ATTO 647,Alexa Fluor 633,Alexa Fluor 647,Cy5;" +
+                "membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;" +
+                "membrane_flag=Alexa Fluor 594";
+        String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
+
+        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
+                area,
+                objective,
+                mergeAlgorithm,
+                channelDyeSpec,
+                outputChannelOrder,
+                true,
+                true
+        );
+
+        Number getSampleLsmsServiceId = 10L;
+        List<Number> mergeTilePairServiceIds = ImmutableList.of(11L, 12L, 13L);
+
+        JacsServiceResult<SampleStitchProcessor.StitchProcessingIntermediateResult> intermediateResults = new JacsServiceResult<>(
+                        testServiceData,
+                        new SampleStitchProcessor.StitchProcessingIntermediateResult(getSampleLsmsServiceId, mergeTilePairServiceIds)
+        );
+        sampleStitchProcessor.processing(intermediateResults);
+    }
 
     private JacsServiceData createTestServiceData(long sampleId, String area, String objective,
                                                   String mergeAlgorithm,

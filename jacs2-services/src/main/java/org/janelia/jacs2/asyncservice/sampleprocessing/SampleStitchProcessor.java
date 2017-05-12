@@ -141,13 +141,14 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
     protected JacsServiceResult<StitchProcessingIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         SampleStitchArgs args = getArgs(jacsServiceData);
         // get sample's LSMs
-        JacsServiceData getSampleLsmMetadataServiceRef = getSampleImageFilesProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
+        JacsServiceData getSampleLsmsServiceRef = getSampleImageFilesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                        .build(),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),
                 new ServiceArg("-sampleDataDir", args.sampleDataDir)
         );
-        JacsServiceData getSampleLsmMetadataService = submitDependencyIfNotPresent(jacsServiceData, getSampleLsmMetadataServiceRef);
+        JacsServiceData getSampleLsmsService = submitDependencyIfNotPresent(jacsServiceData, getSampleLsmsServiceRef);
         List<AnatomicalArea> anatomicalAreas =
                 sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective, args.sampleArea);
         // invoke child file copy services for all LSM files
@@ -155,7 +156,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                 .map(ar -> {
                     // merge sample LSMs if needed
                     JacsServiceData mergeTilePairsService = mergeAndGroupSampleTilePairsProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
-                                    .waitFor(getSampleLsmMetadataService)
+                                    .waitFor(getSampleLsmsService)
                                     .build(),
                             new ServiceArg("-sampleId", args.sampleId.toString()),
                             new ServiceArg("-objective", ar.getObjective()),
@@ -173,7 +174,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                 .collect(Collectors.toList())
                 ;
 
-        return new JacsServiceResult<>(jacsServiceData, new StitchProcessingIntermediateResult(getSampleLsmMetadataService.getId(), mergeTilePairServiceIds));
+        return new JacsServiceResult<>(jacsServiceData, new StitchProcessingIntermediateResult(getSampleLsmsService.getId(), mergeTilePairServiceIds));
     }
 
     @Override
@@ -316,4 +317,5 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
     private SampleStitchArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleStitchArgs());
     }
+
 }
