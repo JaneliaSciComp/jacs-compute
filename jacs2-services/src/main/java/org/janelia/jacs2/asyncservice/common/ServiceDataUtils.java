@@ -2,21 +2,19 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Splitter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
+import org.janelia.jacs2.dao.mongo.utils.MongoModule;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ServiceDataUtils {
 
-    private static ObjectMapper MAPPER = ObjectMapperFactory.instance().getDefaultObjectMapper();
+    private static ObjectMapper MAPPER = ObjectMapperFactory.instance().newObjectMapper().registerModule(new MongoModule());
 
     public static List<File> serializableObjectToFileList(Object o) {
         if (o != null) {

@@ -23,15 +23,10 @@ import org.janelia.jacs2.dao.mongo.utils.DomainCodecProvider;
 import org.janelia.jacs2.dao.mongo.utils.EnumCodec;
 import org.janelia.jacs2.dao.mongo.utils.MapOfEnumCodec;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
