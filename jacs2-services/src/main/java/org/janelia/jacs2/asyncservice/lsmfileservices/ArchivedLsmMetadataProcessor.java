@@ -12,7 +12,6 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileSe
 import org.janelia.jacs2.asyncservice.fileservices.FileCopyProcessor;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -110,7 +109,7 @@ public class ArchivedLsmMetadataProcessor extends AbstractBasicLifeCycleServiceP
     }
 
     private JacsServiceData createFileCopyService(ArchivedLsmMetadataArgs args, File workingLsmFile, JacsServiceData jacsServiceData) {
-        return fileCopyProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData).processingLocation(ProcessingLocation.CLUSTER).build(),
+        return fileCopyProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData).build(),
                     new ServiceArg("-src", getInputFile(args).getAbsolutePath()),
                     new ServiceArg("-dst", workingLsmFile.getAbsolutePath())
             );
