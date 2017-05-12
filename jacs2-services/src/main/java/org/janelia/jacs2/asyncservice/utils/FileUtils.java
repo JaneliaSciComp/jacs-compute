@@ -12,6 +12,7 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,14 @@ public class FileUtils {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public static boolean fileExists(String filepath) {
+        return Files.exists(Paths.get(filepath));
+    }
+
+    public static boolean fileNotExists(String filepath) {
+        return !fileExists(filepath);
     }
 
     /**

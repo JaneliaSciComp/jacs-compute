@@ -21,6 +21,7 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceRe
 import org.janelia.jacs2.asyncservice.imageservices.tools.LSMProcessingTools;
 import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMDetectionChannel;
 import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMMetadata;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.model.DomainModelUtils;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -33,6 +34,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -114,7 +116,7 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
                     if (lsmImage == null) {
                         throw new IllegalStateException("No LSM found for " + sif.getSampleId() + ":" + sif.getId());
                     }
-                    if (!lsmImage.hasFileName(FileType.LsmMetadata) || args.overwrite) {
+                    if (!lsmImage.hasFileName(FileType.LsmMetadata) || args.overwrite || FileUtils.fileNotExists(lsmImage.getFileName(FileType.LsmMetadata))) {
                         updateLSM(lsmImage, sif.getMetadataFilePath(), args.channelDyeSpec);
                     }
                     pd.getResult().addSampleImageFile(sif);
