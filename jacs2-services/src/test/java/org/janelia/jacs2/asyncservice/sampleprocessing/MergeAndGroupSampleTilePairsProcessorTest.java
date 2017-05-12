@@ -2,10 +2,7 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
-import org.janelia.it.jacs.model.domain.sample.LSMImage;
-import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -44,16 +41,6 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     private static final String MERGE_DIRNAME = "merge";
     private static final String GROUP_DIRNAME = "group";
 
-    private static final String TEST_WORKING_DIR = "testdir";
-    private static final String TEST_TILE_NAME = "tileForTest";
-    private static final String TEST_LSM_1 = "lsm1";
-    private static final String TEST_LSM1_METADATA = "src/test/resources/testdata/mergeTilePairs/lsm_1_1.metadata.json";
-    private static final String TEST_LSM_2 = "lsm2";
-    private static final String TEST_LSM2_METADATA = "src/test/resources/testdata/mergeTilePairs/lsm_1_2.metadata.json";
-
-    private static final Long TEST_ID = 1L;
-    private static final Long TEST_SAMPLE_ID = 100L;
-
     private SampleDataService sampleDataService;
     private UpdateSampleLSMMetadataProcessor updateSampleLSMMetadataProcessor;
     private MergeLsmPairProcessor mergeLsmPairProcessor;
@@ -80,12 +67,12 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
 
         doAnswer(invocation -> {
             JacsServiceData jacsServiceData = invocation.getArgument(0);
-            jacsServiceData.setId(TEST_ID);
+            jacsServiceData.setId(SampleProcessorTestUtils.TEST_SERVICE_ID);
             jacsServiceData.setState(JacsServiceState.SUCCESSFUL); // mark the service as completed otherwise the computation doesn't return
             return null;
         }).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
 
-        when(idGenerator.generateId()).thenReturn(TEST_ID);
+        when(idGenerator.generateId()).thenReturn(SampleProcessorTestUtils.TEST_SERVICE_ID);
 
         when(updateSampleLSMMetadataProcessor.getMetadata()).thenCallRealMethod();
         when(updateSampleLSMMetadataProcessor.createServiceData(any(ServiceExecutionContext.class),
@@ -125,7 +112,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
 
         mergeAndGroupSampleTilePairsProcessor = new MergeAndGroupSampleTilePairsProcessor(computationFactory,
                 jacsServiceDataPersistence,
-                TEST_WORKING_DIR,
+                SampleProcessorTestUtils.TEST_WORKING_DIR,
                 updateSampleLSMMetadataProcessor,
                 mergeLsmPairProcessor,
                 vaa3dChannelMapProcessor,
@@ -140,7 +127,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWithDyeSpecThatDoesNotRequireReordering() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
                 "FLYLIGHT_ORDERED",
@@ -150,11 +137,12 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                         "membrane_flag=Alexa Fluor 594",
                 "membrane_ha,membrane_v5,membrane_flag,reference"
         );
-        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
-                .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, null,
-                        createTestLsmPair(
-                                TEST_LSM1_METADATA, null, 0,
-                                TEST_LSM2_METADATA, null, 0))));
+        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area))
+                .thenReturn(ImmutableList.of(SampleProcessorTestUtils.createTestAnatomicalArea(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area, null,
+                        SampleProcessorTestUtils.createTestLsmPair(
+                                SampleProcessorTestUtils.TEST_TILE_NAME,
+                                SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
+                                SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0))));
 
         JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
         result.getResult().getAreasResults()
@@ -165,21 +153,21 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                     assertThat(ar.areaChannelComponents.referenceChannelsPos, equalTo("3"));
                 });
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope1", "m1"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString())))
         );
         verify(linkDataProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class)
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "0,0,1,1,2,2,3,3")))
         );
     }
@@ -188,7 +176,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWithDyeSpecThatRequiresReordering() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
                 "FLYLIGHT_ORDERED",
@@ -198,11 +186,12 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                         "membrane_flag=Alexa Fluor 594",
                 "membrane_flag,membrane_ha,membrane_v5,reference"
         );
-        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
-                .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, null,
-                        createTestLsmPair(
-                                TEST_LSM1_METADATA, null, 0,
-                                TEST_LSM2_METADATA, null, 0))));
+        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area))
+                .thenReturn(ImmutableList.of(SampleProcessorTestUtils.createTestAnatomicalArea(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area, null,
+                        SampleProcessorTestUtils.createTestLsmPair(
+                                SampleProcessorTestUtils.TEST_TILE_NAME,
+                                SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
+                                SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0))));
 
         JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
         result.getResult().getAreasResults()
@@ -213,21 +202,21 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                     assertThat(ar.areaChannelComponents.referenceChannelsPos, equalTo("3"));
                 });
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope1", "m1"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString())))
         );
         verify(linkDataProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class)
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "2,0,0,1,1,2,3,3")))
         );
     }
@@ -236,18 +225,19 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWithChanSpecUsingFlylightOrderedAlgorithm() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
                 "FLYLIGHT_ORDERED",
                 null,
                 null
         );
-        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
-                .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, "sssr",
-                        createTestLsmPair(
-                                TEST_LSM1_METADATA, "ssr", 0,
-                                TEST_LSM2_METADATA, "sr", 0))));
+        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area))
+                .thenReturn(ImmutableList.of(SampleProcessorTestUtils.createTestAnatomicalArea(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area, "sssr",
+                        SampleProcessorTestUtils.createTestLsmPair(
+                                SampleProcessorTestUtils.TEST_TILE_NAME,
+                                SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, "ssr", 0,
+                                SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, "sr", 0))));
 
         JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
         result.getResult().getAreasResults()
@@ -258,21 +248,21 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                     assertThat(ar.areaChannelComponents.referenceChannelsPos, equalTo("3"));
                 });
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope1", "m1"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString())))
         );
         verify(linkDataProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class)
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "0,0,1,1,2,2,3,3")))
         );
     }
@@ -281,12 +271,13 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWithChanSpecUsingFlylightAlgorithm() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID, area, objective, null, null, null);
-        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
-                .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, "sssr",
-                        createTestLsmPair(
-                                TEST_LSM1_METADATA, null, 3,
-                                TEST_LSM2_METADATA, null, 2))));
+        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID, area, objective, null, null, null);
+        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area))
+                .thenReturn(ImmutableList.of(SampleProcessorTestUtils.createTestAnatomicalArea(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area, "sssr",
+                        SampleProcessorTestUtils.createTestLsmPair(
+                                SampleProcessorTestUtils.TEST_TILE_NAME,
+                                SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 3,
+                                SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 2))));
 
         JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
         result.getResult().getAreasResults()
@@ -297,21 +288,21 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                     assertThat(ar.areaChannelComponents.referenceChannelsPos, equalTo("3"));
                 });
         verify(mergeLsmPairProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope1", "m1"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", null))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString())))
         );
         verify(linkDataProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class)
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "0,0,1,1,2,2,3,3")))
         );
     }
@@ -320,12 +311,13 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWhenNoMergeIsNeeded() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID, area, objective, null, null, null);
-        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
-                .thenReturn(ImmutableList.of(createTestAnatomicalArea(objective, area, "rs",
-                        createTestLsmPair(
-                                TEST_LSM1_METADATA, null, 3,
-                                null, null, 0))));
+        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID, area, objective, null, null, null);
+        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area))
+                .thenReturn(ImmutableList.of(SampleProcessorTestUtils.createTestAnatomicalArea(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area, "rs",
+                        SampleProcessorTestUtils.createTestLsmPair(
+                                SampleProcessorTestUtils.TEST_TILE_NAME,
+                                SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 3,
+                                null, null, null, 0))));
 
         JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
         result.getResult().getAreasResults()
@@ -345,12 +337,12 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                 any(ServiceArg.class)
         );
         verify(linkDataProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-source", Paths.get(TEST_WORKING_DIR, objective, area, TEST_LSM_1).toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-target", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_LSM_1).toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-source", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, SampleProcessorTestUtils.TEST_LSM_1).toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-target", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, SampleProcessorTestUtils.TEST_LSM_1).toString())))
         );
         verify(vaa3dChannelMapProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_LSM_1).toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + TEST_TILE_NAME + ".v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, SampleProcessorTestUtils.TEST_LSM_1).toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "2,0,0,1")))
         );
     }
@@ -359,7 +351,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWhenTileNamesAreNotUnique() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
                 "FLYLIGHT_ORDERED",
@@ -369,18 +361,21 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                         "membrane_flag=Alexa Fluor 594",
                 "membrane_ha,membrane_v5,membrane_flag,reference"
         );
-        AnatomicalArea testAnatomicalArea = createTestAnatomicalArea(objective, area, null,
-                createTestLsmPair(
-                        TEST_LSM1_METADATA, null, 0,
-                        TEST_LSM2_METADATA, null, 0),
-                createTestLsmPair(
-                        TEST_LSM1_METADATA, null, 0,
-                        TEST_LSM2_METADATA, null, 0),
-                createTestLsmPair(
-                        TEST_LSM1_METADATA, null, 0,
-                        TEST_LSM2_METADATA, null, 0)
+        AnatomicalArea testAnatomicalArea = SampleProcessorTestUtils.createTestAnatomicalArea(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area, null,
+                SampleProcessorTestUtils.createTestLsmPair(
+                        SampleProcessorTestUtils.TEST_TILE_NAME,
+                        SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
+                        SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0),
+                SampleProcessorTestUtils.createTestLsmPair(
+                        SampleProcessorTestUtils.TEST_TILE_NAME,
+                        SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
+                        SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0),
+                SampleProcessorTestUtils.createTestLsmPair(
+                        SampleProcessorTestUtils.TEST_TILE_NAME,
+                        SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
+                        SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0)
         );
-        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, TEST_SAMPLE_ID, objective, area))
+        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area))
                 .thenReturn(ImmutableList.of(testAnatomicalArea));
 
         JacsServiceResult<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> result = mergeAndGroupSampleTilePairsProcessor.submitServiceDependencies(testServiceData);
@@ -392,26 +387,26 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                     assertThat(ar.areaChannelComponents.referenceChannelsPos, equalTo("3"));
                 });
         verify(mergeLsmPairProcessor, times(testAnatomicalArea.getTileLsmPairs().size())).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm1", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, "lsm1").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-lsm2", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, "lsm2").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope1", "m1"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", "2"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString())))
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, SampleProcessorTestUtils.TEST_TILE_NAME + "tile-1.v3draw").toString())))
         );
         verify(linkDataProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class)
         );
         verify(vaa3dChannelMapProcessor, times(testAnatomicalArea.getTileLsmPairs().size())).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, TEST_TILE_NAME + "tile-1.v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, SampleProcessorTestUtils.TEST_TILE_NAME + "tile-1.v3draw").toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME, SampleProcessorTestUtils.TEST_TILE_NAME + "tile-1.v3draw").toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelMapping", "0,0,1,1,2,2,3,3")))
         );
         verify(vaa3dStitchGroupingProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", Paths.get(TEST_WORKING_DIR, objective, area, MERGE_DIRNAME).toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", Paths.get(TEST_WORKING_DIR, objective, area, GROUP_DIRNAME).toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, MERGE_DIRNAME).toString()))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, objective, area, GROUP_DIRNAME).toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", "4")))
         );
     }
@@ -421,8 +416,8 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                 .addArg("-sampleId", String.valueOf(sampleId))
                 .addArg("-area", area)
                 .addArg("-objective", objective)
-                .addArg("-sampleDataDir", TEST_WORKING_DIR)
-                .setWorkspace(TEST_WORKING_DIR);
+                .addArg("-sampleDataDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
+                .setWorkspace(SampleProcessorTestUtils.TEST_WORKING_DIR);
 
         if (StringUtils.isNotBlank(mergeAlgorithm))
             testServiceDataBuilder.addArg("-mergeAlgorithm", mergeAlgorithm);
@@ -436,34 +431,4 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
         return testServiceDataBuilder.build();
     }
 
-    private AnatomicalArea createTestAnatomicalArea(String objective, String name, String chanSpec, TileLsmPair... tps) {
-        AnatomicalArea a = new AnatomicalArea();
-        a.setDefaultChanSpec(chanSpec);
-        a.setSampleId(TEST_SAMPLE_ID);
-        a.setName(name);
-        a.setObjective(objective);
-        for (TileLsmPair tp : tps) {
-            a.addLsmPair(tp);
-        }
-        return a;
-    }
-
-    private TileLsmPair createTestLsmPair(String lsm1MetadataFile, String chanSpec1, int lsm1NChannels,
-                                          String lsm2MetadataFile, String chanSpec2, int lsm2NChannels) {
-        TileLsmPair tp = new TileLsmPair();
-        tp.setTileName(TEST_TILE_NAME);
-        tp.setFirstLsm(createTestLsm(TEST_LSM_1, "m1", chanSpec1, lsm1NChannels, lsm1MetadataFile));
-        if (StringUtils.isNotBlank(lsm2MetadataFile)) tp.setSecondLsm(createTestLsm(TEST_LSM_2, "m2", chanSpec2, lsm2NChannels, lsm2MetadataFile));
-        return tp;
-    }
-
-    private LSMImage createTestLsm(String lsmPath, String microscope, String chanSpec, int nChannels, String lsmMetadataFile) {
-        LSMImage lsm = new LSMImage();
-        lsm.setFilepath(lsmPath);
-        lsm.setMicroscope(microscope);
-        lsm.setChanSpec(chanSpec);
-        lsm.setNumChannels(chanSpec != null ? chanSpec.length() : nChannels);
-        lsm.setFileName(FileType.LsmMetadata, lsmMetadataFile);
-        return lsm;
-    }
 }
