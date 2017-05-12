@@ -56,7 +56,7 @@ public class FileRemoveProcessor extends AbstractBasicLifeCycleServiceProcessor<
                     try {
                         FileMoveArgs args = getArgs(pd.getJacsServiceData());
                         Path filePath = getFile(args);
-                        if (!Files.exists(filePath)) {
+                        if (Files.exists(filePath)) {
                             Files.delete(filePath);
                         }
                         return pd;

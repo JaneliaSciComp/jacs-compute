@@ -23,17 +23,24 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * LinkDataProcessor creates a soft link for the specified input. If a link already exists and the errorIfExists is on
+ * then the processor fails otherwise it simply overwrites it.
+ */
 @Named("linkData")
 public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
 
     public static class LinkDataArgs extends ServiceArgs {
         @Parameter(names = {"-input", "-source"}, description = "Source name", required = true)
         String source;
-        @Parameter(names = {"-target"}, description = "Target name or location", required = true)
+        @Parameter(names = {"-target"}, description = "Target name or location of the link", required = true)
         String target;
+        @Parameter(names = {"-errorIfExists"}, description = "Error if a link already exists, otherwise simply overwrite it", required = false)
+        boolean errorIfExists;
     }
 
     @Inject
@@ -93,6 +100,13 @@ public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<Vo
                         Path sourcePath = getSourceFile(args);
                         Path targetPath = getTargetFile(args);
                         if (!sourcePath.toAbsolutePath().startsWith(targetPath.toAbsolutePath())) {
+                            if (Files.exists(targetPath, LinkOption.NOFOLLOW_LINKS)) {
+                                if (args.errorIfExists) {
+                                    throw new ComputationException(pd.getJacsServiceData(), "Link " + targetPath + " already exists");
+                                } else {
+                                    Files.deleteIfExists(targetPath);
+                                }
+                            }
                             Files.createSymbolicLink(targetPath, sourcePath);
                         }
                         return pd;

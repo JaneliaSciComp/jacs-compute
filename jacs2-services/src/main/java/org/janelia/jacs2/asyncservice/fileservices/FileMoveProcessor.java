@@ -34,6 +34,8 @@ public class FileMoveProcessor extends AbstractBasicLifeCycleServiceProcessor<Vo
         String source;
         @Parameter(names = {"-target"}, description = "Target name or location", required = true)
         String target;
+        @Parameter(names = {"-errorIfExists"}, description = "Error if a link already exists, otherwise simply overwrite it", required = false)
+        boolean errorIfExists;
     }
 
     @Inject
@@ -93,6 +95,13 @@ public class FileMoveProcessor extends AbstractBasicLifeCycleServiceProcessor<Vo
                         Path sourcePath = getSourceFile(args);
                         Path targetPath = getTargetFile(args);
                         if (!sourcePath.toAbsolutePath().startsWith(targetPath.toAbsolutePath())) {
+                            if (Files.exists(targetPath)) {
+                                if (args.errorIfExists) {
+                                    throw new ComputationException(pd.getJacsServiceData(), "File " + targetPath + " already exists");
+                                } else {
+                                    Files.deleteIfExists(targetPath);
+                                }
+                            }
                             Files.move(sourcePath, targetPath);
                         }
                         return pd;
