@@ -88,6 +88,7 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
                 "java.rmi.ConnectException",
                 "java.net.ConnectException",
                 "java.lang.NullPointerException", // strangely there are a lot of this in Fiji logs
+                "java.lang.ArrayIndexOutOfBoundsException: 0 >= 0",
                 "java.lang.IllegalArgumentException: Cannot handle app name",
                 "javassist.CannotCompileException: No code replaced"
         };
