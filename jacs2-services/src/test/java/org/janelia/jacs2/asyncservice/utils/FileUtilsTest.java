@@ -51,4 +51,15 @@ public class FileUtilsTest {
         });
     }
 
+    @Test
+    public void replaceFileExt() {
+        Map<String, String> testData = ImmutableMap.<String, String>builder()
+                .put("test/filenamewithext.oldext", "test/filenamewithext.newext")
+                .put("test/filenamenoext", "test/filenamenoext.newext")
+                .put("test/filenamewithext.ext1.ext2", "test/filenamewithext.ext1.newext")
+                .build();
+        testData.entrySet().forEach(entry -> {
+            assertThat(FileUtils.replaceFileExt(Paths.get(entry.getKey()), "newext"), equalTo(Paths.get(entry.getValue())));
+        });
+    }
 }

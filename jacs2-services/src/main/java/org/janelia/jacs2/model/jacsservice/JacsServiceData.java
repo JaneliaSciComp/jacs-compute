@@ -2,8 +2,6 @@ package org.janelia.jacs2.model.jacsservice;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
@@ -27,7 +25,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private String name;
     private String description;
     private String version;
-    private ProcessingLocation processingLocation;
+    private ProcessingLocation processingLocation = ProcessingLocation.LOCAL;
     private JacsServiceState state = JacsServiceState.CREATED;
     private Integer priority = 0;
     private String owner;

@@ -51,19 +51,9 @@ public class ExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
             if (StringUtils.isNotBlank(serviceContext.getInputPath())) {
                 jt.setInputPath(":" + serviceContext.getInputPath());
             }
-            if (StringUtils.isNotBlank(serviceContext.getOutputPath())) {
-                outputFile = new File(serviceContext.getOutputPath());
-                Files.createParentDirs(outputFile);
-            } else {
-                throw new IllegalArgumentException("Output file must be set before running the service " + serviceContext.getName());
-            }
+            outputFile = prepareOutputFile(serviceContext.getOutputPath(), "Output file must be set before running the service " + serviceContext.getName());
             jt.setOutputPath(":" + outputFile.getAbsolutePath());
-            if (StringUtils.isNotBlank(serviceContext.getErrorPath())) {
-                errorFile = new File(serviceContext.getErrorPath());
-                Files.createParentDirs(errorFile);
-            } else {
-                throw new IllegalArgumentException("Error file must be set before running the service " + serviceContext.getName());
-            }
+            errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
             jt.setErrorPath(":" + errorFile.getAbsolutePath());
             String nativeSpec = createNativeSpec(serviceContext);
             if (StringUtils.isNotBlank(nativeSpec)) {

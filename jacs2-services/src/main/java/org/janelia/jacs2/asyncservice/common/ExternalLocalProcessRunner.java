@@ -36,19 +36,8 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
         File errorFile;
         try {
             File workingDirectory = new File(workingDirName);
-            if (StringUtils.isNotBlank(serviceContext.getOutputPath())) {
-                outputFile = new File(serviceContext.getOutputPath());
-                Files.createParentDirs(outputFile);
-            } else {
-                throw new IllegalArgumentException("Output file must be set before running the service " + serviceContext.getName());
-            }
-            if (StringUtils.isNotBlank(serviceContext.getErrorPath())) {
-                errorFile = new File(serviceContext.getErrorPath());
-                Files.createParentDirs(errorFile);
-            } else {
-                throw new IllegalArgumentException("Error file must be set before running the service " + serviceContext.getName());
-            }
-
+            outputFile = prepareOutputFile(serviceContext.getOutputPath(), "Output file must be set before running the service " + serviceContext.getName());
+            errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
             ProcessBuilder processBuilder = new ProcessBuilder(ImmutableList.<String>builder()
                     .add(processingScript)
                     .build());
@@ -56,13 +45,9 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                 processBuilder.environment().putAll(env);
             }
             // set the working directory, the process stdout and stderr
-            processBuilder.directory(workingDirectory);
-            if (StringUtils.isNotBlank(serviceContext.getOutputPath())) {
-                processBuilder.redirectOutput(outputFile);
-            }
-            if (StringUtils.isNotBlank(serviceContext.getErrorPath())) {
-                processBuilder.redirectError(errorFile);
-            }
+            processBuilder.directory(workingDirectory)
+                .redirectOutput(outputFile)
+                .redirectError(errorFile);
             // start the local process
             Process localProcess;
             logger.info("Start {} for {} using  env {}", processingScript, serviceContext, env);

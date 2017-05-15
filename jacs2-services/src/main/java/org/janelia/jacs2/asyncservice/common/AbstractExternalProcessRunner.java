@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,6 +55,18 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         }
     }
 
+    protected File prepareOutputFile(String filepath, String errorCaseMessage) throws IOException {
+        File outputFile;
+        if (StringUtils.isNotBlank(filepath)) {
+            outputFile = new File(filepath);
+            com.google.common.io.Files.createParentDirs(outputFile);
+        } else {
+            throw new IllegalArgumentException(errorCaseMessage);
+        }
+        resetOutputLog(outputFile);
+        return outputFile;
+    }
+
     private Path createScriptFileName(JacsServiceData sd, Path dir) {
         String nameSuffix;
         if (sd.hasId()) {
@@ -82,5 +96,21 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         } else {
             return Optional.of(scriptFilePath);
         }
+    }
+
+    protected void resetOutputLog(File logFile) throws IOException {
+        Path logFilePath = logFile.toPath();
+        String logFileExt = FileUtils.getFileExtensionOnly(logFilePath);
+        if (Files.exists(logFilePath)) {
+            for (int i = 1; i <= MAX_SUBSCRIPT_INDEX; i++) {
+                logFileExt = logFileExt + "." + i;
+                Path newLogFile = FileUtils.replaceFileExt(logFilePath, logFileExt);
+                if (Files.notExists(newLogFile)) {
+                    Files.move(logFilePath, newLogFile);
+                    return;
+                }
+            }
+        }
+        throw new IllegalStateException("There are too many backups so no backup could be created for " + logFile);
     }
 }
