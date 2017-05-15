@@ -100,15 +100,14 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
 
     protected void resetOutputLog(File logFile) throws IOException {
         Path logFilePath = logFile.toPath();
+        if (Files.notExists(logFilePath)) return;
         String logFileExt = FileUtils.getFileExtensionOnly(logFilePath);
-        if (Files.exists(logFilePath)) {
-            for (int i = 1; i <= MAX_SUBSCRIPT_INDEX; i++) {
-                logFileExt = logFileExt + "." + i;
-                Path newLogFile = FileUtils.replaceFileExt(logFilePath, logFileExt);
-                if (Files.notExists(newLogFile)) {
-                    Files.move(logFilePath, newLogFile);
-                    return;
-                }
+        for (int i = 1; i <= MAX_SUBSCRIPT_INDEX; i++) {
+            logFileExt = logFileExt + "." + i;
+            Path newLogFile = FileUtils.replaceFileExt(logFilePath, logFileExt);
+            if (Files.notExists(newLogFile)) {
+                Files.move(logFilePath, newLogFile);
+                return;
             }
         }
         throw new IllegalStateException("There are too many backups so no backup could be created for " + logFile);
