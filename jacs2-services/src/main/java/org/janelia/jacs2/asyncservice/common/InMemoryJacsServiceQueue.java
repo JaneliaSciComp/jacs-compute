@@ -34,13 +34,16 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     private final Set<Number> submittedServicesSet = new ConcurrentSkipListSet<>();
     private final Semaphore queuePermit;
     private final Logger logger;
+    private String queueId;
     private int maxReadyCapacity;
     private boolean noWaitingSpaceAvailable;
 
     @Inject
     public InMemoryJacsServiceQueue(JacsServiceDataPersistence jacsServiceDataPersistence,
+                                    @PropertyValue(name = "service.queue.id") String queueId,
                                     @PropertyValue(name = "service.queue.MaxCapacity") int maxReadyCapacity,
                                     Logger logger) {
+        this.queueId = queueId;
         this.maxReadyCapacity = maxReadyCapacity == 0 ? DEFAULT_MAX_READY_CAPACITY : maxReadyCapacity;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.waitingServices = new PriorityBlockingQueue<>(this.maxReadyCapacity, new DefaultServiceInfoComparator());
@@ -151,7 +154,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
         servicePageRequest.setSortCriteria(new ArrayList<>(ImmutableList.of(
                 new SortCriteria("priority", SortDirection.DESC),
                 new SortCriteria("creationDate"))));
-        PageResult<JacsServiceData> services = jacsServiceDataPersistence.findServicesByState(jacsServiceStates, servicePageRequest);
+        PageResult<JacsServiceData> services = jacsServiceDataPersistence.claimServiceByQueueAndState(queueId, jacsServiceStates, servicePageRequest);
         if (CollectionUtils.isNotEmpty(services.getResultList())) {
             services.getResultList().stream().forEach(serviceData -> {
                 try {

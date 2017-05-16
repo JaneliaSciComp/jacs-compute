@@ -29,6 +29,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private JacsServiceState state = JacsServiceState.CREATED;
     private Integer priority = 0;
     private String owner;
+    private String queueId;
     private String inputPath;
     private String outputPath;
     private String errorPath;
@@ -49,6 +50,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private List<JacsServiceData> dependencies = new ArrayList<>();
     private List<Number> dependenciesIds = new ArrayList<>();
     private Long serviceTimeout;
+    private Integer optimisticLock;
 
     public Number getId() {
         return id;
@@ -104,6 +106,14 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public void setPriority(Integer priority) {
         this.priority = priority;
+    }
+
+    public String getQueueId() {
+        return queueId;
+    }
+
+    public void setQueueId(String queueId) {
+        this.queueId = queueId;
     }
 
     public String getOwner() {
@@ -396,6 +406,14 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     @JsonIgnore
     public long timeout() {
         return serviceTimeout != null && serviceTimeout > 0L ? serviceTimeout : -1;
+    }
+
+    public Integer getOptimisticLock() {
+        return optimisticLock;
+    }
+
+    public void setOptimisticLock(Integer optimisticLock) {
+        this.optimisticLock = optimisticLock;
     }
 
     public Optional<JacsServiceData> findSimilarDependency(JacsServiceData dependency) {

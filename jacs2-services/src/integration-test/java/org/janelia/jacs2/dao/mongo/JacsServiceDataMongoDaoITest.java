@@ -2,6 +2,9 @@ package org.janelia.jacs2.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
+import org.bson.conversions.Bson;
 import org.hamcrest.Matchers;
 import org.janelia.jacs2.dao.JacsServiceDataDao;
 import org.janelia.jacs2.model.DataInterval;
@@ -25,6 +28,7 @@ import java.util.stream.Collectors;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
@@ -187,13 +191,129 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
             persistServiceWithEvents(s);
         });
         PageRequest pageRequest = new PageRequest();
-        PageResult<JacsServiceData> retrievedQueuedServices = testDao.findServiceByState(ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
+        PageResult<JacsServiceData> retrievedQueuedServices = testDao.findServicesByState(ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
         assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
 
-        PageResult<JacsServiceData> retrievedRunningOrCanceledServices = testDao.findServiceByState(
+        PageResult<JacsServiceData> retrievedRunningOrCanceledServices = testDao.findServicesByState(
                 ImmutableSet.of(JacsServiceState.RUNNING, JacsServiceState.CANCELED), pageRequest);
         assertThat(retrievedRunningOrCanceledServices.getResultList().size(), equalTo(servicesInRunningState.size() + servicesInCanceledState.size()));
+    }
+
+    @Test
+    public void claimUnassignedFirstThenAssignedServices() {
+        List<JacsServiceData> servicesInQueuedState = ImmutableList.of(
+                createTestService("s1.1", ProcessingLocation.LOCAL),
+                createTestService("s1.2", ProcessingLocation.LOCAL),
+                createTestService("s1.3", ProcessingLocation.LOCAL),
+                createTestService("s1.4", ProcessingLocation.LOCAL)
+        );
+        List<JacsServiceData> servicesInRunningState = ImmutableList.of(
+                createTestService("s2.4", ProcessingLocation.CLUSTER),
+                createTestService("s2.5", ProcessingLocation.CLUSTER),
+                createTestService("s2.6", ProcessingLocation.CLUSTER)
+        );
+        List<JacsServiceData> servicesInCanceledState = ImmutableList.of(
+                createTestService("s7", null),
+                createTestService("s8", null),
+                createTestService("s9", null)
+        );
+        servicesInQueuedState.stream().forEach(s -> {
+            s.updateState(JacsServiceState.QUEUED);
+            persistServiceWithEvents(s);
+        });
+        servicesInRunningState.stream().forEach(s -> {
+            s.updateState(JacsServiceState.RUNNING);
+            persistServiceWithEvents(s);
+        });
+        servicesInCanceledState.stream().forEach(s -> {
+            s.updateState(JacsServiceState.CANCELED);
+            persistServiceWithEvents(s);
+        });
+        String testQueueId = "testQueueId";
+        PageRequest pageRequest = new PageRequest();
+        PageResult<JacsServiceData> retrievedQueuedServices;
+
+        // first claim unassigned services
+        retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("optimisticLock", equalTo(1))));
+        assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
+        // now try to claim them for a different queue
+        retrievedQueuedServices = testDao.claimServiceByQueueAndState("otherQueue", ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
+        assertThat(retrievedQueuedServices.getResultList(), emptyCollectionOf(JacsServiceData.class));
+        // then claim them again for the same queue that claimed them first
+        retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("optimisticLock", equalTo(2))));
+        assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
+
+        PageResult<JacsServiceData> retrievedRunningOrCanceledServices = testDao.findServicesByState(
+                ImmutableSet.of(JacsServiceState.RUNNING, JacsServiceState.CANCELED), pageRequest);
+        assertThat(retrievedRunningOrCanceledServices.getResultList().size(), equalTo(servicesInRunningState.size() + servicesInCanceledState.size()));
+    }
+
+    @Test
+    public void simulateConcurrentClaim() {
+        List<JacsServiceData> servicesInQueuedState = ImmutableList.of(
+                createTestService("s1.1", ProcessingLocation.LOCAL),
+                createTestService("s1.2", ProcessingLocation.LOCAL),
+                createTestService("s1.3", ProcessingLocation.LOCAL),
+                createTestService("s1.4", ProcessingLocation.LOCAL)
+        );
+        List<JacsServiceData> servicesInRunningState = ImmutableList.of(
+                createTestService("s2.4", ProcessingLocation.CLUSTER),
+                createTestService("s2.5", ProcessingLocation.CLUSTER),
+                createTestService("s2.6", ProcessingLocation.CLUSTER)
+        );
+        List<JacsServiceData> servicesInCanceledState = ImmutableList.of(
+                createTestService("s7", null),
+                createTestService("s8", null),
+                createTestService("s9", null)
+        );
+        servicesInQueuedState.stream().forEach(s -> {
+            s.updateState(JacsServiceState.QUEUED);
+            persistServiceWithEvents(s);
+        });
+        servicesInRunningState.stream().forEach(s -> {
+            s.updateState(JacsServiceState.RUNNING);
+            persistServiceWithEvents(s);
+        });
+        servicesInCanceledState.stream().forEach(s -> {
+            s.updateState(JacsServiceState.CANCELED);
+            persistServiceWithEvents(s);
+        });
+        String testQueueId = "testQueueId";
+        PageRequest pageRequest = new PageRequest();
+
+        JacsServiceDataMongoDao spiedTestDao = new JacsServiceDataMongoDao(testMongoDatabase, idGenerator, testObjectMapperFactory) {
+            @Override
+            protected Class<JacsServiceData> getEntityType() {
+                return JacsServiceData.class;
+            }
+
+            @Override
+            protected <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
+                List<R> candidates = super.find(queryFilter, sortCriteria, offset, length, resultType);
+                // while one queue is trying to claim the services some other queue attempts to do the same
+                // and the other queue manages to get the services first
+                candidates.stream().forEach(e -> {
+                    JacsServiceData sd = (JacsServiceData) e;
+                    mongoCollection.findOneAndUpdate(
+                            Filters.and(Filters.eq("_id", sd.getId())),
+                            Updates.combine(
+                                    Updates.set("queueId", testQueueId),
+                                    Updates.inc("optimisticLock", 1)
+                            )
+                    );
+                });
+                return candidates;
+            }
+        };
+        PageResult<JacsServiceData> retrievedQueuedServices = spiedTestDao.claimServiceByQueueAndState(testQueueId, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
+        assertThat(retrievedQueuedServices.getResultList(), emptyCollectionOf(JacsServiceData.class));
     }
 
     @Test

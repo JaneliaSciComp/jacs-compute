@@ -53,7 +53,6 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
         // queued
         stats.setAvailableSlots(getAvailableSlots());
         int waitingCapacity = jacsServiceQueue.getMaxReadyCapacity();
-        JacsServiceState queued[] = {JacsServiceState.QUEUED};
         PageRequest servicePageRequest = new PageRequest();
         servicePageRequest.setPageSize(waitingCapacity);
         PageResult<JacsServiceData> waitingServiceInfo = jacsServiceDataPersistence.findServicesByState(

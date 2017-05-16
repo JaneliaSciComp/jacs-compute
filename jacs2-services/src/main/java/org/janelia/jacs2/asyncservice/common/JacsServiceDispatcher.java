@@ -46,7 +46,7 @@ public class JacsServiceDispatcher {
                 // if this is a root service, i.e. no other currently running service depends on it
                 // then try to acquire a slot otherwise let this pass through
                 if (!jacsServiceEngine.acquireSlot()) {
-                    logger.debug("Abort service {} for now because there are not enough processing slots", queuedService);
+                    logger.info("Abort service {} for now because there are not enough processing slots", queuedService);
                     jacsServiceQueue.abortService(queuedService);
                     continue; // no slot available
                 }
@@ -83,16 +83,14 @@ public class JacsServiceDispatcher {
     }
 
     private void success(JacsServiceData jacsServiceData) {
-        logger.error("Processing successful {}:{}", jacsServiceData.getId(), jacsServiceData.getName());
+        logger.info("Processing successful {}:{}", jacsServiceData.getId(), jacsServiceData.getName());
         if (jacsServiceData.hasCompletedSuccessfully()) {
             // nothing to do
-            logger.info("Service {} has already been marked as successful", jacsServiceData);
+            logger.debug("Service {} has already been marked as successful", jacsServiceData);
             return;
         }
-        logger.error("Processing successful {}:{}", jacsServiceData.getId(), jacsServiceData.getName());
         if (jacsServiceData.hasCompletedUnsuccessfully()) {
             logger.warn("Attempted to overwrite failed state with success for {}", jacsServiceData);
-            return;
         }
         jacsServiceData.updateState(JacsServiceState.SUCCESSFUL);
         jacsServiceData.addEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully");
@@ -100,12 +98,12 @@ public class JacsServiceDispatcher {
     }
 
     private void fail(JacsServiceData jacsServiceData, Throwable exc) {
+        logger.error("Processing error executing {}:{}", jacsServiceData.getId(), jacsServiceData.getName(), exc);
         if (jacsServiceData.hasCompletedUnsuccessfully()) {
             // nothing to do
-            logger.info("Service {} has already been marked as failed", jacsServiceData);
+            logger.debug("Service {} has already been marked as failed", jacsServiceData);
             return;
         }
-        logger.error("Processing error executing {}:{}", jacsServiceData.getId(), jacsServiceData.getName(), exc);
         if (jacsServiceData.hasCompletedSuccessfully()) {
             logger.warn("Service {} has failed after has already been markes as successfully completed", jacsServiceData);
         }

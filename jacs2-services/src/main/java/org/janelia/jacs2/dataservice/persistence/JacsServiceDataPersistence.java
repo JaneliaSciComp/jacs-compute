@@ -20,10 +20,10 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         super(serviceDataDaoSource);
     }
 
-    public PageResult<JacsServiceData> findServicesByState(Set<JacsServiceState> requestStates, PageRequest pageRequest) {
+    public PageResult<JacsServiceData> claimServiceByQueueAndState(String queueId, Set<JacsServiceState> requestStates, PageRequest pageRequest) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
-            return jacsServiceDataDao.findServiceByState(requestStates, pageRequest);
+            return jacsServiceDataDao.claimServiceByQueueAndState(queueId, requestStates, pageRequest);
         } finally {
             daoSource.destroy(jacsServiceDataDao);
         }
@@ -33,6 +33,15 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
             return jacsServiceDataDao.findMatchingServices(pattern, creationInterval, pageRequest);
+        } finally {
+            daoSource.destroy(jacsServiceDataDao);
+        }
+    }
+
+    public PageResult<JacsServiceData> findServicesByState(Set<JacsServiceState> requestStates, PageRequest pageRequest) {
+        JacsServiceDataDao jacsServiceDataDao = daoSource.get();
+        try {
+            return jacsServiceDataDao.findServicesByState(requestStates, pageRequest);
         } finally {
             daoSource.destroy(jacsServiceDataDao);
         }

@@ -169,7 +169,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     }
 
     protected long update(T entity, Bson toUpdate, UpdateOptions updateOptions) {
-        UpdateResult result =  mongoCollection.updateOne(getUpdateMatchCriteria(entity), toUpdate, updateOptions);
+        UpdateResult result = mongoCollection.updateOne(getUpdateMatchCriteria(entity), toUpdate, updateOptions);
         return result.getMatchedCount();
     }
 

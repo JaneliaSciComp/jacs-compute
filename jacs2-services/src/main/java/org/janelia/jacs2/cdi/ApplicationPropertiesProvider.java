@@ -1,5 +1,7 @@
 package org.janelia.jacs2.cdi;
 
+import com.beust.jcommander.DynamicParameter;
+import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -7,11 +9,19 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class ApplicationPropertiesProvider {
 
     private static final String DEFAULT_APPLICATION_CONFIG_RESOURCES = "/jacs.properties";
+
+    private static final Map<String, String> APPLICATION_ARGS = new HashMap<>();
+
+    public static Map<String, String> applicationArgs() {
+        return APPLICATION_ARGS;
+    }
 
     private Properties applicationProperties = new Properties();
 
@@ -53,6 +63,11 @@ public class ApplicationPropertiesProvider {
                 throw new UncheckedIOException(e);
             }
         }
+        return this;
+    }
+
+    public ApplicationPropertiesProvider fromMap(Map<String, String> map) {
+        applicationProperties.putAll(map);
         return this;
     }
 

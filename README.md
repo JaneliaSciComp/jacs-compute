@@ -82,6 +82,16 @@ and then use JACS2_CONFIG environment variable to reference the settings file, e
 
 `JACS2_CONFIG=/usr/local/etc/myjacs2-config.properties jacs2-asyncweb/build/install/jacs2-asyncweb/bin/jacs2-asyncweb`
 
+### Run multiple jacsV2 instances against the same mongo database store
+
+If you want to run multiple instances of JacsV2, whethere it's on the same or on different machines, but against the same mongo database, in order to prevent
+services from being processed multiple times, you need every instance of JacsV2 to use a different "service.queue.id". This can be specified either in the configuration
+properties and then each instance will have to use its own configuration properties or in the command line, e.g.:
+
+`JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" jacs2-asyncweb/build/install/jacs2-asyncweb/bin/jacs2-asyncweb -Dservice.queue.id=MyQueueID`
+
+As a note you can overwrite every configuration property in the command line using -D<propertyName>=<value>
+
 ### Run the admin dashboard
 
 To run the dashboard, navigate to the jacs2-admin directory after building and type npm start.  This will kick off the administration dashboard in hot-deploy mode.

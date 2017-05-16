@@ -4,6 +4,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Updates;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
@@ -95,6 +98,15 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
         if (StringUtils.isNotBlank(pattern.getOwner())) {
             filtersBuilder.add(eq("owner", pattern.getOwner()));
         }
+        if (StringUtils.isNotBlank(pattern.getVersion())) {
+            filtersBuilder.add(eq("version", pattern.getVersion()));
+        }
+        if (pattern.getState() != null) {
+            filtersBuilder.add(eq("state", pattern.getState()));
+        }
+        if (StringUtils.isNotBlank(pattern.getQueueId())) {
+            filtersBuilder.add(eq("queueId", pattern.getQueueId()));
+        }
         if (creationInterval.hasFrom()) {
             filtersBuilder.add(gte("creationDate", creationInterval.getFrom()));
         }
@@ -110,7 +122,44 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     }
 
     @Override
-    public PageResult<JacsServiceData> findServiceByState(Set<JacsServiceState> requestStates, PageRequest pageRequest) {
+    public PageResult<JacsServiceData> claimServiceByQueueAndState(String queueId, Set<JacsServiceState> requestStates, PageRequest pageRequest) {
+        Preconditions.checkArgument(CollectionUtils.isNotEmpty(requestStates));
+        ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
+
+        if (StringUtils.isNotBlank(queueId)) {
+            filtersBuilder.add(Filters.or(
+                    Filters.eq("queueId", queueId),
+                    Filters.exists("queueId", false)));
+        } else {
+            filtersBuilder.add(Filters.exists("queueId", false));
+        }
+        filtersBuilder.add(in("state", requestStates));
+        Bson bsonFilter = and(filtersBuilder.build());
+        List<JacsServiceData> candidateResults = find(bsonFilter, createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), JacsServiceData.class);
+        if (candidateResults.isEmpty()) {
+            return new PageResult<>(pageRequest, candidateResults);
+        }
+        List<JacsServiceData> finalClaimedResults = candidateResults.stream()
+                .map(sd -> {
+                    FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
+                    updateOptions.returnDocument(ReturnDocument.AFTER);
+
+                    return mongoCollection.findOneAndUpdate(
+                            Filters.and(Filters.eq("_id", sd.getId()), Filters.eq("optimisticLock", sd.getOptimisticLock())),
+                            Updates.combine(
+                                    Updates.set("queueId", queueId),
+                                    Updates.inc("optimisticLock", 1)
+                            ),
+                            updateOptions
+                    );
+                })
+                .filter(sd -> sd != null)
+                .collect(Collectors.toList());
+        return new PageResult<>(pageRequest, finalClaimedResults);
+    }
+
+    @Override
+    public PageResult<JacsServiceData> findServicesByState(Set<JacsServiceState> requestStates, PageRequest pageRequest) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(requestStates));
         List<JacsServiceData> results = find(in("state", requestStates), createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), JacsServiceData.class);
         return new PageResult<>(pageRequest, results);

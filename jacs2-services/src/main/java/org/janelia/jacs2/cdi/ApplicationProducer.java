@@ -47,6 +47,7 @@ public class ApplicationProducer {
         return new ApplicationPropertiesProvider()
                 .fromDefaultResource()
                 .fromEnvVar("JACS2_CONFIG")
+                .fromMap(ApplicationPropertiesProvider.applicationArgs())
                 .build();
     }
 

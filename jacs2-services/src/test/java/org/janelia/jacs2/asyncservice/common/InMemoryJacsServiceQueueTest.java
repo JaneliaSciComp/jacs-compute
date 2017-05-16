@@ -16,12 +16,14 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class InMemoryJacsServiceQueueTest {
 
+    private static final String TEST_QUEUE_ID = "queueId";
     private static final Long TEST_ID = 101L;
 
     private JacsServiceDataPersistence jacsServiceDataPersistence;
@@ -32,7 +34,7 @@ public class InMemoryJacsServiceQueueTest {
     public void setUp() {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         logger = mock(Logger.class);
-        jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, 10, logger);
+        jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, TEST_QUEUE_ID, 10, logger);
         Answer<Void> saveServiceData = invocation -> {
             JacsServiceData ti = invocation.getArgument(0);
             ti.setId(TEST_ID);
@@ -54,7 +56,7 @@ public class InMemoryJacsServiceQueueTest {
                 .add(createTestService(7L, "t7"))
                 .build();
         serviceDataPageResult.setResultList(serviceResults);
-        when(jacsServiceDataPersistence.findServicesByState(any(Set.class), any(PageRequest.class))).thenReturn(serviceDataPageResult);
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class))).thenReturn(serviceDataPageResult);
         jacsServiceQueue.refreshServiceQueue();
         assertThat(jacsServiceQueue.getReadyServicesSize(), equalTo(serviceResults.size()));
     }

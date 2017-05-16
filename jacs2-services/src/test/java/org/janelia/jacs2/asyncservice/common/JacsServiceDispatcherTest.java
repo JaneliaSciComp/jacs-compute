@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -49,7 +50,7 @@ public class JacsServiceDispatcherTest {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         serviceRegistrarSource = mock(Instance.class);
         serviceRegistry = mock(ServiceRegistry.class);
-        jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, 10, logger);
+        jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, "queue", 10, logger);
         jacsServiceEngine = new JacsServiceEngineImpl(jacsServiceDataPersistence, jacsServiceQueue, serviceRegistrarSource, 10, logger);
         testDispatcher = new JacsServiceDispatcher(serviceComputationFactory,
                 jacsServiceQueue,
@@ -88,17 +89,17 @@ public class JacsServiceDispatcherTest {
     public void dispatchServiceWhenNoSlotsAreAvailable() {
         jacsServiceEngine.setProcessingSlotsCount(0);
         JacsServiceData testService = enqueueTestService("test");
-        when(jacsServiceDataPersistence.findServicesByState(any(Set.class), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
         testDispatcher.dispatchServices();
-        verify(logger).debug("Abort service {} for now because there are not enough processing slots", testService);
+        verify(logger).info("Abort service {} for now because there are not enough processing slots", testService);
     }
 
     @Test
     public void runSubmittedService() {
         JacsServiceData testServiceData = enqueueTestService("submittedService");
 
-        when(jacsServiceDataPersistence.findServicesByState(any(Set.class), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
 
         verifyDispatch(testServiceData);
@@ -110,7 +111,7 @@ public class JacsServiceDispatcherTest {
 
         PageResult<JacsServiceData> nonEmptyPageResult = new PageResult<>();
         nonEmptyPageResult.setResultList(ImmutableList.of(testServiceData));
-        when(jacsServiceDataPersistence.findServicesByState(any(Set.class), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
                 .thenReturn(nonEmptyPageResult)
                 .thenReturn(new PageResult<>());
 
@@ -165,7 +166,7 @@ public class JacsServiceDispatcherTest {
     @Test
     public void serviceProcessingError() {
         JacsServiceData testServiceData = enqueueTestService("submittedService");
-        when(jacsServiceDataPersistence.findServicesByState(any(Set.class), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
         ComputationException processException = new ComputationException(testServiceData, "test exception");
         ServiceProcessor testProcessor = prepareServiceProcessor(testServiceData, processException);
