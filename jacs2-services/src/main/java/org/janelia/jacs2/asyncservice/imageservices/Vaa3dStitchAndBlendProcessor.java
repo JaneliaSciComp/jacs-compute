@@ -93,8 +93,6 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
     public ServiceResultHandler<StitchAndBlendResult> getResultHandler() {
 
         return new AbstractAnyServiceResultHandler<StitchAndBlendResult>() {
-            final String resultsPattern = "glob:**/*.{png,avi,mp4}";
-
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile().exists();

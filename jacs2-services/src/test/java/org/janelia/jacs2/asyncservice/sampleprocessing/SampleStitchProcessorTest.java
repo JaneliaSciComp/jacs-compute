@@ -10,8 +10,11 @@ import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
+import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.MIPGenerationProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.StitchAndBlendResult;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
@@ -22,7 +25,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -30,14 +35,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SampleStitchProcessorTest {
+    private JacsServiceDataPersistence jacsServiceDataPersistence;
     private SampleDataService sampleDataService;
     private GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor;
+    private Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor;
+    private MIPGenerationProcessor mipGenerationProcessor;
     private SampleStitchProcessor sampleStitchProcessor;
 
     @Before
@@ -46,14 +55,14 @@ public class SampleStitchProcessorTest {
 
         ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
 
-        JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         TimebasedIdentifierGenerator idGenerator = mock(TimebasedIdentifierGenerator.class);
 
         sampleDataService = mock(SampleDataService.class);
         getSampleImageFilesProcessor = mock(GetSampleImageFilesProcessor.class);
         mergeAndGroupSampleTilePairsProcessor = mock(MergeAndGroupSampleTilePairsProcessor.class);
-        Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor = mock(Vaa3dStitchAndBlendProcessor.class);
-        MIPGenerationProcessor mipGenerationProcessor = mock(MIPGenerationProcessor.class);
+        vaa3dStitchAndBlendProcessor = mock(Vaa3dStitchAndBlendProcessor.class);
+        mipGenerationProcessor = mock(MIPGenerationProcessor.class);
 
         doAnswer(invocation -> {
             JacsServiceData jacsServiceData = invocation.getArgument(0);
@@ -62,6 +71,18 @@ public class SampleStitchProcessorTest {
             return null;
         }).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
 
+        when(jacsServiceDataPersistence.findById(any(Number.class)))
+                .then(invocation -> {
+                    JacsServiceData sd = new JacsServiceData();
+                    sd.setId(invocation.getArgument(0));
+                    return sd;
+                });
+        when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class)))
+                .then(invocation -> {
+                    JacsServiceData sd = new JacsServiceData();
+                    sd.setId(invocation.getArgument(0));
+                    return sd;
+                });
         when(idGenerator.generateId()).thenReturn(SampleProcessorTestUtils.TEST_SERVICE_ID);
 
         when(getSampleImageFilesProcessor.getMetadata()).thenCallRealMethod();
@@ -73,10 +94,29 @@ public class SampleStitchProcessorTest {
         )).thenCallRealMethod();
 
         when(mergeAndGroupSampleTilePairsProcessor.getMetadata()).thenCallRealMethod();
+        when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenCallRealMethod();
         when(mergeAndGroupSampleTilePairsProcessor.createServiceData(any(ServiceExecutionContext.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class)
+                )
+        ).thenCallRealMethod();
+
+        when(vaa3dStitchAndBlendProcessor.getMetadata()).thenCallRealMethod();
+        when(vaa3dStitchAndBlendProcessor.createServiceData(any(ServiceExecutionContext.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class)
+                )
+        ).thenCallRealMethod();
+
+        when(mipGenerationProcessor.getMetadata()).thenCallRealMethod();
+        when(mipGenerationProcessor.createServiceData(any(ServiceExecutionContext.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
@@ -163,7 +203,7 @@ public class SampleStitchProcessorTest {
     }
 
     @Test
-    public void processingWhenThereAreMultipleTiles() {
+    public void processingWhenMultipleTilesRequireStitching() {
         String area = "area";
         String objective = "objective";
         String mergeAlgorithm = "FLYLIGHT_ORDERED";
@@ -190,7 +230,115 @@ public class SampleStitchProcessorTest {
                         testServiceData,
                         new SampleStitchProcessor.StitchProcessingIntermediateResult(getSampleLsmsServiceId, mergeTilePairServiceIds)
         );
-        sampleStitchProcessor.processing(intermediateResults);
+        mergeTilePairServiceIds.forEach(id -> {
+            when(jacsServiceDataPersistence.findById(id)).then(invocation -> {
+                JacsServiceData sd = new JacsServiceData();
+                sd.setId(id);
+                sd.setSerializableResult(ImmutableList.of(
+                        createSampleAreaResult(
+                                "a" + id,
+                                ImmutableList.of(
+                                        createTilePairResult("t1"),
+                                        createTilePairResult("t2")
+                                ),
+                                ImmutableList.of(
+                                        createTilePairResult("tm1"),
+                                        createTilePairResult("tm2")
+                                )
+                        )));
+                return sd;
+            });
+        });
+        ServiceResultHandler<StitchAndBlendResult> vaa3dResultHandler = mock(ServiceResultHandler.class);
+        when(vaa3dResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            StitchAndBlendResult stitchResult = new StitchAndBlendResult();
+            stitchResult.setStitchedImageInfoFile(new File("imageInfo.tc"));
+            stitchResult.setStitchedFile(new File("stitched.v3draw"));
+            return stitchResult;
+        });
+        ServiceResultHandler<List<File>> mipResultHandler = mock(ServiceResultHandler.class);
+        when(mipResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> ImmutableList.of(new File("i1.png"), new File("i2.png")));
+
+        when(vaa3dStitchAndBlendProcessor.getResultHandler()).thenReturn(vaa3dResultHandler);
+        when(mipGenerationProcessor.getResultHandler()).thenReturn(mipResultHandler);
+
+        Consumer successful = mock(Consumer.class);
+        Consumer failure = mock(Consumer.class);
+        sampleStitchProcessor.processing(intermediateResults)
+            .thenApply(sir -> {
+                successful.accept(sir);
+                // verify the stitcher was invoked
+                verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a11"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a11.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", "3")))
+                );
+                verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a12"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a12.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", "3")))
+                );
+                verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a13"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a13.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", "3")))
+                );
+                // verify the mips generator was invoked
+                verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a11.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "mips"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "2"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
+                );
+                verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a12.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "mips"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "2"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
+                );
+                verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a13.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "mips"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "2"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
+                );
+                return null;
+            })
+            .exceptionally(exc -> {
+                failure.accept(exc);
+                return null;
+            })
+            ;
+        verify(failure, never()).accept(any());
+        verify(successful).accept(any());
+    }
+
+    private SampleAreaResult createSampleAreaResult(String areaName, List<MergeTilePairResult> mergedTiles, List<MergeTilePairResult> groupedTiles) {
+        SampleAreaResult ar = new SampleAreaResult();
+        ar.setGroupDir(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + areaName);
+        ar.setConsensusChannelComponents(createChannelComponents());
+        ar.setAnatomicalArea(areaName);
+        ar.setMergeResults(mergedTiles);
+        ar.setGroupResults(groupedTiles);
+        return ar;
+    }
+
+    private MergeTilePairResult createTilePairResult(String tn) {
+        MergeTilePairResult tpr = new MergeTilePairResult();
+        tpr.setTileName(tn);
+        return tpr;
+    }
+
+    private ChannelComponents createChannelComponents() {
+        ChannelComponents chComp = new ChannelComponents();
+        chComp.channelSpec = "ssr";
+        chComp.signalChannelsPos = "0 1";
+        chComp.referenceChannelsPos = "2";
+        chComp.referenceChannelNumbers = "3";
+        return chComp;
     }
 
     private JacsServiceData createTestServiceData(long sampleId, String area, String objective,

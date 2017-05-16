@@ -1,21 +1,14 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import org.hamcrest.Matchers;
-import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
-import org.janelia.jacs2.asyncservice.imageservices.MIPGenerationProcessor;
-import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor;
-import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
@@ -23,7 +16,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-import java.math.BigInteger;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.notNullValue;

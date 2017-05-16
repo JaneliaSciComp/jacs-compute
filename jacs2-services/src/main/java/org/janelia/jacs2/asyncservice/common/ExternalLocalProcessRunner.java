@@ -1,9 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.Files;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.asyncservice.qualifier.LocalJob;
