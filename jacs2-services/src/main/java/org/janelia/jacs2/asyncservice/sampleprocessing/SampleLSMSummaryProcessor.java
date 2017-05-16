@@ -19,7 +19,6 @@ import org.janelia.jacs2.asyncservice.imageservices.GroupAndMontageFolderImagesP
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.model.DomainModelUtils;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
@@ -199,16 +198,8 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
 
     private void updateLSM(LSMImage lsmImage, LSMSummary lsmSummary) {
         logger.info("Update LSM {} with {}", lsmImage, lsmSummary);
-        List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(lsmImage, lsmSummary.getMips());
-        boolean lsmWasUpdated = fGroups.stream()
-                .flatMap(group -> group.getFiles().entrySet().stream())
-                .map(fileTypeEntry -> {
-                    DomainModelUtils.setPathForFileType(lsmImage, fileTypeEntry.getKey(), fileTypeEntry.getValue());
-                    return true;
-                })
-                .reduce((r1, r2) -> r1 || r2)
-                .orElse(false);
-        if (lsmWasUpdated) {
+        List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(lsmImage.getFilepath(), lsmSummary.getMips());
+        if (SampleServicesUtils.updateFiles(lsmImage, fGroups)) {
             sampleDataService.updateLSMFiles(lsmImage);
         }
     }

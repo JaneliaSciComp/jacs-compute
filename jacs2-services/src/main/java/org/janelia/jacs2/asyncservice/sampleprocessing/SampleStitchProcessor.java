@@ -4,6 +4,9 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
+import org.janelia.it.jacs.model.domain.sample.FileGroup;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -191,6 +194,15 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                             ;
                     return pd;
                 })
+                .thenApply(pd -> {
+                    JacsServiceData jacsServiceData = depResults.getJacsServiceData();
+                    SampleStitchArgs args = getArgs(jacsServiceData);
+                    Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), args.sampleId);
+                    pd.getResult().stitchedAreasResults.stream()
+                            .forEach(sar -> updateObjectSampleResult(jacsServiceData, sample, sar.sampleAreaResult))
+                            ;
+                    return pd;
+                })
                 ;
     }
 
@@ -312,6 +324,28 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
             List<File> mips = mipGenerationProcessor.getResultHandler().getServiceDataResult(sd);
             areaResults.sampleAreaResult.addMips(mips.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
         });
+    }
+
+    private void updateObjectSampleResult(JacsServiceData jacsServiceData, Sample sample, SampleAreaResult areaResult) {
+        sample.lookupObjective(areaResult.getObjective())
+                .ifPresent(objective -> {
+                    // create entry for the corresponding service run
+                    SamplePipelineRun pipelineRun = new SamplePipelineRun();
+                    pipelineRun.setId(jacsServiceData.getId());
+                    pipelineRun.setName(StringUtils.defaultIfBlank(jacsServiceData.getDescription(), jacsServiceData.getName()));
+                    pipelineRun.setPipelineProcess(jacsServiceData.getName());
+                    pipelineRun.setCreationDate(jacsServiceData.getCreationDate());
+                    // create stitch result
+                    SampleStitchResult stitchResult = new SampleStitchResult();
+                    stitchResult.setChannelSpec(areaResult.getConsensusChannelComponents().channelSpec);
+                    stitchResult.setAnatomicalArea(areaResult.getAnatomicalArea());
+                    List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(areaResult.getMipsDir(), areaResult.getMipsFileList());
+                    SampleServicesUtils.updateFiles(stitchResult, fGroups);
+
+                    pipelineRun.addResult(stitchResult);
+                    objective.addPipelineRun(pipelineRun);
+                });
+
     }
 
     private SampleStitchArgs getArgs(JacsServiceData jacsServiceData) {

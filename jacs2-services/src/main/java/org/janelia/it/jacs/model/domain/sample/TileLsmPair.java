@@ -7,6 +7,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.List;
 
+/**
+ * A pair of LSMs where the first LSM contains some image channels and the second one if it exists contains the rest of the channels.
+ */
 public class TileLsmPair {
     private String tileName;
     private LSMImage firstLsm;

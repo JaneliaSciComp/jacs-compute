@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
+import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.jacs2.model.DomainModelUtils;
@@ -40,7 +41,25 @@ public class SampleServicesUtils {
         return getImageDataPath(destDirName, objective, area).resolve(imageFile.getName().replaceAll("\\s+", "_") + ".json");
     }
 
-    public static List<FileGroup> createFileGroups(HasFilepath parent, List<String> filepaths) {
+    /**
+     * Updates the files from the fileGroups
+     *
+     * @param objectWithFiles object to be updated
+     * @param fileGroups list of filegroups
+     * @return true if the object has been changed
+     */
+    public static boolean updateFiles(HasFiles objectWithFiles, List<FileGroup> fileGroups) {
+        return fileGroups.stream()
+                .flatMap(group -> group.getFiles().entrySet().stream())
+                .map(fileTypeEntry -> {
+                    DomainModelUtils.setPathForFileType(objectWithFiles, fileTypeEntry.getKey(), fileTypeEntry.getValue());
+                    return true;
+                })
+                .reduce((r1, r2) -> r1 || r2)
+                .orElse(false);
+    }
+
+    public static List<FileGroup> createFileGroups(String groupFilePath, List<String> filepaths) {
         class FileNameStruct {
             String fullFilepath;
             String nameWithExt;
@@ -85,7 +104,7 @@ public class SampleServicesUtils {
                     FileGroup group = groups.get(fn.key);
                     if (group == null) {
                         group = new FileGroup(fn.key);
-                        group.setFilepath(parent.getFilepath());
+                        group.setFilepath(StringUtils.defaultIfBlank(groupFilePath, fn.fullFilepath));
                         groups.put(fn.key, group);
                     }
                     DomainModelUtils.setPathForFileType(group, fn.fileType, fn.fullFilepath);

@@ -1,9 +1,13 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 
 public class SampleProcessorTestUtils {
@@ -16,6 +20,42 @@ public class SampleProcessorTestUtils {
     static final String TEST_LSM1_METADATA = "src/test/resources/testdata/mergeTilePairs/lsm_1_1.metadata.json";
     static final String TEST_LSM_2 = "lsm2";
     static final String TEST_LSM2_METADATA = "src/test/resources/testdata/mergeTilePairs/lsm_1_2.metadata.json";
+
+    private static volatile long nextId = 1;
+
+    public static Sample createTestSample(Number sampleId) {
+        Sample s = new Sample();
+        s.setId(sampleId);
+        return s;
+    }
+
+    public static ObjectiveSample createTestObjective(String objective) {
+        ObjectiveSample objectiveSample = new ObjectiveSample();
+        objectiveSample.setObjective(objective);
+        return objectiveSample;
+    }
+
+    public static Sample createTestSample(Number sampleId, String objective, String area, TileLsmPair... tps) {
+        Sample s = createTestSample(sampleId);
+        s.addObjective(createTestObjective(objective, area, tps));
+        return s;
+    }
+
+    public static ObjectiveSample createTestObjective(String objective, String area, TileLsmPair... tps) {
+        ObjectiveSample objectiveSample = createTestObjective(objective);
+        for (TileLsmPair tileLsmPair : tps) {
+            objectiveSample.addTiles(tileFromTileLsmPair(area, tileLsmPair));
+        }
+        return objectiveSample;
+    }
+
+    public static SampleTile tileFromTileLsmPair(String anatomicalArea, TileLsmPair tileLsmPair) {
+        SampleTile st = new SampleTile();
+        st.setAnatomicalArea(anatomicalArea);
+        st.addLsmReference(Reference.createFor(tileLsmPair.getFirstLsm().getEntityRefId()));
+        if (tileLsmPair.hasTwoLsms()) st.addLsmReference(Reference.createFor(tileLsmPair.getSecondLsm().getEntityRefId()));
+        return st;
+    }
 
     public static AnatomicalArea createTestAnatomicalArea(Number sampleId, String objective, String name, String chanSpec, TileLsmPair... tps) {
         AnatomicalArea a = new AnatomicalArea();
@@ -41,6 +81,7 @@ public class SampleProcessorTestUtils {
 
     public static LSMImage createTestLsm(String lsmPath, String microscope, String chanSpec, int nChannels, String lsmMetadataFile) {
         LSMImage lsm = new LSMImage();
+        lsm.setId(nextId++);
         lsm.setFilepath(lsmPath);
         lsm.setMicroscope(microscope);
         lsm.setChanSpec(chanSpec);

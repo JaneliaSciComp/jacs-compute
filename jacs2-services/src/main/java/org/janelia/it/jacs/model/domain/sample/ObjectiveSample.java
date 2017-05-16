@@ -8,14 +8,14 @@ import java.util.List;
 
 /**
  * A set of LSMs in a Sample with a common objective.
- *
- * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class ObjectiveSample {
 
     private String objective;
     private String chanSpec;
     private List<SampleTile> tiles = new ArrayList<>();
+    private List<SamplePipelineRun> pipelineRuns = new ArrayList<>();
+
     @JsonIgnore
     private transient Sample parent;
 
@@ -57,5 +57,17 @@ public class ObjectiveSample {
 
     public void setParent(Sample parent) {
         this.parent = parent;
+    }
+
+    public List<SamplePipelineRun> getPipelineRuns() {
+        return pipelineRuns;
+    }
+
+    public void setPipelineRuns(List<SamplePipelineRun> pipelineRuns) {
+        this.pipelineRuns = pipelineRuns;
+    }
+
+    public void addPipelineRun(SamplePipelineRun pipelineRun) {
+        pipelineRuns.add(pipelineRun);
     }
 }

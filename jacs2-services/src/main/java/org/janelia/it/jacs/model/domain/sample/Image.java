@@ -12,6 +12,9 @@ import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Image holds a raw acquired image.
+ */
 @MongoMapping(collectionName="image", label="Image")
 public class Image extends AbstractDomainObject implements HasRelativeFiles {
     private String filepath;
@@ -26,6 +29,7 @@ public class Image extends AbstractDomainObject implements HasRelativeFiles {
     @JsonIgnore
     private HasFileImpl filesImpl = new HasFileImpl();
 
+    @Override
     public String getFilepath() {
         return filepath;
     }
@@ -66,6 +70,7 @@ public class Image extends AbstractDomainObject implements HasRelativeFiles {
         this.numChannels = numChannels;
     }
 
+    @Override
     public Map<FileType, String> getFiles() {
         return filesImpl.getFiles();
     }

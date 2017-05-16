@@ -15,8 +15,6 @@ import java.util.Optional;
  * of data set and slide code. A single sample may include many LSMs. For example, it may include images taken
  * at multiple objectives (e.g. 20x/63x), of different anatomical areas (e.g. Brain/VNC), and of different
  * tile regions which are stitched together.
- *
- * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @MongoMapping(collectionName="sample", label="Sample")
 public class Sample extends AbstractDomainObject {
@@ -280,7 +278,7 @@ public class Sample extends AbstractDomainObject {
         Optional<ObjectiveSample> objective = Optional.empty();
         if (CollectionUtils.isNotEmpty(objectiveSamples)) {
             objective = objectiveSamples.stream()
-                    .filter(o -> objectiveName == null && o.getObjective() == null || objectiveName.equals(o.getObjective()))
+                    .filter(o -> objectiveName == null && o.getObjective() == null || o.getObjective().equals(objectiveName))
                     .findFirst();
         }
         return objective;

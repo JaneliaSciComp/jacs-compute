@@ -12,8 +12,6 @@ import java.util.Map;
 /**
  * A sample tile consists of a set of LSMs with the same objective,
  * and in the same anatomical area.
- *
- * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SampleTile implements HasFiles {
 

@@ -4,6 +4,9 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.Matchers;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -236,6 +239,7 @@ public class SampleStitchProcessorTest {
                 sd.setId(id);
                 sd.setSerializableResult(ImmutableList.of(
                         createSampleAreaResult(
+                                objective,
                                 "a" + id,
                                 ImmutableList.of(
                                         createTilePairResult("t1"),
@@ -262,6 +266,32 @@ public class SampleStitchProcessorTest {
         when(vaa3dStitchAndBlendProcessor.getResultHandler()).thenReturn(vaa3dResultHandler);
         when(mipGenerationProcessor.getResultHandler()).thenReturn(mipResultHandler);
 
+        Sample testSample = SampleProcessorTestUtils.createTestSample(SampleProcessorTestUtils.TEST_SAMPLE_ID);
+        ObjectiveSample testObjective = SampleProcessorTestUtils.createTestObjective(objective);
+        testSample.addObjective(testObjective);
+        testObjective.addTiles(
+                SampleProcessorTestUtils.tileFromTileLsmPair(
+                        "a11",
+                        SampleProcessorTestUtils.createTestLsmPair(
+                                SampleProcessorTestUtils.TEST_TILE_NAME,
+                                SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
+                                SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0)),
+                SampleProcessorTestUtils.tileFromTileLsmPair(
+                        "a12",
+                        SampleProcessorTestUtils.createTestLsmPair(
+                                SampleProcessorTestUtils.TEST_TILE_NAME,
+                                SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
+                                SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0)),
+                SampleProcessorTestUtils.tileFromTileLsmPair(
+                        "a13",
+                        SampleProcessorTestUtils.createTestLsmPair(
+                                SampleProcessorTestUtils.TEST_TILE_NAME,
+                                SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
+                                SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0))
+                );
+
+        when(sampleDataService.getSampleById(null, SampleProcessorTestUtils.TEST_SAMPLE_ID)).thenReturn(testSample);
+
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         sampleStitchProcessor.processing(intermediateResults)
@@ -270,36 +300,36 @@ public class SampleStitchProcessorTest {
                 // verify the stitcher was invoked
                 verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
                         argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a11"))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a11.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-objectivea11.v3draw"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", "3")))
                 );
                 verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
                         argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a12"))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a12.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-objectivea12.v3draw"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", "3")))
                 );
                 verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
                         argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a13"))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a13.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-objectivea13.v3draw"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", "3")))
                 );
                 // verify the mips generator was invoked
                 verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a11.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-objectivea11.v3draw"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "mips"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "2"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
                 );
                 verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a12.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-objectivea12.v3draw"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "mips"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "2"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
                 );
                 verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-a13.v3draw"))),
+                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "stitch/stitched-objectivea13.v3draw"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "mips"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
                         argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "2"))),
@@ -316,10 +346,11 @@ public class SampleStitchProcessorTest {
         verify(successful).accept(any());
     }
 
-    private SampleAreaResult createSampleAreaResult(String areaName, List<MergeTilePairResult> mergedTiles, List<MergeTilePairResult> groupedTiles) {
+    private SampleAreaResult createSampleAreaResult(String objective, String areaName, List<MergeTilePairResult> mergedTiles, List<MergeTilePairResult> groupedTiles) {
         SampleAreaResult ar = new SampleAreaResult();
         ar.setGroupDir(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + areaName);
         ar.setConsensusChannelComponents(createChannelComponents());
+        ar.setObjective(objective);
         ar.setAnatomicalArea(areaName);
         ar.setMergeResults(mergedTiles);
         ar.setGroupResults(groupedTiles);
