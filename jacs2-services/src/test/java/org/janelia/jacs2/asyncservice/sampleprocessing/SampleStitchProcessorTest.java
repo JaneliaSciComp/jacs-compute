@@ -6,7 +6,6 @@ import org.hamcrest.Matchers;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -344,6 +343,7 @@ public class SampleStitchProcessorTest {
             ;
         verify(failure, never()).accept(any());
         verify(successful).accept(any());
+        verify(sampleDataService).updateSample(testSample);
     }
 
     private SampleAreaResult createSampleAreaResult(String objective, String areaName, List<MergeTilePairResult> mergedTiles, List<MergeTilePairResult> groupedTiles) {

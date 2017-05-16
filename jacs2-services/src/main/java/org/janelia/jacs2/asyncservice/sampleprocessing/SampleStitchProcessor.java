@@ -198,9 +198,13 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     JacsServiceData jacsServiceData = depResults.getJacsServiceData();
                     SampleStitchArgs args = getArgs(jacsServiceData);
                     Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), args.sampleId);
-                    pd.getResult().stitchedAreasResults.stream()
-                            .forEach(sar -> updateObjectSampleResult(jacsServiceData, sample, sar.sampleAreaResult))
+                    boolean updated = pd.getResult().stitchedAreasResults.stream()
+                            .map(sar -> updateObjectSampleResult(jacsServiceData, sample, sar.sampleAreaResult))
+                            .reduce(false, (r1, r2) -> r1 || r2)
                             ;
+                    if (updated) {
+                        sampleDataService.updateSample(sample);
+                    }
                     return pd;
                 })
                 ;
@@ -326,9 +330,9 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
         });
     }
 
-    private void updateObjectSampleResult(JacsServiceData jacsServiceData, Sample sample, SampleAreaResult areaResult) {
-        sample.lookupObjective(areaResult.getObjective())
-                .ifPresent(objective -> {
+    private boolean updateObjectSampleResult(JacsServiceData jacsServiceData, Sample sample, SampleAreaResult areaResult) {
+        return sample.lookupObjective(areaResult.getObjective())
+                .map(objective -> {
                     // create entry for the corresponding service run
                     SamplePipelineRun pipelineRun = new SamplePipelineRun();
                     pipelineRun.setId(jacsServiceData.getId());
@@ -344,8 +348,10 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
 
                     pipelineRun.addResult(stitchResult);
                     objective.addPipelineRun(pipelineRun);
-                });
-
+                    return true;
+                })
+                .orElse(false)
+        ;
     }
 
     private SampleStitchArgs getArgs(JacsServiceData jacsServiceData) {
