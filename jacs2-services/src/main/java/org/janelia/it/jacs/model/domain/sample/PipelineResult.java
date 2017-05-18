@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * The result of some processing. May be nested if further processing is done on this result.
  */
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 public class PipelineResult implements HasRelativeFiles {
 
     private Long id;
