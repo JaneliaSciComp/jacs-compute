@@ -7,7 +7,7 @@ task webpack(type: NodeTask, dependsOn: 'npmInstall') {
   script = project.file('node_modules/.bin/webpack')
 }
 
-task start(type: NpmTask, dependsOn: 'webpack') {
+task start(type: NpmTask, dependsOn: ['webpack', 'copyRoot']) {
     args = ['start']
 }
 
@@ -16,7 +16,3 @@ task copyRoot(type: Copy) {
     into('build')
     include('*.html')
 }
- 
-processResources.dependsOn 'webpack'
-processResources.dependsOn 'copyRoot'
- 
