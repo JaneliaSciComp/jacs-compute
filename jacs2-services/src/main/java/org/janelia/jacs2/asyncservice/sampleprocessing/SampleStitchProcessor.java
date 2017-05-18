@@ -2,7 +2,9 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.Sample;
@@ -20,6 +22,8 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceRe
 import org.janelia.jacs2.asyncservice.imageservices.MIPGenerationProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.StitchAndBlendResult;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.stitching.StitchedImageInfo;
+import org.janelia.jacs2.asyncservice.imageservices.stitching.StitchingUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
@@ -345,7 +349,23 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     stitchResult.setAnatomicalArea(areaResult.getAnatomicalArea());
                     List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(areaResult.getMipsDir(), areaResult.getMipsFileList());
                     SampleServicesUtils.updateFiles(stitchResult, fGroups);
-
+                    if (StringUtils.isNotBlank(areaResult.getStichFile())) {
+                        stitchResult.setFileName(FileType.LosslessStack, areaResult.getStichFile());
+                    }
+                    if (StringUtils.isNotBlank(areaResult.getStitchInfoFile())) {
+                        StitchedImageInfo stitchedImageInfo = StitchingUtils.readStitchedImageInfo(Paths.get(areaResult.getStitchInfoFile()));
+                        stitchResult.setImageSize(stitchedImageInfo.getXYZDimensions());
+                    } else {
+                        stitchResult.setImageSize(getConsensusValue(areaResult.getMergeResults(), MergeTilePairResult::getImageSize));
+                    }
+                    stitchResult.setChannelColors(getConsensusValue(areaResult.getMergeResults(), mtp -> {
+                        if (CollectionUtils.isNotEmpty(mtp.getChannelColors())) {
+                            return String.join(",", mtp.getChannelColors());
+                        } else {
+                            return "";
+                        }
+                    }));
+                    stitchResult.setOpticalResolution(getConsensusValue(areaResult.getMergeResults(), MergeTilePairResult::getOpticalResolution));
                     pipelineRun.addResult(stitchResult);
                     objective.addPipelineRun(pipelineRun);
                     return true;
@@ -354,8 +374,31 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
         ;
     }
 
+    private String getConsensusValue(List<MergeTilePairResult> mergeResults, Function<MergeTilePairResult, String>  tilePairResultMapper) {
+        return mergeResults.stream()
+                .reduce((String) null, (String acValue, MergeTilePairResult mtp) -> {
+                    String mtpValue = tilePairResultMapper.apply(mtp);
+                    if (acValue == null) {
+                        return mtpValue;
+                    } else if (acValue.equalsIgnoreCase(mtpValue)) {
+                        return acValue;
+                    } else {
+                        return "";
+                    }
+                }, (String v1, String v2) -> {
+                    if (v1 == null) return v2;
+                    else if (v2 == null) return v1;
+                    else if (v1.equalsIgnoreCase(v2)) {
+                        return v1;
+                    } else {
+                        return "";
+                    }
+                });
+    }
+
     private SampleStitchArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleStitchArgs());
     }
 
 }
+

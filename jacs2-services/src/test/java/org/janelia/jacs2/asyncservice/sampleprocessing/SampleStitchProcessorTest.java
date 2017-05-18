@@ -255,7 +255,7 @@ public class SampleStitchProcessorTest {
         ServiceResultHandler<StitchAndBlendResult> vaa3dResultHandler = mock(ServiceResultHandler.class);
         when(vaa3dResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
             StitchAndBlendResult stitchResult = new StitchAndBlendResult();
-            stitchResult.setStitchedImageInfoFile(new File("imageInfo.tc"));
+            stitchResult.setStitchedImageInfoFile(new File("src/test/resources/testdata/stitch/imageInfo.tc"));
             stitchResult.setStitchedFile(new File("stitched.v3draw"));
             return stitchResult;
         });
@@ -360,6 +360,8 @@ public class SampleStitchProcessorTest {
     private MergeTilePairResult createTilePairResult(String tn) {
         MergeTilePairResult tpr = new MergeTilePairResult();
         tpr.setTileName(tn);
+        tpr.setImageSize("10x20x30");
+        tpr.setOpticalResolution("0.45x0.45");
         return tpr;
     }
 

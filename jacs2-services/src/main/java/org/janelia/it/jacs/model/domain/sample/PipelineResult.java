@@ -2,6 +2,7 @@ package org.janelia.it.jacs.model.domain.sample;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.janelia.it.jacs.model.domain.FileReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
@@ -14,6 +15,7 @@ import java.util.Map;
 /**
  * The result of some processing. May be nested if further processing is done on this result.
  */
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public class PipelineResult implements HasRelativeFiles {
 
     private Long id;

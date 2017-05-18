@@ -56,6 +56,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -95,16 +96,20 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         List<String> unmergedInputChannels;
         List<String> mergedInputChannels;
         List<String> outputChannels;
+        List<String> outputColors;
         String mapping;
         String mergeTileDir;
         String mergeTileFile;
+        String imageSize;
+        String opticalResolution;
         JacsServiceData mergeTileServiceData;
 
-        MergeChannelsData(TileLsmPair tilePair, List<String> unmergedInputChannels, List<String> mergedInputChannels, List<String> outputChannels) {
+        MergeChannelsData(TileLsmPair tilePair, List<String> unmergedInputChannels, List<String> mergedInputChannels, List<String> outputChannels, List<String> outputColors) {
             this.tilePair = tilePair;
             this.unmergedInputChannels = unmergedInputChannels;
             this.mergedInputChannels = mergedInputChannels;
             this.outputChannels = outputChannels;
+            this.outputColors = outputColors;
             this.mapping = LSMProcessingTools.generateChannelMapping(mergedInputChannels, outputChannels);
         }
 
@@ -265,7 +270,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             // otherwise use the channel spec and the merge algorithm
             channelMappingFunc = (ar, tp) -> determineChannelMappingsUsingChanSpec(tp, ar.getDefaultChanSpec(), mergeAlgorithm);
         }
-        BinaryOperator<MergedAndGroupedAreaTiles> channelMappingConsensusCombiner = (c1, c2) -> {
+        BinaryOperator<MergedAndGroupedAreaTiles> channelMappingConsensusCombiner = (MergedAndGroupedAreaTiles c1, MergedAndGroupedAreaTiles c2) -> {
             c1.objective = c2.objective;
             c1.anatomicalArea = c2.anatomicalArea;
             // compare if the two mapping are identical
@@ -325,14 +330,17 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                                                                          ConvertTileToImageArgs args,
                                                                          JacsServiceData... deps) {
         return ar.getTileLsmPairs().stream()
-                .map(tp -> channelMappingFunc.apply(ar, tp))
-                .map(mcd -> mergeChannelsForATilePair(ar, mcd, multiscanBlendVersion, mergeFileNameGenerator, jacsServiceData, args, deps))
-                .reduce(new MergedAndGroupedAreaTiles(), (ac, mcd) -> {
+                .map((TileLsmPair tp) -> channelMappingFunc.apply(ar, tp)) // determine channel mapping
+                .map((MergeChannelsData mcd) -> mergeChannelsForATilePair(ar, mcd, multiscanBlendVersion, mergeFileNameGenerator, jacsServiceData, args, deps)) // merge channels from a tile pair
+                .reduce(new MergedAndGroupedAreaTiles(), (MergedAndGroupedAreaTiles ac, MergeChannelsData mcd) -> { // generate consensus result
                     MergeTilePairResult mergeResult = new MergeTilePairResult();
                     mergeResult.setTileName(mcd.tilePair.getTileName());
+                    mergeResult.setImageSize(mcd.imageSize);
+                    mergeResult.setOpticalResolution(mcd.opticalResolution);
                     mergeResult.setMergeResultFile(mcd.mergeTileFile);
                     mergeResult.setChannelMapping(mcd.mapping);
                     mergeResult.setChannelComponents(LSMProcessingTools.extractChannelComponents(mcd.outputChannels));
+                    mergeResult.setChannelColors(mcd.outputColors);
 
                     MergedAndGroupedAreaTiles areaTiles = new MergedAndGroupedAreaTiles();
                     areaTiles.objective = ar.getObjective();
@@ -381,6 +389,12 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                     new ServiceArg("-outputFile", mergedResultFileName.toString())
             );
             channelMappingInput = mergedResultFileName;
+            mcd.imageSize = LSMProcessingTools.reconcileValues(
+                    mcd.tilePair.getFirstLsm().getImageSize(),
+                    mcd.tilePair.getSecondLsm().getImageSize());
+            mcd.opticalResolution = LSMProcessingTools.reconcileValues(
+                    mcd.tilePair.getFirstLsm().getOpticalResolution(),
+                    mcd.tilePair.getSecondLsm().getOpticalResolution());
         } else {
             // no merge is necessary so the result is the tile's LSM but create a link in the merge directory
             channelMappingInput = FileUtils.getFilePath(
@@ -398,6 +412,8 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                             mcd.tilePair.getFirstLsm()).toString()),
                     new ServiceArg("-target", channelMappingInput.toString())
             );
+            mcd.imageSize = mcd.tilePair.getFirstLsm().getImageSize();
+            mcd.opticalResolution = mcd.tilePair.getFirstLsm().getOpticalResolution();
         }
         mergeLsmPairsService = submitDependencyIfNotPresent(jacsServiceData, mergeLsmPairsService);
         logger.info("Map channels {} + {} -> {}", mergedResultFileName, mcd.mapping, mergedResultFileName);
@@ -522,21 +538,25 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                                                                   Pair<Multimap<String, String>, Map<String, String>> channelDyesMapData,
                                                                   List<String> outputChannels) {
         logger.info("Determine channel mapping using dye spec for {}", tilePair);
-        Collection<String> referenceDyes = channelDyesMapData.getLeft().get("reference");
+        Multimap<String, String> channelTagToDyesMapping = channelDyesMapData.getLeft();
+        Collection<String> referenceDyes = channelTagToDyesMapping.get("reference");
+
         Map<String, String> dyesToTagMap = channelDyesMapData.getRight();
+        Map<String, String> dyesToColorMap = new HashMap<>();
 
         DataHolder<String> referenceDye = new DataHolder<>();
         LSMImage lsm1 = tilePair.getFirstLsm();
         LSMMetadata lsm1Metadata = LSMProcessingTools.getLSMMetadata(lsm1.getFileName(FileType.LsmMetadata));
         List<String> lsm1DyeArray = new ArrayList<>();
         List<String> lsm2DyeArray = new ArrayList<>();
+        Map<String, String> lsm2DyeToColorMap = new HashMap<>();
         List<String> mergedDyeArray = new ArrayList<>();
-        collectDyes(lsm1Metadata, referenceDyes, referenceDye, mergedDyeArray, lsm1DyeArray);
+        collectDyes(lsm1Metadata, referenceDyes, referenceDye, mergedDyeArray, lsm1DyeArray, dyesToColorMap);
 
         LSMImage lsm2 = tilePair.getSecondLsm();
         if (lsm2 != null) {
             LSMMetadata lsm2Metadata = LSMProcessingTools.getLSMMetadata(lsm2.getFileName(FileType.LsmMetadata));
-            collectDyes(lsm2Metadata, referenceDyes, referenceDye, mergedDyeArray, lsm2DyeArray);
+            collectDyes(lsm2Metadata, referenceDyes, referenceDye, mergedDyeArray, lsm2DyeArray, dyesToColorMap);
             // Add the reference dye back in, at the end
             if (referenceDye.isPresent()) {
                 mergedDyeArray.add(referenceDye.getData());
@@ -552,7 +572,17 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         return new MergeChannelsData(tilePair,
                 unmergedChannelList,
                 ImmutableList.copyOf(convertDyesToChannelTags(mergedDyeArray, dyesToTagMap)),
-                outputChannels);
+                outputChannels,
+                outputChannels.stream()
+                        .filter(chTag -> channelTagToDyesMapping.containsKey(chTag))
+                        .map(chTag -> {
+                            if (channelTagToDyesMapping.containsKey(chTag)) {
+                                return channelTagToDyesMapping.get(chTag).stream().findFirst().orElse("");
+                            } else {
+                                return "";
+                            }
+                        })
+                        .collect(Collectors.toList()));
     }
 
     private MergeChannelsData determineChannelMappingsUsingChanSpec(TileLsmPair tilePair, String outputChannelSpec, MergeAlgorithm mergeAlgorithm) {
@@ -576,12 +606,12 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             int refIndex1 = LSMProcessingTools.getOneBasedRefChannelIndex(lsm1Metadata);
             String chanSpec1 = StringUtils.defaultIfBlank(lsm1.getChanSpec(),
                     LSMProcessingTools.createChanSpec(lsm1.getNumChannels(), refIndex1));
-            channelMapping = createInputAndOutputChannels(tilePair, chanSpec1, outputChannelSpec);
+            channelMapping = createInputAndOutputChannels(tilePair, chanSpec1, outputChannelSpec, LSMProcessingTools.parseChannelComponents(lsm1.getChannelColors()));
         }
         return channelMapping;
     }
 
-    private MergeChannelsData createInputAndOutputChannels(TileLsmPair tilePair, String inputChanSpec, String outputChanSpec) {
+    private MergeChannelsData createInputAndOutputChannels(TileLsmPair tilePair, String inputChanSpec, String outputChanSpec, List<String> outputChannelColors) {
         List<String> inputChannelList = LSMProcessingTools.convertChanSpecToList(inputChanSpec);
         List<String> inputChannelWithSingleRefList = LSMProcessingTools.convertChanSpecToList(moveRefChannelAtTheEnd(inputChanSpec));
         List<String> outputChannelList;
@@ -591,7 +621,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         } else {
             outputChannelList = LSMProcessingTools.convertChanSpecToList(outputChanSpec);
         }
-        return new MergeChannelsData(tilePair, inputChannelList, inputChannelWithSingleRefList, outputChannelList);
+        return new MergeChannelsData(tilePair, inputChannelList, inputChannelWithSingleRefList, outputChannelList, outputChannelColors);
     }
 
     private MergeChannelsData mergeUsingFlylightOrderedAlgorithm(TileLsmPair tilePair,
@@ -602,12 +632,44 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         int refIndex1 = LSMProcessingTools.getOneBasedRefChannelIndex(lsm1Metadata);
         String chanSpec1 = StringUtils.defaultIfBlank(lsm1.getChanSpec(),
                 LSMProcessingTools.createChanSpec(lsm1.getNumChannels(), refIndex1));
-
+        List<String> lsm1Colors;
+        if (StringUtils.isBlank(lsm1.getChannelColors())) {
+            lsm1Colors = LSMProcessingTools.getLsmChannelColors(lsm1Metadata);
+        } else {
+            lsm1Colors = LSMProcessingTools.parseChannelComponents(lsm1.getChannelColors());
+        }
         int refIndex2 = LSMProcessingTools.getOneBasedRefChannelIndex(lsm2Metadata);
         String chanSpec2 = StringUtils.defaultIfBlank(lsm2.getChanSpec(),
                 LSMProcessingTools.createChanSpec(lsm2.getNumChannels(), refIndex2));
-
-        return createInputAndOutputChannels(tilePair, chanSpec1 + chanSpec2, outputChanSpec);
+        List<String> lsm2Colors;
+        if (StringUtils.isBlank(lsm2.getChannelColors())) {
+            lsm2Colors = LSMProcessingTools.getLsmChannelColors(lsm2Metadata);
+        } else {
+            lsm2Colors = LSMProcessingTools.parseChannelComponents(lsm2.getChannelColors());
+        }
+        Iterator<String> outputChanSpecItr = LSMProcessingTools.convertChanSpecToList(outputChanSpec).iterator();
+        List<String> outputChanColors = Stream.concat(
+                lsm1Colors.stream().filter(c -> !c.equalsIgnoreCase(LSMProcessingTools.REFERENCE_COLOR)),
+                Stream.concat(
+                        lsm2Colors.stream().filter(c -> !c.equalsIgnoreCase(LSMProcessingTools.REFERENCE_COLOR)),
+                        Stream.of(LSMProcessingTools.REFERENCE_COLOR))
+        )
+                .filter(chColor -> outputChanSpecItr.hasNext())
+                .flatMap(chColor -> {
+                    String chnSpec = outputChanSpecItr.next();
+                    if (LSMProcessingTools.isReferenceChanSpec(chnSpec)) {
+                        if (outputChanSpecItr.hasNext()) {
+                            outputChanSpecItr.next(); // consume one more char
+                            return Stream.<String>of(LSMProcessingTools.REFERENCE_COLOR, chColor);
+                        } else {
+                            return Stream.of(LSMProcessingTools.REFERENCE_COLOR);
+                        }
+                    } else {
+                        return Stream.of(chColor);
+                    }
+                })
+                .collect(Collectors.toList());
+        return createInputAndOutputChannels(tilePair, chanSpec1 + chanSpec2, outputChanSpec, outputChanColors);
     }
 
     private MergeChannelsData mergeUsingFlylightAlgorithm(TileLsmPair tilePair, LSMImage lsm1, LSMMetadata lsm1Metadata, LSMImage lsm2, LSMMetadata lsm2Metadata) {
@@ -641,7 +703,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             // or terminate if there's no tag left
             if (tag.startsWith("r") && !tag.equals("r0")) {
                 // if this is a reference channel only consider the first reference channel and ignore all others
-                if ("#FFFFFF".equalsIgnoreCase(color)) {
+                if (LSMProcessingTools.REFERENCE_COLOR.equalsIgnoreCase(color)) {
                     // if both the tag and the color mark a reference channel advance both of them
                     continue;
                 } else if (tagIterator.hasNext()) {
@@ -650,11 +712,11 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                     break;
                 }
             }
-            if ("#FF0000".equalsIgnoreCase(color)) {
+            if (LSMProcessingTools.RED_COLOR.equalsIgnoreCase(color)) {
                 redTag = tag;
-            } else if ("#00FF00".equalsIgnoreCase(color)) {
+            } else if (LSMProcessingTools.GREEN_COLOR.equalsIgnoreCase(color)) {
                 greenTag = tag;
-            } else if ("#0000FF".equalsIgnoreCase(color)) {
+            } else if (LSMProcessingTools.BLUE_COLOR.equalsIgnoreCase(color)) {
                 blueTag = tag;
             } else if (refTag==null) {
                 refTag = tag;
@@ -691,7 +753,13 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 StringUtils.defaultString(blueTag, ""),
                 StringUtils.defaultString(refTag, "")
         );
-        return new MergeChannelsData(tilePair, unmergedChannelTagList, inputChannelList, inputChannelList);
+        List<String> inputColorList = ImmutableList.of(
+                StringUtils.isNotBlank(redTag) ? LSMProcessingTools.RED_COLOR : "",
+                StringUtils.isNotBlank(greenTag) ? LSMProcessingTools.GREEN_COLOR : "",
+                StringUtils.isNotBlank(blueTag) ? LSMProcessingTools.BLUE_COLOR : "",
+                StringUtils.isNotBlank(refTag) ? LSMProcessingTools.REFERENCE_COLOR : ""
+        );
+        return new MergeChannelsData(tilePair, unmergedChannelTagList, inputChannelList, inputChannelList, inputColorList);
     }
 
     private String moveRefChannelAtTheEnd(String channelSpec) {
@@ -708,8 +776,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
      */
     private Collection<String> convertDyesToChannelTags(Collection<String> dyes, Map<String, String> dyeToTagMap) {
         return dyes.stream()
-                .filter(dyeToTagMap::containsKey)
-                .map(dyeToTagMap::get)
+                .map(dye -> StringUtils.defaultIfBlank(dyeToTagMap.get(dye), ""))
                 .collect(Collectors.toList());
     }
 
@@ -722,8 +789,9 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     }
 
     private void collectDyes(LSMMetadata lsmMetadata, Collection<String> referenceChannelDyes,
-                             DataHolder<String> foundReferenceDye, Collection<String> signalDyes,
-                             Collection<String> allDyes) {
+                             DataHolder<String> foundReferenceDye, List<String> signalDyes,
+                             List<String> allDyes,
+                             Map<String, String> dyeToColorMap) {
         for(LSMChannel lsmChannel : lsmMetadata.getChannels()) {
             LSMDetectionChannel detectionChannel = lsmMetadata.getDetectionChannel(lsmChannel);
             if (detectionChannel != null) {
@@ -738,6 +806,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                     signalDyes.add(dye);
                 }
                 allDyes.add(dye);
+                dyeToColorMap.put(dye, lsmChannel.getColor());
             }
         }
     }

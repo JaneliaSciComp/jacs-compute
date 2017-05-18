@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.imageservices.tools;
 import com.google.common.base.Splitter;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMChannel;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +23,11 @@ import java.util.StringJoiner;
 import java.util.stream.IntStream;
 
 public class LSMProcessingTools {
+
+    public static final String REFERENCE_COLOR = "#FFFFFF";
+    public static final String RED_COLOR = "#FF0000";
+    public static final String GREEN_COLOR = "#00FF00";
+    public static final String BLUE_COLOR = "#0000FF";
 
     private static final char REFERENCE = 'r';
     private static final char SIGNAL = 's';
@@ -52,6 +59,10 @@ public class LSMProcessingTools {
                 .map(dye -> referenceDyes.contains(dye) ? REFERENCE : SIGNAL)
                 .forEach(chanSpecBuilder::append);
         return chanSpecBuilder.toString();
+    }
+
+    public static boolean isReferenceChanSpec(String chSpec) {
+        return chSpec.startsWith(String.valueOf(REFERENCE));
     }
 
     /**
@@ -92,6 +103,14 @@ public class LSMProcessingTools {
             i++;
         }
         return refIndex;
+    }
+
+    public static List<String> getLsmChannelColors(LSMMetadata lsmMetadata) {
+        List<String> lsmChannelColors = new ArrayList<>();
+        for(LSMChannel lsmChannel : lsmMetadata.getChannels()) {
+            lsmChannelColors.add(lsmChannel.getColor());
+        }
+        return lsmChannelColors;
     }
 
     /**
@@ -200,6 +219,13 @@ public class LSMProcessingTools {
     }
 
     public static List<String> parseChannelComponents(String channelComponents) {
-        return Splitter.on(',').trimResults().omitEmptyStrings().splitToList(channelComponents);
+        return StringUtils.isBlank(channelComponents) ? Collections.emptyList() : Splitter.on(',').trimResults().omitEmptyStrings().splitToList(channelComponents);
+    }
+
+    public static String reconcileValues(String v1, String v2) {
+        if (StringUtils.isBlank(v1)) return v2;
+        else if (StringUtils.isBlank(v2)) return v1;
+        else if (StringUtils.equals(v1, v2)) return v1;
+        else return null;
     }
 }

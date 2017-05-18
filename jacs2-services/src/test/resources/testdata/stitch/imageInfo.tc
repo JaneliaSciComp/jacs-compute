@@ -1,0 +1,21 @@
+# thumbnail file
+NULL
+
+# tiles
+2
+
+# dimensions (XYZC)
+1364 1329 450 4
+
+# origin (XYZ)
+-340.000000 -305.000000 -2.000000
+
+# resolution (XYZ)
+1.000000 1.000000 1.000000
+
+# image coordinates look up table
+tile-2222814593330184290.v3draw  ( 0, 0, 0 ) ( 1023, 1023, 447 )
+tile-2222814593506345058.v3draw  ( -340, -305, -2 ) ( 683, 718, 446 )
+
+# MST LUT
+1 -1 -343 -308 -3
