@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing.zeiss;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 
 import java.io.File;
@@ -115,7 +116,14 @@ public class LSMMetadata {
         return null;
     }
 
+    /**
+     * Read LSM metadata from the given file
+     * @param file LSM metadata file
+     * @return the internal representation of the LSM metadata
+     * @throws IOException
+     */
     public static LSMMetadata fromFile(File file) throws IOException {
+        Preconditions.checkArgument(file.exists(), "LSM metadata file " + file + " is missing");
         ObjectMapper objectMapper = ObjectMapperFactory.instance().getDefaultObjectMapper();
         return objectMapper.readValue(Files.readAllBytes(file.toPath()), LSMMetadata.class);
     }

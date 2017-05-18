@@ -129,6 +129,7 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
     }
 
     private void updateLSM(LSMImage lsm, String lsmMetadataFilePath, String channelDyeSpec) {
+        logger.debug("Update LSM metadata for {} to {}", lsm, lsmMetadataFilePath);
         LSMMetadata lsmMetadata = LSMProcessingTools.getLSMMetadata(lsmMetadataFilePath);
         List<String> colors = new ArrayList<>();
         List<String> dyeNames = new ArrayList<>();
