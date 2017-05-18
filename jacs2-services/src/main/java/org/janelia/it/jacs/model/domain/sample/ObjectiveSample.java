@@ -14,7 +14,7 @@ public class ObjectiveSample {
     private String objective;
     private String chanSpec;
     private List<SampleTile> tiles = new ArrayList<>();
-    private List<SamplePipelineRun> pipelineRuns = new ArrayList<>();
+    private List<SamplePipelineRun> pipelineRuns;
 
     @JsonIgnore
     private transient Sample parent;
@@ -68,6 +68,7 @@ public class ObjectiveSample {
     }
 
     public void addPipelineRun(SamplePipelineRun pipelineRun) {
+        if (pipelineRuns == null) pipelineRuns = new ArrayList<>();
         pipelineRuns.add(pipelineRun);
     }
 }
