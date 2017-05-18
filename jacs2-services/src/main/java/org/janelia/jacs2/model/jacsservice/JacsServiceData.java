@@ -50,7 +50,6 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private List<JacsServiceData> dependencies = new ArrayList<>();
     private List<Number> dependenciesIds = new ArrayList<>();
     private Long serviceTimeout;
-    private Integer optimisticLock;
 
     public Number getId() {
         return id;
@@ -406,14 +405,6 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     @JsonIgnore
     public long timeout() {
         return serviceTimeout != null && serviceTimeout > 0L ? serviceTimeout : -1;
-    }
-
-    public Integer getOptimisticLock() {
-        return optimisticLock;
-    }
-
-    public void setOptimisticLock(Integer optimisticLock) {
-        this.optimisticLock = optimisticLock;
     }
 
     public Optional<JacsServiceData> findSimilarDependency(JacsServiceData dependency) {

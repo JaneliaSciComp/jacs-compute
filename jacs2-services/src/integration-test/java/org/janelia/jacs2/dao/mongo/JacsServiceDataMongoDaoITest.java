@@ -238,7 +238,6 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("optimisticLock", equalTo(1))));
         assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
         // now try to claim them for a different queue
         retrievedQueuedServices = testDao.claimServiceByQueueAndState("otherQueue", ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
@@ -247,7 +246,6 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("optimisticLock", equalTo(2))));
         assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
 
         PageResult<JacsServiceData> retrievedRunningOrCanceledServices = testDao.findServicesByState(
@@ -304,8 +302,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                     mongoCollection.findOneAndUpdate(
                             Filters.and(Filters.eq("_id", sd.getId())),
                             Updates.combine(
-                                    Updates.set("queueId", testQueueId),
-                                    Updates.inc("optimisticLock", 1)
+                                    Updates.set("queueId", "otherqueue")
                             )
                     );
                 });

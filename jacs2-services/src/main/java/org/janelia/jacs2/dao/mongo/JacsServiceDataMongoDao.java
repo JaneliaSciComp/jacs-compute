@@ -145,10 +145,14 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
                     updateOptions.returnDocument(ReturnDocument.AFTER);
 
                     return mongoCollection.findOneAndUpdate(
-                            Filters.and(Filters.eq("_id", sd.getId()), Filters.eq("optimisticLock", sd.getOptimisticLock())),
+                            Filters.and(
+                                    Filters.eq("_id", sd.getId()),
+                                    Filters.or(
+                                            Filters.eq("queueId", queueId),
+                                            Filters.exists("queueId", false))
+                            ),
                             Updates.combine(
-                                    Updates.set("queueId", queueId),
-                                    Updates.inc("optimisticLock", 1)
+                                    Updates.set("queueId", queueId)
                             ),
                             updateOptions
                     );
