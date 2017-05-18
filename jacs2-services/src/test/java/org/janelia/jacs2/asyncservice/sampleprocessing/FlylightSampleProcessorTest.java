@@ -101,9 +101,9 @@ public class FlylightSampleProcessorTest {
         );
 
         for (Map.Entry<String, String> testEntry : testData.entrySet()) {
-            Long testSampleId = Long.valueOf(testEntry.getKey());
+            Long testServiceId = Long.valueOf(testEntry.getKey());
             String testSampleDir = SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + testEntry.getValue();
-            JacsServiceData testServiceData = createTestServiceData(testSampleId,
+            JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
                     area,
                     objective,
                     mergeAlgorithm,
@@ -112,11 +112,12 @@ public class FlylightSampleProcessorTest {
                     true,
                     true
             );
+            testServiceData.setId(testServiceId);
 
             JacsServiceResult<FlylightSampleProcessor.FlylightSampleIntermediateResult> result = flylightSampleProcessor.submitServiceDependencies(testServiceData);
 
             verify(sampleLSMSummaryProcessor).createServiceData(any(ServiceExecutionContext.class),
-                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId.toString()))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", testSampleDir))),
@@ -125,7 +126,7 @@ public class FlylightSampleProcessorTest {
             );
 
             verify(sampleStitchProcessor).createServiceData(any(ServiceExecutionContext.class),
-                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId.toString()))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", testSampleDir))),

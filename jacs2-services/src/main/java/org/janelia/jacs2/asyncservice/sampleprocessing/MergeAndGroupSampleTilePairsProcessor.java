@@ -98,7 +98,8 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         List<String> outputChannels;
         List<String> outputColors;
         String mapping;
-        String mergeTileDir;
+        String resultsParentDir;
+        String mergeTileRelativeSubDir;
         String mergeTileFile;
         String imageSize;
         String opticalResolution;
@@ -128,8 +129,9 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         String anatomicalArea;
         String areaChannelMapping;
         ChannelComponents areaChannelComponents;
-        String mergeDir;
-        String groupDir;
+        String resultsDir;
+        String mergeSubDir;
+        String groupSubDir;
         List<MergeTilePairResult> mergeResults = new LinkedList<>();
         List<MergeTilePairResult> groupedTiles = new LinkedList<>();
         List<JacsServiceData> mergeTileServiceList = new LinkedList<>();
@@ -201,8 +203,9 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                             SampleAreaResult areaResult = new SampleAreaResult();
                             areaResult.setObjective(tmpAreaResult.objective);
                             areaResult.setAnatomicalArea(tmpAreaResult.anatomicalArea);
-                            areaResult.setMergeDir(tmpAreaResult.mergeDir);
-                            areaResult.setGroupDir(tmpAreaResult.groupDir);
+                            areaResult.setResultDir(tmpAreaResult.resultsDir);
+                            areaResult.setMergeRelativeSubDir(tmpAreaResult.mergeSubDir);
+                            areaResult.setGroupRelativeSubDir(tmpAreaResult.groupSubDir);
                             areaResult.setConsensusChannelMapping(tmpAreaResult.areaChannelMapping);
                             areaResult.setConsensusChannelComponents(tmpAreaResult.areaChannelComponents);
                             areaResult.setMergeResults(tmpAreaResult.mergeResults);
@@ -284,7 +287,9 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             } else if (!c1.areaChannelComponents.equals(c2.areaChannelComponents)) {
                 throw new IllegalStateException("No channel mapping consesus among tiles: " + c1.areaChannelComponents + " != " + c2.areaChannelComponents);
             }
-            c1.mergeDir = c2.mergeDir;
+            c1.resultsDir = c2.resultsDir;
+            c1.mergeSubDir = c2.mergeSubDir;
+            c1.groupSubDir = c2.groupSubDir;
             c1.mergeResults.addAll(c2.mergeResults);
             c1.mergeTileServiceList.addAll(c2.mergeTileServiceList);
             return c1;
@@ -348,7 +353,9 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                     areaTiles.areaChannelMapping = LSMProcessingTools.generateOutputChannelReordering(mcd.unmergedInputChannels, mcd.outputChannels);
                     areaTiles.areaChannelComponents = mergeResult.getChannelComponents();
                     areaTiles.mergeResults.add(mergeResult);
-                    areaTiles.mergeDir = mcd.mergeTileDir;
+                    areaTiles.resultsDir = mcd.resultsParentDir;
+                    areaTiles.mergeSubDir = mcd.mergeTileRelativeSubDir;
+                    areaTiles.groupSubDir = null; // no grouping yet
                     areaTiles.mergeTileServiceList.add(mcd.mergeTileServiceData);
                     return channelMappingConsensusCombiner.apply(ac, areaTiles);
                 }, channelMappingConsensusCombiner);
@@ -364,10 +371,10 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         logger.info("Merge channel info for tile {} -> unmerged channels: {}, merged channels: {}, output: {}, mapping: {}",
                 mcd.tilePair.getTileName(), mcd.unmergedInputChannels, mcd.mergedInputChannels, mcd.outputChannels, mcd.mapping);
         JacsServiceData mergeLsmPairsService;
-        Path mergedResultDir = FileUtils.getFilePath(
-                SampleServicesUtils.getImageDataPath(args.sampleDataDir, ar.getObjective(), ar.getName()),
-                MERGE_DIRNAME,
-                null);
+
+        Path areaResultsParentDir = SampleServicesUtils.getImageDataPath(args.sampleDataDir, ar.getObjective(), ar.getName());
+        String mergeSubDir = MERGE_DIRNAME;
+        Path mergedResultDir = areaResultsParentDir.resolve(mergeSubDir);
         Path channelMappingInput;
         Path mergedResultFileName = FileUtils.getFilePath(mergedResultDir, mergeFileNameGenerator.apply(mcd.tilePair), ".v3draw");
         if (mcd.tilePair.hasTwoLsms()) {
@@ -426,14 +433,17 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 new ServiceArg("-channelMapping", mcd.mapping)
         );
         mcd.mergeTileServiceData = submitDependencyIfNotPresent(jacsServiceData, mapChannelsService);
-        mcd.mergeTileDir = mergedResultDir.toString();
+        mcd.resultsParentDir = areaResultsParentDir.toString();
+        mcd.mergeTileRelativeSubDir = mergeSubDir;
         mcd.mergeTileFile = mergedResultFileName.toString();
         return mcd;
     }
 
     private MergedAndGroupedAreaTiles groupTiles(MergedAndGroupedAreaTiles mergeTileResults, JacsServiceData jacsServiceData) {
-        Path mergeDir = Paths.get(mergeTileResults.mergeDir);
-        Path groupDir = mergeDir.getParent().resolve(GROUP_DIRNAME);
+        Path resultsDir = Paths.get(mergeTileResults.resultsDir);
+        Path mergeDir = resultsDir.resolve(mergeTileResults.mergeSubDir);
+        String groupSubDir = GROUP_DIRNAME;
+        Path groupDir = resultsDir.resolve(groupSubDir);
         String referenceChannelNumber = mergeTileResults.areaChannelComponents.referenceChannelNumbers;
         JacsServiceData groupingService = vaa3dStitchGroupingProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Group tiles")
@@ -444,7 +454,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 new ServiceArg("-refchannel", referenceChannelNumber)
         );
         mergeTileResults.groupService = submitDependencyIfNotPresent(jacsServiceData, groupingService);
-        mergeTileResults.groupDir = groupDir.toAbsolutePath().toString();
+        mergeTileResults.groupSubDir = groupSubDir;
         return mergeTileResults;
     }
 
@@ -485,7 +495,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 .forEach(tp -> {
                     try {
                         Path tileMergedFile = Paths.get(tp.getMergeResultFile());
-                        Path tileMergedFileLink = FileUtils.getFilePath(Paths.get(areaTiles.groupDir), tp.getMergeResultFile());
+                        Path tileMergedFileLink = FileUtils.getFilePath(Paths.get(areaTiles.resultsDir, areaTiles.groupSubDir), tp.getMergeResultFile());
                         if (!tileMergedFile.toAbsolutePath().startsWith(tileMergedFileLink.toAbsolutePath())) {
                             Files.createSymbolicLink(tileMergedFileLink, tileMergedFile);
                         }

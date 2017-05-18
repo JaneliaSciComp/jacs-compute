@@ -152,7 +152,7 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
         if (StringUtils.isBlank(lsm.getChanSpec())) {
             updateChanSpec(lsm, channelDyeSpec);
         }
-        DomainModelUtils.setPathForFileType(lsm, FileType.LsmMetadata, lsmMetadataFilePath);
+        DomainModelUtils.setFullPathForFileType(lsm, FileType.LsmMetadata, lsmMetadataFilePath);
         sampleDataService.updateLSM(lsm);
    }
 

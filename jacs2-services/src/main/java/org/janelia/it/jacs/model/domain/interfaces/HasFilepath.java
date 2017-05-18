@@ -7,4 +7,7 @@ package org.janelia.it.jacs.model.domain.interfaces;
  */
 public interface HasFilepath {
     String getFilepath();
+    default boolean hasFilepath() {
+        return getFilepath() != null && getFilepath().trim().length() > 0;
+    }
 }

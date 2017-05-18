@@ -1,11 +1,9 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.interfaces.HasFilepath;
-import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.jacs2.model.DomainModelUtils;
@@ -48,11 +46,11 @@ public class SampleServicesUtils {
      * @param fileGroups list of filegroups
      * @return true if the object has been changed
      */
-    public static boolean updateFiles(HasFiles objectWithFiles, List<FileGroup> fileGroups) {
+    public static boolean updateFiles(HasRelativeFiles objectWithFiles, List<FileGroup> fileGroups) {
         return fileGroups.stream()
                 .flatMap(group -> group.getFiles().entrySet().stream())
                 .map(fileTypeEntry -> {
-                    DomainModelUtils.setPathForFileType(objectWithFiles, fileTypeEntry.getKey(), fileTypeEntry.getValue());
+                    DomainModelUtils.setRelativePathForFileType(objectWithFiles, fileTypeEntry.getKey(), fileTypeEntry.getValue());
                     return true;
                 })
                 .reduce((r1, r2) -> r1 || r2)
@@ -107,7 +105,7 @@ public class SampleServicesUtils {
                         group.setFilepath(StringUtils.defaultIfBlank(groupFilePath, fn.fullFilepath));
                         groups.put(fn.key, group);
                     }
-                    DomainModelUtils.setPathForFileType(group, fn.fileType, fn.fullFilepath);
+                    DomainModelUtils.setRelativePathForFileType(group, fn.fileType, fn.fullFilepath);
                 });
         return ImmutableList.copyOf(groups.values());
     }

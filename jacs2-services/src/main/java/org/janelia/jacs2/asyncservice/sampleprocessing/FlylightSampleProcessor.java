@@ -98,18 +98,14 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     @Override
     protected JacsServiceResult<FlylightSampleIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         FlylightSampleArgs args = getArgs(jacsServiceData);
-        Path sampleDataDir = getSampleDataDir(args);
-        Path sampleWorkingDir = getSampleWorkingDir(jacsServiceData, args);
+        Path sampleDataDir = getSampleDataDir(jacsServiceData, args);
         String sampleId = args.sampleId.toString();
 
-
-        JacsServiceData lsmSummaryService = lsmSummary(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.channelDyeSpec, args.basicMipMapsOptions, sampleDataDir, sampleWorkingDir);
+        lsmSummary(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.channelDyeSpec, args.basicMipMapsOptions, sampleDataDir);
 
         JacsServiceData stitchService = stitch(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.mergeAlgorithm, args.channelDyeSpec, args.outputChannelOrder,
                 args.applyDistortionCorrection, args.persistResults,
-                sampleDataDir,
-                sampleWorkingDir,
-                lsmSummaryService);
+                sampleDataDir);
 
         return new JacsServiceResult<>(jacsServiceData, new FlylightSampleIntermediateResult(stitchService.getId()));
     }
@@ -120,10 +116,9 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     }
 
     private JacsServiceData lsmSummary(JacsServiceData jacsServiceData, String sampleId, String objective, String area, String channelDyeSpec, String basicMipMapsOptions,
-                                       Path sampleDataDir, Path sampleWorkingDir) {
+                                       Path sampleDataDir) {
         JacsServiceData lsmSummaryService = sampleLSMSummaryProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Create sample LSM summary")
-                        .setWorkingDirectory(sampleWorkingDir.toString())
                         .build(),
                 new ServiceArg("-sampleId", sampleId),
                 new ServiceArg("-objective", objective),
@@ -138,12 +133,9 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     private JacsServiceData stitch(JacsServiceData jacsServiceData, String sampleId, String objective, String area,
                                    String mergeAlgorithm, String channelDyeSpec, String outputChannelOrder,
                                    boolean useDistortionCorrection, boolean generateMips,
-                                   Path sampleDataDir, Path sampleWorkingDir,
-                                   JacsServiceData... deps) {
+                                   Path sampleDataDir) {
         JacsServiceData mipsService = sampleStitchProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Stitch sample tiles")
-                        .setWorkingDirectory(sampleWorkingDir.toString())
-                        .waitFor(deps)
                         .build(),
                 new ServiceArg("-sampleId", sampleId),
                 new ServiceArg("-objective", objective),
@@ -162,15 +154,9 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         return ServiceArgs.parse(jacsServiceData.getArgsArray(), new FlylightSampleArgs());
     }
 
-    private Path getSampleDataDir(FlylightSampleArgs args) {
-        List<String> sampleIdTreePath = FileUtils.getTreePathComponentsForId(args.sampleId);
-        return Paths.get(args.sampleDataDir, sampleIdTreePath.toArray(new String[sampleIdTreePath.size()]));
-    }
-
-    private Path getSampleWorkingDir(JacsServiceData jacsServiceData, FlylightSampleArgs args) {
-        List<String> sampleIdTreePath = FileUtils.getTreePathComponentsForId(args.sampleId);
-        Path serviceWorkingDir = getWorkingDirectory(jacsServiceData);
-        return sampleIdTreePath.stream().map(s -> Paths.get(s)).reduce(serviceWorkingDir, Path::resolve);
+    private Path getSampleDataDir(JacsServiceData jacsServiceData, FlylightSampleArgs args) {
+        List<String> serviceIdTreePath = FileUtils.getTreePathComponentsForId(jacsServiceData.getId());
+        return Paths.get(args.sampleDataDir, serviceIdTreePath.toArray(new String[serviceIdTreePath.size()]));
     }
 
 }

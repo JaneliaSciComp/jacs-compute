@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
@@ -17,6 +18,8 @@ import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
 
 import java.lang.reflect.ParameterizedType;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class DomainModelUtils {
@@ -112,11 +115,27 @@ public class DomainModelUtils {
         return mongoMapping;
     }
 
-    public static void setPathForFileType(HasFiles objWithFiles, FileType fileType, String fileName) {
+    public static void setFullPathForFileType(HasFiles objWithFiles, FileType fileType, String fileName) {
         if (StringUtils.isBlank(fileName)) {
             objWithFiles.removeFileName(fileType);
         } else {
             objWithFiles.setFileName(fileType, fileName);
+        }
+    }
+
+    public static void setRelativePathForFileType(HasRelativeFiles objWithFiles, FileType fileType, String fileName) {
+        if (StringUtils.isBlank(fileName)) {
+            objWithFiles.removeFileName(fileType);
+        } else {
+            if (!objWithFiles.hasFilepath())
+                objWithFiles.setFileName(fileType, fileName);
+            else if (fileName.startsWith(objWithFiles.getFilepath())) {
+                Path parent = Paths.get(objWithFiles.getFilepath());
+                Path child = Paths.get(fileName);
+                objWithFiles.setFileName(fileType, parent.relativize(child).toString());
+            } else {
+                objWithFiles.setFileName(fileType, fileName);
+            }
         }
     }
 

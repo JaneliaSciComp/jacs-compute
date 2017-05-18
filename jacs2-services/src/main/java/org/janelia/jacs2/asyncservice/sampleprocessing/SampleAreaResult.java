@@ -1,19 +1,25 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SampleAreaResult {
     private String anatomicalArea;
     private String objective;
-    private String mergeDir;
-    private String groupDir;
+    private String resultDir;
+    private String mergeRelativeSubDir;
+    private String groupRelativeSubDir;
     private String stitchInfoFile;
-    private String stitchDir;
+    private String stitchRelativeSubDir;
     private String stichFile;
-    private String mipsDir;
+    private String mipsRelativeSubDir;
     private List<String> mipsFileList = new ArrayList<>();
     private String consensusChannelMapping;
     private ChannelComponents consensusChannelComponents;
@@ -36,20 +42,44 @@ public class SampleAreaResult {
         this.objective = objective;
     }
 
-    public String getMergeDir() {
-        return mergeDir;
+    public String getResultDir() {
+        return resultDir;
     }
 
-    public void setMergeDir(String mergeDir) {
-        this.mergeDir = mergeDir;
+    public void setResultDir(String resultDir) {
+        this.resultDir = resultDir;
     }
 
-    public String getGroupDir() {
-        return groupDir;
+    public String getMergeRelativeSubDir() {
+        return mergeRelativeSubDir;
     }
 
-    public void setGroupDir(String groupDir) {
-        this.groupDir = groupDir;
+    public void setMergeRelativeSubDir(String mergeRelativeSubDir) {
+        this.mergeRelativeSubDir = mergeRelativeSubDir;
+    }
+
+    public String getGroupRelativeSubDir() {
+        return groupRelativeSubDir;
+    }
+
+    public void setGroupRelativeSubDir(String groupRelativeSubDir) {
+        this.groupRelativeSubDir = groupRelativeSubDir;
+    }
+
+    public String getStitchRelativeSubDir() {
+        return stitchRelativeSubDir;
+    }
+
+    public void setStitchRelativeSubDir(String stitchRelativeSubDir) {
+        this.stitchRelativeSubDir = stitchRelativeSubDir;
+    }
+
+    public String getMipsRelativeSubDir() {
+        return mipsRelativeSubDir;
+    }
+
+    public void setMipsRelativeSubDir(String mipsRelativeSubDir) {
+        this.mipsRelativeSubDir = mipsRelativeSubDir;
     }
 
     public String getStitchInfoFile() {
@@ -60,28 +90,12 @@ public class SampleAreaResult {
         this.stitchInfoFile = stitchInfoFile;
     }
 
-    public String getStitchDir() {
-        return stitchDir;
-    }
-
-    public void setStitchDir(String stitchDir) {
-        this.stitchDir = stitchDir;
-    }
-
     public String getStichFile() {
         return stichFile;
     }
 
     public void setStichFile(String stichFile) {
         this.stichFile = stichFile;
-    }
-
-    public String getMipsDir() {
-        return mipsDir;
-    }
-
-    public void setMipsDir(String mipsDir) {
-        this.mipsDir = mipsDir;
     }
 
     public List<String> getMipsFileList() {
@@ -126,5 +140,16 @@ public class SampleAreaResult {
 
     public void setGroupResults(List<MergeTilePairResult> groupResults) {
         this.groupResults = groupResults;
+    }
+
+    @JsonIgnore
+    public List<String> getMergeResultFiles() {
+        if (CollectionUtils.isNotEmpty(groupResults)) {
+            return groupResults.stream().map(MergeTilePairResult::getMergeResultFile).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        } else if (CollectionUtils.isNotEmpty(mergeResults)) {
+            return mergeResults.stream().map(MergeTilePairResult::getMergeResultFile).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
     }
 }

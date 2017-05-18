@@ -239,30 +239,33 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
         return allGroupedAreasResults.stream()
                 .map(groupedArea -> {
                     JacsServiceData stitichingService = null;
+                    Path areaResultsDir = Paths.get(groupedArea.getResultDir());
                     Optional<Path> tileFile;
                     Optional<Number> stitchingServiceId;
                     Optional<Number> mipsServiceId;
                     Path mipsDir;
                     if (groupedArea.getGroupResults().size() > 1) {
                         // if the area has more than 1 tile then stitch them together
-                        Path groupDir = Paths.get(groupedArea.getGroupDir());
-                        Path stitchingDir = groupDir.getParent().resolve(STITCH_DIRNAME);
-                        mipsDir = groupDir.getParent().resolve(MIPS_DIRNAME);
+                        Path groupDir = areaResultsDir.resolve(groupedArea.getGroupRelativeSubDir());
+                        Path stitchingDir = areaResultsDir.resolve(STITCH_DIRNAME);
+                        mipsDir = areaResultsDir.resolve(MIPS_DIRNAME);
                         Path stitchingFile = FileUtils.getFilePath(stitchingDir, stitchedFileNameGenerator.apply(groupedArea), ".v3draw");
                         String referenceChannelNumber = groupedArea.getConsensusChannelComponents().referenceChannelNumbers;
                         stitichingService = stitchTilesFromArea(depResults.getJacsServiceData(), groupDir, stitchingFile, referenceChannelNumber);
                         // use the stitched file to generate the mips
                         tileFile = Optional.of(stitchingFile);
-                        groupedArea.setStitchDir(stitchingDir.toString());
+                        groupedArea.setStitchRelativeSubDir(STITCH_DIRNAME);
                         stitchingServiceId = Optional.of(stitichingService.getId());
                     } else {
                         // no need for stitching so simply take the result of the merge to generate the mips
                         tileFile = groupedArea.getGroupResults().stream()
                                 .map(tp -> Paths.get(tp.getMergeResultFile()))
                                 .findFirst();
-                        mipsDir = tileFile
-                                .map(fp -> fp.getParent().getParent().resolve(MIPS_DIRNAME))
-                                .orElse(null);
+                        if (tileFile.isPresent()) {
+                            mipsDir = areaResultsDir.resolve(MIPS_DIRNAME);
+                        } else {
+                            mipsDir = null;
+                        }
                         stitchingServiceId = Optional.empty();
                     }
                     if (args.generateMips && tileFile.isPresent()) {
@@ -270,7 +273,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                                 groupedArea.getConsensusChannelComponents().signalChannelsPos,
                                 groupedArea.getConsensusChannelComponents().referenceChannelsPos,
                                 stitichingService);
-                        groupedArea.setMipsDir(mipsDir.toString());
+                        groupedArea.setMipsRelativeSubDir(MIPS_DIRNAME);
                         mipsServiceId = Optional.of(mipsService.getId());
                     } else {
                         mipsServiceId = Optional.empty();
@@ -345,12 +348,15 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     pipelineRun.setCreationDate(jacsServiceData.getCreationDate());
                     // create stitch result
                     SampleStitchResult stitchResult = new SampleStitchResult();
+                    stitchResult.setFilepath(areaResult.getResultDir());
                     stitchResult.setChannelSpec(areaResult.getConsensusChannelComponents().channelSpec);
                     stitchResult.setAnatomicalArea(areaResult.getAnatomicalArea());
-                    List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(areaResult.getMipsDir(), areaResult.getMipsFileList());
+                    List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(areaResult.getResultDir(), areaResult.getMipsFileList());
                     SampleServicesUtils.updateFiles(stitchResult, fGroups);
                     if (StringUtils.isNotBlank(areaResult.getStichFile())) {
                         stitchResult.setFileName(FileType.LosslessStack, areaResult.getStichFile());
+                    } else {
+                        stitchResult.setFileName(FileType.LosslessStack, areaResult.getMergeResultFiles().stream().findFirst().orElse(null));
                     }
                     if (StringUtils.isNotBlank(areaResult.getStitchInfoFile())) {
                         StitchedImageInfo stitchedImageInfo = StitchingUtils.readStitchedImageInfo(Paths.get(areaResult.getStitchInfoFile()));

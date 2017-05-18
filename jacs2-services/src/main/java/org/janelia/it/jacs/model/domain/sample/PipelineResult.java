@@ -21,7 +21,7 @@ public class PipelineResult implements HasRelativeFiles {
     private Long id;
     private String name;
     private String filepath;
-    private Date creationDate;
+    private Date creationDate = new Date();
     private List<PipelineResult> results = new ArrayList<>();
     @JsonIgnore
     private HasFileImpl filesImpl = new HasFileImpl();
