@@ -101,11 +101,12 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         Path sampleDataDir = getSampleDataDir(jacsServiceData, args);
         String sampleId = args.sampleId.toString();
 
-        lsmSummary(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.channelDyeSpec, args.basicMipMapsOptions, sampleDataDir);
+        JacsServiceData lsmSummaryService = lsmSummary(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.channelDyeSpec, args.basicMipMapsOptions, sampleDataDir);
 
         JacsServiceData stitchService = stitch(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.mergeAlgorithm, args.channelDyeSpec, args.outputChannelOrder,
                 args.applyDistortionCorrection, args.persistResults,
-                sampleDataDir);
+                sampleDataDir,
+                lsmSummaryService);
 
         return new JacsServiceResult<>(jacsServiceData, new FlylightSampleIntermediateResult(stitchService.getId()));
     }
@@ -133,9 +134,11 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     private JacsServiceData stitch(JacsServiceData jacsServiceData, String sampleId, String objective, String area,
                                    String mergeAlgorithm, String channelDyeSpec, String outputChannelOrder,
                                    boolean useDistortionCorrection, boolean generateMips,
-                                   Path sampleDataDir) {
+                                   Path sampleDataDir,
+                                   JacsServiceData... deps) {
         JacsServiceData mipsService = sampleStitchProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Stitch sample tiles")
+                        .waitFor(deps)
                         .build(),
                 new ServiceArg("-sampleId", sampleId),
                 new ServiceArg("-objective", objective),

@@ -114,10 +114,6 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             this.mapping = LSMProcessingTools.generateChannelMapping(mergedInputChannels, outputChannels);
         }
 
-        boolean isNonEmptyMapping() {
-            return !mapping.replaceAll("([0-9]),\\1,?", "").equals("");
-        }
-
         @Override
         public String toString() {
             return ToStringBuilder.reflectionToString(this);

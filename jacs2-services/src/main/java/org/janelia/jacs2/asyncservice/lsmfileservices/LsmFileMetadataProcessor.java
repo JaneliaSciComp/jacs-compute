@@ -73,7 +73,7 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<V
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 File outputFile = getOutputFile(getArgs(depResults.getJacsServiceData()));
-                return outputFile.exists();
+                return outputFile.exists() && outputFile.length() > 0;
             }
 
             @Override
