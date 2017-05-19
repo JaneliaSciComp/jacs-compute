@@ -48,7 +48,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                 .redirectError(errorFile);
             // start the local process
             Process localProcess;
-            logger.info("Start {} for {} using  env {}", processingScript, serviceContext, env);
+            logger.info("Start {} for {} using  env {}", processingScript, serviceContext, processBuilder.environment());
             serviceContext.addEvent(JacsServiceEventTypes.START_PROCESS, String.format("Start %s", processingScript));
             localProcess = processBuilder.start();
             logger.info("Started process {} for {}", processingScript, serviceContext);
