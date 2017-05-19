@@ -22,7 +22,7 @@ public class DomainCodecProvider implements CodecProvider {
     private final ObjectMapper objectMapper;
 
     public DomainCodecProvider(ObjectMapperFactory objectMapperFactory) {
-        this.objectMapper = objectMapperFactory.newObjectMapper().registerModule(new MongoModule());
+        this.objectMapper = objectMapperFactory.newMongoCompatibleObjectMapper();
     }
 
     @Override

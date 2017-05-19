@@ -51,7 +51,13 @@ public class ThrottledProcessesQueue {
         scheduler.shutdownNow();
     }
 
-    ThrottledJobInfo add(ThrottledJobInfo jobInfo) {
+    /**
+     * This method adds another job to the queue either as a running job or as a waiting job if there are not enough resources.
+     * Since this can be called by multiple threads the access to it needs to be synchronized
+     * @param jobInfo being added
+     * @return
+     */
+    synchronized ThrottledJobInfo add(ThrottledJobInfo jobInfo) {
         if (jobInfo.getMaxRunningProcesses() <= 0 ||
                 CollectionUtils.size(runningProcesses.get(jobInfo.getProcessName())) < jobInfo.getMaxRunningProcesses()) {
             addJobDoneCallback(jobInfo);

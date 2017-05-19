@@ -30,7 +30,7 @@ public abstract class AbstractDomainObject implements DomainObject {
     private Date lockTimestamp;
     private Set<String> readers = new HashSet<>();
     private Set<String> writers = new HashSet<>();
-    private Date creationDate;
+    private Date creationDate = new Date();
     private Date updatedDate;
 
     @JsonIgnore

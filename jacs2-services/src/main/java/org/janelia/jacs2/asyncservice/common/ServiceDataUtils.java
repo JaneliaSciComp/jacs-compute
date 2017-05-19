@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
-import org.janelia.jacs2.dao.mongo.utils.MongoModule;
 
 import java.io.File;
 import java.util.Collections;
@@ -14,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class ServiceDataUtils {
 
-    private static ObjectMapper MAPPER = ObjectMapperFactory.instance().newObjectMapper().registerModule(new MongoModule());
+    private static ObjectMapper MAPPER = ObjectMapperFactory.instance().newMongoCompatibleObjectMapper();
 
     public static List<File> serializableObjectToFileList(Object o) {
         if (o != null) {

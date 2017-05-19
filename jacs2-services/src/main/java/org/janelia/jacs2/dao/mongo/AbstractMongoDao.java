@@ -52,7 +52,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
                                ObjectMapperFactory objectMapperFactory) {
         mongoCollection = mongoDatabase.getCollection(getDomainObjectCollection(), getEntityType());
         this.idGenerator = idGenerator;
-        this.objectMapper = objectMapperFactory.newObjectMapper().setSerializationInclusion(JsonInclude.Include.ALWAYS);
+        this.objectMapper = objectMapperFactory.newMongoCompatibleObjectMapper().setSerializationInclusion(JsonInclude.Include.ALWAYS);
     }
 
     protected String getDomainObjectCollection() {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
+import org.janelia.jacs2.dao.mongo.utils.MongoModule;
 
 public class ObjectMapperFactory {
     private static final ObjectMapperFactory INSTANCE = new ObjectMapperFactory();
@@ -34,4 +35,7 @@ public class ObjectMapperFactory {
                 .setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
+    public ObjectMapper newMongoCompatibleObjectMapper() {
+        return newObjectMapper().registerModule(new MongoModule());
+    }
 }

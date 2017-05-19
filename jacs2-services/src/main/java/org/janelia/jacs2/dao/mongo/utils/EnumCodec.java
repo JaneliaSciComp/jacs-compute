@@ -6,8 +6,6 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
-import java.math.BigInteger;
-
 /**
  * EnumCodec implements a Codec for an enum type.
  */

@@ -214,8 +214,8 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
                 createSampleObjective("new_o1"),
                 createSampleObjective("new_o2"),
                 createSampleObjective("new_o3")));
+        testSample.setUpdatedDate(new Date());
         testDao.update(testSample);
-
     }
 
     @Test
