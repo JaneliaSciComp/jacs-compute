@@ -1,6 +1,6 @@
 package org.janelia.jacs2;
 
-import org.janelia.jacs2.cdi.ApplicationPropertiesProvider;
+import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.junit.BeforeClass;
 
 import java.util.Properties;
@@ -10,7 +10,7 @@ public abstract class AbstractITest {
 
     @BeforeClass
     public static void setUpTestsConfig() {
-        integrationTestsConfig = new ApplicationPropertiesProvider()
+        integrationTestsConfig = new ApplicationConfigProvider()
                 .fromFile("build/resources/integrationTest/jacs_test.properties")
                 .fromEnvVar("JACS2_CONFIG_TEST")
                 .build();

@@ -2,8 +2,10 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
+import org.janelia.jacs2.cdi.ApplicationConfigProvider;
+import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
+import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
@@ -18,7 +20,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -35,9 +36,10 @@ public class AbstractExeBasedServiceProcessorTest {
                                      JacsServiceDataPersistence jacsServiceDataPersistence,
                                      Instance<ExternalProcessRunner> serviceRunners,
                                      String defaultWorkingDir,
-                                     String executablesBaseDir,
+                                     ThrottledProcessesQueue throttledProcessesQueue,
+                                     ApplicationConfig applicationConfig,
                                      Logger logger) {
-            super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, executablesBaseDir, logger);
+            super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, throttledProcessesQueue, applicationConfig, logger);
         }
 
         @Override
@@ -73,12 +75,16 @@ public class AbstractExeBasedServiceProcessorTest {
         processRunner = mock(ExternalProcessRunner.class);
         when(processRunner.supports(ProcessingLocation.LOCAL)).thenReturn(true);
         when(serviceRunners.iterator()).thenReturn(ImmutableList.of(processRunner).iterator());
+        ApplicationConfig applicationConfig = new ApplicationConfigProvider().fromMap(
+                ImmutableMap.of("Executables.ModuleBase", TEST_EXE_DIR))
+                .build();
         testProcessor = new TestExternalProcessor(
                             serviceComputationFactory,
                             jacsServiceDataPersistence,
                             serviceRunners,
                             TEST_WORKING_DIR,
-                            TEST_EXE_DIR,
+                            ComputationTestUtils.createTestThrottledProcessesQueue(),
+                            applicationConfig,
                             logger);
     }
 

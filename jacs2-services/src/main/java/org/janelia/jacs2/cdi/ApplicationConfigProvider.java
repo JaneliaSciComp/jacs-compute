@@ -1,8 +1,7 @@
 package org.janelia.jacs2.cdi;
 
-import com.beust.jcommander.DynamicParameter;
-import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.config.ApplicationConfig;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,9 +10,8 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
-public class ApplicationPropertiesProvider {
+public class ApplicationConfigProvider {
 
     private static final String DEFAULT_APPLICATION_CONFIG_RESOURCES = "/jacs.properties";
 
@@ -23,13 +21,13 @@ public class ApplicationPropertiesProvider {
         return APPLICATION_ARGS;
     }
 
-    private Properties applicationProperties = new Properties();
+    private ApplicationConfig applicationConfig = new ApplicationConfig();
 
-    public ApplicationPropertiesProvider fromDefaultResource() {
+    public ApplicationConfigProvider fromDefaultResource() {
         return fromResource(DEFAULT_APPLICATION_CONFIG_RESOURCES);
     }
 
-    public ApplicationPropertiesProvider fromResource(String resourceName) {
+    public ApplicationConfigProvider fromResource(String resourceName) {
         if (StringUtils.isBlank(resourceName)) {
             return this;
         }
@@ -40,7 +38,7 @@ public class ApplicationPropertiesProvider {
         }
     }
 
-    public ApplicationPropertiesProvider fromEnvVar(String envVarName) {
+    public ApplicationConfigProvider fromEnvVar(String envVarName) {
         if (StringUtils.isBlank(envVarName)) {
             return this;
         }
@@ -51,7 +49,7 @@ public class ApplicationPropertiesProvider {
         return fromFile(envVarValue);
     }
 
-    public ApplicationPropertiesProvider fromFile(String fileName) {
+    public ApplicationConfigProvider fromFile(String fileName) {
         if (StringUtils.isBlank(fileName)) {
             return this;
         }
@@ -66,22 +64,22 @@ public class ApplicationPropertiesProvider {
         return this;
     }
 
-    public ApplicationPropertiesProvider fromMap(Map<String, String> map) {
-        applicationProperties.putAll(map);
+    public ApplicationConfigProvider fromMap(Map<String, String> map) {
+        applicationConfig.putAll(map);
         return this;
     }
 
-    private ApplicationPropertiesProvider fromInputStream(InputStream stream) {
+    private ApplicationConfigProvider fromInputStream(InputStream stream) {
         try {
-            applicationProperties.load(stream);
+            applicationConfig.load(stream);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
         return this;
     }
 
-    public Properties build() {
-        return applicationProperties;
+    public ApplicationConfig build() {
+        return applicationConfig;
     }
 
 }

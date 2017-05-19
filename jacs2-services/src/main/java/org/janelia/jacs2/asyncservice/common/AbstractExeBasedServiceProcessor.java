@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.base.Preconditions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
@@ -24,16 +25,21 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
 
     private final String executablesBaseDir;
     private final Instance<ExternalProcessRunner> serviceRunners;
+    private final ThrottledProcessesQueue throttledProcessesQueue;
+    private final ApplicationConfig applicationConfig;
 
     public AbstractExeBasedServiceProcessor(ServiceComputationFactory computationFactory,
                                             JacsServiceDataPersistence jacsServiceDataPersistence,
                                             Instance<ExternalProcessRunner> serviceRunners,
                                             String defaultWorkingDir,
-                                            String executablesBaseDir,
+                                            ThrottledProcessesQueue throttledProcessesQueue,
+                                            ApplicationConfig applicationConfig,
                                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.serviceRunners = serviceRunners;
-        this.executablesBaseDir = executablesBaseDir;
+        this.executablesBaseDir = applicationConfig.getStringPropertyValue("Executables.ModuleBase");
+        this.throttledProcessesQueue = throttledProcessesQueue;
+        this.applicationConfig = applicationConfig;
     }
 
     @Override
@@ -113,7 +119,13 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
     protected ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> env = prepareEnvironment(jacsServiceData);
-        return getProcessRunner(jacsServiceData.getProcessingLocation()).runCmds(
+        int defaultMaxRunningProcesses = applicationConfig.getIntegerPropertyValue("service.maxRunningProcesses", -1);
+        int maxRunningProcesses = applicationConfig.getIntegerPropertyValue(
+                "service." + jacsServiceData.getName() + ".maxRunningProcesses",
+                defaultMaxRunningProcesses);
+        ExternalProcessRunner processRunner =
+                new ThrottledExternalProcessRunner(throttledProcessesQueue, jacsServiceData.getName(), getProcessRunner(jacsServiceData.getProcessingLocation()), maxRunningProcesses);
+        return processRunner.runCmds(
                 script,
                 env,
                 getWorkingDirectory(jacsServiceData).toString(),

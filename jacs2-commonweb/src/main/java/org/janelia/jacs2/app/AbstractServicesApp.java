@@ -3,8 +3,6 @@ package org.janelia.jacs2.app;
 import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.beust.jcommander.ParametersDelegate;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.handlers.PathHandler;
@@ -15,7 +13,7 @@ import io.undertow.servlet.api.FilterInfo;
 import io.undertow.servlet.api.ListenerInfo;
 import io.undertow.servlet.api.ServletInfo;
 import org.glassfish.jersey.servlet.ServletContainer;
-import org.janelia.jacs2.cdi.ApplicationPropertiesProvider;
+import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.filter.CORSResponseFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +46,7 @@ public abstract class AbstractServicesApp {
         @Parameter(names = "-h", description = "Display help", arity = 0, required = false)
         private boolean displayUsage = false;
         @DynamicParameter(names = "-D", description = "Dynamic application parameters that could override application properties")
-        private Map<String, String> applicationArgs = ApplicationPropertiesProvider.applicationArgs();
+        private Map<String, String> applicationArgs = ApplicationConfigProvider.applicationArgs();
     }
 
     protected void start(String[] args) throws ServletException {

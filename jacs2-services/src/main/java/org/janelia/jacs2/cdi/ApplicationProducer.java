@@ -3,6 +3,7 @@ package org.janelia.jacs2.cdi;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -10,7 +11,6 @@ import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.Properties;
 
 public class ApplicationProducer {
 
@@ -28,26 +28,26 @@ public class ApplicationProducer {
 
     @Produces
     @PropertyValue(name = "")
-    public String stringPropertyValue(@ApplicationProperties Properties properties, InjectionPoint injectionPoint) {
+    public String stringPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
         final PropertyValue property = injectionPoint.getAnnotated().getAnnotation(PropertyValue.class);
-        return properties.getProperty(property.name());
+        return applicationConfig.getStringPropertyValue(property.name());
     }
 
     @Produces
     @PropertyValue(name = "")
-    public Integer integerPropertyValue(@ApplicationProperties Properties properties, InjectionPoint injectionPoint) {
-        String stringValue = stringPropertyValue(properties, injectionPoint);
-        return stringValue == null ? null : Integer.valueOf(stringValue);
+    public Integer integerPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
+        final PropertyValue property = injectionPoint.getAnnotated().getAnnotation(PropertyValue.class);
+        return applicationConfig.getIntegerPropertyValue(property.name());
     }
 
     @ApplicationScoped
     @ApplicationProperties
     @Produces
-    public Properties properties() throws IOException {
-        return new ApplicationPropertiesProvider()
+    public ApplicationConfig applicationConfig() throws IOException {
+        return new ApplicationConfigProvider()
                 .fromDefaultResource()
                 .fromEnvVar("JACS2_CONFIG")
-                .fromMap(ApplicationPropertiesProvider.applicationArgs())
+                .fromMap(ApplicationConfigProvider.applicationArgs())
                 .build();
     }
 

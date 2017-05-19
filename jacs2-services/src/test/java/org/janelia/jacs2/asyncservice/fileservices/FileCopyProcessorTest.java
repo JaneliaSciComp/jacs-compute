@@ -1,9 +1,12 @@
 package org.janelia.jacs2.asyncservice.fileservices;
 
+import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.cdi.ApplicationConfigProvider;
+import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -50,13 +53,18 @@ public class FileCopyProcessorTest {
         Logger logger = mock(Logger.class);
         ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
 
+        ApplicationConfig applicationConfig = new ApplicationConfigProvider().fromMap(
+                ImmutableMap.of("Executables.ModuleBase", executablesBaseDir))
+                .build();
+
         testProcessor = new FileCopyProcessor(serviceComputationFactory,
                 jacsServiceDataPersistence,
                 null, // serviceRunners are not essential for these unit tests
                 defaultWorkingDir,
-                executablesBaseDir,
                 libraryPath,
                 scriptName,
+                ComputationTestUtils.createTestThrottledProcessesQueue(),
+                applicationConfig,
                 logger);
         testDirectory = Files.createTempDirectory("testFileCopy").toFile();
     }
