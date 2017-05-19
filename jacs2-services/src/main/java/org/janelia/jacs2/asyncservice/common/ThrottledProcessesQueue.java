@@ -89,7 +89,7 @@ public class ThrottledProcessesQueue {
     private void removeProcessFromRunningQueue(ThrottledJobInfo jobInfo) {
         BlockingQueue<ThrottledJobInfo> runningQueue = getQueue(jobInfo.getProcessName(), runningProcesses);
         boolean removed = runningQueue.remove(jobInfo);
-        logger.debug("Completed {} and removed it ({}) from the runningProcesses: ", jobInfo, removed, runningQueue.size());
+        logger.debug("Completed {}:{} and removed it ({}) from the runningProcesses: ", jobInfo.getProcessName(), jobInfo.getScriptName(), removed, runningQueue.size());
     }
 
     private void checkWaitingQueue() {

@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 public class FlylightSampleProcessorTest {
     private static final String DEFAULT_MIP_MAPS_OPTIONS = "mips:movies:legends:bcomp";
 
+    private GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private SampleLSMSummaryProcessor sampleLSMSummaryProcessor;
     private SampleStitchProcessor sampleStitchProcessor;
     private FlylightSampleProcessor flylightSampleProcessor;
@@ -42,6 +43,7 @@ public class FlylightSampleProcessorTest {
 
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
 
+        getSampleImageFilesProcessor = mock(GetSampleImageFilesProcessor.class);
         sampleLSMSummaryProcessor = mock(SampleLSMSummaryProcessor.class);
         sampleStitchProcessor = mock(SampleStitchProcessor.class);
 
@@ -51,6 +53,14 @@ public class FlylightSampleProcessorTest {
             jacsServiceData.setState(JacsServiceState.SUCCESSFUL); // mark the service as completed otherwise the computation doesn't return
             return null;
         }).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
+
+        when(getSampleImageFilesProcessor.getMetadata()).thenCallRealMethod();
+        when(getSampleImageFilesProcessor.createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class)
+        )).thenCallRealMethod();
 
         when(sampleLSMSummaryProcessor.getMetadata()).thenCallRealMethod();
         when(sampleLSMSummaryProcessor.createServiceData(any(ServiceExecutionContext.class),
@@ -79,6 +89,7 @@ public class FlylightSampleProcessorTest {
         flylightSampleProcessor = new FlylightSampleProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 SampleProcessorTestUtils.TEST_WORKING_DIR,
+                getSampleImageFilesProcessor,
                 sampleLSMSummaryProcessor,
                 sampleStitchProcessor,
                 logger);
@@ -115,6 +126,13 @@ public class FlylightSampleProcessorTest {
             testServiceData.setId(testServiceId);
 
             JacsServiceResult<FlylightSampleProcessor.FlylightSampleIntermediateResult> result = flylightSampleProcessor.submitServiceDependencies(testServiceData);
+
+            verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", testSampleDir)))
+            );
 
             verify(sampleLSMSummaryProcessor).createServiceData(any(ServiceExecutionContext.class),
                     argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),

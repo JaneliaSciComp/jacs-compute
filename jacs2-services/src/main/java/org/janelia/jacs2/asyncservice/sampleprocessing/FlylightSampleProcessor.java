@@ -55,6 +55,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         boolean persistResults;
     }
 
+    private final GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private final SampleLSMSummaryProcessor sampleLSMSummaryProcessor;
     private final SampleStitchProcessor sampleStitchProcessor;
 
@@ -62,10 +63,12 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     FlylightSampleProcessor(ServiceComputationFactory computationFactory,
                             JacsServiceDataPersistence jacsServiceDataPersistence,
                             @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                            GetSampleImageFilesProcessor getSampleImageFilesProcessor,
                             SampleLSMSummaryProcessor sampleLSMSummaryProcessor,
                             SampleStitchProcessor sampleStitchProcessor,
                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
+        this.getSampleImageFilesProcessor = getSampleImageFilesProcessor;
         this.sampleLSMSummaryProcessor = sampleLSMSummaryProcessor;
         this.sampleStitchProcessor = sampleStitchProcessor;
     }
@@ -101,12 +104,14 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         Path sampleDataDir = getSampleDataDir(jacsServiceData, args);
         String sampleId = args.sampleId.toString();
 
-        JacsServiceData lsmSummaryService = lsmSummary(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.channelDyeSpec, args.basicMipMapsOptions, sampleDataDir);
+        JacsServiceData getSampleLsmsService = getSampleLsms(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, sampleDataDir);
+
+        lsmSummary(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.channelDyeSpec, args.basicMipMapsOptions, sampleDataDir, getSampleLsmsService);
 
         JacsServiceData stitchService = stitch(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.mergeAlgorithm, args.channelDyeSpec, args.outputChannelOrder,
                 args.applyDistortionCorrection, args.persistResults,
                 sampleDataDir,
-                lsmSummaryService);
+                getSampleLsmsService);
 
         return new JacsServiceResult<>(jacsServiceData, new FlylightSampleIntermediateResult(stitchService.getId()));
     }
@@ -116,10 +121,23 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         return computationFactory.newCompletedComputation(depResults);
     }
 
+    private JacsServiceData getSampleLsms(JacsServiceData jacsServiceData, String sampleId, String objective, String area, Path sampleDataDir) {
+        JacsServiceData getLsmsService = getSampleImageFilesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Retrieve sample LSMs")
+                        .build(),
+                new ServiceArg("-sampleId", sampleId),
+                new ServiceArg("-objective", objective),
+                new ServiceArg("-area", area),
+                new ServiceArg("-sampleDataDir", sampleDataDir.toString())
+        );
+        return submitDependencyIfNotPresent(jacsServiceData, getLsmsService);
+    }
+
     private JacsServiceData lsmSummary(JacsServiceData jacsServiceData, String sampleId, String objective, String area, String channelDyeSpec, String basicMipMapsOptions,
-                                       Path sampleDataDir) {
+                                       Path sampleDataDir, JacsServiceData... deps) {
         JacsServiceData lsmSummaryService = sampleLSMSummaryProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Create sample LSM summary")
+                        .waitFor(deps)
                         .build(),
                 new ServiceArg("-sampleId", sampleId),
                 new ServiceArg("-objective", objective),
