@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
@@ -17,6 +18,7 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -73,7 +75,7 @@ public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<Void, Fi
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 FileCopyArgs args = getArgs(depResults.getJacsServiceData());
                 File targetFile = getTargetFile(args);
-                return targetFile.exists();
+                return targetFile.exists() && targetFile.length() > 0;
             }
 
             @Override
@@ -137,7 +139,12 @@ public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<Void, Fi
 
     @Override
     protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
-        return ImmutableMap.of(DY_LIBRARY_PATH_VARNAME, getUpdatedEnvValue(DY_LIBRARY_PATH_VARNAME, libraryPath));
+        ImmutableMap.Builder builder = ImmutableMap.builder();
+        builder.put(DY_LIBRARY_PATH_VARNAME, getUpdatedEnvValue(DY_LIBRARY_PATH_VARNAME, libraryPath));
+        if (jacsServiceData.getProcessingLocation() != ProcessingLocation.CLUSTER) {
+            builder.put("NSLOTS", String.valueOf(ProcessorHelper.getProcessingSlots(jacsServiceData)));
+        }
+        return builder.build();
     }
 
     private FileCopyArgs getArgs(JacsServiceData jacsServiceData) {
