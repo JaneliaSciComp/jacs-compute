@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class ThrottledProcessesQueue {
 
+    private final Logger logger;
     private final ScheduledExecutorService scheduler;
     private final Map<String, BlockingQueue<ThrottledJobInfo>> waitingProcesses;
     private final Map<String, BlockingQueue<ThrottledJobInfo>> runningProcesses;
@@ -26,7 +28,8 @@ public class ThrottledProcessesQueue {
     private final int periodInMillis;
 
     @Inject
-    ThrottledProcessesQueue() {
+    ThrottledProcessesQueue(Logger logger) {
+        this.logger = logger;
         this.waitingProcesses = new ConcurrentHashMap<>();
         this.runningProcesses = new ConcurrentHashMap<>();
         this.initialDelayInMillis = 30000;
@@ -51,7 +54,7 @@ public class ThrottledProcessesQueue {
     ThrottledJobInfo add(ThrottledJobInfo jobInfo) {
         if (jobInfo.getMaxRunningProcesses() <= 0 ||
                 CollectionUtils.size(runningProcesses.get(jobInfo.getProcessName())) < jobInfo.getMaxRunningProcesses()) {
-            jobInfo.setJobDoneCallback(ji -> removeProcessFromRunningQueue(ji));
+            addJobDoneCallback(jobInfo);
             if (jobInfo.runProcess() && jobInfo.getMaxRunningProcesses() > 0) {
                 BlockingQueue<ThrottledJobInfo> queue = getQueue(jobInfo.getProcessName(), runningProcesses);
                 queue.add(jobInfo);
@@ -85,7 +88,8 @@ public class ThrottledProcessesQueue {
 
     private void removeProcessFromRunningQueue(ThrottledJobInfo jobInfo) {
         BlockingQueue<ThrottledJobInfo> runningQueue = getQueue(jobInfo.getProcessName(), runningProcesses);
-        runningQueue.remove(jobInfo);
+        boolean removed = runningQueue.remove(jobInfo);
+        logger.debug("Completed {} and removed it ({}) from the runningProcesses: ", jobInfo, removed, runningQueue.size());
     }
 
     private void checkWaitingQueue() {
@@ -93,7 +97,7 @@ public class ThrottledProcessesQueue {
             BlockingQueue<ThrottledJobInfo> queue = queueEntry.getValue();
             for (ThrottledJobInfo jobInfo = queue.peek(); jobInfo != null; jobInfo = queue.peek()) {
                 if (CollectionUtils.size(runningProcesses.get(jobInfo.getProcessName())) < jobInfo.getMaxRunningProcesses()) {
-                    jobInfo.setJobDoneCallback(ji -> removeProcessFromRunningQueue(ji));
+                    addJobDoneCallback(jobInfo);
                     moveProcessToRunningQueue(jobInfo);
                     jobInfo.runProcess();
                 } else {
@@ -103,4 +107,7 @@ public class ThrottledProcessesQueue {
         }
     }
 
+    private void addJobDoneCallback(ThrottledJobInfo jobInfo) {
+        jobInfo.setJobDoneCallback(ji -> removeProcessFromRunningQueue(ji));
+    }
 }
