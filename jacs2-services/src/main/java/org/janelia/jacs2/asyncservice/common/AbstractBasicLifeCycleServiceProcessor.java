@@ -133,11 +133,11 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
         };
     }
 
-    private void resumeSuspendedService(JacsServiceData jacsServiceData) {
+    protected void resumeSuspendedService(JacsServiceData jacsServiceData) {
         updateState(jacsServiceData, JacsServiceState.RUNNING);
     }
 
-    private void suspendService(JacsServiceData jacsServiceData) {
+    protected void suspendService(JacsServiceData jacsServiceData) {
         if (!jacsServiceData.hasBeenSuspended()) {
             // if the service has not completed yet and it's not already suspended - update the state to suspended
             updateState(jacsServiceData, JacsServiceState.SUSPENDED);
