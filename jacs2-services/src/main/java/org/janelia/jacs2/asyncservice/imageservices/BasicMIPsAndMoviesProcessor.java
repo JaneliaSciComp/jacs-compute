@@ -137,6 +137,8 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
                 new ServiceArg("-macroArgs", getBasicMIPsAndMoviesArgs(args, temporaryOutputDir)),
                 new ServiceArg("-temporaryOutput", temporaryOutputDir.toString()),
                 new ServiceArg("-finalOutput", getResultsDir(args).toString()),
+                new ServiceArg("-headless", true),
+                new ServiceArg("-resultsPatterns", "*.properties"),
                 new ServiceArg("-resultsPatterns", "*.png"),
                 new ServiceArg("-resultsPatterns", "*.avi")
         );

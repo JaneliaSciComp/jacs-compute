@@ -52,8 +52,14 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
         String temporaryOutput;
         @Parameter(names = "-finalOutput", description = "Final output directory")
         String finalOutput;
+        @Parameter(names = "-headless", description = "Run Fiji in headless mode")
+        boolean headless;
         @Parameter(names = "-resultsPatterns", description = "results patterns")
         List<String> resultsPatterns = new ArrayList<>();
+
+        boolean isNotHeadless() {
+            return !headless;
+        }
     }
 
     private final String fijiExecutable;
@@ -148,7 +154,9 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
                 Files.createDirectories(Paths.get(args.finalOutput));
             }
             Path workingDir = getWorkingDirectory(jacsServiceData);
-            X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
+            if (!args.headless) {
+                X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
+            }
             // Create temp dir so that large temporary avis are not created on the network drive
             String scratchFolder = StringUtils.defaultIfBlank(args.temporaryOutput, workingDir.toString());
             Path scratchDir = Paths.get(scratchFolder, jacsServiceData.getName(), jacsServiceData.getName() + "_" + jacsServiceData.getId());
@@ -159,18 +167,29 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
                     .add("function exitHandler() { cleanXvfb; cleanTemp; }")
                     .add("trap exitHandler EXIT\n");
 
-            scriptWriter.addBackground(String.format("%s -macro %s %s", getFijiExecutable(), getFullFijiMacro(args), String.join(",", args.macroArgs)));
-            // Monitor Fiji and take periodic screenshots, killing it eventually
-            scriptWriter.setVar("fpid", "$!");
-            X11Utils.startScreenCaptureLoop(scratchDir + "/xvfb-" + jacsServiceData.getId() + ".${PORT}",
-                    "PORT", "fpid", 30, getTimeoutInSeconds(jacsServiceData), scriptWriter);
+            scriptWriter.addWithArgs(getFijiExecutable());
+            if (args.headless) {
+                scriptWriter.addArg("--headless");
+            }
+            scriptWriter
+                    .addArg("-macro").addArg(getFullFijiMacro(args))
+                    .addArg(String.join(",", args.macroArgs));
+            if (args.isNotHeadless()) {
+                scriptWriter.endArgs("&");
+                // Monitor Fiji and take periodic screenshots, killing it eventually
+                scriptWriter.setVar("fpid", "$!");
+                X11Utils.startScreenCaptureLoop(scratchDir + "/xvfb-" + jacsServiceData.getId() + ".${PORT}",
+                        "PORT", "fpid", 30, getTimeoutInSeconds(jacsServiceData), scriptWriter);
+            } else {
+                scriptWriter.endArgs("");
+            }
             if (StringUtils.isNotBlank(args.finalOutput) && StringUtils.isNotBlank(args.temporaryOutput) &&
                     !args.finalOutput.equals(args.temporaryOutput)) {
                 // the copy should not fail if the file exists
                 if (args.resultsPatterns.isEmpty()) {
-                    scriptWriter.add(String.format("cp -a %s/* %s || true", args.temporaryOutput, args.finalOutput));
+                    scriptWriter.add(String.format("mv %s/* %s || true", args.temporaryOutput, args.finalOutput));
                 } else {
-                    args.resultsPatterns.forEach(resultPattern -> scriptWriter.add(String.format("cp %s/%s %s || true", args.temporaryOutput, resultPattern, args.finalOutput)));
+                    args.resultsPatterns.forEach(resultPattern -> scriptWriter.add(String.format("mv %s/%s %s || true", args.temporaryOutput, resultPattern, args.finalOutput)));
                 }
             }
         } catch (IOException e) {

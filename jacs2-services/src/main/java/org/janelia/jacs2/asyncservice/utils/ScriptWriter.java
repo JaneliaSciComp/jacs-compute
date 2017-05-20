@@ -136,11 +136,6 @@ public class ScriptWriter {
         return this;
     }
 
-    public ScriptWriter addBackground(String line) throws IOException {
-        w.append(indent).append(line).append('&').append('\n');
-        return this;
-    }
-
     public ScriptWriter setVar(String var, String value) throws IOException {
         w.append(indent).append(var).append('=').append(value).append('\n');
         return this;
