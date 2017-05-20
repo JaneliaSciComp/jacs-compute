@@ -13,5 +13,6 @@ public interface ReadWriteDao<T, I> extends ReadOnlyDao<T, I> {
     void saveAll(List<T> entities);
     void update(T entity);
     void updateAll(List<T> entities);
-    void delete (T entity);
+    void delete(T entity);
+    void archive(T entity);
 }

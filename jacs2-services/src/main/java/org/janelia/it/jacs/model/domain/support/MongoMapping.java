@@ -9,12 +9,11 @@ import java.lang.annotation.Target;
  * Annotation for mapping a class hierarchy to a given collection in MongoDB.
  * Only the top-level class should be mapped using this annotation -
  * the subclasses will be instantiated using JsonTypeInfo.
- *
- * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface MongoMapping {
     String collectionName();
+    String archiveCollectionName() default "";
     String label();
 }

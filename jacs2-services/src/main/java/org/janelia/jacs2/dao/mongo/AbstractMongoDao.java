@@ -12,6 +12,8 @@ import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
@@ -46,20 +48,27 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     private final ObjectMapper objectMapper;
     protected final TimebasedIdentifierGenerator idGenerator;
     protected final MongoCollection<T> mongoCollection;
+    protected final MongoCollection<T> archiveMongoCollection;
 
     protected AbstractMongoDao(MongoDatabase mongoDatabase,
                                TimebasedIdentifierGenerator idGenerator,
                                ObjectMapperFactory objectMapperFactory) {
-        mongoCollection = mongoDatabase.getCollection(getDomainObjectCollection(), getEntityType());
+        Pair<String, String> entityCollectionNames = getDomainObjectCollectionNames();
+        mongoCollection = mongoDatabase.getCollection(entityCollectionNames.getLeft(), getEntityType());
+        if (StringUtils.isNotEmpty(entityCollectionNames.getRight())) {
+            archiveMongoCollection = mongoDatabase.getCollection(entityCollectionNames.getRight(), getEntityType());
+        } else {
+            archiveMongoCollection = null;
+        }
         this.idGenerator = idGenerator;
         this.objectMapper = objectMapperFactory.newMongoCompatibleObjectMapper().setSerializationInclusion(JsonInclude.Include.ALWAYS);
     }
 
-    protected String getDomainObjectCollection() {
+    private Pair<String, String> getDomainObjectCollectionNames() {
         Class<T> entityClass = getEntityType();
         MongoMapping mongoMapping = DomainModelUtils.getMapping(entityClass);
         Preconditions.checkArgument(mongoMapping != null, "Entity class " + entityClass.getName() + " is not annotated with MongoMapping");
-        return mongoMapping.collectionName();
+        return ImmutablePair.of(mongoMapping.collectionName(), mongoMapping.archiveCollectionName());
     }
 
     @Override
@@ -207,4 +216,12 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         mongoCollection.deleteOne(eq("_id", entity.getId()));
     }
 
+    @Override
+    public void archive(T entity) {
+        if (archiveMongoCollection == null) {
+            throw new UnsupportedOperationException("Archive is not supported for " + getEntityType());
+        }
+        archiveMongoCollection.insertOne(entity);
+        delete(entity);
+    }
 }

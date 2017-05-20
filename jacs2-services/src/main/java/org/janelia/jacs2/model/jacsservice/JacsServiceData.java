@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@MongoMapping(collectionName="jacsService", label="JacsService")
+@MongoMapping(collectionName="jacsService", archiveCollectionName = "jacsServiceHistory", label="JacsService")
 public class JacsServiceData implements BaseEntity, HasIdentifier {
     @JsonProperty("_id")
     private Number id;

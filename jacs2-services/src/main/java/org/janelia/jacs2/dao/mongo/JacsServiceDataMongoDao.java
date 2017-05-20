@@ -196,4 +196,9 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
         super.update(entity);
     }
 
+    @Override
+    public void archiveServiceHierarchy(JacsServiceData serviceData) {
+        List<JacsServiceData> serviceHierarchy = serviceData.serviceHierarchyStream().collect(Collectors.toList());
+        serviceHierarchy.forEach(this::archive);
+    }
 }
