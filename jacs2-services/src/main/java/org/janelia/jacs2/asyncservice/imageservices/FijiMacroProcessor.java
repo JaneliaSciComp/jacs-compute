@@ -88,27 +88,20 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
 
     @Override
     public ServiceErrorChecker getErrorChecker() {
-        final String[] acceptableExceptions = new String[] {
-                "Error while executing the main() method",
-                "Cannot write XdndAware property",
-                "java.rmi.ConnectException",
-                "java.net.ConnectException",
-                "java.lang.NullPointerException", // strangely there are a lot of this in Fiji logs
-                "java.lang.ArrayIndexOutOfBoundsException: 0 >= 0",
-                "java.lang.IllegalArgumentException: Cannot handle app name",
-                "javassist.CannotCompileException: No code replaced"
-        };
         return new DefaultServiceErrorChecker(logger) {
             @Override
             protected boolean hasErrors(String l) {
-                if (StringUtils.isNotBlank(l) && l.matches("(?i:.*(error|exception).*)")) {
-                    if (Stream.of(acceptableExceptions).filter(l::contains).findAny().isPresent()) {
-                        // the line contains an acceptable exception - so don't treat it as an error
+                if (StringUtils.isNotBlank(l)) {
+                    if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
+                        // core dump is still an error
+                        logger.error(l);
+                        return true;
+                    } else if (l.matches("(?i:.*(error|exception).*)")) {
+                        // ignore any exception for Fiji - just log it
                         logger.warn(l);
                         return false;
                     } else {
-                        logger.error(l);
-                        return true;
+                        return false;
                     }
                 } else {
                     return false;
