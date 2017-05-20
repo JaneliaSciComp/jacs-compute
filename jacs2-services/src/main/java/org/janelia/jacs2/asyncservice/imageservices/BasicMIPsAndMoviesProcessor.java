@@ -142,8 +142,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
                 new ServiceArg("-resultsPatterns", "*.png"),
                 new ServiceArg("-resultsPatterns", "*.avi")
         );
-        jacsServiceDataPersistence.saveHierarchy(fijiMacroService);
-        return fijiMacroService;
+        return submitDependencyIfNotPresent(jacsServiceData, fijiMacroService);
     }
 
     private String getBasicMIPsAndMoviesArgs(BasicMIPsAndMoviesArgs args, Path outputDir) {
