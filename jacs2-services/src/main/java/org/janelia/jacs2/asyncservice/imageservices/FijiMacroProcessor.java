@@ -56,10 +56,6 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
         boolean headless;
         @Parameter(names = "-resultsPatterns", description = "results patterns")
         List<String> resultsPatterns = new ArrayList<>();
-
-        boolean isNotHeadless() {
-            return !headless;
-        }
     }
 
     private final String fijiExecutable;
@@ -147,6 +143,7 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
 
     private void createScript(JacsServiceData jacsServiceData, FijiMacroArgs args, ScriptWriter scriptWriter) {
         try {
+            boolean headless = args.headless || getApplicationConfig().getBooleanPropertyValue("Fiji.RunHeadless");
             if (StringUtils.isNotBlank(args.temporaryOutput)) {
                 Files.createDirectories(Paths.get(args.temporaryOutput));
             }
@@ -154,7 +151,7 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
                 Files.createDirectories(Paths.get(args.finalOutput));
             }
             Path workingDir = getWorkingDirectory(jacsServiceData);
-            if (!args.headless) {
+            if (!headless) {
                 X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
             }
             // Create temp dir so that large temporary avis are not created on the network drive
@@ -168,13 +165,13 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
                     .add("trap exitHandler EXIT\n");
 
             scriptWriter.addWithArgs(getFijiExecutable());
-            if (args.headless) {
+            if (headless) {
                 scriptWriter.addArg("--headless");
             }
             scriptWriter
                     .addArg("-macro").addArg(getFullFijiMacro(args))
                     .addArg(String.join(",", args.macroArgs));
-            if (args.isNotHeadless()) {
+            if (!headless) {
                 scriptWriter.endArgs("&");
                 // Monitor Fiji and take periodic screenshots, killing it eventually
                 scriptWriter.setVar("fpid", "$!");

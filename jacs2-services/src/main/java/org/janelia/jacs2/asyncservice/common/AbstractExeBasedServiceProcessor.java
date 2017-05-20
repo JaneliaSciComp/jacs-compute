@@ -88,6 +88,10 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
         return Optional.ofNullable(System.getenv(varName));
     }
 
+    protected ApplicationConfig getApplicationConfig() {
+        return applicationConfig;
+    }
+
     protected String getFullExecutableName(String... execPathComponents) {
         String baseDir;
         String[] pathComponents;
