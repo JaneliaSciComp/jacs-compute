@@ -103,8 +103,8 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         if (Files.notExists(logFilePath)) return;
         String logFileExt = FileUtils.getFileExtensionOnly(logFilePath);
         for (int i = 1; i <= MAX_SUBSCRIPT_INDEX; i++) {
-            logFileExt = logFileExt + "." + i;
-            Path newLogFile = FileUtils.replaceFileExt(logFilePath, logFileExt);
+            String newLogFileExt = logFileExt + "." + i;
+            Path newLogFile = FileUtils.replaceFileExt(logFilePath, newLogFileExt);
             if (Files.notExists(newLogFile)) {
                 Files.move(logFilePath, newLogFile);
                 return;
