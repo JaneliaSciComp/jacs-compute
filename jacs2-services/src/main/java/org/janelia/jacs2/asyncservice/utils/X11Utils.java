@@ -8,7 +8,7 @@ import java.text.MessageFormat;
 import java.util.Random;
 
 public class X11Utils {
-    private static final String X_LOCK_FILE = "/tmp/.X${PORT}-lock";
+    private static final String X_LOCK_FILE_PATTERN = "/tmp/.*X${PORT}-lock";
     private static final String X11_UNIX_SOCKET = "/tmp/.X11-unix/X${PORT}";
 
     public static final int START_DISPLAY_PORT = 890;
@@ -36,7 +36,7 @@ public class X11Utils {
                 .openFunction("cleanXvfb")
                 .add("kill $MYPID")
                 .addWithArgs("rm -f ")
-                    .addArg(X_LOCK_FILE)
+                    .addArg(X_LOCK_FILE_PATTERN)
                     .addArg(X11_UNIX_SOCKET)
                     .endArgs("")
                 .echo("Cleaned up Xvfb")
@@ -68,12 +68,26 @@ public class X11Utils {
                 .add("while [ \"$COUNTER\" -lt \"$RETRIES\" ]; do")
                 .addIndent()
                 .add(String.format(
-                        "while (test -f \"%s\") || (test -f \"%s\") || (netstat -atwn | grep \"^.*:${PORT}.*:\\*\\s*LISTEN\\s*$\")",
-                        X_LOCK_FILE, X11_UNIX_SOCKET))
+                        "while (test -f \"%s\") || (netstat -atwn | grep \"^.*:${PORT}.*:\\*\\s*LISTEN\\s*$\"); do",
+                        X11_UNIX_SOCKET))
                 .addIndent()
-                .add("do PORT=$(( ${PORT} + 1 ))")
+                .add("PORT=$(( ${PORT} + 1 ))")
                 .removeIndent()
                 .add("done")
+                .setVar("tryAgain", "0")
+                .add(String.format("for f in \"%s\"; do", X_LOCK_FILE_PATTERN))
+                .addIndent()
+                .add("if [ -f $f ]; then")
+                .addIndent()
+                .add("PORT=$(( ${PORT} + 1 ))")
+                .setVar("tryAgain", "1")
+                .removeIndent()
+                .add("fi")
+                .removeIndent()
+                .add("done")
+                .add("if [ $tryAgain == 1 ]; then")
+                .addIndent().add("continue").removeIndent()
+                .add("fi")
                 .echo("Found the first free port: $PORT")
                 // Run Xvfb (virtual framebuffer) on the chosen port
                 .addWithArgs("/usr/bin/Xvfb :${PORT} -screen 0 ")
