@@ -349,6 +349,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     pipelineRun.setCreationDate(jacsServiceData.getCreationDate());
                     // create stitch result
                     SampleStitchResult stitchResult = new SampleStitchResult();
+                    stitchResult.setId(identifierGenerator.generateId());
                     stitchResult.setFilepath(areaResult.getResultDir());
                     stitchResult.setChannelSpec(areaResult.getConsensusChannelComponents().channelSpec);
                     stitchResult.setAnatomicalArea(areaResult.getAnatomicalArea());
@@ -357,7 +358,9 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     if (StringUtils.isNotBlank(areaResult.getStichFile())) {
                         stitchResult.setFileName(FileType.LosslessStack, areaResult.getStichFile());
                     } else {
-                        stitchResult.setFileName(FileType.LosslessStack, areaResult.getMergeResultFiles().stream().findFirst().orElse(null));
+                        stitchResult.setFileName(
+                                FileType.LosslessStack,
+                                areaResult.getMergeResultFiles().stream().findFirst().map(mrn -> Paths.get(mrn).relativize(Paths.get(areaResult.getResultDir())).toString()).orElse(null));
                     }
                     if (StringUtils.isNotBlank(areaResult.getStitchInfoFile())) {
                         StitchedImageInfo stitchedImageInfo = StitchingUtils.readStitchedImageInfo(Paths.get(areaResult.getStitchInfoFile()));

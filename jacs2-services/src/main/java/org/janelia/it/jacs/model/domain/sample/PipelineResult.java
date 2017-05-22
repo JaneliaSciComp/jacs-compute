@@ -18,7 +18,7 @@ import java.util.Map;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 public class PipelineResult implements HasRelativeFiles {
 
-    private Long id;
+    private Number id;
     private String name;
     private String filepath;
     private Date creationDate = new Date();
@@ -26,11 +26,11 @@ public class PipelineResult implements HasRelativeFiles {
     @JsonIgnore
     private HasFileImpl filesImpl = new HasFileImpl();
 
-    public Long getId() {
+    public Number getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Number id) {
         this.id = id;
     }
 
