@@ -96,7 +96,7 @@ public class JacsServiceDispatcher {
         jacsServiceData.addEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully");
         updateServiceData(jacsServiceData);
         if (!jacsServiceData.hasParentServiceId()) {
-            archiveServiceData(jacsServiceData);
+            archiveServiceData(jacsServiceData.getId());
         }
     }
 
@@ -119,8 +119,9 @@ public class JacsServiceDispatcher {
         jacsServiceDataPersistence.update(jacsServiceData);
     }
 
-    private void archiveServiceData(JacsServiceData jacsServiceData) {
-        jacsServiceDataPersistence.archiveHierarchy(jacsServiceData);
+    private void archiveServiceData(Number serviceId) {
+        JacsServiceData jacsServiceDataHierarchy = jacsServiceDataPersistence.findServiceHierarchy(serviceId);
+        jacsServiceDataPersistence.archiveHierarchy(jacsServiceDataHierarchy);
     }
 
 }
