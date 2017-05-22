@@ -362,7 +362,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     } else {
                         stitchResult.setFileName(
                                 FileType.LosslessStack,
-                                areaResult.getMergeResultFiles().stream().findFirst().map(mrn -> Paths.get(mrn).relativize(Paths.get(areaResult.getResultDir())).toString()).orElse(null));
+                                areaResult.getMergeResultFiles().stream().findFirst().map(mrn -> Paths.get(areaResult.getResultDir()).relativize(Paths.get(mrn)).toString()).orElse(null));
                     }
                     if (StringUtils.isNotBlank(areaResult.getStitchInfoFile())) {
                         StitchedImageInfo stitchedImageInfo = StitchingUtils.readStitchedImageInfo(Paths.get(areaResult.getStitchInfoFile()));
