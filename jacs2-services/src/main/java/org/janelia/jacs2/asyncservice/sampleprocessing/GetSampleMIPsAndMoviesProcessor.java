@@ -55,8 +55,6 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
     static class SampleMIPsAndMoviesArgs extends SampleServiceArgs {
         @Parameter(names = "-options", description = "Options", required = false)
         String options = "mips:movies:legends:bcomp";
-        @Parameter(names = "-mipsSubDir", description = "MIPs and movies directory relative to sampleData directory", required = false)
-        public String mipsSubDir = "mips";
     }
 
     private final GetSampleImageFilesProcessor getSampleImageFilesProcessor;
@@ -173,7 +171,6 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
             pathCompBuilder.add(area);
         }
         pathCompBuilder.add(FileUtils.getFileNameOnly(lsmImageFile.getName()));
-        pathCompBuilder.add(args.mipsSubDir);
         ImmutableList<String> pathComps = pathCompBuilder.build();
         return Paths.get(args.sampleDataDir, pathComps.toArray(new String[pathComps.size()]));
     }

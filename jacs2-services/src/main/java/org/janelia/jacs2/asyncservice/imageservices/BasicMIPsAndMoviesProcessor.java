@@ -205,7 +205,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
     }
 
     private Path getResultsDir(BasicMIPsAndMoviesArgs args) {
-        return Paths.get(args.resultsDir, FileUtils.getFileNameOnly(args.imageFile));
+        return Paths.get(args.resultsDir);
     }
 
 }
