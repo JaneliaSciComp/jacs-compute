@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.util.Random;
 
 public class X11Utils {
     private static final String X_LOCK_FILE = "/tmp/.X${PORT}-lock";
@@ -12,10 +13,12 @@ public class X11Utils {
 
     public static final int START_DISPLAY_PORT = 890;
     public static final int DEFAULT_TIMEOUT_SECONDS = 3600;  // 60 minutes
-    public static final int DEFAULT_RETRIES = 10;
+    public static final int DEFAULT_RETRIES = 254;
+
+    private static final Random PORT_GENERATOR = new Random();
 
     public static int getRandomPort(int startPort) {
-        return ((int)(100.0 * Math.random()) + startPort);
+        return startPort + PORT_GENERATOR.nextInt(256);
     }
 
     /**
