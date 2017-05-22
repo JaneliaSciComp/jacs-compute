@@ -37,7 +37,7 @@ public class JacsServiceRegistry implements ServiceRegistry {
     public ServiceProcessor<?> lookupService(String serviceName) {
         for (ServiceProcessor<?> service : getAllServices(anyServiceSource)) {
             if (serviceName.equals(service.getMetadata().getServiceName())) {
-                logger.info("Service found for {}", serviceName);
+                logger.trace("Service found for {}", serviceName);
                 return service;
             }
         }
