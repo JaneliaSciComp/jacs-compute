@@ -1,13 +1,15 @@
-package org.janelia.jacs2.asyncservice.sampleprocessing;
+package org.janelia.it.jacs.model.domain.sample;
 
-import org.janelia.it.jacs.model.domain.sample.PipelineResult;
+/**
+ * The result of processing the LSMs of a single anatomical area of an ObjectiveSample.
+ */
+public class SampleProcessingResult extends PipelineResult {
 
-public class SampleStitchResult extends PipelineResult {
     private String anatomicalArea;
     private String imageSize;
     private String opticalResolution;
     private String channelColors;
-    private String channelSpec;
+    private String chanelSpec;
 
     public String getAnatomicalArea() {
         return anatomicalArea;
@@ -42,10 +44,10 @@ public class SampleStitchResult extends PipelineResult {
     }
 
     public String getChannelSpec() {
-        return channelSpec;
+        return chanelSpec;
     }
 
-    public void setChannelSpec(String channelSpec) {
-        this.channelSpec = channelSpec;
+    public void setChannelSpec(String chanSpec) {
+        this.chanelSpec = chanSpec;
     }
 }

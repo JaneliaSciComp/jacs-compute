@@ -9,6 +9,7 @@ import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -348,8 +349,9 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     pipelineRun.setPipelineProcess(jacsServiceData.getName());
                     pipelineRun.setCreationDate(jacsServiceData.getCreationDate());
                     // create stitch result
-                    SampleStitchResult stitchResult = new SampleStitchResult();
+                    SampleProcessingResult stitchResult = new SampleProcessingResult();
                     stitchResult.setId(identifierGenerator.generateId());
+                    stitchResult.setName(String.format("Sample processing results (%s)", areaResult.getAnatomicalArea()));
                     stitchResult.setFilepath(areaResult.getResultDir());
                     stitchResult.setChannelSpec(areaResult.getConsensusChannelComponents().channelSpec);
                     stitchResult.setAnatomicalArea(areaResult.getAnatomicalArea());
