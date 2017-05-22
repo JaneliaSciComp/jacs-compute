@@ -32,18 +32,15 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
 
     @Override
     public ServiceComputation<T> process(JacsServiceData jacsServiceData) {
-        DataHolder<JacsServiceResult<S>> processDataHolder = new DataHolder<>(); // this will enclose the service data with the changes made by the prepareProcessing method in case there are any
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(sd -> {
                     JacsServiceData preparedJacsServiceData = this.prepareProcessing(sd);
-                    processDataHolder.setData(new JacsServiceResult<>(preparedJacsServiceData));
-                    processDataHolder.setData(this.submitServiceDependencies(preparedJacsServiceData));
-                    return processDataHolder.getData();
+                    return this.submitServiceDependencies(preparedJacsServiceData);
                 })
-                .thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(processDataHolder.getData().getJacsServiceData())) // suspend until all dependencies complete
-                .thenCompose(this::processing)
-                .thenSuspendUntil(() -> this.isResultReady(processDataHolder.getData())) // wait until the result becomes available
-                .thenApply(this::updateServiceResult)
+                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, !suspendUntilAllDependenciesComplete(pd.getJacsServiceData())))
+                .thenCompose(pdCond -> this.processing(pdCond.getState()))
+                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, this.isResultReady(pd)))
+                .thenApply(pdCond -> this.updateServiceResult(pdCond.getState()))
                 .thenApply(this::postProcessing)
                 ;
     }

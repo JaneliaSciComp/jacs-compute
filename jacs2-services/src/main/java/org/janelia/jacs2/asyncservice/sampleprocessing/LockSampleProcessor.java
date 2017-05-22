@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -89,7 +90,7 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
         DataHolder<String> lockHolder = new DataHolder<>();
         Sample sample = sampleDataService.getSampleById(null, args.sampleId);
         return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenSuspendUntil(() -> {
+                .thenSuspendUntil(sd -> {
                     String lockKey = domainObjectService.tryLock(sample);
                     if (StringUtils.isBlank(lockKey)) {
                         if (!jacsServiceData.hasBeenSuspended()) {
@@ -97,12 +98,13 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
                             jacsServiceData.updateState(JacsServiceState.SUSPENDED);
                             updateServiceData(jacsServiceData);
                         }
-                        return false;
+                        return new ContinuationCond.Cond<>(sd, false);
                     }
                     lockHolder.setData(lockKey);
-                    return true;
+                    return new ContinuationCond.Cond<> (sd, true);
                 })
-                .thenApply(sd -> {
+                .thenApply(sdCond -> {
+                    JacsServiceData sd = sdCond.getState();
                     String lockKey = lockHolder.getData();
                     this.getResultHandler().updateServiceDataResult(sd, lockKey);
                     updateServiceData(sd);

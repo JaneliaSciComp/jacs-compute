@@ -6,6 +6,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
@@ -150,8 +151,8 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Voi
          * The underlying script creates merged.v3draw in the temporary merge directory and that has to be moved over.
          */
         return super.processing(depsResult)
-                .thenSuspendUntil(() -> tmpMergeFile.toFile().exists())
-                .thenApply(pd -> {
+                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, tmpMergeFile.toFile().exists()))
+                .thenApply(pdCond -> {
                     try {
                         Path source;
                         if (mergeDir.toAbsolutePath().toString().equals(outputFile.toAbsolutePath().toString())) {
@@ -163,7 +164,7 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Voi
                             source = tmpMergeFile;
                         }
                         Files.move(source, outputFile, StandardCopyOption.REPLACE_EXISTING);
-                        return pd;
+                        return pdCond.getState();
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }

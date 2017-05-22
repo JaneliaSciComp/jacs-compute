@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.imageservices;
 import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -100,11 +101,8 @@ public class Vaa3dStitchGroupingProcessor extends AbstractBasicLifeCycleServiceP
         JacsServiceData vaa3dPluginService = createVaa3dPluginService(args, depResults.getJacsServiceData());
         Path groupsFile = getGroupsFile(getArgs(depResults.getJacsServiceData()));
         return vaa3dPluginProcessor.process(vaa3dPluginService)
-                .thenSuspendUntil(() -> groupsFile.toFile().exists())
-                .thenApply(voidResult -> {
-                    return voidResult;
-                })
-                .thenApply(voidResult -> depResults);
+                .thenSuspendUntil(vr -> new ContinuationCond.Cond<>(vr, groupsFile.toFile().exists()))
+                .thenApply(vrCond -> depResults);
     }
 
     private JacsServiceData createVaa3dPluginService(Vaa3dStitchGroupingArgs args, JacsServiceData jacsServiceData) {

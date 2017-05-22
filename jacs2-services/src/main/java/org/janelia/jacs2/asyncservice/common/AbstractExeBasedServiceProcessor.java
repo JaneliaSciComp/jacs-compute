@@ -46,8 +46,9 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
     protected ServiceComputation<JacsServiceResult<S>> processing(JacsServiceResult<S> depsResult) {
         ExeJobInfo jobInfo = runExternalProcess(depsResult.getJacsServiceData());
         return computationFactory.newCompletedComputation(depsResult)
-                .thenSuspendUntil(() -> this.hasJobFinished(depsResult.getJacsServiceData(), jobInfo))
-                .thenApply(pd -> {
+                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, this.hasJobFinished(pd.getJacsServiceData(), jobInfo)))
+                .thenApply(pdCond -> {
+                    JacsServiceResult<S> pd = pdCond.getState();
                     List<String> errors = this.getErrorChecker().collectErrors(pd.getJacsServiceData());
                     String errorMessage = null;
                     if (CollectionUtils.isNotEmpty(errors)) {

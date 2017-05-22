@@ -213,36 +213,20 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
         return next;
     }
 
-    public ServiceComputation<T> thenSuspendUntil(ContinuationCond fn) {
-        FutureBasedServiceComputation<Boolean> waitFor = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(this));
-        ServiceComputationTask<T> nextTask = new ServiceComputationTask<>(waitFor);
-        FutureBasedServiceComputation<T> next = new FutureBasedServiceComputation<>(computationQueue, logger, nextTask);
-        waitFor.submit(() -> {
-            try {
-                if (this.isCompletedExceptionally() || fn.checkCond()) { // checks the condition based on the enclosed state
-                    logger.debug("Resume {}", nextTask);
-                    waitFor.complete(true);
-                    nextTask.resume();
-                } else {
-                    if (!nextTask.isSuspended()) {
-                        logger.debug("Suspend {}", nextTask);
-                        nextTask.suspend();
-                    }
-                    throw new SuspendedException();
-                }
-            } catch (SuspendedException e) {
-                throw e;
-            } catch (Exception e) {
-                waitFor.completeExceptionally(e);
-                nextTask.resume();
-            }
-            return waitFor.get();
-        });
+    public ServiceComputation<ContinuationCond.Cond<T>> thenSuspendUntil(ContinuationCond<T> fn) {
+        FutureBasedServiceComputation<ContinuationCond.Cond<T>> next = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(this));
         next.submit(() -> {
             try {
-                waitForResult(waitFor);
                 T r = waitForResult(this);
-                next.complete(r);
+                if (this.isCompletedExceptionally()) {
+                    next.complete(new ContinuationCond.Cond<>(this.get(), false));
+                }
+                ContinuationCond.Cond<T> condResult = fn.checkCond(r);
+                if (condResult.isNotCondValue()) {
+                    throw new SuspendedException();
+                } else {
+                    next.complete(condResult);
+                }
             } catch (SuspendedException e) {
                 throw e;
             } catch (Exception e) {

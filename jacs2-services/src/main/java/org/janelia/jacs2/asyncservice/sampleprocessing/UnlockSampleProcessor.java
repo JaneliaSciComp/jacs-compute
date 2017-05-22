@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import com.beust.jcommander.Parameter;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -68,7 +69,7 @@ public class UnlockSampleProcessor extends AbstractServiceProcessor<Void> {
 
         Sample sample = sampleDataService.getSampleById(null, args.sampleId);
         return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenSuspendUntil(() -> {
+                .thenSuspendUntil(sd -> {
                     boolean result = domainObjectService.unlock(args.lockKey, sample);
                     if (!result) {
                         if (!jacsServiceData.hasBeenSuspended()) {
@@ -76,11 +77,11 @@ public class UnlockSampleProcessor extends AbstractServiceProcessor<Void> {
                             jacsServiceData.updateState(JacsServiceState.SUSPENDED);
                             updateServiceData(jacsServiceData);
                         }
-                        return false;
+                        return new ContinuationCond.Cond<> (sd, false);
                     }
-                    return true;
+                    return new ContinuationCond.Cond<> (sd, true);
                 })
-                .thenApply(sd -> null);
+                .thenApply(sdCond -> null);
     }
 
     private UnlockSampleArgs getArgs(JacsServiceData jacsServiceData) {

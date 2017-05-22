@@ -10,6 +10,7 @@ import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -191,11 +192,12 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     pd.getResult().stitchedAreasResults.addAll(stitchTiles(pd));
                     return pd;
                 })
-                .thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(depResults.getJacsServiceData()))
-                .thenApply(pd -> {
+                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, !suspendUntilAllDependenciesComplete(pd.getJacsServiceData())))
+                .thenApply(pdCond -> {
+                    JacsServiceResult<StitchProcessingIntermediateResult> pd = pdCond.getState();
                     pd.getResult().stitchedAreasResults.stream()
                             .forEach(this::updateStitchingResult)
-                            ;
+                    ;
                     return pd;
                 })
                 .thenApply(pd -> {
@@ -204,8 +206,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), args.sampleId);
                     boolean updated = pd.getResult().stitchedAreasResults.stream()
                             .map(sar -> updateObjectSampleResult(jacsServiceData, sample, sar.sampleAreaResult))
-                            .reduce(false, (r1, r2) -> r1 || r2)
-                            ;
+                            .reduce(false, (r1, r2) -> r1 || r2);
                     if (updated) {
                         sampleDataService.updateSample(sample);
                     }

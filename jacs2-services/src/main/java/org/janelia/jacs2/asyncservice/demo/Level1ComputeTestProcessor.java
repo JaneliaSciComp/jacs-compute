@@ -63,31 +63,31 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(jsd -> {
                     logger.info("Beginning loop to create IntegerTests and save to queue");
-                    for (int i=0;i<args.integerServiceCount;i++) {
-                        String testName=args.testName+".IntegerTest"+i;
+                    for (int i = 0; i < args.integerServiceCount; i++) {
+                        String testName = args.testName + ".IntegerTest" + i;
                         JacsServiceData j = integerComputeTestProcessor.createServiceData(new ServiceExecutionContext(jsd));
                         j.addArg("-testName");
                         j.addArg(testName);
-                        logger.info("adding integerComputeTest "+testName);
+                        logger.info("adding integerComputeTest " + testName);
                         jacsServiceDataPersistence.saveHierarchy(j);
                     }
                     return jsd;
                 })
-                .thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(jacsServiceData))
-                .thenApply(jsd -> {
+                .thenSuspendUntil(jsd -> new ContinuationCond.Cond<>(jsd, !suspendUntilAllDependenciesComplete(jacsServiceData)))
+                .thenApply(jsdCond -> {
                     logger.info("Beginning loop to create FloatTests and save to queue");
-                    for (int i=0;i<args.floatServiceCount;i++) {
-                        String testName=args.testName+".FloatTest"+i;
-                        JacsServiceData j = floatComputeTestProcessor.createServiceData(new ServiceExecutionContext(jsd));
+                    for (int i = 0; i < args.floatServiceCount; i++) {
+                        String testName = args.testName + ".FloatTest" + i;
+                        JacsServiceData j = floatComputeTestProcessor.createServiceData(new ServiceExecutionContext(jsdCond.getState()));
                         j.addArg("-testName");
                         j.addArg(testName);
-                        logger.info("adding floatComputeTest "+testName);
+                        logger.info("adding floatComputeTest " + testName);
                         jacsServiceDataPersistence.saveHierarchy(j);
                     }
-                    return jsd;
+                    return jsdCond.getState();
                 })
-                .thenSuspendUntil(() -> !suspendUntilAllDependenciesComplete(jacsServiceData))
-                .thenApply(jsd -> {
+                .thenSuspendUntil(jsd -> new ContinuationCond.Cond<>(jsd, !suspendUntilAllDependenciesComplete(jacsServiceData)))
+                .thenApply(jsdCond -> {
                     logger.info("All tests complete for service " + serviceName);
                     long endTime = new Date().getTime();
                     resultComputationTime = endTime - startTime;
