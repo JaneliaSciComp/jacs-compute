@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.SampleDao;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
@@ -25,7 +26,7 @@ import static com.mongodb.client.model.Filters.lt;
 
 public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements SampleDao {
     @Inject
-    public SampleMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
+    public SampleMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
         super(mongoDatabase, idGenerator, objectMapperFactory);
     }
 

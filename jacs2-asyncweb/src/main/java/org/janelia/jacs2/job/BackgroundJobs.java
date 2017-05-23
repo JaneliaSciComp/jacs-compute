@@ -3,13 +3,13 @@ package org.janelia.jacs2.job;
 import org.janelia.jacs2.asyncservice.common.JacsJobRunner;
 import org.janelia.jacs2.asyncservice.common.JacsQueueSyncer;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.spi.CDI;
-import javax.inject.Singleton;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-@Singleton
+@ApplicationScoped
 public class BackgroundJobs implements ServletContextListener {
 
     private JacsQueueSyncer queueSyncer;

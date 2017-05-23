@@ -2,12 +2,12 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.slf4j.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
-@Singleton
 public class ServiceComputationFactory {
 
+    @ApplicationScoped
     private final ServiceComputationQueue computationQueue;
     private final Logger logger;
 

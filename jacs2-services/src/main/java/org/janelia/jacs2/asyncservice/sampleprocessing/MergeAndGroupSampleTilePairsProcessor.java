@@ -39,6 +39,7 @@ import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMDetectionChannel
 import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMMetadata;
 import org.janelia.jacs2.asyncservice.utils.DataHolder;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -155,7 +156,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     private final LinkDataProcessor linkDataProcessor;
     private final Vaa3dStitchGroupingProcessor vaa3dStitchGroupingProcessor;
     private final SampleDataService sampleDataService;
-    private final TimebasedIdentifierGenerator identifierGenerator;
+    private final TimebasedIdentifierGenerator idGenerator;
 
     @Inject
     MergeAndGroupSampleTilePairsProcessor(ServiceComputationFactory computationFactory,
@@ -167,7 +168,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                                           LinkDataProcessor linkDataProcessor,
                                           Vaa3dStitchGroupingProcessor vaa3dStitchGroupingProcessor,
                                           SampleDataService sampleDataService,
-                                          TimebasedIdentifierGenerator identifierGenerator,
+                                          @JacsDefault TimebasedIdentifierGenerator idGenerator,
                                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.updateSampleLSMMetadataProcessor = updateSampleLSMMetadataProcessor;
@@ -176,7 +177,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         this.linkDataProcessor = linkDataProcessor;
         this.vaa3dStitchGroupingProcessor = vaa3dStitchGroupingProcessor;
         this.sampleDataService = sampleDataService;
-        this.identifierGenerator = identifierGenerator;
+        this.idGenerator = idGenerator;
     }
 
     @Override
@@ -296,7 +297,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         if (canUseTileNameAsMergeFile(anatomicalAreas)) {
             mergeFileNameGenerator = tp -> "tile-" + tp.getNonNullableTileName();
         } else {
-            mergeFileNameGenerator = tp -> tp.getNonNullableTileName() + "tile-" + identifierGenerator.generateId();
+            mergeFileNameGenerator = tp -> tp.getNonNullableTileName() + "tile-" + idGenerator.generateId();
         }
         return anatomicalAreas.stream()
                 .map(ar -> mergeChannelsForAllTilesFromAnArea(ar, multiscanBlendVersion, channelMappingFunc, mergeFileNameGenerator,

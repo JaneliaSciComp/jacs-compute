@@ -6,16 +6,16 @@ import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-@Singleton
 public class JacsJobRunner {
 
+    @ApplicationScoped
     private final JacsServiceDispatcher jacsServiceDispatcher;
     private final ScheduledExecutorService scheduler;
     private final Logger logger;

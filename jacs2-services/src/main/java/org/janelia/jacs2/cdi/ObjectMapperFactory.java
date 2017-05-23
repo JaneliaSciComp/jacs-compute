@@ -7,7 +7,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import org.janelia.jacs2.dao.mongo.utils.MongoModule;
 
+import javax.enterprise.context.ApplicationScoped;
+
 public class ObjectMapperFactory {
+    @ApplicationScoped
     private static final ObjectMapperFactory INSTANCE = new ObjectMapperFactory();
 
     private final ObjectMapper defaultObjectMapper;

@@ -11,6 +11,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.JacsServiceDataDao;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.model.DataInterval;
@@ -40,7 +41,7 @@ import static com.mongodb.client.model.Filters.lt;
 public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> implements JacsServiceDataDao {
 
     @Inject
-    public JacsServiceDataMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
+    public JacsServiceDataMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
         super(mongoDatabase, idGenerator, objectMapperFactory);
     }
 

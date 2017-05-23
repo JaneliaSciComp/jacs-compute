@@ -23,14 +23,15 @@ import org.janelia.jacs2.dao.mongo.utils.DomainCodecProvider;
 import org.janelia.jacs2.dao.mongo.utils.EnumCodec;
 import org.janelia.jacs2.dao.mongo.utils.MapOfEnumCodec;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+@ApplicationScoped
 public class PersistenceProducer {
 
     @PropertyValue(name = "MongoDB.ConnectionURL")
@@ -40,7 +41,7 @@ public class PersistenceProducer {
     @Inject
     private String mongoDatabase;
 
-    @Singleton
+    @ApplicationScoped
     @Produces
     public MongoClient createMongoClient(ObjectMapperFactory objectMapperFactory) {
         CodecRegistry codecRegistry = CodecRegistries.fromRegistries(
@@ -67,7 +68,7 @@ public class PersistenceProducer {
     }
 
     @Sage
-    @Singleton
+    @ApplicationScoped
     @Produces
     public DataSource createSageDatasource(@PropertyValue(name = "sage.db.url") String dbUrl,
                                            @PropertyValue(name = "sage.db.user") String dbUser,

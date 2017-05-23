@@ -8,9 +8,7 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
-@Singleton
 public class JacsServiceDispatcher {
 
     private static final int DISPATCH_BATCH_SIZE = 20;

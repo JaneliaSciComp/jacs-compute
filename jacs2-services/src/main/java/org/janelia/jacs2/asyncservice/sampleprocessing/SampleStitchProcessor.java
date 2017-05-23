@@ -27,6 +27,7 @@ import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor
 import org.janelia.jacs2.asyncservice.imageservices.stitching.StitchedImageInfo;
 import org.janelia.jacs2.asyncservice.imageservices.stitching.StitchingUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -96,7 +97,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
     private final MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor;
     private final Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor;
     private final MIPGenerationProcessor mipGenerationProcessor;
-    private final TimebasedIdentifierGenerator identifierGenerator;
+    private final TimebasedIdentifierGenerator idGenerator;
 
     @Inject
     SampleStitchProcessor(ServiceComputationFactory computationFactory,
@@ -107,7 +108,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                           MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor,
                           Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor,
                           MIPGenerationProcessor mipGenerationProcessor,
-                          TimebasedIdentifierGenerator identifierGenerator,
+                          @JacsDefault TimebasedIdentifierGenerator idGenerator,
                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sampleDataService = sampleDataService;
@@ -115,7 +116,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
         this.mergeAndGroupSampleTilePairsProcessor = mergeAndGroupSampleTilePairsProcessor;
         this.vaa3dStitchAndBlendProcessor = vaa3dStitchAndBlendProcessor;
         this.mipGenerationProcessor = mipGenerationProcessor;
-        this.identifierGenerator = identifierGenerator;
+        this.idGenerator = idGenerator;
     }
 
     @Override
@@ -236,7 +237,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                 return nameBuilder.toString();
             };
         } else {
-            stitchedFileNameGenerator = groupedArea -> "stitched-" + identifierGenerator.generateId();
+            stitchedFileNameGenerator = groupedArea -> "stitched-" + idGenerator.generateId();
         }
         return allGroupedAreasResults.stream()
                 .map(groupedArea -> {
@@ -350,7 +351,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     pipelineRun.setCreationDate(jacsServiceData.getCreationDate());
                     // create stitch result
                     SampleProcessingResult stitchResult = new SampleProcessingResult();
-                    stitchResult.setId(identifierGenerator.generateId());
+                    stitchResult.setId(idGenerator.generateId());
                     stitchResult.setName(String.format("Sample processing results (%s)", areaResult.getAnatomicalArea()));
                     stitchResult.setFilepath(areaResult.getResultDir());
                     stitchResult.setChannelSpec(areaResult.getConsensusChannelComponents().channelSpec);

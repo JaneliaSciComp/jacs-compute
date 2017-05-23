@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,21 +17,20 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-@Singleton
 public class ThrottledProcessesQueue {
 
     private final Logger logger;
     private final ScheduledExecutorService scheduler;
-    private final Map<String, BlockingQueue<ThrottledJobInfo>> waitingProcesses;
-    private final Map<String, BlockingQueue<ThrottledJobInfo>> runningProcesses;
+    @ApplicationScoped
+    private Map<String, BlockingQueue<ThrottledJobInfo>> waitingProcesses;
+    @ApplicationScoped
+    private Map<String, BlockingQueue<ThrottledJobInfo>> runningProcesses;
     private final int initialDelayInMillis;
     private final int periodInMillis;
 
     @Inject
     ThrottledProcessesQueue(Logger logger) {
         this.logger = logger;
-        this.waitingProcesses = new ConcurrentHashMap<>();
-        this.runningProcesses = new ConcurrentHashMap<>();
         this.initialDelayInMillis = 30000;
         this.periodInMillis = 500;
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
@@ -43,6 +42,8 @@ public class ThrottledProcessesQueue {
 
     @PostConstruct
     public void initialize() {
+        waitingProcesses = new ConcurrentHashMap<>();;
+        runningProcesses= new ConcurrentHashMap<>();;
         scheduler.scheduleAtFixedRate(() -> checkWaitingQueue(), initialDelayInMillis, periodInMillis, TimeUnit.MILLISECONDS);
     }
 

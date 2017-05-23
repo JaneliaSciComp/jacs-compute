@@ -2,12 +2,12 @@ package org.janelia.jacs2.cdi;
 
 import org.janelia.jacs2.job.BackgroundJobs;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
-import javax.inject.Singleton;
 
 public class WebApplicationProducer {
 
-    @Singleton
+    @ApplicationScoped
     @Produces
     public BackgroundJobs jobs() {
         return new BackgroundJobs();

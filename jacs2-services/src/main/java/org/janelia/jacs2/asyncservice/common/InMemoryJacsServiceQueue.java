@@ -13,8 +13,8 @@ import org.janelia.jacs2.model.page.SortCriteria;
 import org.janelia.jacs2.model.page.SortDirection;
 import org.slf4j.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -24,7 +24,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.Semaphore;
 
-@Singleton
 public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     private static final int DEFAULT_MAX_READY_CAPACITY = 20;
 

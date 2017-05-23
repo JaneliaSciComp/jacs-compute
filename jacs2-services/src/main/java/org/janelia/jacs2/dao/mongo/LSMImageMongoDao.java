@@ -7,6 +7,7 @@ import org.bson.conversions.Bson;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.LSMImageDao;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.model.DomainModelUtils;
@@ -22,7 +23,7 @@ import static com.mongodb.client.model.Filters.eq;
 
 public class LSMImageMongoDao extends AbstractImageMongoDao<LSMImage> implements LSMImageDao {
     @Inject
-    public LSMImageMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
+    public LSMImageMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
         super(mongoDatabase, idGenerator, objectMapperFactory);
     }
 

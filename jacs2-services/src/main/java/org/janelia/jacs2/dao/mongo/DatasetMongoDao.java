@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.DatasetDao;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.model.DomainModelUtils;
@@ -16,7 +17,7 @@ import java.util.List;
 
 public class DatasetMongoDao extends AbstractDomainObjectDao<DataSet> implements DatasetDao {
     @Inject
-    public DatasetMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
+    public DatasetMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
         super(mongoDatabase, idGenerator, objectMapperFactory);
     }
 

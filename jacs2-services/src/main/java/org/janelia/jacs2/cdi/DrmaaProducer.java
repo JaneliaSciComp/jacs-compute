@@ -9,6 +9,7 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 
+@ApplicationScoped
 public class DrmaaProducer {
 
     @ApplicationScoped

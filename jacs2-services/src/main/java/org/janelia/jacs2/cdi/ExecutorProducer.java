@@ -5,16 +5,17 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.TaskQueuePoll;
 import org.slf4j.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+@ApplicationScoped
 public class ExecutorProducer {
 
     private final static int DEFAULT_THREAD_POOL_SIZE = 100;
@@ -29,7 +30,7 @@ public class ExecutorProducer {
     @Inject
     private Integer suspendedTasksThreadPoolSize;
 
-    @Singleton
+    @ApplicationScoped
     @Produces
     public ExecutorService createExecutorService() {
         if (threadPoolSize == null || threadPoolSize == 0) {
@@ -43,7 +44,7 @@ public class ExecutorProducer {
     }
 
     @TaskQueuePoll
-    @Singleton
+    @ApplicationScoped
     @Produces
     public ExecutorService createTaskQueuePollExecutorService() {
         if (suspendedTasksThreadPoolSize == null || suspendedTasksThreadPoolSize == 0) {
