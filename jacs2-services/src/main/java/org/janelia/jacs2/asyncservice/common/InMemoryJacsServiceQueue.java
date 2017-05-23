@@ -132,13 +132,14 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
         boolean added = false;
         try {
             queuePermit.acquireUninterruptibly();
-            if (submittedServicesSet.contains(jacsServiceData.getId()) || waitingServicesSet.contains(jacsServiceData.getId())) {
+            if (submittedServicesSet.contains(jacsServiceData.getId())
+                    || waitingServicesSet.contains(jacsServiceData.getId())) {
                 // service is already waiting or running
                 return true;
             }
             added = waitingServices.offer(jacsServiceData);
             if (added) {
-                logger.debug("Enqueued service {}", jacsServiceData);
+                logger.debug("Enqueued service {} into {}", jacsServiceData, this);
                 waitingServicesSet.add(jacsServiceData.getId());
                 if (jacsServiceData.getState() == JacsServiceState.CREATED) {
                     jacsServiceData.updateState(JacsServiceState.QUEUED);
@@ -163,7 +164,8 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
             services.getResultList().stream().forEach(serviceData -> {
                 try {
                     Preconditions.checkArgument(serviceData.getId() != null, "Invalid service ID");
-                    if (!submittedServicesSet.contains(serviceData.getId()) && !waitingServicesSet.contains(serviceData.getId())) {
+                    if (!submittedServicesSet.contains(serviceData.getId()) &&
+                            !waitingServicesSet.contains(serviceData.getId())) {
                         addWaitingService(serviceData);
                     }
                 } catch (Exception e) {

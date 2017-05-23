@@ -72,22 +72,26 @@ public class JacsServiceDispatcher {
                     })
                     .whenComplete((r, exc) -> {
                         JacsServiceData service = jacsServiceDataPersistence.findById(queuedService.getId());
-                        if (!service.hasParentServiceId()) {
-                            // release the slot acquired before the service was started
-                            jacsServiceEngine.releaseSlot();
+                        try {
+                            if (!service.hasParentServiceId()) {
+                                // release the slot acquired before the service was started
+                                jacsServiceEngine.releaseSlot();
+                            }
+                            if (exc != null) {
+                                fail(service, exc);
+                            } else {
+                                success(service);
+                            }
+                        } finally {
+                            jacsServiceQueue.completeService(service);
                         }
-                        jacsServiceQueue.completeService(service);
-                        if (exc != null) {
-                            fail(service, exc);
-                        } else {
-                            success(service);
-                        }
-                    });
+                    })
+                    ;
         }
     }
 
     private void success(JacsServiceData jacsServiceData) {
-        logger.info("Processing successful {}:{}", jacsServiceData.getId(), jacsServiceData.getName());
+        logger.info("Processing successful {}", jacsServiceData);
         if (jacsServiceData.hasCompletedSuccessfully()) {
             // nothing to do
             logger.debug("Service {} has already been marked as successful", jacsServiceData);
@@ -105,7 +109,7 @@ public class JacsServiceDispatcher {
     }
 
     private void fail(JacsServiceData jacsServiceData, Throwable exc) {
-        logger.error("Processing error executing {}:{}", jacsServiceData.getId(), jacsServiceData.getName(), exc);
+        logger.error("Processing error executing {}", jacsServiceData, exc);
         if (jacsServiceData.hasCompletedUnsuccessfully()) {
             // nothing to do
             logger.debug("Service {} has already been marked as failed", jacsServiceData);
