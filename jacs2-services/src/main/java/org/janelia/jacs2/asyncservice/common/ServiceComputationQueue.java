@@ -2,6 +2,8 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.cdi.qualifier.TaskQueuePoll;
 
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -16,12 +18,17 @@ public class ServiceComputationQueue {
 
     private final ExecutorService taskExecutor;
     private final ExecutorService queueInspector;
-    private final BlockingQueue<ServiceComputationTask<?>> taskQueue;
+    @ApplicationScoped
+    private BlockingQueue<ServiceComputationTask<?>> taskQueue;
 
     @Inject
     public ServiceComputationQueue(ExecutorService taskExecutor, @TaskQueuePoll ExecutorService queueInspector) {
         this.taskExecutor = taskExecutor;
         this.queueInspector = queueInspector;
+    }
+
+    @PostConstruct
+    void initialize() {
         taskQueue = new LinkedBlockingQueue<>();
         this.queueInspector.submit(() -> executeTasks());
     }

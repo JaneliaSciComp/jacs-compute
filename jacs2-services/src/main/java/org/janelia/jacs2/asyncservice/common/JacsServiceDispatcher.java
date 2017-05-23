@@ -7,13 +7,16 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.slf4j.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 public class JacsServiceDispatcher {
 
     private static final int DISPATCH_BATCH_SIZE = 20;
 
+    @ApplicationScoped
     private final ServiceComputationFactory serviceComputationFactory;
+    @ApplicationScoped
     private final JacsServiceQueue jacsServiceQueue;
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
     private final JacsServiceEngine jacsServiceEngine;
