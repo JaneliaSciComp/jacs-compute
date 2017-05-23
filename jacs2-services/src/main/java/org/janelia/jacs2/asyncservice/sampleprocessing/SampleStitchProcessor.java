@@ -358,7 +358,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(areaResult.getResultDir(), areaResult.getMipsFileList());
                     SampleServicesUtils.updateFiles(stitchResult, fGroups);
                     if (StringUtils.isNotBlank(areaResult.getStichFile())) {
-                        stitchResult.setFileName(FileType.LosslessStack, areaResult.getStichFile());
+                        stitchResult.setFileName(FileType.LosslessStack, Paths.get(areaResult.getResultDir()).relativize(Paths.get(areaResult.getStichFile())).toString());
                     } else {
                         stitchResult.setFileName(
                                 FileType.LosslessStack,
