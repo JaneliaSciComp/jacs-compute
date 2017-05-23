@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
-import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
@@ -11,20 +10,23 @@ import org.slf4j.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+@ApplicationScoped
 public class JacsServiceDispatcher {
 
     private static final int DISPATCH_BATCH_SIZE = 20;
 
-    @ApplicationScoped
-    private final ServiceComputationFactory serviceComputationFactory;
-    @ApplicationScoped
-    private final JacsServiceQueue jacsServiceQueue;
-    private final JacsServiceDataPersistence jacsServiceDataPersistence;
-    private final JacsServiceEngine jacsServiceEngine;
-    private final Logger logger;
+    private ServiceComputationFactory serviceComputationFactory;
+    private JacsServiceQueue jacsServiceQueue;
+    private JacsServiceDataPersistence jacsServiceDataPersistence;
+    private JacsServiceEngine jacsServiceEngine;
+    private Logger logger;
+
+    JacsServiceDispatcher() {
+        // CDI required ctor
+    }
 
     @Inject
-    public JacsServiceDispatcher(@JacsDefault ServiceComputationFactory serviceComputationFactory,
+    public JacsServiceDispatcher(ServiceComputationFactory serviceComputationFactory,
                                  JacsServiceQueue jacsServiceQueue,
                                  JacsServiceDataPersistence jacsServiceDataPersistence,
                                  JacsServiceEngine jacsServiceEngine,

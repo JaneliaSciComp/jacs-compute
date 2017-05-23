@@ -1,21 +1,16 @@
 package org.janelia.jacs2.cdi;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.ServiceComputationQueue;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.cdi.qualifier.TaskQueuePoll;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
-import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
 
 @ApplicationScoped
 public class ApplicationProducer {
@@ -62,27 +57,4 @@ public class ApplicationProducer {
                 .fromMap(ApplicationConfigProvider.applicationArgs())
                 .build();
     }
-
-    @JacsDefault
-    @ApplicationScoped
-    @Produces
-    public ServiceComputationQueue createTaskQueue(ExecutorService taskExecutor, @TaskQueuePoll ExecutorService queueInspector) {
-        return new ServiceComputationQueue(taskExecutor, queueInspector);
-    }
-
-    @JacsDefault
-    @ApplicationScoped
-    @Produces
-    public ServiceComputationFactory createComputationFactory(@JacsDefault ServiceComputationQueue computationQueue, Logger logger) {
-        return new ServiceComputationFactory(computationQueue, logger);
-    }
-
-//    @ApplicationScoped
-//    @Produces
-//    public JacsServiceQueue createJacsServiceQueue(JacsServiceDataPersistence jacsServiceDataPersistence,
-//                                                   @PropertyValue(name = "service.queue.id") String queueId,
-//                                                   @PropertyValue(name = "service.queue.MaxCapacity") int maxReadyCapacity,
-//                                                   Logger logger) {
-//        return new InMemoryJacsServiceQueue(jacsServiceDataPersistence, queueId, maxReadyCapacity, logger);
-//    }
 }

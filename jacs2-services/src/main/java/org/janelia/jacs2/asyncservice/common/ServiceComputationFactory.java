@@ -2,6 +2,10 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.slf4j.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+
+@ApplicationScoped
 public class ServiceComputationFactory {
 
     private ServiceComputationQueue computationQueue;
@@ -11,6 +15,7 @@ public class ServiceComputationFactory {
         // CDI required ctor
     }
 
+    @Inject
     public ServiceComputationFactory(ServiceComputationQueue computationQueue, Logger logger) {
         this.computationQueue = computationQueue;
         this.logger = logger;

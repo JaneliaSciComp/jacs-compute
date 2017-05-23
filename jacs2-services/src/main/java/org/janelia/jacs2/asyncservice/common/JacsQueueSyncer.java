@@ -13,20 +13,24 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+@ApplicationScoped
 public class JacsQueueSyncer {
 
-    @ApplicationScoped
-    private final JacsServiceQueue jacsServiceQueue;
-    private final ScheduledExecutorService scheduler;
-    private final Logger logger;
+    private JacsServiceQueue jacsServiceQueue;
+    private ScheduledExecutorService scheduler;
+    private Logger logger;
     private int initialDelay;
     private int period;
 
+    JacsQueueSyncer() {
+        // CDI required ctor
+    }
+
     @Inject
-    JacsQueueSyncer(JacsServiceQueue jacsServiceQueue,
-                    @PropertyValue(name = "service.queue.InitialDelayInSeconds") int initialDelay,
-                    @PropertyValue(name = "service.queue.PeriodInSeconds") int period,
-                    Logger logger) {
+    public JacsQueueSyncer(JacsServiceQueue jacsServiceQueue,
+                           @PropertyValue(name = "service.queue.InitialDelayInSeconds") int initialDelay,
+                           @PropertyValue(name = "service.queue.PeriodInSeconds") int period,
+                           Logger logger) {
         this.jacsServiceQueue = jacsServiceQueue;
         this.initialDelay = initialDelay == 0 ? 30 : initialDelay;
         this.period = period == 0 ? 10 : period;

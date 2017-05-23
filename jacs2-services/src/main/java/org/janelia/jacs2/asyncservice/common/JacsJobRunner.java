@@ -13,14 +13,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+@ApplicationScoped
 public class JacsJobRunner {
 
-    @ApplicationScoped
-    private final JacsServiceDispatcher jacsServiceDispatcher;
-    private final ScheduledExecutorService scheduler;
-    private final Logger logger;
+    private JacsServiceDispatcher jacsServiceDispatcher;
+    private ScheduledExecutorService scheduler;
+    private Logger logger;
     private int initialDelay;
     private int period;
+
+    JacsJobRunner() {
+        // CDI required ctor
+    }
 
     @Inject
     JacsJobRunner(JacsServiceDispatcher jacsServiceDispatcher,

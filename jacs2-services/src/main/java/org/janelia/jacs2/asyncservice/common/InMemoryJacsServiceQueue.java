@@ -24,18 +24,23 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.Semaphore;
 
+@ApplicationScoped
 public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     private static final int DEFAULT_MAX_READY_CAPACITY = 20;
 
-    private final JacsServiceDataPersistence jacsServiceDataPersistence;
-    private final Queue<JacsServiceData> waitingServices;
-    private final Set<Number> waitingServicesSet = new ConcurrentSkipListSet<>();
-    private final Set<Number> submittedServicesSet = new ConcurrentSkipListSet<>();
-    private final Semaphore queuePermit;
-    private final Logger logger;
+    private JacsServiceDataPersistence jacsServiceDataPersistence;
+    private Queue<JacsServiceData> waitingServices;
+    private Set<Number> waitingServicesSet = new ConcurrentSkipListSet<>();
+    private Set<Number> submittedServicesSet = new ConcurrentSkipListSet<>();
+    private Semaphore queuePermit;
+    private Logger logger;
     private String queueId;
     private int maxReadyCapacity;
     private boolean noWaitingSpaceAvailable;
+
+    InMemoryJacsServiceQueue() {
+        // CDI required ctor
+    }
 
     @Inject
     public InMemoryJacsServiceQueue(JacsServiceDataPersistence jacsServiceDataPersistence,

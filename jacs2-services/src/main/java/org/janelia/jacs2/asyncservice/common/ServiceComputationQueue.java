@@ -1,10 +1,13 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import javax.annotation.PostConstruct;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 
+@ApplicationScoped
 public class ServiceComputationQueue {
 
     static boolean runTask(ServiceComputationTask<?> task) {
@@ -21,6 +24,7 @@ public class ServiceComputationQueue {
         taskQueue = new LinkedBlockingQueue<>();
     }
 
+    @Inject
     public ServiceComputationQueue(ExecutorService taskExecutor,ExecutorService queueInspector) {
         this();
         this.taskExecutor = taskExecutor;

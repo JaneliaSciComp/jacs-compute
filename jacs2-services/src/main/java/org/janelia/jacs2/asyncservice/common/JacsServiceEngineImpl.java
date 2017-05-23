@@ -12,7 +12,6 @@ import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.slf4j.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -25,7 +24,6 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
     private static final int DEFAULT_MAX_RUNNING_SLOTS = 1000;
 
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
-    @ApplicationScoped
     private final JacsServiceQueue jacsServiceQueue;
     private final Instance<ServiceRegistry> serviceRegistrarSource;
     private final Logger logger;
