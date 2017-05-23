@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.janelia.jacs2.asyncservice.utils.DataHolder;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;

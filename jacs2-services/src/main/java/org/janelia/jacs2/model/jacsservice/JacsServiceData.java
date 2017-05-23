@@ -370,6 +370,8 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         return new ToStringBuilder(this)
                 .append("id", id)
                 .append("name", name)
+                .append("state", state)
+                .append("queueId", queueId)
                 .append("args", args)
                 .toString();
     }

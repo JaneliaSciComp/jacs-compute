@@ -33,7 +33,7 @@ public class ThrottledProcessesQueue {
         this.waitingProcesses = new ConcurrentHashMap<>();
         this.runningProcesses = new ConcurrentHashMap<>();
         this.initialDelayInMillis = 30000;
-        this.periodInMillis = 1000;
+        this.periodInMillis = 500;
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("JACS-THROTTLE-%d")
                 .setDaemon(true)
@@ -84,6 +84,7 @@ public class ThrottledProcessesQueue {
     }
 
     private void moveProcessToRunningQueue(ThrottledJobInfo jobInfo) {
+        logger.debug("Prepare for actually running queue {} - {}", jobInfo.getProcessName(), jobInfo.getServiceContext());
         BlockingQueue<ThrottledJobInfo> waitingQueue = getQueue(jobInfo.getProcessName(), waitingProcesses);
         BlockingQueue<ThrottledJobInfo> runningQueue = getQueue(jobInfo.getProcessName(), runningProcesses);
         waitingQueue.remove(jobInfo);
