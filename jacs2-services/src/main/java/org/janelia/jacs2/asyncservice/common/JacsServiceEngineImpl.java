@@ -33,11 +33,11 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
     private final Semaphore availableSlots;
 
     @Inject
-    JacsServiceEngineImpl(JacsServiceDataPersistence jacsServiceDataPersistence,
-                          JacsServiceQueue jacsServiceQueue,
-                          Instance<ServiceRegistry> serviceRegistrarSource,
-                          @PropertyValue(name = "service.engine.ProcessingSlots") int nAvailableSlots,
-                          Logger logger) {
+    public JacsServiceEngineImpl(JacsServiceDataPersistence jacsServiceDataPersistence,
+                                 JacsServiceQueue jacsServiceQueue,
+                                 Instance<ServiceRegistry> serviceRegistrarSource,
+                                 @PropertyValue(name = "service.engine.ProcessingSlots") int nAvailableSlots,
+                                 Logger logger) {
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.jacsServiceQueue = jacsServiceQueue;
         this.serviceRegistrarSource = serviceRegistrarSource;

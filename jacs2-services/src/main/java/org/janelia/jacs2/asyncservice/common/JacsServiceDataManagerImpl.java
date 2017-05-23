@@ -16,7 +16,7 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
 
     @Inject
-    JacsServiceDataManagerImpl(JacsServiceDataPersistence jacsServiceDataPersistence) {
+    public JacsServiceDataManagerImpl(JacsServiceDataPersistence jacsServiceDataPersistence) {
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
     }
 

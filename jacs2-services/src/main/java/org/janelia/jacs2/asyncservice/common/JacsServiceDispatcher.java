@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
@@ -23,7 +24,7 @@ public class JacsServiceDispatcher {
     private final Logger logger;
 
     @Inject
-    public JacsServiceDispatcher(ServiceComputationFactory serviceComputationFactory,
+    public JacsServiceDispatcher(@JacsDefault ServiceComputationFactory serviceComputationFactory,
                                  JacsServiceQueue jacsServiceQueue,
                                  JacsServiceDataPersistence jacsServiceDataPersistence,
                                  JacsServiceEngine jacsServiceEngine,

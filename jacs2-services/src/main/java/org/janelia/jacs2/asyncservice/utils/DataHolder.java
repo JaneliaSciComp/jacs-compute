@@ -1,5 +1,8 @@
 package org.janelia.jacs2.asyncservice.utils;
 
+import javax.enterprise.inject.Vetoed;
+
+@Vetoed
 public class DataHolder<T> {
     private T data;
 

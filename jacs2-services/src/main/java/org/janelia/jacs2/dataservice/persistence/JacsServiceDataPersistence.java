@@ -16,7 +16,7 @@ import java.util.Set;
 public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServiceDataDao, JacsServiceData, Number> {
 
     @Inject
-    JacsServiceDataPersistence(Instance<JacsServiceDataDao> serviceDataDaoSource) {
+    public JacsServiceDataPersistence(Instance<JacsServiceDataDao> serviceDataDaoSource) {
         super(serviceDataDaoSource);
     }
 

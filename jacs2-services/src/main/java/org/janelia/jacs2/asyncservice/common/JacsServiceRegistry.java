@@ -17,7 +17,7 @@ public class JacsServiceRegistry implements ServiceRegistry {
     private final Logger logger;
 
     @Inject
-    JacsServiceRegistry(@Any Instance<ServiceProcessor<?>> anyServiceSource, Logger logger) {
+    public JacsServiceRegistry(@Any Instance<ServiceProcessor<?>> anyServiceSource, Logger logger) {
         this.anyServiceSource = anyServiceSource;
         this.logger = logger;
     }

@@ -2,16 +2,15 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.slf4j.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-
 public class ServiceComputationFactory {
 
-    @ApplicationScoped
-    private final ServiceComputationQueue computationQueue;
-    private final Logger logger;
+    private ServiceComputationQueue computationQueue;
+    private Logger logger;
 
-    @Inject
+    ServiceComputationFactory() {
+        // CDI required ctor
+    }
+
     public ServiceComputationFactory(ServiceComputationQueue computationQueue, Logger logger) {
         this.computationQueue = computationQueue;
         this.logger = logger;
