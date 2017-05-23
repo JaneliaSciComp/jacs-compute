@@ -18,17 +18,18 @@ public class ServiceComputationQueue {
 
     ServiceComputationQueue() {
         // CDI ctor
+        taskQueue = new LinkedBlockingQueue<>();
     }
 
     public ServiceComputationQueue(ExecutorService taskExecutor,ExecutorService queueInspector) {
+        this();
         this.taskExecutor = taskExecutor;
         this.queueInspector = queueInspector;
     }
 
     @PostConstruct
     void initialize() {
-        taskQueue = new LinkedBlockingQueue<>();
-        this.queueInspector.submit(() -> executeTasks());
+       this.queueInspector.submit(() -> executeTasks());
     }
 
     private void executeTasks() {
