@@ -73,10 +73,6 @@ public class JacsServiceDispatcher {
                     .whenComplete((r, exc) -> {
                         JacsServiceData service = jacsServiceDataPersistence.findById(queuedService.getId());
                         try {
-                            if (!service.hasParentServiceId()) {
-                                // release the slot acquired before the service was started
-                                jacsServiceEngine.releaseSlot();
-                            }
                             if (exc != null) {
                                 fail(service, exc);
                             } else {
@@ -84,6 +80,10 @@ public class JacsServiceDispatcher {
                             }
                         } finally {
                             jacsServiceQueue.completeService(service);
+                            if (!service.hasParentServiceId()) {
+                                // release the slot acquired before the service was started
+                                jacsServiceEngine.releaseSlot();
+                            }
                         }
                     })
                     ;
