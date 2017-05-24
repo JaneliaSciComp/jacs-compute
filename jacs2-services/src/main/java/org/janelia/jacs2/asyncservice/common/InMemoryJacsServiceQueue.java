@@ -28,7 +28,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     private static final int DEFAULT_MAX_READY_CAPACITY = 20;
 
     private JacsServiceDataPersistence jacsServiceDataPersistence;
-    transient private Queue<JacsServiceData> waitingServices;
+    private Queue<JacsServiceData> waitingServices;
     private Set<Number> waitingServicesSet = new LinkedHashSet<>();
     private Set<Number> submittedServicesSet = new LinkedHashSet<>();
     private Logger logger;
@@ -148,7 +148,6 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
                 new SortCriteria("creationDate"))));
         PageResult<JacsServiceData> services = jacsServiceDataPersistence.claimServiceByQueueAndState(queueId, jacsServiceStates, servicePageRequest);
         if (CollectionUtils.isNotEmpty(services.getResultList())) {
-            logger.debug("Claimed services: {}", services.getResultList());
             services.getResultList().stream().forEach(serviceData -> {
                 try {
                     Preconditions.checkArgument(serviceData.getId() != null, "Invalid service ID");

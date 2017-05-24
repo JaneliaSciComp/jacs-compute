@@ -69,14 +69,14 @@ public abstract class AbstractDomainObjectDao<T extends DomainObject> extends Ab
         Preconditions.checkArgument(StringUtils.isNotBlank(lockKey));
         Bson lockedEntity = Updates.combine(Updates.set("lockKey", lockKey), Updates.set("lockTimestamp", new Date()));
         entity.setLockKey(lockKey);
-        return update(entity, lockedEntity, new UpdateOptions()) > 0;
+        return update(getUpdateMatchCriteria(entity), lockedEntity, new UpdateOptions()) > 0;
     }
 
     @Override
     public boolean unlockEntity(String lockKey, T entity) {
         Bson lockedEntity = Updates.combine(Updates.unset("lockKey"), Updates.unset("lockTimestamp"));
         entity.setLockKey(lockKey);
-        return update(entity, lockedEntity, new UpdateOptions()) > 0;
+        return update(getUpdateMatchCriteria(entity), lockedEntity, new UpdateOptions()) > 0;
     }
 
     protected Bson getUpdateMatchCriteria(T entity) {

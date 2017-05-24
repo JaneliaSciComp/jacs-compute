@@ -27,6 +27,8 @@ import org.janelia.jacs2.model.page.SortCriteria;
 import org.janelia.jacs2.model.page.SortDirection;
 import org.janelia.jacs2.model.DomainModelUtils;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
@@ -44,6 +46,8 @@ import static com.mongodb.client.model.Filters.eq;
  * @param <T> type of the element
  */
 public abstract class AbstractMongoDao<T extends HasIdentifier> extends AbstractDao<T, Number> implements ReadWriteDao<T, Number> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoDao.class);
 
     private final ObjectMapper objectMapper;
     protected final TimebasedIdentifierGenerator idGenerator;
@@ -128,31 +132,21 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     public void save(T entity) {
         if (entity.getId() == null) {
             entity.setId(idGenerator.generateId());
-            mongoCollection.insertOne(entity);
-        } else {
-            upsert(entity);
         }
+        mongoCollection.insertOne(entity);
     }
 
     public void saveAll(List<T> entities) {
         Iterator<Number> idIterator = idGenerator.generateIdList(entities.size()).iterator();
-        List<T> toUpsert = new ArrayList<>();
         List<T> toInsert = new ArrayList<>();
         entities.forEach(e -> {
             if (e.getId() == null) {
                 e.setId(idIterator.next());
-                toInsert.add(e);
-            } else {
-                toUpsert.add(e);
             }
+            toInsert.add(e);
         });
         if (!toInsert.isEmpty()) {
             mongoCollection.insertMany(toInsert);
-        }
-        if (!toUpsert.isEmpty()) {
-            UpdateOptions upsertOptions = new UpdateOptions();
-            upsertOptions.upsert(true);
-            toUpsert.forEach(e -> this.update(e, upsertOptions));
         }
     }
 
@@ -167,18 +161,13 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         update(entity, updateOptions);
     }
 
-    private void upsert(T entity) {
-        UpdateOptions updateOptions = new UpdateOptions();
-        updateOptions.upsert(true);
-        update(entity, updateOptions);
-    }
-
     private long update(T entity, UpdateOptions updateOptions) {
-        return update(entity, getUpdates(entity), updateOptions);
+        return update(getUpdateMatchCriteria(entity), getUpdates(entity), updateOptions);
     }
 
-    protected long update(T entity, Bson toUpdate, UpdateOptions updateOptions) {
-        UpdateResult result = mongoCollection.updateOne(getUpdateMatchCriteria(entity), toUpdate, updateOptions);
+    protected long update(Bson query, Bson toUpdate, UpdateOptions updateOptions) {
+        LOG.debug("Update: {} -> {}", query, toUpdate);
+        UpdateResult result = mongoCollection.updateOne(query, toUpdate, updateOptions);
         return result.getMatchedCount();
     }
 
@@ -204,11 +193,6 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
 
     protected Bson getUpdateMatchCriteria(T entity) {
         return eq("_id", entity.getId());
-    }
-
-    @Override
-    public void updateAll(List<T> entities) {
-        entities.forEach(this::update);
     }
 
     @Override
