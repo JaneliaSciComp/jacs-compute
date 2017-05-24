@@ -72,18 +72,17 @@ public class JacsServiceDispatcher {
                     })
                     .whenComplete((r, exc) -> {
                         JacsServiceData service = jacsServiceDataPersistence.findById(queuedService.getId());
-                        try {
-                            if (exc != null) {
-                                fail(service, exc);
-                            } else {
-                                success(service);
-                            }
-                        } finally {
-                            jacsServiceQueue.completeService(service);
-                            if (!service.hasParentServiceId()) {
-                                // release the slot acquired before the service was started
-                                jacsServiceEngine.releaseSlot();
-                            }
+                        if (exc != null) {
+                            fail(service, exc);
+                        } else {
+                            success(service);
+                        }
+                    })
+                    .whenComplete((r, exc) -> {
+                        jacsServiceQueue.completeService(queuedService);
+                        if (!queuedService.hasParentServiceId()) {
+                            // release the slot acquired before the service was started
+                            jacsServiceEngine.releaseSlot();
                         }
                     })
                     ;

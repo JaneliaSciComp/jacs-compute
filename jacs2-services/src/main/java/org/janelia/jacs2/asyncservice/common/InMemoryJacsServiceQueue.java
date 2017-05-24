@@ -17,6 +17,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
@@ -29,8 +30,8 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
 
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private Queue<JacsServiceData> waitingServices;
-    private Set<Number> waitingServicesSet = new ConcurrentSkipListSet<>();
-    private Set<Number> submittedServicesSet = new ConcurrentSkipListSet<>();
+    private Set<Number> waitingServicesSet = new LinkedHashSet<>();
+    private Set<Number> submittedServicesSet = new LinkedHashSet<>();
     private Logger logger;
     private String queueId;
     private int maxReadyCapacity;
@@ -87,27 +88,27 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     }
 
     @Override
-    public void abortService(JacsServiceData jacsServiceData) {
+    public synchronized void abortService(JacsServiceData jacsServiceData) {
         submittedServicesSet.remove(jacsServiceData.getId());
     }
 
     @Override
-    public void completeService(JacsServiceData jacsServiceData) {
+    public synchronized void completeService(JacsServiceData jacsServiceData) {
         submittedServicesSet.remove(jacsServiceData.getId());
     }
 
     @Override
-    public int getReadyServicesSize() {
+    public synchronized int getReadyServicesSize() {
         return waitingServices.size();
     }
 
     @Override
-    public int getPendingServicesSize() {
+    public synchronized int getPendingServicesSize() {
         return submittedServicesSet.size();
     }
 
     @Override
-    public List<Number> getPendingServices() {
+    public synchronized List<Number> getPendingServices() {
         return ImmutableList.copyOf(submittedServicesSet);
     }
 
