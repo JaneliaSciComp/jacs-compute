@@ -20,6 +20,8 @@ import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.page.SortCriteria;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Date;
@@ -39,6 +41,7 @@ import static com.mongodb.client.model.Filters.lt;
  * Mongo based implementation of JacsServiceDataDao
  */
 public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> implements JacsServiceDataDao {
+    static private final Logger LOG = LoggerFactory.getLogger(JacsServiceDataMongoDao.class);
 
     @Inject
     public JacsServiceDataMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
@@ -160,6 +163,8 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
                 })
                 .filter(sd -> sd != null)
                 .collect(Collectors.toList());
+        LOG.debug("Getting claimed services: {}", finalClaimedResults);
+
         return new PageResult<>(pageRequest, finalClaimedResults);
     }
 

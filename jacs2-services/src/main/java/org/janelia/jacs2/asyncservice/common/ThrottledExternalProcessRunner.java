@@ -26,7 +26,7 @@ public class ThrottledExternalProcessRunner implements ExternalProcessRunner {
 
     @Override
     public boolean supports(ProcessingLocation processingLocation) {
-        return true;
+        return false;
     }
 
 }
