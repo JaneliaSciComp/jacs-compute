@@ -6,14 +6,12 @@ import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-@ApplicationScoped
 public class JacsJobRunner {
 
     private JacsServiceDispatcher jacsServiceDispatcher;
@@ -21,10 +19,6 @@ public class JacsJobRunner {
     private Logger logger;
     private int initialDelay;
     private int period;
-
-    JacsJobRunner() {
-        // CDI required ctor
-    }
 
     @Inject
     public JacsJobRunner(JacsServiceDispatcher jacsServiceDispatcher,
