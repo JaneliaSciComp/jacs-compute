@@ -132,21 +132,33 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     public void save(T entity) {
         if (entity.getId() == null) {
             entity.setId(idGenerator.generateId());
+            mongoCollection.insertOne(entity);
+        } else {
+            UpdateOptions upsertOptions = new UpdateOptions();
+            upsertOptions.upsert(true);
+            update(entity, upsertOptions);
         }
-        mongoCollection.insertOne(entity);
     }
 
     public void saveAll(List<T> entities) {
         Iterator<Number> idIterator = idGenerator.generateIdList(entities.size()).iterator();
+        List<T> toUpsert = new ArrayList<>();
         List<T> toInsert = new ArrayList<>();
         entities.forEach(e -> {
             if (e.getId() == null) {
                 e.setId(idIterator.next());
+                toInsert.add(e);
+            } else {
+                toUpsert.add(e);
             }
-            toInsert.add(e);
         });
         if (!toInsert.isEmpty()) {
             mongoCollection.insertMany(toInsert);
+        }
+        if (!toUpsert.isEmpty()) {
+            UpdateOptions upsertOptions = new UpdateOptions();
+            upsertOptions.upsert(true);
+            toUpsert.forEach(e -> this.update(e, upsertOptions));
         }
     }
 
