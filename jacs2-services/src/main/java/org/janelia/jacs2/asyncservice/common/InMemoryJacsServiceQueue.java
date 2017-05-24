@@ -22,7 +22,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.Semaphore;
 
 @ApplicationScoped
 public class InMemoryJacsServiceQueue implements JacsServiceQueue {
@@ -32,7 +31,6 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     private Queue<JacsServiceData> waitingServices;
     private Set<Number> waitingServicesSet = new ConcurrentSkipListSet<>();
     private Set<Number> submittedServicesSet = new ConcurrentSkipListSet<>();
-    private Semaphore queuePermit;
     private Logger logger;
     private String queueId;
     private int maxReadyCapacity;
@@ -51,7 +49,6 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
         this.maxReadyCapacity = maxReadyCapacity == 0 ? DEFAULT_MAX_READY_CAPACITY : maxReadyCapacity;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.waitingServices = new PriorityBlockingQueue<>(this.maxReadyCapacity, new DefaultServiceInfoComparator());
-        this.queuePermit = new Semaphore(1, true);
         this.logger = logger;
         noWaitingSpaceAvailable = false;
     }
@@ -128,31 +125,26 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
         jacsServiceDataPersistence.saveHierarchy(jacsServiceData);
     }
 
-    private boolean addWaitingService(JacsServiceData jacsServiceData) {
+    private synchronized boolean addWaitingService(JacsServiceData jacsServiceData) {
         boolean added = false;
-        try {
-            queuePermit.acquireUninterruptibly();
-            if (submittedServicesSet.contains(jacsServiceData.getId())
-                    || waitingServicesSet.contains(jacsServiceData.getId())) {
-                // service is already waiting or running
-                return true;
+        if (submittedServicesSet.contains(jacsServiceData.getId())
+                || waitingServicesSet.contains(jacsServiceData.getId())) {
+            // service is already waiting or running
+            return true;
+        }
+        added = waitingServices.offer(jacsServiceData);
+        if (added) {
+            logger.debug("Enqueued service {} into {}", jacsServiceData, this);
+            waitingServicesSet.add(jacsServiceData.getId());
+            if (jacsServiceData.getState() == JacsServiceState.CREATED) {
+                jacsServiceData.updateState(JacsServiceState.QUEUED);
+                jacsServiceDataPersistence.update(jacsServiceData);
             }
-            added = waitingServices.offer(jacsServiceData);
-            if (added) {
-                logger.debug("Enqueued service {} into {}", jacsServiceData, this);
-                waitingServicesSet.add(jacsServiceData.getId());
-                if (jacsServiceData.getState() == JacsServiceState.CREATED) {
-                    jacsServiceData.updateState(JacsServiceState.QUEUED);
-                    jacsServiceDataPersistence.update(jacsServiceData);
-                }
-            }
-        } finally {
-            queuePermit.release();
         }
         return added;
     }
 
-    private boolean enqueueAvailableServices(Set<JacsServiceState> jacsServiceStates) {
+    private synchronized boolean enqueueAvailableServices(Set<JacsServiceState> jacsServiceStates) {
         int availableSpaces = maxReadyCapacity;
         PageRequest servicePageRequest = new PageRequest();
         servicePageRequest.setPageSize(availableSpaces);
@@ -178,20 +170,15 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
         return false;
     }
 
-    private JacsServiceData getWaitingService() {
-        try {
-            queuePermit.acquireUninterruptibly();
-            JacsServiceData jacsServiceData = waitingServices.poll();
-            if (jacsServiceData != null) {
-                logger.debug("Retrieved waiting service {}", jacsServiceData);
-                Number serviceId = jacsServiceData.getId();
-                submittedServicesSet.add(serviceId);
-                waitingServicesSet.remove(serviceId);
-            }
-            return jacsServiceData;
-        } finally {
-            queuePermit.release();
+    private synchronized JacsServiceData getWaitingService() {
+        JacsServiceData jacsServiceData = waitingServices.poll();
+        if (jacsServiceData != null) {
+            logger.debug("Retrieved waiting service {}", jacsServiceData);
+            Number serviceId = jacsServiceData.getId();
+            submittedServicesSet.add(serviceId);
+            waitingServicesSet.remove(serviceId);
         }
+        return jacsServiceData;
     }
 
     private int waitingCapacity() {
