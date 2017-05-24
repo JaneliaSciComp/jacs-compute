@@ -56,7 +56,6 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     @Override
     public JacsServiceData enqueueService(JacsServiceData jacsServiceData) {
         logger.debug("Enqueued service {}", jacsServiceData);
-        jacsServiceDataPersistence.saveHierarchy(jacsServiceData);
         if (noWaitingSpaceAvailable) {
             // don't even check if anything has become available since last time
             // just drop it for now - the queue will be refilled after it drains.
@@ -135,7 +134,6 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
             waitingServicesSet.add(jacsServiceData.getId());
             if (jacsServiceData.getState() == JacsServiceState.CREATED) {
                 jacsServiceData.updateState(JacsServiceState.QUEUED);
-                jacsServiceDataPersistence.update(jacsServiceData);
             }
         }
         return added;

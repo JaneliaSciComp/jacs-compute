@@ -22,7 +22,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -81,7 +80,7 @@ public class JacsServiceDispatcherTest {
     }
 
     private JacsServiceData enqueueTestService(String serviceName) {
-        JacsServiceData testService = createTestService(null, serviceName);
+        JacsServiceData testService = createTestService(TEST_ID, serviceName);
         return jacsServiceQueue.enqueueService(testService);
     }
 
@@ -140,7 +139,7 @@ public class JacsServiceDispatcherTest {
         verify(testProcessor).process(jacsServiceArg.capture());
         assertSame(testServiceData, jacsServiceArg.getValue());
 
-        verify(jacsServiceDataPersistence, atLeast(2)).update(testServiceData);
+        verify(jacsServiceDataPersistence, times(1)).update(testServiceData);
         assertThat(testServiceData.getState(), equalTo(JacsServiceState.SUCCESSFUL));
     }
 
@@ -177,7 +176,7 @@ public class JacsServiceDispatcherTest {
         ArgumentCaptor<JacsServiceData> jacsServiceArg = ArgumentCaptor.forClass(JacsServiceData.class);
         verify(testProcessor).process(jacsServiceArg.capture());
         assertSame(testServiceData, jacsServiceArg.getValue());
-        verify(jacsServiceDataPersistence, times(2)).update(testServiceData);
+        verify(jacsServiceDataPersistence, times(1)).update(testServiceData);
         assertThat(testServiceData.getState(), equalTo(JacsServiceState.ERROR));
     }
 
