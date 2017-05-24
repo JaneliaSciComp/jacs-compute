@@ -150,6 +150,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
                 new SortCriteria("creationDate"))));
         PageResult<JacsServiceData> services = jacsServiceDataPersistence.claimServiceByQueueAndState(queueId, jacsServiceStates, servicePageRequest);
         if (CollectionUtils.isNotEmpty(services.getResultList())) {
+            logger.debug("Claimed services: {}", services.getResultList());
             services.getResultList().stream().forEach(serviceData -> {
                 try {
                     Preconditions.checkArgument(serviceData.getId() != null, "Invalid service ID");
