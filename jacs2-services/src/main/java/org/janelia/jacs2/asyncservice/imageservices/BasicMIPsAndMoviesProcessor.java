@@ -142,6 +142,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
                 new ServiceArg("-resultsPatterns", "*.png"),
                 new ServiceArg("-resultsPatterns", "*.avi")
         );
+        logger.debug("Submit FIJI service {}", fijiMacroService);
         return submitDependencyIfNotPresent(jacsServiceData, fijiMacroService);
     }
 
