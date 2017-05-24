@@ -66,6 +66,17 @@ public class SampleStitchProcessorTest {
         vaa3dStitchAndBlendProcessor = mock(Vaa3dStitchAndBlendProcessor.class);
         mipGenerationProcessor = mock(MIPGenerationProcessor.class);
 
+        when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> {
+            JacsServiceData sd = new JacsServiceData();
+            sd.setId(invocation.getArgument(0));
+            return sd;
+        });
+        when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class))).then(invocation -> {
+            JacsServiceData sd = new JacsServiceData();
+            sd.setId(invocation.getArgument(0));
+            return sd;
+        });
+
         doAnswer(invocation -> {
             JacsServiceData jacsServiceData = invocation.getArgument(0);
             jacsServiceData.setId(SampleProcessorTestUtils.TEST_SERVICE_ID);
@@ -73,18 +84,6 @@ public class SampleStitchProcessorTest {
             return null;
         }).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
 
-        when(jacsServiceDataPersistence.findById(any(Number.class)))
-                .then(invocation -> {
-                    JacsServiceData sd = new JacsServiceData();
-                    sd.setId(invocation.getArgument(0));
-                    return sd;
-                });
-        when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class)))
-                .then(invocation -> {
-                    JacsServiceData sd = new JacsServiceData();
-                    sd.setId(invocation.getArgument(0));
-                    return sd;
-                });
         when(idGenerator.generateId()).thenReturn(SampleProcessorTestUtils.TEST_SERVICE_ID);
 
         when(getSampleImageFilesProcessor.getMetadata()).thenCallRealMethod();
@@ -150,7 +149,8 @@ public class SampleStitchProcessorTest {
                 "membrane_flag=Alexa Fluor 594";
         String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
 
-        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
                 mergeAlgorithm,
@@ -215,7 +215,8 @@ public class SampleStitchProcessorTest {
                 "membrane_flag=Alexa Fluor 594";
         String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
 
-        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
                 mergeAlgorithm,
@@ -224,7 +225,6 @@ public class SampleStitchProcessorTest {
                 true,
                 true
         );
-
         Number getSampleLsmsServiceId = 10L;
         List<Number> mergeTilePairServiceIds = ImmutableList.of(11L, 12L, 13L);
 
@@ -337,6 +337,7 @@ public class SampleStitchProcessorTest {
                 return null;
             })
             .exceptionally(exc -> {
+                exc.printStackTrace();
                 failure.accept(exc);
                 return null;
             })
@@ -376,7 +377,8 @@ public class SampleStitchProcessorTest {
         return chComp;
     }
 
-    private JacsServiceData createTestServiceData(long sampleId, String area, String objective,
+    private JacsServiceData createTestServiceData(Long serviceId,
+                                                  Long sampleId, String area, String objective,
                                                   String mergeAlgorithm,
                                                   String channelDyeSpec, String outputChannelOrder,
                                                   boolean useDistortionCorrection,
@@ -402,7 +404,9 @@ public class SampleStitchProcessorTest {
 
         if (generateMips)
             testServiceDataBuilder.addArg("-generateMips");
-        return testServiceDataBuilder.build();
+        JacsServiceData testServiceData = testServiceDataBuilder.build();
+        testServiceData.setId(serviceId);
+        return testServiceData;
     }
 
 }

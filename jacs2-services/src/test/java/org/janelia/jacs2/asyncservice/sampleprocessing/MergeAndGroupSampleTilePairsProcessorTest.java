@@ -65,6 +65,12 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
         vaa3dStitchGroupingProcessor = mock(Vaa3dStitchGroupingProcessor.class);
         sampleDataService = mock(SampleDataService.class);
 
+        when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class))).then(invocation -> {
+            JacsServiceData sd = new JacsServiceData();
+            sd.setId(invocation.getArgument(0));
+            return sd;
+        });
+
         doAnswer(invocation -> {
             JacsServiceData jacsServiceData = invocation.getArgument(0);
             jacsServiceData.setId(SampleProcessorTestUtils.TEST_SERVICE_ID);
@@ -127,7 +133,8 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWithDyeSpecThatDoesNotRequireReordering() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
                 "FLYLIGHT_ORDERED",
@@ -176,7 +183,8 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWithDyeSpecThatRequiresReordering() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
                 "FLYLIGHT_ORDERED",
@@ -225,7 +233,8 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWithChanSpecUsingFlylightOrderedAlgorithm() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
                 "FLYLIGHT_ORDERED",
@@ -271,7 +280,8 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWithChanSpecUsingFlylightOrderedAlgorithmWhenRefChannelIsFirst() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
                 "FLYLIGHT_ORDERED",
@@ -317,7 +327,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWithChanSpecUsingFlylightAlgorithm() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID, area, objective, null, null, null);
+        JacsServiceData testServiceData = createTestServiceData(1L, SampleProcessorTestUtils.TEST_SAMPLE_ID, area, objective, null, null, null);
         when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area))
                 .thenReturn(ImmutableList.of(SampleProcessorTestUtils.createTestAnatomicalArea(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area, "sssr",
                         SampleProcessorTestUtils.createTestLsmPair(
@@ -357,7 +367,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWhenNoMergeIsNeeded() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID, area, objective, null, null, null);
+        JacsServiceData testServiceData = createTestServiceData(1L, SampleProcessorTestUtils.TEST_SAMPLE_ID, area, objective, null, null, null);
         when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area))
                 .thenReturn(ImmutableList.of(SampleProcessorTestUtils.createTestAnatomicalArea(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area, "rs",
                         SampleProcessorTestUtils.createTestLsmPair(
@@ -397,7 +407,8 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void submitDependenciesWhenTileNamesAreNotUnique() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                SampleProcessorTestUtils.TEST_SAMPLE_ID,
                 area,
                 objective,
                 "FLYLIGHT_ORDERED",
@@ -457,7 +468,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
         );
     }
 
-    private JacsServiceData createTestServiceData(long sampleId, String area, String objective, String mergeAlgorithm, String channelDyeSpec, String outputChannelOrder) {
+    private JacsServiceData createTestServiceData(Long serviceId, Long sampleId, String area, String objective, String mergeAlgorithm, String channelDyeSpec, String outputChannelOrder) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .addArg("-sampleId", String.valueOf(sampleId))
                 .addArg("-area", area)
@@ -474,7 +485,9 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
         if (StringUtils.isNotBlank(outputChannelOrder))
             testServiceDataBuilder.addArg("-outputChannelOrder", outputChannelOrder);
 
-        return testServiceDataBuilder.build();
+        JacsServiceData testServiceData = testServiceDataBuilder.build();
+        testServiceData.setId(serviceId);
+        return testServiceData;
     }
 
 }

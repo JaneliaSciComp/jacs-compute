@@ -54,6 +54,12 @@ public class SampleLSMSummaryProcessorTest {
         GroupAndMontageFolderImagesProcessor groupAndMontageFolderImagesProcessor = mock(GroupAndMontageFolderImagesProcessor.class);
         Logger logger = mock(Logger.class);
 
+        when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class))).then(invocation -> {
+            JacsServiceData sd = new JacsServiceData();
+            sd.setId(invocation.getArgument(0));
+            return sd;
+        });
+
         doAnswer(invocation -> {
             JacsServiceData jacsServiceData = invocation.getArgument(0);
             jacsServiceData.setId(TEST_ID);
@@ -83,7 +89,8 @@ public class SampleLSMSummaryProcessorTest {
     public void submitServiceDependencies() {
         String area = "area";
         String objective = "objective";
-        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                TEST_SAMPLE_ID,
                 area,
                 objective,
                 null
@@ -124,7 +131,7 @@ public class SampleLSMSummaryProcessorTest {
         );
     }
 
-    private JacsServiceData createTestServiceData(long sampleId, String area, String objective, String channelDyeSpec) {
+    private JacsServiceData createTestServiceData(Long serviceId, Long sampleId, String area, String objective, String channelDyeSpec) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwner(TEST_OWNER)
                 .addArg("-sampleId", String.valueOf(sampleId))
@@ -134,12 +141,15 @@ public class SampleLSMSummaryProcessorTest {
         if (StringUtils.isNotBlank(channelDyeSpec))
             testServiceDataBuilder.addArg("-channelDyeSpec", channelDyeSpec);
 
-        return testServiceDataBuilder.build();
+        JacsServiceData testService = testServiceDataBuilder.build();
+        testService.setId(serviceId);
+        return testService;
     }
 
     @Test
     public void updateServiceResult() {
-        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                TEST_SAMPLE_ID,
                 "area",
                 "objective",
                 null
@@ -167,7 +177,8 @@ public class SampleLSMSummaryProcessorTest {
 
     @Test
     public void illegalStateWhenUpdateServiceResult() {
-        JacsServiceData testServiceData = createTestServiceData(TEST_SAMPLE_ID,
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                TEST_SAMPLE_ID,
                 "area",
                 "objective",
                 null

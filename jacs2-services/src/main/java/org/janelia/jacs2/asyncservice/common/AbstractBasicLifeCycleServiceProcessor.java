@@ -184,7 +184,8 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
     }
 
     protected JacsServiceData submitDependencyIfNotPresent(JacsServiceData jacsServiceData, JacsServiceData dependency) {
-        Optional<JacsServiceData> existingDependency = jacsServiceData.findSimilarDependency(dependency);
+        JacsServiceData refreshedServiceData = jacsServiceDataPersistence.findServiceHierarchy(jacsServiceData.getId());
+        Optional<JacsServiceData> existingDependency = refreshedServiceData.findSimilarDependency(dependency);
         if (existingDependency.isPresent()) {
             return existingDependency.get();
         } else {

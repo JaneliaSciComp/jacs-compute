@@ -47,6 +47,12 @@ public class FlylightSampleProcessorTest {
         sampleLSMSummaryProcessor = mock(SampleLSMSummaryProcessor.class);
         sampleStitchProcessor = mock(SampleStitchProcessor.class);
 
+        when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class))).then(invocation -> {
+            JacsServiceData sd = new JacsServiceData();
+            sd.setId(invocation.getArgument(0));
+            return sd;
+        });
+
         doAnswer(invocation -> {
             JacsServiceData jacsServiceData = invocation.getArgument(0);
             jacsServiceData.setId(SampleProcessorTestUtils.TEST_SERVICE_ID);
@@ -114,7 +120,8 @@ public class FlylightSampleProcessorTest {
         for (Map.Entry<String, String> testEntry : testData.entrySet()) {
             Long testServiceId = Long.valueOf(testEntry.getKey());
             String testSampleDir = SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + testEntry.getValue();
-            JacsServiceData testServiceData = createTestServiceData(SampleProcessorTestUtils.TEST_SAMPLE_ID,
+            JacsServiceData testServiceData = createTestServiceData(1L,
+                    SampleProcessorTestUtils.TEST_SAMPLE_ID,
                     area,
                     objective,
                     mergeAlgorithm,
@@ -160,7 +167,8 @@ public class FlylightSampleProcessorTest {
     }
 
 
-    private JacsServiceData createTestServiceData(long sampleId, String area, String objective,
+    private JacsServiceData createTestServiceData(Long serviceId,
+                                                  Long sampleId, String area, String objective,
                                                   String mergeAlgorithm,
                                                   String channelDyeSpec, String outputChannelOrder,
                                                   boolean useDistortionCorrection,
@@ -186,7 +194,9 @@ public class FlylightSampleProcessorTest {
 
         if (persistResults)
             testServiceDataBuilder.addArg("-persistResults");
-        return testServiceDataBuilder.build();
+        JacsServiceData testServiceData = testServiceDataBuilder.build();
+        testServiceData.setId(serviceId);
+        return testServiceData;
     }
 
 }
