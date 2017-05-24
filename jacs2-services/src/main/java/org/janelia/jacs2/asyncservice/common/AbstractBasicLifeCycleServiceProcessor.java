@@ -32,10 +32,8 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
     @Override
     public ServiceComputation<T> process(JacsServiceData jacsServiceData) {
         return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenApply(sd -> {
-                    JacsServiceData preparedJacsServiceData = this.prepareProcessing(sd);
-                    return this.submitServiceDependencies(preparedJacsServiceData);
-                })
+                .thenApply(this::prepareProcessing)
+                .thenApply(this::submitServiceDependencies)
                 .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, !suspendUntilAllDependenciesComplete(pd.getJacsServiceData())))
                 .thenCompose(pdCond -> this.processing(pdCond.getState()))
                 .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, this.isResultReady(pd)))
