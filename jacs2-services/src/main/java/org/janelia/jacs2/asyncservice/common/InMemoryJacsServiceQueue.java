@@ -55,7 +55,8 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
 
     @Override
     public JacsServiceData enqueueService(JacsServiceData jacsServiceData) {
-        persistServiceInfo(jacsServiceData);
+        logger.debug("Enqueued service {}", jacsServiceData);
+        jacsServiceDataPersistence.saveHierarchy(jacsServiceData);
         if (noWaitingSpaceAvailable) {
             // don't even check if anything has become available since last time
             // just drop it for now - the queue will be refilled after it drains.
@@ -119,10 +120,6 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     @Override
     public void setMaxReadyCapacity(int maxReadyCapacity) {
         this.maxReadyCapacity = maxReadyCapacity <= 0 ? DEFAULT_MAX_READY_CAPACITY : maxReadyCapacity;
-    }
-
-    private void persistServiceInfo(JacsServiceData jacsServiceData) {
-        jacsServiceDataPersistence.saveHierarchy(jacsServiceData);
     }
 
     private synchronized boolean addWaitingService(JacsServiceData jacsServiceData) {
