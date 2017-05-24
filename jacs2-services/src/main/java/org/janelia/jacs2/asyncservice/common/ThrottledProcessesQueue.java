@@ -108,12 +108,14 @@ public class ThrottledProcessesQueue {
     private void checkWaitingQueue() {
         for (Map.Entry<String, BlockingQueue<ThrottledJobInfo>> queueEntry : waitingProcesses.entrySet()) {
             BlockingQueue<ThrottledJobInfo> queue = queueEntry.getValue();
-            for (ThrottledJobInfo jobInfo = queue.peek(); jobInfo != null; jobInfo = queue.peek()) {
+            for (ThrottledJobInfo jobInfo = queue.poll(); jobInfo != null; jobInfo = queue.poll()) {
                 if (CollectionUtils.size(runningProcesses.get(jobInfo.getProcessName())) < jobInfo.getMaxRunningProcesses()) {
+                    logger.debug("Move {} - {} to running queue", jobInfo.getProcessName(), jobInfo.getServiceContext());
                     addJobDoneCallback(jobInfo);
                     moveProcessToRunningQueue(jobInfo);
                     jobInfo.runProcess();
                 } else {
+                    queue.add(jobInfo);
                     break;
                 }
             }
