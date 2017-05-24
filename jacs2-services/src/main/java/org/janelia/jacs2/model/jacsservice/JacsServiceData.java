@@ -438,8 +438,10 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
                         " with " + newState + " for " + getId() + ":" + getName());
             }
         }
-        addEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from " + oldState + " -> " + newState);
-        setState(newState);
+        if (newState != oldState) {
+            addEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from " + oldState + " -> " + newState);
+            setState(newState);
+        }
     }
 
 }
