@@ -124,6 +124,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
     protected JacsServiceResult<JacsServiceData> submitServiceDependencies(JacsServiceData jacsServiceData) {
         BasicMIPsAndMoviesArgs args = getArgs(jacsServiceData);
         JacsServiceData fijiServiceData = submitFijiService(args, jacsServiceData);
+        logger.debug("Submitted FIJI service {}", fijiServiceData);
         return new JacsServiceResult<>(jacsServiceData, fijiServiceData);
     }
 
