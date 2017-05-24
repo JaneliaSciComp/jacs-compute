@@ -21,7 +21,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.PriorityBlockingQueue;
 
 @ApplicationScoped
@@ -29,7 +28,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     private static final int DEFAULT_MAX_READY_CAPACITY = 20;
 
     private JacsServiceDataPersistence jacsServiceDataPersistence;
-    private Queue<JacsServiceData> waitingServices;
+    transient private Queue<JacsServiceData> waitingServices;
     private Set<Number> waitingServicesSet = new LinkedHashSet<>();
     private Set<Number> submittedServicesSet = new LinkedHashSet<>();
     private Logger logger;

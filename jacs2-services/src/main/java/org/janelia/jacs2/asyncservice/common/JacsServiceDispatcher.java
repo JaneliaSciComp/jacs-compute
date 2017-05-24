@@ -65,18 +65,15 @@ public class JacsServiceDispatcher {
                         return queuedService;
                     })
                     .thenCompose(sd -> serviceProcessor.process(sd))
+                    .thenApply(r -> {
+                        JacsServiceData service = jacsServiceDataPersistence.findById(queuedService.getId());
+                        success(service);
+                        return r;
+                    })
                     .exceptionally(exc -> {
                         JacsServiceData service = jacsServiceDataPersistence.findById(queuedService.getId());
                         fail(service, exc);
                         throw new ComputationException(service, exc);
-                    })
-                    .whenComplete((r, exc) -> {
-                        JacsServiceData service = jacsServiceDataPersistence.findById(queuedService.getId());
-                        if (exc != null) {
-                            fail(service, exc);
-                        } else {
-                            success(service);
-                        }
                     })
                     .whenComplete((r, exc) -> {
                         jacsServiceQueue.completeService(queuedService);
