@@ -13,19 +13,24 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+@ApplicationScoped
 public class JacsJobRunner {
 
-    private final JacsServiceDispatcher jacsServiceDispatcher;
-    private final ScheduledExecutorService scheduler;
-    private final Logger logger;
-    private final int initialDelay;
-    private final int period;
+    private JacsServiceDispatcher jacsServiceDispatcher;
+    private ScheduledExecutorService scheduler;
+    private Logger logger;
+    private int initialDelay;
+    private int period;
+
+    JacsJobRunner() {
+        // CDI required ctor
+    }
 
     @Inject
-    JacsJobRunner(JacsServiceDispatcher jacsServiceDispatcher,
-                  @PropertyValue(name = "service.dispatcher.InitialDelayInSeconds") int initialDelay,
-                  @PropertyValue(name = "service.dispatcher.PeriodInSeconds") int period,
-                  Logger logger) {
+    public JacsJobRunner(JacsServiceDispatcher jacsServiceDispatcher,
+                         @PropertyValue(name = "service.dispatcher.InitialDelayInSeconds") int initialDelay,
+                         @PropertyValue(name = "service.dispatcher.PeriodInSeconds") int period,
+                         Logger logger) {
         this.jacsServiceDispatcher = jacsServiceDispatcher;
         this.initialDelay = initialDelay == 0 ? 30 : initialDelay;
         this.period = period == 0 ? 10 : period;
