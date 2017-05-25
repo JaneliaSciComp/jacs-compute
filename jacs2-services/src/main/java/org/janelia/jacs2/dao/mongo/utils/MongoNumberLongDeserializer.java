@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
-import java.math.BigInteger;
 
 public class MongoNumberLongDeserializer extends JsonDeserializer<Long> {
 
