@@ -1,11 +1,8 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.Matchers;
-import org.hamcrest.collection.IsCollectionWithSize;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
@@ -38,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
@@ -356,7 +352,7 @@ public class SampleStitchProcessorTest {
             ;
         verify(failure, never()).accept(any());
         verify(successful).accept(any());
-        verify(sampleDataService).updateSampleObjectivePipelineResults(same(testSample),
+        verify(sampleDataService).addSampleObjectivePipelineResults(same(testSample),
                 argThat(new ArgumentMatcher<Map<String, Collection<SamplePipelineRun>>>() {
                     @Override
                     public boolean matches(Map<String, Collection<SamplePipelineRun>> argument) {

@@ -5,13 +5,9 @@ import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
-import javax.xml.ws.Service;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;

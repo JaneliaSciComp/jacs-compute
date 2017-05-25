@@ -6,7 +6,9 @@ import com.google.common.collect.ImmutableSet;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import org.bson.conversions.Bson;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
+import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.jacs2.dao.JacsServiceDataDao;
 import org.janelia.jacs2.model.DataInterval;
 import org.janelia.jacs2.model.page.PageRequest;
@@ -34,6 +36,7 @@ import static org.hamcrest.Matchers.emptyCollectionOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
+import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
@@ -92,9 +95,16 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestServiceEvent("e1", "v1"),
                 createTestServiceEvent("e2", "v2"));
         testDao.addServiceEvent(si, createTestServiceEvent("e3", "v3"));
+        testDao.addServiceEvent(si, createTestServiceEvent("e4", "v4"));
         testDao.update(si, ImmutableMap.of("state", JacsServiceState.RUNNING));
         JacsServiceData retrievedSi = testDao.findById(si.getId());
         assertThat(retrievedSi.getName(), equalTo(si.getName()));
+        assertThat(retrievedSi.getEvents(),
+                contains(new HasPropertyWithValue<>("name", CoreMatchers.equalTo("e1")),
+                        new HasPropertyWithValue<>("name", CoreMatchers.equalTo("e2")),
+                        new HasPropertyWithValue<>("name", CoreMatchers.equalTo("e3")),
+                        new HasPropertyWithValue<>("name", CoreMatchers.equalTo("e4"))
+                ));
     }
 
     @Test

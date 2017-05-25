@@ -202,7 +202,7 @@ public class SampleDataService {
         sampleDao.update(sample, updatedFields);
     }
 
-    public void updateSampleObjectivePipelineResults(Sample sample, Map<String, Collection<SamplePipelineRun>> sampleRuns) {
-        // TODO
+    public void addSampleObjectivePipelineResults(Sample sample, Map<String, Collection<SamplePipelineRun>> sampleRuns) {
+        sampleDao.addObjectivePipelineResults(sample, sampleRuns);
     }
 }

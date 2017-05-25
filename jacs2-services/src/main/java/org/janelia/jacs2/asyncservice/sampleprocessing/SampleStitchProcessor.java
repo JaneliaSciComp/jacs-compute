@@ -214,19 +214,19 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                             .map(sar -> getObjectivePipelineRunResult(jacsServiceData, sample, sar.sampleAreaResult))
                             .reduce(LinkedListMultimap.<String, SamplePipelineRun>create(),
                                     (Multimap<String, SamplePipelineRun> ac, Map<String, SamplePipelineRun> objectivePipelineResult) -> {
-                                Multimap<String, SamplePipelineRun> finalResult = LinkedListMultimap.create();
-                                finalResult.putAll(ac);
-                                objectivePipelineResult.entrySet().forEach(oprEntry -> {
-                                    finalResult.put(oprEntry.getKey(), oprEntry.getValue());
-                                });
-                                return finalResult;
-                            }, (Multimap<String, SamplePipelineRun> r1, Multimap<String, SamplePipelineRun> r2) -> {
-                                Multimap<String, SamplePipelineRun> finalResult = LinkedListMultimap.create();
-                                finalResult.putAll(r1);
-                                finalResult.putAll(r2);
-                                return finalResult;
-                            });
-                    sampleDataService.updateSampleObjectivePipelineResults(sample, objectiveRunResults.asMap());
+                                        Multimap<String, SamplePipelineRun> finalResult = LinkedListMultimap.create();
+                                        finalResult.putAll(ac);
+                                        objectivePipelineResult.entrySet().forEach(oprEntry -> {
+                                            finalResult.put(oprEntry.getKey(), oprEntry.getValue());
+                                        });
+                                        return finalResult;
+                                    }, (Multimap<String, SamplePipelineRun> r1, Multimap<String, SamplePipelineRun> r2) -> {
+                                        Multimap<String, SamplePipelineRun> finalResult = LinkedListMultimap.create();
+                                        finalResult.putAll(r1);
+                                        finalResult.putAll(r2);
+                                        return finalResult;
+                                    });
+                    sampleDataService.addSampleObjectivePipelineResults(sample, objectiveRunResults.asMap());
                     return pd;
                 })
                 ;

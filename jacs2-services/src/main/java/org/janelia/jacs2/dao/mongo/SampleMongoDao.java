@@ -2,9 +2,13 @@ package org.janelia.jacs2.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.Updates;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.SampleDao;
@@ -16,8 +20,12 @@ import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.DomainModelUtils;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -79,5 +87,25 @@ public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements S
         if (!filters.isEmpty()) bsonFilter = and(filters);
         List<Sample> results = find(bsonFilter, createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), Sample.class);
         return new PageResult<>(pageRequest, results);
+    }
+
+    @Override
+    public void addObjectivePipelineResults(Sample sample, Map<String, Collection<SamplePipelineRun>> sampleRuns) {
+        if (sample.getObjectiveSamples() == null) {
+            throw new IllegalArgumentException("Sample " + sample + " has no objective samples");
+        }
+        List<Bson> updatedFields = new ArrayList<>();
+        int objectiveSampleIndex = 0;
+        for (ObjectiveSample os : sample.getObjectiveSamples()) {
+            String fieldName = String.format("objectiveSamples.%d.pipelineRuns", objectiveSampleIndex);
+            if (sampleRuns.get(os.getObjective()) != null) {
+                updatedFields.add(Updates.pushEach(fieldName, ImmutableList.copyOf(sampleRuns.get(os.getObjective()))));
+            }
+            objectiveSampleIndex++;
+        }
+        UpdateOptions updateOptions = new UpdateOptions();
+        updateOptions.upsert(false);
+
+        update(getUpdateMatchCriteria(sample), Updates.combine(updatedFields), updateOptions);
     }
 }

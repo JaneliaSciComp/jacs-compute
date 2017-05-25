@@ -1,6 +1,10 @@
 package org.janelia.jacs2.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import org.hamcrest.beans.HasPropertyWithValue;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.dao.SampleDao;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -29,6 +33,7 @@ import static java.util.Objects.isNull;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -267,11 +272,38 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         assertThat(savedLockedSample.getLockKey(), equalTo("NewKey"));
     }
 
+    @Test
+    public void updateSampleObjectivePipelineResults() {
+        Sample testSample = createTestSample("ds1", "sc1");
+        testSample.getObjectiveSamples().addAll(ImmutableList.of(
+                createSampleObjective("o1"),
+                createSampleObjective("o2"),
+                createSampleObjective("o3")));
+        testDao.save(testSample);
+        testDao.addObjectivePipelineResults(testSample, ImmutableMap.of(
+                "o1", ImmutableList.of(createPipelineResult("o1.1"), createPipelineResult("o1.2")),
+                "o3", ImmutableList.of(createPipelineResult("o3.1"), createPipelineResult("o3.2"))
+        ));
+        Sample retrievedSample = testDao.findById(testSample.getId());
+        assertThat(retrievedSample.lookupObjective("o1").get().getPipelineRuns(),
+                contains(new HasPropertyWithValue<>("name", equalTo("o1.1")), new HasPropertyWithValue<>("name", equalTo("o1.2")))
+        );
+    }
+
     private ObjectiveSample createSampleObjective(String o) {
         ObjectiveSample so = new ObjectiveSample();
         so.setObjective(o);
         so.setChanSpec("cs");
         return so;
+    }
+
+    private SamplePipelineRun createPipelineResult(String s) {
+        SamplePipelineRun pipelineRun = new SamplePipelineRun();
+        pipelineRun.setName(s);
+        PipelineResult result = new PipelineResult();
+        result.setName(s);
+        pipelineRun.addResult(result);
+        return pipelineRun;
     }
 
     protected List<Sample> createMultipleTestItems(int nItems) {
