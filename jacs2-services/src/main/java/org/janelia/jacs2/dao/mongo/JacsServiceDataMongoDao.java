@@ -196,7 +196,7 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
                 toBeUpdated.get(sd).put("dependenciesIds", sd.getDependenciesIds());
             }
         });
-        mongoCollection.insertMany(serviceHierarchy);
+        mongoCollection.insertMany(toBeInserted);
         toBeUpdated.entrySet().forEach(updatedEntry -> update(updatedEntry.getKey(), updatedEntry.getValue()));
     }
 
