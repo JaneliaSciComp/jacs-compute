@@ -1,8 +1,11 @@
 package org.janelia.jacs2.dataservice.persistence;
 
+import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.dao.JacsServiceDataDao;
 import org.janelia.jacs2.model.DataInterval;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
+import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
@@ -10,7 +13,9 @@ import org.janelia.jacs2.model.page.PageResult;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.util.Date;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServiceDataDao, JacsServiceData, Number> {
@@ -47,15 +52,6 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    public List<JacsServiceData> findChildServices(Number serviceId) {
-        JacsServiceDataDao jacsServiceDataDao = daoSource.get();
-        try {
-            return jacsServiceDataDao.findChildServices(serviceId);
-        } finally {
-            daoSource.destroy(jacsServiceDataDao);
-        }
-    }
-
     public JacsServiceData findServiceHierarchy(Number serviceId) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
@@ -74,15 +70,6 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    public void updateHierarchy(JacsServiceData jacsServiceData) {
-        JacsServiceDataDao jacsServiceDataDao = daoSource.get();
-        try {
-            jacsServiceDataDao.updateServiceHierarchy(jacsServiceData);
-        } finally {
-            daoSource.destroy(jacsServiceDataDao);
-        }
-    }
-
     public void archiveHierarchy(JacsServiceData jacsServiceData) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
@@ -91,4 +78,37 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
             daoSource.destroy(jacsServiceDataDao);
         }
     }
+
+    public void updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, Optional<JacsServiceEvent> serviceEvent) {
+        JacsServiceState oldServiceState = jacsServiceData.getState();
+        jacsServiceData.setState(newServiceState);
+        if (serviceEvent.isPresent()) addServiceEvent(jacsServiceData, serviceEvent.get());
+        if (newServiceState != oldServiceState) {
+            addServiceEvent(
+                    jacsServiceData,
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from " + oldServiceState + " -> " + newServiceState));
+            if (jacsServiceData.hasId()) update(jacsServiceData, ImmutableMap.of("state", newServiceState));
+        }
+    }
+
+    public void addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
+        jacsServiceData.addNewEvent(serviceEvent);
+        if (jacsServiceData.hasId()) {
+            JacsServiceDataDao jacsServiceDataDao = daoSource.get();
+            try {
+                jacsServiceDataDao.addServiceEvent(jacsServiceData, serviceEvent);
+            } finally {
+                daoSource.destroy(jacsServiceDataDao);
+            }
+        }
+    }
+
+    public void updateServiceResult(JacsServiceData jacsServiceData) {
+        Map<String, Object> fieldsToUpdate = new LinkedHashMap<>();
+        fieldsToUpdate.put("serializableResult", jacsServiceData.getSerializableResult());
+        if (jacsServiceData.hasId()) {
+            update(jacsServiceData, fieldsToUpdate);
+        }
+    }
+
 }

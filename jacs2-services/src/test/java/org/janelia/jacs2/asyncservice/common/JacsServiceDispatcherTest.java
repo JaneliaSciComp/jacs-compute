@@ -1,7 +1,10 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
+import org.hamcrest.Matchers;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
+import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
+import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -11,10 +14,12 @@ import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -22,6 +27,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -63,6 +71,13 @@ public class JacsServiceDispatcherTest {
             return null;
         };
         doAnswer(saveServiceData).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
+        doAnswer(invocation -> {
+            JacsServiceData sd = invocation.getArgument(0);
+            JacsServiceState state = invocation.getArgument(1);
+            sd.setState(state);
+            return null;
+        }).when(jacsServiceDataPersistence).updateServiceState(any(JacsServiceData.class), any(JacsServiceState.class), any(Optional.class));
+
     }
 
     @Test
@@ -133,31 +148,49 @@ public class JacsServiceDispatcherTest {
 
     private void verifyDispatch(JacsServiceData testServiceData) {
         ServiceProcessor testProcessor = prepareServiceProcessor(testServiceData, null);
+
         testDispatcher.dispatchServices();
         verify(logger).debug("Dequeued service {}", testServiceData);
         ArgumentCaptor<JacsServiceData> jacsServiceArg = ArgumentCaptor.forClass(JacsServiceData.class);
         verify(testProcessor).process(jacsServiceArg.capture());
         assertSame(testServiceData, jacsServiceArg.getValue());
 
-        verify(jacsServiceDataPersistence, times(1)).update(testServiceData);
+        verify(jacsServiceDataPersistence)
+                .updateServiceState(
+                        testServiceData,
+                        JacsServiceState.QUEUED,
+                        Optional.empty());
+        verify(jacsServiceDataPersistence)
+                .updateServiceState(
+                        testServiceData,
+                        JacsServiceState.SUBMITTED,
+                        Optional.empty());
+        verify(jacsServiceDataPersistence)
+                .updateServiceState(
+                        same(testServiceData),
+                        eq(JacsServiceState.SUCCESSFUL),
+                        argThat(new ArgumentMatcher<Optional<JacsServiceEvent>>() {
+                            @Override
+                            public boolean matches(Optional<JacsServiceEvent> argument) {
+                                return argument.isPresent()
+                                        && argument.get().getName().equals(JacsServiceEventTypes.COMPLETED.name())
+                                        && argument.get().getValue().equals("Completed successfully");
+                            }
+                        })
+                );
         assertThat(testServiceData.getState(), equalTo(JacsServiceState.SUCCESSFUL));
     }
 
     private ServiceProcessor prepareServiceProcessor(JacsServiceData testServiceData, Exception exc) {
         ServiceProcessor testProcessor = mock(ServiceProcessor.class);
 
+        when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> testServiceData);
         when(serviceRegistry.lookupService(testServiceData.getName())).thenReturn(testProcessor);
 
         if (exc == null) {
-            when(testProcessor.process(any(JacsServiceData.class))).thenAnswer(invocation -> {
-                testServiceData.updateState(JacsServiceState.SUCCESSFUL);
-                return serviceComputationFactory.newCompletedComputation(null);
-            });
+            when(testProcessor.process(any(JacsServiceData.class))).thenAnswer(invocation -> serviceComputationFactory.newCompletedComputation(null));
         } else {
-            when(testProcessor.process(any(JacsServiceData.class))).thenAnswer(invocation -> {
-                testServiceData.updateState(JacsServiceState.ERROR);
-                return serviceComputationFactory.newFailedComputation(exc);
-            });
+            when(testProcessor.process(any(JacsServiceData.class))).thenAnswer(invocation -> serviceComputationFactory.newFailedComputation(exc));
         }
         return testProcessor;
     }
@@ -176,7 +209,30 @@ public class JacsServiceDispatcherTest {
         ArgumentCaptor<JacsServiceData> jacsServiceArg = ArgumentCaptor.forClass(JacsServiceData.class);
         verify(testProcessor).process(jacsServiceArg.capture());
         assertSame(testServiceData, jacsServiceArg.getValue());
-        verify(jacsServiceDataPersistence, times(1)).update(testServiceData);
+
+        verify(jacsServiceDataPersistence)
+                .updateServiceState(
+                        testServiceData,
+                        JacsServiceState.QUEUED,
+                        Optional.empty());
+        verify(jacsServiceDataPersistence)
+                .updateServiceState(
+                        testServiceData,
+                        JacsServiceState.SUBMITTED,
+                        Optional.empty());
+        verify(jacsServiceDataPersistence)
+                .updateServiceState(
+                        same(testServiceData),
+                        eq(JacsServiceState.ERROR),
+                        argThat(new ArgumentMatcher<Optional<JacsServiceEvent>>() {
+                            @Override
+                            public boolean matches(Optional<JacsServiceEvent> argument) {
+                                return argument.isPresent()
+                                        && argument.get().getName().equals(JacsServiceEventTypes.FAILED.name())
+                                        && argument.get().getValue().equals("Failed: test exception");
+                            }
+                        })
+                );
         assertThat(testServiceData.getState(), equalTo(JacsServiceState.ERROR));
     }
 

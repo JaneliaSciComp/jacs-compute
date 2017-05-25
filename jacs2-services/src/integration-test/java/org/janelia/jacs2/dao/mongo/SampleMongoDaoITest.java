@@ -20,7 +20,9 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
@@ -215,7 +217,13 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
                 createSampleObjective("new_o2"),
                 createSampleObjective("new_o3")));
         testSample.setUpdatedDate(new Date());
-        testDao.update(testSample);
+        Map<String, Object> updates = new LinkedHashMap<>();
+        updates.put("flycoreAlias", testSample.getFlycoreAlias());
+        updates.put("dataSet", testSample.getDataSet());
+        updates.put("line", testSample.getLine());
+        updates.put("effector", testSample.getEffector());
+        updates.put("objectiveSamples", testSample.getObjectiveSamples());
+        testDao.update(testSample, updates);
     }
 
     @Test

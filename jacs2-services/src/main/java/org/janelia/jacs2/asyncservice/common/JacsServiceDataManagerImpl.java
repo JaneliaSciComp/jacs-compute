@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.DataInterval;
@@ -10,6 +11,8 @@ import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 
 import javax.inject.Inject;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
 
@@ -32,28 +35,33 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
 
     @Override
     public JacsServiceData updateService(Number instanceId, JacsServiceData serviceData) {
-        boolean updateEntireHierarchy = false;
         JacsServiceData existingService = jacsServiceDataPersistence.findServiceHierarchy(instanceId);
         if (existingService == null) {
             return null;
         }
+        Map<String, Object> updates = new LinkedHashMap<>();
         if (serviceData.getState() != null) {
-            existingService.updateState(serviceData.getState());
+            existingService.setState(serviceData.getState());
+            updates.put("state", serviceData.getState());
         }
         if (serviceData.getServiceTimeout() != null) {
             existingService.setServiceTimeout(serviceData.getServiceTimeout());
-        }
-        if (serviceData.getPriority() != null) {
-            updateEntireHierarchy = true;
-            existingService.updateServiceHierarchyPriority(serviceData.priority());
+            updates.put("serviceTimeout", serviceData.getServiceTimeout());
         }
         if (StringUtils.isNotBlank(serviceData.getWorkspace())) {
             existingService.setWorkspace(serviceData.getWorkspace());
+            updates.put("workspace", serviceData.getWorkspace());
         }
-        if (updateEntireHierarchy) {
-            jacsServiceDataPersistence.updateHierarchy(existingService);
-        } else {
-            jacsServiceDataPersistence.update(existingService);
+        if (!updates.isEmpty()) {
+            jacsServiceDataPersistence.update(existingService, updates);
+        }
+        if (serviceData.getPriority() != null) {
+            Map<JacsServiceData, Integer> newPriorities = existingService.getNewServiceHierarchyPriorities(serviceData.getPriority());
+            newPriorities.entrySet().forEach(sdpEntry -> {
+                JacsServiceData sd = sdpEntry.getKey();
+                sd.setPriority(sdpEntry.getValue());
+                jacsServiceDataPersistence.update(sd, ImmutableMap.of("priority", sd.getPriority()));
+            });
         }
         return existingService;
     }

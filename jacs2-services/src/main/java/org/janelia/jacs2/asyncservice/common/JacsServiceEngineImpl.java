@@ -140,7 +140,7 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
                 int newPriority = prevPriority + 1;
                 if (currentPriority < newPriority) {
                     currentPriority = newPriority;
-                    currentService.updateServiceHierarchyPriority(currentPriority);
+                    currentService.updateServicePriority(currentPriority);
                 }
             }
             prevPriority = currentPriority;

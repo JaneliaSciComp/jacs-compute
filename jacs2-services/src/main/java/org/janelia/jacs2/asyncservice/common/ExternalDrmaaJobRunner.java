@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 @ClusterJob
 public class ExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
@@ -35,8 +36,7 @@ public class ExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
                               JacsServiceData serviceContext) {
         logger.debug("Begin DRMAA job invocation for {}", serviceContext);
         String processingScript = createProcessingScript(externalCode, workingDirName, serviceContext);
-        serviceContext.updateState(JacsServiceState.RUNNING);
-        this.jacsServiceDataPersistence.update(serviceContext);
+        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
         JobTemplate jt = null;
         File outputFile;
         File errorFile;
@@ -62,17 +62,22 @@ public class ExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
             logger.info("Start {} for {} using  env {}", processingScript, serviceContext, env);
             String jobId = drmaaSession.runJob(jt);
             logger.info("Submitted job {} for {}", jobId, serviceContext);
-            serviceContext.addEvent(JacsServiceEventTypes.DRMAA_SUBMIT, String.format("Submitted job %s {%s} running: %s", serviceContext.getName(), jobId, processingScript));
+            jacsServiceDataPersistence.addServiceEvent(
+                    serviceContext,
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.DRMAA_SUBMIT, String.format("Submitted job %s {%s} running: %s", serviceContext.getName(), jobId, processingScript))
+            );
             drmaaSession.deleteJobTemplate(jt);
             jt = null;
             return new DrmaaJobInfo(drmaaSession, jobId, processingScript);
         } catch (Exception e) {
-            serviceContext.updateState(JacsServiceState.ERROR);
-            serviceContext.addEvent(JacsServiceEventTypes.DRMAA_JOB_ERROR, String.format("Error creating DRMAA job %s - %s", serviceContext.getName(), e.getMessage()));
+            jacsServiceDataPersistence.updateServiceState(
+                    serviceContext,
+                    JacsServiceState.ERROR,
+                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.DRMAA_JOB_ERROR, String.format("Error creating DRMAA job %s - %s", serviceContext.getName(), e.getMessage())))
+            );
             logger.error("Error creating a DRMAA job {} for {}", processingScript, serviceContext, e);
             throw new ComputationException(serviceContext, e);
         } finally {
-            this.jacsServiceDataPersistence.update(serviceContext);
             if (jt != null) {
                 try {
                     drmaaSession.deleteJobTemplate(jt);

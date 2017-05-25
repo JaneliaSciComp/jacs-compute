@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.sample;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.dao.LSMImageDao;
 import org.janelia.jacs2.dao.SampleDao;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -21,6 +22,7 @@ import org.janelia.jacs2.dataservice.DomainObjectService;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -188,15 +190,19 @@ public class SampleDataService {
         sampleDao.save(sample);
     }
 
-    public void updateLSM(LSMImage lsmImage) {
-        lsmImageDao.update(lsmImage);
+    public void updateLSM(LSMImage lsmImage, Map<String, Object> updatedFields) {
+        lsmImageDao.update(lsmImage, updatedFields);
     }
 
     public void updateLSMFiles(LSMImage lsmImage) {
         lsmImageDao.updateImageFiles(lsmImage);
     }
 
-    public void updateSample(Sample sample) {
-        sampleDao.update(sample);
+    public void updateSample(Sample sample, Map<String, Object> updatedFields) {
+        sampleDao.update(sample, updatedFields);
+    }
+
+    public void updateSampleObjectivePipelineResults(Sample sample, Map<String, Collection<SamplePipelineRun>> sampleRuns) {
+        // TODO
     }
 }

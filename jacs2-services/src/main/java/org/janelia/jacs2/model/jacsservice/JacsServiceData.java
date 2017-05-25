@@ -7,7 +7,6 @@ import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
 import org.janelia.jacs2.model.BaseEntity;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -16,10 +15,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @MongoMapping(collectionName="jacsService", archiveCollectionName = "jacsServiceHistory", label="JacsService")
 public class JacsServiceData implements BaseEntity, HasIdentifier {
+
+    public static JacsServiceEvent createServiceEvent(JacsServiceEventTypes name, String value) {
+        JacsServiceEvent se = new JacsServiceEvent();
+        se.setName(name.name());
+        se.setValue(value);
+        return se;
+    }
+
     @JsonProperty("_id")
     private Number id;
     private String name;
@@ -277,14 +285,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.serializableResult = serializableResult;
     }
 
-    public void addEvent(JacsServiceEventTypes name, String value) {
-        JacsServiceEvent se = new JacsServiceEvent();
-        se.setName(name.name());
-        se.setValue(value);
-        addEvent(se);
-    }
-
-    public void addEvent(JacsServiceEvent se) {
+    public void addNewEvent(JacsServiceEvent se) {
         if (this.events == null) {
             this.events = new ArrayList<>();
         }
@@ -321,7 +322,8 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         return parentService;
     }
 
-    public void updateParentService(JacsServiceData parentService) {
+    public Map<String, Object> updateParentService(JacsServiceData parentService) {
+        Map<String, Object> updatedFields = new LinkedHashMap<>();
         if (parentService != null) {
             if (this.parentService == null) {
                 this.parentService = parentService;
@@ -329,20 +331,26 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
             }
             if (this.getParentServiceId() == null) {
                 setParentServiceId(parentService.getId());
+                updatedFields.put("parentServiceId", getParentServiceId());
             }
             if (parentService.getRootServiceId() == null) {
                 setRootServiceId(parentService.getId());
             } else {
                 setRootServiceId(parentService.getRootServiceId());
             }
+            updatedFields.put("rootServiceId", getRootServiceId());
             if (priority == null || priority() <= parentService.priority()) {
                 priority = parentService.priority() + 1;
+                updatedFields.put("priority", priority);
             }
         } else {
             this.parentService = null;
             setParentServiceId(null);
             setRootServiceId(null);
+            updatedFields.put("parentServiceId", null);
+            updatedFields.put("rootServiceId", null);
         }
+        return updatedFields;
     }
 
     public Stream<JacsServiceData> serviceHierarchyStream() {
@@ -417,31 +425,21 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     }
 
     /**
-     * Updates the priority of the entire service hierarchy
+     * Get the new priorities for the entire service hierarchy given a new priority for the current node.
      * @param newPriority
      */
-    public void updateServiceHierarchyPriority(int newPriority) {
+    public Map<JacsServiceData, Integer> getNewServiceHierarchyPriorities(int newPriority) {
         int currentPriority = this.priority();
         int priorityDiff = newPriority - currentPriority;
-        this.serviceHierarchyStream().forEach(s -> {
-            s.setPriority(s.priority() + priorityDiff);
+        return this.serviceHierarchyStream().collect(Collectors.toMap(sd -> sd, sd -> sd.priority() + priorityDiff));
+    }
+
+
+    public void updateServicePriority(int newPriority) {
+        Map<JacsServiceData, Integer> newPriorities = getNewServiceHierarchyPriorities(newPriority);
+        newPriorities.entrySet().forEach(sdpEntry -> {
+            JacsServiceData sd = sdpEntry.getKey();
+            sd.setPriority(sdpEntry.getValue());
         });
     }
-
-    public void updateState(@Nullable JacsServiceState newState) {
-        JacsServiceState oldState = getState();
-        if (hasCompleted()) {
-            if (newState != JacsServiceState.QUEUED && newState != oldState) {
-                setState(JacsServiceState.ERROR);
-                addEvent(JacsServiceEventTypes.FAILED, "Attempt to overwrite a completed state");
-                throw new IllegalStateException("Attempt to overwrite a completed stated " + oldState +
-                        " with " + newState + " for " + getId() + ":" + getName());
-            }
-        }
-        if (newState != oldState) {
-            addEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from " + oldState + " -> " + newState);
-            setState(newState);
-        }
-    }
-
 }

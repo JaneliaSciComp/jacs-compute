@@ -2,6 +2,7 @@ package org.janelia.jacs2.dao.mongo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.mongodb.client.FindIterable;
@@ -133,48 +134,33 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         if (entity.getId() == null) {
             entity.setId(idGenerator.generateId());
             mongoCollection.insertOne(entity);
-        } else {
-            UpdateOptions upsertOptions = new UpdateOptions();
-            upsertOptions.upsert(true);
-            update(entity, upsertOptions);
         }
     }
 
     public void saveAll(List<T> entities) {
         Iterator<Number> idIterator = idGenerator.generateIdList(entities.size()).iterator();
-        List<T> toUpsert = new ArrayList<>();
         List<T> toInsert = new ArrayList<>();
         entities.forEach(e -> {
             if (e.getId() == null) {
                 e.setId(idIterator.next());
                 toInsert.add(e);
-            } else {
-                toUpsert.add(e);
             }
         });
         if (!toInsert.isEmpty()) {
             mongoCollection.insertMany(toInsert);
         }
-        if (!toUpsert.isEmpty()) {
-            UpdateOptions upsertOptions = new UpdateOptions();
-            upsertOptions.upsert(true);
-            toUpsert.forEach(e -> this.update(e, upsertOptions));
-        }
     }
 
-    /**
-     * Generic update implementation which updates all first level fields - if their value is set or removes them if the value is null.
-     * @param entity to be updated.
-     */
     @Override
-    public void update(T entity) {
+    public void update(T entity, Map<String, Object> fieldsToUpdate) {
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);
-        update(entity, updateOptions);
+        update(entity, fieldsToUpdate, updateOptions);
+
     }
 
-    private long update(T entity, UpdateOptions updateOptions) {
-        return update(getUpdateMatchCriteria(entity), getUpdates(entity), updateOptions);
+    private long update(T entity, Map<String, Object> fieldsToUpdate, UpdateOptions updateOptions) {
+        return update(getUpdateMatchCriteria(entity), getUpdates(fieldsToUpdate), updateOptions);
     }
 
     protected long update(Bson query, Bson toUpdate, UpdateOptions updateOptions) {
@@ -183,15 +169,8 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         return result.getMatchedCount();
     }
 
-    protected Bson getUpdates(T entity) {
-        String jsonEntity = null;
-        try {
-            jsonEntity = objectMapper.writeValueAsString(entity);
-        } catch (JsonProcessingException e) {
-            throw new UncheckedIOException(e);
-        }
-        Document bsonEntity = Document.parse(jsonEntity);
-        List<Bson> fieldUpdates = bsonEntity.entrySet().stream()
+    protected Bson getUpdates(Map<String, Object> fieldsToUpdate) {
+        List<Bson> fieldUpdates = fieldsToUpdate.entrySet().stream()
                 .map(e -> {
                     Object value = e.getValue();
                     if (value == null) {

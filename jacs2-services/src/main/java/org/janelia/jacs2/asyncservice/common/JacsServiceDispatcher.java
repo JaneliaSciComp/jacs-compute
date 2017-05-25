@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.util.Optional;
 
 @ApplicationScoped
 public class JacsServiceDispatcher {
@@ -60,8 +61,7 @@ public class JacsServiceDispatcher {
             serviceComputationFactory.<JacsServiceData>newComputation()
                     .supply(() -> {
                         logger.debug("Submit {}", queuedService);
-                        queuedService.updateState(JacsServiceState.SUBMITTED);
-                        updateServiceData(queuedService);
+                        jacsServiceDataPersistence.updateServiceState(queuedService, JacsServiceState.SUBMITTED, Optional.empty());
                         return queuedService;
                     })
                     .thenCompose(sd -> serviceProcessor.process(sd))
@@ -96,9 +96,10 @@ public class JacsServiceDispatcher {
         if (jacsServiceData.hasCompletedUnsuccessfully()) {
             logger.warn("Attempted to overwrite failed state with success for {}", jacsServiceData);
         }
-        jacsServiceData.updateState(JacsServiceState.SUCCESSFUL);
-        jacsServiceData.addEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully");
-        updateServiceData(jacsServiceData);
+        jacsServiceDataPersistence.updateServiceState(
+                jacsServiceData,
+                JacsServiceState.SUCCESSFUL,
+                Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully")));
         if (!jacsServiceData.hasParentServiceId()) {
             archiveServiceData(jacsServiceData.getId());
         }
@@ -114,14 +115,11 @@ public class JacsServiceDispatcher {
         if (jacsServiceData.hasCompletedSuccessfully()) {
             logger.warn("Service {} has failed after has already been markes as successfully completed", jacsServiceData);
         }
-        jacsServiceData.updateState(JacsServiceState.ERROR);
-        jacsServiceData.addEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage()));
-        updateServiceData(jacsServiceData);
-    }
-
-    private void updateServiceData(JacsServiceData jacsServiceData) {
-        jacsServiceDataPersistence.update(jacsServiceData);
-    }
+        jacsServiceDataPersistence.updateServiceState(
+                jacsServiceData,
+                JacsServiceState.ERROR,
+                Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage()))));
+   }
 
     private void archiveServiceData(Number serviceId) {
         JacsServiceData jacsServiceDataHierarchy = jacsServiceDataPersistence.findServiceHierarchy(serviceId);

@@ -9,11 +9,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -98,6 +100,12 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
         testJacsServiceData.setName("test");
         testJacsServiceData.setId(TEST_ID);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        doAnswer(invocation -> {
+            JacsServiceData sd = invocation.getArgument(0);
+            JacsServiceState state = invocation.getArgument(1);
+            sd.setState(state);
+            return null;
+        }).when(jacsServiceDataPersistence).updateServiceState(any(JacsServiceData.class), any(JacsServiceState.class), any(Optional.class));
 
         testSuccessfullProcessor = new TestSuccessfulProcessorBasicLifeCycle(
                 serviceComputationFactory,
@@ -123,7 +131,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
         when(jacsServiceDataPersistence.findById(TEST_ID)).thenReturn(testJacsServiceData);
         when(jacsServiceDataPersistence.findServiceHierarchy(TEST_ID))
                 .thenAnswer(invocation -> {
-                    testJacsServiceDataDependency.updateState(JacsServiceState.SUCCESSFUL);
+                    testJacsServiceDataDependency.setState(JacsServiceState.SUCCESSFUL);
                     return testJacsServiceData;
                 });
 
@@ -150,7 +158,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
         testJacsServiceData.addServiceDependency(testJacsServiceDataDependency);
         when(jacsServiceDataPersistence.findServiceHierarchy(TEST_ID))
                 .thenAnswer(invocation -> {
-                    testJacsServiceDataDependency.updateState(JacsServiceState.CANCELED);
+                    testJacsServiceDataDependency.setState(JacsServiceState.CANCELED);
                     return testJacsServiceData;
                 });
 
@@ -173,7 +181,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
 
         JacsServiceData testJacsServiceDataDependency = new JacsServiceData();
         testJacsServiceDataDependency.setId(TEST_ID.longValue() + 1);
-        testJacsServiceDataDependency.updateState(JacsServiceState.RUNNING);
+        testJacsServiceDataDependency.setState(JacsServiceState.RUNNING);
 
         testJacsServiceData.addServiceDependency(testJacsServiceDataDependency);
 
@@ -181,7 +189,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
         when(jacsServiceDataPersistence.findServiceHierarchy(TEST_ID))
                 .thenReturn(testJacsServiceData)
                 .thenAnswer(invocation -> {
-                    testJacsServiceDataDependency.updateState(JacsServiceState.SUCCESSFUL);
+                    testJacsServiceDataDependency.setState(JacsServiceState.SUCCESSFUL);
                     return testJacsServiceData;
                 });
 
@@ -204,7 +212,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
 
         JacsServiceData testJacsServiceDataDependency = new JacsServiceData();
         testJacsServiceDataDependency.setId(TEST_ID.longValue() + 1);
-        testJacsServiceDataDependency.updateState(JacsServiceState.RUNNING);
+        testJacsServiceDataDependency.setState(JacsServiceState.RUNNING);
 
         testJacsServiceData.addServiceDependency(testJacsServiceDataDependency);
         testJacsServiceData.setServiceTimeout(1L);

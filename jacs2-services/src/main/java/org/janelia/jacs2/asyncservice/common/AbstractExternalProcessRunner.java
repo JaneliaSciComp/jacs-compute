@@ -44,11 +44,17 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
             File scriptFile = Files.createFile(scriptFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
             scriptWriter = new ScriptWriter(new BufferedWriter(new FileWriter(scriptFile)));
             scriptWriter.add(externalCode.toString());
-            sd.addEvent(JacsServiceEventTypes.CREATED_RUNNING_SCRIPT, String.format("Created the running script for %s: %s", sd.getName(), sd.getArgs()));
+            jacsServiceDataPersistence.addServiceEvent(
+                    sd,
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CREATED_RUNNING_SCRIPT, String.format("Created the running script for %s: %s", sd.getName(), sd.getArgs()))
+            );
             return scriptFile.getAbsolutePath();
         } catch (Exception e) {
             logger.error("Error creating the processing script with {} for {}", externalCode, sd, e);
-            sd.addEvent(JacsServiceEventTypes.SCRIPT_CREATION_ERROR, String.format("Error creating the running script for %s: %s", sd.getName(), sd.getArgs()));
+            jacsServiceDataPersistence.addServiceEvent(
+                    sd,
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.SCRIPT_CREATION_ERROR, String.format("Error creating the running script for %s: %s", sd.getName(), sd.getArgs()))
+            );
             throw new ComputationException(sd, e);
         } finally {
             if (scriptWriter != null) scriptWriter.close();

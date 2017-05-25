@@ -57,9 +57,10 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
                         errorMessage = String.format("Process %s failed", jobInfo.getScriptName());
                     }
                     if (errorMessage != null) {
-                        pd.getJacsServiceData().addEvent(JacsServiceEventTypes.FAILED, errorMessage);
-                        pd.getJacsServiceData().updateState(JacsServiceState.ERROR);
-                        updateServiceData(pd.getJacsServiceData());
+                        jacsServiceDataPersistence.updateServiceState(
+                                pd.getJacsServiceData(),
+                                JacsServiceState.ERROR,
+                                Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, errorMessage)));
                         throw new ComputationException(pd.getJacsServiceData(), errorMessage);
                     }
                     return pd;

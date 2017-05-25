@@ -3,12 +3,15 @@ package org.janelia.jacs2.asyncservice.common;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -112,10 +115,12 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
                         }
                     });
             if (CollectionUtils.isNotEmpty(failed)) {
-                jacsServiceData.updateState(JacsServiceState.CANCELED);
-                jacsServiceData.addEvent(JacsServiceEventTypes.CANCELED,
-                        String.format("Canceled because one or more service dependencies finished unsuccessfully: %s", failed));
-                updateServiceData(jacsServiceData);
+                jacsServiceDataPersistence.updateServiceState(
+                        jacsServiceData,
+                        JacsServiceState.CANCELED,
+                        Optional.of(JacsServiceData.createServiceEvent(
+                                JacsServiceEventTypes.CANCELED,
+                                String.format("Canceled because one or more service dependencies finished unsuccessfully: %s", failed))));
                 logger.warn("Service {} canceled because of {}", jacsServiceData, failed);
                 throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " canceled");
             }
@@ -128,33 +133,23 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
     }
 
     protected void resumeSuspendedService(JacsServiceData jacsServiceData) {
-        updateState(jacsServiceData, JacsServiceState.RUNNING);
+        jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.RUNNING, Optional.empty());
     }
 
     protected void suspendService(JacsServiceData jacsServiceData) {
         if (!jacsServiceData.hasBeenSuspended()) {
             // if the service has not completed yet and it's not already suspended - update the state to suspended
-            updateState(jacsServiceData, JacsServiceState.SUSPENDED);
-        }
-    }
-
-    private void updateState(JacsServiceData jacsServiceData, JacsServiceState state) {
-        try {
-            jacsServiceData.updateState(state);
-        } catch (Exception e) {
-            logger.error("Update state error for {}", jacsServiceData, e);
-            throw new ComputationException(jacsServiceData, e);
-        } finally {
-            updateServiceData(jacsServiceData);
+            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.SUSPENDED, Optional.empty());
         }
     }
 
     protected void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
         long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
         if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
-            jacsServiceData.updateState(JacsServiceState.TIMEOUT);
-            jacsServiceData.addEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart));
-            jacsServiceDataPersistence.update(jacsServiceData);
+            jacsServiceDataPersistence.updateServiceState(
+                    jacsServiceData,
+                    JacsServiceState.TIMEOUT,
+                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart))));
             logger.warn("Service {} timed out after {}ms", jacsServiceData, timeSinceStart);
             throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " timed out");
         }
@@ -172,9 +167,10 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
 
     protected JacsServiceResult<T> updateServiceResult(JacsServiceResult<S> depsResult) {
         T r = this.getResultHandler().collectResult(depsResult);
-        this.getResultHandler().updateServiceDataResult(depsResult.getJacsServiceData(), r);
-        updateServiceData(depsResult.getJacsServiceData());
-        return new JacsServiceResult<>(depsResult.getJacsServiceData(), r);
+        JacsServiceData jacsServiceData = depsResult.getJacsServiceData();
+        this.getResultHandler().updateServiceDataResult(jacsServiceData, r);
+        jacsServiceDataPersistence.updateServiceResult(jacsServiceData);
+        return new JacsServiceResult<>(jacsServiceData, r);
     }
 
     protected T postProcessing(JacsServiceResult<T> sr) {
@@ -188,6 +184,9 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
             return existingDependency.get();
         } else {
             jacsServiceDataPersistence.saveHierarchy(dependency);
+            jacsServiceDataPersistence.addServiceEvent(
+                    jacsServiceData,
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CREATE_CHILD_SERVICE, String.format("Created child service %s", dependency)));
             return dependency;
         }
     }

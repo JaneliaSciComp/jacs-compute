@@ -6,6 +6,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -133,7 +135,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
             logger.debug("Enqueued service {} into {}", jacsServiceData, this);
             waitingServicesSet.add(jacsServiceData.getId());
             if (jacsServiceData.getState() == JacsServiceState.CREATED) {
-                jacsServiceData.updateState(JacsServiceState.QUEUED);
+                jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.QUEUED, Optional.<JacsServiceEvent>empty());
             }
         }
         return added;

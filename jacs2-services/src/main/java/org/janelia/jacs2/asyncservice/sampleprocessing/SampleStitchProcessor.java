@@ -2,6 +2,9 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
@@ -43,6 +46,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -206,12 +210,23 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     JacsServiceData jacsServiceData = depResults.getJacsServiceData();
                     SampleStitchArgs args = getArgs(jacsServiceData);
                     Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), args.sampleId);
-                    boolean updated = pd.getResult().stitchedAreasResults.stream()
-                            .map(sar -> updateObjectSampleResult(jacsServiceData, sample, sar.sampleAreaResult))
-                            .reduce(false, (r1, r2) -> r1 || r2);
-                    if (updated) {
-                        sampleDataService.updateSample(sample);
-                    }
+                    Multimap<String,  SamplePipelineRun> objectiveRunResults = pd.getResult().stitchedAreasResults.stream()
+                            .map(sar -> getObjectivePipelineRunResult(jacsServiceData, sample, sar.sampleAreaResult))
+                            .reduce(LinkedListMultimap.<String, SamplePipelineRun>create(),
+                                    (Multimap<String, SamplePipelineRun> ac, Map<String, SamplePipelineRun> objectivePipelineResult) -> {
+                                Multimap<String, SamplePipelineRun> finalResult = LinkedListMultimap.create();
+                                finalResult.putAll(ac);
+                                objectivePipelineResult.entrySet().forEach(oprEntry -> {
+                                    finalResult.put(oprEntry.getKey(), oprEntry.getValue());
+                                });
+                                return finalResult;
+                            }, (Multimap<String, SamplePipelineRun> r1, Multimap<String, SamplePipelineRun> r2) -> {
+                                Multimap<String, SamplePipelineRun> finalResult = LinkedListMultimap.create();
+                                finalResult.putAll(r1);
+                                finalResult.putAll(r2);
+                                return finalResult;
+                            });
+                    sampleDataService.updateSampleObjectivePipelineResults(sample, objectiveRunResults.asMap());
                     return pd;
                 })
                 ;
@@ -340,7 +355,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
         });
     }
 
-    private boolean updateObjectSampleResult(JacsServiceData jacsServiceData, Sample sample, SampleAreaResult areaResult) {
+    private Map<String, SamplePipelineRun> getObjectivePipelineRunResult(JacsServiceData jacsServiceData, Sample sample, SampleAreaResult areaResult) {
         return sample.lookupObjective(areaResult.getObjective())
                 .map(objective -> {
                     // create entry for the corresponding service run
@@ -380,11 +395,9 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     }));
                     stitchResult.setOpticalResolution(getConsensusValue(areaResult.getMergeResults(), MergeTilePairResult::getOpticalResolution));
                     pipelineRun.addResult(stitchResult);
-                    objective.addPipelineRun(pipelineRun);
-                    return true;
+                    return ImmutableMap.of(objective.getObjective(), pipelineRun);
                 })
-                .orElse(false)
-        ;
+                .orElse(ImmutableMap.of());
     }
 
     private String getConsensusValue(List<MergeTilePairResult> mergeResults, Function<MergeTilePairResult, String>  tilePairResultMapper) {

@@ -1,9 +1,14 @@
 package org.janelia.jacs2.model.jacsservice;
 
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import java.io.Serializable;
 import java.util.Date;
 
-public class JacsServiceEvent {
+public class JacsServiceEvent implements Serializable {
     private String name;
     private String value;
     private Date eventTime = new Date();
@@ -30,5 +35,34 @@ public class JacsServiceEvent {
 
     public void setEventTime(Date eventTime) {
         this.eventTime = eventTime;
+    }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        JacsServiceEvent that = (JacsServiceEvent) o;
+
+        return new EqualsBuilder()
+                .append(name, that.name)
+                .append(value, that.value)
+                .append(eventTime, that.eventTime)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(name)
+                .append(value)
+                .append(eventTime)
+                .toHashCode();
     }
 }

@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -144,20 +145,24 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
                 }
             });
         }
+        Map<String, Object> updatedLsmFields = new LinkedHashMap<>();
         if (CollectionUtils.isNotEmpty(colors)) {
             lsm.setChannelColors(Joiner.on(',').join(colors));
+            updatedLsmFields.put("channelColors", lsm.getChannelColors());
         }
         if (CollectionUtils.isNotEmpty(dyeNames)) {
             lsm.setChannelDyeNames(Joiner.on(',').join(dyeNames));
+            updatedLsmFields.put("channelDyeNames", lsm.getChannelDyeNames());
         }
         if (StringUtils.isBlank(lsm.getChanSpec())) {
-            updateChanSpec(lsm, channelDyeSpec);
+            updatedLsmFields.putAll(updateChanSpec(lsm, channelDyeSpec));
         }
         DomainModelUtils.setFullPathForFileType(lsm, FileType.LsmMetadata, lsmMetadataFilePath);
-        sampleDataService.updateLSM(lsm);
+        sampleDataService.updateLSM(lsm, updatedLsmFields);
    }
 
-    private void updateChanSpec(LSMImage lsm, String channelDyeSpec) {
+    private Map<String, Object> updateChanSpec(LSMImage lsm, String channelDyeSpec) {
+        Map<String, Object> updatedLsmFields = new LinkedHashMap<>();
         Set<String> referenceDyes = new LinkedHashSet<>();
         if (StringUtils.isNotBlank(channelDyeSpec)) {
             Pair<Multimap<String, String>, Map<String, String>> channelDyesMapData = LSMProcessingTools.parseChannelDyeSpec(channelDyeSpec);
@@ -181,9 +186,12 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
             }
             // For legacy LSMs without chanspec or dyespec, we assume that the reference is the first channel and the rest are signal
             lsm.setChanSpec(LSMProcessingTools.createChanSpec(numChannels, 1));
+            updatedLsmFields.put("chanSpec", lsm.getChanSpec());
         } else {
             List<String> channelDyeNames = LSMProcessingTools.parseChannelComponents(lsm.getChannelDyeNames());
             lsm.setChanSpec(LSMProcessingTools.createChanSpec(channelDyeNames, referenceDyes));
+            updatedLsmFields.put("chanSpec", lsm.getChanSpec());
         }
+        return updatedLsmFields;
     }
 }

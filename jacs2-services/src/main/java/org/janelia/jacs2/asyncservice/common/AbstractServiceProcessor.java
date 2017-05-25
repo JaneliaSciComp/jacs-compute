@@ -1,12 +1,16 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
+import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
+import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
+import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -115,10 +119,6 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         }
         pathElemsBuilder.addAll(Arrays.asList(more));
         return Paths.get(baseDir, pathElemsBuilder.build().toArray(new String[0])).toAbsolutePath();
-    }
-
-    protected void updateServiceData(JacsServiceData jacsServiceData) {
-        if (jacsServiceData.hasId()) jacsServiceDataPersistence.update(jacsServiceData);
     }
 
 }

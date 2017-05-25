@@ -1,6 +1,7 @@
 package org.janelia.jacs2.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
@@ -90,9 +91,8 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         JacsServiceData si = persistServiceWithEvents(createTestService("s", ProcessingLocation.LOCAL),
                 createTestServiceEvent("e1", "v1"),
                 createTestServiceEvent("e2", "v2"));
-        si.addEvent(createTestServiceEvent("e3", "v3"));
-        si.updateState(JacsServiceState.RUNNING);
-        testDao.update(si);
+        testDao.addServiceEvent(si, createTestServiceEvent("e3", "v3"));
+        testDao.update(si, ImmutableMap.of("state", JacsServiceState.RUNNING));
         JacsServiceData retrievedSi = testDao.findById(si.getId());
         assertThat(retrievedSi.getName(), equalTo(si.getName()));
     }
@@ -194,15 +194,15 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestService("s9", null)
         );
         servicesInQueuedState.stream().forEach(s -> {
-            s.updateState(JacsServiceState.QUEUED);
+            s.setState(JacsServiceState.QUEUED);
             persistServiceWithEvents(s);
         });
         servicesInRunningState.stream().forEach(s -> {
-            s.updateState(JacsServiceState.RUNNING);
+            s.setState(JacsServiceState.RUNNING);
             persistServiceWithEvents(s);
         });
         servicesInCanceledState.stream().forEach(s -> {
-            s.updateState(JacsServiceState.CANCELED);
+            s.setState(JacsServiceState.CANCELED);
             persistServiceWithEvents(s);
         });
         PageRequest pageRequest = new PageRequest();
@@ -234,15 +234,15 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestService("s9", null)
         );
         servicesInQueuedState.stream().forEach(s -> {
-            s.updateState(JacsServiceState.QUEUED);
+            s.setState(JacsServiceState.QUEUED);
             persistServiceWithEvents(s);
         });
         servicesInRunningState.stream().forEach(s -> {
-            s.updateState(JacsServiceState.RUNNING);
+            s.setState(JacsServiceState.RUNNING);
             persistServiceWithEvents(s);
         });
         servicesInCanceledState.stream().forEach(s -> {
-            s.updateState(JacsServiceState.CANCELED);
+            s.setState(JacsServiceState.CANCELED);
             persistServiceWithEvents(s);
         });
         String testQueueId = "testQueueId";
@@ -287,15 +287,15 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestService("s9", null)
         );
         servicesInQueuedState.stream().forEach(s -> {
-            s.updateState(JacsServiceState.QUEUED);
+            s.setState(JacsServiceState.QUEUED);
             persistServiceWithEvents(s);
         });
         servicesInRunningState.stream().forEach(s -> {
-            s.updateState(JacsServiceState.RUNNING);
+            s.setState(JacsServiceState.RUNNING);
             persistServiceWithEvents(s);
         });
         servicesInCanceledState.stream().forEach(s -> {
-            s.updateState(JacsServiceState.CANCELED);
+            s.setState(JacsServiceState.CANCELED);
             persistServiceWithEvents(s);
         });
         String testQueueId = "testQueueId";
@@ -347,7 +347,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
 
         JacsServiceData u1ServicesRequest = new JacsServiceData();
         u1ServicesRequest.setOwner("user:u1");
-        u1ServicesRequest.updateState(JacsServiceState.QUEUED);
+        u1ServicesRequest.setState(JacsServiceState.QUEUED);
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(null, null), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
@@ -401,7 +401,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         );
         u1Services.stream().forEach(s -> {
             s.setOwner("user:u1");
-            s.updateState(JacsServiceState.QUEUED);
+            s.setState(JacsServiceState.QUEUED);
             s.setCreationDate(calDate.getTime());
             calDate.add(Calendar.DATE, 1);
             persistServiceWithEvents(s);
@@ -409,7 +409,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         });
         u2Services.stream().forEach(s -> {
             s.setOwner("group:u2");
-            s.updateState(JacsServiceState.RUNNING);
+            s.setState(JacsServiceState.RUNNING);
             s.setCreationDate(calDate.getTime());
             calDate.add(Calendar.DATE, 1);
             persistServiceWithEvents(s);
@@ -420,7 +420,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
 
     private JacsServiceData persistServiceWithEvents(JacsServiceData si, JacsServiceEvent... jacsServiceEvents) {
         for (JacsServiceEvent se : jacsServiceEvents) {
-            si.addEvent(se);
+            si.addNewEvent(se);
         }
         testDao.save(si);
         return si;

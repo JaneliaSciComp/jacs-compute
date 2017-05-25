@@ -13,12 +13,15 @@ import org.janelia.jacs2.dao.DomainObjectDao;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.DomainModelUtils;
 
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -62,6 +65,14 @@ public abstract class AbstractDomainObjectDao<T extends DomainObject> extends Ab
                     -1,
                     entityType);
         }
+    }
+
+    @Override
+    public void update(T entity, Map<String, Object> fieldsToUpdate) {
+        Map<String, Object> fieldsWithUpdatedDate = new LinkedHashMap<>(fieldsToUpdate);
+        entity.setUpdatedDate(new Date());
+        fieldsWithUpdatedDate.put("updatedDate", entity.getUpdatedDate());
+        super.update(entity, fieldsWithUpdatedDate);
     }
 
     @Override

@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.dataimport;
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
@@ -228,15 +229,13 @@ public class LSMImportProcessor extends AbstractBasicLifeCycleServiceProcessor<L
             return lsmImage;
         } else if (matchingLsms.getResultList().size() == 1) {
             LSMImage existingLsm = matchingLsms.getResultList().get(0);
-            SampleUtils.updateLsmAttributes(lsmImage, existingLsm);
-            sampleDataService.updateLSM(existingLsm);
+            sampleDataService.updateLSM(existingLsm, SampleUtils.updateLsmAttributes(lsmImage, existingLsm));
             return existingLsm;
         } else {
             // there is a potential clash or duplication here
             logger.warn("Multiple candidates found for {}", lsmImage);
             LSMImage existingLsm = matchingLsms.getResultList().get(0); // FIXME this probably needs to be changed
-            SampleUtils.updateLsmAttributes(lsmImage, existingLsm);
-            sampleDataService.updateLSM(existingLsm);
+            sampleDataService.updateLSM(existingLsm, SampleUtils.updateLsmAttributes(lsmImage, existingLsm));
             return existingLsm;
         }
     }
@@ -293,7 +292,7 @@ public class LSMImportProcessor extends AbstractBasicLifeCycleServiceProcessor<L
                     .filter(s -> s != selectedSample)
                     .forEach(s -> {
                         s.setSageSynced(false);
-                        sampleDataService.updateSample(s);
+                        sampleDataService.updateSample(s, ImmutableMap.of("sageSynced", s.isSageSynced()));
                     });
         }
 

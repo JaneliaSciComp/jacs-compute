@@ -1,6 +1,7 @@
 package org.janelia.jacs2.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.dao.SubjectDao;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.jacs2.model.page.PageRequest;
@@ -16,7 +17,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
-import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -81,7 +81,10 @@ public class SubjectMongoDaoITest extends AbstractMongoDaoITest<Subject> {
         testSubject.addGroup("newGroup1");
         testSubject.addGroup("newGroup2");
         testSubject.setFullName(testFullname);
-        testDao.update(testSubject);
+        testDao.update(testSubject, ImmutableMap.<String, Object>of(
+                "groups", testSubject.getGroups(),
+                "fullName", testSubject.getFullName())
+        );
         Subject retrievedSample = testDao.findById(testSubject.getId());
         assertThat(retrievedSample, hasProperty("key", equalTo("user:s1")));
         assertThat(retrievedSample, hasProperty("fullName", equalTo(testFullname)));

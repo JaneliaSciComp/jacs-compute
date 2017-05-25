@@ -16,12 +16,14 @@ import org.janelia.jacs2.dataservice.DomainObjectService;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Optional;
 
 @Named("unlockSample")
 public class UnlockSampleProcessor extends AbstractServiceProcessor<Void> {
@@ -74,8 +76,7 @@ public class UnlockSampleProcessor extends AbstractServiceProcessor<Void> {
                     if (!result) {
                         if (!jacsServiceData.hasBeenSuspended()) {
                             // if the service has not completed yet and it's not already suspended - update the state to suspended
-                            jacsServiceData.updateState(JacsServiceState.SUSPENDED);
-                            updateServiceData(jacsServiceData);
+                            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.SUSPENDED, Optional.<JacsServiceEvent>empty());
                         }
                         return new ContinuationCond.Cond<> (sd, false);
                     }

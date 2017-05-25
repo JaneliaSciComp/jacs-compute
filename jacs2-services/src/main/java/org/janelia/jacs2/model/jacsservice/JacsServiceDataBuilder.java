@@ -48,7 +48,7 @@ public class JacsServiceDataBuilder {
     }
 
     public JacsServiceDataBuilder setState(JacsServiceState state) {
-        serviceData.updateState(state);
+        serviceData.setState(state);
         return this;
     }
 
@@ -88,9 +88,6 @@ public class JacsServiceDataBuilder {
     }
 
     public JacsServiceData build() {
-        if (serviceContext != null) {
-            serviceContext.addEvent(JacsServiceEventTypes.CREATE_CHILD_SERVICE, String.format("Create child service %s %s", serviceData.getName(), serviceData.getArgs()));
-        }
         return serviceData;
     }
 }

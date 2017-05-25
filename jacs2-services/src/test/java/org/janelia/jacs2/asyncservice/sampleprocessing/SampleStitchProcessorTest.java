@@ -1,11 +1,15 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.Matchers;
+import org.hamcrest.collection.IsCollectionWithSize;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -25,16 +29,24 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.slf4j.Logger;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -344,7 +356,14 @@ public class SampleStitchProcessorTest {
             ;
         verify(failure, never()).accept(any());
         verify(successful).accept(any());
-        verify(sampleDataService).updateSample(testSample);
+        verify(sampleDataService).updateSampleObjectivePipelineResults(same(testSample),
+                argThat(new ArgumentMatcher<Map<String, Collection<SamplePipelineRun>>>() {
+                    @Override
+                    public boolean matches(Map<String, Collection<SamplePipelineRun>> argument) {
+                        return argument.containsKey("objective") && argument.get("objective").size() == 3;
+                    }
+                })
+        );
     }
 
     private SampleAreaResult createSampleAreaResult(String objective, String areaName, List<MergeTilePairResult> mergedTiles, List<MergeTilePairResult> groupedTiles) {
