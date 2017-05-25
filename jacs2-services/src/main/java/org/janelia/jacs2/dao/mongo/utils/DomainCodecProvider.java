@@ -1,6 +1,7 @@
 package org.janelia.jacs2.dao.mongo.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableSet;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.Document;
@@ -11,8 +12,11 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
-import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
+import org.janelia.it.jacs.model.domain.sample.SampleTile;
+import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
@@ -64,9 +68,9 @@ public class DomainCodecProvider implements CodecProvider {
 
     private <T> boolean checkCodecApplicability(Class<T> clazz) {
         return DomainObject.class.isAssignableFrom(clazz)
+                || ImmutableSet.of(ObjectiveSample.class, AnatomicalArea.class, SampleTile.class, TileLsmPair.class, SamplePipelineRun.class).contains(clazz)
                 || Subject.class.equals(clazz)
                 || JacsServiceData.class.equals(clazz)
-                || clazz.getPackage().equals(Sample.class.getPackage())
                 || JacsServiceEvent.class.equals(clazz);
     }
 }

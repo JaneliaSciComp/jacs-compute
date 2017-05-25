@@ -82,13 +82,13 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
     public void updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, Optional<JacsServiceEvent> serviceEvent) {
         JacsServiceState oldServiceState = jacsServiceData.getState();
         jacsServiceData.setState(newServiceState);
-        if (serviceEvent.isPresent()) addServiceEvent(jacsServiceData, serviceEvent.get());
         if (newServiceState != oldServiceState) {
             addServiceEvent(
                     jacsServiceData,
                     JacsServiceData.createServiceEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from " + oldServiceState + " -> " + newServiceState));
             if (jacsServiceData.hasId()) update(jacsServiceData, ImmutableMap.of("state", newServiceState));
         }
+        if (serviceEvent.isPresent()) addServiceEvent(jacsServiceData, serviceEvent.get());
     }
 
     public void addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
