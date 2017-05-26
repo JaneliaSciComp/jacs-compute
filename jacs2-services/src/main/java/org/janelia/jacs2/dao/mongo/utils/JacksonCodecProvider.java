@@ -1,7 +1,6 @@
 package org.janelia.jacs2.dao.mongo.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableSet;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.Document;
@@ -10,27 +9,16 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.janelia.it.jacs.model.domain.DomainObject;
-import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
-import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
-import org.janelia.it.jacs.model.domain.sample.PipelineResult;
-import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
-import org.janelia.it.jacs.model.domain.sample.SampleTile;
-import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
-import org.janelia.jacs2.model.jacsservice.annotation.JacsServiceResultType;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-public class DomainCodecProvider implements CodecProvider {
+public class JacksonCodecProvider implements CodecProvider {
 
     private final ObjectMapper objectMapper;
 
-    public DomainCodecProvider(ObjectMapperFactory objectMapperFactory) {
+    public JacksonCodecProvider(ObjectMapperFactory objectMapperFactory) {
         this.objectMapper = objectMapperFactory.newMongoCompatibleObjectMapper();
     }
 
