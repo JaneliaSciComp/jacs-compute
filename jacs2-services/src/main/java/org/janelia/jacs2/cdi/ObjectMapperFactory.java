@@ -1,7 +1,6 @@
 package org.janelia.jacs2.cdi;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -36,6 +35,8 @@ public class ObjectMapperFactory {
                 .configure(SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
+                .configure(DeserializationFeature.FAIL_ON_UNRESOLVED_OBJECT_IDS, false)
+                .configure(DeserializationFeature.FAIL_ON_MISSING_EXTERNAL_TYPE_ID_PROPERTY, false)
                 .setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 

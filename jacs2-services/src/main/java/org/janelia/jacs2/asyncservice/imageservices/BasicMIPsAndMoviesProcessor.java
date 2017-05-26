@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
