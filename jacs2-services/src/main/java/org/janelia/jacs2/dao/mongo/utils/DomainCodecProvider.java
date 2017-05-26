@@ -1,5 +1,6 @@
 package org.janelia.jacs2.dao.mongo.utils;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ValueNode;
@@ -75,6 +76,7 @@ public class DomainCodecProvider implements CodecProvider {
                 || PipelineResult.class.isAssignableFrom(clazz)
                 || Subject.class.equals(clazz)
                 || JacsServiceData.class.equals(clazz)
-                || JacsServiceEvent.class.equals(clazz);
+                || JacsServiceEvent.class.equals(clazz)
+                || clazz.getAnnotation(JsonAutoDetect.class) != null;
     }
 }

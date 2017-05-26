@@ -1,9 +1,11 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
 
 import java.util.List;
 
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class MergeTilePairResult {
     private String tileName;
     private String mergeResultFile;
