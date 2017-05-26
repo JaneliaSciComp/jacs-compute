@@ -1,6 +1,5 @@
 package org.janelia.jacs2.cdi;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
@@ -17,7 +16,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
-import org.janelia.jacs2.dao.mongo.utils.JsonNodeCodec;
+import org.janelia.jacs2.dao.mongo.utils.JacksonCodecProvider;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
 import org.janelia.jacs2.dao.mongo.utils.BigIntegerCodec;
@@ -56,7 +55,8 @@ public class PersistenceProducer {
                         new EnumCodec<>(FileType.class),
                         new MapOfEnumCodec<>(FileType.class, HashMap.class),
                         new MapOfEnumCodec<>(FileType.class, LinkedHashMap.class)
-                )
+                ),
+                CodecRegistries.fromProviders(new JacksonCodecProvider(objectMapperFactory))
         );
         MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder().codecRegistry(codecRegistry);
         MongoClientURI mongoConnectionString = new MongoClientURI(nmongoConnectionURL, optionsBuilder);
