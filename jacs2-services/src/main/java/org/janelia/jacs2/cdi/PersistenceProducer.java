@@ -55,8 +55,8 @@ public class PersistenceProducer {
                         new MapOfEnumCodec<>(FileType.class, HashMap.class),
                         new MapOfEnumCodec<>(FileType.class, LinkedHashMap.class)
                 ),
-                CodecRegistries.fromProviders(new JacksonCodecProvider(objectMapperFactory)),
-                CodecRegistries.fromProviders(new DomainCodecProvider(objectMapperFactory))
+                CodecRegistries.fromProviders(new DomainCodecProvider(objectMapperFactory)),
+                CodecRegistries.fromProviders(new JacksonCodecProvider(objectMapperFactory))
         );
         MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder().codecRegistry(codecRegistry);
         MongoClientURI mongoConnectionString = new MongoClientURI(nmongoConnectionURL, optionsBuilder);
