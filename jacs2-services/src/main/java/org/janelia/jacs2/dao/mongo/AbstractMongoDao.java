@@ -1,8 +1,6 @@
 package org.janelia.jacs2.dao.mongo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -32,7 +30,6 @@ import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -165,7 +162,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     }
 
     protected long update(Bson query, Bson toUpdate, UpdateOptions updateOptions) {
-        LOG.debug("Update: {} -> {}", query, toUpdate);
+        LOG.trace("Update: {} -> {}", query, toUpdate);
         UpdateResult result = mongoCollection.updateOne(query, toUpdate, updateOptions);
         return result.getMatchedCount();
     }
