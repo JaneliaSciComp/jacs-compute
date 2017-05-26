@@ -26,6 +26,7 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -224,12 +225,9 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     @Override
     public void updateServiceResult(JacsServiceData serviceData) {
         serviceData.setModificationDate(new Date());
-        UpdateOptions updateOptions = new UpdateOptions();
-        updateOptions.upsert(false);
-        update(getUpdateMatchCriteria(serviceData),
-                Updates.combine(
-                        Updates.set("serializableResult", serviceData.getSerializableResult()),
-                        Updates.set("modificationDate", serviceData.getModificationDate())),
-                updateOptions);
+        Map<String, Object> updatedFields = new HashMap<>();
+        updatedFields.put("serializableResult", serviceData.getSerializableResult());
+        updatedFields.put("modificationDate", serviceData.getModificationDate());
+        update(serviceData, updatedFields);
     }
 }

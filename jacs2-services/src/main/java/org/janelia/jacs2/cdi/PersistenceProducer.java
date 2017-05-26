@@ -16,7 +16,6 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
-import org.janelia.jacs2.dao.mongo.utils.JacksonCodecProvider;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
 import org.janelia.jacs2.dao.mongo.utils.BigIntegerCodec;

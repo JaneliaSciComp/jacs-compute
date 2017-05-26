@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -171,14 +172,8 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
 
     protected Bson getUpdates(Map<String, Object> fieldsToUpdate) {
         List<Bson> fieldUpdates = fieldsToUpdate.entrySet().stream()
-                .map(e -> {
-                    Object value = e.getValue();
-                    if (value == null) {
-                        return Updates.unset(e.getKey());
-                    } else {
-                        return Updates.set(e.getKey(), e.getValue());
-                    }
-                }).collect(Collectors.toList());
+                .map(e -> getFieldUpdate(e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
         return Updates.combine(fieldUpdates);
     }
 
@@ -198,5 +193,15 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         }
         archiveMongoCollection.insertOne(entity);
         delete(entity);
+    }
+
+    private Bson getFieldUpdate(String fieldName, Object value) {
+        if (value == null) {
+            return Updates.unset(fieldName);
+        } else if (value instanceof Iterable) {
+            return Updates.pushEach(fieldName, ImmutableList.copyOf((Iterable) value));
+        } else {
+            return Updates.set(fieldName, value);
+        }
     }
 }
