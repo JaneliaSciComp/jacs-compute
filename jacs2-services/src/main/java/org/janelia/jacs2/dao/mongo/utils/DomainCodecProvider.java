@@ -72,6 +72,7 @@ public class DomainCodecProvider implements CodecProvider {
                 || ImmutableSet.of(ObjectiveSample.class, AnatomicalArea.class, SampleTile.class, TileLsmPair.class, SamplePipelineRun.class).contains(clazz)
                 || Subject.class.equals(clazz)
                 || JacsServiceData.class.equals(clazz)
-                || JacsServiceEvent.class.equals(clazz);
+                || JacsServiceEvent.class.equals(clazz)
+                || JsonNode.class.isAssignableFrom(clazz);
     }
 }
