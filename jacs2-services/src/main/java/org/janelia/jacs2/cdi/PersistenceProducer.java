@@ -45,7 +45,6 @@ public class PersistenceProducer {
     @Produces
     public MongoClient createMongoClient(ObjectMapperFactory objectMapperFactory) {
         CodecRegistry codecRegistry = CodecRegistries.fromRegistries(
-                MongoClient.getDefaultCodecRegistry(),
                 CodecRegistries.fromProviders(new DomainCodecProvider(objectMapperFactory)),
                 CodecRegistries.fromCodecs(
                         new BigIntegerCodec(),
@@ -54,7 +53,8 @@ public class PersistenceProducer {
                         new EnumCodec<>(FileType.class),
                         new MapOfEnumCodec<>(FileType.class, HashMap.class),
                         new MapOfEnumCodec<>(FileType.class, LinkedHashMap.class)
-                )
+                ),
+                MongoClient.getDefaultCodecRegistry()
         );
         MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder().codecRegistry(codecRegistry);
         MongoClientURI mongoConnectionString = new MongoClientURI(nmongoConnectionURL, optionsBuilder);
