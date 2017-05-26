@@ -2,10 +2,6 @@ package org.janelia.it.jacs.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.janelia.jacs2.dao.mongo.utils.ISODateDeserializer;
-import org.janelia.jacs2.dao.mongo.utils.ISODateSerializer;
 import org.janelia.jacs2.model.BaseEntity;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 

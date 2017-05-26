@@ -1,7 +1,9 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.commons.lang3.StringUtils;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 public class SampleImageFile {
     private Number id;
     private Number sampleId;

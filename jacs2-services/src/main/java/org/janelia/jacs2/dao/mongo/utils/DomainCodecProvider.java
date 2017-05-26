@@ -16,6 +16,7 @@ import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
@@ -71,9 +72,9 @@ public class DomainCodecProvider implements CodecProvider {
     private <T> boolean checkCodecApplicability(Class<T> clazz) {
         return DomainObject.class.isAssignableFrom(clazz)
                 || ImmutableSet.of(ObjectiveSample.class, AnatomicalArea.class, SampleTile.class, TileLsmPair.class, SamplePipelineRun.class).contains(clazz)
+                || PipelineResult.class.isAssignableFrom(clazz)
                 || Subject.class.equals(clazz)
                 || JacsServiceData.class.equals(clazz)
-                || JacsServiceEvent.class.equals(clazz)
-                || (JsonNode.class.isAssignableFrom(clazz) && !ValueNode.class.isAssignableFrom(clazz));
+                || JacsServiceEvent.class.equals(clazz);
     }
 }

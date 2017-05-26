@@ -11,25 +11,16 @@ import org.apache.commons.dbcp2.PoolableConnectionFactory;
 import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
-import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
-import org.janelia.jacs2.dao.mongo.utils.BigIntegerCodec;
-import org.janelia.jacs2.dao.mongo.utils.DomainCodecProvider;
-import org.janelia.jacs2.dao.mongo.utils.EnumCodec;
-import org.janelia.jacs2.dao.mongo.utils.MapOfEnumCodec;
+import org.janelia.jacs2.dao.mongo.utils.RegistryHelper;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 
 @ApplicationScoped
 public class PersistenceProducer {
@@ -44,18 +35,7 @@ public class PersistenceProducer {
     @ApplicationScoped
     @Produces
     public MongoClient createMongoClient(ObjectMapperFactory objectMapperFactory) {
-        CodecRegistry codecRegistry = CodecRegistries.fromRegistries(
-                CodecRegistries.fromProviders(new DomainCodecProvider(objectMapperFactory)),
-                CodecRegistries.fromCodecs(
-                        new BigIntegerCodec(),
-                        new EnumCodec<>(JacsServiceState.class),
-                        new EnumCodec<>(ProcessingLocation.class),
-                        new EnumCodec<>(FileType.class),
-                        new MapOfEnumCodec<>(FileType.class, HashMap.class),
-                        new MapOfEnumCodec<>(FileType.class, LinkedHashMap.class)
-                ),
-                MongoClient.getDefaultCodecRegistry()
-        );
+        CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(objectMapperFactory);
         MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder().codecRegistry(codecRegistry);
         MongoClientURI mongoConnectionString = new MongoClientURI(nmongoConnectionURL, optionsBuilder);
         MongoClient mongoClient = new MongoClient(mongoConnectionString);
