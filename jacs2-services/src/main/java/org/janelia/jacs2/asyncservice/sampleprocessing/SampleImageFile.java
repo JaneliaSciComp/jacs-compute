@@ -1,9 +1,9 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.model.jacsservice.annotation.JacsServiceResultType;
 
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JacsServiceResultType
 public class SampleImageFile {
     private Number id;
     private Number sampleId;

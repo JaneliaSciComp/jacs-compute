@@ -1,9 +1,6 @@
 package org.janelia.jacs2.dao.mongo.utils;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ValueNode;
 import com.google.common.collect.ImmutableSet;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -24,6 +21,7 @@ import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
+import org.janelia.jacs2.model.jacsservice.annotation.JacsServiceResultType;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -71,12 +69,6 @@ public class DomainCodecProvider implements CodecProvider {
     }
 
     private <T> boolean checkCodecApplicability(Class<T> clazz) {
-        return DomainObject.class.isAssignableFrom(clazz)
-                || ImmutableSet.of(ObjectiveSample.class, AnatomicalArea.class, SampleTile.class, TileLsmPair.class, SamplePipelineRun.class).contains(clazz)
-                || PipelineResult.class.isAssignableFrom(clazz)
-                || Subject.class.equals(clazz)
-                || JacsServiceData.class.equals(clazz)
-                || JacsServiceEvent.class.equals(clazz)
-                || clazz.getAnnotation(JsonAutoDetect.class) != null;
+        return true;
     }
 }

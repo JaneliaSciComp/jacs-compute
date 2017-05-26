@@ -1,8 +1,11 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
+import org.janelia.jacs2.model.jacsservice.annotation.JacsServiceResultType;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@JacsServiceResultType
 public class BasicMIPsAndMoviesResult {
     private String resultsDir;
     private List<String> fileList = new ArrayList<>();

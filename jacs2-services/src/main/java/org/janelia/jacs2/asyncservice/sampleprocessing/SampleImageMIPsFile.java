@@ -1,8 +1,11 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
+import org.janelia.jacs2.model.jacsservice.annotation.JacsServiceResultType;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@JacsServiceResultType
 public class SampleImageMIPsFile {
     private SampleImageFile sampleImageFile;
     private String mipsResultsDir;

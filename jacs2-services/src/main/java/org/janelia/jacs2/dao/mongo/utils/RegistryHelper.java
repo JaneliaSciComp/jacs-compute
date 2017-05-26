@@ -18,7 +18,6 @@ public class RegistryHelper {
     public static CodecRegistry createCodecRegistry(ObjectMapperFactory objectMapperFactory) {
         return CodecRegistries.fromRegistries(
                 MongoClient.getDefaultCodecRegistry(),
-                CodecRegistries.fromProviders(new DomainCodecProvider(objectMapperFactory)),
                 CodecRegistries.fromCodecs(
                         new BigIntegerCodec(),
                         new EnumCodec<>(JacsServiceState.class),
@@ -26,7 +25,8 @@ public class RegistryHelper {
                         new EnumCodec<>(FileType.class),
                         new MapOfEnumCodec<>(FileType.class, HashMap.class),
                         new MapOfEnumCodec<>(FileType.class, LinkedHashMap.class)
-                )
+                ),
+                CodecRegistries.fromProviders(new DomainCodecProvider(objectMapperFactory))
         );
     }
 
