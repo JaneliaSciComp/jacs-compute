@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -196,7 +197,11 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         if (value == null) {
             return Updates.unset(fieldName);
         } else if (value instanceof Iterable) {
-            return Updates.pushEach(fieldName, ImmutableList.copyOf((Iterable) value));
+            if (Set.class.isAssignableFrom(value.getClass())) {
+                return Updates.addEachToSet(fieldName, ImmutableList.copyOf((Iterable) value));
+            } else {
+                return Updates.pushEach(fieldName, ImmutableList.copyOf((Iterable) value));
+            }
         } else {
             return Updates.set(fieldName, value);
         }
