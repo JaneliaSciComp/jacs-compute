@@ -220,4 +220,16 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
         updateOptions.upsert(false);
         update(getUpdateMatchCriteria(jacsServiceData), Updates.push("events", serviceEvent), updateOptions);
     }
+
+    @Override
+    public void updateServiceResult(JacsServiceData serviceData) {
+        serviceData.setModificationDate(new Date());
+        UpdateOptions updateOptions = new UpdateOptions();
+        updateOptions.upsert(false);
+        update(getUpdateMatchCriteria(serviceData),
+                Updates.combine(
+                        Updates.set("serializableResult", serviceData.getSerializableResult()),
+                        Updates.set("modificationDate", serviceData.getModificationDate())),
+                updateOptions);
+    }
 }

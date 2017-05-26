@@ -104,10 +104,13 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
     }
 
     public void updateServiceResult(JacsServiceData jacsServiceData) {
-        Map<String, Object> fieldsToUpdate = new LinkedHashMap<>();
-        fieldsToUpdate.put("serializableResult", jacsServiceData.getSerializableResult());
         if (jacsServiceData.hasId()) {
-            update(jacsServiceData, fieldsToUpdate);
+            JacsServiceDataDao jacsServiceDataDao = daoSource.get();
+            try {
+                jacsServiceDataDao.updateServiceResult(jacsServiceData);
+            } finally {
+                daoSource.destroy(jacsServiceDataDao);
+            }
         }
     }
 

@@ -54,7 +54,6 @@ public class PersistenceProducer {
                         new EnumCodec<>(JacsServiceState.class),
                         new EnumCodec<>(ProcessingLocation.class),
                         new EnumCodec<>(FileType.class),
-                        new JsonNodeCodec(objectMapperFactory, MongoClient.getDefaultCodecRegistry()),
                         new MapOfEnumCodec<>(FileType.class, HashMap.class),
                         new MapOfEnumCodec<>(FileType.class, LinkedHashMap.class)
                 )

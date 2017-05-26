@@ -9,7 +9,6 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public interface JacsServiceDataDao extends ReadWriteDao<JacsServiceData, Number> {
@@ -26,4 +25,5 @@ public interface JacsServiceDataDao extends ReadWriteDao<JacsServiceData, Number
     void saveServiceHierarchy(JacsServiceData serviceData);
     void archiveServiceHierarchy(JacsServiceData serviceData);
     void addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent);
+    void updateServiceResult(JacsServiceData serviceData);
 }
