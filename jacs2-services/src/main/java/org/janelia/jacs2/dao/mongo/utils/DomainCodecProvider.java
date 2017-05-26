@@ -2,6 +2,7 @@ package org.janelia.jacs2.dao.mongo.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ValueNode;
 import com.google.common.collect.ImmutableSet;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -73,6 +74,6 @@ public class DomainCodecProvider implements CodecProvider {
                 || Subject.class.equals(clazz)
                 || JacsServiceData.class.equals(clazz)
                 || JacsServiceEvent.class.equals(clazz)
-                || JsonNode.class.isAssignableFrom(clazz);
+                || (JsonNode.class.isAssignableFrom(clazz) && !ValueNode.class.isAssignableFrom(clazz));
     }
 }
