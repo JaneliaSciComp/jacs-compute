@@ -97,7 +97,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
                 BasicMIPsAndMoviesResult result = new BasicMIPsAndMoviesResult();
                 result.setResultsDir(getResultsDir(args).toString());
                 FileUtils.lookupFiles(getResultsDir(args), 1, resultsPattern)
-                        .map(Path::toFile)
+                        .map(Path::toString)
                         .forEach(result::addFile);
                 return result;
             }
@@ -175,18 +175,18 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
                 .thenApply(pd -> {
                     BasicMIPsAndMoviesResult result = getResultHandler().collectResult(pd);
                     result.getFileList().stream()
-                            .filter(f -> f.getName().endsWith(".avi"))
+                            .filter(f -> f.endsWith(".avi"))
                             .forEach(f -> submitMpegConverterService(f, "Convert AVI to MPEG", pd.getJacsServiceData(), pd.getResult()));
                     return pd;
                 });
     }
 
-    private JacsServiceData submitMpegConverterService(File aviFile, String description, JacsServiceData jacsServiceData, JacsServiceData dep) {
+    private JacsServiceData submitMpegConverterService(String aviFileName, String description, JacsServiceData jacsServiceData, JacsServiceData dep) {
         JacsServiceData mpegConverterService = mpegConverterProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                 .description(description)
                 .waitFor(dep)
                 .build(),
-                new ServiceArg("-input", aviFile.getAbsolutePath())
+                new ServiceArg("-input", aviFileName)
         );
         return submitDependencyIfNotPresent(jacsServiceData, mpegConverterService);
     }

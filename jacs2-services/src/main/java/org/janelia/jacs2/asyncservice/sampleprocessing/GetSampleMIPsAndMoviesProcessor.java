@@ -95,7 +95,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
                             BasicMIPsAndMoviesResult basicMIPsAndMoviesResult = basicMIPsAndMoviesProcessor.getResultHandler().getServiceDataResult(basicMipsAndMoviesServiceData);
                             SampleImageMIPsFile simf = simfEntry.getValue();
                             simf.setMipsResultsDir(basicMIPsAndMoviesResult.getResultsDir());
-                            basicMIPsAndMoviesResult.getFileList().stream().forEach(f -> simf.addMipFile(f.getAbsolutePath()));
+                            basicMIPsAndMoviesResult.getFileList().stream().forEach(simf::addMipFile);
                             return simf;
                         })
                         .collect(Collectors.toList());
