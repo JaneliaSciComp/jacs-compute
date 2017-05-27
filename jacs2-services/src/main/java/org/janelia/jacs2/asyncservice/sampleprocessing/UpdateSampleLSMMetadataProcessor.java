@@ -42,8 +42,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Named("updateSampleLSMMetadata")
 @MdcContext
+@Named("updateSampleLSMMetadata")
 public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServiceProcessor<GetSampleLsmsIntermediateResult, List<SampleImageFile>> {
 
     static class UpdateLSMsMetadataArgs extends SampleServiceArgs {
