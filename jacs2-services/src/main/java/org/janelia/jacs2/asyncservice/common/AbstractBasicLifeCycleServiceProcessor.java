@@ -31,7 +31,6 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
     }
 
-    @MdcContext
     @Override
     public ServiceComputation<T> process(JacsServiceData jacsServiceData) {
         return computationFactory.newCompletedComputation(jacsServiceData)
