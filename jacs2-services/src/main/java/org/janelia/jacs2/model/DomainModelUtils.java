@@ -21,6 +21,7 @@ import java.lang.reflect.ParameterizedType;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 public class DomainModelUtils {
     private static LoadingCache<String, Class<? extends BaseEntity>> ENTITY_CLASS_CACHE = CacheBuilder.newBuilder()
@@ -115,26 +116,26 @@ public class DomainModelUtils {
         return mongoMapping;
     }
 
-    public static void setFullPathForFileType(HasFiles objWithFiles, FileType fileType, String fileName) {
+    public static Map<String, Object> setFullPathForFileType(HasFiles objWithFiles, FileType fileType, String fileName) {
         if (StringUtils.isBlank(fileName)) {
-            objWithFiles.removeFileName(fileType);
+            return objWithFiles.removeFileName(fileType);
         } else {
-            objWithFiles.setFileName(fileType, fileName);
+            return objWithFiles.setFileName(fileType, fileName);
         }
     }
 
-    public static void setRelativePathForFileType(HasRelativeFiles objWithFiles, FileType fileType, String fileName) {
+    public static Map<String, Object> setRelativePathForFileType(HasRelativeFiles objWithFiles, FileType fileType, String fileName) {
         if (StringUtils.isBlank(fileName)) {
-            objWithFiles.removeFileName(fileType);
+            return objWithFiles.removeFileName(fileType);
         } else {
             if (!objWithFiles.hasFilepath())
-                objWithFiles.setFileName(fileType, fileName);
+                return objWithFiles.setFileName(fileType, fileName);
             else if (fileName.startsWith(objWithFiles.getFilepath())) {
                 Path parent = Paths.get(objWithFiles.getFilepath());
                 Path child = Paths.get(fileName);
-                objWithFiles.setFileName(fileType, parent.relativize(child).toString());
+                return objWithFiles.setFileName(fileType, parent.relativize(child).toString());
             } else {
-                objWithFiles.setFileName(fileType, fileName);
+                return objWithFiles.setFileName(fileType, fileName);
             }
         }
     }

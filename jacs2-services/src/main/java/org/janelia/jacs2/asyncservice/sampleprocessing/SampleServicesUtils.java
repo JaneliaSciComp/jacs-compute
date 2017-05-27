@@ -46,15 +46,18 @@ public class SampleServicesUtils {
      * @param fileGroups list of filegroups
      * @return true if the object has been changed
      */
-    public static boolean updateFiles(HasRelativeFiles objectWithFiles, List<FileGroup> fileGroups) {
+    public static Map<String, Object> updateFiles(HasRelativeFiles objectWithFiles, List<FileGroup> fileGroups) {
         return fileGroups.stream()
                 .flatMap(group -> group.getFiles().entrySet().stream())
                 .map(fileTypeEntry -> {
-                    DomainModelUtils.setRelativePathForFileType(objectWithFiles, fileTypeEntry.getKey(), fileTypeEntry.getValue());
-                    return true;
+                    return DomainModelUtils.setRelativePathForFileType(objectWithFiles, fileTypeEntry.getKey(), fileTypeEntry.getValue());
                 })
-                .reduce((r1, r2) -> r1 || r2)
-                .orElse(false);
+                .reduce(new LinkedHashMap<>(), (r1, r2) -> {
+                    Map<String, Object> result = new LinkedHashMap<>();
+                    result.putAll(r1);
+                    result.putAll(r2);
+                    return result;
+                });
     }
 
     public static List<FileGroup> createFileGroups(String groupFilePath, List<String> filepaths) {

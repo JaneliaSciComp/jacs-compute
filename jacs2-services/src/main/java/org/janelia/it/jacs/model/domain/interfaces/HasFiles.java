@@ -16,6 +16,6 @@ public interface HasFiles {
         String fn = getFileName(fileType);
         return fn != null && fn.trim().length() > 0;
     }
-    void setFileName(FileType fileType, String fileName);
-    void removeFileName(FileType fileType);
+    Map<String, Object> setFileName(FileType fileType, String fileName);
+    Map<String, Object> removeFileName(FileType fileType);
 }

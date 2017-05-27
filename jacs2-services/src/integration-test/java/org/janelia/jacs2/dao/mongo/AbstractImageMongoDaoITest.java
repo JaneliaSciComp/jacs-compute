@@ -78,18 +78,6 @@ public class AbstractImageMongoDaoITest extends AbstractDomainObjectDaoITest<Ima
         findByIdsWithSubject(testDao);
     }
 
-    @Test
-    public void updateImageFiles() {
-        Image testImage = createImage("line", "area");
-        testDao.save(testImage);
-        testImage.setFileName(FileType.ChanFile, "chan");
-        testImage.setFileName(FileType.MaskFile, "mask");
-        testDao.updateImageFiles(testImage);
-        Image retrievedImages = testDao.findById(testImage.getId());
-        assertThat(retrievedImages.getFiles(), hasEntry(FileType.ChanFile, "chan"));
-        assertThat(retrievedImages.getFiles(), hasEntry(FileType.MaskFile, "mask"));
-    }
-
     @Override
     protected List<Image> createMultipleTestItems(int nItems) {
         List<Image> testItems = new ArrayList<>();

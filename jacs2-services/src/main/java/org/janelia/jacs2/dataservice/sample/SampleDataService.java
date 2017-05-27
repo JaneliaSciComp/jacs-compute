@@ -194,10 +194,6 @@ public class SampleDataService {
         lsmImageDao.update(lsmImage, updatedFields);
     }
 
-    public void updateLSMFiles(LSMImage lsmImage) {
-        lsmImageDao.updateImageFiles(lsmImage);
-    }
-
     public void updateSample(Sample sample, Map<String, Object> updatedFields) {
         sampleDao.update(sample, updatedFields);
     }

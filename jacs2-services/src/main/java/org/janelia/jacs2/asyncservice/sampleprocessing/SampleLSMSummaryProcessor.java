@@ -27,6 +27,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -199,8 +200,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
     private void updateLSM(LSMImage lsmImage, LSMSummary lsmSummary) {
         logger.info("Update LSM {} with {}", lsmImage, lsmSummary);
         List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(lsmImage.getFilepath(), lsmSummary.getMips());
-        if (SampleServicesUtils.updateFiles(lsmImage, fGroups)) {
-            sampleDataService.updateLSMFiles(lsmImage);
-        }
+        Map<String, Object> updates = SampleServicesUtils.updateFiles(lsmImage, fGroups);
+        sampleDataService.updateLSM(lsmImage, updates);
     }
 }

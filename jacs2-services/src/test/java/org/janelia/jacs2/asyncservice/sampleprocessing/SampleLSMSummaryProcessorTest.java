@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
@@ -18,7 +19,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -172,7 +175,10 @@ public class SampleLSMSummaryProcessorTest {
                         hasItem(new HasPropertyWithValue<>("mipsResultsDir", equalTo(montageParameters.montageData.getMipsResultsDir())))
                 )
         );
-        verify(sampleDataService).updateLSMFiles(lsm);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("files.ReferenceMip", "i1_reference.png");
+        updates.put("files.SignalMip", null);
+        verify(sampleDataService).updateLSM(lsm, updates);
     }
 
     @Test

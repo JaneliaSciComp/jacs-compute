@@ -9,6 +9,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,21 +29,29 @@ public class HasFileImpl implements HasFiles {
     }
 
     @Override
-    public void setFileName(FileType fileType, String fileName) {
+    public Map<String, Object> setFileName(FileType fileType, String fileName) {
+        Map<String, Object> updates = new LinkedHashMap<>();
         String existingFile = getFileName(fileType);
         if (StringUtils.isNotBlank(existingFile) && !StringUtils.equals(existingFile, fileName)) {
             deprecatedFiles.add(new FileReference(fileType, existingFile));
+            updates.put("deprecatedFiles", deprecatedFiles);
         }
         files.put(fileType, fileName);
+        updates.put("files." + fileType.name(), fileName);
+        return updates;
     }
 
     @Override
-    public void removeFileName(FileType fileType) {
+    public Map<String, Object> removeFileName(FileType fileType) {
+        Map<String, Object> updates = new LinkedHashMap<>();
         String existingFile = getFileName(fileType);
         if (StringUtils.isNotBlank(existingFile)) {
             deprecatedFiles.add(new FileReference(fileType, existingFile));
+            updates.put("deprecatedFiles", deprecatedFiles);
         }
         files.remove(fileType);
+        updates.put("files." + fileType.name(), null);
+        return updates;
     }
 
     public List<FileReference> getDeprecatedFiles() {

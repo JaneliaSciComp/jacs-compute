@@ -50,13 +50,13 @@ public class FileGroup implements HasRelativeFiles {
     }
 
     @Override
-    public void setFileName(FileType fileType, String fileName) {
-        filesImpl.setFileName(fileType, fileName);
+    public Map<String, Object> setFileName(FileType fileType, String fileName) {
+        return filesImpl.setFileName(fileType, fileName);
     }
 
     @Override
-    public void removeFileName(FileType fileType) {
-        filesImpl.removeFileName(fileType);
+    public Map<String, Object> removeFileName(FileType fileType) {
+        return filesImpl.removeFileName(fileType);
     }
 
 }
