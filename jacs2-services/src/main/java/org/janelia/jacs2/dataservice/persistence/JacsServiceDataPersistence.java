@@ -13,8 +13,7 @@ import org.janelia.jacs2.model.page.PageResult;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -47,6 +46,15 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
             return jacsServiceDataDao.findServicesByState(requestStates, pageRequest);
+        } finally {
+            daoSource.destroy(jacsServiceDataDao);
+        }
+    }
+
+    public List<JacsServiceData> findChildServices(Number serviceId) {
+        JacsServiceDataDao jacsServiceDataDao = daoSource.get();
+        try {
+            return jacsServiceDataDao.findChildServices(serviceId);
         } finally {
             daoSource.destroy(jacsServiceDataDao);
         }

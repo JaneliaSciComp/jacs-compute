@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * Abstract implementation of a service processor that "encodes" the life cycle of a computation. The class is parameterized
@@ -101,12 +102,14 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
         return sdp -> {
             List<JacsServiceData> running = new ArrayList<>();
             List<JacsServiceData> failed = new ArrayList<>();
-            JacsServiceData jacsServiceData = jacsServiceDataPersistence.findServiceHierarchy(sdp.getId());
-            if (jacsServiceData == null) {
+            if (!sdp.hasId()) {
                 return new JacsServiceResult<>(sdp, true);
             }
-            jacsServiceData.serviceHierarchyStream()
-                    .filter(sd -> !sd.getId().equals(jacsServiceData.getId()))
+            List<JacsServiceData> childServices = jacsServiceDataPersistence.findChildServices(sdp.getId());
+            List<JacsServiceData> dependentServices = jacsServiceDataPersistence.findByIds(sdp.getDependenciesIds());
+            Stream.concat(
+                    childServices.stream(),
+                    dependentServices.stream())
                     .forEach(sd -> {
                         if (!sd.hasCompleted()) {
                             running.add(sd);
@@ -116,19 +119,19 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
                     });
             if (CollectionUtils.isNotEmpty(failed)) {
                 jacsServiceDataPersistence.updateServiceState(
-                        jacsServiceData,
+                        sdp,
                         JacsServiceState.CANCELED,
                         Optional.of(JacsServiceData.createServiceEvent(
                                 JacsServiceEventTypes.CANCELED,
                                 String.format("Canceled because one or more service dependencies finished unsuccessfully: %s", failed))));
-                logger.warn("Service {} canceled because of {}", jacsServiceData, failed);
-                throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " canceled");
+                logger.warn("Service {} canceled because of {}", sdp, failed);
+                throw new ComputationException(sdp, "Service " + sdp.getId() + " canceled");
             }
             if (CollectionUtils.isEmpty(running)) {
-                return new JacsServiceResult<>(jacsServiceData, true);
+                return new JacsServiceResult<>(sdp, true);
             }
-            verifyAndFailIfTimeOut(jacsServiceData);
-            return new JacsServiceResult<>(jacsServiceData, false);
+            verifyAndFailIfTimeOut(sdp);
+            return new JacsServiceResult<>(sdp, false);
         };
     }
 

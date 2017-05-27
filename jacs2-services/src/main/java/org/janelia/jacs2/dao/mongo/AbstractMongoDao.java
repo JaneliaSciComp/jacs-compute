@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableList;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
@@ -31,6 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -79,6 +82,15 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     public T findById(Number id) {
         List<T> entityDocs = find(eq("_id", id), null, 0, 1, getEntityType());
         return CollectionUtils.isEmpty(entityDocs) ? null : entityDocs.get(0);
+    }
+
+    @Override
+    public List<T> findByIds(Collection<Number> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        } else {
+            return find(Filters.in("_id", ids), null, 0, 1, getEntityType());
+        }
     }
 
     @Override

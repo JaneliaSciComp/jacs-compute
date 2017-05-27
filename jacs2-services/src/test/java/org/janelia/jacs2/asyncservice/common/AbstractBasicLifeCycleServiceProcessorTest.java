@@ -1,5 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -156,10 +158,10 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
         testJacsServiceDataDependency.setId(TEST_ID.longValue() + 1);
 
         testJacsServiceData.addServiceDependency(testJacsServiceDataDependency);
-        when(jacsServiceDataPersistence.findServiceHierarchy(TEST_ID))
+        when(jacsServiceDataPersistence.findByIds(ImmutableSet.of(TEST_ID.longValue() + 1)))
                 .thenAnswer(invocation -> {
                     testJacsServiceDataDependency.setState(JacsServiceState.CANCELED);
-                    return testJacsServiceData;
+                    return ImmutableList.of(testJacsServiceDataDependency);
                 });
 
         testSuccessfullProcessor.process(testJacsServiceData)
@@ -218,8 +220,8 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
         testJacsServiceData.setServiceTimeout(1L);
 
         when(jacsServiceDataPersistence.findById(TEST_ID)).thenReturn(testJacsServiceData);
-        when(jacsServiceDataPersistence.findServiceHierarchy(TEST_ID))
-                .thenReturn(testJacsServiceData);
+        when(jacsServiceDataPersistence.findByIds(ImmutableSet.of(TEST_ID.longValue() + 1)))
+                .thenReturn(ImmutableList.of(testJacsServiceDataDependency));
 
         testSuccessfullProcessor.process(testJacsServiceData)
                 .whenComplete((r, e) -> {

@@ -3,6 +3,8 @@ package org.janelia.jacs2.dataservice.persistence;
 import org.janelia.jacs2.dao.ReadWriteDao;
 
 import javax.enterprise.inject.Instance;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
@@ -16,6 +18,15 @@ public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
         D dao = daoSource.get();
         try {
             return dao.findById(id);
+        } finally {
+            daoSource.destroy(dao);
+        }
+    }
+
+    public List<T> findByIds(Collection<I> ids) {
+        D dao = daoSource.get();
+        try {
+            return dao.findByIds(ids);
         } finally {
             daoSource.destroy(dao);
         }
