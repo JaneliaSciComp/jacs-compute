@@ -105,6 +105,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
             if (!sdp.hasId()) {
                 return new JacsServiceResult<>(sdp, true);
             }
+            // check if the children and the immediate dependencies are done
             List<JacsServiceData> childServices = jacsServiceDataPersistence.findChildServices(sdp.getId());
             List<JacsServiceData> dependentServices = jacsServiceDataPersistence.findByIds(sdp.getDependenciesIds());
             Stream.concat(
