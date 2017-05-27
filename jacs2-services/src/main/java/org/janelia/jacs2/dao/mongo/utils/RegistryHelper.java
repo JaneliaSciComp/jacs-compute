@@ -18,8 +18,6 @@ public class RegistryHelper {
                         new EnumCodec<>(JacsServiceState.class),
                         new EnumCodec<>(ProcessingLocation.class),
                         new EnumCodec<>(FileType.class)
-//                        new MapOfEnumCodec<>(FileType.class, HashMap.class),
-//                        new MapOfEnumCodec<>(FileType.class, LinkedHashMap.class)
                 ),
                 CodecRegistries.fromProviders(new JacksonCodecProvider(objectMapperFactory))
         );

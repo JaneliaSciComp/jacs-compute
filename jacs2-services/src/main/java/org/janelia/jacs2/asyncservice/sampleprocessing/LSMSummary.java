@@ -1,13 +1,11 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.jacs2.model.jacsservice.annotation.JacsServiceResultType;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@JacsServiceResultType
 public class LSMSummary {
     private SampleImageFile sampleImageFile;
     private String mipsResultsDir;

@@ -1,9 +1,7 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.model.jacsservice.annotation.JacsServiceResultType;
 
-@JacsServiceResultType
 public class SampleImageFile {
     private Number id;
     private Number sampleId;
