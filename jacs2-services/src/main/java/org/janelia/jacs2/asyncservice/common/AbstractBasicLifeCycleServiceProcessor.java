@@ -22,7 +22,6 @@ import java.util.stream.Stream;
  *           current service
  * @param <T> represents the result type
  */
-@MdcContext
 public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends AbstractServiceProcessor<T> {
 
     public AbstractBasicLifeCycleServiceProcessor(ServiceComputationFactory computationFactory,

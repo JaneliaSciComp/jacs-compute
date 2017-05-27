@@ -17,6 +17,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.tools.LSMProcessingTools;
 import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMDetectionChannel;
@@ -42,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Named("updateSampleLSMMetadata")
+@MdcContext
 public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServiceProcessor<GetSampleLsmsIntermediateResult, List<SampleImageFile>> {
 
     static class UpdateLSMsMetadataArgs extends SampleServiceArgs {
