@@ -16,14 +16,16 @@ public class MdcContextInterceptor implements Serializable {
     public Object setMdcContext(InvocationContext invocationContext)
             throws Exception {
         Object[] args = invocationContext.getParameters();
-        for (Object arg : args) {
-            if (arg instanceof JacsServiceData) {
-                JacsServiceData sd = (JacsServiceData) arg;
-                MDC.put("serviceName", sd.getName());
-                if (sd.getRootServiceId() != null) {
-                    MDC.put("rootService", sd.getRootServiceId().toString());
-                } else {
-                    MDC.put("rootService", "ROOT");
+        if (args != null) {
+            for (Object arg : args) {
+                if (arg instanceof JacsServiceData) {
+                    JacsServiceData sd = (JacsServiceData) arg;
+                    MDC.put("serviceName", sd.getName());
+                    if (sd.getRootServiceId() != null) {
+                        MDC.put("rootService", sd.getRootServiceId().toString());
+                    } else {
+                        MDC.put("rootService", "ROOT");
+                    }
                 }
             }
         }
