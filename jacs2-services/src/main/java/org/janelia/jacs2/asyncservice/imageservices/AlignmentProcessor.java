@@ -144,7 +144,6 @@ public class AlignmentProcessor extends AbstractBasicLifeCycleServiceProcessor<V
         alignmentArgs.add(new ServiceArg("-step", args.step));
         alignmentArgs.add(new ServiceArg("-mountingProtocol", args.mountingProtocol));
 
-
         if (args.zFlip) alignmentArgs.add(new ServiceArg("-zflip"));
         if (StringUtils.isNotBlank(args.fslOutputType)) alignmentArgs.add(new ServiceArg("-fslOutputType", args.fslOutputType));
         alignmentArgs.add(new ServiceArg("-resultsDir", args.resultsDir));
