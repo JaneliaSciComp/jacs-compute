@@ -3,7 +3,6 @@ package org.janelia.jacs2.asyncservice.imageservices;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -16,8 +15,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.fileservices.FileMoveProcessor;
 import org.janelia.jacs2.asyncservice.fileservices.FileRemoveProcessor;
-import org.janelia.jacs2.asyncservice.imageservices.stitching.StitchedImageInfo;
-import org.janelia.jacs2.asyncservice.qualifier.ServiceName;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -27,7 +24,6 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -88,7 +84,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new Vaa3dStitchAndBlendArgs());
+        return ServiceArgs.getMetadata(Vaa3dStitchAndBlendProcessor.class, new Vaa3dStitchAndBlendArgs());
     }
 
     @Override

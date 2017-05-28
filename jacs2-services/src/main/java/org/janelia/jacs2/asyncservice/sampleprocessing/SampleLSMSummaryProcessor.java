@@ -89,7 +89,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new SampleServiceArgs());
+        return ServiceArgs.getMetadata(SampleLSMSummaryProcessor.class, new SampleServiceArgs());
     }
 
     @Override

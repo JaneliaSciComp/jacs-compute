@@ -69,7 +69,7 @@ public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<Void, Fi
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new FileCopyArgs());
+        return ServiceArgs.getMetadata(FileCopyProcessor.class, new FileCopyArgs());
     }
 
     @Override

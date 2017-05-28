@@ -70,7 +70,7 @@ public class Vaa3dChannelMapProcessor extends AbstractBasicLifeCycleServiceProce
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new Vaa3dChannelMapArgs());
+        return ServiceArgs.getMetadata(Vaa3dChannelMapProcessor.class, new Vaa3dChannelMapArgs());
     }
 
     @Override

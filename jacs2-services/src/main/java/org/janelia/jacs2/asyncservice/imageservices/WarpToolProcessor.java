@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
@@ -79,7 +78,7 @@ public class WarpToolProcessor extends AbstractExeBasedServiceProcessor<Void, Vo
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new WarpToolArgs());
+        return ServiceArgs.getMetadata(WarpToolProcessor.class, new WarpToolArgs());
     }
 
     @Override

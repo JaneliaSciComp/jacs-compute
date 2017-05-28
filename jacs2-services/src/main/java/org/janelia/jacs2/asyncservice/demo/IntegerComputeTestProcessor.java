@@ -45,7 +45,7 @@ public class IntegerComputeTestProcessor extends AbstractServiceProcessor<Long> 
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new IntegerComputeTestArgs());
+        return ServiceArgs.getMetadata(IntegerComputeTestProcessor.class, new IntegerComputeTestArgs());
     }
 
     @Override

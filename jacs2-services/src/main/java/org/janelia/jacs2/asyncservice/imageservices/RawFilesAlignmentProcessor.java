@@ -133,7 +133,7 @@ public class RawFilesAlignmentProcessor extends AbstractBasicLifeCycleServicePro
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new AlignmentArgs());
+        return ServiceArgs.getMetadata(RawFilesAlignmentProcessor.class, new AlignmentArgs());
     }
 
     @Override

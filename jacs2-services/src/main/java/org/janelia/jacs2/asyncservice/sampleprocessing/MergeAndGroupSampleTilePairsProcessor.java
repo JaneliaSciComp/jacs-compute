@@ -182,7 +182,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new ConvertTileToImageArgs());
+        return ServiceArgs.getMetadata(MergeAndGroupSampleTilePairsProcessor.class, new ConvertTileToImageArgs());
     }
 
     @Override

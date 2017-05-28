@@ -54,7 +54,7 @@ public class NiftiConverterProcessor extends AbstractBasicLifeCycleServiceProces
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new Vaa3dNiftiConverterArgs());
+        return ServiceArgs.getMetadata(NiftiConverterProcessor.class, new Vaa3dNiftiConverterArgs());
     }
 
     @Override

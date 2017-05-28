@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.beust.jcommander.JCommander;
+import com.google.common.base.Preconditions;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 
 import javax.inject.Named;
@@ -21,7 +22,9 @@ public class ServiceArgs {
     }
 
     public static <P extends ServiceProcessor, A extends ServiceArgs> ServiceMetaData getMetadata(Class<P> processorClass, A args) {
-        String serviceName = processorClass.getAnnotation(Named.class).value();
+        Named namedAnnotation = processorClass.getAnnotation(Named.class);
+        Preconditions.checkArgument(namedAnnotation != null);
+        String serviceName = namedAnnotation.value();
         ServiceMetaData smd = new ServiceMetaData();
         smd.setServiceName(serviceName);
         smd.setUsage(ServiceArgs.usage(serviceName, args));

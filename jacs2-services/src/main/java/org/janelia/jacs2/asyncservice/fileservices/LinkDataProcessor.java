@@ -53,7 +53,7 @@ public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<Vo
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new LinkDataArgs());
+        return ServiceArgs.getMetadata(LinkDataProcessor.class, new LinkDataArgs());
     }
 
     @Override

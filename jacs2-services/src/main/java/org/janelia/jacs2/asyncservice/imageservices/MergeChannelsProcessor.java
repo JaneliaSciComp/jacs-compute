@@ -85,7 +85,7 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Voi
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new ChannelMergeArgs());
+        return ServiceArgs.getMetadata(MergeChannelsProcessor.class, new ChannelMergeArgs());
     }
 
     @Override

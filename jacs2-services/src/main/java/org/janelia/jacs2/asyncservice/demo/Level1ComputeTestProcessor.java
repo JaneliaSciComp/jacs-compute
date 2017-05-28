@@ -50,7 +50,7 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new Level1ComputeTestProcessor.Level1ComputeTestArgs());
+        return ServiceArgs.getMetadata(Level1ComputeTestProcessor.class, new Level1ComputeTestProcessor.Level1ComputeTestArgs());
     }
 
     @Override

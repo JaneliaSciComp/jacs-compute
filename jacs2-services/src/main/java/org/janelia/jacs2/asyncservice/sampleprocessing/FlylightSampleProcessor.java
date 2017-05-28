@@ -75,7 +75,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new FlylightSampleArgs());
+        return ServiceArgs.getMetadata(FlylightSampleProcessor.class, new FlylightSampleArgs());
     }
 
     @Override

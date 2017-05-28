@@ -10,9 +10,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
-import org.janelia.jacs2.asyncservice.qualifier.ServiceName;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -28,8 +26,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-@MdcContext
-@ServiceName("vaa3dBlend")
 @Named("vaa3dBlend")
 public class Vaa3dBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
 
@@ -56,7 +52,7 @@ public class Vaa3dBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new Vaa3dBlendArgs());
+        return ServiceArgs.getMetadata(Vaa3dBlendProcessor.class, new Vaa3dBlendArgs());
     }
 
     @Override

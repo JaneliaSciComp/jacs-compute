@@ -76,7 +76,7 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new MergeLsmPairArgs());
+        return ServiceArgs.getMetadata(MergeLsmPairProcessor.class, new MergeLsmPairArgs());
     }
 
     @Override

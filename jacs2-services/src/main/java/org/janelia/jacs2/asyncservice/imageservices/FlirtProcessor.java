@@ -155,7 +155,7 @@ public class FlirtProcessor extends AbstractExeBasedServiceProcessor<Void, List<
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new FlirtArgs());
+        return ServiceArgs.getMetadata(FlirtProcessor.class, new FlirtArgs());
     }
 
     @Override

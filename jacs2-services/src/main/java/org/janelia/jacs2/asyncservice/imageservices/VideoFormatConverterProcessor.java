@@ -73,7 +73,7 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new ConverterArgs());
+        return ServiceArgs.getMetadata(VideoFormatConverterProcessor.class, new ConverterArgs());
     }
 
     @Override

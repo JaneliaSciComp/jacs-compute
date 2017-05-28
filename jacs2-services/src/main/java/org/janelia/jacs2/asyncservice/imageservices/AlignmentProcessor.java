@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -20,7 +19,6 @@ import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -83,7 +81,7 @@ public class AlignmentProcessor extends AbstractBasicLifeCycleServiceProcessor<V
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new AlignmentArgs());
+        return ServiceArgs.getMetadata(AlignmentProcessor.class, new AlignmentArgs());
     }
 
     @Override

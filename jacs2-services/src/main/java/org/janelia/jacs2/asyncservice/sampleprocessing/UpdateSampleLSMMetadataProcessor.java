@@ -68,7 +68,7 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new SampleServiceArgs());
+        return ServiceArgs.getMetadata(UpdateSampleLSMMetadataProcessor.class, new SampleServiceArgs());
     }
 
     @Override

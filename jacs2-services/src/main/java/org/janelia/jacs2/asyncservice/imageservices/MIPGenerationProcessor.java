@@ -77,7 +77,7 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Voi
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new MIPGenerationArgs());
+        return ServiceArgs.getMetadata(MIPGenerationProcessor.class, new MIPGenerationArgs());
     }
 
     @Override

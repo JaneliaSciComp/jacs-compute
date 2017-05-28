@@ -50,7 +50,7 @@ public class Vaa3dConverterProcessor extends AbstractBasicLifeCycleServiceProces
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new Vaa3dConverterArgs());
+        return ServiceArgs.getMetadata(Vaa3dConverterProcessor.class, new Vaa3dConverterArgs());
     }
 
     @Override

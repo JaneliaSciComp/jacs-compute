@@ -1,19 +1,15 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
-import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -45,13 +41,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -114,7 +106,7 @@ public class LSMImportProcessor extends AbstractBasicLifeCycleServiceProcessor<L
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new LSMImportArgs());
+        return ServiceArgs.getMetadata(LSMImportProcessor.class, new LSMImportArgs());
     }
 
     @Override

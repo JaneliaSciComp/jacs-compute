@@ -54,7 +54,7 @@ public class DistortionCorrectionProcessor extends AbstractBasicLifeCycleService
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new DistortionCorrectionArgs());
+        return ServiceArgs.getMetadata(DistortionCorrectionProcessor.class, new DistortionCorrectionArgs());
     }
 
     @Override

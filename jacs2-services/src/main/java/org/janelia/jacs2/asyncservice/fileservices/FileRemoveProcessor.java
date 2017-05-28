@@ -41,7 +41,7 @@ public class FileRemoveProcessor extends AbstractBasicLifeCycleServiceProcessor<
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new FileMoveArgs());
+        return ServiceArgs.getMetadata(FileRemoveProcessor.class, new FileMoveArgs());
     }
 
     @Override

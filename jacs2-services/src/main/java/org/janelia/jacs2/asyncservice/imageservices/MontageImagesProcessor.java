@@ -67,7 +67,7 @@ public class MontageImagesProcessor extends AbstractExeBasedServiceProcessor<Voi
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new MontageImagesArgs());
+        return ServiceArgs.getMetadata(MontageImagesProcessor.class, new MontageImagesArgs());
     }
 
     @Override

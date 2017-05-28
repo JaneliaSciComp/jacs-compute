@@ -62,7 +62,7 @@ public class Vaa3dPluginProcessor extends AbstractBasicLifeCycleServiceProcessor
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new Vaa3dPluginArgs());
+        return ServiceArgs.getMetadata(Vaa3dPluginProcessor.class, new Vaa3dPluginArgs());
     }
 
     @Override

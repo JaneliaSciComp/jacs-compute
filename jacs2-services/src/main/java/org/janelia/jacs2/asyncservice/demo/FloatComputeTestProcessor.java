@@ -46,7 +46,7 @@ public class FloatComputeTestProcessor extends AbstractServiceProcessor<Long> {
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new FloatComputeTestArgs());
+        return ServiceArgs.getMetadata(FloatComputeTestProcessor.class, new FloatComputeTestArgs());
     }
 
     @Override

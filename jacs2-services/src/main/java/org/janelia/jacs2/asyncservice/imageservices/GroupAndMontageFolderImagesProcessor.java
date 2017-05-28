@@ -86,7 +86,7 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new MontageFolderImagesArgs());
+        return ServiceArgs.getMetadata(GroupAndMontageFolderImagesProcessor.class, new MontageFolderImagesArgs());
     }
 
     @Override

@@ -62,7 +62,7 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new SampleServiceArgs());
+        return ServiceArgs.getMetadata(GetSampleImageFilesProcessor.class, new SampleServiceArgs());
     }
 
     @Override

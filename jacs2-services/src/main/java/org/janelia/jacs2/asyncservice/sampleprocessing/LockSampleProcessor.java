@@ -52,7 +52,7 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new LockSampleArgs());
+        return ServiceArgs.getMetadata(LockSampleProcessor.class, new LockSampleArgs());
     }
 
     @Override

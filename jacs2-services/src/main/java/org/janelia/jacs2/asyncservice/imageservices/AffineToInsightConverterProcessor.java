@@ -42,7 +42,7 @@ public class AffineToInsightConverterProcessor extends AbstractBasicLifeCycleSer
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new AfineToInsightConverterArgs());
+        return ServiceArgs.getMetadata(AffineToInsightConverterProcessor.class, new AfineToInsightConverterArgs());
     }
 
     @Override

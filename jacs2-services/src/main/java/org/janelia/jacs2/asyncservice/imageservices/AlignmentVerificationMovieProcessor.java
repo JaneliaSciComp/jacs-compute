@@ -64,7 +64,7 @@ public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleS
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new AlignmentVerificationMoviewArgs());
+        return ServiceArgs.getMetadata(AlignmentVerificationMovieProcessor.class, new AlignmentVerificationMoviewArgs());
     }
 
     @Override

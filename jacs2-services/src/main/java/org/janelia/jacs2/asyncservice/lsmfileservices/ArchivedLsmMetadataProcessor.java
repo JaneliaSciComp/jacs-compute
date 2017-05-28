@@ -63,7 +63,7 @@ public class ArchivedLsmMetadataProcessor extends AbstractBasicLifeCycleServiceP
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new ArchivedLsmMetadataArgs());
+        return ServiceArgs.getMetadata(ArchivedLsmMetadataProcessor.class, new ArchivedLsmMetadataArgs());
     }
 
     @Override

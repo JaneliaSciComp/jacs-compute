@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -61,7 +60,7 @@ public class Vaa3dStitchGroupingProcessor extends AbstractBasicLifeCycleServiceP
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new Vaa3dStitchGroupingArgs());
+        return ServiceArgs.getMetadata(Vaa3dStitchGroupingProcessor.class, new Vaa3dStitchGroupingArgs());
     }
 
     @Override

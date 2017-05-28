@@ -125,7 +125,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new SampleStitchArgs());
+        return ServiceArgs.getMetadata(SampleStitchProcessor.class, new SampleStitchArgs());
     }
 
     @Override

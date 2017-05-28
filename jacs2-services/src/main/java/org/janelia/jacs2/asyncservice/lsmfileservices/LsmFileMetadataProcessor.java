@@ -67,7 +67,7 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<V
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new LsmFileMetadataArgs());
+        return ServiceArgs.getMetadata(LsmFileMetadataProcessor.class, new LsmFileMetadataArgs());
     }
 
     @Override

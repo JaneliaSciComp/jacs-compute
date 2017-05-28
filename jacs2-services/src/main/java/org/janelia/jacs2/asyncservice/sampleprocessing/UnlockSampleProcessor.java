@@ -52,7 +52,7 @@ public class UnlockSampleProcessor extends AbstractServiceProcessor<Void> {
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new UnlockSampleArgs());
+        return ServiceArgs.getMetadata(UnlockSampleProcessor.class, new UnlockSampleArgs());
     }
 
     @Override

@@ -119,7 +119,7 @@ public class AntsToolProcessor extends AbstractExeBasedServiceProcessor<Void, Vo
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new AntsToolArgs());
+        return ServiceArgs.getMetadata(AntsToolProcessor.class, new AntsToolArgs());
     }
 
     @Override

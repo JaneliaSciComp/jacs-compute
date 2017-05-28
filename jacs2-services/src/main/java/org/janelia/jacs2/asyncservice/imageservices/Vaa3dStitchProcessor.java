@@ -54,7 +54,7 @@ public class Vaa3dStitchProcessor extends AbstractBasicLifeCycleServiceProcessor
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new Vaa3dStitchArgs());
+        return ServiceArgs.getMetadata(Vaa3dStitchProcessor.class, new Vaa3dStitchArgs());
     }
 
     @Override

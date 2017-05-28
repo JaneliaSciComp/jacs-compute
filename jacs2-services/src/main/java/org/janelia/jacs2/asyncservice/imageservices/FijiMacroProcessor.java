@@ -77,7 +77,7 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void, V
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new FijiMacroArgs());
+        return ServiceArgs.getMetadata(FijiMacroProcessor.class, new FijiMacroArgs());
     }
 
     @Override

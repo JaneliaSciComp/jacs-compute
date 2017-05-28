@@ -48,7 +48,7 @@ public class FileMoveProcessor extends AbstractBasicLifeCycleServiceProcessor<Vo
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new FileMoveArgs());
+        return ServiceArgs.getMetadata(FileMoveProcessor.class, new FileMoveArgs());
     }
 
     @Override

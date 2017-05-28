@@ -55,7 +55,7 @@ public class Vaa3dCmdProcessor extends AbstractExeBasedServiceProcessor<Void, Vo
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new Vaa3dCmdArgs());
+        return ServiceArgs.getMetadata(Vaa3dCmdProcessor.class, new Vaa3dCmdArgs());
     }
 
     @Override

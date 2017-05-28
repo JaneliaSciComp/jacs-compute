@@ -81,7 +81,7 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void, 
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new SageLoaderArgs());
+        return ServiceArgs.getMetadata(SageLoaderProcessor.class, new SageLoaderArgs());
     }
 
     @Override

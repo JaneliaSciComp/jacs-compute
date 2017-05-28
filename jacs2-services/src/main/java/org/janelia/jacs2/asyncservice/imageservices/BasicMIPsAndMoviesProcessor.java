@@ -76,7 +76,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), new BasicMIPsAndMoviesArgs());
+        return ServiceArgs.getMetadata(BasicMIPsAndMoviesProcessor.class, new BasicMIPsAndMoviesArgs());
     }
 
     @Override
