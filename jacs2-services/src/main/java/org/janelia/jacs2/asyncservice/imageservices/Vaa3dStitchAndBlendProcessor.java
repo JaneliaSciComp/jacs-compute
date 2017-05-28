@@ -17,6 +17,7 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceRe
 import org.janelia.jacs2.asyncservice.fileservices.FileMoveProcessor;
 import org.janelia.jacs2.asyncservice.fileservices.FileRemoveProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.stitching.StitchedImageInfo;
+import org.janelia.jacs2.asyncservice.qualifier.ServiceName;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -72,7 +73,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
                                  JacsServiceDataPersistence jacsServiceDataPersistence,
                                  @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                  Vaa3dStitchProcessor vaa3dStitchProcessor,
-                                 Vaa3dBlendProcessor vaa3dBlendProcessor,
+                                 @ServiceName("vaa3dBlend") Vaa3dBlendProcessor vaa3dBlendProcessor,
                                  Vaa3dConverterProcessor vaa3dConverterProcessor,
                                  FileMoveProcessor fileMoveProcessor,
                                  FileRemoveProcessor fileRemoveProcessor,
