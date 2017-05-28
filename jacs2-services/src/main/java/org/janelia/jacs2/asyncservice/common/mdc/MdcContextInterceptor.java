@@ -6,11 +6,10 @@ import org.slf4j.MDC;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
-import java.io.Serializable;
 
 @MdcContext
 @Interceptor
-public class MdcContextInterceptor implements Serializable {
+public class MdcContextInterceptor {
 
     @AroundInvoke
     public Object setMdcContext(InvocationContext invocationContext)
