@@ -27,8 +27,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-@MdcContext
 @Named("vaa3dBlend")
+@MdcContext
 public class Vaa3dBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
 
     static class Vaa3dBlendArgs extends ServiceArgs {
