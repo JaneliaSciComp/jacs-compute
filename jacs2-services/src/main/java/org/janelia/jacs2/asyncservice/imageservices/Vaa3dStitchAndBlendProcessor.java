@@ -73,7 +73,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
                                  JacsServiceDataPersistence jacsServiceDataPersistence,
                                  @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                  Vaa3dStitchProcessor vaa3dStitchProcessor,
-                                 @ServiceName("vaa3dBlend") Vaa3dBlendProcessor vaa3dBlendProcessor,
+                                 Vaa3dBlendProcessor vaa3dBlendProcessor,
                                  Vaa3dConverterProcessor vaa3dConverterProcessor,
                                  FileMoveProcessor fileMoveProcessor,
                                  FileRemoveProcessor fileRemoveProcessor,

@@ -30,6 +30,7 @@ import java.util.List;
 
 @MdcContext
 @ServiceName("vaa3dBlend")
+@Named("vaa3dBlend")
 public class Vaa3dBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
 
     static class Vaa3dBlendArgs extends ServiceArgs {
