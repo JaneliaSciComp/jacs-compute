@@ -12,6 +12,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
+import org.janelia.jacs2.asyncservice.qualifier.ServiceName;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -27,8 +28,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-@Named("vaa3dBlend")
 @MdcContext
+@Named("vaa3dBlend")
+@ServiceName("vaa3dBlend")
 public class Vaa3dBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
 
     static class Vaa3dBlendArgs extends ServiceArgs {
