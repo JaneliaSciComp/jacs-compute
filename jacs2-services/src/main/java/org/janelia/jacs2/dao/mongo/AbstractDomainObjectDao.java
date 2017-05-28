@@ -7,13 +7,10 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
-import org.janelia.jacs2.cdi.ObjectMapperFactory;
-import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.DomainObjectDao;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.DomainModelUtils;
@@ -32,8 +29,8 @@ import static com.mongodb.client.model.Filters.eq;
  */
 public abstract class AbstractDomainObjectDao<T extends DomainObject> extends AbstractMongoDao<T> implements DomainObjectDao<T> {
 
-    public AbstractDomainObjectDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
-        super(mongoDatabase, idGenerator, objectMapperFactory);
+    public AbstractDomainObjectDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
+        super(mongoDatabase, idGenerator);
     }
 
     @Override

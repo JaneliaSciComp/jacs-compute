@@ -2,7 +2,6 @@ package org.janelia.jacs2.dao.mongo;
 
 import com.mongodb.client.MongoDatabase;
 import org.apache.commons.collections4.CollectionUtils;
-import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.SubjectDao;
 import org.janelia.it.jacs.model.domain.Subject;
@@ -15,8 +14,8 @@ import static com.mongodb.client.model.Filters.eq;
 
 public class SubjectMongoDao extends AbstractMongoDao<Subject> implements SubjectDao {
     @Inject
-    public SubjectMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
-        super(mongoDatabase, idGenerator, objectMapperFactory);
+    public SubjectMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
+        super(mongoDatabase, idGenerator);
     }
 
     @Override

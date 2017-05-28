@@ -52,14 +52,12 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoDao.class);
 
-    private final ObjectMapper objectMapper;
     protected final TimebasedIdentifierGenerator idGenerator;
     protected final MongoCollection<T> mongoCollection;
     protected final MongoCollection<T> archiveMongoCollection;
 
     protected AbstractMongoDao(MongoDatabase mongoDatabase,
-                               TimebasedIdentifierGenerator idGenerator,
-                               ObjectMapperFactory objectMapperFactory) {
+                               TimebasedIdentifierGenerator idGenerator) {
         Pair<String, String> entityCollectionNames = getDomainObjectCollectionNames();
         mongoCollection = mongoDatabase.getCollection(entityCollectionNames.getLeft(), getEntityType());
         if (StringUtils.isNotEmpty(entityCollectionNames.getRight())) {
@@ -68,7 +66,6 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
             archiveMongoCollection = null;
         }
         this.idGenerator = idGenerator;
-        this.objectMapper = objectMapperFactory.newMongoCompatibleObjectMapper().setSerializationInclusion(JsonInclude.Include.ALWAYS);
     }
 
     private Pair<String, String> getDomainObjectCollectionNames() {
@@ -80,7 +77,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
 
     @Override
     public T findById(Number id) {
-        List<T> entityDocs = find(eq("_id", id), null, 0, 1, getEntityType());
+        List<T> entityDocs = find(eq("_id", id), null, 0, 2, getEntityType());
         return CollectionUtils.isEmpty(entityDocs) ? null : entityDocs.get(0);
     }
 
@@ -89,7 +86,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyList();
         } else {
-            return find(Filters.in("_id", ids), null, 0, 1, getEntityType());
+            return find(Filters.in("_id", ids), null, 0, 0, getEntityType());
         }
     }
 

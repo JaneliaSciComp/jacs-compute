@@ -29,7 +29,7 @@ public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage
 
     @Before
     public void setUp() {
-        testDao = new LSMImageMongoDao(testMongoDatabase, idGenerator, testObjectMapperFactory);
+        testDao = new LSMImageMongoDao(testMongoDatabase, idGenerator);
     }
 
     @After

@@ -2,7 +2,6 @@ package org.janelia.jacs2.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import org.hamcrest.Matchers;
-import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.jacs2.dao.ImageDao;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Image;
@@ -21,7 +20,6 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.collection.IsIn.isIn;
-import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertThat;
 
 public class AbstractImageMongoDaoITest extends AbstractDomainObjectDaoITest<Image> {
@@ -30,7 +28,7 @@ public class AbstractImageMongoDaoITest extends AbstractDomainObjectDaoITest<Ima
 
     @Before
     public void setUp() {
-        testDao = new AbstractImageMongoDao<Image>(testMongoDatabase, idGenerator, testObjectMapperFactory){};
+        testDao = new AbstractImageMongoDao<Image>(testMongoDatabase, idGenerator){};
     }
 
     @After

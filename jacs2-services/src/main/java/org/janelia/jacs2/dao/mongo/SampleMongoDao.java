@@ -9,7 +9,6 @@ import org.bson.conversions.Bson;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
-import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.SampleDao;
 import org.janelia.it.jacs.model.domain.sample.Sample;
@@ -23,7 +22,6 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,8 +32,8 @@ import static com.mongodb.client.model.Filters.lt;
 
 public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements SampleDao {
     @Inject
-    public SampleMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator, ObjectMapperFactory objectMapperFactory) {
-        super(mongoDatabase, idGenerator, objectMapperFactory);
+    public SampleMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
+        super(mongoDatabase, idGenerator);
     }
 
     @Override

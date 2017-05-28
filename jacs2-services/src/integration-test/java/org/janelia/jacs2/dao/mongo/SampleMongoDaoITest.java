@@ -52,7 +52,7 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
 
     @Before
     public void setUp() {
-        testDao = new SampleMongoDao(testMongoDatabase, idGenerator, testObjectMapperFactory);
+        testDao = new SampleMongoDao(testMongoDatabase, idGenerator);
     }
 
     @After
