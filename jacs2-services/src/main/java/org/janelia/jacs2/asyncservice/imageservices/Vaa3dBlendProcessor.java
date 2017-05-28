@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @MdcContext
-@Named("vaa3dBlend")
 @ServiceName("vaa3dBlend")
 public class Vaa3dBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
 
