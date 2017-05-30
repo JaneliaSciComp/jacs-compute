@@ -77,9 +77,11 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
                 .addArg("neuronSeparatorPipeline")
                 .addArg(args.inputFile)
                 .addArg(StringUtils.wrap(args.signalChannels, '"'))
-                .addArg(StringUtils.wrap(args.referenceChannel, '"'))
-                .addArg(args.previousResultFile)
-                .endArgs("");
+                .addArg(StringUtils.wrap(args.referenceChannel, '"'));
+        if (StringUtils.isNotBlank(args.previousResultFile)) {
+            scriptWriter.addArg(args.previousResultFile);
+        }
+        scriptWriter.endArgs("");
     }
 
     @Override
