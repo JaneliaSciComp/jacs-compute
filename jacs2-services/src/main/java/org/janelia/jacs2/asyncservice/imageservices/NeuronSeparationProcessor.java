@@ -43,9 +43,9 @@ public class NeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<
         @Parameter(names = "-previousResultFile", description = "Previous result file name")
         String previousResultFile;
         @Parameter(names = "-signalChannels", description = "Signal channels")
-        String signalChannels;
+        String signalChannels = "0 1 2";
         @Parameter(names = "-referenceChannel", description = "Reference channel")
-        String referenceChannel;
+        String referenceChannel = "3";
         @Parameter(names = "-numThreads", description = "Number of threads")
         int numThreads = 16;
     }
