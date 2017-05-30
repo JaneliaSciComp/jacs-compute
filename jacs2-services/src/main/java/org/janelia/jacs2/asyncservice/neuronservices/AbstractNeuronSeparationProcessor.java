@@ -12,12 +12,15 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
+import org.janelia.jacs2.asyncservice.utils.X11Utils;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -66,9 +69,15 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
         NeuronSeparationArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
-        createScript(args, externalScriptWriter);
-        externalScriptWriter.close();
-        return externalScriptCode;
+        Path workingDir = getWorkingDirectory(jacsServiceData);
+        try {
+            X11Utils.setDisplayPort(workingDir.toString(), externalScriptWriter);
+            createScript(args, externalScriptWriter);
+            externalScriptWriter.close();
+            return externalScriptCode;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private void createScript(NeuronSeparationArgs args, ScriptWriter scriptWriter) {
