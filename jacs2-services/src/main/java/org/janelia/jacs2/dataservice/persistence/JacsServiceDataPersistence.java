@@ -14,6 +14,7 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -84,6 +85,12 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
             jacsServiceDataDao.archiveServiceHierarchy(jacsServiceData);
         } finally {
             daoSource.destroy(jacsServiceDataDao);
+        }
+    }
+
+    public void update(JacsServiceData jacsServiceData, Map<String, Object> fieldsToUpdate) {
+        if (jacsServiceData.hasId()) {
+            super.update(jacsServiceData, fieldsToUpdate);
         }
     }
 

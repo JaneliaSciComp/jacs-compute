@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -212,7 +213,7 @@ public class SampleLSMSummaryProcessorTest {
         sif.setSampleImageFile(createSampleImage(lsmId));
         sif.setMipsResultsDir(TEST_MIPS_DIR);
         sif.setMips(ImmutableList.of("i1_signal.png", "i1_reference.png"));
-        return new SampleLSMSummaryProcessor.MontageParameters(montageServiceId, sif);
+        return new SampleLSMSummaryProcessor.MontageParameters(Optional.of(montageServiceId), sif);
     }
 
     private SampleImageFile createSampleImage(long lsmId) {

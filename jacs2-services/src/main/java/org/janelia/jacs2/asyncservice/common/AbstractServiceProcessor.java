@@ -1,22 +1,20 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -93,22 +91,24 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         }
     }
 
-    protected void setOutputPath(JacsServiceData jacsServiceData) {
+    protected Map<String, Object> setOutputAndErrorPaths(JacsServiceData jacsServiceData) {
+        Map<String, Object> serviceUpdates = new LinkedHashMap<>();
         if (StringUtils.isBlank(jacsServiceData.getOutputPath())) {
             jacsServiceData.setOutputPath(getServicePath(
                     getWorkingDirectory(jacsServiceData).toString(),
                     jacsServiceData,
                     String.format("%s-stdout.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
+            serviceUpdates.put("outputPath", jacsServiceData.getOutputPath());
         }
-    }
-
-    protected void setErrorPath(JacsServiceData jacsServiceData) {
         if (StringUtils.isBlank(jacsServiceData.getErrorPath())) {
             jacsServiceData.setErrorPath(getServicePath(
                     getWorkingDirectory(jacsServiceData).toString(),
                     jacsServiceData,
                     String.format("%s-stderr.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
+            serviceUpdates.put("errorPath", jacsServiceData.getErrorPath());
         }
+        jacsServiceDataPersistence.update(jacsServiceData, serviceUpdates);
+        return serviceUpdates;
     }
 
     protected Path getServicePath(String baseDir, JacsServiceData jacsServiceData, String... more) {

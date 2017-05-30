@@ -9,7 +9,9 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -50,8 +52,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
         if (jacsServiceDataHierarchy == null) {
             jacsServiceDataHierarchy = jacsServiceData;
         }
-        setOutputPath(jacsServiceDataHierarchy);
-        setErrorPath(jacsServiceDataHierarchy);
+        setOutputAndErrorPaths(jacsServiceDataHierarchy);
         return jacsServiceDataHierarchy;
     }
 

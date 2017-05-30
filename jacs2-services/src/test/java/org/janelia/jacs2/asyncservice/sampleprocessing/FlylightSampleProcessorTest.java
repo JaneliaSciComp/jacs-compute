@@ -75,6 +75,7 @@ public class FlylightSampleProcessorTest {
                 any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
+                any(ServiceArg.class),
                 any(ServiceArg.class)
         )).thenCallRealMethod();
 
@@ -128,6 +129,7 @@ public class FlylightSampleProcessorTest {
                     channelDyeSpec,
                     outputChannelOrder,
                     true,
+                    true,
                     true
             );
             testServiceData.setId(testServiceId);
@@ -147,7 +149,8 @@ public class FlylightSampleProcessorTest {
                     argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", testSampleDir))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                    argThat(new ServiceArgMatcher(new ServiceArg("-basicMipMapsOptions", DEFAULT_MIP_MAPS_OPTIONS)))
+                    argThat(new ServiceArgMatcher(new ServiceArg("-basicMipMapsOptions", DEFAULT_MIP_MAPS_OPTIONS))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-montageMipMaps", true)))
             );
 
             verify(sampleStitchProcessor).createServiceData(any(ServiceExecutionContext.class),
@@ -171,6 +174,7 @@ public class FlylightSampleProcessorTest {
                                                   Long sampleId, String area, String objective,
                                                   String mergeAlgorithm,
                                                   String channelDyeSpec, String outputChannelOrder,
+                                                  boolean montageMipMaps,
                                                   boolean useDistortionCorrection,
                                                   boolean persistResults) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
@@ -188,6 +192,9 @@ public class FlylightSampleProcessorTest {
 
         if (StringUtils.isNotBlank(outputChannelOrder))
             testServiceDataBuilder.addArg("-outputChannelOrder", outputChannelOrder);
+
+        if (montageMipMaps)
+            testServiceDataBuilder.addArg("-montageMipMaps");
 
         if (useDistortionCorrection)
             testServiceDataBuilder.addArg("-distortionCorrection");

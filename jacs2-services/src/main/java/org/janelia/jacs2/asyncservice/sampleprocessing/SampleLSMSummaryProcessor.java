@@ -35,10 +35,10 @@ import java.util.stream.Collectors;
 public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProcessor<SampleLSMSummaryProcessor.SampleLSMSummaryIntermediateResult, List<LSMSummary>> {
 
     static class MontageParameters {
-        final Number montageServiceId;
+        final Optional<Number> montageServiceId;
         final SampleImageMIPsFile montageData;
 
-        public MontageParameters(Number montageServiceId, SampleImageMIPsFile montageData) {
+        public MontageParameters(Optional<Number> montageServiceId, SampleImageMIPsFile montageData) {
             this.montageServiceId = montageServiceId;
             this.montageData = montageData;
         }
@@ -63,6 +63,8 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
         String channelDyeSpec;
         @Parameter(names = "-basicMipMapsOptions", description = "Basic MIPS and Movies Options", required = false)
         String basicMipMapsOptions = "mips:movies:legends:bcomp";
+        @Parameter(names = "-montageMipMaps", description = "If set montage the mipmaps", required = false)
+        boolean montageMipMaps;
     }
 
     private final SampleDataService sampleDataService;
@@ -103,14 +105,17 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
             @Override
             public List<LSMSummary> collectResult(JacsServiceResult<?> depResults) {
                 SampleLSMSummaryIntermediateResult result = (SampleLSMSummaryIntermediateResult) depResults.getResult();
+                SampleLSMSummaryArgs args = getArgs(depResults.getJacsServiceData());
                 return result.montageCalls.stream()
                         .map(mc -> {
-                            JacsServiceData montageServiceData = jacsServiceDataPersistence.findById(mc.montageServiceId);
                             LSMSummary lsmSummary = new LSMSummary();
                             lsmSummary.setSampleImageFile(mc.montageData.getSampleImageFile());
                             lsmSummary.setMipsResultsDir(mc.montageData.getMipsResultsDir());
                             lsmSummary.setMips(mc.montageData.getMips());
-                            lsmSummary.setMontageResultsByType(groupAndMontageFolderImagesProcessor.getResultHandler().getServiceDataResult(montageServiceData));
+                            if (mc.montageServiceId.isPresent()) {
+                                JacsServiceData montageServiceData = jacsServiceDataPersistence.findById(mc.montageServiceId.get());
+                                lsmSummary.setMontageResultsByType(groupAndMontageFolderImagesProcessor.getResultHandler().getServiceDataResult(montageServiceData));
+                            }
                             return lsmSummary;
                         })
                         .collect(Collectors.toList());
@@ -156,22 +161,29 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
     @Override
     protected ServiceComputation<JacsServiceResult<SampleLSMSummaryIntermediateResult>> processing(JacsServiceResult<SampleLSMSummaryIntermediateResult> depResults) {
         JacsServiceData jacsServiceData = depResults.getJacsServiceData();
+        SampleLSMSummaryArgs args = getArgs(jacsServiceData);
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
                     JacsServiceData mipMapsService = jacsServiceDataPersistence.findById(depResults.getResult().mipMapsServiceDataId);
                     List<SampleImageMIPsFile> sampleImageFiles = getSampleMIPsAndMoviesProcessor.getResultHandler().getServiceDataResult(mipMapsService);
                     sampleImageFiles.stream()
                             .forEach(sif -> {
-                                // for each sample image file invoke basic mipmaps and montage service
-                                JacsServiceData montageService = groupAndMontageFolderImagesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
-                                                .description("Montage PNG images")
-                                                .waitFor(mipMapsService)
-                                                .build(),
-                                        new ServiceArg("-input", sif.getMipsResultsDir()),
-                                        new ServiceArg("-output", sif.getMipsResultsDir())
-                                );
-                                montageService = submitDependencyIfNotPresent(jacsServiceData, montageService);
-                                MontageParameters montageCall = new MontageParameters(montageService.getId(), sif);
+                                Optional<Number> montageServiceId;
+                                if (args.montageMipMaps) {
+                                    // for each sample image file invoke basic mipmaps and montage service
+                                    JacsServiceData montageService = groupAndMontageFolderImagesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                                                    .description("Montage PNG images")
+                                                    .waitFor(mipMapsService)
+                                                    .build(),
+                                            new ServiceArg("-input", sif.getMipsResultsDir()),
+                                            new ServiceArg("-output", sif.getMipsResultsDir())
+                                    );
+                                    montageService = submitDependencyIfNotPresent(jacsServiceData, montageService);
+                                    montageServiceId = Optional.of(montageService.getId());
+                                } else {
+                                    montageServiceId = Optional.empty();
+                                }
+                                MontageParameters montageCall = new MontageParameters(montageServiceId, sif);
                                 pd.getResult().addMontage(montageCall);
                             })
                     ;

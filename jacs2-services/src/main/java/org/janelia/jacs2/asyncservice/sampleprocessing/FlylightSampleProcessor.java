@@ -51,6 +51,8 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         boolean applyDistortionCorrection;
         @Parameter(names = "-basicMipMapsOptions", description = "Basic MIPS and Movies Options", required = false)
         String basicMipMapsOptions = "mips:movies:legends:bcomp";
+        @Parameter(names = "-montageMipMaps", description = "If set montage the mipmaps", required = false)
+        boolean montageMipMaps;
         @Parameter(names = "-persistResults", description = "If specified it generates the mips", required = false)
         boolean persistResults;
     }
@@ -106,7 +108,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
 
         JacsServiceData getSampleLsmsService = getSampleLsms(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, sampleDataDir);
 
-        lsmSummary(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.channelDyeSpec, args.basicMipMapsOptions, sampleDataDir, getSampleLsmsService);
+        lsmSummary(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.channelDyeSpec, args.basicMipMapsOptions, args.montageMipMaps, sampleDataDir, getSampleLsmsService);
 
         JacsServiceData stitchService = stitch(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.mergeAlgorithm, args.channelDyeSpec, args.outputChannelOrder,
                 args.applyDistortionCorrection, args.persistResults,
@@ -134,6 +136,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     }
 
     private JacsServiceData lsmSummary(JacsServiceData jacsServiceData, String sampleId, String objective, String area, String channelDyeSpec, String basicMipMapsOptions,
+                                       boolean montageMipMaps,
                                        Path sampleDataDir, JacsServiceData... deps) {
         JacsServiceData lsmSummaryService = sampleLSMSummaryProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Create sample LSM summary")
@@ -144,7 +147,8 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                 new ServiceArg("-area", area),
                 new ServiceArg("-sampleDataDir", sampleDataDir.toString()),
                 new ServiceArg("-channelDyeSpec", channelDyeSpec),
-                new ServiceArg("-basicMipMapsOptions", basicMipMapsOptions)
+                new ServiceArg("-basicMipMapsOptions", basicMipMapsOptions),
+                new ServiceArg("-montageMipMaps", montageMipMaps)
         );
         return submitDependencyIfNotPresent(jacsServiceData, lsmSummaryService);
     }
