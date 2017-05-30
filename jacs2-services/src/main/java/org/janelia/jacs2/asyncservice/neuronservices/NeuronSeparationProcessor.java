@@ -46,11 +46,6 @@ public class NeuronSeparationProcessor extends AbstractNeuronSeparationProcessor
     }
 
     @Override
-    public ServiceResultHandler<Void> getResultHandler() {
-        return new VoidServiceResultHandler();
-    }
-
-    @Override
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
         NeuronSeparationArgs args = getArgs(jacsServiceData);
         try {

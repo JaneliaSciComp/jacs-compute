@@ -1,16 +1,20 @@
 package org.janelia.jacs2.asyncservice.neuronservices;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.asyncservice.utils.X11Utils;
 import org.janelia.jacs2.config.ApplicationConfig;
@@ -25,7 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
+public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<Void, NeuronSeparationResult> {
 
     static class NeuronSeparationArgs extends ServiceArgs {
         @Parameter(names = {"-inputFile"}, description = "Input file name", required = true)
@@ -60,8 +64,54 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
     }
 
     @Override
-    public ServiceResultHandler<Void> getResultHandler() {
-        return new VoidServiceResultHandler();
+    public ServiceResultHandler<NeuronSeparationResult> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<NeuronSeparationResult>() {
+            final String resultsPattern = "glob:**/{archive,maskChan,fastLoad,Consolidated,Reference, SeparationResult,neuronSeparatorPipeline.PR.neuron}*";
+
+            @Override
+            public boolean isResultReady(JacsServiceResult<?> depResults) {
+                return areAllDependenciesDone(depResults.getJacsServiceData());
+            }
+
+            @Override
+            public NeuronSeparationResult collectResult(JacsServiceResult<?> depResults) {
+                NeuronSeparationArgs args = getArgs(depResults.getJacsServiceData());
+                NeuronSeparationResult result = new NeuronSeparationResult();
+                Path resultDir = getOutputDir(args);
+                result.setResultDir(resultDir.toString());
+                FileUtils.lookupFiles(resultDir, 2, resultsPattern)
+                        .forEach(f -> {
+                            String fn = FileUtils.getFileNameOnly(f);
+                            if ("ConsolidatedLabel".equals(fn)) {
+                                result.setConsolidatedLabel(resultDir.relativize(f).toString());
+                            } else if ("ConsolidatedSignal".equals(fn)) {
+                                result.setConsolidatedSignal(resultDir.relativize(f).toString());
+                            } else if ("ConsolidatedSignalMIP".equals(fn)) {
+                                result.setConsolidatedSignalMip(resultDir.relativize(f).toString());
+                            } else if ("Reference".equals(fn)) {
+                                result.setReference(resultDir.relativize(f).toString());
+                            } else if ("ReferenceMIP".equals(fn)) {
+                                result.setReferenceMip(resultDir.relativize(f).toString());
+                            } else if ("archive".equals(fn)) {
+                                result.setArchiveSubdir(resultDir.relativize(f).toString());
+                            } else if (fn.startsWith("neuronSeparatorPipeline.PR.neuron_")) {
+                                result.addNeuron(resultDir.relativize(f).toString());
+                            } else if ("fastLoad".equals(fn)) {
+                                result.setFastLoadSubDir(resultDir.relativize(f).toString());
+                            } else if ("maskChan".equals(fn)) {
+                                result.setMaskChanSubdir(resultDir.relativize(f).toString());
+                            } else if (fn.startsWith("SeparationResultUnmapped")) {
+                                result.addSeparationResult(resultDir.relativize(f).toString());
+                            }
+                        });
+                return result;
+            }
+
+            @Override
+            public NeuronSeparationResult getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<NeuronSeparationResult>() {});
+            }
+        };
     }
 
     @Override
@@ -69,12 +119,16 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
         NeuronSeparationArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
-        Path workingDir = getWorkingDirectory(jacsServiceData);
+        addStartX11ServerCmd(jacsServiceData, externalScriptWriter);
+        createScript(args, externalScriptWriter);
+        externalScriptWriter.close();
+        return externalScriptCode;
+    }
+
+    private void addStartX11ServerCmd(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) {
         try {
-            X11Utils.setDisplayPort(workingDir.toString(), externalScriptWriter);
-            createScript(args, externalScriptWriter);
-            externalScriptWriter.close();
-            return externalScriptCode;
+            Path workingDir = getWorkingDirectory(jacsServiceData);
+            X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
