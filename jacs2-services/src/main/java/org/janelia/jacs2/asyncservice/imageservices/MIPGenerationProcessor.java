@@ -166,10 +166,6 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Voi
         return channelsList.isEmpty() ? "" : String.join(" ", channelsList);
     }
 
-    private Path getOutputFile(MIPGenerationArgs args) {
-        return FileUtils.getFilePath(getOutputDir(args), args.inputFile, getOutputFileExt(args));
-    }
-
     private String getOutputFileExt(MIPGenerationArgs args) {
         return args.imgFormat;
     }

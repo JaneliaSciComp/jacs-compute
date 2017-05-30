@@ -69,11 +69,9 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
 
     protected boolean hasJobFinished(JacsServiceData jacsServiceData, ExeJobInfo jobInfo) {
         if (jobInfo.isDone()) {
-            resumeSuspendedService(jacsServiceData);
             return true;
         }
         try {
-            suspendService(jacsServiceData);
             verifyAndFailIfTimeOut(jacsServiceData);
         } catch (ComputationException e) {
             jobInfo.terminate();
