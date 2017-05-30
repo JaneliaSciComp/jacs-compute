@@ -1,11 +1,9 @@
-package org.janelia.jacs2.asyncservice.imageservices;
+package org.janelia.jacs2.asyncservice.neuronservices;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -14,26 +12,17 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
-import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-@Named("neuronSeparation")
-public class NeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
+public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
 
     static class NeuronSeparationArgs extends ServiceArgs {
         @Parameter(names = {"-inputFile"}, description = "Input file name", required = true)
@@ -53,41 +42,23 @@ public class NeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<
     private final String executable;
     private final String libraryPath;
 
-    @Inject
-    NeuronSeparationProcessor(ServiceComputationFactory computationFactory,
-                              JacsServiceDataPersistence jacsServiceDataPersistence,
-                              @Any Instance<ExternalProcessRunner> serviceRunners,
-                              @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                              @PropertyValue(name = "NeuronSeparator.Script.Path") String executable,
-                              @PropertyValue(name = "NeuronSeparator.Library.Path") String libraryPath,
-                              ThrottledProcessesQueue throttledProcessesQueue,
-                              @ApplicationProperties ApplicationConfig applicationConfig,
-                              Logger logger) {
+    AbstractNeuronSeparationProcessor(ServiceComputationFactory computationFactory,
+                                      JacsServiceDataPersistence jacsServiceDataPersistence,
+                                      Instance<ExternalProcessRunner> serviceRunners,
+                                      String defaultWorkingDir,
+                                      String executable,
+                                      String libraryPath,
+                                      ThrottledProcessesQueue throttledProcessesQueue,
+                                      ApplicationConfig applicationConfig,
+                                      Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, throttledProcessesQueue, applicationConfig, logger);
         this.executable = executable;
         this.libraryPath = libraryPath;
     }
 
     @Override
-    public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(NeuronSeparationProcessor.class, new NeuronSeparationArgs());
-    }
-
-    @Override
     public ServiceResultHandler<Void> getResultHandler() {
         return new VoidServiceResultHandler();
-    }
-
-    @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
-        NeuronSeparationArgs args = getArgs(jacsServiceData);
-        try {
-            Path outputDir = getOutputDir(args);
-            Files.createDirectories(outputDir);
-        } catch (IOException e) {
-            throw new ComputationException(jacsServiceData, e);
-        }
-        return super.prepareProcessing(jacsServiceData);
     }
 
     @Override
@@ -120,13 +91,9 @@ public class NeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<
         );
     }
 
-    private NeuronSeparationArgs getArgs(JacsServiceData jacsServiceData) {
-        NeuronSeparationArgs args = new NeuronSeparationArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
-    }
+    protected abstract NeuronSeparationArgs getArgs(JacsServiceData jacsServiceData);
 
-    private Path getOutputDir(NeuronSeparationArgs args) {
+    protected Path getOutputDir(NeuronSeparationArgs args) {
         if (StringUtils.isNotBlank(args.outputDir)) {
             return Paths.get(args.outputDir);
         } else {
@@ -137,5 +104,4 @@ public class NeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<
     private String getExecutable() {
         return getFullExecutableName(executable);
     }
-
 }
