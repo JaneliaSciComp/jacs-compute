@@ -79,7 +79,7 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
                 NeuronSeparationResult result = new NeuronSeparationResult();
                 Path resultDir = getOutputDir(args);
                 result.setResultDir(resultDir.toString());
-                FileUtils.lookupFiles(resultDir, 2, resultsPattern)
+                FileUtils.lookupFiles(resultDir, 3, resultsPattern)
                         .forEach(f -> {
                             String pn = FileUtils.getFileNameOnly(f.getParent());
                             String fn = FileUtils.getFileNameOnly(f);
