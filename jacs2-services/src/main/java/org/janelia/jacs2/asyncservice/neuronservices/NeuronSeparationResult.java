@@ -10,12 +10,12 @@ class NeuronSeparationResult {
     private String consolidatedSignalMip;
     private String reference;
     private String referenceMip;
+    private String mappingIssues;
     private List<String> neurons = new ArrayList<>();
     private List<String> separationResults = new ArrayList<>();
     private String fastLoadSubDir;
     private String archiveSubdir;
     private String maskChanSubdir;
-
 
     public String getResultDir() {
         return resultDir;
@@ -63,6 +63,14 @@ class NeuronSeparationResult {
 
     public void setReferenceMip(String referenceMip) {
         this.referenceMip = referenceMip;
+    }
+
+    public String getMappingIssues() {
+        return mappingIssues;
+    }
+
+    public void setMappingIssues(String mappingIssues) {
+        this.mappingIssues = mappingIssues;
     }
 
     public List<String> getNeurons() {

@@ -92,6 +92,8 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
                                 result.setReference(resultDir.relativize(f).toString());
                             } else if ("ReferenceMIP".equals(fn)) {
                                 result.setReferenceMip(resultDir.relativize(f).toString());
+                            } else if ("mapping_issues".equals(fn)) {
+                                result.setMappingIssues(resultDir.relativize(f).toString());
                             } else if ("archive".equals(fn)) {
                                 result.setArchiveSubdir(resultDir.relativize(f).toString());
                             } else if (fn.startsWith("neuronSeparatorPipeline.PR.neuron_")) {
