@@ -3,7 +3,7 @@ package org.janelia.jacs2.asyncservice.neuronservices;
 import java.util.ArrayList;
 import java.util.List;
 
-class NeuronSeparationResult {
+public class NeuronSeparationResult {
     private String resultDir;
     private String consolidatedLabel;
     private String consolidatedSignal;
@@ -16,6 +16,8 @@ class NeuronSeparationResult {
     private String fastLoadSubDir;
     private String archiveSubdir;
     private String maskChanSubdir;
+    private List<String> maskFiles = new ArrayList<>();
+    private List<String> chanFiles = new ArrayList<>();
 
     public String getResultDir() {
         return resultDir;
@@ -119,5 +121,29 @@ class NeuronSeparationResult {
 
     public void setMaskChanSubdir(String maskChanSubdir) {
         this.maskChanSubdir = maskChanSubdir;
+    }
+
+    public List<String> getMaskFiles() {
+        return maskFiles;
+    }
+
+    public void setMaskFiles(List<String> maskFiles) {
+        this.maskFiles = maskFiles;
+    }
+
+    public void addMaskFile(String maskFile) {
+        maskFiles.add(maskFile);
+    }
+
+    public List<String> getChanFiles() {
+        return chanFiles;
+    }
+
+    public void setChanFiles(List<String> chanFiles) {
+        this.chanFiles = chanFiles;
+    }
+
+    public void addChanFile(String chanFile) {
+        chanFiles.add(chanFile);
     }
 }

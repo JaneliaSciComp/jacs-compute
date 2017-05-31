@@ -81,6 +81,7 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
                 result.setResultDir(resultDir.toString());
                 FileUtils.lookupFiles(resultDir, 2, resultsPattern)
                         .forEach(f -> {
+                            String pn = FileUtils.getFileNameOnly(f.getParent());
                             String fn = FileUtils.getFileNameOnly(f);
                             if ("ConsolidatedLabel".equals(fn)) {
                                 result.setConsolidatedLabel(resultDir.relativize(f).toString());
@@ -102,6 +103,13 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
                                 result.setFastLoadSubDir(resultDir.relativize(f).toString());
                             } else if ("maskChan".equals(fn)) {
                                 result.setMaskChanSubdir(resultDir.relativize(f).toString());
+                            } else if ("maskChan".equals(pn)) {
+                                String fnWithExt = f.toFile().getName();
+                                if (fnWithExt.matches("neuron_(\\d++).mask")) {
+                                    result.addMaskFile(resultDir.relativize(f).toString());
+                                } else if (fnWithExt.matches("neuron_(\\d++).chan")) {
+                                    result.addChanFile(resultDir.relativize(f).toString());
+                                }
                             } else if (fn.startsWith("SeparationResultUnmapped")) {
                                 result.addSeparationResult(resultDir.relativize(f).toString());
                             }
