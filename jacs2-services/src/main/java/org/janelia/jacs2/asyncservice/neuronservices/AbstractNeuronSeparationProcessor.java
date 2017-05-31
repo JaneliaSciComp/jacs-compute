@@ -109,6 +109,10 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
                                     result.addMaskFile(resultDir.relativize(f).toString());
                                 } else if (fnWithExt.matches("neuron_(\\d++).chan")) {
                                     result.addChanFile(resultDir.relativize(f).toString());
+                                } else if ("ref.chan".equals(fnWithExt)) {
+                                    result.setRefMaskFile(resultDir.relativize(f).toString());
+                                } else if ("ref.mask".equals(fnWithExt)) {
+                                    result.setRefChanFile(resultDir.relativize(f).toString());
                                 }
                             } else if (fn.startsWith("SeparationResultUnmapped")) {
                                 result.addSeparationResult(resultDir.relativize(f).toString());

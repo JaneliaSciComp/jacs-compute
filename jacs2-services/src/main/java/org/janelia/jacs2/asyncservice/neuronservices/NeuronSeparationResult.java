@@ -18,6 +18,8 @@ public class NeuronSeparationResult {
     private String maskChanSubdir;
     private List<String> maskFiles = new ArrayList<>();
     private List<String> chanFiles = new ArrayList<>();
+    private String refMaskFile;
+    private String refChanFile;
 
     public String getResultDir() {
         return resultDir;
@@ -145,5 +147,21 @@ public class NeuronSeparationResult {
 
     public void addChanFile(String chanFile) {
         chanFiles.add(chanFile);
+    }
+
+    public String getRefMaskFile() {
+        return refMaskFile;
+    }
+
+    public void setRefMaskFile(String refMaskFile) {
+        this.refMaskFile = refMaskFile;
+    }
+
+    public String getRefChanFile() {
+        return refChanFile;
+    }
+
+    public void setRefChanFile(String refChanFile) {
+        this.refChanFile = refChanFile;
     }
 }
