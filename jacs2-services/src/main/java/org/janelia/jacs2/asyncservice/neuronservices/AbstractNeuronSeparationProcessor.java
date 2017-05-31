@@ -66,7 +66,7 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
     @Override
     public ServiceResultHandler<NeuronSeparationResult> getResultHandler() {
         return new AbstractAnyServiceResultHandler<NeuronSeparationResult>() {
-            final String resultsPattern = "glob:**/{archive,maskChan,fastLoad,Consolidated,Reference,SeparationResult,neuronSeparatorPipeline.PR.neuron}*";
+            final String resultsPattern = "glob:**/{archive,maskChan,fastLoad,Consolidated,Reference,SeparationResult,neuronSeparatorPipeline.PR.neuron,maskChan/neuron_,maskChan/ref}*";
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
