@@ -13,6 +13,8 @@ class FlylightSampleArgs extends SampleServiceArgs {
     boolean applyDistortionCorrection;
     @Parameter(names = "-basicMipMapsOptions", description = "Basic MIPS and Movies Options", required = false)
     String basicMipMapsOptions = "mips:movies:legends:bcomp";
+    @Parameter(names = "-skipSummary", description = "If set do not run LSM summary", required = false)
+    boolean skipSummary;
     @Parameter(names = "-montageMipMaps", description = "If set montage the mipmaps", required = false)
     boolean montageMipMaps;
     @Parameter(names = "-persistResults", description = "If specified it generates the mips", required = false)

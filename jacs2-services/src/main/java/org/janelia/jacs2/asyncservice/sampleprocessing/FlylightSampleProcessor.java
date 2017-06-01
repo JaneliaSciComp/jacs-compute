@@ -82,7 +82,9 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
 
         JacsServiceData getSampleLsmsService = getSampleLsms(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, sampleDataDir);
 
-        lsmSummary(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.channelDyeSpec, args.basicMipMapsOptions, args.montageMipMaps, sampleDataDir, getSampleLsmsService);
+        if (!args.skipSummary) {
+            lsmSummary(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.channelDyeSpec, args.basicMipMapsOptions, args.montageMipMaps, sampleDataDir, getSampleLsmsService);
+        }
 
         JacsServiceData stitchService = stitch(jacsServiceData, sampleId, args.sampleObjective, args.sampleArea, args.mergeAlgorithm, args.channelDyeSpec, args.outputChannelOrder,
                 args.applyDistortionCorrection, args.persistResults,
