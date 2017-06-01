@@ -3,8 +3,11 @@ package org.janelia.jacs2.dataservice.sample;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.dao.LSMImageDao;
+import org.janelia.jacs2.dao.NeuronFragmentDao;
 import org.janelia.jacs2.dao.SampleDao;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
@@ -38,14 +41,21 @@ public class SampleDataService {
     private final SubjectService subjectService;
     private final SampleDao sampleDao;
     private final LSMImageDao lsmImageDao;
+    private final NeuronFragmentDao neuronFragmentDao;
     private final Logger logger;
 
     @Inject
-    public SampleDataService(DomainObjectService domainObjectService, SubjectService subjectService, SampleDao sampleDao, LSMImageDao lsmImageDao, Logger logger) {
+    public SampleDataService(DomainObjectService domainObjectService,
+                             SubjectService subjectService,
+                             SampleDao sampleDao,
+                             LSMImageDao lsmImageDao,
+                             NeuronFragmentDao neuronFragmentDao,
+                             Logger logger) {
         this.domainObjectService = domainObjectService;
         this.subjectService = subjectService;
         this.sampleDao = sampleDao;
         this.lsmImageDao = lsmImageDao;
+        this.neuronFragmentDao = neuronFragmentDao;
         this.logger = logger;
     }
 
@@ -186,6 +196,10 @@ public class SampleDataService {
         lsmImageDao.save(lsmImage);
     }
 
+    public void createNeuronFragments(Collection<NeuronFragment> neuronFragments) {
+        neuronFragments.forEach(neuronFragmentDao::save);
+    }
+
     public void createSample(Sample sample) {
         sampleDao.save(sample);
     }
@@ -198,7 +212,11 @@ public class SampleDataService {
         sampleDao.update(sample, updatedFields);
     }
 
-    public void addSampleObjectivePipelineResults(Sample sample, Map<String, Collection<SamplePipelineRun>> sampleRuns) {
-        sampleDao.addObjectivePipelineResults(sample, sampleRuns);
+    public void addSampleObjectivePipelineRun(Sample sample, String objective, SamplePipelineRun samplePipelineRun) {
+        sampleDao.addObjectivePipelineRun(sample, objective, samplePipelineRun);
+    }
+
+    public void addSampleObjectivePipelineRunResult(Sample sample, String objective, Number runId, PipelineResult pipelineResult) {
+        sampleDao.addSampleObjectivePipelineRunResult(sample, objective, runId, pipelineResult);
     }
 }

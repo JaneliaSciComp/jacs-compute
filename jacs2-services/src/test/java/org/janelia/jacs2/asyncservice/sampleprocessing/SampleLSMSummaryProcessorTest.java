@@ -117,7 +117,7 @@ public class SampleLSMSummaryProcessorTest {
         )).thenAnswer(invocation -> new JacsServiceData());
 
         JacsServiceResult<SampleLSMSummaryProcessor.SampleLSMSummaryIntermediateResult> result = sampleLSMSummaryProcessor.submitServiceDependencies(testServiceData);
-        assertThat(result.getResult().getSampleLsmsServiceDataId, equalTo(TEST_ID));
+        assertThat(result.getResult().getChildServiceId(), equalTo(TEST_ID));
         assertThat(result.getResult().mipMapsServiceDataId, equalTo(TEST_ID));
         verify(updateSampleLSMMetadataProcessor).createServiceData(any(ServiceExecutionContext.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", String.valueOf(TEST_SAMPLE_ID)))),

@@ -2,9 +2,12 @@ package org.janelia.it.jacs.model.domain.sample;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
+import org.janelia.it.jacs.model.domain.IndexedReference;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.IntStream;
 
 /**
  * A set of LSMs in a Sample with a common objective.
@@ -71,4 +74,16 @@ public class ObjectiveSample {
         if (pipelineRuns == null) pipelineRuns = new ArrayList<>();
         pipelineRuns.add(pipelineRun);
     }
+
+    public Optional<IndexedReference<SamplePipelineRun>> findPipelineRunById(Number runId) {
+        if (pipelineRuns == null || runId == null) {
+            return Optional.empty();
+        } else {
+            return IntStream.range(0, pipelineRuns.size())
+                    .mapToObj(pos -> new IndexedReference<>(pipelineRuns.get(pos), pos))
+                    .filter(positionalReference -> runId.toString().equals(positionalReference.getReference().getId().toString()))
+                    .findFirst();
+        }
+    }
+
 }

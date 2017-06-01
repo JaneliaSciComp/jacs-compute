@@ -3,12 +3,11 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import java.util.LinkedList;
 import java.util.List;
 
-class GetSampleLsmsIntermediateResult {
-    final Number getSampleLsmsServiceDataId;
+class GetSampleLsmsIntermediateResult extends SampleIntermediateResult {
     final List<SampleImageFile> sampleImageFiles = new LinkedList<>();
 
     GetSampleLsmsIntermediateResult(Number getSampleLsmsServiceDataId) {
-        this.getSampleLsmsServiceDataId = getSampleLsmsServiceDataId;
+        super(getSampleLsmsServiceDataId);
     }
 
     void addSampleImageFile(SampleImageFile sif) {

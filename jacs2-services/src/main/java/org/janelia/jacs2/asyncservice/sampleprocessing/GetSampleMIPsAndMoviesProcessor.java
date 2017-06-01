@@ -131,7 +131,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
                     SampleMIPsAndMoviesArgs args = getArgs(pd.getJacsServiceData());
-                    JacsServiceData getSampleLsmsService = jacsServiceDataPersistence.findById(depResults.getResult().getSampleLsmsServiceDataId);
+                    JacsServiceData getSampleLsmsService = jacsServiceDataPersistence.findById(depResults.getResult().getChildServiceId());
                     List<SampleImageFile> sampleImageFiles = getSampleImageFilesProcessor.getResultHandler().getServiceDataResult(getSampleLsmsService);
                     sampleImageFiles.stream()
                             .forEach(sif -> {

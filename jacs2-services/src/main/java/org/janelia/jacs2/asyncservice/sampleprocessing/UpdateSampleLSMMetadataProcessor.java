@@ -109,7 +109,7 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
         UpdateLSMsMetadataArgs args = getArgs(depResults1.getJacsServiceData());
         return computationFactory.newCompletedComputation(depResults1)
             .thenApply(pd -> {
-                JacsServiceData getSampleLsmsMetadataService = jacsServiceDataPersistence.findById(pd.getResult().getSampleLsmsServiceDataId);
+                JacsServiceData getSampleLsmsMetadataService = jacsServiceDataPersistence.findById(pd.getResult().getChildServiceId());
                 List<SampleImageFile> sampleImageFiles = getSampleLsmsMetadataProcessor.getResultHandler().getServiceDataResult(getSampleLsmsMetadataService);
                 sampleImageFiles.forEach(sif -> {
                     LSMImage lsmImage = sampleDataService.getLSMsByIds(pd.getJacsServiceData().getOwner(), ImmutableList.of(sif.getId())).stream().findFirst().orElse(null);

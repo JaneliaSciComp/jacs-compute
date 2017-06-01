@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.neuronservices;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class NeuronSeparationResult {
     private String resultDir;
@@ -163,5 +164,15 @@ public class NeuronSeparationResult {
 
     public void setRefChanFile(String refChanFile) {
         this.refChanFile = refChanFile;
+    }
+
+    public Optional<String> getNeuronMask(Integer neuronIndex) {
+        String neuronMaskName = "neuron_" + neuronIndex + ".mask";
+        return this.maskFiles.stream().filter(fn -> fn.contains(neuronMaskName)).findFirst();
+    }
+
+    public Optional<String> getNeuronChan(Integer neuronIndex) {
+        String neuronChanName = "neuron_" + neuronIndex + ".chan";
+        return this.chanFiles.stream().filter(fn -> fn.contains(neuronChanName)).findFirst();
     }
 }

@@ -17,10 +17,14 @@ public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
     public T findById(I id) {
         D dao = daoSource.get();
         try {
-            return dao.findById(id);
+            return findById(dao, id);
         } finally {
             daoSource.destroy(dao);
         }
+    }
+
+    protected T findById(D dao, I id) {
+        return dao.findById(id);
     }
 
     public List<T> findByIds(Collection<I> ids) {

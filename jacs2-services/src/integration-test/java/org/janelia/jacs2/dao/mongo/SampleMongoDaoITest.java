@@ -1,7 +1,6 @@
 package org.janelia.jacs2.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
@@ -273,20 +272,44 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
     }
 
     @Test
-    public void updateSampleObjectivePipelineResults() {
+    public void updateSampleObjectivePipelineRuns() {
         Sample testSample = createTestSample("ds1", "sc1");
         testSample.getObjectiveSamples().addAll(ImmutableList.of(
                 createSampleObjective("o1"),
                 createSampleObjective("o2"),
                 createSampleObjective("o3")));
         testDao.save(testSample);
-        testDao.addObjectivePipelineResults(testSample, ImmutableMap.of(
-                "o1", ImmutableList.of(createPipelineResult("o1.1"), createPipelineResult("o1.2")),
-                "o3", ImmutableList.of(createPipelineResult("o3.1"), createPipelineResult("o3.2"))
-        ));
+        testDao.addObjectivePipelineRun(testSample, "o1", createPipelineRun(1, "o1.1"));
+        testDao.addObjectivePipelineRun(testSample, "o1", createPipelineRun(2, "o1.2"));
+        testDao.addObjectivePipelineRun(testSample, "o3", createPipelineRun(3, "o3.1"));
+        testDao.addObjectivePipelineRun(testSample, "o3", createPipelineRun(4, "o3.2"));
         Sample retrievedSample = testDao.findById(testSample.getId());
         assertThat(retrievedSample.lookupObjective("o1").get().getPipelineRuns(),
                 contains(new HasPropertyWithValue<>("name", equalTo("o1.1")), new HasPropertyWithValue<>("name", equalTo("o1.2")))
+        );
+    }
+
+    @Test
+    public void updateSampleObjectivePipelineResult() {
+        Sample testSample = createTestSample("ds1", "sc1");
+        testSample.getObjectiveSamples().addAll(ImmutableList.of(
+                createSampleObjective("o1"),
+                createSampleObjective("o2"),
+                createSampleObjective("o3")));
+        testDao.save(testSample);
+        testDao.addObjectivePipelineRun(testSample, "o1", createPipelineRun(1, "o1.1"));
+
+        testSample = testDao.findById(testSample.getId());
+        testDao.addSampleObjectivePipelineRunResult(testSample, "o1", 1, createPipelineResult("new o1.1. result"));
+        testDao.addSampleObjectivePipelineRunResult(testSample, "o1", 2, createPipelineResult("result not created"));
+
+        Sample retrievedSample = testDao.findById(testSample.getId());
+        assertThat(
+                retrievedSample.lookupObjective("o1")
+                        .flatMap(os -> os.findPipelineRunById(1))
+                        .map(positionalRun -> positionalRun.getReference().getResults())
+                        .get(),
+                contains(new HasPropertyWithValue<>("name", equalTo("o1.1")), new HasPropertyWithValue<>("name", equalTo("new o1.1. result")))
         );
     }
 
@@ -297,13 +320,18 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         return so;
     }
 
-    private SamplePipelineRun createPipelineResult(String s) {
+    private SamplePipelineRun createPipelineRun(Integer runId, String s) {
         SamplePipelineRun pipelineRun = new SamplePipelineRun();
+        pipelineRun.setId(runId);
         pipelineRun.setName(s);
+        pipelineRun.addResult(createPipelineResult(s));
+        return pipelineRun;
+    }
+
+    private PipelineResult createPipelineResult(String s) {
         PipelineResult result = new PipelineResult();
         result.setName(s);
-        pipelineRun.addResult(result);
-        return pipelineRun;
+        return result;
     }
 
     protected List<Sample> createMultipleTestItems(int nItems) {

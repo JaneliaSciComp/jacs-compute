@@ -2,17 +2,8 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Multimap;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
-import org.janelia.it.jacs.model.domain.sample.FileGroup;
-import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
-import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -27,8 +18,6 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceRe
 import org.janelia.jacs2.asyncservice.imageservices.MIPGenerationProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.StitchAndBlendResult;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor;
-import org.janelia.jacs2.asyncservice.imageservices.stitching.StitchedImageInfo;
-import org.janelia.jacs2.asyncservice.imageservices.stitching.StitchingUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -46,18 +35,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Named("sampleStitcher")
-public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcessor<SampleStitchProcessor.StitchProcessingIntermediateResult, List<SampleAreaResult>> {
+public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcessor<SampleStitchProcessor.StitchProcessingIntermediateResult, SampleResult> {
 
     private static final String STITCH_DIRNAME = "stitch";
     private static final String MIPS_DIRNAME = "mips";
 
-    static class StitchProcessingIntermediateResult extends GetSampleLsmsIntermediateResult {
+    static class StitchProcessingIntermediateResult extends SampleIntermediateResult {
         private final List<Number> mergeTilePairServiceIds;
         private final List<AreaStitchingIntermediateResult> stitchedAreasResults = new ArrayList<>();
 
@@ -73,11 +61,13 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
 
     static class AreaStitchingIntermediateResult {
         private final SampleAreaResult sampleAreaResult;
+        private final Optional<Path> tileResultFile;
         private Optional<Number> stichingServiceId;
         private Optional<Number> mipsServiceId;
 
-        public AreaStitchingIntermediateResult(SampleAreaResult sampleAreaResult, Optional<Number> stichingServiceId, Optional<Number> mipsServiceId) {
+        public AreaStitchingIntermediateResult(SampleAreaResult sampleAreaResult, Optional<Path> tileResultFile, Optional<Number> stichingServiceId, Optional<Number> mipsServiceId) {
             this.sampleAreaResult = sampleAreaResult;
+            this.tileResultFile = tileResultFile;
             this.stichingServiceId = stichingServiceId;
             this.mipsServiceId = mipsServiceId;
         }
@@ -129,24 +119,33 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
     }
 
     @Override
-    public ServiceResultHandler<List<SampleAreaResult>> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<List<SampleAreaResult>>() {
+    public ServiceResultHandler<SampleResult> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<SampleResult>() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
             @Override
-            public List<SampleAreaResult> collectResult(JacsServiceResult<?> depResults) {
+            public SampleResult collectResult(JacsServiceResult<?> depResults) {
+                SampleStitchArgs args = getArgs(depResults.getJacsServiceData());
                 StitchProcessingIntermediateResult result = (StitchProcessingIntermediateResult) depResults.getResult();
-                return result.stitchedAreasResults.stream()
-                        .map(ar -> ar.sampleAreaResult)
-                        .collect(Collectors.toList());
+                SampleResult sampleResult = new SampleResult();
+                sampleResult.setSampleId(args.sampleId);
+                sampleResult.setSampleAreaResults(result.stitchedAreasResults.stream()
+                        .map(ar -> {
+                            SampleAreaResult sar = ar.sampleAreaResult;
+                            if (ar.tileResultFile.isPresent()) {
+                                sar.setTileResultFile(ar.tileResultFile.get().toString());
+                            }
+                            return sar;
+                        })
+                        .collect(Collectors.toList()));
+                return sampleResult;
             }
 
-            public List<SampleAreaResult> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<SampleAreaResult>>() {
-                });
+            public SampleResult getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<SampleResult>() {});
             }
         };
     }
@@ -206,29 +205,6 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     ;
                     return pd;
                 })
-                .thenApply(pd -> {
-                    JacsServiceData jacsServiceData = depResults.getJacsServiceData();
-                    SampleStitchArgs args = getArgs(jacsServiceData);
-                    Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), args.sampleId);
-                    Multimap<String,  SamplePipelineRun> objectiveRunResults = pd.getResult().stitchedAreasResults.stream()
-                            .map(sar -> getObjectivePipelineRunResult(jacsServiceData, sample, sar.sampleAreaResult))
-                            .reduce(LinkedListMultimap.<String, SamplePipelineRun>create(),
-                                    (Multimap<String, SamplePipelineRun> ac, Map<String, SamplePipelineRun> objectivePipelineResult) -> {
-                                        Multimap<String, SamplePipelineRun> finalResult = LinkedListMultimap.create();
-                                        finalResult.putAll(ac);
-                                        objectivePipelineResult.entrySet().forEach(oprEntry -> {
-                                            finalResult.put(oprEntry.getKey(), oprEntry.getValue());
-                                        });
-                                        return finalResult;
-                                    }, (Multimap<String, SamplePipelineRun> r1, Multimap<String, SamplePipelineRun> r2) -> {
-                                        Multimap<String, SamplePipelineRun> finalResult = LinkedListMultimap.create();
-                                        finalResult.putAll(r1);
-                                        finalResult.putAll(r2);
-                                        return finalResult;
-                                    });
-                    sampleDataService.addSampleObjectivePipelineResults(sample, objectiveRunResults.asMap());
-                    return pd;
-                })
                 ;
     }
 
@@ -255,7 +231,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
             stitchedFileNameGenerator = groupedArea -> "stitched-" + idGenerator.generateId();
         }
         return allGroupedAreasResults.stream()
-                .map(groupedArea -> {
+                .map((SampleAreaResult groupedArea) -> {
                     JacsServiceData stitichingService = null;
                     Path areaResultsDir = Paths.get(groupedArea.getResultDir());
                     Optional<Path> tileFile;
@@ -296,7 +272,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     } else {
                         mipsServiceId = Optional.empty();
                     }
-                    return new AreaStitchingIntermediateResult(groupedArea, stitchingServiceId, mipsServiceId);
+                    return new AreaStitchingIntermediateResult(groupedArea, tileFile, stitchingServiceId, mipsServiceId);
                 })
                 .collect(Collectors.toList())
                 ;
@@ -355,76 +331,8 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
         });
     }
 
-    private Map<String, SamplePipelineRun> getObjectivePipelineRunResult(JacsServiceData jacsServiceData, Sample sample, SampleAreaResult areaResult) {
-        return sample.lookupObjective(areaResult.getObjective())
-                .map(objective -> {
-                    // create entry for the corresponding service run
-                    SamplePipelineRun pipelineRun = new SamplePipelineRun();
-                    pipelineRun.setId(jacsServiceData.getId());
-                    pipelineRun.setName(StringUtils.defaultIfBlank(jacsServiceData.getDescription(), jacsServiceData.getName()));
-                    pipelineRun.setPipelineProcess(jacsServiceData.getName());
-                    pipelineRun.setCreationDate(jacsServiceData.getCreationDate());
-                    // create stitch result
-                    SampleProcessingResult stitchResult = new SampleProcessingResult();
-                    stitchResult.setId(idGenerator.generateId());
-                    stitchResult.setName(String.format("Sample processing results (%s)", areaResult.getAnatomicalArea()));
-                    stitchResult.setFilepath(areaResult.getResultDir());
-                    stitchResult.setChannelSpec(areaResult.getConsensusChannelComponents().channelSpec);
-                    stitchResult.setAnatomicalArea(areaResult.getAnatomicalArea());
-                    List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(areaResult.getResultDir(), areaResult.getMipsFileList());
-                    SampleServicesUtils.updateFiles(stitchResult, fGroups);
-                    if (StringUtils.isNotBlank(areaResult.getStichFile())) {
-                        stitchResult.setFileName(FileType.LosslessStack, Paths.get(areaResult.getResultDir()).relativize(Paths.get(areaResult.getStichFile())).toString());
-                    } else {
-                        stitchResult.setFileName(
-                                FileType.LosslessStack,
-                                areaResult.getMergeResultFiles().stream().findFirst().map(mrn -> Paths.get(areaResult.getResultDir()).relativize(Paths.get(mrn)).toString()).orElse(null));
-                    }
-                    if (StringUtils.isNotBlank(areaResult.getStitchInfoFile())) {
-                        StitchedImageInfo stitchedImageInfo = StitchingUtils.readStitchedImageInfo(Paths.get(areaResult.getStitchInfoFile()));
-                        stitchResult.setImageSize(stitchedImageInfo.getXYZDimensions());
-                    } else {
-                        stitchResult.setImageSize(getConsensusValue(areaResult.getMergeResults(), MergeTilePairResult::getImageSize));
-                    }
-                    stitchResult.setChannelColors(getConsensusValue(areaResult.getMergeResults(), mtp -> {
-                        if (CollectionUtils.isNotEmpty(mtp.getChannelColors())) {
-                            return String.join(",", mtp.getChannelColors());
-                        } else {
-                            return "";
-                        }
-                    }));
-                    stitchResult.setOpticalResolution(getConsensusValue(areaResult.getMergeResults(), MergeTilePairResult::getOpticalResolution));
-                    pipelineRun.addResult(stitchResult);
-                    return ImmutableMap.of(objective.getObjective(), pipelineRun);
-                })
-                .orElse(ImmutableMap.of());
-    }
-
-    private String getConsensusValue(List<MergeTilePairResult> mergeResults, Function<MergeTilePairResult, String>  tilePairResultMapper) {
-        return mergeResults.stream()
-                .reduce((String) null, (String acValue, MergeTilePairResult mtp) -> {
-                    String mtpValue = tilePairResultMapper.apply(mtp);
-                    if (acValue == null) {
-                        return mtpValue;
-                    } else if (acValue.equalsIgnoreCase(mtpValue)) {
-                        return acValue;
-                    } else {
-                        return "";
-                    }
-                }, (String v1, String v2) -> {
-                    if (v1 == null) return v2;
-                    else if (v2 == null) return v1;
-                    else if (v1.equalsIgnoreCase(v2)) {
-                        return v1;
-                    } else {
-                        return "";
-                    }
-                });
-    }
-
     private SampleStitchArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleStitchArgs());
     }
 
 }
-

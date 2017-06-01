@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,6 +34,7 @@ public class FlylightSampleProcessorTest {
     private GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private SampleLSMSummaryProcessor sampleLSMSummaryProcessor;
     private SampleStitchProcessor sampleStitchProcessor;
+    private UpdateSamplePipelineResultsProcessor updateSamplePipelineResultsProcessor;
     private FlylightSampleProcessor flylightSampleProcessor;
 
     @Before
@@ -46,6 +48,7 @@ public class FlylightSampleProcessorTest {
         getSampleImageFilesProcessor = mock(GetSampleImageFilesProcessor.class);
         sampleLSMSummaryProcessor = mock(SampleLSMSummaryProcessor.class);
         sampleStitchProcessor = mock(SampleStitchProcessor.class);
+        updateSamplePipelineResultsProcessor = mock(UpdateSamplePipelineResultsProcessor.class);
 
         when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class))).then(invocation -> {
             JacsServiceData sd = new JacsServiceData();
@@ -93,12 +96,19 @@ public class FlylightSampleProcessorTest {
                 )
         ).thenCallRealMethod();
 
+        when(updateSamplePipelineResultsProcessor.getMetadata()).thenCallRealMethod();
+        when(updateSamplePipelineResultsProcessor.createServiceData(any(ServiceExecutionContext.class),
+                        any(ServiceArg.class)
+                )
+        ).thenCallRealMethod();
+
         flylightSampleProcessor = new FlylightSampleProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 SampleProcessorTestUtils.TEST_WORKING_DIR,
                 getSampleImageFilesProcessor,
                 sampleLSMSummaryProcessor,
                 sampleStitchProcessor,
+                updateSamplePipelineResultsProcessor,
                 logger);
     }
 
@@ -118,6 +128,7 @@ public class FlylightSampleProcessorTest {
                 "1234567891234567", "234/567/1234567891234567"
         );
 
+        int dataIndex = 0;
         for (Map.Entry<String, String> testEntry : testData.entrySet()) {
             Long testServiceId = Long.valueOf(testEntry.getKey());
             String testSampleDir = SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + testEntry.getValue();
@@ -134,7 +145,7 @@ public class FlylightSampleProcessorTest {
             );
             testServiceData.setId(testServiceId);
 
-            JacsServiceResult<FlylightSampleProcessor.FlylightSampleIntermediateResult> result = flylightSampleProcessor.submitServiceDependencies(testServiceData);
+            JacsServiceResult<SampleIntermediateResult> result = flylightSampleProcessor.submitServiceDependencies(testServiceData);
 
             verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
                     argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
@@ -165,7 +176,13 @@ public class FlylightSampleProcessorTest {
                     argThat(new ServiceArgMatcher(new ServiceArg("-generateMips", true)))
             );
 
-            assertThat(result.getResult().getSampleStitchServiceId(), notNullValue());
+            verify(updateSamplePipelineResultsProcessor, times(dataIndex + 1)).createServiceData(any(ServiceExecutionContext.class),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-stitchingServiceId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString())))
+            );
+
+            assertThat(result.getResult().getChildServiceId(), notNullValue());
+
+            dataIndex++;
         }
     }
 

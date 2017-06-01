@@ -2,6 +2,7 @@ package org.janelia.it.jacs.model.domain.sample;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
+import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 /**
  * All the processing results of a particular specimen. Uniqueness of a Sample is determined by a combination
@@ -280,6 +282,20 @@ public class Sample extends AbstractDomainObject {
             objective = objectiveSamples.stream()
                     .filter(o -> objectiveName == null && o.getObjective() == null || o.getObjective().equals(objectiveName))
                     .findFirst();
+        }
+        return objective;
+    }
+
+    public Optional<IndexedReference<ObjectiveSample>> lookupObjectiveWithPos(String objectiveName) {
+        Optional<IndexedReference<ObjectiveSample>> objective;
+        if (CollectionUtils.isNotEmpty(objectiveSamples)) {
+            objective = IntStream.range(0, objectiveSamples.size())
+                    .mapToObj(pos -> new IndexedReference<>(objectiveSamples.get(pos), pos))
+                    .filter(positionalReference -> (objectiveName == null && positionalReference.getReference().getObjective() == null
+                                    || positionalReference.getReference().getObjective().equals(objectiveName)))
+                    .findFirst();
+        } else {
+            objective = Optional.empty();
         }
         return objective;
     }

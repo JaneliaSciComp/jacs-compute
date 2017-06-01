@@ -26,40 +26,12 @@ import java.nio.file.Paths;
 import java.util.List;
 
 @Named("flylightSample")
-public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProcessor<FlylightSampleProcessor.FlylightSampleIntermediateResult, List<SampleAreaResult>> {
-
-    static class FlylightSampleIntermediateResult {
-        private final Number sampleStitchServiceId;
-
-        FlylightSampleIntermediateResult(Number sampleStitchServiceId) {
-            this.sampleStitchServiceId = sampleStitchServiceId;
-        }
-
-        Number getSampleStitchServiceId() {
-            return sampleStitchServiceId;
-        }
-    }
-
-    static class FlylightSampleArgs extends SampleServiceArgs {
-        @Parameter(names = "-mergeAlgorithm", description = "Merge algorithm", required = false)
-        String mergeAlgorithm;
-        @Parameter(names = "-channelDyeSpec", description = "Channel dye spec", required = false)
-        String channelDyeSpec;
-        @Parameter(names = "-outputChannelOrder", description = "Output channel order", required = false)
-        String outputChannelOrder;
-        @Parameter(names = "-distortionCorrection", description = "If specified apply distortion correction", required = false)
-        boolean applyDistortionCorrection;
-        @Parameter(names = "-basicMipMapsOptions", description = "Basic MIPS and Movies Options", required = false)
-        String basicMipMapsOptions = "mips:movies:legends:bcomp";
-        @Parameter(names = "-montageMipMaps", description = "If set montage the mipmaps", required = false)
-        boolean montageMipMaps;
-        @Parameter(names = "-persistResults", description = "If specified it generates the mips", required = false)
-        boolean persistResults;
-    }
+public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProcessor<SampleIntermediateResult, List<SampleProcessorResult>> {
 
     private final GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private final SampleLSMSummaryProcessor sampleLSMSummaryProcessor;
     private final SampleStitchProcessor sampleStitchProcessor;
+    private final UpdateSamplePipelineResultsProcessor updateSamplePipelineResultsProcessor;
 
     @Inject
     FlylightSampleProcessor(ServiceComputationFactory computationFactory,
@@ -68,11 +40,13 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                             GetSampleImageFilesProcessor getSampleImageFilesProcessor,
                             SampleLSMSummaryProcessor sampleLSMSummaryProcessor,
                             SampleStitchProcessor sampleStitchProcessor,
+                            UpdateSamplePipelineResultsProcessor updateSamplePipelineResultsProcessor,
                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.getSampleImageFilesProcessor = getSampleImageFilesProcessor;
         this.sampleLSMSummaryProcessor = sampleLSMSummaryProcessor;
         this.sampleStitchProcessor = sampleStitchProcessor;
+        this.updateSamplePipelineResultsProcessor = updateSamplePipelineResultsProcessor;
     }
 
     @Override
@@ -81,27 +55,27 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     }
 
     @Override
-    public ServiceResultHandler<List<SampleAreaResult>> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<List<SampleAreaResult>>() {
+    public ServiceResultHandler<List<SampleProcessorResult>> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<List<SampleProcessorResult>>() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
             @Override
-            public List<SampleAreaResult> collectResult(JacsServiceResult<?> depResults) {
-                FlylightSampleIntermediateResult result = (FlylightSampleIntermediateResult) depResults.getResult();
-                return sampleStitchProcessor.getResultHandler().getServiceDataResult(jacsServiceDataPersistence.findById(result.getSampleStitchServiceId()));
+            public List<SampleProcessorResult> collectResult(JacsServiceResult<?> depResults) {
+                SampleIntermediateResult result = (SampleIntermediateResult) depResults.getResult();
+                return updateSamplePipelineResultsProcessor.getResultHandler().getServiceDataResult(jacsServiceDataPersistence.findById(result.getChildServiceId()));
             }
 
-            public List<SampleAreaResult> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<SampleAreaResult>>() {});
+            public List<SampleProcessorResult> getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<SampleProcessorResult>>() {});
             }
         };
     }
 
     @Override
-    protected JacsServiceResult<FlylightSampleIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    protected JacsServiceResult<SampleIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         FlylightSampleArgs args = getArgs(jacsServiceData);
         Path sampleDataDir = getSampleDataDir(jacsServiceData, args);
         String sampleId = args.sampleId.toString();
@@ -115,11 +89,13 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                 sampleDataDir,
                 getSampleLsmsService);
 
-        return new JacsServiceResult<>(jacsServiceData, new FlylightSampleIntermediateResult(stitchService.getId()));
+        JacsServiceData resultsService = updateSampleResults(jacsServiceData, stitchService.getId(), stitchService);
+
+        return new JacsServiceResult<>(jacsServiceData, new SampleIntermediateResult(resultsService.getId()));
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<FlylightSampleIntermediateResult>> processing(JacsServiceResult<FlylightSampleIntermediateResult> depResults) {
+    protected ServiceComputation<JacsServiceResult<SampleIntermediateResult>> processing(JacsServiceResult<SampleIntermediateResult> depResults) {
         return computationFactory.newCompletedComputation(depResults);
     }
 
@@ -158,7 +134,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                                    boolean useDistortionCorrection, boolean generateMips,
                                    Path sampleDataDir,
                                    JacsServiceData... deps) {
-        JacsServiceData mipsService = sampleStitchProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+        JacsServiceData stitchService = sampleStitchProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Stitch sample tiles")
                         .waitFor(deps)
                         .build(),
@@ -172,7 +148,17 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                 new ServiceArg("-distortionCorrection", useDistortionCorrection),
                 new ServiceArg("-generateMips", generateMips)
         );
-        return submitDependencyIfNotPresent(jacsServiceData, mipsService);
+        return submitDependencyIfNotPresent(jacsServiceData, stitchService);
+    }
+
+    private JacsServiceData updateSampleResults(JacsServiceData jacsServiceData, Number stitchingServiceId, JacsServiceData... deps) {
+        JacsServiceData resultsService = updateSamplePipelineResultsProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Update sample results")
+                        .waitFor(deps)
+                        .build(),
+                new ServiceArg("-stitchingServiceId", stitchingServiceId.toString())
+        );
+        return submitDependencyIfNotPresent(jacsServiceData, resultsService);
     }
 
     private FlylightSampleArgs getArgs(JacsServiceData jacsServiceData) {

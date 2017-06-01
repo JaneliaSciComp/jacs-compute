@@ -98,7 +98,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
      * state to a (state, value) pair.
      * @return a function from a servicedata to a service data. The function's application updates the service data.
      */
-    private Function<JacsServiceData, JacsServiceResult<Boolean>> areAllDependenciesDoneFunc() {
+    protected Function<JacsServiceData, JacsServiceResult<Boolean>> areAllDependenciesDoneFunc() {
         return sdp -> {
             List<JacsServiceData> running = new ArrayList<>();
             List<JacsServiceData> failed = new ArrayList<>();

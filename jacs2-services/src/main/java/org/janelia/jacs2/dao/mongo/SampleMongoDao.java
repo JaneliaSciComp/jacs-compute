@@ -6,8 +6,10 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
+import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.SampleDao;
@@ -24,6 +26,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -88,7 +91,7 @@ public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements S
     }
 
     @Override
-    public void addObjectivePipelineResults(Sample sample, Map<String, Collection<SamplePipelineRun>> sampleRuns) {
+    public void addObjectivePipelineRun(Sample sample, String objective, SamplePipelineRun samplePipelineRun) {
         if (sample.getObjectiveSamples() == null) {
             throw new IllegalArgumentException("Sample " + sample + " has no objective samples");
         }
@@ -96,8 +99,8 @@ public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements S
         int objectiveSampleIndex = 0;
         for (ObjectiveSample os : sample.getObjectiveSamples()) {
             String fieldName = String.format("objectiveSamples.%d.pipelineRuns", objectiveSampleIndex);
-            if (sampleRuns.get(os.getObjective()) != null) {
-                updatedFields.add(Updates.pushEach(fieldName, ImmutableList.copyOf(sampleRuns.get(os.getObjective()))));
+            if (StringUtils.equals(os.getObjective(), objective)) {
+                updatedFields.add(Updates.push(fieldName, samplePipelineRun));
             }
             objectiveSampleIndex++;
         }
@@ -105,5 +108,29 @@ public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements S
         updateOptions.upsert(false);
 
         update(getUpdateMatchCriteria(sample), Updates.combine(updatedFields), updateOptions);
+    }
+
+    @Override
+    public void addSampleObjectivePipelineRunResult(Sample sample, String objective, Number runId, PipelineResult pipelineResult) {
+        if (sample.getObjectiveSamples() == null) {
+            throw new IllegalArgumentException("Sample " + sample + " has no objective samples");
+        }
+
+        List<Bson> updatedFields = new ArrayList<>();
+        sample.lookupObjectiveWithPos(objective)
+                .flatMap(positionalObjectiveSample -> {
+                    Optional<IndexedReference<SamplePipelineRun>> positionalPipelineRun = positionalObjectiveSample.getReference().findPipelineRunById(runId);
+                    if (positionalPipelineRun.isPresent()) {
+                        return Optional.of(String.format("objectiveSamples.%d.pipelineRuns.%d.results", positionalObjectiveSample.getPos(), positionalPipelineRun.get().getPos()));
+                    } else {
+                        return Optional.<String>empty();
+                    }
+                })
+                .ifPresent(fn -> updatedFields.add(Updates.push(fn, pipelineResult)));
+        if (!updatedFields.isEmpty()) {
+            UpdateOptions updateOptions = new UpdateOptions();
+            updateOptions.upsert(false);
+            update(getUpdateMatchCriteria(sample), Updates.combine(updatedFields), updateOptions);
+        }
     }
 }

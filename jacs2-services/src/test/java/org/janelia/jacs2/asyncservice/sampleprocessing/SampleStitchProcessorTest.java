@@ -26,20 +26,16 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.slf4j.Logger;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -204,8 +200,7 @@ public class SampleStitchProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true)))
         );
 
-        assertThat(result.getResult().sampleImageFiles, Matchers.empty());
-        assertThat(result.getResult().getSampleLsmsServiceDataId, notNullValue());
+        assertThat(result.getResult().getChildServiceId(), notNullValue());
         assertThat(result.getResult().getMergeTilePairServiceIds(), Matchers.hasSize(mergeInvocations));
     }
 
@@ -349,14 +344,6 @@ public class SampleStitchProcessorTest {
             ;
         verify(failure, never()).accept(any());
         verify(successful).accept(any());
-        verify(sampleDataService).addSampleObjectivePipelineResults(same(testSample),
-                argThat(new ArgumentMatcher<Map<String, Collection<SamplePipelineRun>>>() {
-                    @Override
-                    public boolean matches(Map<String, Collection<SamplePipelineRun>> argument) {
-                        return argument.containsKey("objective") && argument.get("objective").size() == 3;
-                    }
-                })
-        );
     }
 
     private SampleAreaResult createSampleAreaResult(String objective, String areaName, List<MergeTilePairResult> mergedTiles, List<MergeTilePairResult> groupedTiles) {

@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.sample;
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.dao.DaoFactory;
 import org.janelia.jacs2.dao.LSMImageDao;
+import org.janelia.jacs2.dao.NeuronFragmentDao;
 import org.janelia.jacs2.dao.SampleDao;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.Subject;
@@ -37,6 +38,7 @@ public class SampleDataServiceTest {
     private SampleDao sampleDao;
     private SubjectService subjectService;
     private LSMImageDao lsmImageDao;
+    private NeuronFragmentDao neuronFragmentDao;
 
     private SampleDataService testService;
 
@@ -47,8 +49,10 @@ public class SampleDataServiceTest {
         subjectService = mock(SubjectService.class);
         DaoFactory daoFactory = mock(DaoFactory.class);
         lsmImageDao = mock(LSMImageDao.class);
+        neuronFragmentDao = mock(NeuronFragmentDao.class);
+
         DomainObjectService domainObjectService = new DomainObjectService(daoFactory);
-        testService = new SampleDataService(domainObjectService, subjectService, sampleDao, lsmImageDao, logger);
+        testService = new SampleDataService(domainObjectService, subjectService, sampleDao, lsmImageDao, neuronFragmentDao, logger);
         when(daoFactory.createDomainObjectDao("LSMImage")).thenAnswer(invocation -> lsmImageDao);
     }
 
