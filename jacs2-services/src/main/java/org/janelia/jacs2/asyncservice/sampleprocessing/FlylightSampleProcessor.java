@@ -2,6 +2,8 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -23,6 +25,7 @@ import javax.inject.Named;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.IntStream;
 
 @Named("flylightSample")
 public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProcessor<SampleIntermediateResult, List<SampleProcessorResult>> {
@@ -204,11 +207,26 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     private void runNeuronSeparation(JacsServiceData jacsServiceData, FlylightSampleArgs args, SampleIntermediateResult intermediateResult) {
         JacsServiceData sampleResultsService = jacsServiceDataPersistence.findById(intermediateResult.getChildServiceId());
         List<SampleProcessorResult> sampleResults = updateSamplePipelineResultsProcessor.getResultHandler().getServiceDataResult(sampleResultsService);
-        sampleResults.stream().forEach(sr -> {
-            separateNeurons(jacsServiceData, sr, args.previousNeuronsResultFile, args.consolidatedNeuronsLabelFile,
-                    Paths.get(args.sampleDataRootDir).resolve(SampleServicesUtils.getSampleDataSubDirs("Separation", jacsServiceData.getId().toString())),
-                    sampleResultsService);
-        });
+
+        IntStream.range(0, sampleResults.size())
+                .mapToObj(pos -> new IndexedReference<SampleProcessorResult>(sampleResults.get(pos), pos))
+                .forEach(indexedSr -> {
+                    Path outputDir;
+                    SampleProcessorResult sr = indexedSr.getReference();
+                    if (StringUtils.isNotBlank(sr.getArea())) {
+                        outputDir = Paths.get(args.sampleDataRootDir)
+                                .resolve(SampleServicesUtils.getSampleDataSubDirs("Separation", jacsServiceData.getId().toString()))
+                                .resolve(sr.getArea());
+                    } else if (sampleResults.size() > 1) {
+                        outputDir = Paths.get(args.sampleDataRootDir)
+                                .resolve(SampleServicesUtils.getSampleDataSubDirs("Separation", jacsServiceData.getId().toString()))
+                                .resolve("area" + indexedSr.getPos() + 1);
+                    } else {
+                        outputDir = Paths.get(args.sampleDataRootDir)
+                                .resolve(SampleServicesUtils.getSampleDataSubDirs("Separation", jacsServiceData.getId().toString()));
+                    }
+                    separateNeurons(jacsServiceData, sr, args.previousNeuronsResultFile, args.consolidatedNeuronsLabelFile, outputDir, sampleResultsService);
+                });
     }
 
     private JacsServiceData separateNeurons(JacsServiceData jacsServiceData, SampleProcessorResult sampleResult,
