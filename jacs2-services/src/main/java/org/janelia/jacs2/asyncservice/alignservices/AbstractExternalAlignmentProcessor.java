@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.beust.jcommander.JCommander;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
@@ -28,21 +29,27 @@ import java.util.Map;
 
 public abstract class AbstractExternalAlignmentProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
 
+    private final String alignmentRunner;
     private final String libraryPath;
     private final String toolsDir;
+    private final String alignmentScriptsDir;
 
     AbstractExternalAlignmentProcessor(ServiceComputationFactory computationFactory,
                                        JacsServiceDataPersistence jacsServiceDataPersistence,
                                        Instance<ExternalProcessRunner> serviceRunners,
                                        String defaultWorkingDir,
-                                       String libraryPath,
+                                       String alignmentRunner,
+                                       String alignmentScriptsDir,
                                        String toolsDir,
+                                       String libraryPath,
                                        ThrottledProcessesQueue throttledProcessesQueue,
                                        ApplicationConfig applicationConfig,
                                        Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, throttledProcessesQueue, applicationConfig, logger);
+        this.alignmentRunner = alignmentRunner;
         this.libraryPath = libraryPath;
         this.toolsDir = toolsDir;
+        this.alignmentScriptsDir = alignmentScriptsDir;
     }
 
     @Override
@@ -87,7 +94,9 @@ public abstract class AbstractExternalAlignmentProcessor extends AbstractExeBase
     }
 
     private void createScript(AlignmentArgs args, ScriptWriter scriptWriter) {
-        scriptWriter.addWithArgs(getExecutable(args))
+        scriptWriter.addWithArgs(getExecutable())
+                .addArg(getAlignmentScript(args))
+                .addArg(String.valueOf(args.numThreads))
                 .addArgFlag("-o", args.outputDir)
                 .addArgFlag("-c", args.configFile)
                 .addArgFlag("-t", args.templateDir)
@@ -111,8 +120,7 @@ public abstract class AbstractExternalAlignmentProcessor extends AbstractExeBase
         return ImmutableMap.of(
                 DY_LIBRARY_PATH_VARNAME, getUpdatedEnvValue(DY_LIBRARY_PATH_VARNAME, libraryPath),
                 "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS", String.valueOf(args.numThreads),
-                "FSLOUTPUTTYPE", args.fslOutputType,
-                "NFE_MAX_THREAD_COUNT", String.valueOf(args.numThreads)
+                "FSLOUTPUTTYPE", args.fslOutputType
         );
     }
 
@@ -150,7 +158,18 @@ public abstract class AbstractExternalAlignmentProcessor extends AbstractExeBase
         return getFullExecutableName(toolsDir);
     }
 
-    private String getExecutable(AlignmentArgs args) {
-        return getFullExecutableName(args.alignmentAlgorithm);
+    private String getExecutable() {
+        return getFullExecutableName(alignmentRunner);
+    }
+
+    private String getAlignmentScript(AlignmentArgs args) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(args.alignmentAlgorithm), "No alignment algorithm has been specified");
+        String alignmentScript;
+        if (args.alignmentAlgorithm.endsWith(".sh")) {
+            alignmentScript = args.alignmentAlgorithm;
+        } else {
+            alignmentScript = args.alignmentAlgorithm + ".sh";
+        }
+        return getFullExecutableName(alignmentScriptsDir, alignmentScript);
     }
 }

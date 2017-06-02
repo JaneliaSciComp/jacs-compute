@@ -24,12 +24,14 @@ public class ExternalAlignmentProcessor extends AbstractExternalAlignmentProcess
                                JacsServiceDataPersistence jacsServiceDataPersistence,
                                @Any Instance<ExternalProcessRunner> serviceRunners,
                                @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                               @PropertyValue(name = "Alignment.Runner.Path") String alignmentRunner,
+                               @PropertyValue(name = "Alignment.Scripts.Path") String alignmentScriptsDir,
                                @PropertyValue(name = "Alignment.Tools.Path") String toolsDir,
                                @PropertyValue(name = "Alignment.Library.Path") String libraryPath,
                                ThrottledProcessesQueue throttledProcessesQueue,
                                @ApplicationProperties ApplicationConfig applicationConfig,
                                Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, toolsDir, libraryPath, throttledProcessesQueue, applicationConfig, logger);
+        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, alignmentRunner, alignmentScriptsDir, toolsDir, libraryPath, throttledProcessesQueue, applicationConfig, logger);
     }
 
     @Override
