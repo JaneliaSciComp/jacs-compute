@@ -114,7 +114,7 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
                                 } else if ("ref.mask".equals(fnWithExt)) {
                                     result.setRefChanFile(resultDir.relativize(f).toString());
                                 }
-                            } else if (fn.startsWith("SeparationResultUnmapped")) {
+                            } else if (fn.startsWith("SeparationResult")) {
                                 result.addSeparationResult(resultDir.relativize(f).toString());
                             }
                         });

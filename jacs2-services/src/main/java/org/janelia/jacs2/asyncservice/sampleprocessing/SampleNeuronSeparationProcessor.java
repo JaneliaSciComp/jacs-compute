@@ -149,11 +149,14 @@ public class SampleNeuronSeparationProcessor extends AbstractBasicLifeCycleServi
                     NeuronSeparation neuronSeparation = new NeuronSeparation();
                     neuronSeparation.setId(separationServiceId);
                     neuronSeparation.setName(separationServiceData.getName());
-
+                    neuronSeparation.setFilepath(separationResult.getResultDir());
+                    separationResult.findSeparationResult()
+                            .ifPresent(srf -> neuronSeparation.setFileName(FileType.NeuronSeparatorResult, srf));
                     ReverseReference fragmentsReference = new ReverseReference();
                     fragmentsReference.setReferringClassName(NeuronFragment.class.getSimpleName());
                     fragmentsReference.setReferenceAttr("separationId");
                     fragmentsReference.setReferenceId(neuronSeparation.getId());
+                    fragmentsReference.setCount((long) separationResult.getNeurons().size());
                     neuronSeparation.setFragmentsReference(fragmentsReference);
 
                     List<NeuronFragment> neuronFragmentList = new ArrayList<>();

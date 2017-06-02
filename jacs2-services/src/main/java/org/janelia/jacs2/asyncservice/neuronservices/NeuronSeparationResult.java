@@ -102,6 +102,12 @@ public class NeuronSeparationResult {
         this.separationResults.add(separationResult);
     }
 
+    public Optional<String> findSeparationResult() {
+        return this.separationResults.stream()
+                .filter(rn -> "SeparationResultUnmapped.nsp".equals(rn) || "SeparationResult.nsp".equals(rn))
+                .findFirst();
+    }
+
     public String getFastLoadSubDir() {
         return fastLoadSubDir;
     }
