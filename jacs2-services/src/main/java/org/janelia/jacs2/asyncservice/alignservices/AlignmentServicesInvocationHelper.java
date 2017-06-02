@@ -1,12 +1,14 @@
-package org.janelia.jacs2.asyncservice.imageservices;
+package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.fileservices.LinkDataProcessor;
-import org.janelia.jacs2.asyncservice.imageservices.align.AlignmentConfiguration;
-import org.janelia.jacs2.asyncservice.imageservices.align.ImageCoordinates;
+import org.janelia.jacs2.asyncservice.imageservices.NiftiConverterProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.Vaa3dConverterProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.Vaa3dPluginProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.WarpToolProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -18,7 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-class ImageServicesInvocationHelper {
+class AlignmentServicesInvocationHelper {
 
     private final LinkDataProcessor linkDataProcessor;
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
@@ -37,13 +39,13 @@ class ImageServicesInvocationHelper {
         return dir.resolve(channelFileName);
     }
 
-    ImageServicesInvocationHelper(JacsServiceDataPersistence jacsServiceDataPersistence,
-                                  LinkDataProcessor linkDataProcessor,
-                                  Vaa3dConverterProcessor vaa3dConverterProcessor,
-                                  Vaa3dPluginProcessor vaa3dPluginProcessor,
-                                  NiftiConverterProcessor niftiConverterProcessor,
-                                  WarpToolProcessor warpToolProcessor,
-                                  Logger logger) {
+    AlignmentServicesInvocationHelper(JacsServiceDataPersistence jacsServiceDataPersistence,
+                                      LinkDataProcessor linkDataProcessor,
+                                      Vaa3dConverterProcessor vaa3dConverterProcessor,
+                                      Vaa3dPluginProcessor vaa3dPluginProcessor,
+                                      NiftiConverterProcessor niftiConverterProcessor,
+                                      WarpToolProcessor warpToolProcessor,
+                                      Logger logger) {
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.linkDataProcessor = linkDataProcessor;
         this.vaa3dConverterProcessor = vaa3dConverterProcessor;

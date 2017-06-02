@@ -1,15 +1,12 @@
 package org.janelia.jacs2.asyncservice.imageservices.align;
 
+import org.janelia.jacs2.asyncservice.alignservices.AlignmentUtils;
 import org.junit.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.file.FileSystem;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.spi.FileSystemProvider;

@@ -1,4 +1,4 @@
-package org.janelia.jacs2.asyncservice.imageservices.align;
+package org.janelia.jacs2.asyncservice.alignservices;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

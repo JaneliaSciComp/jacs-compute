@@ -1,4 +1,4 @@
-package org.janelia.jacs2.asyncservice.imageservices.align;
+package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
+import java.util.StringJoiner;
 
 public class AlignmentUtils {
 
@@ -64,6 +65,16 @@ public class AlignmentUtils {
             alignmentInput.dims = inputItr.next();
         }
         return alignmentInput;
+    }
+
+    public static String formatInput(AlignmentInput alignmentInput) {
+        StringJoiner joiner = new StringJoiner(",");
+        joiner.add(StringUtils.defaultIfBlank(alignmentInput.name, ""));
+        joiner.add(StringUtils.defaultIfBlank(alignmentInput.channels, ""));
+        joiner.add(StringUtils.defaultIfBlank(alignmentInput.ref, ""));
+        joiner.add(StringUtils.defaultIfBlank(alignmentInput.res, ""));
+        joiner.add(StringUtils.defaultIfBlank(alignmentInput.dims, ""));
+        return joiner.toString();
     }
 
     public static void convertAffineMatToInsightMat(Path affineMatFile, Path insightMatFile) {

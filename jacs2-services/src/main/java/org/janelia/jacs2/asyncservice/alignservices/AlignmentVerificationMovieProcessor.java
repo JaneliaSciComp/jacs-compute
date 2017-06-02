@@ -1,4 +1,4 @@
-package org.janelia.jacs2.asyncservice.imageservices;
+package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
@@ -11,6 +11,8 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
 import org.janelia.jacs2.asyncservice.fileservices.LinkDataProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.Vaa3dConverterProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.Vaa3dPluginProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -42,7 +44,7 @@ public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleS
         String outputFile;
     }
 
-    private final ImageServicesInvocationHelper invocationHelper;
+    private final AlignmentServicesInvocationHelper invocationHelper;
 
     @Inject
     AlignmentVerificationMovieProcessor(ServiceComputationFactory computationFactory,
@@ -53,7 +55,7 @@ public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleS
                                         Vaa3dPluginProcessor vaa3dPluginProcessor,
                                         Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        invocationHelper = new ImageServicesInvocationHelper(jacsServiceDataPersistence,
+        invocationHelper = new AlignmentServicesInvocationHelper(jacsServiceDataPersistence,
                 linkDataProcessor,
                 vaa3dConverterProcessor,
                 vaa3dPluginProcessor,

@@ -1,4 +1,4 @@
-package org.janelia.jacs2.asyncservice.imageservices.align;
+package org.janelia.jacs2.asyncservice.alignservices;
 
 public class ImageCoordinates {
     public double x;
