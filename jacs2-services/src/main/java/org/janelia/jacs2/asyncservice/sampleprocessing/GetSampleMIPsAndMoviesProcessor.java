@@ -120,7 +120,8 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),
-                new ServiceArg("-sampleDataDir", args.sampleDataDir)
+                new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir)
         );
         JacsServiceData getSampleLsmsService = submitDependencyIfNotPresent(jacsServiceData, getSampleLsmsServiceRef);
         return new JacsServiceResult<>(jacsServiceData, new GetSampleMIPsIntermediateResult(getSampleLsmsService.getId()));
@@ -152,10 +153,8 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
                                         new ServiceArg("-resultsDir", resultsDir.toString())
                                 );
                                 basicMipMapsService = submitDependencyIfNotPresent(depResults.getJacsServiceData(), basicMipMapsService);
-
                                 SampleImageMIPsFile sampleImageMIPsFile = new SampleImageMIPsFile();
                                 sampleImageMIPsFile.setSampleImageFile(sif);
-
                                 depResults.getResult().addSampleImageMipsFile(basicMipMapsService.getId(), sampleImageMIPsFile);
                             });
                     return pd;
@@ -164,6 +163,9 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
 
     private Path getResultsDir(SampleMIPsAndMoviesArgs args, String area, String objective, File lsmImageFile) {
         ImmutableList.Builder<String> pathCompBuilder = new ImmutableList.Builder<>();
+        if (StringUtils.isNotBlank(args.sampleSummarySubDir)) {
+            pathCompBuilder.add(args.sampleSummarySubDir);
+        }
         if (StringUtils.isNotBlank(objective)) {
             pathCompBuilder.add(objective);
         }
@@ -172,7 +174,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
         }
         pathCompBuilder.add(FileUtils.getFileNameOnly(lsmImageFile.getName()));
         ImmutableList<String> pathComps = pathCompBuilder.build();
-        return Paths.get(args.sampleDataDir, pathComps.toArray(new String[pathComps.size()]));
+        return Paths.get(args.sampleDataRootDir, pathComps.toArray(new String[pathComps.size()]));
     }
 
     private SampleMIPsAndMoviesArgs getArgs(JacsServiceData jacsServiceData) {

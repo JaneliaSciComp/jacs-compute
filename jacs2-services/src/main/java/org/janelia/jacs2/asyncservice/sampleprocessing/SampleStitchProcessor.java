@@ -61,13 +61,13 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
 
     static class AreaStitchingIntermediateResult {
         private final SampleAreaResult sampleAreaResult;
-        private final Optional<Path> tileResultFile;
+        private final Optional<Path> areaResultFile;
         private Optional<Number> stichingServiceId;
         private Optional<Number> mipsServiceId;
 
-        public AreaStitchingIntermediateResult(SampleAreaResult sampleAreaResult, Optional<Path> tileResultFile, Optional<Number> stichingServiceId, Optional<Number> mipsServiceId) {
+        public AreaStitchingIntermediateResult(SampleAreaResult sampleAreaResult, Optional<Path> areaResultFile, Optional<Number> stichingServiceId, Optional<Number> mipsServiceId) {
             this.sampleAreaResult = sampleAreaResult;
-            this.tileResultFile = tileResultFile;
+            this.areaResultFile = areaResultFile;
             this.stichingServiceId = stichingServiceId;
             this.mipsServiceId = mipsServiceId;
         }
@@ -135,8 +135,8 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                 sampleResult.setSampleAreaResults(result.stitchedAreasResults.stream()
                         .map(ar -> {
                             SampleAreaResult sar = ar.sampleAreaResult;
-                            if (ar.tileResultFile.isPresent()) {
-                                sar.setTileResultFile(ar.tileResultFile.get().toString());
+                            if (ar.areaResultFile.isPresent()) {
+                                sar.setAreaResultFile(ar.areaResultFile.get().toString());
                             }
                             return sar;
                         })
@@ -159,7 +159,8 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),
-                new ServiceArg("-sampleDataDir", args.sampleDataDir)
+                new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir)
         );
         JacsServiceData getSampleLsmsService = submitDependencyIfNotPresent(jacsServiceData, getSampleLsmsServiceRef);
         List<AnatomicalArea> anatomicalAreas =
@@ -174,7 +175,10 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                             new ServiceArg("-sampleId", args.sampleId.toString()),
                             new ServiceArg("-objective", ar.getObjective()),
                             new ServiceArg("-area", ar.getName()),
-                            new ServiceArg("-sampleDataDir", args.sampleDataDir),
+                            new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                            new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),
+                            new ServiceArg("-sampleSummarySubDir", args.sampleSummarySubDir),
+                            new ServiceArg("-sampleSitchingSubDir", args.sampleSitchingSubDir),
                             new ServiceArg("-mergeAlgorithm", args.mergeAlgorithm),
                             new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
                             new ServiceArg("-outputChannelOrder", args.outputChannelOrder),

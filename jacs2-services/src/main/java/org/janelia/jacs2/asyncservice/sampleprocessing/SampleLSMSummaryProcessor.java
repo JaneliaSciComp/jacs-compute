@@ -140,7 +140,9 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                 new ServiceArg("-area", args.sampleArea),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
-                new ServiceArg("-sampleDataDir", args.sampleDataDir)
+                new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),
+                new ServiceArg("-sampleSummarySubDir", args.sampleSummarySubDir)
         );
         updateSampleLsmMetadataService = submitDependencyIfNotPresent(jacsServiceData, updateSampleLsmMetadataService);
         JacsServiceData getSampleMipMapsService = getSampleMIPsAndMoviesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
@@ -151,7 +153,9 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                 new ServiceArg("-area", args.sampleArea),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-options", args.basicMipMapsOptions),
-                new ServiceArg("-sampleDataDir", args.sampleDataDir)
+                new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),
+                new ServiceArg("-sampleSummarySubDir", args.sampleSummarySubDir)
         );
         getSampleMipMapsService = submitDependencyIfNotPresent(jacsServiceData, getSampleMipMapsService);
 

@@ -49,22 +49,22 @@ public class SampleNeuronSeparationProcessor extends AbstractBasicLifeCycleServi
     }
 
     static class SampleNeuronSeparationArgs extends ServiceArgs {
-        @Parameter(names = "-runId", description = "Run ID to be updated with the corresponding fragment results.", required = true)
-        Long pipelineRunId;
-        @Parameter(names = "-objective", description = "Sample objective for which to update the separation result.", required = true)
-        String sampleObjective;
         @Parameter(names = "-sampleId", description = "Sample ID", required = true)
         Long sampleId;
+        @Parameter(names = "-objective", description = "Sample objective for which to update the separation result.", required = true)
+        String sampleObjective;
+        @Parameter(names = "-runId", description = "Run ID to be updated with the corresponding fragment results.", required = true)
+        Long pipelineRunId;
         @Parameter(names = {"-inputFile"}, description = "Input file name", required = true)
         String inputFile;
         @Parameter(names = {"-outputDir"}, description = "Output directory name", required = true)
         String outputDir;
-        @Parameter(names = "-previousResultFile", description = "Previous result file name")
-        String previousResultFile;
         @Parameter(names = "-signalChannels", description = "Signal channels")
         String signalChannels = "0 1 2";
         @Parameter(names = "-referenceChannel", description = "Reference channel")
         String referenceChannel = "3";
+        @Parameter(names = "-previousResultFile", description = "Previous result file name")
+        String previousResultFile;
         @Parameter(names = "-consolidatedLabelFile", description = "Consolidated label file name", required = false)
         String consolidatedLabelFile;
         @Parameter(names = "-numThreads", description = "Number of threads")

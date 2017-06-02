@@ -81,6 +81,7 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public List<SampleProcessorResult> collectResult(JacsServiceResult<?> depResults) {
                 JacsServiceResult<List<SampleProcessorResult>> intermediateResult = (JacsServiceResult<List<SampleProcessorResult>>)depResults;
@@ -132,8 +133,11 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
                                     updateResult.setSampleId(sampleResult.getSampleId());
                                     updateResult.setObjective(sar.getObjective());
                                     updateResult.setArea(sar.getAnatomicalArea());
-                                    updateResult.setTileFile(sar.getTileResultFile());
+                                    updateResult.setResultDir(sar.getResultDir());
+                                    updateResult.setAreaFile(sar.getAreaResultFile());
                                     updateResult.setRunId(pipelineRun.getId());
+                                    updateResult.setSignalChannels(sar.getConsensusChannelComponents().signalChannelsPos);
+                                    updateResult.setReferenceChannel(sar.getConsensusChannelComponents().referenceChannelsPos);
                                     pd.getResult().add(updateResult);
                                 }
                             });
@@ -182,8 +186,8 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
                     stitchResult.setAnatomicalArea(areaResult.getAnatomicalArea());
                     List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(areaResult.getResultDir(), areaResult.getMipsFileList());
                     SampleServicesUtils.updateFiles(stitchResult, fGroups);
-                    if (StringUtils.isNotBlank(areaResult.getTileResultFile())) {
-                        stitchResult.setFileName(FileType.LosslessStack, Paths.get(areaResult.getResultDir()).relativize(Paths.get(areaResult.getTileResultFile())).toString());
+                    if (StringUtils.isNotBlank(areaResult.getAreaResultFile())) {
+                        stitchResult.setFileName(FileType.LosslessStack, Paths.get(areaResult.getResultDir()).relativize(Paths.get(areaResult.getAreaResultFile())).toString());
                     }
                     if (StringUtils.isNotBlank(areaResult.getStitchInfoFile())) {
                         StitchedImageInfo stitchedImageInfo = StitchingUtils.readStitchedImageInfo(Paths.get(areaResult.getStitchInfoFile()));

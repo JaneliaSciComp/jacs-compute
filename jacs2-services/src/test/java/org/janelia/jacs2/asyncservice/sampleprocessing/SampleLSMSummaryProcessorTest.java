@@ -105,7 +105,9 @@ public class SampleLSMSummaryProcessorTest {
                 any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", TEST_WORKING_DIR)))
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", TEST_WORKING_DIR))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary")))
         )).thenAnswer(invocation -> new JacsServiceData());
 
         when(getSampleMIPsAndMoviesProcessor.createServiceData(any(ServiceExecutionContext.class),
@@ -113,7 +115,9 @@ public class SampleLSMSummaryProcessorTest {
                 any(ServiceArg.class),
                 any(ServiceArg.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:bcomp"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", TEST_WORKING_DIR)))
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", TEST_WORKING_DIR))),
+                any(ServiceArg.class),
+                any(ServiceArg.class)
         )).thenAnswer(invocation -> new JacsServiceData());
 
         JacsServiceResult<SampleLSMSummaryProcessor.SampleLSMSummaryIntermediateResult> result = sampleLSMSummaryProcessor.submitServiceDependencies(testServiceData);
@@ -124,14 +128,18 @@ public class SampleLSMSummaryProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", null))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", TEST_WORKING_DIR)))
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", TEST_WORKING_DIR))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary")))
         );
         verify(getSampleMIPsAndMoviesProcessor).createServiceData(any(ServiceExecutionContext.class),
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", String.valueOf(TEST_SAMPLE_ID)))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:bcomp"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", TEST_WORKING_DIR)))
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", TEST_WORKING_DIR))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary")))
         );
     }
 
@@ -141,7 +149,10 @@ public class SampleLSMSummaryProcessorTest {
                 .addArg("-sampleId", String.valueOf(sampleId))
                 .addArg("-area", area)
                 .addArg("-objective", objective)
-                .addArg("-sampleDataDir", TEST_WORKING_DIR);
+                .addArg("-sampleDataRootDir", TEST_WORKING_DIR)
+                .addArg("-sampleLsmsSubDir", "lsms")
+                .addArg("-sampleSummarySubDir", "summary")
+                ;
         if (StringUtils.isNotBlank(channelDyeSpec))
             testServiceDataBuilder.addArg("-channelDyeSpec", channelDyeSpec);
 

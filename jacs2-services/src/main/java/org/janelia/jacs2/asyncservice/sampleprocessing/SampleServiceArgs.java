@@ -14,6 +14,12 @@ class SampleServiceArgs extends ServiceArgs {
             description = "Optional sample area. If specified it filters images by the specified area",
             required = false)
     String sampleArea;
-    @Parameter(names = "-sampleDataDir", description = "Sample data directory", required = false)
-    String sampleDataDir;
+    @Parameter(names = "-sampleDataRootDir", description = "Sample root data directory", required = false)
+    String sampleDataRootDir;
+    @Parameter(names = "-sampleLsmsSubDir", description = "Sample LSMs data subdirectory", required = false)
+    String sampleLsmsSubDir;
+    @Parameter(names = "-sampleSummarySubDir", description = "Sample summary data subdirectory", required = false)
+    String sampleSummarySubDir;
+    @Parameter(names = "-sampleSitchingSubDir", description = "Sample stitching data subdirectory", required = false)
+    String sampleSitchingSubDir;
 }

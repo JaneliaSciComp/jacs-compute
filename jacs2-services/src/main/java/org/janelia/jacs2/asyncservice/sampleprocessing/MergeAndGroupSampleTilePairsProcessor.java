@@ -232,8 +232,10 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),
-                new ServiceArg("-sampleDataDir", args.sampleDataDir),
-                new ServiceArg("-channelDyeSpec", args.channelDyeSpec)
+                new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
+                new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),
+                new ServiceArg("-sampleSummarySubDir", args.sampleSummarySubDir)
         );
         JacsServiceData sampleLsmsMetadataService = submitDependencyIfNotPresent(jacsServiceData, updateSampleLSMMetadataServiceRef);
 
@@ -370,7 +372,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 mcd.tilePair.getTileName(), mcd.unmergedInputChannels, mcd.mergedInputChannels, mcd.outputChannels, mcd.mapping);
         JacsServiceData mergeLsmPairsService;
 
-        Path areaResultsParentDir = SampleServicesUtils.getImageDataPath(args.sampleDataDir, ar.getObjective(), ar.getName());
+        Path areaResultsParentDir = SampleServicesUtils.getImageDataPath(args.sampleDataRootDir, args.sampleSitchingSubDir, ar.getObjective(), ar.getName());
         String mergeSubDir = MERGE_DIRNAME;
         Path mergedResultDir = areaResultsParentDir.resolve(mergeSubDir);
         Path channelMappingInput;
@@ -379,11 +381,11 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             mergeLsmPairsService = mergeLsmPairProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                             .waitFor(deps)
                             .build(),
-                    new ServiceArg("-lsm1", SampleServicesUtils.getImageFile(args.sampleDataDir,
+                    new ServiceArg("-lsm1", SampleServicesUtils.getImageFile(args.sampleDataRootDir, args.sampleLsmsSubDir,
                             ar.getObjective(),
                             ar.getName(),
                             mcd.tilePair.getFirstLsm()).toString()),
-                    new ServiceArg("-lsm2", SampleServicesUtils.getImageFile(args.sampleDataDir,
+                    new ServiceArg("-lsm2", SampleServicesUtils.getImageFile(args.sampleDataRootDir, args.sampleLsmsSubDir,
                             ar.getObjective(),
                             ar.getName(),
                             mcd.tilePair.getSecondLsm()).toString()),
@@ -404,14 +406,14 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             // no merge is necessary so the result is the tile's LSM but create a link in the merge directory
             channelMappingInput = FileUtils.getFilePath(
                     mergedResultDir,
-                    SampleServicesUtils.getImageFile(args.sampleDataDir,
+                    SampleServicesUtils.getImageFile(args.sampleDataRootDir, args.sampleLsmsSubDir,
                             ar.getObjective(),
                             ar.getName(),
                             mcd.tilePair.getFirstLsm()).toString());
             mergeLsmPairsService = linkDataProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                             .waitFor(deps)
                             .build(),
-                    new ServiceArg("-source", SampleServicesUtils.getImageFile(args.sampleDataDir,
+                    new ServiceArg("-source", SampleServicesUtils.getImageFile(args.sampleDataRootDir, args.sampleLsmsSubDir,
                             ar.getObjective(),
                             ar.getName(),
                             mcd.tilePair.getFirstLsm()).toString()),

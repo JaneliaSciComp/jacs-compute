@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
@@ -97,7 +98,7 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
         try {
             SampleServiceArgs args = getArgs(jacsServiceData);
-            Path destinationDirectory = Paths.get(args.sampleDataDir);
+            Path destinationDirectory = Paths.get(args.sampleDataRootDir, args.sampleLsmsSubDir);
             Files.createDirectories(destinationDirectory);
         } catch (IOException e) {
             throw new ComputationException(jacsServiceData, e);
@@ -120,7 +121,7 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
                             sif.setSampleId(args.sampleId);
                             sif.setId(lsmf.getId());
                             sif.setArchiveFilePath(lsmf.getFilepath());
-                            sif.setWorkingFilePath(SampleServicesUtils.getImageFile(args.sampleDataDir, ar.getObjective(), ar.getName(), lsmf).toString());
+                            sif.setWorkingFilePath(SampleServicesUtils.getImageFile(args.sampleDataRootDir, args.sampleLsmsSubDir, ar.getObjective(), ar.getName(), lsmf).toString());
                             sif.setArea(ar.getName());
                             sif.setChanSpec(lsmf.getChanSpec());
                             sif.setColorSpec(lsmf.getChannelColors());

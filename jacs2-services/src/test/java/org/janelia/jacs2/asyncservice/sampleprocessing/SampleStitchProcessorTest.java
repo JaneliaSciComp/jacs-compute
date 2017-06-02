@@ -92,12 +92,16 @@ public class SampleStitchProcessorTest {
                 any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
+                any(ServiceArg.class),
                 any(ServiceArg.class)
         )).thenCallRealMethod();
 
         when(mergeAndGroupSampleTilePairsProcessor.getMetadata()).thenCallRealMethod();
         when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenCallRealMethod();
         when(mergeAndGroupSampleTilePairsProcessor.createServiceData(any(ServiceExecutionContext.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
@@ -184,7 +188,8 @@ public class SampleStitchProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", SampleProcessorTestUtils.TEST_WORKING_DIR)))
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms")))
         );
 
         int mergeInvocations = 2;
@@ -193,7 +198,10 @@ public class SampleStitchProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary"))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
@@ -386,7 +394,10 @@ public class SampleStitchProcessorTest {
                 .addArg("-sampleId", String.valueOf(sampleId))
                 .addArg("-area", area)
                 .addArg("-objective", objective)
-                .addArg("-sampleDataDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
+                .addArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
+                .addArg("-sampleLsmsSubDir", "lsms")
+                .addArg("-sampleSummarySubDir", "summary")
+                .addArg("-sampleSitchingSubDir", "stitching")
                 .setWorkspace(SampleProcessorTestUtils.TEST_WORKING_DIR);
 
         if (StringUtils.isNotBlank(mergeAlgorithm))

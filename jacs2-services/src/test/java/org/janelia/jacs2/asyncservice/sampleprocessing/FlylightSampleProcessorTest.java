@@ -49,6 +49,7 @@ public class FlylightSampleProcessorTest {
         sampleLSMSummaryProcessor = mock(SampleLSMSummaryProcessor.class);
         sampleStitchProcessor = mock(SampleStitchProcessor.class);
         updateSamplePipelineResultsProcessor = mock(UpdateSamplePipelineResultsProcessor.class);
+        SampleNeuronSeparationProcessor sampleNeuronSeparationProcessor = mock(SampleNeuronSeparationProcessor.class);
 
         when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class))).then(invocation -> {
             JacsServiceData sd = new JacsServiceData();
@@ -68,6 +69,7 @@ public class FlylightSampleProcessorTest {
                 any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
+                any(ServiceArg.class),
                 any(ServiceArg.class)
         )).thenCallRealMethod();
 
@@ -79,11 +81,16 @@ public class FlylightSampleProcessorTest {
                 any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
                 any(ServiceArg.class)
         )).thenCallRealMethod();
 
         when(sampleStitchProcessor.getMetadata()).thenCallRealMethod();
         when(sampleStitchProcessor.createServiceData(any(ServiceExecutionContext.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
@@ -109,6 +116,7 @@ public class FlylightSampleProcessorTest {
                 sampleLSMSummaryProcessor,
                 sampleStitchProcessor,
                 updateSamplePipelineResultsProcessor,
+                sampleNeuronSeparationProcessor,
                 logger);
     }
 
@@ -131,7 +139,8 @@ public class FlylightSampleProcessorTest {
         int dataIndex = 0;
         for (Map.Entry<String, String> testEntry : testData.entrySet()) {
             Long testServiceId = Long.valueOf(testEntry.getKey());
-            String testSampleDir = SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + testEntry.getValue();
+            String testSampleDir = SampleProcessorTestUtils.TEST_WORKING_DIR;
+            String testLsmSubDir =  testEntry.getValue();
             JacsServiceData testServiceData = createTestServiceData(1L,
                     SampleProcessorTestUtils.TEST_SAMPLE_ID,
                     area,
@@ -151,14 +160,17 @@ public class FlylightSampleProcessorTest {
                     argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", testSampleDir)))
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)))
             );
 
             verify(sampleLSMSummaryProcessor).createServiceData(any(ServiceExecutionContext.class),
                     argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", testSampleDir))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-basicMipMapsOptions", DEFAULT_MIP_MAPS_OPTIONS))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-montageMipMaps", true)))
@@ -168,7 +180,10 @@ public class FlylightSampleProcessorTest {
                     argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataDir", testSampleDir))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
+                    argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
                     argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
@@ -198,7 +213,7 @@ public class FlylightSampleProcessorTest {
                 .addArg("-sampleId", String.valueOf(sampleId))
                 .addArg("-area", area)
                 .addArg("-objective", objective)
-                .addArg("-sampleDataDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
+                .addArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
                 .setWorkspace(SampleProcessorTestUtils.TEST_WORKING_DIR);
 
         if (StringUtils.isNotBlank(mergeAlgorithm))

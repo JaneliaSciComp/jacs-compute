@@ -6,6 +6,7 @@ import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.Image;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.model.DomainModelUtils;
 
 import java.io.File;
@@ -17,26 +18,34 @@ import java.util.Map;
 
 public class SampleServicesUtils {
 
-    static Path getImageDataPath(String destDirName, String objective, String area) {
-        Path imageDataPath = Paths.get(destDirName,
+    static final String DEFAULT_WORKING_LSMS_SUBDIR = "Temp";
+
+    static Path getSampleDataSubDirs(String dataTopSubDirname, String subTreeId) {
+        List<String> pathComponents = FileUtils.getTreePathComponentsForId(subTreeId);
+        return Paths.get(dataTopSubDirname, pathComponents.toArray(new String[pathComponents.size()]));
+    }
+
+    static Path getImageDataPath(String destRootDirName, String destSubDirName, String objective, String area) {
+        Path imageDataPath = Paths.get(destRootDirName,
+                StringUtils.defaultIfBlank(destSubDirName, ""),
                 StringUtils.defaultIfBlank(objective, ""),
                 StringUtils.defaultIfBlank(area, "")
         );
         return imageDataPath;
     }
 
-    static Path getImageFile(String destDirName, String objective, String area, Image image) {
+    static Path getImageFile(String destRootDirName, String destSubDirName, String objective, String area, Image image) {
         String fileName = new File(image.getFilepath()).getName();
         if (fileName.endsWith(".bz2")) {
             fileName = fileName.substring(0, fileName.length() - ".bz2".length());
         } else if (fileName.endsWith(".gz")) {
             fileName = fileName.substring(0, fileName.length() - ".gz".length());
         }
-        return getImageDataPath(destDirName, objective, area).resolve(fileName);
+        return getImageDataPath(destRootDirName, destSubDirName, objective, area).resolve(fileName);
     }
 
-    static Path getImageMetadataFile(String destDirName, String objective, String area, File imageFile) {
-        return getImageDataPath(destDirName, objective, area).resolve(imageFile.getName().replaceAll("\\s+", "_") + ".json");
+    static Path getImageMetadataFile(String destRootDirName, String destSubDirName, String objective, String area, File imageFile) {
+        return getImageDataPath(destRootDirName, destSubDirName, objective, area).resolve(imageFile.getName().replaceAll("\\s+", "_") + ".json");
     }
 
     /**

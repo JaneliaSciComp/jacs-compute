@@ -19,7 +19,7 @@ public class SampleAreaResult {
     private String stitchInfoFile;
     private String stitchRelativeSubDir;
     private String stichFile;
-    private String tileResultFile;
+    private String areaResultFile;
     private String mipsRelativeSubDir;
     private List<String> mipsFileList = new ArrayList<>();
     private String consensusChannelMapping;
@@ -99,12 +99,12 @@ public class SampleAreaResult {
         this.stichFile = stichFile;
     }
 
-    public String getTileResultFile() {
-        return tileResultFile;
+    public String getAreaResultFile() {
+        return areaResultFile;
     }
 
-    public void setTileResultFile(String tileResultFile) {
-        this.tileResultFile = tileResultFile;
+    public void setAreaResultFile(String areaResultFile) {
+        this.areaResultFile = areaResultFile;
     }
 
     public List<String> getMipsFileList() {
