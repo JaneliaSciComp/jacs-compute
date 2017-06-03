@@ -216,7 +216,7 @@ public class SampleDataService {
         sampleDao.addObjectivePipelineRun(sample, objective, samplePipelineRun);
     }
 
-    public void addSampleObjectivePipelineRunResult(Sample sample, String objective, Number runId, PipelineResult pipelineResult) {
-        sampleDao.addSampleObjectivePipelineRunResult(sample, objective, runId, pipelineResult);
+    public void addSampleObjectivePipelineRunResult(Sample sample, String objective, Number runId, Number parentResultId, PipelineResult pipelineResult) {
+        sampleDao.addSampleObjectivePipelineRunResult(sample, objective, runId, parentResultId, pipelineResult);
     }
 }

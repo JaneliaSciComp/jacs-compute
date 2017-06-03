@@ -1,8 +1,13 @@
 package org.janelia.it.jacs.model.domain.sample;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.janelia.it.jacs.model.domain.IndexedReference;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * A single service or pipeline run.
@@ -75,5 +80,13 @@ public class SamplePipelineRun {
 
     public void setError(PipelineError error) {
         this.error = error;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Stream<IndexedReference<PipelineResult, IndexedReference<Integer, Integer>[]>> streamResults() {
+        IndexedReference<Integer, Integer>[] emptyTrace = (IndexedReference<Integer, Integer>[]) new IndexedReference[0];
+        return IntStream.range(0, results.size())
+                .mapToObj(pos -> new IndexedReference<>(results.get(pos), pos))
+                .flatMap(indexedResult -> indexedResult.getReference().streamResults(0, indexedResult.getPos(), emptyTrace));
     }
 }

@@ -13,5 +13,5 @@ import java.util.Date;
 public interface SampleDao extends DomainObjectDao<Sample> {
     PageResult<Sample> findMatchingSamples(Subject subject, Sample pattern, DataInterval<Date> tmogInterval, PageRequest pageRequest);
     void addObjectivePipelineRun(Sample sample, String objective, SamplePipelineRun samplePipelineRun);
-    void addSampleObjectivePipelineRunResult(Sample sample, String objective, Number runId, PipelineResult pipelineResult);
+    void addSampleObjectivePipelineRunResult(Sample sample, String objective, Number runId, Number parentResultId, PipelineResult pipelineResult);
 }

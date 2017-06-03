@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
@@ -209,7 +208,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         List<SampleProcessorResult> sampleResults = updateSamplePipelineResultsProcessor.getResultHandler().getServiceDataResult(sampleResultsService);
 
         IntStream.range(0, sampleResults.size())
-                .mapToObj(pos -> new IndexedReference<SampleProcessorResult>(sampleResults.get(pos), pos))
+                .mapToObj(pos -> new IndexedReference<>(sampleResults.get(pos), pos))
                 .forEach(indexedSr -> {
                     Path outputDir;
                     SampleProcessorResult sr = indexedSr.getReference();
@@ -240,6 +239,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                 new ServiceArg("-sampleId", sampleResult.getSampleId().toString()),
                 new ServiceArg("-objective", sampleResult.getObjective()),
                 new ServiceArg("-runId", sampleResult.getRunId().toString()),
+                new ServiceArg("-resultId", sampleResult.getResultId().toString()),
                 new ServiceArg("-inputFile", sampleResult.getAreaFile()),
                 new ServiceArg("-outputDir", outputDir.toString()),
                 new ServiceArg("-signalChannels", sampleResult.getSignalChannels()),

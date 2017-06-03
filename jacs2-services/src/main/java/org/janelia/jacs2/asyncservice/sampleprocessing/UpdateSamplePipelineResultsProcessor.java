@@ -136,6 +136,7 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
                                     updateResult.setResultDir(sar.getResultDir());
                                     updateResult.setAreaFile(sar.getAreaResultFile());
                                     updateResult.setRunId(pipelineRun.getId());
+                                    updateResult.setResultId(sampleProcessingResult.get().getId());
                                     updateResult.setSignalChannels(sar.getConsensusChannelComponents().signalChannelsPos);
                                     updateResult.setReferenceChannel(sar.getConsensusChannelComponents().referenceChannelsPos);
                                     pd.getResult().add(updateResult);

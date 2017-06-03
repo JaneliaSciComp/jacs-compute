@@ -46,6 +46,7 @@ import static org.mockito.ArgumentMatchers.same;
 
 public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
 
+    private volatile int nextResultId = 1;
     private List<Sample> testData = new ArrayList<>();
     private SampleDao testDao;
 
@@ -297,19 +298,42 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
                 createSampleObjective("o2"),
                 createSampleObjective("o3")));
         testDao.save(testSample);
-        testDao.addObjectivePipelineRun(testSample, "o1", createPipelineRun(1, "o1.1"));
+        SamplePipelineRun pipelineRun = createPipelineRun(1, "o1.1");
+        PipelineResult r1 = createPipelineResult("o1.1 r1");
+        PipelineResult r2 = createPipelineResult("o1.1 r2");
+        pipelineRun.addResult(r1);
+        pipelineRun.addResult(r2);
+
+        PipelineResult r1_1 = createPipelineResult("o1.1 r1_1");
+        PipelineResult r1_2 = createPipelineResult("o1.1 r1_2");
+        PipelineResult r2_1 = createPipelineResult("o1.1 r2_1");
+
+        r1.addResult(r1_1);
+        r1.addResult(r1_2);
+        r2.addResult(r2_1);
+
+        testDao.addObjectivePipelineRun(testSample, "o1", pipelineRun);
 
         testSample = testDao.findById(testSample.getId());
-        testDao.addSampleObjectivePipelineRunResult(testSample, "o1", 1, createPipelineResult("new o1.1. result"));
-        testDao.addSampleObjectivePipelineRunResult(testSample, "o1", 2, createPipelineResult("result not created"));
+        testDao.addSampleObjectivePipelineRunResult(testSample, "o1", 1, r1_2.getId(), createPipelineResult("new o1.1. result"));
+        testDao.addSampleObjectivePipelineRunResult(testSample, "o1", 1, r1.getId(), createPipelineResult("new o1.1 r1 result"));
+        testDao.addSampleObjectivePipelineRunResult(testSample, "o1", 2, null, createPipelineResult("result not created"));
 
         Sample retrievedSample = testDao.findById(testSample.getId());
         assertThat(
                 retrievedSample.lookupObjective("o1")
                         .flatMap(os -> os.findPipelineRunById(1))
-                        .map(positionalRun -> positionalRun.getReference().getResults())
+                        .map(positionalRun -> positionalRun.getReference().streamResults().map(indexedResult -> indexedResult.getReference()).collect(Collectors.toList()))
                         .get(),
-                contains(new HasPropertyWithValue<>("name", equalTo("o1.1")), new HasPropertyWithValue<>("name", equalTo("new o1.1. result")))
+                contains(new HasPropertyWithValue<>("name", equalTo("o1.1")),
+                        new HasPropertyWithValue<>("name", equalTo("o1.1 r1")),
+                        new HasPropertyWithValue<>("name", equalTo("o1.1 r1_1")),
+                        new HasPropertyWithValue<>("name", equalTo("o1.1 r1_2")),
+                        new HasPropertyWithValue<>("name", equalTo("new o1.1. result")),
+                        new HasPropertyWithValue<>("name", equalTo("new o1.1 r1 result")),
+                        new HasPropertyWithValue<>("name", equalTo("o1.1 r2")),
+                        new HasPropertyWithValue<>("name", equalTo("o1.1 r2_1"))
+                )
         );
     }
 
@@ -330,6 +354,7 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
 
     private PipelineResult createPipelineResult(String s) {
         PipelineResult result = new PipelineResult();
+        result.setId(++nextResultId);
         result.setName(s);
         return result;
     }

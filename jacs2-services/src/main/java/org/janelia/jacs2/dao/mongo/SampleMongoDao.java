@@ -22,10 +22,8 @@ import org.janelia.jacs2.model.DomainModelUtils;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.mongodb.client.model.Filters.and;
@@ -111,7 +109,7 @@ public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements S
     }
 
     @Override
-    public void addSampleObjectivePipelineRunResult(Sample sample, String objective, Number runId, PipelineResult pipelineResult) {
+    public void addSampleObjectivePipelineRunResult(Sample sample, String objective, Number runId, Number resultId, PipelineResult pipelineResult) {
         if (sample.getObjectiveSamples() == null) {
             throw new IllegalArgumentException("Sample " + sample + " has no objective samples");
         }
@@ -119,9 +117,26 @@ public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements S
         List<Bson> updatedFields = new ArrayList<>();
         sample.lookupObjectiveWithPos(objective)
                 .flatMap(positionalObjectiveSample -> {
-                    Optional<IndexedReference<SamplePipelineRun>> positionalPipelineRun = positionalObjectiveSample.getReference().findPipelineRunById(runId);
+                    Optional<IndexedReference<SamplePipelineRun, Integer>> positionalPipelineRun = positionalObjectiveSample.getReference().findPipelineRunById(runId);
                     if (positionalPipelineRun.isPresent()) {
-                        return Optional.of(String.format("objectiveSamples.%d.pipelineRuns.%d.results", positionalObjectiveSample.getPos(), positionalPipelineRun.get().getPos()));
+                        if (resultId == null) {
+                            return Optional.of(String.format("objectiveSamples.%d.pipelineRuns.%d.results", positionalObjectiveSample.getPos(), positionalPipelineRun.get().getPos()));
+                        } else {
+                            return positionalPipelineRun.get().getReference().streamResults()
+                                    .filter(indexedResult -> indexedResult.getReference().getId() != null && resultId.toString().equals(indexedResult.getReference().getId().toString()))
+                                    .findFirst()
+                                    .map(indexedResult -> {
+                                        List<Object> formatArgs = new ArrayList<>(ImmutableList.of(positionalObjectiveSample.getPos(), positionalPipelineRun.get().getPos()));
+                                        StringBuilder fieldFormat = new StringBuilder("objectiveSamples.%d.pipelineRuns.%d");
+                                        for (IndexedReference<Integer, Integer> treePos : indexedResult.getPos()) {
+                                            fieldFormat.append(".results.%d");
+                                            formatArgs.add(treePos.getPos());
+                                        }
+                                        fieldFormat.append(".results");
+                                        return String.format(fieldFormat.toString(), formatArgs.toArray());
+                                    })
+                                    ;
+                        }
                     } else {
                         return Optional.<String>empty();
                     }

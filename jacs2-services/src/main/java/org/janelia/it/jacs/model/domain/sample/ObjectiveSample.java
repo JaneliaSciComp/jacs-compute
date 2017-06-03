@@ -75,7 +75,7 @@ public class ObjectiveSample {
         pipelineRuns.add(pipelineRun);
     }
 
-    public Optional<IndexedReference<SamplePipelineRun>> findPipelineRunById(Number runId) {
+    public Optional<IndexedReference<SamplePipelineRun, Integer>> findPipelineRunById(Number runId) {
         if (pipelineRuns == null || runId == null) {
             return Optional.empty();
         } else {

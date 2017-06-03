@@ -5,6 +5,7 @@ class SampleProcessorResult {
     private String objective;
     private String area;
     private Number runId;
+    private Number resultId;
     private String areaFile;
     private String signalChannels;
     private String referenceChannel;
@@ -40,6 +41,14 @@ class SampleProcessorResult {
 
     public void setRunId(Number runId) {
         this.runId = runId;
+    }
+
+    public Number getResultId() {
+        return resultId;
+    }
+
+    public void setResultId(Number resultId) {
+        this.resultId = resultId;
     }
 
     public String getAreaFile() {

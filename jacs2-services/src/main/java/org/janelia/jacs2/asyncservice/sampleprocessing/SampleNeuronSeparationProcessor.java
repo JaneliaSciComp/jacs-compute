@@ -55,6 +55,8 @@ public class SampleNeuronSeparationProcessor extends AbstractBasicLifeCycleServi
         String sampleObjective;
         @Parameter(names = "-runId", description = "Run ID to be updated with the corresponding fragment results.", required = true)
         Long pipelineRunId;
+        @Parameter(names = "-resultId", description = "Run ID to be updated with the corresponding fragment results.", required = true)
+        Long pipelineResultId;
         @Parameter(names = {"-inputFile"}, description = "Input file name", required = true)
         String inputFile;
         @Parameter(names = {"-outputDir"}, description = "Output directory name", required = true)
@@ -65,15 +67,12 @@ public class SampleNeuronSeparationProcessor extends AbstractBasicLifeCycleServi
         String referenceChannel = "3";
         @Parameter(names = "-previousResultFile", description = "Previous result file name")
         String previousResultFile;
-        @Parameter(names = "-consolidatedLabelFile", description = "Consolidated label file name", required = false)
-        String consolidatedLabelFile;
         @Parameter(names = "-numThreads", description = "Number of threads")
         int numThreads = 16;
     }
 
     private final SampleDataService sampleDataService;
     private final NeuronSeparationProcessor neuronSeparationProcessor;
-    private final NeuronWarpingProcessor neuronWarpingProcessor;
 
     @Inject
     SampleNeuronSeparationProcessor(ServiceComputationFactory computationFactory,
@@ -81,12 +80,10 @@ public class SampleNeuronSeparationProcessor extends AbstractBasicLifeCycleServi
                                     @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                     SampleDataService sampleDataService,
                                     NeuronSeparationProcessor neuronSeparationProcessor,
-                                    NeuronWarpingProcessor neuronWarpingProcessor,
                                     Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sampleDataService = sampleDataService;
         this.neuronSeparationProcessor = neuronSeparationProcessor;
-        this.neuronWarpingProcessor = neuronWarpingProcessor;
     }
 
     @Override
@@ -102,31 +99,16 @@ public class SampleNeuronSeparationProcessor extends AbstractBasicLifeCycleServi
     @Override
     protected JacsServiceResult<SampleSeparationIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         SampleNeuronSeparationArgs args = getArgs(jacsServiceData);
-        JacsServiceData neuronSeparationService;
-        if (StringUtils.isNotEmpty(args.consolidatedLabelFile)) {
-            neuronSeparationService = neuronWarpingProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
-                            .description("Warp sample neurons")
-                            .build(),
-                    new ServiceArg("-inputFile", args.inputFile),
-                    new ServiceArg("-outputDir", args.outputDir),
-                    new ServiceArg("-previousResultFile", args.previousResultFile),
-                    new ServiceArg("-signalChannels", args.signalChannels),
-                    new ServiceArg("-referenceChannel", args.referenceChannel),
-                    new ServiceArg("-consolidatedLabelFile", args.consolidatedLabelFile),
-                    new ServiceArg("-numThreads", String.valueOf(args.numThreads))
-            );
-        } else {
-            neuronSeparationService = neuronSeparationProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
-                            .description("Separate sample neurons")
-                            .build(),
-                    new ServiceArg("-inputFile", args.inputFile),
-                    new ServiceArg("-outputDir", args.outputDir),
-                    new ServiceArg("-previousResultFile", args.previousResultFile),
-                    new ServiceArg("-signalChannels", args.signalChannels),
-                    new ServiceArg("-referenceChannel", args.referenceChannel),
-                    new ServiceArg("-numThreads", String.valueOf(args.numThreads))
-            );
-        }
+        JacsServiceData neuronSeparationService = neuronSeparationProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Separate sample neurons")
+                        .build(),
+                new ServiceArg("-inputFile", args.inputFile),
+                new ServiceArg("-outputDir", args.outputDir),
+                new ServiceArg("-previousResultFile", args.previousResultFile),
+                new ServiceArg("-signalChannels", args.signalChannels),
+                new ServiceArg("-referenceChannel", args.referenceChannel),
+                new ServiceArg("-numThreads", String.valueOf(args.numThreads))
+        );
         neuronSeparationService = submitDependencyIfNotPresent(jacsServiceData, neuronSeparationService);
         return new JacsServiceResult<>(jacsServiceData, new SampleSeparationIntermediateResult(neuronSeparationService.getId()));
     }
@@ -138,12 +120,7 @@ public class SampleNeuronSeparationProcessor extends AbstractBasicLifeCycleServi
                     Number separationServiceId = depResults.getResult().neuronSeparationServiceId;
                     JacsServiceData separationServiceData = jacsServiceDataPersistence.findById(separationServiceId);
                     SampleNeuronSeparationArgs args = getArgs(pd.getJacsServiceData());
-                    NeuronSeparationResult separationResult;
-                    if (StringUtils.isNotEmpty(args.consolidatedLabelFile)) {
-                        separationResult = neuronWarpingProcessor.getResultHandler().getServiceDataResult(separationServiceData);
-                    } else {
-                        separationResult = neuronSeparationProcessor.getResultHandler().getServiceDataResult(separationServiceData);
-                    }
+                    NeuronSeparationResult separationResult = neuronSeparationProcessor.getResultHandler().getServiceDataResult(separationServiceData);
                     Sample sample = sampleDataService.getSampleById(separationServiceData.getOwner(), args.sampleId);
                     Preconditions.checkArgument(sample != null, "Invalid sample ID");
                     NeuronSeparation neuronSeparation = new NeuronSeparation();
@@ -182,7 +159,7 @@ public class SampleNeuronSeparationProcessor extends AbstractBasicLifeCycleServi
                         }
                         neuronFragmentList.add(neuronFragment);
                     }
-                    sampleDataService.addSampleObjectivePipelineRunResult(sample, args.sampleObjective, args.pipelineRunId, neuronSeparation);
+                    sampleDataService.addSampleObjectivePipelineRunResult(sample, args.sampleObjective, args.pipelineRunId, args.pipelineResultId, neuronSeparation);
                     sampleDataService.createNeuronFragments(neuronFragmentList);
                     return pd;
                 });
