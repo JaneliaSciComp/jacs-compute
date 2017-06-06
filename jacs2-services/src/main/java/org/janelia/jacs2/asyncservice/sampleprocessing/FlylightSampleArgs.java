@@ -19,10 +19,8 @@ class FlylightSampleArgs extends SampleServiceArgs {
     boolean montageMipMaps;
     @Parameter(names = "-persistResults", description = "If specified it generates the mips", required = false)
     boolean persistResults;
-    @Parameter(names = "-runNeuronSeparation", description = "If specified it runs the neuron separation", required = false)
-    boolean runNeuronSeparation;
-    @Parameter(names = "-previousNeuronsResultFile", description = "Previous neurons result file name", required = false)
-    String previousNeuronsResultFile;
-    @Parameter(names = "-consolidatedNeuronsLabelFile", description = "Consolidated neurons label file name", required = false)
-    String consolidatedNeuronsLabelFile;
+    @Parameter(names = "-runNeuronSeparationAfterSampleProcessing", description = "If specified it runs the neuron separation after sample processing", required = false)
+    boolean runNeuronSeparationAfterSampleProcessing;
+    @Parameter(names = "-alignmentAlgorithm", description = "Specifies the alignment algorithm to be run", required = false)
+    String alignmentAlgorithm;
 }

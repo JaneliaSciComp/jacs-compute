@@ -116,7 +116,7 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
                     // for all objectives collect the results and create the corresponding samplepipeline results
                     sampleResult.getSampleAreaResults().stream()
                             .forEach(sar -> {
-                                Optional<SampleProcessingResult> sampleProcessingResult = getObjectivePipelineRunResult(stitchingService, sample, sar);
+                                Optional<SampleProcessingResult> sampleProcessingResult = getObjectivePipelineRunResult(sample, sar);
                                 if (sampleProcessingResult.isPresent()) {
                                     SamplePipelineRun pipelineRun = pipelineRunsByObjective.get(sar.getObjective());
                                     if (pipelineRun == null) {
@@ -174,7 +174,7 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
         };
     }
 
-    private Optional<SampleProcessingResult> getObjectivePipelineRunResult(JacsServiceData jacsServiceData, Sample sample, SampleAreaResult areaResult) {
+    private Optional<SampleProcessingResult> getObjectivePipelineRunResult(Sample sample, SampleAreaResult areaResult) {
         return sample.lookupObjective(areaResult.getObjective())
                 .map(objective -> {
                     // create entry for the corresponding service run

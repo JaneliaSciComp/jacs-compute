@@ -1,10 +1,14 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+
+import java.util.List;
 
 public final class JacsServiceResult<T> {
     private final JacsServiceData jacsServiceData;
     private T result;
+    private List<SampleProcessorResult> sampleProcessorResults;
 
     public JacsServiceResult(JacsServiceData jacsServiceData) {
         this.jacsServiceData = jacsServiceData;
@@ -25,5 +29,13 @@ public final class JacsServiceResult<T> {
 
     public final void setResult(T result) {
         this.result = result;
+    }
+
+    public void setSampleProcessorResults(List<SampleProcessorResult> sampleProcessorResults) {
+        this.sampleProcessorResults = sampleProcessorResults;
+    }
+
+    public List<SampleProcessorResult> getSampleProcessorResults() {
+        return sampleProcessorResults;
     }
 }

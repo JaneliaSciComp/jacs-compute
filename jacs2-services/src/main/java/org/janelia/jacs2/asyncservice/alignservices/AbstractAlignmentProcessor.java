@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.beust.jcommander.JCommander;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
@@ -9,11 +10,14 @@ import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.asyncservice.utils.X11Utils;
 import org.janelia.jacs2.config.ApplicationConfig;
@@ -29,24 +33,24 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-public abstract class AbstractExternalAlignmentProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
+public abstract class AbstractAlignmentProcessor extends AbstractExeBasedServiceProcessor<Void, AlignmentResultFiles> {
 
     private final String alignmentRunner;
     private final String libraryPath;
     private final String toolsDir;
     private final String alignmentScriptsDir;
 
-    AbstractExternalAlignmentProcessor(ServiceComputationFactory computationFactory,
-                                       JacsServiceDataPersistence jacsServiceDataPersistence,
-                                       Instance<ExternalProcessRunner> serviceRunners,
-                                       String defaultWorkingDir,
-                                       String alignmentRunner,
-                                       String alignmentScriptsDir,
-                                       String toolsDir,
-                                       String libraryPath,
-                                       ThrottledProcessesQueue throttledProcessesQueue,
-                                       ApplicationConfig applicationConfig,
-                                       Logger logger) {
+    AbstractAlignmentProcessor(ServiceComputationFactory computationFactory,
+                               JacsServiceDataPersistence jacsServiceDataPersistence,
+                               Instance<ExternalProcessRunner> serviceRunners,
+                               String defaultWorkingDir,
+                               String alignmentRunner,
+                               String alignmentScriptsDir,
+                               String toolsDir,
+                               String libraryPath,
+                               ThrottledProcessesQueue throttledProcessesQueue,
+                               ApplicationConfig applicationConfig,
+                               Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, throttledProcessesQueue, applicationConfig, logger);
         this.alignmentRunner = alignmentRunner;
         this.libraryPath = libraryPath;
@@ -55,8 +59,39 @@ public abstract class AbstractExternalAlignmentProcessor extends AbstractExeBase
     }
 
     @Override
-    public ServiceResultHandler<Void> getResultHandler() {
-        return new VoidServiceResultHandler();
+    public ServiceResultHandler<AlignmentResultFiles> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<AlignmentResultFiles>() {
+            final String resultsPattern = "glob:**/{Align,QiScore,rotations,Affine,ccmi}*";
+
+            @Override
+            public boolean isResultReady(JacsServiceResult<?> depResults) {
+                return areAllDependenciesDone(depResults.getJacsServiceData());
+            }
+
+            @Override
+            public AlignmentResultFiles collectResult(JacsServiceResult<?> depResults) {
+                AlignmentArgs args = getArgs(depResults.getJacsServiceData());
+                AlignmentResultFiles result = new AlignmentResultFiles();
+                Path resultDir = getOutputDir(args);
+                result.setResultDir(resultDir.toString());
+                FileUtils.lookupFiles(resultDir, 3, resultsPattern)
+                        .forEach(f -> {
+                            String fn = f.toFile().getName();
+                            if (fn.endsWith(".properties")) {
+                                result.setAlignmentPropertiesFile(resultDir.relativize(f).toString());
+                            } else if ("QiScore.csv".equals(fn)) {
+                                result.setScoresFile(resultDir.relativize(f).toString());
+                            }
+                        });
+
+                return null;
+            }
+
+            @Override
+            public AlignmentResultFiles getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<AlignmentResultFiles>() {});
+            }
+        };
     }
 
     @Override

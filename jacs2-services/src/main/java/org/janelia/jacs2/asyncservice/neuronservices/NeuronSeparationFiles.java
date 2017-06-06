@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class NeuronSeparationResult {
+public class NeuronSeparationFiles {
     private String resultDir;
     private String consolidatedLabel;
     private String consolidatedSignal;

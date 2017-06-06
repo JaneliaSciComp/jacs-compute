@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<Void, NeuronSeparationResult> {
+public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<Void, NeuronSeparationFiles> {
 
     static class NeuronSeparationArgs extends ServiceArgs {
         @Parameter(names = {"-inputFile"}, description = "Input file name", required = true)
@@ -64,8 +64,8 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
     }
 
     @Override
-    public ServiceResultHandler<NeuronSeparationResult> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<NeuronSeparationResult>() {
+    public ServiceResultHandler<NeuronSeparationFiles> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<NeuronSeparationFiles>() {
             final String resultsPattern = "glob:**/{archive,maskChan,fastLoad,Consolidated,Reference,SeparationResult,neuronSeparatorPipeline.PR.neuron,maskChan/neuron_,maskChan/ref}*";
 
             @Override
@@ -74,9 +74,9 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
             }
 
             @Override
-            public NeuronSeparationResult collectResult(JacsServiceResult<?> depResults) {
+            public NeuronSeparationFiles collectResult(JacsServiceResult<?> depResults) {
                 NeuronSeparationArgs args = getArgs(depResults.getJacsServiceData());
-                NeuronSeparationResult result = new NeuronSeparationResult();
+                NeuronSeparationFiles result = new NeuronSeparationFiles();
                 Path resultDir = getOutputDir(args);
                 result.setResultDir(resultDir.toString());
                 FileUtils.lookupFiles(resultDir, 3, resultsPattern)
@@ -122,8 +122,8 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
             }
 
             @Override
-            public NeuronSeparationResult getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<NeuronSeparationResult>() {});
+            public NeuronSeparationFiles getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<NeuronSeparationFiles>() {});
             }
         };
     }

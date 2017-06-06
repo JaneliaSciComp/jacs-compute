@@ -58,7 +58,7 @@ public enum FileType {
     private final boolean is2dImage;
     private final boolean isAscii;
 
-    private FileType(String label, boolean is2dImage, boolean isAscii) {
+    FileType(String label, boolean is2dImage, boolean isAscii) {
         this.label = label;
         this.is2dImage = is2dImage;
         this.isAscii = isAscii;

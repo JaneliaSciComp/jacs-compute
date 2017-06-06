@@ -1,6 +1,6 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
-class SampleProcessorResult {
+public class SampleProcessorResult {
     private Number sampleId;
     private String objective;
     private String area;

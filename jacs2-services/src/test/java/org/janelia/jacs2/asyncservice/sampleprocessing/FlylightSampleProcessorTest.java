@@ -2,6 +2,8 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.alignservices.AlignmentArgBuilderFactory;
+import org.janelia.jacs2.asyncservice.alignservices.AlignmentProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -9,6 +11,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
@@ -44,12 +47,15 @@ public class FlylightSampleProcessorTest {
         ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
 
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        SampleDataService sampleDataService = mock(SampleDataService.class);
 
         getSampleImageFilesProcessor = mock(GetSampleImageFilesProcessor.class);
         sampleLSMSummaryProcessor = mock(SampleLSMSummaryProcessor.class);
         sampleStitchProcessor = mock(SampleStitchProcessor.class);
         updateSamplePipelineResultsProcessor = mock(UpdateSamplePipelineResultsProcessor.class);
         SampleNeuronSeparationProcessor sampleNeuronSeparationProcessor = mock(SampleNeuronSeparationProcessor.class);
+        AlignmentArgBuilderFactory alignmentArgBuilderFactory = mock(AlignmentArgBuilderFactory.class);
+        AlignmentProcessor alignmentProcessor = mock(AlignmentProcessor.class);
 
         when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class))).then(invocation -> {
             JacsServiceData sd = new JacsServiceData();
@@ -112,11 +118,14 @@ public class FlylightSampleProcessorTest {
         flylightSampleProcessor = new FlylightSampleProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 SampleProcessorTestUtils.TEST_WORKING_DIR,
+                sampleDataService,
                 getSampleImageFilesProcessor,
                 sampleLSMSummaryProcessor,
                 sampleStitchProcessor,
                 updateSamplePipelineResultsProcessor,
                 sampleNeuronSeparationProcessor,
+                alignmentArgBuilderFactory,
+                alignmentProcessor,
                 logger);
     }
 
@@ -154,7 +163,7 @@ public class FlylightSampleProcessorTest {
             );
             testServiceData.setId(testServiceId);
 
-            JacsServiceResult<SampleIntermediateResult> result = flylightSampleProcessor.submitServiceDependencies(testServiceData);
+            JacsServiceResult<FlylightSampleProcessor.FlylightSampleIntermediateResult> result = flylightSampleProcessor.submitServiceDependencies(testServiceData);
 
             verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
                     argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),

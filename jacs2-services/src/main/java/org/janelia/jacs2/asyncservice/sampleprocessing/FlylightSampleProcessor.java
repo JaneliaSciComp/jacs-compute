@@ -2,7 +2,14 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.it.jacs.model.domain.IndexedReference;
+import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
+import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.jacs2.asyncservice.alignservices.AlignmentArgBuilderFactory;
+import org.janelia.jacs2.asyncservice.alignservices.AlignmentProcessor;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -15,6 +22,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
@@ -24,33 +32,51 @@ import javax.inject.Named;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Named("flylightSample")
-public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProcessor<SampleIntermediateResult, List<SampleProcessorResult>> {
+public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProcessor<FlylightSampleProcessor.FlylightSampleIntermediateResult, List<SampleProcessorResult>> {
 
+    static class FlylightSampleIntermediateResult extends SampleIntermediateResult {
+
+        public FlylightSampleIntermediateResult(Number childServiceId) {
+            super(childServiceId);
+        }
+
+    }
+
+    private final SampleDataService sampleDataService;
     private final GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private final SampleLSMSummaryProcessor sampleLSMSummaryProcessor;
     private final SampleStitchProcessor sampleStitchProcessor;
     private final UpdateSamplePipelineResultsProcessor updateSamplePipelineResultsProcessor;
     private final SampleNeuronSeparationProcessor sampleNeuronSeparationProcessor;
+    private final AlignmentArgBuilderFactory alignmentArgBuilderFactory;
+    private final AlignmentProcessor alignmentProcessor;
 
     @Inject
     FlylightSampleProcessor(ServiceComputationFactory computationFactory,
                             JacsServiceDataPersistence jacsServiceDataPersistence,
                             @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                            SampleDataService sampleDataService,
                             GetSampleImageFilesProcessor getSampleImageFilesProcessor,
                             SampleLSMSummaryProcessor sampleLSMSummaryProcessor,
                             SampleStitchProcessor sampleStitchProcessor,
                             UpdateSamplePipelineResultsProcessor updateSamplePipelineResultsProcessor,
                             SampleNeuronSeparationProcessor sampleNeuronSeparationProcessor,
+                            AlignmentArgBuilderFactory alignmentArgBuilderFactory,
+                            AlignmentProcessor alignmentProcessor,
                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
+        this.sampleDataService = sampleDataService;
         this.getSampleImageFilesProcessor = getSampleImageFilesProcessor;
         this.sampleLSMSummaryProcessor = sampleLSMSummaryProcessor;
         this.sampleStitchProcessor = sampleStitchProcessor;
         this.updateSamplePipelineResultsProcessor = updateSamplePipelineResultsProcessor;
         this.sampleNeuronSeparationProcessor = sampleNeuronSeparationProcessor;
+        this.alignmentArgBuilderFactory = alignmentArgBuilderFactory;
+        this.alignmentProcessor = alignmentProcessor;
     }
 
     @Override
@@ -79,7 +105,7 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
     }
 
     @Override
-    protected JacsServiceResult<SampleIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    protected JacsServiceResult<FlylightSampleIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         FlylightSampleArgs args = getArgs(jacsServiceData);
         String sampleId = args.sampleId.toString();
         Path sampleLsmsSubDir = SampleServicesUtils.getSampleDataSubDirs(SampleServicesUtils.DEFAULT_WORKING_LSMS_SUBDIR, jacsServiceData.getId().toString());
@@ -111,16 +137,27 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
 
         JacsServiceData resultsService = updateSampleResults(jacsServiceData, stitchService.getId(), stitchService);
 
-        return new JacsServiceResult<>(jacsServiceData, new SampleIntermediateResult(resultsService.getId()));
+        return new JacsServiceResult<>(jacsServiceData, new FlylightSampleIntermediateResult(resultsService.getId()));
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<SampleIntermediateResult>> processing(JacsServiceResult<SampleIntermediateResult> depResults) {
+    protected ServiceComputation<JacsServiceResult<FlylightSampleIntermediateResult>> processing(JacsServiceResult<FlylightSampleIntermediateResult> depResults) {
+        FlylightSampleArgs args = getArgs(depResults.getJacsServiceData());
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
-                    FlylightSampleArgs args = getArgs(depResults.getJacsServiceData());
-                    if (args.runNeuronSeparation) {
-                        runNeuronSeparation(depResults.getJacsServiceData(), args, depResults.getResult());
+                    if (args.runNeuronSeparationAfterSampleProcessing) {
+                        List<Pair<SampleProcessorResult, JacsServiceData>> neuronSeparationServices = runPostSampleProcessNeuronSeparation(depResults.getJacsServiceData(), args, depResults.getResult());
+                        pd.setSampleProcessorResults(neuronSeparationServices.stream().map(nss -> nss.getLeft()).collect(Collectors.toList()));
+                    } else {
+                        JacsServiceData sampleResultsService = jacsServiceDataPersistence.findById(pd.getResult().getChildServiceId());
+                        List<SampleProcessorResult> sampleResults = updateSamplePipelineResultsProcessor.getResultHandler().getServiceDataResult(sampleResultsService);
+                        pd.setSampleProcessorResults(sampleResults);
+                    }
+                    return pd;
+                })
+                .thenApply(pd -> {
+                    if (StringUtils.isNotBlank(args.alignmentAlgorithm)) {
+                        align(depResults.getJacsServiceData(), args.alignmentAlgorithm, pd.getSampleProcessorResults());
                     }
                     return pd;
                 });
@@ -203,13 +240,13 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
         return submitDependencyIfNotPresent(jacsServiceData, resultsService);
     }
 
-    private void runNeuronSeparation(JacsServiceData jacsServiceData, FlylightSampleArgs args, SampleIntermediateResult intermediateResult) {
+    private List<Pair<SampleProcessorResult, JacsServiceData>> runPostSampleProcessNeuronSeparation(JacsServiceData jacsServiceData, FlylightSampleArgs args, SampleIntermediateResult intermediateResult) {
         JacsServiceData sampleResultsService = jacsServiceDataPersistence.findById(intermediateResult.getChildServiceId());
         List<SampleProcessorResult> sampleResults = updateSamplePipelineResultsProcessor.getResultHandler().getServiceDataResult(sampleResultsService);
 
-        IntStream.range(0, sampleResults.size())
+        return IntStream.range(0, sampleResults.size())
                 .mapToObj(pos -> new IndexedReference<>(sampleResults.get(pos), pos))
-                .forEach(indexedSr -> {
+                .map(indexedSr -> {
                     Path outputDir;
                     SampleProcessorResult sr = indexedSr.getReference();
                     if (StringUtils.isNotBlank(sr.getArea())) {
@@ -224,15 +261,16 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                         outputDir = Paths.get(args.sampleDataRootDir)
                                 .resolve(SampleServicesUtils.getSampleDataSubDirs("Separation", jacsServiceData.getId().toString()));
                     }
-                    separateNeurons(jacsServiceData, sr, args.previousNeuronsResultFile, args.consolidatedNeuronsLabelFile, outputDir, sampleResultsService);
-                });
+                    return ImmutablePair.of(sr, separateNeurons(jacsServiceData, sr, getPreviousNeuronsResultFile(jacsServiceData, args.sampleId, sr.getObjective(), sr.getRunId()), null, outputDir, sampleResultsService));
+                })
+                .collect(Collectors.toList());
     }
 
     private JacsServiceData separateNeurons(JacsServiceData jacsServiceData, SampleProcessorResult sampleResult,
                                             String previousNeuronsResultFile, String consolidatedNeuronLabelsFile,
                                             Path outputDir,
                                             JacsServiceData... deps) {
-        JacsServiceData resultsService = sampleNeuronSeparationProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+        JacsServiceData neuronSeparatorService = sampleNeuronSeparationProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Separate sample neurons")
                         .waitFor(deps)
                         .build(),
@@ -247,11 +285,38 @@ public class FlylightSampleProcessor extends AbstractBasicLifeCycleServiceProces
                 new ServiceArg("-previousResultFile", previousNeuronsResultFile),
                 new ServiceArg("-consolidatedLabelFile", consolidatedNeuronLabelsFile)
         );
-        return submitDependencyIfNotPresent(jacsServiceData, resultsService);
+        return submitDependencyIfNotPresent(jacsServiceData, neuronSeparatorService);
+    }
+
+    private JacsServiceData align(JacsServiceData jacsServiceData, String alignmentAlg, List<SampleProcessorResult> sampleProcessorResults, JacsServiceData... deps) {
+        JacsServiceData alignService = alignmentProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Align sample")
+                        .waitFor(deps)
+                        .build(),
+                alignmentArgBuilderFactory.getServiceArgBuilder(alignmentAlg).getAlignerArgs(sampleProcessorResults)
+        );
+        return submitDependencyIfNotPresent(jacsServiceData, alignService);
+
     }
 
     private FlylightSampleArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(jacsServiceData.getArgsArray(), new FlylightSampleArgs());
     }
 
+    private String getPreviousNeuronsResultFile(JacsServiceData jacsServiceData, Number sampleId, String objective, Number runId) {
+        // check previus neuron separation results and return corresponding result file
+        Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), sampleId);
+        return sample.lookupObjective(objective)
+                .flatMap(objectiveSample -> objectiveSample.findPipelineRunById(runId))
+                .map(indexedRun -> indexedRun.getReference())
+                .map(sampleRun -> sampleRun.streamResults()
+                        .map(indexedResult -> indexedResult.getReference())
+                        .filter(result -> result instanceof NeuronSeparation) // only look at neuronseparation result types
+                        .sorted((pr1, pr2) -> pr2.getCreationDate().compareTo(pr1.getCreationDate())) // sort by creation date desc
+                        .map(ns -> ns.getFileName(FileType.NeuronSeparatorResult))
+                        .filter(nsfn -> StringUtils.isNoneBlank(nsfn)) // filter out result that don't have a neuron separation result
+                        .findFirst()
+                        .orElse(null))
+                .orElse((String) null);
+    }
 }
