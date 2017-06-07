@@ -7,12 +7,14 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
@@ -98,6 +100,30 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Voi
                 return FileUtils.lookupFiles(outputDir, 1, pattern)
                         .map(Path::toFile)
                         .collect(Collectors.toList());
+            }
+        };
+    }
+
+    @Override
+    public ServiceErrorChecker getErrorChecker() {
+        return new DefaultServiceErrorChecker(logger) {
+            @Override
+            protected boolean hasErrors(String l) {
+                if (StringUtils.isNotBlank(l)) {
+                    if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
+                        // core dump is still an error
+                        logger.error(l);
+                        return true;
+                    } else if (l.matches("(?i:.*(fail to call the plugin).*)")) {
+                        // vaa3d plugin call failed
+                        logger.error(l);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
             }
         };
     }
