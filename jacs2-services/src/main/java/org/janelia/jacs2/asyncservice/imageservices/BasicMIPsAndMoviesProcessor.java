@@ -191,11 +191,11 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
     }
 
     @Override
-    protected BasicMIPsAndMoviesResult postProcessing(JacsServiceResult<BasicMIPsAndMoviesResult> sr) {
+    protected JacsServiceResult<BasicMIPsAndMoviesResult> postProcessing(JacsServiceResult<BasicMIPsAndMoviesResult> sr) {
         try {
             Path temporaryOutputDir = getServicePath(scratchLocation, sr.getJacsServiceData());
             FileUtils.deletePath(temporaryOutputDir);
-            return sr.getResult();
+            return sr;
         } catch (Exception e) {
             throw new ComputationException(sr.getJacsServiceData(), e);
         }

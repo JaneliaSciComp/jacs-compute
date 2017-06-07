@@ -38,6 +38,8 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
     private final String alignmentRunner;
     private final String libraryPath;
     private final String toolsDir;
+    private final String alignmentConfigDir;
+    private final String alignmentTemplatesDir;
     private final String alignmentScriptsDir;
 
     AbstractAlignmentProcessor(ServiceComputationFactory computationFactory,
@@ -47,6 +49,8 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
                                String alignmentRunner,
                                String alignmentScriptsDir,
                                String toolsDir,
+                               String alignmentConfigDir,
+                               String alignmentTemplatesDir,
                                String libraryPath,
                                ThrottledProcessesQueue throttledProcessesQueue,
                                ApplicationConfig applicationConfig,
@@ -55,6 +59,8 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
         this.alignmentRunner = alignmentRunner;
         this.libraryPath = libraryPath;
         this.toolsDir = toolsDir;
+        this.alignmentConfigDir = alignmentConfigDir;
+        this.alignmentTemplatesDir = alignmentTemplatesDir;
         this.alignmentScriptsDir = alignmentScriptsDir;
     }
 
@@ -158,9 +164,9 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
         scriptWriter.addWithArgs(getExecutable())
                 .addArg(getAlignmentScript(args))
                 .addArg(String.valueOf(args.numThreads))
-                .addArgFlag("-o", args.outputDir)
-                .addArgFlag("-c", args.configFile)
-                .addArgFlag("-t", args.templateDir)
+                .addArgFlag("-o", getOutputDir(args).toString())
+                .addArgFlag("-c", getAlignmentConfigDir())
+                .addArgFlag("-t", getAlignmentTemplatesDir())
                 .addArgFlag("-k", getToolsDir())
                 .addArgFlag("-g", args.gender)
                 .addArgFlag("-i", getFirstInput(args))
@@ -217,6 +223,14 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
 
     protected String getToolsDir() {
         return getFullExecutableName(toolsDir);
+    }
+
+    protected String getAlignmentTemplatesDir() {
+        return getFullExecutableName(alignmentTemplatesDir);
+    }
+
+    protected String getAlignmentConfigDir() {
+        return getFullExecutableName(alignmentConfigDir);
     }
 
     private String getExecutable() {

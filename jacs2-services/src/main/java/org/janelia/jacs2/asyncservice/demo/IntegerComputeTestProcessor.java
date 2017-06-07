@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.demo;
 
 import com.beust.jcommander.Parameter;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
@@ -49,7 +50,7 @@ public class IntegerComputeTestProcessor extends AbstractServiceProcessor<Long> 
     }
 
     @Override
-    public ServiceComputation<Long> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<Long>> process(JacsServiceData jacsServiceData) {
         logger.debug("process() start");
         IntegerComputeTestArgs args = getArgs(jacsServiceData);
         int matrixSize = args.matrixSize;
@@ -92,7 +93,7 @@ public class IntegerComputeTestProcessor extends AbstractServiceProcessor<Long> 
         long doneTime = new Date().getTime();
         resultComputationTime = doneTime - startTime;
         logger.debug("localProcessData() end, elapsed time="+resultComputationTime+" ms");
-        return computationFactory.newCompletedComputation(resultComputationTime);
+        return computationFactory.newCompletedComputation(new JacsServiceResult<Long>(jacsServiceData, resultComputationTime));
     }
 
     @Override

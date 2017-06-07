@@ -7,46 +7,46 @@ import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 
 import java.util.Optional;
 
-public class ServiceDecoratorProcessor<T> implements ServiceProcessor<T> {
+public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implements ServiceProcessor<T> {
 
     private final ServiceComputationFactory computationFactory;
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
-    private final ServiceProcessor<T> processorImpl;
+    private final S wrappedProcessor;
 
-    public ServiceDecoratorProcessor(ServiceComputationFactory computationFactory,
-                                     JacsServiceDataPersistence jacsServiceDataPersistence,
-                                     ServiceProcessor<T> processorImpl) {
+    public WrappedServiceProcessor(ServiceComputationFactory computationFactory,
+                                   JacsServiceDataPersistence jacsServiceDataPersistence,
+                                   S wrappedProcessor) {
         this.computationFactory = computationFactory;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
-        this.processorImpl = processorImpl;
+        this.wrappedProcessor = wrappedProcessor;
     }
 
     @Override
     public ServiceMetaData getMetadata() {
-        return processorImpl.getMetadata();
+        return wrappedProcessor.getMetadata();
     }
 
     @Override
     public JacsServiceData createServiceData(ServiceExecutionContext executionContext, ServiceArg... args) {
-        return processorImpl.createServiceData(executionContext, args);
+        return wrappedProcessor.createServiceData(executionContext, args);
     }
 
     @Override
     public ServiceResultHandler<T> getResultHandler() {
-        return processorImpl.getResultHandler();
+        return wrappedProcessor.getResultHandler();
     }
 
     @Override
     public ServiceErrorChecker getErrorChecker() {
-        return processorImpl.getErrorChecker();
+        return wrappedProcessor.getErrorChecker();
     }
 
     @Override
-    public ServiceComputation<T> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<T>> process(JacsServiceData jacsServiceData) {
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(sd -> submit(sd))
                 .thenSuspendUntil(sd -> new ContinuationCond.Cond<>(sd, isDone(sd)))
-                .thenApply(sdCond -> processorImpl.getResultHandler().getServiceDataResult(sdCond.getState()));
+                .thenApply(sdCond -> new JacsServiceResult<>(sdCond.getState(), wrappedProcessor.getResultHandler().getServiceDataResult(sdCond.getState())));
     }
 
     private JacsServiceData submit(JacsServiceData jacsServiceData) {
@@ -71,5 +71,9 @@ public class ServiceDecoratorProcessor<T> implements ServiceProcessor<T> {
     private boolean isDone(JacsServiceData jacsServiceData) {
         JacsServiceData refreshServiceData = jacsServiceDataPersistence.findById(jacsServiceData.getId());
         return refreshServiceData.hasCompleted();
+    }
+
+    public S getWrappedProcessor() {
+        return wrappedProcessor;
     }
 }

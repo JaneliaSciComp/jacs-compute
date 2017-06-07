@@ -31,7 +31,7 @@ public interface ServiceProcessor<T> {
      */
     ServiceErrorChecker getErrorChecker();
 
-    ServiceComputation<T> process(JacsServiceData jacsServiceData);
+    ServiceComputation<JacsServiceResult<T>> process(JacsServiceData jacsServiceData);
 
     /**
      * Default process mechanism given the execution context and the service arguments.
@@ -39,7 +39,7 @@ public interface ServiceProcessor<T> {
      * @param args service arguments.
      * @return service information.
      */
-    default ServiceComputation<T> process(ServiceExecutionContext executionContext, ServiceArg... args) {
+    default ServiceComputation<JacsServiceResult<T>> process(ServiceExecutionContext executionContext, ServiceArg... args) {
         return process(createServiceData(executionContext, args));
     }
 }

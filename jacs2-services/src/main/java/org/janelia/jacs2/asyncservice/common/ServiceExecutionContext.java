@@ -30,6 +30,13 @@ public class ServiceExecutionContext {
             return this;
         }
 
+        public Builder waitFor(Number... dependenciesIds) {
+            for (Number dependencyId : dependenciesIds) {
+                if (dependencyId != null) serviceExecutionContext.waitForIds.add(dependencyId);
+            }
+            return this;
+        }
+
         public Builder state(JacsServiceState state) {
             serviceExecutionContext.serviceState = state;
             return this;
@@ -79,49 +86,54 @@ public class ServiceExecutionContext {
     private JacsServiceState serviceState;
     private String description;
     private List<JacsServiceData> waitFor = new ArrayList<>();
+    private List<Number> waitForIds = new ArrayList<>();
     private Map<String, String> resources = new LinkedHashMap<>();
 
     public ServiceExecutionContext(JacsServiceData parentServiceData) {
         this.parentServiceData = parentServiceData;
     }
 
-    public JacsServiceData getParentServiceData() {
+    JacsServiceData getParentServiceData() {
         return parentServiceData;
     }
 
-    public ProcessingLocation getProcessingLocation() {
+    ProcessingLocation getProcessingLocation() {
         return processingLocation;
     }
 
-    public List<JacsServiceData> getWaitFor() {
+    List<JacsServiceData> getWaitFor() {
         return waitFor;
     }
 
-    public JacsServiceState getServiceState() {
+    List<Number> getWaitForIds() {
+        return waitForIds;
+    }
+
+    JacsServiceState getServiceState() {
         return serviceState;
     }
 
-    public String getServiceName() {
+    String getServiceName() {
         return serviceName;
     }
 
-    public String getOutputPath() {
+    String getOutputPath() {
         return outputPath;
     }
 
-    public String getErrorPath() {
+    String getErrorPath() {
         return errorPath;
     }
 
-    public String getWorkingDirectory() {
+    String getWorkingDirectory() {
         return workingDirectory;
     }
 
-    public String getDescription() {
+    String getDescription() {
         return description;
     }
 
-    public Map<String, String> getResources() {
+    Map<String, String> getResources() {
         return resources;
     }
 }

@@ -54,7 +54,7 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
     }
 
     @Override
-    public ServiceComputation<Long> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<Long>> process(JacsServiceData jacsServiceData) {
         String serviceName=getArgs(jacsServiceData).testName;
         logger.info(serviceName+" start processing");
         long startTime=new Date().getTime();
@@ -92,7 +92,7 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     long endTime = new Date().getTime();
                     resultComputationTime = endTime - startTime;
                     logger.info(serviceName + " end processing, processing time= " + resultComputationTime);
-                    return endTime;
+                    return new JacsServiceResult<>(jsdCond.getState(), endTime);
                 })
                 ;
     }

@@ -1,5 +1,7 @@
 package org.janelia.jacs2.asyncservice.neuronservices;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -180,5 +182,13 @@ public class NeuronSeparationFiles {
     public Optional<String> getNeuronChan(Integer neuronIndex) {
         String neuronChanName = "neuron_" + neuronIndex + ".chan";
         return this.chanFiles.stream().filter(fn -> fn.contains(neuronChanName)).findFirst();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("resulDir", resultDir)
+                .append("consolidatedLabel", consolidatedLabel)
+                .build();
     }
 }

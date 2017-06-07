@@ -33,7 +33,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
     }
 
     @Override
-    public ServiceComputation<T> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<T>> process(JacsServiceData jacsServiceData) {
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(this::prepareProcessing)
                 .thenApply(this::submitServiceDependencies)
@@ -175,8 +175,8 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
         return new JacsServiceResult<>(jacsServiceData, r);
     }
 
-    protected T postProcessing(JacsServiceResult<T> sr) {
-        return sr.getResult();
+    protected JacsServiceResult<T> postProcessing(JacsServiceResult<T> sr) {
+        return sr;
     }
 
     protected JacsServiceData submitDependencyIfNotPresent(JacsServiceData jacsServiceData, JacsServiceData dependency) {

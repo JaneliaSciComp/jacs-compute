@@ -14,9 +14,9 @@ class AlignmentArgs extends ServiceArgs {
     String input1;
     @Parameter(names = "-i1File", description = "The name of the first input file", required = false)
     String input1File;
-    @Parameter(names = "-i1Channels", description = "The channels of the first input file", required = false)
+    @Parameter(names = "-i1Channels", description = "The number of channels of the first input file", required = false)
     int input1Channels;
-    @Parameter(names = "-i1Ref", description = "The reference for the first input file", required = false)
+    @Parameter(names = "-i1Ref", description = "The one based reference channel for the first input file", required = false)
     int input1Ref;
     @Parameter(names = "-i1Res", description = "The resolution of the first input file", required = false)
     String input1Res;
@@ -40,10 +40,6 @@ class AlignmentArgs extends ServiceArgs {
     String input2Dims;
     @Parameter(names = {"-f", "-i2Neurons"}, description = "Input2 neurons file", required = false)
     String input2Neurons;
-    @Parameter(names = {"-c", "-config"}, description = "Configuration file", required = true)
-    String configFile;
-    @Parameter(names = {"-t", "-templateDir"}, description = "Template directory", required = true)
-    String templateDir;
     @Parameter(names = {"-s", "-step"}, description = "Step", required = false)
     String step;
     @Parameter(names = {"-m", "-mp", "-mountingProtocol"}, description = "Mounting protocol", required = false)

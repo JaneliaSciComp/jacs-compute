@@ -20,11 +20,6 @@ public class SampleServicesUtils {
 
     static final String DEFAULT_WORKING_LSMS_SUBDIR = "Temp";
 
-    static Path getSampleDataSubDirs(String dataTopSubDirname, String subTreeId) {
-        List<String> pathComponents = FileUtils.getTreePathComponentsForId(subTreeId);
-        return Paths.get(dataTopSubDirname, pathComponents.toArray(new String[pathComponents.size()]));
-    }
-
     static Path getImageDataPath(String destRootDirName, String destSubDirName, String objective, String area) {
         Path imageDataPath = Paths.get(destRootDirName,
                 StringUtils.defaultIfBlank(destSubDirName, ""),

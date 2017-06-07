@@ -118,6 +118,16 @@ public class FileUtils {
         return dir.resolve(actualFileName);
     }
 
+    public static Path getDataPath(String dataRootDir, Number dataInstanceId) {
+        List<String> pathComponents = FileUtils.getTreePathComponentsForId(dataInstanceId);
+        return Paths.get(dataRootDir, pathComponents.toArray(new String[pathComponents.size()]));
+    }
+
+    public static Path getDataPath(String dataRootDir, String dataInstanceId) {
+        List<String> pathComponents = FileUtils.getTreePathComponentsForId(dataInstanceId);
+        return Paths.get(dataRootDir, pathComponents.toArray(new String[pathComponents.size()]));
+    }
+
     public static List<String> getTreePathComponentsForId(Number id) {
         return id == null ? Collections.emptyList() : getTreePathComponentsForId(id.toString());
     }

@@ -86,7 +86,7 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
     }
 
     @Override
-    public ServiceComputation<String> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<String>> process(JacsServiceData jacsServiceData) {
         LockSampleArgs args = getArgs(jacsServiceData);
 
         DataHolder<String> lockHolder = new DataHolder<>();
@@ -109,7 +109,7 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
                     String lockKey = lockHolder.getData();
                     this.getResultHandler().updateServiceDataResult(sd, lockKey);
                     jacsServiceDataPersistence.updateServiceResult(sd);
-                    return lockKey;
+                    return new JacsServiceResult<>(sd, lockKey);
                 });
     }
 

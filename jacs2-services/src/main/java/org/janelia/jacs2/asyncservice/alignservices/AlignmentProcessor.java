@@ -27,11 +27,13 @@ public class AlignmentProcessor extends AbstractAlignmentProcessor {
                        @PropertyValue(name = "Alignment.Runner.Path") String alignmentRunner,
                        @PropertyValue(name = "Alignment.Scripts.Path") String alignmentScriptsDir,
                        @PropertyValue(name = "Alignment.Tools.Path") String toolsDir,
+                       @PropertyValue(name = "Alignment.Config.Path") String alignmentConfigDir,
+                       @PropertyValue(name = "Alignment.Templates.Path") String alignmentTemplatesDir,
                        @PropertyValue(name = "Alignment.Library.Path") String libraryPath,
                        ThrottledProcessesQueue throttledProcessesQueue,
                        @ApplicationProperties ApplicationConfig applicationConfig,
                        Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, alignmentRunner, alignmentScriptsDir, toolsDir, libraryPath, throttledProcessesQueue, applicationConfig, logger);
+        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, alignmentRunner, alignmentScriptsDir, toolsDir, alignmentConfigDir, alignmentTemplatesDir, libraryPath, throttledProcessesQueue, applicationConfig, logger);
     }
 
     @Override

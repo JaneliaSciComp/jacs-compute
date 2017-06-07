@@ -112,14 +112,14 @@ public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<Void, Fi
     }
 
     @Override
-    protected File postProcessing(JacsServiceResult<File> sr) {
+    protected JacsServiceResult<File> postProcessing(JacsServiceResult<File> sr) {
         try {
             FileCopyArgs args = getArgs(sr.getJacsServiceData());
             if (args.deleteSourceFile) {
                 File sourceFile = getSourceFile(args);
                 Files.deleteIfExists(sourceFile.toPath());
             }
-            return sr.getResult();
+            return sr;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

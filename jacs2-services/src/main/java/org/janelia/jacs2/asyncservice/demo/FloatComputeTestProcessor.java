@@ -50,7 +50,7 @@ public class FloatComputeTestProcessor extends AbstractServiceProcessor<Long> {
     }
 
     @Override
-    public ServiceComputation<Long> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<Long>> process(JacsServiceData jacsServiceData) {
         String serviceName=getArgs(jacsServiceData).testName;
         logger.debug(serviceName +" start");
         FloatComputeTestArgs args = getArgs(jacsServiceData);
@@ -100,7 +100,7 @@ public class FloatComputeTestProcessor extends AbstractServiceProcessor<Long> {
         long doneTime=new Date().getTime();
         resultComputationTime=doneTime-startTime;
         logger.debug(serviceName+" end, elapsed time ms="+resultComputationTime);
-        return computationFactory.newCompletedComputation(resultComputationTime);
+        return computationFactory.newCompletedComputation(new JacsServiceResult<Long>(jacsServiceData, resultComputationTime));
     }
 
     @Override

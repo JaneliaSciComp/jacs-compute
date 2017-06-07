@@ -7,11 +7,11 @@ import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
-import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationProcessor;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
+import org.janelia.jacs2.asyncservice.neuronservices.NeuronWarpingProcessor;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
@@ -22,10 +22,10 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Named("sampleNeuronSeparation")
-public class SampleNeuronSeparationProcessor extends AbstractServiceProcessor<NeuronSeparationFiles> {
+@Named("sampleNeuronWarping")
+public class SampleNeuronWarpingProcessor extends AbstractServiceProcessor<NeuronSeparationFiles> {
 
-    static class SampleNeuronSeparationArgs extends ServiceArgs {
+    static class SampleNeuronWarpingArgs extends ServiceArgs {
         @Parameter(names = "-sampleId", description = "Sample ID", required = true)
         Long sampleId;
         @Parameter(names = "-objective", description = "Sample objective for which to update the separation result.", required = true)
@@ -44,46 +44,49 @@ public class SampleNeuronSeparationProcessor extends AbstractServiceProcessor<Ne
         String referenceChannel = "3";
         @Parameter(names = "-previousResultFile", description = "Previous result file name")
         String previousResultFile;
+        @Parameter(names = "-consolidatedLabelFile", description = "Consolidated label file name", required = true)
+        String consolidatedLabelFile;
         @Parameter(names = "-numThreads", description = "Number of threads")
         int numThreads = 16;
     }
 
-    private final WrappedServiceProcessor<NeuronSeparationProcessor, NeuronSeparationFiles> neuronSeparationProcessor;
+    private final WrappedServiceProcessor<NeuronWarpingProcessor, NeuronSeparationFiles> neuronWarpingProcessor;
     private final SampleNeuronSeparationResultHandler sampleNeuronSeparationResultHandler;
 
     @Inject
-    SampleNeuronSeparationProcessor(ServiceComputationFactory computationFactory,
-                                    JacsServiceDataPersistence jacsServiceDataPersistence,
-                                    @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                    SampleDataService sampleDataService,
-                                    NeuronSeparationProcessor neuronSeparationProcessor,
-                                    Logger logger) {
+    SampleNeuronWarpingProcessor(ServiceComputationFactory computationFactory,
+                                 JacsServiceDataPersistence jacsServiceDataPersistence,
+                                 @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                                 SampleDataService sampleDataService,
+                                 NeuronWarpingProcessor neuronWarpingProcessor,
+                                 Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.neuronSeparationProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, neuronSeparationProcessor);
+        this.neuronWarpingProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, neuronWarpingProcessor);
         sampleNeuronSeparationResultHandler = new SampleNeuronSeparationResultHandler(sampleDataService, logger);
     }
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(SampleNeuronSeparationProcessor.class, new SampleNeuronSeparationArgs());
+        return ServiceArgs.getMetadata(SampleNeuronWarpingProcessor.class, new SampleNeuronWarpingArgs());
     }
 
     @Override
     public ServiceResultHandler<NeuronSeparationFiles> getResultHandler() {
-        return neuronSeparationProcessor.getResultHandler();
+        return neuronWarpingProcessor.getResultHandler();
     }
 
     @Override
     public ServiceComputation<JacsServiceResult<NeuronSeparationFiles>> process(JacsServiceData jacsServiceData) {
-        SampleNeuronSeparationArgs args = getArgs(jacsServiceData);
-        return neuronSeparationProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
-                        .description("Separate sample neurons")
+        SampleNeuronWarpingArgs args = getArgs(jacsServiceData);
+        return neuronWarpingProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Warp sample neurons")
                         .build(),
                 new ServiceArg("-inputFile", args.inputFile),
                 new ServiceArg("-outputDir", args.outputDir),
                 new ServiceArg("-previousResultFile", args.previousResultFile),
                 new ServiceArg("-signalChannels", args.signalChannels),
                 new ServiceArg("-referenceChannel", args.referenceChannel),
+                new ServiceArg("-consolidatedLabelFile", args.consolidatedLabelFile),
                 new ServiceArg("-numThreads", String.valueOf(args.numThreads))
         )
         .thenApply((JacsServiceResult<NeuronSeparationFiles> jacsSeparationResult) -> {
@@ -98,8 +101,8 @@ public class SampleNeuronSeparationProcessor extends AbstractServiceProcessor<Ne
         });
     }
 
-    private SampleNeuronSeparationArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleNeuronSeparationArgs());
+    private SampleNeuronWarpingArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleNeuronWarpingArgs());
     }
 
 }

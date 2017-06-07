@@ -5,6 +5,7 @@ import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
@@ -66,7 +67,7 @@ public class UnlockSampleProcessor extends AbstractServiceProcessor<Void> {
     }
 
     @Override
-    public ServiceComputation<Void> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         UnlockSampleArgs args = getArgs(jacsServiceData);
 
         Sample sample = sampleDataService.getSampleById(null, args.sampleId);
@@ -82,7 +83,7 @@ public class UnlockSampleProcessor extends AbstractServiceProcessor<Void> {
                     }
                     return new ContinuationCond.Cond<> (sd, true);
                 })
-                .thenApply(sdCond -> null);
+                .thenApply(sdCond -> new JacsServiceResult<>(sdCond.getState()));
     }
 
     private UnlockSampleArgs getArgs(JacsServiceData jacsServiceData) {

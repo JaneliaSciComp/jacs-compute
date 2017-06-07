@@ -115,9 +115,10 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
 
                     // for all objectives collect the results and create the corresponding samplepipeline results
                     sampleResult.getSampleAreaResults().stream()
-                            .forEach(sar -> {
-                                Optional<SampleProcessingResult> sampleProcessingResult = getObjectivePipelineRunResult(sample, sar);
-                                if (sampleProcessingResult.isPresent()) {
+                            .forEach((SampleAreaResult sar) -> {
+                                Optional<SampleProcessingResult> optionalSampleProcessingResult = getObjectivePipelineRunResult(sample, sar);
+                                if (optionalSampleProcessingResult.isPresent()) {
+                                    SampleProcessingResult sampleProcessingResult = optionalSampleProcessingResult.get();
                                     SamplePipelineRun pipelineRun = pipelineRunsByObjective.get(sar.getObjective());
                                     if (pipelineRun == null) {
                                         pipelineRun = new SamplePipelineRun();
@@ -127,7 +128,7 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
                                         pipelineRun.setCreationDate(stitchingService.getCreationDate());
                                         pipelineRunsByObjective.put(sar.getObjective(), pipelineRun);
                                     }
-                                    pipelineRun.addResult(sampleProcessingResult.get());
+                                    pipelineRun.addResult(sampleProcessingResult);
 
                                     SampleProcessorResult updateResult = new SampleProcessorResult();
                                     updateResult.setSampleId(sampleResult.getSampleId());
@@ -136,9 +137,14 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
                                     updateResult.setResultDir(sar.getResultDir());
                                     updateResult.setAreaFile(sar.getAreaResultFile());
                                     updateResult.setRunId(pipelineRun.getId());
-                                    updateResult.setResultId(sampleProcessingResult.get().getId());
+                                    updateResult.setResultId(sampleProcessingResult.getId());
                                     updateResult.setSignalChannels(sar.getConsensusChannelComponents().signalChannelsPos);
                                     updateResult.setReferenceChannel(sar.getConsensusChannelComponents().referenceChannelsPos);
+                                    updateResult.setReferenceChannelNumber(sar.getConsensusChannelComponents().referenceChannelNumbers);
+                                    updateResult.setChanSpec(sar.getConsensusChannelComponents().channelSpec);
+                                    updateResult.setNumChannels(sar.getConsensusChannelComponents().getNumChannels());
+                                    updateResult.setOpticalResolution(sampleProcessingResult.getOpticalResolution());
+                                    updateResult.setImageSize(sampleProcessingResult.getImageSize());
                                     pd.getResult().add(updateResult);
                                 }
                             });

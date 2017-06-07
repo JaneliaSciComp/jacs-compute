@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,8 +45,7 @@ public class JacsServiceRegistry implements ServiceRegistry {
         return null;
     }
 
-    @Inject
-    private List<ServiceProcessor<?>> getAllServices(@Any Instance<ServiceProcessor<?>> services) {
+    private List<ServiceProcessor<?>> getAllServices(Instance<ServiceProcessor<?>> services) {
         List<ServiceProcessor<?>> allServices = new ArrayList<>();
         for (ServiceProcessor<?> service : services) {
             allServices.add(service);
