@@ -170,9 +170,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
     protected JacsServiceResult<T> updateServiceResult(JacsServiceResult<S> depsResult) {
         T r = this.getResultHandler().collectResult(depsResult);
         JacsServiceData jacsServiceData = depsResult.getJacsServiceData();
-        this.getResultHandler().updateServiceDataResult(jacsServiceData, r);
-        jacsServiceDataPersistence.updateServiceResult(jacsServiceData);
-        return new JacsServiceResult<>(jacsServiceData, r);
+        return updateServiceResult(jacsServiceData, r);
     }
 
     protected JacsServiceResult<T> postProcessing(JacsServiceResult<T> sr) {

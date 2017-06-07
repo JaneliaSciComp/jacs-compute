@@ -89,12 +89,13 @@ public class SampleNeuronSeparationProcessor extends AbstractServiceProcessor<Ne
         .thenApply((JacsServiceResult<NeuronSeparationFiles> jacsSeparationResult) -> {
             JacsServiceData separationServiceData = jacsSeparationResult.getJacsServiceData();
             NeuronSeparationFiles neuronSeparationFiles = jacsSeparationResult.getResult();
+
             Number separationServiceId = jacsSeparationResult.getJacsServiceData().getId();
 
             sampleNeuronSeparationResultHandler.updateSampleNeuronSeparationResult(args.sampleId, separationServiceData.getOwner(),
                     args.sampleObjective, args.pipelineRunId, args.pipelineResultId, separationServiceId, separationServiceData.getDescription(), neuronSeparationFiles);
 
-            return jacsSeparationResult;
+            return updateServiceResult(jacsServiceData, neuronSeparationFiles);
         });
     }
 

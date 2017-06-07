@@ -122,4 +122,9 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         return Paths.get(baseDir, pathElemsBuilder.build().toArray(new String[0])).toAbsolutePath();
     }
 
+    protected JacsServiceResult<T> updateServiceResult(JacsServiceData jacsServiceData, T result) {
+        this.getResultHandler().updateServiceDataResult(jacsServiceData, result);
+        jacsServiceDataPersistence.updateServiceResult(jacsServiceData);
+        return new JacsServiceResult<>(jacsServiceData, result);
+    }
 }

@@ -97,7 +97,7 @@ public class SampleNeuronWarpingProcessor extends AbstractServiceProcessor<Neuro
             sampleNeuronSeparationResultHandler.updateSampleNeuronSeparationResult(args.sampleId, separationServiceData.getOwner(),
                     args.sampleObjective, args.pipelineRunId, args.pipelineResultId, separationServiceId, separationServiceData.getDescription(), neuronSeparationFiles);
 
-            return jacsSeparationResult;
+            return updateServiceResult(jacsServiceData, neuronSeparationFiles);
         });
     }
 
