@@ -56,6 +56,7 @@ public class FlylightSampleProcessorTest {
         SampleNeuronSeparationProcessor sampleNeuronSeparationProcessor = mock(SampleNeuronSeparationProcessor.class);
         AlignmentServiceBuilderFactory alignmentServiceBuilderFactory = mock(AlignmentServiceBuilderFactory.class);
         AlignmentProcessor alignmentProcessor = mock(AlignmentProcessor.class);
+        UpdateAlignmentResultsProcessor updateAlignmentResultsProcessor = mock(UpdateAlignmentResultsProcessor.class);
 
         when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class))).then(invocation -> {
             JacsServiceData sd = new JacsServiceData();
@@ -126,6 +127,7 @@ public class FlylightSampleProcessorTest {
                 sampleNeuronSeparationProcessor,
                 alignmentServiceBuilderFactory,
                 alignmentProcessor,
+                updateAlignmentResultsProcessor,
                 logger);
     }
 

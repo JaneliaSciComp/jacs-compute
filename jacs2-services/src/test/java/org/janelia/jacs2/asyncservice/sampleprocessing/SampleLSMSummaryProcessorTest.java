@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
@@ -31,7 +30,6 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,11 +62,11 @@ public class SampleLSMSummaryProcessorTest {
             return sd;
         });
 
-        doAnswer(invocation -> {
+        when(jacsServiceDataPersistence.createServiceIfNotFound(any(JacsServiceData.class))).then(invocation -> {
             JacsServiceData jacsServiceData = invocation.getArgument(0);
             jacsServiceData.setId(TEST_ID);
-            return null;
-        }).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
+            return jacsServiceData;
+        });
 
         when(jacsServiceDataPersistence.findById(any(Number.class))).thenAnswer(invocation -> {
             Number serviceId = invocation.getArgument(0);

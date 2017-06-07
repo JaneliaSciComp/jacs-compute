@@ -165,7 +165,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
                 new ServiceArg("-refchannel", String.valueOf(referenceChannel)),
                 new ServiceArg("-pluginParams", String.join(" ", additionalPluginParams))
         );
-        return submitDependencyIfNotPresent(jacsServiceData, stitchServiceData);
+        return submitDependencyIfNotFound(stitchServiceData);
     }
 
     private JacsServiceData blend(Path inputDir, Path outputFile, List<String> additionalPluginParams, String description, JacsServiceData jacsServiceData, JacsServiceData... deps) {
@@ -177,7 +177,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
                 new ServiceArg("-outputFile", outputFile.toString()),
                 new ServiceArg("-pluginParams", String.join(" ", additionalPluginParams))
         );
-        return submitDependencyIfNotPresent(jacsServiceData, blendServiceData);
+        return submitDependencyIfNotFound(blendServiceData);
     }
 
     private JacsServiceData mv(Path source, Path target, String description, JacsServiceData jacsServiceData, JacsServiceData... deps) {
@@ -188,7 +188,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
                 new ServiceArg("-source", source.toString()),
                 new ServiceArg("-target", target.toString())
         );
-        return submitDependencyIfNotPresent(jacsServiceData, mvServiceData);
+        return submitDependencyIfNotFound(mvServiceData);
     }
 
     private JacsServiceData convert(Path source, Path target, String description, JacsServiceData jacsServiceData, JacsServiceData... deps) {
@@ -199,7 +199,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
                 new ServiceArg("-input", source.toString()),
                 new ServiceArg("-output", target.toString())
         );
-        return submitDependencyIfNotPresent(jacsServiceData, convertServiceData);
+        return submitDependencyIfNotFound(convertServiceData);
     }
 
     private JacsServiceData rm(Path dataFile, String description, JacsServiceData jacsServiceData, JacsServiceData... deps) {
@@ -209,7 +209,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
                         .build(),
                 new ServiceArg("-file", dataFile.toString())
         );
-        return submitDependencyIfNotPresent(jacsServiceData, rmServiceData);
+        return submitDependencyIfNotFound(rmServiceData);
     }
 
     @Override

@@ -25,6 +25,30 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         super(serviceDataDaoSource);
     }
 
+    public JacsServiceData createServiceIfNotFound(JacsServiceData jacsServiceData) {
+        JacsServiceDataDao jacsServiceDataDao = daoSource.get();
+        try {
+            JacsServiceData parentServiceData = jacsServiceDataDao.findServiceHierarchy(jacsServiceData.getParentServiceId());
+            if (parentServiceData == null) {
+                jacsServiceDataDao.saveServiceHierarchy(jacsServiceData);
+                return jacsServiceData;
+            } else {
+                Optional<JacsServiceData> existingInstance = parentServiceData.findSimilarDependency(jacsServiceData);
+                if (existingInstance.isPresent()) {
+                    return existingInstance.get();
+                } else {
+                    jacsServiceDataDao.saveServiceHierarchy(jacsServiceData);
+                    jacsServiceDataDao.addServiceEvent(
+                            jacsServiceData,
+                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CREATE_CHILD_SERVICE, String.format("Created child service %s", jacsServiceData)));
+                    return jacsServiceData;
+                }
+            }
+        } finally {
+            daoSource.destroy(jacsServiceDataDao);
+        }
+    }
+
     public PageResult<JacsServiceData> claimServiceByQueueAndState(String queueId, Set<JacsServiceState> requestStates, PageRequest pageRequest) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {

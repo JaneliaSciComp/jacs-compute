@@ -156,7 +156,7 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
                 new ServiceArg("-outputFile", output.toString()),
                 new ServiceArg("-microscope", microscope)
         );
-        return submitDependencyIfNotPresent(jacsServiceData, correctionServiceData);
+        return submitDependencyIfNotFound(correctionServiceData);
     }
 
     private JacsServiceData mergeChannels(Path input1, Path input2, Path outputFile, String multiscanBlendVersion, String description, JacsServiceData jacsServiceData, JacsServiceData... deps) {
@@ -169,7 +169,7 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
                 new ServiceArg("-multiscanVersion", multiscanBlendVersion),
                 new ServiceArg("-outputFile", outputFile.toString())
         );
-        return submitDependencyIfNotPresent(jacsServiceData, mergeServiceData);
+        return submitDependencyIfNotFound(mergeServiceData);
     }
 
     @Override

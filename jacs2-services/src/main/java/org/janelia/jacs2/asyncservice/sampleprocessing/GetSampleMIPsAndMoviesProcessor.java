@@ -123,7 +123,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
                 new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
                 new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir)
         );
-        JacsServiceData getSampleLsmsService = submitDependencyIfNotPresent(jacsServiceData, getSampleLsmsServiceRef);
+        JacsServiceData getSampleLsmsService = submitDependencyIfNotFound(getSampleLsmsServiceRef);
         return new JacsServiceResult<>(jacsServiceData, new GetSampleMIPsIntermediateResult(getSampleLsmsService.getId()));
     }
 
@@ -152,7 +152,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
                                         new ServiceArg("-options", args.options),
                                         new ServiceArg("-resultsDir", resultsDir.toString())
                                 );
-                                basicMipMapsService = submitDependencyIfNotPresent(depResults.getJacsServiceData(), basicMipMapsService);
+                                basicMipMapsService = submitDependencyIfNotFound(basicMipMapsService);
                                 SampleImageMIPsFile sampleImageMIPsFile = new SampleImageMIPsFile();
                                 sampleImageMIPsFile.setSampleImageFile(sif);
                                 depResults.getResult().addSampleImageMipsFile(basicMipMapsService.getId(), sampleImageMIPsFile);

@@ -166,7 +166,7 @@ public class LSMImportProcessor extends AbstractBasicLifeCycleServiceProcessor<L
                             new ServiceArg("-grammarFile", ds.getSageGrammarPath()),
                             new ServiceArg("-sampleFiles", String.join(",", slideImageNames))
                     );
-                    sageLoaderService = submitDependencyIfNotPresent(jacsServiceData, sageLoaderService);
+                    sageLoaderService = submitDependencyIfNotFound(sageLoaderService);
                     return new SageLoaderResult(sageLoaderService.getId(), imageLine.getLab(), ds, imageLine.getName(), lineEntries.getValue());
                 })
                 .filter(r -> r != null)

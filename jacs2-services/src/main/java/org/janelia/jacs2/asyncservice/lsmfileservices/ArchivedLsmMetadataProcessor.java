@@ -102,9 +102,9 @@ public class ArchivedLsmMetadataProcessor extends AbstractBasicLifeCycleServiceP
         File lsmMetadataFile = getOutputFile(args);
         File workingLsmFile = getWorkingLsmFile(jacsServiceData, lsmMetadataFile);
         JacsServiceData fileCopyService = createFileCopyService(args, workingLsmFile, jacsServiceData);
-        fileCopyService = submitDependencyIfNotPresent(jacsServiceData, fileCopyService);
+        fileCopyService = submitDependencyIfNotFound(fileCopyService);
         JacsServiceData lsmMetadataService = createLsmMetadataService(lsmMetadataFile, workingLsmFile, jacsServiceData, fileCopyService);
-        submitDependencyIfNotPresent(jacsServiceData, lsmMetadataService);
+        submitDependencyIfNotFound(lsmMetadataService);
         return new JacsServiceResult<>(jacsServiceData, new ChildServiceData(fileCopyService.getId()));
     }
 

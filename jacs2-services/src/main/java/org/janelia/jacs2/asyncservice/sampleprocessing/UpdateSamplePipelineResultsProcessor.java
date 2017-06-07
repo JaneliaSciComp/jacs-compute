@@ -46,8 +46,8 @@ import java.util.function.Function;
 public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycleServiceProcessor<List<SampleProcessorResult>, List<SampleProcessorResult>> {
 
     static class UpdateSampleResultsArgs extends ServiceArgs {
-        @Parameter(names = "-stitchingServiceId", description = "Stitching service ID", required = true)
-        Long stitchingServiceId;
+        @Parameter(names = "-sampleProcessingId", description = "Stitching service ID", required = true)
+        Long sampleProcessingId;
     }
 
     private final SampleDataService sampleDataService;
@@ -107,9 +107,9 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
                 .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, !suspendUntilAllDependenciesComplete(pd.getJacsServiceData())))
                 .thenApply(pdCond -> {
                     JacsServiceResult<List<SampleProcessorResult>> pd = pdCond.getState();
-                    JacsServiceData stitchingService = jacsServiceDataPersistence.findById(args.stitchingServiceId);
-                    SampleResult sampleResult = sampleStitchProcessor.getResultHandler().getServiceDataResult(stitchingService);
-                    Sample sample = sampleDataService.getSampleById(stitchingService.getOwner(), sampleResult.getSampleId());
+                    JacsServiceData sampleProcessingService = jacsServiceDataPersistence.findById(args.sampleProcessingId);
+                    SampleResult sampleResult = sampleStitchProcessor.getResultHandler().getServiceDataResult(sampleProcessingService);
+                    Sample sample = sampleDataService.getSampleById(sampleProcessingService.getOwner(), sampleResult.getSampleId());
 
                     Map<String, SamplePipelineRun> pipelineRunsByObjective = new HashMap<>();
 
@@ -122,10 +122,10 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
                                     SamplePipelineRun pipelineRun = pipelineRunsByObjective.get(sar.getObjective());
                                     if (pipelineRun == null) {
                                         pipelineRun = new SamplePipelineRun();
-                                        pipelineRun.setId(stitchingService.getId());
-                                        pipelineRun.setName(StringUtils.defaultIfBlank(stitchingService.getDescription(), stitchingService.getName()));
-                                        pipelineRun.setPipelineProcess(stitchingService.getName());
-                                        pipelineRun.setCreationDate(stitchingService.getCreationDate());
+                                        pipelineRun.setId(sampleProcessingService.getId());
+                                        pipelineRun.setName(StringUtils.defaultIfBlank(sampleProcessingService.getDescription(), sampleProcessingService.getName()));
+                                        pipelineRun.setPipelineProcess(sampleProcessingService.getName());
+                                        pipelineRun.setCreationDate(sampleProcessingService.getCreationDate());
                                         pipelineRunsByObjective.put(sar.getObjective(), pipelineRun);
                                     }
                                     pipelineRun.addResult(sampleProcessingResult);
@@ -162,17 +162,17 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
     protected Function<JacsServiceData, JacsServiceResult<Boolean>> areAllDependenciesDoneFunc() {
         return sdp -> {
             UpdateSampleResultsArgs args = getArgs(sdp);
-            JacsServiceData stitchingService = jacsServiceDataPersistence.findById(args.stitchingServiceId);
-            if (stitchingService.hasCompletedUnsuccessfully()) {
+            JacsServiceData sampleProcessingService = jacsServiceDataPersistence.findById(args.sampleProcessingId);
+            if (sampleProcessingService.hasCompletedUnsuccessfully()) {
                 jacsServiceDataPersistence.updateServiceState(
                         sdp,
                         JacsServiceState.CANCELED,
                         Optional.of(JacsServiceData.createServiceEvent(
                                 JacsServiceEventTypes.CANCELED,
-                                String.format("Canceled because service %d finished unsuccessfully", stitchingService.getId()))));
-                logger.warn("Service {} canceled because of {}", sdp, stitchingService);
+                                String.format("Canceled because service %d finished unsuccessfully", sampleProcessingService.getId()))));
+                logger.warn("Service {} canceled because of {}", sdp, sampleProcessingService);
                 throw new ComputationException(sdp, "Service " + sdp.getId() + " canceled");
-            } else if (stitchingService.hasCompletedSuccessfully()) {
+            } else if (sampleProcessingService.hasCompletedSuccessfully()) {
                 return new JacsServiceResult<>(sdp, true);
             }
             verifyAndFailIfTimeOut(sdp);

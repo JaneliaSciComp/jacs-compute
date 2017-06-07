@@ -84,7 +84,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
                 new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
                 new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir)
         );
-        JacsServiceData getSampleLsmsService = submitDependencyIfNotPresent(jacsServiceData, getSampleLsmsServiceRef);
+        JacsServiceData getSampleLsmsService = submitDependencyIfNotFound(getSampleLsmsServiceRef);
         return new JacsServiceResult<>(jacsServiceData, new GetSampleLsmsIntermediateResult(getSampleLsmsService.getId()));
     }
 
@@ -106,7 +106,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
                                             new ServiceArg("-inputLSM", lsmImageFile.getAbsolutePath()),
                                             new ServiceArg("-outputLSMMetadata", lsmMetadataFile.getAbsolutePath())
                                     );
-                                    submitDependencyIfNotPresent(depResults.getJacsServiceData(), lsmMetadataService);
+                                    submitDependencyIfNotFound(lsmMetadataService);
                                 }
                                 sif.setMetadataFilePath(lsmMetadataFile.getAbsolutePath());
                                 depResults.getResult().addSampleImageFile(sif);

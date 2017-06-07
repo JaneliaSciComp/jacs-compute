@@ -139,7 +139,7 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
                             new ServiceArg("-tilesPerSide", tilesPerSide),
                             new ServiceArg("-output", montageOutput.toString())
                     );
-                    JacsServiceData montageService = submitDependencyIfNotPresent(jacsServiceData, montageServiceRef);
+                    JacsServiceData montageService = submitDependencyIfNotFound(montageServiceRef);
                     return new MontageFolderIntermediateResult(montageService.getId(), group.getKey(), montageOutput.toString());
                 })
                 .collect(Collectors.toList());

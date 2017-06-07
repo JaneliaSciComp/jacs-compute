@@ -20,18 +20,18 @@ public class FlyAlign20XJBAQiScoreBuilder implements AlignmentServiceBuilder {
     }
 
     @Override
-    public List<List<ServiceArg>> getAlignmentServicesArgs(String alignmentAlgorithm,
-                                                           String sampleDataRootDir,
-                                                           List<SampleProcessorResult> sampleProcessorResults,
-                                                           List<NeuronSeparationFiles> neuronSeparationResults) {
-        List<List<ServiceArg>> alignmentServicesArgs = new ArrayList<>();
+    public List<AlignmentServiceParams> getAlignmentServicesArgs(String alignmentAlgorithm,
+                                                                 String sampleDataRootDir,
+                                                                 List<SampleProcessorResult> sampleProcessorResults,
+                                                                 List<NeuronSeparationFiles> neuronSeparationResults) {
+        List<AlignmentServiceParams> alignmentServicesParams = new ArrayList<>();
         int resultIndex = 0;
         for (SampleProcessorResult sampleProcessorResult : sampleProcessorResults) {
             if (neuronSeparationResults.size() < resultIndex) {
                 throw new IllegalStateException("The number of sampleProcessor results and neuron separation results differ: " + sampleProcessorResults + ", " + neuronSeparationResults);
             }
             NeuronSeparationFiles neuronSeparationFiles = neuronSeparationResults.get(resultIndex);
-            alignmentServicesArgs.add(ImmutableList.of(
+            alignmentServicesParams.add(new AlignmentServiceParams(sampleProcessorResult, neuronSeparationFiles, ImmutableList.of(
                     new ServiceArg("-i1File", sampleProcessorResult.getAreaFile()),
                     new ServiceArg("-i1Channels", sampleProcessorResult.getNumChannels()),
                     new ServiceArg("-i1Ref", sampleProcessorResult.getReferenceChannelNumber()),
@@ -40,9 +40,9 @@ public class FlyAlign20XJBAQiScoreBuilder implements AlignmentServiceBuilder {
                     new ServiceArg("-o", getAlignmentOutputDir(sampleDataRootDir, "Alignment", sampleProcessorResult.getResultId(), sampleProcessorResults.size(), sampleProcessorResult.getArea(), resultIndex++).toString()),
                     new ServiceArg("-i1Neurons", neuronSeparationFiles.getConsolidatedLabel()),
                     new ServiceArg("-alignmentAlgorithm", alignmentAlgorithm)
-            ));
+            )));
         }
-        return alignmentServicesArgs;
+        return alignmentServicesParams;
     }
 
     private Path getAlignmentOutputDir(String sampleDataRootDir, String subDir, Number parentResultId, int nAreas, String area, int resultIndex) {

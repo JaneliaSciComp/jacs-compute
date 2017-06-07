@@ -144,7 +144,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                 new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),
                 new ServiceArg("-sampleSummarySubDir", args.sampleSummarySubDir)
         );
-        updateSampleLsmMetadataService = submitDependencyIfNotPresent(jacsServiceData, updateSampleLsmMetadataService);
+        updateSampleLsmMetadataService = submitDependencyIfNotFound(updateSampleLsmMetadataService);
         JacsServiceData getSampleMipMapsService = getSampleMIPsAndMoviesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Generate MIPs and Movies for the sample")
                         .waitFor(updateSampleLsmMetadataService)
@@ -157,7 +157,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                 new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),
                 new ServiceArg("-sampleSummarySubDir", args.sampleSummarySubDir)
         );
-        getSampleMipMapsService = submitDependencyIfNotPresent(jacsServiceData, getSampleMipMapsService);
+        getSampleMipMapsService = submitDependencyIfNotFound(getSampleMipMapsService);
 
         return new JacsServiceResult<>(jacsServiceData, new SampleLSMSummaryIntermediateResult(updateSampleLsmMetadataService.getId(), getSampleMipMapsService.getId()));
     }
@@ -182,7 +182,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                                             new ServiceArg("-input", sif.getMipsResultsDir()),
                                             new ServiceArg("-output", sif.getMipsResultsDir())
                                     );
-                                    montageService = submitDependencyIfNotPresent(jacsServiceData, montageService);
+                                    montageService = submitDependencyIfNotFound(montageService);
                                     montageServiceId = Optional.of(montageService.getId());
                                 } else {
                                     montageServiceId = Optional.empty();

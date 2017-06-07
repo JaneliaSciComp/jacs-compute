@@ -102,7 +102,7 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
                 new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),
                 new ServiceArg("-sampleSummarySubDir", args.sampleSummarySubDir)
         );
-        JacsServiceData getSampleLsmMetadataService = submitDependencyIfNotPresent(jacsServiceData, getSampleLsmMetadataServiceRef);
+        JacsServiceData getSampleLsmMetadataService = submitDependencyIfNotFound(getSampleLsmMetadataServiceRef);
         return new JacsServiceResult<>(jacsServiceData, new GetSampleLsmsIntermediateResult(getSampleLsmMetadataService.getId()));
     }
 

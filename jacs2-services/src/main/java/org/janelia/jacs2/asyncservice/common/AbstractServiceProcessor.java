@@ -1,21 +1,28 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
+import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
+import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T> {
@@ -122,9 +129,107 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         return Paths.get(baseDir, pathElemsBuilder.build().toArray(new String[0])).toAbsolutePath();
     }
 
+    protected JacsServiceData submitDependencyIfNotFound(JacsServiceData dependency) {
+        return jacsServiceDataPersistence.createServiceIfNotFound(dependency);
+    }
+
+    /**
+     * Suspend the service until the given service is done or until all dependencies are done
+     * @param jacsServiceData service data
+     * @return true if the service has been suspended
+     */
+    protected boolean suspendUntilAllDependenciesComplete(JacsServiceData jacsServiceData) {
+        if (jacsServiceData.hasCompleted()) {
+            return false;
+        }
+        return areAllDependenciesDoneFunc()
+                .andThen(pd -> {
+                    JacsServiceData sd = pd.getJacsServiceData();
+                    boolean depsCompleted = pd.getResult();
+                    if (depsCompleted) {
+                        resumeSuspendedService(sd);
+                        return false;
+                    } else {
+                        suspendService(sd);
+                        return true;
+                    }
+                })
+                .apply(jacsServiceData);
+    }
+
+    /**
+     * This function is related to the state monad bind operator in which a state is a function from a
+     * state to a (state, value) pair.
+     * @return a function from a servicedata to a service data. The function's application updates the service data.
+     */
+    protected Function<JacsServiceData, JacsServiceResult<Boolean>> areAllDependenciesDoneFunc() {
+        return sdp -> {
+            List<JacsServiceData> running = new ArrayList<>();
+            List<JacsServiceData> failed = new ArrayList<>();
+            if (!sdp.hasId()) {
+                return new JacsServiceResult<>(sdp, true);
+            }
+            // check if the children and the immediate dependencies are done
+            List<JacsServiceData> childServices = jacsServiceDataPersistence.findChildServices(sdp.getId());
+            List<JacsServiceData> dependentServices = jacsServiceDataPersistence.findByIds(sdp.getDependenciesIds());
+            Stream.concat(
+                    childServices.stream(),
+                    dependentServices.stream())
+                    .forEach(sd -> {
+                        if (!sd.hasCompleted()) {
+                            running.add(sd);
+                        } else if (sd.hasCompletedUnsuccessfully()) {
+                            failed.add(sd);
+                        }
+                    });
+            if (CollectionUtils.isNotEmpty(failed)) {
+                jacsServiceDataPersistence.updateServiceState(
+                        sdp,
+                        JacsServiceState.CANCELED,
+                        Optional.of(JacsServiceData.createServiceEvent(
+                                JacsServiceEventTypes.CANCELED,
+                                String.format("Canceled because one or more service dependencies finished unsuccessfully: %s", failed))));
+                logger.warn("Service {} canceled because of {}", sdp, failed);
+                throw new ComputationException(sdp, "Service " + sdp.getId() + " canceled");
+            }
+            if (CollectionUtils.isEmpty(running)) {
+                return new JacsServiceResult<>(sdp, true);
+            }
+            verifyAndFailIfTimeOut(sdp);
+            return new JacsServiceResult<>(sdp, false);
+        };
+    }
+
+    protected boolean areAllDependenciesDone(JacsServiceData jacsServiceData) {
+        return areAllDependenciesDoneFunc().apply(jacsServiceData).getResult();
+    }
+
+    protected void resumeSuspendedService(JacsServiceData jacsServiceData) {
+        jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.RUNNING, Optional.empty());
+    }
+
+    protected void suspendService(JacsServiceData jacsServiceData) {
+        if (!jacsServiceData.hasBeenSuspended()) {
+            // if the service has not completed yet and it's not already suspended - update the state to suspended
+            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.SUSPENDED, Optional.empty());
+        }
+    }
+
     protected JacsServiceResult<T> updateServiceResult(JacsServiceData jacsServiceData, T result) {
         this.getResultHandler().updateServiceDataResult(jacsServiceData, result);
         jacsServiceDataPersistence.updateServiceResult(jacsServiceData);
         return new JacsServiceResult<>(jacsServiceData, result);
+    }
+
+    protected void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
+        long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
+        if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
+            jacsServiceDataPersistence.updateServiceState(
+                    jacsServiceData,
+                    JacsServiceState.TIMEOUT,
+                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart))));
+            logger.warn("Service {} timed out after {}ms", jacsServiceData, timeSinceStart);
+            throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " timed out");
+        }
     }
 }

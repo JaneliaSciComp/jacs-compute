@@ -50,22 +50,7 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
     }
 
     private JacsServiceData submit(JacsServiceData jacsServiceData) {
-        JacsServiceData parentServiceData = jacsServiceDataPersistence.findServiceHierarchy(jacsServiceData.getParentServiceId());
-        if (parentServiceData == null) {
-            jacsServiceDataPersistence.saveHierarchy(jacsServiceData);
-            return jacsServiceData;
-        } else {
-            Optional<JacsServiceData> existingInstance = parentServiceData.findSimilarDependency(jacsServiceData);
-            if (existingInstance.isPresent()) {
-                return existingInstance.get();
-            } else {
-                jacsServiceDataPersistence.saveHierarchy(jacsServiceData);
-                jacsServiceDataPersistence.addServiceEvent(
-                        jacsServiceData,
-                        JacsServiceData.createServiceEvent(JacsServiceEventTypes.CREATE_CHILD_SERVICE, String.format("Created child service %s", jacsServiceData)));
-                return jacsServiceData;
-            }
-        }
+        return jacsServiceDataPersistence.createServiceIfNotFound(jacsServiceData);
     }
 
     private boolean isDone(JacsServiceData jacsServiceData) {
@@ -79,9 +64,5 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
             throw new ComputationException(refreshServiceData);
         }
         return new JacsServiceResult<T>(refreshServiceData, wrappedProcessor.getResultHandler().getServiceDataResult(refreshServiceData));
-    }
-
-    public S getWrappedProcessor() {
-        return wrappedProcessor;
     }
 }

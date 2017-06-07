@@ -143,7 +143,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
                 new ServiceArg("-resultsPatterns", "*.avi")
         );
         logger.debug("Submit FIJI service {}", fijiMacroService);
-        return submitDependencyIfNotPresent(jacsServiceData, fijiMacroService);
+        return submitDependencyIfNotFound(fijiMacroService);
     }
 
     private String getBasicMIPsAndMoviesArgs(BasicMIPsAndMoviesArgs args, Path outputDir) {
@@ -187,7 +187,7 @@ public class BasicMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServicePr
                 .build(),
                 new ServiceArg("-input", aviFileName)
         );
-        return submitDependencyIfNotPresent(jacsServiceData, mpegConverterService);
+        return submitDependencyIfNotFound(mpegConverterService);
     }
 
     @Override

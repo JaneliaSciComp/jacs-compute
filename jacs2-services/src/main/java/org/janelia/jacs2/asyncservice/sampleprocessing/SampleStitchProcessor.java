@@ -162,7 +162,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                 new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
                 new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir)
         );
-        JacsServiceData getSampleLsmsService = submitDependencyIfNotPresent(jacsServiceData, getSampleLsmsServiceRef);
+        JacsServiceData getSampleLsmsService = submitDependencyIfNotFound(getSampleLsmsServiceRef);
         List<AnatomicalArea> anatomicalAreas =
                 sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective, args.sampleArea);
         // invoke child file copy services for all LSM files
@@ -184,7 +184,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                             new ServiceArg("-outputChannelOrder", args.outputChannelOrder),
                             new ServiceArg("-distortionCorrection", args.applyDistortionCorrection)
                     );
-                    mergeTilePairsService = submitDependencyIfNotPresent(jacsServiceData, mergeTilePairsService);
+                    mergeTilePairsService = submitDependencyIfNotFound(mergeTilePairsService);
                     return mergeTilePairsService;
                 })
                 .map(JacsServiceData::getId)
@@ -304,7 +304,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                 new ServiceArg("-outputFile", outputFile.toString()),
                 new ServiceArg("-refchannel", referenceChannelNumber)
         );
-        return submitDependencyIfNotPresent(jacsServiceData, stitchingService);
+        return submitDependencyIfNotFound(stitchingService);
     }
 
     private JacsServiceData generateMips(JacsServiceData jacsServiceData, Path tileFile, Path outputDir, String signalChannels, String referenceChannel, JacsServiceData... deps) {
@@ -318,7 +318,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                 new ServiceArg("-referenceChannel", referenceChannel),
                 new ServiceArg("-imgFormat", "png")
         );
-        return submitDependencyIfNotPresent(jacsServiceData, mipsService);
+        return submitDependencyIfNotFound(mipsService);
     }
 
     private void updateStitchingResult(AreaStitchingIntermediateResult areaResults) {

@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
@@ -135,7 +134,7 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
                         JacsServiceData fileCopyService = fileCopyProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData).build(),
                                 new ServiceArg("-src", sif.getArchiveFilePath()),
                                 new ServiceArg("-dst", sif.getWorkingFilePath()));
-                        submitDependencyIfNotPresent(jacsServiceData, fileCopyService);
+                        submitDependencyIfNotFound(fileCopyService);
                     }
                     return new GetSampleImageIntermediateData(sif);
                 })

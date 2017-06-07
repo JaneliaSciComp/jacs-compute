@@ -237,7 +237,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),
                 new ServiceArg("-sampleSummarySubDir", args.sampleSummarySubDir)
         );
-        JacsServiceData sampleLsmsMetadataService = submitDependencyIfNotPresent(jacsServiceData, updateSampleLSMMetadataServiceRef);
+        JacsServiceData sampleLsmsMetadataService = submitDependencyIfNotFound(updateSampleLSMMetadataServiceRef);
 
         // the LSM metadata is required for generating the merge tile commands so I am waiting until update completes
         return computationFactory.newCompletedComputation(sampleLsmsMetadataService)
@@ -422,7 +422,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             mcd.imageSize = mcd.tilePair.getFirstLsm().getImageSize();
             mcd.opticalResolution = mcd.tilePair.getFirstLsm().getOpticalResolution();
         }
-        mergeLsmPairsService = submitDependencyIfNotPresent(jacsServiceData, mergeLsmPairsService);
+        mergeLsmPairsService = submitDependencyIfNotFound(mergeLsmPairsService);
         logger.info("Map channels {} + {} -> {}", mergedResultFileName, mcd.mapping, mergedResultFileName);
         // since the channels were in the right order no re-ordering of the channels is necessary
         JacsServiceData mapChannelsService = vaa3dChannelMapProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
@@ -432,7 +432,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 new ServiceArg("-outputFile", mergedResultFileName.toString()),
                 new ServiceArg("-channelMapping", mcd.mapping)
         );
-        mcd.mergeTileServiceData = submitDependencyIfNotPresent(jacsServiceData, mapChannelsService);
+        mcd.mergeTileServiceData = submitDependencyIfNotFound(mapChannelsService);
         mcd.resultsParentDir = areaResultsParentDir.toString();
         mcd.mergeTileRelativeSubDir = mergeSubDir;
         mcd.mergeTileFile = mergedResultFileName.toString();
@@ -453,7 +453,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 new ServiceArg("-outputDir", groupDir.toString()),
                 new ServiceArg("-refchannel", referenceChannelNumber)
         );
-        mergeTileResults.groupService = submitDependencyIfNotPresent(jacsServiceData, groupingService);
+        mergeTileResults.groupService = submitDependencyIfNotFound(groupingService);
         mergeTileResults.groupSubDir = groupSubDir;
         return mergeTileResults;
     }

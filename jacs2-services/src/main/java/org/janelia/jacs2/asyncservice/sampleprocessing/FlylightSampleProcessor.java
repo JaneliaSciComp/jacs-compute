@@ -10,7 +10,9 @@ import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilder;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilderFactory;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentProcessor;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentResultFiles;
+import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceParams;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -47,6 +49,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
     private final WrappedServiceProcessor<UpdateSamplePipelineResultsProcessor, List<SampleProcessorResult>> updateSamplePipelineResultsProcessor;
     private final WrappedServiceProcessor<SampleNeuronSeparationProcessor, NeuronSeparationFiles> sampleNeuronSeparationProcessor;
     private final WrappedServiceProcessor<AlignmentProcessor, AlignmentResultFiles> alignmentProcessor;
+    private final WrappedServiceProcessor<UpdateAlignmentResultsProcessor, AlignmentResultFiles> updateAlignmentResultsProcessor;
     private final AlignmentServiceBuilderFactory alignmentServiceBuilderFactory;
 
     @Inject
@@ -61,6 +64,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
                             SampleNeuronSeparationProcessor sampleNeuronSeparationProcessor,
                             AlignmentServiceBuilderFactory alignmentServiceBuilderFactory,
                             AlignmentProcessor alignmentProcessor,
+                            UpdateAlignmentResultsProcessor updateAlignmentResultsProcessor,
                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sampleDataService = sampleDataService;
@@ -70,6 +74,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
         this.updateSamplePipelineResultsProcessor = new WrappedServiceProcessor(computationFactory, jacsServiceDataPersistence, updateSamplePipelineResultsProcessor);
         this.sampleNeuronSeparationProcessor = new WrappedServiceProcessor(computationFactory, jacsServiceDataPersistence, sampleNeuronSeparationProcessor);
         this.alignmentProcessor = new WrappedServiceProcessor(computationFactory, jacsServiceDataPersistence, alignmentProcessor);
+        this.updateAlignmentResultsProcessor = new WrappedServiceProcessor(computationFactory, jacsServiceDataPersistence, updateAlignmentResultsProcessor);
         this.alignmentServiceBuilderFactory = alignmentServiceBuilderFactory;
     }
 
@@ -124,7 +129,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
                             return getSampleImages;
                         }
                 )
-                .thenCompose((JacsServiceResult <List<SampleImageFile>> lsir) -> sampleStitchProcessor.process(
+                .thenCompose((JacsServiceResult<List<SampleImageFile>> lsir) -> sampleStitchProcessor.process(
                                 new ServiceExecutionContext.Builder(jacsServiceData)
                                         .description("Stitch sample tiles")
                                         .waitFor(lsir.getJacsServiceData())
@@ -148,7 +153,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
                                         .description("Update sample results")
                                         .waitFor(stitchResult.getJacsServiceData())
                                         .build(),
-                                new ServiceArg("-stitchingServiceId", stitchResult.getJacsServiceData().getId().toString())
+                                new ServiceArg("-sampleProcessingId", stitchResult.getJacsServiceData().getId().toString())
                         )
                 )
                 .thenCompose((JacsServiceResult<List<SampleProcessorResult>> lspr) -> {
@@ -161,7 +166,8 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
                                     SampleProcessorResult sr = indexedSr.getReference();
                                     Path neuronSeparationOutputDir = getNeuronSeparationOutputDir(args.sampleDataRootDir, "Separation", sr.getResultId(), sampleResults.size(), sr.getArea(), indexedSr.getPos());
                                     String previousNeuronsResult = getPreviousNeuronsResultFile(jacsServiceData, sr.getSampleId(), sr.getObjective(), sr.getRunId());
-                                    return sampleNeuronSeparationProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                                    return sampleNeuronSeparationProcessor.process(
+                                            new ServiceExecutionContext.Builder(jacsServiceData)
                                                     .description("Separate sample neurons")
                                                     .waitFor(lspr.getJacsServiceData())
                                                     .build(),
@@ -188,24 +194,37 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
                                     alignmentServiceBuilder = alignmentServiceBuilderFactory.getServiceArgBuilder(args.alignmentAlgorithm);
                                 }
                                 if (alignmentServiceBuilder != null) {
-                                    List<List<ServiceArg>> alignmentServicesArgs =
+                                    List<AlignmentServiceParams> alignmentServicesParams =
                                             alignmentServiceBuilder.getAlignmentServicesArgs(
                                                     args.alignmentAlgorithm,
                                                     args.sampleDataRootDir,
                                                     lspr1.getResult(),
                                                     afterSampleProcessNeuronSeparationsResults.stream().map(JacsServiceResult::getResult).collect(Collectors.toList()));
                                     int resultIndex = 0;
-                                    for (List<ServiceArg> alignmentServiceArgs : alignmentServicesArgs) {
+                                    for (AlignmentServiceParams alignmentServiceParams : alignmentServicesParams) {
                                         JacsServiceResult<NeuronSeparationFiles> neuronSeparationResult = afterSampleProcessNeuronSeparationsResults.get(resultIndex);
-                                        alignmentProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                                        alignmentProcessor.process(
+                                                new ServiceExecutionContext.Builder(jacsServiceData)
                                                         .description("Align sample")
                                                         .waitFor(lspr1.getJacsServiceData(), neuronSeparationResult.getJacsServiceData())
                                                         .build(),
-                                                alignmentServiceArgs.toArray(new ServiceArg[alignmentServiceArgs.size()])
-                                        );
+                                                alignmentServiceParams.getAlignmentServiceArgs().toArray(new ServiceArg[alignmentServiceParams.getAlignmentServiceArgs().size()])
+                                        )
+                                        .thenCompose((JacsServiceResult<AlignmentResultFiles> alignmentResult) -> {
+                                            return updateAlignmentResultsProcessor.process(
+                                                    new ServiceExecutionContext.Builder(jacsServiceData)
+                                                            .description("Update alignment results")
+                                                            .waitFor(neuronSeparationResult.getJacsServiceData())
+                                                            .build(),
+                                                    new ServiceArg("-sampleId", alignmentServiceParams.getSampleProcessorResult().getSampleId().toString()),
+                                                    new ServiceArg("-objective", alignmentServiceParams.getSampleProcessorResult().getObjective()),
+                                                    new ServiceArg("-area", alignmentServiceParams.getSampleProcessorResult().getArea()),
+                                                    new ServiceArg("-runId", alignmentServiceParams.getSampleProcessorResult().getRunId().toString()),
+                                                    new ServiceArg("-alignmentServiceId", alignmentResult.getJacsServiceData().getId().toString())
+                                            );
+                                        });
                                         ++resultIndex;
                                     }
-
                                     return lspr1;
 
                                 } else {
@@ -213,6 +232,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
                                 }
                             });
                 })
+                .thenSuspendUntil(r -> new ContinuationCond.Cond<>(r, !suspendUntilAllDependenciesComplete(jacsServiceData)))
                 .thenApply(r -> new JacsServiceResult<Void>(jacsServiceData));
             }
 

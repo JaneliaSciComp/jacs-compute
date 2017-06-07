@@ -35,7 +35,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -77,12 +76,12 @@ public class SampleStitchProcessorTest {
             return sd;
         });
 
-        doAnswer(invocation -> {
+        when(jacsServiceDataPersistence.createServiceIfNotFound(any(JacsServiceData.class))).then(invocation -> {
             JacsServiceData jacsServiceData = invocation.getArgument(0);
             jacsServiceData.setId(SampleProcessorTestUtils.TEST_SERVICE_ID);
             jacsServiceData.setState(JacsServiceState.SUCCESSFUL); // mark the service as completed otherwise the computation doesn't return
-            return null;
-        }).when(jacsServiceDataPersistence).saveHierarchy(any(JacsServiceData.class));
+            return jacsServiceData;
+        });
 
         when(idGenerator.generateId()).thenReturn(SampleProcessorTestUtils.TEST_SERVICE_ID);
 
