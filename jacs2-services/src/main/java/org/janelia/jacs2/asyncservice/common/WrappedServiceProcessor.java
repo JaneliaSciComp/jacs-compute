@@ -46,7 +46,7 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(sd -> submit(sd))
                 .thenSuspendUntil(sd -> new ContinuationCond.Cond<>(sd, isDone(sd)))
-                .thenApply(sdCond -> new JacsServiceResult<>(sdCond.getState(), wrappedProcessor.getResultHandler().getServiceDataResult(sdCond.getState())));
+                .thenApply(sdCond -> getResult(sdCond.getState()));
     }
 
     private JacsServiceData submit(JacsServiceData jacsServiceData) {
@@ -71,6 +71,14 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
     private boolean isDone(JacsServiceData jacsServiceData) {
         JacsServiceData refreshServiceData = jacsServiceDataPersistence.findById(jacsServiceData.getId());
         return refreshServiceData.hasCompleted();
+    }
+
+    private JacsServiceResult<T> getResult(JacsServiceData jacsServiceData) {
+        JacsServiceData refreshServiceData = jacsServiceDataPersistence.findById(jacsServiceData.getId());
+        if (refreshServiceData.hasCompletedUnsuccessfully()) {
+            throw new ComputationException(refreshServiceData);
+        }
+        return new JacsServiceResult<T>(refreshServiceData, wrappedProcessor.getResultHandler().getServiceDataResult(refreshServiceData));
     }
 
     public S getWrappedProcessor() {
