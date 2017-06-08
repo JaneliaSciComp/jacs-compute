@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.domain.sample;
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
 
 import java.util.HashMap;
@@ -92,5 +93,13 @@ public class SampleAlignmentResult extends PipelineResult {
     public void setScores(Map<AlignmentScoreType, String> scores) {
         Preconditions.checkArgument(scores != null, "Scores cannot be null");
         this.scores = scores;
+    }
+
+    public void addScore(AlignmentScoreType scoreType, String score) {
+        if (StringUtils.isNotBlank(score)) scores.put(scoreType, score);
+    }
+
+    public void addScores(Map<AlignmentScoreType, String> scores) {
+        scores.entrySet().stream().forEach(entry -> addScore(entry.getKey(), entry.getValue()));
     }
 }

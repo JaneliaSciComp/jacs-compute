@@ -8,14 +8,20 @@ import java.util.List;
 
 public class AlignmentServiceParams {
 
+    private final String alignmentResultName;
     private final SampleProcessorResult sampleProcessorResult;
     private final NeuronSeparationFiles neuronSeparationFiles;
     private final List<ServiceArg> alignmentServiceArgs;
 
-    public AlignmentServiceParams(SampleProcessorResult sampleProcessorResult, NeuronSeparationFiles neuronSeparationFiles, List<ServiceArg> alignmentServiceArgs) {
+    public AlignmentServiceParams(String alignmentResultName, SampleProcessorResult sampleProcessorResult, NeuronSeparationFiles neuronSeparationFiles, List<ServiceArg> alignmentServiceArgs) {
+        this.alignmentResultName = alignmentResultName;
         this.sampleProcessorResult = sampleProcessorResult;
         this.neuronSeparationFiles = neuronSeparationFiles;
         this.alignmentServiceArgs = alignmentServiceArgs;
+    }
+
+    public String getAlignmentResultName() {
+        return alignmentResultName;
     }
 
     public SampleProcessorResult getSampleProcessorResult() {

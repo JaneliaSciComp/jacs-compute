@@ -6,12 +6,22 @@ import java.util.List;
 public class AlignmentResultFiles {
     private String alignmentPropertiesFile;
 
+    private String algorithm;
     private String resultDir;
     private List<String> alignedResultFiles = new ArrayList<>();
     private String scoresFile;
     private String rotationsFile;
     private String affineFile;
     private List<String> warpedFiles = new ArrayList<>();
+    private String alignmentVerificationMovie;
+
+    public String getAlgorithm() {
+        return algorithm;
+    }
+
+    public void setAlgorithm(String algorithm) {
+        this.algorithm = algorithm;
+    }
 
     public String getResultDir() {
         return resultDir;
@@ -71,5 +81,13 @@ public class AlignmentResultFiles {
 
     public void setWarpedFiles(List<String> warpedFiles) {
         this.warpedFiles = warpedFiles;
+    }
+
+    public String getAlignmentVerificationMovie() {
+        return alignmentVerificationMovie;
+    }
+
+    public void setAlignmentVerificationMovie(String alignmentVerificationMovie) {
+        this.alignmentVerificationMovie = alignmentVerificationMovie;
     }
 }

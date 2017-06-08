@@ -2,11 +2,14 @@ package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import java.io.Closeable;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
@@ -14,9 +17,31 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import java.util.StringJoiner;
 
 public class AlignmentUtils {
+
+    public static Properties getAlignmentProperties(String alignmentPropertiesFile) {
+        Properties alignmentProperties = new Properties();
+        if (StringUtils.isNotBlank(alignmentPropertiesFile)) {
+            FileReader propReader = null;
+            try {
+                propReader = new FileReader(alignmentPropertiesFile);
+                alignmentProperties.load(propReader);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            } finally {
+                if (propReader != null) {
+                    try {
+                        propReader.close();
+                    } catch (Exception ignore) {
+                    }
+                }
+            }
+        }
+        return alignmentProperties;
+    }
 
     public static AlignmentConfiguration parseAlignConfig(String configFile) {
         try {

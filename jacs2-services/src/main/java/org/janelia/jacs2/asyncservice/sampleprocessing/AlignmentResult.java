@@ -1,10 +1,12 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
+import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentResultFiles;
 
 public class AlignmentResult {
     private Number alignmentResultId;
     private AlignmentResultFiles alignmentResultFiles;
+    private SampleAlignmentResult sampleAlignmentResult;
 
     public Number getAlignmentResultId() {
         return alignmentResultId;
@@ -20,5 +22,13 @@ public class AlignmentResult {
 
     public void setAlignmentResultFiles(AlignmentResultFiles alignmentResultFiles) {
         this.alignmentResultFiles = alignmentResultFiles;
+    }
+
+    public SampleAlignmentResult getSampleAlignmentResult() {
+        return sampleAlignmentResult;
+    }
+
+    public void setSampleAlignmentResult(SampleAlignmentResult sampleAlignmentResult) {
+        this.sampleAlignmentResult = sampleAlignmentResult;
     }
 }

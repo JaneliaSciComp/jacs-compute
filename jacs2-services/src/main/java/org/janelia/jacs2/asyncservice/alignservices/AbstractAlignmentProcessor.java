@@ -67,7 +67,7 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
     @Override
     public ServiceResultHandler<AlignmentResultFiles> getResultHandler() {
         return new AbstractAnyServiceResultHandler<AlignmentResultFiles>() {
-            final String resultsPattern = "glob:**/{Align,QiScore,rotations,Affine,ccmi}*";
+            final String resultsPattern = "glob:**/{Align,QiScore,rotations,Affine,ccmi,VerifyMovie}*";
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
@@ -79,18 +79,21 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
                 AlignmentArgs args = getArgs(depResults.getJacsServiceData());
                 AlignmentResultFiles result = new AlignmentResultFiles();
                 Path resultDir = getOutputDir(args);
+                result.setAlgorithm(args.alignmentAlgorithm);
                 result.setResultDir(resultDir.toString());
                 FileUtils.lookupFiles(resultDir, 3, resultsPattern)
                         .forEach(f -> {
                             String fn = f.toFile().getName();
                             if (fn.endsWith(".properties")) {
-                                result.setAlignmentPropertiesFile(resultDir.relativize(f).toString());
+                                result.setAlignmentPropertiesFile(f.toString());
                             } else if ("QiScore.csv".equals(fn)) {
                                 result.setScoresFile(resultDir.relativize(f).toString());
+                            } else if (fn.endsWith(".mp4")) {
+                                // if this is an mp4 file assume it's the verification movie
+                                result.setAlignmentVerificationMovie(resultDir.relativize(f).toString());
                             }
                         });
-
-                return null;
+                return result;
             }
 
             @Override
