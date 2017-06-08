@@ -149,7 +149,7 @@ public class UpdateAlignmentResultsProcessor extends AbstractBasicLifeCycleServi
                     sampleAlignmentResult.addScore(AlignmentScoreType.OverlapCoefficient, getScore(alignmentProperties, "alignment.overlap.coefficient"));
                     sampleAlignmentResult.addScore(AlignmentScoreType.ObjectPearsonCoefficient, getScore(alignmentProperties, "alignment.object.pearson.coefficient"));
                     sampleAlignmentResult.addScore(AlignmentScoreType.OtsunaObjectPearsonCoefficient, getScore(alignmentProperties, "alignment.otsuna.object.pearson.coefficient"));
-                    sampleAlignmentResult.addScores(getQiScores(getScore(alignmentProperties, "alignment.quality.score.qi")));
+                    sampleAlignmentResult.addScores(getQiScores(alignmentProperties.getProperty("alignment.quality.score.qi")));
 
                     String channels = alignmentProperties.getProperty("alignment.image.channels");
                     int nChannels = -1;

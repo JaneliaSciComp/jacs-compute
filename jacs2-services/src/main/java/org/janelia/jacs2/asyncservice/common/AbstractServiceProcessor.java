@@ -73,9 +73,6 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         jacsServiceDataBuilder.copyResourcesFrom(executionContext.getResources());
         executionContext.getWaitFor().forEach(jacsServiceDataBuilder::addDependency);
         executionContext.getWaitForIds().forEach(jacsServiceDataBuilder::addDependencyId);
-        if (executionContext.getParentServiceData() != null) {
-            executionContext.getParentServiceData().getDependenciesIds().forEach(jacsServiceDataBuilder::addDependencyId);
-        }
         return jacsServiceDataBuilder.build();
     }
 
