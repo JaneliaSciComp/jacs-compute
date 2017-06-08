@@ -31,7 +31,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 @Named("updateAlignmentResults")
-public class UpdateAlignmentResultsProcessor extends AbstractBasicLifeCycleServiceProcessor<AlignmentResultFiles, AlignmentResultFiles> {
+public class UpdateAlignmentResultsProcessor extends AbstractBasicLifeCycleServiceProcessor<AlignmentResult, AlignmentResult> {
 
     static class UpdateAlignmentResultsArgs extends ServiceArgs {
         @Parameter(names = "-sampleId", description = "Sample ID", required = true)
@@ -74,8 +74,8 @@ public class UpdateAlignmentResultsProcessor extends AbstractBasicLifeCycleServi
     }
 
     @Override
-    public ServiceResultHandler<AlignmentResultFiles> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<AlignmentResultFiles>() {
+    public ServiceResultHandler<AlignmentResult> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<AlignmentResult>() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
@@ -83,33 +83,35 @@ public class UpdateAlignmentResultsProcessor extends AbstractBasicLifeCycleServi
 
             @SuppressWarnings("unchecked")
             @Override
-            public AlignmentResultFiles collectResult(JacsServiceResult<?> depResults) {
-                JacsServiceResult<AlignmentResultFiles> intermediateResult = (JacsServiceResult<AlignmentResultFiles>)depResults;
+            public AlignmentResult collectResult(JacsServiceResult<?> depResults) {
+                JacsServiceResult<AlignmentResult> intermediateResult = (JacsServiceResult<AlignmentResult>)depResults;
                 return intermediateResult.getResult();
             }
 
             @Override
-            public AlignmentResultFiles getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<AlignmentResultFiles>() {});
+            public AlignmentResult getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<AlignmentResult>() {});
             }
         };
     }
 
     @Override
-    protected JacsServiceResult<AlignmentResultFiles> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    protected JacsServiceResult<AlignmentResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         return new JacsServiceResult<>(jacsServiceData);
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<AlignmentResultFiles>> processing(JacsServiceResult<AlignmentResultFiles> depResults) {
+    protected ServiceComputation<JacsServiceResult<AlignmentResult>> processing(JacsServiceResult<AlignmentResult> depResults) {
         UpdateAlignmentResultsArgs args = getArgs(depResults.getJacsServiceData());
         return computationFactory.newCompletedComputation(depResults)
                 .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, !suspendUntilAllDependenciesComplete(pd.getJacsServiceData())))
                 .thenApply(pdCond -> {
-                    JacsServiceResult<AlignmentResultFiles> pd = pdCond.getState();
+                    JacsServiceResult<AlignmentResult> pd = pdCond.getState();
                     JacsServiceData alignmentService = jacsServiceDataPersistence.findById(args.alignmentServiceId);
                     AlignmentResultFiles alignmentResultFiles = alignmentProcessor.getResultHandler().getServiceDataResult(alignmentService);
-                    pd.setResult(alignmentResultFiles);
+                    AlignmentResult alignmentResult = new AlignmentResult();
+                    alignmentResult.setAlignmentResultFiles(alignmentResultFiles);
+                    pd.setResult(alignmentResult);
                     // !!!!!!!!!!!!!!!!! TODO
                     return pd;
                 });

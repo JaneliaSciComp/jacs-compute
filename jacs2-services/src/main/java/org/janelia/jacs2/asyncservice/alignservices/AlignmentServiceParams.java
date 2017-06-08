@@ -29,4 +29,8 @@ public class AlignmentServiceParams {
     public List<ServiceArg> getAlignmentServiceArgs() {
         return alignmentServiceArgs;
     }
+
+    public ServiceArg[] getAlignmentServiceArgsArray() {
+        return alignmentServiceArgs.toArray(new ServiceArg[alignmentServiceArgs.size()]);
+    }
 }
