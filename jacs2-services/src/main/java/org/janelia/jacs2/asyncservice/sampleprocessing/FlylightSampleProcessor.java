@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -8,10 +9,12 @@ import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilder;
-import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilderFactory;
+import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
+import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentProcessor;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentResultFiles;
+import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilder;
+import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilderFactory;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceParams;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
@@ -20,10 +23,11 @@ import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -44,7 +48,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Named("flylightSample")
-public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
+public class FlylightSampleProcessor extends AbstractServiceProcessor<List<SampleProcessorResult>> {
 
     private final SampleDataService sampleDataService;
     private final WrappedServiceProcessor<GetSampleImageFilesProcessor, List<SampleImageFile>> getSampleImageFilesProcessor;
@@ -91,12 +95,30 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
     }
 
     @Override
-    public ServiceResultHandler<Void> getResultHandler() {
-        return new VoidServiceResultHandler();
+    public ServiceResultHandler<List<SampleProcessorResult>> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<List<SampleProcessorResult>>() {
+            final String resultsPattern = "glob:**/{archive,maskChan,fastLoad,Consolidated,Reference,SeparationResult,neuronSeparatorPipeline.PR.neuron,maskChan/neuron_,maskChan/ref}*";
+
+            @Override
+            public boolean isResultReady(JacsServiceResult<?> depResults) {
+                return areAllDependenciesDone(depResults.getJacsServiceData());
+            }
+
+            @Override
+            public List<SampleProcessorResult> collectResult(JacsServiceResult<?> depResults) {
+                JacsServiceResult<List<SampleProcessorResult>> intermediateResult = (JacsServiceResult<List<SampleProcessorResult>>)depResults;
+                return intermediateResult.getResult();
+            }
+
+            @Override
+            public List<SampleProcessorResult> getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<SampleProcessorResult>>() {});
+            }
+        };
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> process(JacsServiceData jacsServiceData) {
         FlylightSampleArgs args = getArgs(jacsServiceData);
         Path sampleLsmsSubDir = FileUtils.getDataPath(SampleServicesUtils.DEFAULT_WORKING_LSMS_SUBDIR, jacsServiceData.getId());
         Path sampleSummarySubDir = FileUtils.getDataPath("Summary", jacsServiceData.getId());
@@ -114,77 +136,77 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
                                             .waitFor(lsir.getJacsServiceData())
                                             .build(),
                                     new ServiceArg("-sampleId", args.sampleId.toString()),
-                                new ServiceArg("-objective", args.sampleObjective),
-                                new ServiceArg("-area", args.sampleArea),
-                                new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
-                                new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
-                                new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
-                                new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
-                                new ServiceArg("-basicMipMapsOptions", args.basicMipMapsOptions),
-                                new ServiceArg("-montageMipMaps", args.montageMipMaps)
+                                    new ServiceArg("-objective", args.sampleObjective),
+                                    new ServiceArg("-area", args.sampleArea),
+                                    new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                                    new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
+                                    new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
+                                    new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
+                                    new ServiceArg("-basicMipMapsOptions", args.basicMipMapsOptions),
+                                    new ServiceArg("-montageMipMaps", args.montageMipMaps)
                             )
                     );
         }
-        ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> processSampleComputation = getSampleImagesComputation
-                .thenCompose((JacsServiceResult<List<SampleImageFile>> lsir) -> processSampleImages(
+        return getSampleImagesComputation
+                .thenCompose((JacsServiceResult<List<SampleImageFile>> lsir) -> processSampleImages( // process sample
                         jacsServiceData, args.sampleId, args.sampleObjective, args.sampleArea,
                         args.sampleDataRootDir, sampleLsmsSubDir, sampleSummarySubDir, sampleStitchingSubDir,
                         args.mergeAlgorithm, args.channelDyeSpec, args.outputChannelOrder,
                         args.applyDistortionCorrection, args.persistResults,
-                        lsir.getJacsServiceData()));
-
-        processSampleComputation
-            .thenCompose((JacsServiceResult<List<SampleProcessorResult>> lspr) -> {
-                List<ServiceComputation<JacsServiceResult<NeuronSeparationFiles>>> neuronSeparationComputations = runSampleNeuronSeparations(
-                        jacsServiceData,
-                        lspr.getResult(),
-                        (args.runNeuronSeparationAfterSampleProcessing ? lspr.getResult().size() : 0),
-                        args.sampleDataRootDir,
-                        lspr.getJacsServiceData());
-                if (StringUtils.isBlank(args.alignmentAlgorithm)) {
-                    // no alignment
-                    return computationFactory.newCompletedComputation(lspr);
-                }
-                AlignmentServiceBuilder alignmentServiceBuilder = alignmentServiceBuilderFactory.getServiceArgBuilder(args.alignmentAlgorithm);
-                if (alignmentServiceBuilder == null) {
-                    // unsupported alignment algorithm
-                    return computationFactory.newCompletedComputation(lspr);
-                }
-                List<ServiceComputation<?>> afterSampleProcessNeuronSeparationsResults = ImmutableList.copyOf(neuronSeparationComputations);
-                return computationFactory.newCompletedComputation(lspr)
-                        .thenCombineAll(afterSampleProcessNeuronSeparationsResults, (JacsServiceResult<List<SampleProcessorResult>> lspr1, List<?> results) -> {
-                            List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults = (List<JacsServiceResult<NeuronSeparationFiles>>) results;
-                            Map<NeuronSeparationFiles, JacsServiceResult<NeuronSeparationFiles>> indexedNeuronSeparationResults = Maps.uniqueIndex(neuronSeparationsResults,
-                                    new Function<JacsServiceResult<NeuronSeparationFiles>, NeuronSeparationFiles>() {
-                                        @Nullable
-                                        @Override
-                                        public NeuronSeparationFiles apply(JacsServiceResult<NeuronSeparationFiles> nsr) {
-                                            return nsr.getResult();
-                                        }
-                                    });
-                            List<AlignmentServiceParams> alignmentServicesParams =
-                                    alignmentServiceBuilder.getAlignmentServicesArgs(
-                                            args.alignmentAlgorithm,
-                                            args.sampleDataRootDir,
-                                            lspr1.getResult(),
-                                            neuronSeparationsResults.stream().map(JacsServiceResult::getResult).collect(Collectors.toList()));
-                            alignmentServicesParams.forEach(alignmentServiceParams -> {
-                                JacsServiceData neuronSeparationService = indexedNeuronSeparationResults.get(alignmentServiceParams.getNeuronSeparationFiles()).getJacsServiceData();
-                                runAlignment(jacsServiceData, alignmentServiceParams, lspr.getJacsServiceData(), neuronSeparationService)
-                                        .thenCompose((JacsServiceResult<AlignmentResult> alignmentResult) -> runAlignmentNeuronSeparation(
-                                                jacsServiceData,
-                                                alignmentServiceParams.getSampleProcessorResult(),
+                        lsir.getJacsServiceData()))
+                .thenCompose((JacsServiceResult<List<SampleProcessorResult>> lspr) -> {
+                    List<ServiceComputation<JacsServiceResult<NeuronSeparationFiles>>> neuronSeparationComputations = runSampleNeuronSeparations(
+                            jacsServiceData,
+                            lspr.getResult(),
+                            (args.runNeuronSeparationAfterSampleProcessing ? lspr.getResult().size() : 0),
+                            args.sampleDataRootDir,
+                            lspr.getJacsServiceData());
+                    if (StringUtils.isBlank(args.alignmentAlgorithm)) {
+                        // no alignment requested so stop here
+                        return computationFactory.newCompletedComputation(lspr);
+                    }
+                    AlignmentServiceBuilder alignmentServiceBuilder = alignmentServiceBuilderFactory.getServiceArgBuilder(args.alignmentAlgorithm);
+                    if (alignmentServiceBuilder == null) {
+                        // unsupported alignment algorithm
+                        return computationFactory.newCompletedComputation(lspr);
+                    }
+                    List<ServiceComputation<?>> afterSampleProcessNeuronSeparationsResults = ImmutableList.copyOf(neuronSeparationComputations);
+                    return computationFactory.newCompletedComputation(lspr)
+                            .thenCombineAll(afterSampleProcessNeuronSeparationsResults, (JacsServiceResult<List<SampleProcessorResult>> lspr1, List<?> results) -> {
+                                // after all neuron separation complete run the alignments
+                                List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults = (List<JacsServiceResult<NeuronSeparationFiles>>) results;
+                                Map<NeuronSeparationFiles, JacsServiceResult<NeuronSeparationFiles>> indexedNeuronSeparationResults = Maps.uniqueIndex(neuronSeparationsResults,
+                                        new Function<JacsServiceResult<NeuronSeparationFiles>, NeuronSeparationFiles>() {
+                                            @Nullable
+                                            @Override
+                                            public NeuronSeparationFiles apply(JacsServiceResult<NeuronSeparationFiles> nsr) {
+                                                return nsr.getResult();
+                                            }
+                                        });
+                                List<AlignmentServiceParams> alignmentServicesParams =
+                                        alignmentServiceBuilder.getAlignmentServicesArgs(
+                                                args.alignmentAlgorithm,
                                                 args.sampleDataRootDir,
-                                                alignmentResult.getResult().getAlignmentResultId(),
-                                                alignmentResult.getJacsServiceData()));
+                                                lspr1.getResult(),
+                                                neuronSeparationsResults.stream().map(JacsServiceResult::getResult).collect(Collectors.toList()));
+                                alignmentServicesParams.forEach(alignmentServiceParams -> {
+                                    JacsServiceData neuronSeparationService = indexedNeuronSeparationResults.get(alignmentServiceParams.getNeuronSeparationFiles()).getJacsServiceData();
+                                    runAlignment(jacsServiceData, alignmentServiceParams, lspr.getJacsServiceData(), neuronSeparationService)
+                                            .thenCompose((JacsServiceResult<AlignmentResult> alignmentResult) -> runAlignmentNeuronSeparation(
+                                                    jacsServiceData,
+                                                    alignmentServiceParams.getSampleProcessorResult(),
+                                                    args.sampleDataRootDir,
+                                                    alignmentResult.getResult().getAlignmentResultId(),
+                                                    alignmentServiceParams.getNeuronSeparationFiles().getConsolidatedLabel(),
+                                                    alignmentResult.getJacsServiceData()));
+                                });
+                                return lspr1;
                             });
-                            return lspr1;
-                        });
-            });
+                })
+                .thenSuspendUntil(lspr -> new ContinuationCond.Cond<>(lspr, !suspendUntilAllDependenciesComplete(jacsServiceData))) // wait for all subtasks to complete
+                .thenApply(lsprCond -> updateServiceResult(jacsServiceData, lsprCond.getState().getResult())) // update the result
+                ;
 
-        return processSampleComputation
-                .thenSuspendUntil(r -> new ContinuationCond.Cond<>(r, !suspendUntilAllDependenciesComplete(jacsServiceData)))
-                .thenApply(r -> new JacsServiceResult<Void>(jacsServiceData));
     }
 
     private ServiceComputation<JacsServiceResult<List<SampleImageFile>>> getSampleImages(JacsServiceData jacsServiceData, Number sampleId, String sampleObjective, String sampleArea,
@@ -242,7 +264,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
                     .map(indexedSr -> {
                         SampleProcessorResult sr = indexedSr.getReference();
                         Path neuronSeparationOutputDir = getNeuronSeparationOutputDir(sampleDataRootDir, "Separation", sr.getResultId(), sampleResults.size(), sr.getArea(), indexedSr.getPos());
-                        String previousNeuronsResult = getPreviousNeuronsResultFile(jacsServiceData, sr.getSampleId(), sr.getObjective(), sr.getRunId());
+                        String previousNeuronsResult = getPreviousSampleProcessingBasedNeuronsResultFile(jacsServiceData, sr.getSampleId(), sr.getObjective(), sr.getArea(), sr.getRunId());
                         return sampleNeuronSeparationProcessor.process(
                                 new ServiceExecutionContext.Builder(jacsServiceData)
                                         .description("Separate sample neurons")
@@ -286,9 +308,15 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
                                                                                                       SampleProcessorResult sampleProcessorResult,
                                                                                                       String sampleDataRootDir,
                                                                                                       Number alignmentResultId,
+                                                                                                      String consolidatedLabelFile,
                                                                                                       JacsServiceData... deps) {
         Path neuronSeparationOutputDir = Paths.get(sampleDataRootDir).resolve(FileUtils.getDataPath("Separation", alignmentResultId));
-        String previousNeuronsResult = null; // this needs to be filled in
+        String previousNeuronsResult = getPreviousAlignmentBasedNeuronsResultFile(
+                jacsServiceData, sampleProcessorResult.getSampleId(),
+                sampleProcessorResult.getObjective(),
+                sampleProcessorResult.getArea(),
+                sampleProcessorResult.getRunId(),
+                alignmentResultId);
         return sampleNeuronWarpingProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Warp sample neurons")
@@ -302,6 +330,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
                     new ServiceArg("-outputDir", neuronSeparationOutputDir.toString()),
                     new ServiceArg("-signalChannels", sampleProcessorResult.getSignalChannels()),
                     new ServiceArg("-referenceChannel", sampleProcessorResult.getReferenceChannel()),
+                    new ServiceArg("-consolidatedLabelFile", consolidatedLabelFile),
                     new ServiceArg("-previousResultFile", previousNeuronsResult)
             );
     }
@@ -327,7 +356,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
         return neuronSeparationOutputDir;
     }
 
-    private String getPreviousNeuronsResultFile(JacsServiceData jacsServiceData, Number sampleId, String objective, Number runId) {
+    private String getPreviousSampleProcessingBasedNeuronsResultFile(JacsServiceData jacsServiceData, Number sampleId, String objective, String area, Number runId) {
         // check previus neuron separation results and return corresponding result file
         Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), sampleId);
         return sample.lookupObjective(objective)
@@ -336,9 +365,29 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<Void> {
                 .map(sampleRun -> sampleRun.streamResults()
                         .map(IndexedReference::getReference)
                         .filter(result -> result instanceof NeuronSeparation) // only look at neuronseparation result types
+                        .filter(result -> result.getParentResult() instanceof SampleProcessingResult && ((SampleProcessingResult) result.getParentResult()).getAnatomicalArea().equals(area))
                         .sorted((pr1, pr2) -> pr2.getCreationDate().compareTo(pr1.getCreationDate())) // sort by creation date desc
                         .map(ns -> ns.getFileName(FileType.NeuronSeparatorResult))
-                        .filter(nsfn -> StringUtils.isNoneBlank(nsfn)) // filter out result that don't have a neuron separation result
+                        .filter(StringUtils::isNoneBlank) // filter out result that don't have a neuron separation result
+                        .findFirst()
+                        .orElse(null))
+                .orElse(null);
+    }
+
+    private String getPreviousAlignmentBasedNeuronsResultFile(JacsServiceData jacsServiceData, Number sampleId, String objective, String area, Number runId, Number alignmentResultId) {
+        // check previus neuron separation results and return corresponding result file
+        Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), sampleId);
+        return sample.lookupObjective(objective)
+                .flatMap(objectiveSample -> objectiveSample.findPipelineRunById(runId))
+                .map(IndexedReference::getReference)
+                .map(sampleRun -> sampleRun.streamResults()
+                        .map(IndexedReference::getReference)
+                        .filter(result -> result instanceof NeuronSeparation) // only look at neuronseparation result types
+                        .filter(result -> result.getParentResult() instanceof SampleAlignmentResult &&
+                                ((SampleAlignmentResult) result.getParentResult()).getAnatomicalArea().equals(area) &&
+                                result.getParentResult().sameId(alignmentResultId))
+                        .map(ns -> ns.getFileName(FileType.NeuronSeparatorResult))
+                        .filter(StringUtils::isNoneBlank) // filter out result that don't have a neuron separation result
                         .findFirst()
                         .orElse(null))
                 .orElse(null);

@@ -130,7 +130,7 @@ public class DomainModelUtils {
         } else {
             if (!objWithFiles.hasFilepath())
                 return objWithFiles.setFileName(fileType, fileName);
-            else if (fileName.startsWith(objWithFiles.getFilepath())) {
+            else if (fileName.startsWith(objWithFiles.getFilepath()) && !fileName.equals(objWithFiles.getFilepath())) {
                 Path parent = Paths.get(objWithFiles.getFilepath());
                 Path child = Paths.get(fileName);
                 return objWithFiles.setFileName(fileType, parent.relativize(child).toString());

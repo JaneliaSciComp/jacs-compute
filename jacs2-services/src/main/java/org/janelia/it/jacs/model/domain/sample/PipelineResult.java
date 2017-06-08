@@ -8,6 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.it.jacs.model.domain.FileReference;
 import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ import java.util.stream.Stream;
  * The result of some processing. May be nested if further processing is done on this result.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-public class PipelineResult implements HasRelativeFiles {
+public class PipelineResult implements HasIdentifier, HasRelativeFiles {
 
     private Number id;
     private String name;
@@ -29,8 +30,12 @@ public class PipelineResult implements HasRelativeFiles {
     private Date creationDate = new Date();
     private List<PipelineResult> results = new ArrayList<>();
     @JsonIgnore
+    private transient PipelineResult parentResult;
+
+    @JsonIgnore
     private HasFileImpl filesImpl = new HasFileImpl();
 
+    @Override
     public Number getId() {
         return id;
     }
@@ -105,6 +110,11 @@ public class PipelineResult implements HasRelativeFiles {
         this.filesImpl.setDeprecatedFiles(deprecatedFiles);
     }
 
+    @JsonIgnore
+    public PipelineResult getParentResult() {
+        return parentResult;
+    }
+
     /**
      * generate a stream of results from this node and its children.
      * @param index current node index
@@ -123,7 +133,11 @@ public class PipelineResult implements HasRelativeFiles {
         return Stream.concat(
                 Stream.of(new IndexedReference<>(this, newTrace)),
                 IntStream.range(0, results.size())
-                        .mapToObj(pos -> new IndexedReference<>(results.get(pos), pos))
+                        .mapToObj(pos -> {
+                            PipelineResult currentResult = results.get(pos);
+                            currentResult.parentResult = this;
+                            return new IndexedReference<>(currentResult, pos);
+                        })
                         .flatMap(indexedResult -> {
                             return indexedResult.getReference().streamResults(level + 1, indexedResult.getPos(), newTrace);
                         })

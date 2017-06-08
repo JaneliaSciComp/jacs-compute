@@ -6,4 +6,5 @@ public interface HasIdentifier {
     default boolean hasId() {
         return getId() != null;
     }
+    default boolean sameId(Number anotherId) { return hasId() && anotherId != null && anotherId.toString().equals(anotherId.toString()); }
 }

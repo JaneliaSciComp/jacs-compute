@@ -187,7 +187,7 @@ public class SampleLSMSummaryProcessorTest {
         );
         Map<String, Object> updates = new HashMap<>();
         updates.put("files.ReferenceMip", "i1_reference.png");
-        updates.put("files.SignalMip", null);
+        updates.put("files.SignalMip", "i1_signal.png");
         verify(sampleDataService).updateLSM(lsm, updates);
     }
 

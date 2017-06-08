@@ -30,15 +30,19 @@ public class HasFileImpl implements HasFiles {
 
     @Override
     public Map<String, Object> setFileName(FileType fileType, String fileName) {
-        Map<String, Object> updates = new LinkedHashMap<>();
-        String existingFile = getFileName(fileType);
-        if (StringUtils.isNotBlank(existingFile) && !StringUtils.equals(existingFile, fileName)) {
-            deprecatedFiles.add(new FileReference(fileType, existingFile));
-            updates.put("deprecatedFiles", deprecatedFiles);
+        if (StringUtils.isBlank(fileName)) {
+            return removeFileName(fileType);
+        } else {
+            Map<String, Object> updates = new LinkedHashMap<>();
+            String existingFile = getFileName(fileType);
+            if (StringUtils.isNotBlank(existingFile) && !StringUtils.equals(existingFile, fileName)) {
+                deprecatedFiles.add(new FileReference(fileType, existingFile));
+                updates.put("deprecatedFiles", deprecatedFiles);
+            }
+            files.put(fileType, fileName);
+            updates.put("files." + fileType.name(), fileName);
+            return updates;
         }
-        files.put(fileType, fileName);
-        updates.put("files." + fileType.name(), fileName);
-        return updates;
     }
 
     @Override
