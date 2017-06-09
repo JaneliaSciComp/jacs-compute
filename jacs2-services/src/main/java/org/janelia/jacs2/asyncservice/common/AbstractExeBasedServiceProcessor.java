@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.base.Preconditions;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@MdcContext
 public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBasicLifeCycleServiceProcessor<S, T> {
 
     protected static final String DY_LIBRARY_PATH_VARNAME = "LD_LIBRARY_PATH";

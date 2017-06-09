@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -21,6 +22,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Optional;
 import java.util.Set;
 
+@MdcContext
 abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
     private static final int MAX_SUBSCRIPT_INDEX = 100;
 

@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
  *           current service
  * @param <T> represents the result type
  */
+@MdcContext
 public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends AbstractServiceProcessor<T> {
 
     public AbstractBasicLifeCycleServiceProcessor(ServiceComputationFactory computationFactory,
