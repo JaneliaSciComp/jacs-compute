@@ -1,7 +1,10 @@
 package org.janelia.jacs2.asyncservice.neuronservices;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -182,6 +185,11 @@ public class NeuronSeparationFiles {
     public Optional<String> getNeuronChan(Integer neuronIndex) {
         String neuronChanName = "neuron_" + neuronIndex + ".chan";
         return this.chanFiles.stream().filter(fn -> fn.contains(neuronChanName)).findFirst();
+    }
+
+    @JsonIgnore
+    public Path getConsolidatedLabelPath() {
+        return Paths.get(resultDir, consolidatedLabel);
     }
 
     @Override

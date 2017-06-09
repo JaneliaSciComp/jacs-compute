@@ -1,12 +1,8 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
 import org.slf4j.Logger;
-
-import java.util.Optional;
 
 /**
  * Abstract implementation of a service processor that "encodes" the life cycle of a computation. The class is parameterized
@@ -16,7 +12,6 @@ import java.util.Optional;
  *           current service
  * @param <T> represents the result type
  */
-@MdcContext
 public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends AbstractServiceProcessor<T> {
 
     public AbstractBasicLifeCycleServiceProcessor(ServiceComputationFactory computationFactory,

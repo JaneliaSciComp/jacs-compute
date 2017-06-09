@@ -26,6 +26,18 @@ public class ServiceArg {
         }
     }
 
+    public ServiceArg(String flag, Number numericValue) {
+        if (numericValue == null) {
+            this.flag = null;
+            this.arity = 0;
+            this.values = null;
+        } else {
+            this.flag = flag;
+            this.arity = 1;
+            this.values = new String[] {numericValue.toString()};
+        }
+    }
+
     public ServiceArg(String flag, String value1, String... values) {
         this.flag = flag;
         this.arity = values.length + 1;

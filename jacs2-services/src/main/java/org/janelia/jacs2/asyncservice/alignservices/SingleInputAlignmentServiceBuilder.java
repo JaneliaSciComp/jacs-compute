@@ -51,7 +51,7 @@ public class SingleInputAlignmentServiceBuilder implements AlignmentServiceBuild
                             new ServiceArg("-i1Res", sampleProcessorResult.getOpticalResolution()),
                             new ServiceArg("-i1Dims", sampleProcessorResult.getImageSize()),
                             new ServiceArg("-o", getAlignmentOutputDir(sampleDataRootDir, "Alignment", sampleProcessorResult.getResultId(), sampleProcessorResults.size(), sampleProcessorResult.getArea(), resultIndex++).toString()),
-                            new ServiceArg("-i1Neurons", neuronSeparationFiles.getConsolidatedLabel()),
+                            new ServiceArg("-i1Neurons", neuronSeparationFiles.getConsolidatedLabelPath().toString()),
                             new ServiceArg("-alignmentAlgorithm", alignmentAlgorithm)
                     )
             ));

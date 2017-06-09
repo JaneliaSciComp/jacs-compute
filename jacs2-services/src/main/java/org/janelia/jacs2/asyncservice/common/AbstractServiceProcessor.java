@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -25,6 +26,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+@MdcContext
 public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T> {
 
     protected final ServiceComputationFactory computationFactory;

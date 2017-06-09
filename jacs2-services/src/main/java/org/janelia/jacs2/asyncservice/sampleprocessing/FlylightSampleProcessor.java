@@ -97,8 +97,6 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
     @Override
     public ServiceResultHandler<List<SampleProcessorResult>> getResultHandler() {
         return new AbstractAnyServiceResultHandler<List<SampleProcessorResult>>() {
-            final String resultsPattern = "glob:**/{archive,maskChan,fastLoad,Consolidated,Reference,SeparationResult,neuronSeparatorPipeline.PR.neuron,maskChan/neuron_,maskChan/ref}*";
-
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
@@ -135,7 +133,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                             .description("Create sample LSM summary")
                                             .waitFor(lsir.getJacsServiceData())
                                             .build(),
-                                    new ServiceArg("-sampleId", args.sampleId.toString()),
+                                    new ServiceArg("-sampleId", args.sampleId),
                                     new ServiceArg("-objective", args.sampleObjective),
                                     new ServiceArg("-area", args.sampleArea),
                                     new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
@@ -197,7 +195,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                                     alignmentServiceParams.getSampleProcessorResult(),
                                                     args.sampleDataRootDir,
                                                     alignmentResult.getResult().getAlignmentResultId(),
-                                                    alignmentServiceParams.getNeuronSeparationFiles().getConsolidatedLabel(),
+                                                    alignmentServiceParams.getNeuronSeparationFiles().getConsolidatedLabelPath(),
                                                     alignmentResult.getJacsServiceData()));
                                 });
                                 return lspr1;
@@ -215,7 +213,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         return getSampleImageFilesProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Retrieve sample LSMs")
                         .build(),
-                new ServiceArg("-sampleId", sampleId.toString()),
+                new ServiceArg("-sampleId", sampleId),
                 new ServiceArg("-objective", sampleObjective),
                 new ServiceArg("-area", sampleArea),
                 new ServiceArg("-sampleDataRootDir", sampleDataRootDir),
@@ -233,7 +231,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         .description("Stitch sample tiles")
                         .waitFor(deps)
                         .build(),
-                new ServiceArg("-sampleId", sampleId.toString()),
+                new ServiceArg("-sampleId", sampleId),
                 new ServiceArg("-objective", sampleObjective),
                 new ServiceArg("-area", sampleArea),
                 new ServiceArg("-sampleDataRootDir", sampleDataRootDir),
@@ -250,7 +248,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                 .description("Update sample results")
                                 .waitFor(stitchResult.getJacsServiceData())
                                 .build(),
-                        new ServiceArg("-sampleProcessingId", stitchResult.getJacsServiceData().getId().toString())
+                        new ServiceArg("-sampleProcessingId", stitchResult.getJacsServiceData().getId())
                 )
         );
     }
@@ -270,10 +268,10 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                         .description("Separate sample neurons")
                                         .waitFor(deps)
                                         .build(),
-                                new ServiceArg("-sampleId", sr.getSampleId().toString()),
+                                new ServiceArg("-sampleId", sr.getSampleId()),
                                 new ServiceArg("-objective", sr.getObjective()),
-                                new ServiceArg("-runId", sr.getRunId().toString()),
-                                new ServiceArg("-resultId", sr.getResultId().toString()),
+                                new ServiceArg("-runId", sr.getRunId()),
+                                new ServiceArg("-resultId", sr.getResultId()),
                                 new ServiceArg("-inputFile", sr.getAreaFile()),
                                 new ServiceArg("-outputDir", neuronSeparationOutputDir.toString()),
                                 new ServiceArg("-signalChannels", sr.getSignalChannels()),
@@ -296,11 +294,11 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         .description("Update alignment results")
                         .waitFor(alignmentResultFiles.getJacsServiceData())
                         .build(),
-                new ServiceArg("-sampleId", alignmentServiceParams.getSampleProcessorResult().getSampleId().toString()),
+                new ServiceArg("-sampleId", alignmentServiceParams.getSampleProcessorResult().getSampleId()),
                 new ServiceArg("-objective", alignmentServiceParams.getSampleProcessorResult().getObjective()),
                 new ServiceArg("-area", alignmentServiceParams.getSampleProcessorResult().getArea()),
-                new ServiceArg("-runId", alignmentServiceParams.getSampleProcessorResult().getRunId().toString()),
-                new ServiceArg("-alignmentServiceId", alignmentResultFiles.getJacsServiceData().getId().toString())
+                new ServiceArg("-runId", alignmentServiceParams.getSampleProcessorResult().getRunId()),
+                new ServiceArg("-alignmentServiceId", alignmentResultFiles.getJacsServiceData().getId())
         ));
     }
 
@@ -308,7 +306,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                                                                                       SampleProcessorResult sampleProcessorResult,
                                                                                                       String sampleDataRootDir,
                                                                                                       Number alignmentResultId,
-                                                                                                      String consolidatedLabelFile,
+                                                                                                      Path consolidatedLabelFile,
                                                                                                       JacsServiceData... deps) {
         Path neuronSeparationOutputDir = Paths.get(sampleDataRootDir).resolve(FileUtils.getDataPath("Separation", alignmentResultId));
         String previousNeuronsResult = getPreviousAlignmentBasedNeuronsResultFile(
@@ -322,15 +320,15 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         .description("Warp sample neurons")
                         .waitFor(deps)
                         .build(),
-                    new ServiceArg("-sampleId", sampleProcessorResult.getSampleId().toString()),
+                    new ServiceArg("-sampleId", sampleProcessorResult.getSampleId()),
                     new ServiceArg("-objective", sampleProcessorResult.getObjective()),
-                    new ServiceArg("-runId", sampleProcessorResult.getRunId().toString()),
-                    new ServiceArg("-resultId", alignmentResultId.toString()),
+                    new ServiceArg("-runId", sampleProcessorResult.getRunId()),
+                    new ServiceArg("-resultId", alignmentResultId),
                     new ServiceArg("-inputFile", sampleProcessorResult.getAreaFile()),
                     new ServiceArg("-outputDir", neuronSeparationOutputDir.toString()),
                     new ServiceArg("-signalChannels", sampleProcessorResult.getSignalChannels()),
                     new ServiceArg("-referenceChannel", sampleProcessorResult.getReferenceChannel()),
-                    new ServiceArg("-consolidatedLabelFile", consolidatedLabelFile),
+                    new ServiceArg("-consolidatedLabelFile", consolidatedLabelFile.toString()),
                     new ServiceArg("-previousResultFile", previousNeuronsResult)
             );
     }

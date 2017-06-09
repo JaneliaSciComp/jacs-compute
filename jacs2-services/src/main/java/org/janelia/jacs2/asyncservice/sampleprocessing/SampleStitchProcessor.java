@@ -156,7 +156,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
         // get sample's LSMs
         JacsServiceData getSampleLsmsServiceRef = getSampleImageFilesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .build(),
-                new ServiceArg("-sampleId", args.sampleId.toString()),
+                new ServiceArg("-sampleId", args.sampleId),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),
                 new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
@@ -172,7 +172,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     JacsServiceData mergeTilePairsService = mergeAndGroupSampleTilePairsProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                                     .waitFor(getSampleLsmsService)
                                     .build(),
-                            new ServiceArg("-sampleId", args.sampleId.toString()),
+                            new ServiceArg("-sampleId", args.sampleId),
                             new ServiceArg("-objective", ar.getObjective()),
                             new ServiceArg("-area", ar.getName()),
                             new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),

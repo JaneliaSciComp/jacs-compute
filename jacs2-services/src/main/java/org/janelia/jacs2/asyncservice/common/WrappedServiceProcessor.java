@@ -1,12 +1,11 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 
-import java.util.Optional;
-
+@MdcContext
 public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implements ServiceProcessor<T> {
 
     private final ServiceComputationFactory computationFactory;

@@ -2,12 +2,10 @@ package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;

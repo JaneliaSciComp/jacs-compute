@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -343,8 +344,8 @@ public class SampleStitchProcessorTest {
                 return null;
             })
             .exceptionally(exc -> {
-                exc.printStackTrace();
                 failure.accept(exc);
+                fail(exc.toString());
                 return null;
             })
             ;
