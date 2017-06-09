@@ -125,7 +125,7 @@ public class SampleLSMSummaryProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", String.valueOf(TEST_SAMPLE_ID)))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", null))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", ""))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", TEST_WORKING_DIR))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary")))

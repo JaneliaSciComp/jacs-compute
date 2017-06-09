@@ -350,7 +350,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope1", "m1"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-microscope2", "m2"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", false))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", null))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-multiscanVersion", ""))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", Paths.get(SampleProcessorTestUtils.TEST_WORKING_DIR, "stitching", objective, area, MERGE_DIRNAME, "tile-" + SampleProcessorTestUtils.TEST_TILE_NAME + ".v3draw").toString())))
         );
         verify(linkDataProcessor, never()).createServiceData(any(ServiceExecutionContext.class),

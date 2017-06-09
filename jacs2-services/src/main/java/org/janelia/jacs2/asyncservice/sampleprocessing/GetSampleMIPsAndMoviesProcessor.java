@@ -147,8 +147,8 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
                                         new ServiceArg("-imgFile", lsmImageFileName),
                                         new ServiceArg("-chanSpec", sif.getChanSpec()),
                                         new ServiceArg("-colorSpec", sif.getColorSpec()),
-                                        new ServiceArg("-laser", null), // no laser info in the lsm
-                                        new ServiceArg("-gain", null), // no gain info in the lsm
+                                        new ServiceArg("-laser", ""), // no laser info in the lsm
+                                        new ServiceArg("-gain", ""), // no gain info in the lsm
                                         new ServiceArg("-options", args.options),
                                         new ServiceArg("-resultsDir", resultsDir.toString())
                                 );
