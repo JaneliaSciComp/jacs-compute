@@ -26,6 +26,7 @@ public class NeuronSeparationFiles {
     private List<String> chanFiles = new ArrayList<>();
     private String refMaskFile;
     private String refChanFile;
+    private String consolidatedSignalMovieResult;
 
     public String getResultDir() {
         return resultDir;
@@ -198,5 +199,13 @@ public class NeuronSeparationFiles {
                 .append("resulDir", resultDir)
                 .append("consolidatedLabel", consolidatedLabel)
                 .build();
+    }
+
+    public String getConsolidatedSignalMovieResult() {
+        return consolidatedSignalMovieResult;
+    }
+
+    public void setConsolidatedSignalMovieResult(String consolidatedSignalMovieResult) {
+        this.consolidatedSignalMovieResult = consolidatedSignalMovieResult;
     }
 }

@@ -83,6 +83,7 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
                         .forEach(f -> {
                             String pn = FileUtils.getFileNameOnly(f.getParent());
                             String fn = FileUtils.getFileNameOnly(f);
+                            String fnWithExt = f.toFile().getName();
                             if ("ConsolidatedLabel".equals(fn)) {
                                 result.setConsolidatedLabel(resultDir.relativize(f).toString());
                             } else if ("ConsolidatedSignal".equals(fn)) {
@@ -104,7 +105,6 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
                             } else if ("maskChan".equals(fn)) {
                                 result.setMaskChanSubdir(resultDir.relativize(f).toString());
                             } else if ("maskChan".equals(pn)) {
-                                String fnWithExt = f.toFile().getName();
                                 if (fnWithExt.matches("neuron_(\\d++).mask")) {
                                     result.addMaskFile(resultDir.relativize(f).toString());
                                 } else if (fnWithExt.matches("neuron_(\\d++).chan")) {
@@ -116,6 +116,8 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
                                 }
                             } else if (fn.startsWith("SeparationResult")) {
                                 result.addSeparationResult(resultDir.relativize(f).toString());
+                            } else if (fnWithExt.startsWith("ConsolidatedSignal") && fnWithExt.endsWith(".mp4")) {
+                                result.setConsolidatedSignalMovieResult(resultDir.relativize(f).toString());
                             }
                         });
                 return result;

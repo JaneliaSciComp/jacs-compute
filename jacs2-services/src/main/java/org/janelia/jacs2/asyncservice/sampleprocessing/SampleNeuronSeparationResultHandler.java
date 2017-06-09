@@ -40,6 +40,7 @@ class SampleNeuronSeparationResultHandler {
         neuronSeparation.setFilepath(neuronSeparationFiles.getResultDir());
         neuronSeparationFiles.findSeparationResult()
                 .ifPresent(srf -> neuronSeparation.setFileName(FileType.NeuronSeparatorResult, srf));
+        neuronSeparation.setFileName(FileType.FastStack, neuronSeparationFiles.getConsolidatedSignalMovieResult());
         ReverseReference fragmentsReference = new ReverseReference();
         fragmentsReference.setReferringClassName(NeuronFragment.class.getSimpleName());
         fragmentsReference.setReferenceAttr("separationId");
