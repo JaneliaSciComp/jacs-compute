@@ -262,7 +262,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                     .map(indexedSr -> {
                         SampleProcessorResult sr = indexedSr.getReference();
                         Path neuronSeparationOutputDir = getNeuronSeparationOutputDir(sampleDataRootDir, "Separation", sr.getResultId(), sampleResults.size(), sr.getArea(), indexedSr.getPos());
-                        String previousNeuronsResult = getPreviousSampleProcessingBasedNeuronsResultFile(jacsServiceData, sr.getSampleId(), sr.getObjective(), sr.getArea(), sr.getRunId());
+                        Path previousNeuronsResult = getPreviousSampleProcessingBasedNeuronsResultFile(jacsServiceData, sr.getSampleId(), sr.getObjective(), sr.getArea(), sr.getRunId());
                         return sampleNeuronSeparationProcessor.process(
                                 new ServiceExecutionContext.Builder(jacsServiceData)
                                         .description("Separate sample neurons")
@@ -276,7 +276,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                 new ServiceArg("-outputDir", neuronSeparationOutputDir.toString()),
                                 new ServiceArg("-signalChannels", sr.getSignalChannels()),
                                 new ServiceArg("-referenceChannel", sr.getReferenceChannel()),
-                                new ServiceArg("-previousResultFile", previousNeuronsResult)
+                                new ServiceArg("-previousResultFile", previousNeuronsResult != null ? previousNeuronsResult.toString() : "")
                         );
                     })
                     .collect(Collectors.toList());
@@ -309,7 +309,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                                                                                       Path consolidatedLabelFile,
                                                                                                       JacsServiceData... deps) {
         Path neuronSeparationOutputDir = Paths.get(sampleDataRootDir).resolve(FileUtils.getDataPath("Separation", alignmentResultId));
-        String previousNeuronsResult = getPreviousAlignmentBasedNeuronsResultFile(
+        Path previousNeuronsResult = getPreviousAlignmentBasedNeuronsResultFile(
                 jacsServiceData, sampleProcessorResult.getSampleId(),
                 sampleProcessorResult.getObjective(),
                 sampleProcessorResult.getArea(),
@@ -329,7 +329,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                     new ServiceArg("-signalChannels", sampleProcessorResult.getSignalChannels()),
                     new ServiceArg("-referenceChannel", sampleProcessorResult.getReferenceChannel()),
                     new ServiceArg("-consolidatedLabelFile", consolidatedLabelFile.toString()),
-                    new ServiceArg("-previousResultFile", previousNeuronsResult)
+                    new ServiceArg("-previousResultFile", previousNeuronsResult != null ? previousNeuronsResult.toString() : "")
             );
     }
 
@@ -354,7 +354,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         return neuronSeparationOutputDir;
     }
 
-    private String getPreviousSampleProcessingBasedNeuronsResultFile(JacsServiceData jacsServiceData, Number sampleId, String objective, String area, Number runId) {
+    private Path getPreviousSampleProcessingBasedNeuronsResultFile(JacsServiceData jacsServiceData, Number sampleId, String objective, String area, Number runId) {
         // check previus neuron separation results and return corresponding result file
         Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), sampleId);
         return sample.lookupObjective(objective)
@@ -365,14 +365,14 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         .filter(result -> result instanceof NeuronSeparation) // only look at neuronseparation result types
                         .filter(result -> result.getParentResult() instanceof SampleProcessingResult && ((SampleProcessingResult) result.getParentResult()).getAnatomicalArea().equals(area))
                         .sorted((pr1, pr2) -> pr2.getCreationDate().compareTo(pr1.getCreationDate())) // sort by creation date desc
-                        .map(ns -> ns.getFileName(FileType.NeuronSeparatorResult))
-                        .filter(StringUtils::isNoneBlank) // filter out result that don't have a neuron separation result
+                        .filter(ns -> StringUtils.isNotBlank(ns.getFileName(FileType.NeuronSeparatorResult)))
+                        .map(ns -> ns.getFullFilePath(FileType.NeuronSeparatorResult))
                         .findFirst()
                         .orElse(null))
                 .orElse(null);
     }
 
-    private String getPreviousAlignmentBasedNeuronsResultFile(JacsServiceData jacsServiceData, Number sampleId, String objective, String area, Number runId, Number alignmentResultId) {
+    private Path getPreviousAlignmentBasedNeuronsResultFile(JacsServiceData jacsServiceData, Number sampleId, String objective, String area, Number runId, Number alignmentResultId) {
         // check previus neuron separation results and return corresponding result file
         Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), sampleId);
         return sample.lookupObjective(objective)
@@ -384,8 +384,8 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         .filter(result -> result.getParentResult() instanceof SampleAlignmentResult &&
                                 ((SampleAlignmentResult) result.getParentResult()).getAnatomicalArea().equals(area) &&
                                 result.getParentResult().sameId(alignmentResultId))
-                        .map(ns -> ns.getFileName(FileType.NeuronSeparatorResult))
-                        .filter(StringUtils::isNoneBlank) // filter out result that don't have a neuron separation result
+                        .filter(ns -> StringUtils.isNotBlank(ns.getFileName(FileType.NeuronSeparatorResult)))
+                        .map(ns -> ns.getFullFilePath(FileType.NeuronSeparatorResult))
                         .findFirst()
                         .orElse(null))
                 .orElse(null);
