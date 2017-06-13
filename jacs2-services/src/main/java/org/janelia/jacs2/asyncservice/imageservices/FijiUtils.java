@@ -37,29 +37,29 @@ public class FijiUtils {
      * Fiji defines color channels as follows: (R)ed, (G)reen, (B)lue, grey(1), (C)yan, (M)agenta, (Y)ellow
      * We also control a divisor (inverse brightness, where 1 is brightest) that can be used to control the
      * color when it is used for a reference channel.
-     * @param hexColor
+     * @param color
      * @param channelType
      * @return
      */
-    public static FijiColor getColorCode(String hexColor, char channelType) {
-        if ("#ff0000".equals(hexColor)) {
-            return new FijiColor('R',channelType=='r' ? 3 : 1); // Red
-        } else if ("#00ff00".equals(hexColor)) {
-            return new FijiColor('G',channelType=='r' ? 2 : 1); // Green
-        } else if ("#0000ff".equals(hexColor)) {
-            return new FijiColor('B',channelType=='r' ? 1 : 1); // Blue
-        } else if ("#ffffff".equals(hexColor)) {
-            return new FijiColor('1',channelType=='r' ? 2 : 1); // Grey
-        } else if ("#0000ff".equals(hexColor)) {
-            return new FijiColor('C',channelType=='r' ? 2 : 1); // Cyan
-        } else if ("#ff00ff".equals(hexColor)) {
-            return new FijiColor('M',channelType=='r' ? 2 : 1); // Magenta
-        } else if ("#ffff00".equals(hexColor)) {
-            return new FijiColor('Y',channelType=='r' ? 2 : 1); // Yellow
-        } else if ("#7e5200".equals(hexColor)) {
-            return new FijiColor('Y',channelType=='r' ? 3 : 2); // Brown
+    private static FijiColor getColorCode(String color, char channelType) {
+        if ("#ff0000".equals(color) || "R".equals(color)) {
+            return new FijiColor('R', channelType=='r' ? 3 : 1); // Red
+        } else if ("#00ff00".equals(color) || "G".equals(color)) {
+            return new FijiColor('G', channelType=='r' ? 2 : 1); // Green
+        } else if ("#0000ff".equals(color) || "B".equals(color)) {
+            return new FijiColor('B', channelType=='r' ? 1 : 1); // Blue
+        } else if ("#ffffff".equals(color) || "1".equals(color)) {
+            return new FijiColor('1', channelType=='r' ? 2 : 1); // Grey
+        } else if ("#00ffff".equals(color) || "C".equals(color)) {
+            return new FijiColor('C', channelType=='r' ? 2 : 1); // Cyan
+        } else if ("#ff00ff".equals(color) || "M".equals(color)) {
+            return new FijiColor('M', channelType=='r' ? 2 : 1); // Magenta
+        } else if ("#ffff00".equals(color) || "Y".equals(color)) {
+            return new FijiColor('Y', channelType=='r' ? 2 : 1); // Yellow
+        } else if ("#7e5200".equals(color) || "N".equals(color)) {
+            return new FijiColor('N', channelType=='r' ? 3 : 2); // Brown
         }
-        return new FijiColor('?',1);
+        return new FijiColor('?', 1);
     }
 
     public static List<FijiColor> getDefaultColorSpec(String chanSpec, String signalColors, char referenceColor) {

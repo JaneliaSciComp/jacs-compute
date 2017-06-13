@@ -15,6 +15,8 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.FijiColor;
+import org.janelia.jacs2.asyncservice.imageservices.FijiUtils;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -141,12 +143,20 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
                                     throw new ComputationException(pd.getJacsServiceData(), "No channel spec for LSM " + sif.getId());
                                 }
                                 Path resultsDir =  getResultsDir(args, sif.getArea(), sif.getObjective(), new File(lsmImageFileName));
+                                // get color spec from the LSM
+                                List<FijiColor> colors = FijiUtils.getColorSpec(sif.getColorSpec(), sif.getChanSpec());
+                                if (colors.isEmpty()) {
+                                    colors = FijiUtils.getDefaultColorSpec(sif.getChanSpec(), "RGB", '1');
+                                }
+                                String colorSpec = colors.stream().map(c -> String.valueOf(c.getCode())).collect(Collectors.joining(""));
+                                String divSpec = colors.stream().map(c -> String.valueOf(c.getDivisor())).collect(Collectors.joining(""));
                                 JacsServiceData basicMipMapsService = basicMIPsAndMoviesProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
                                                 .waitFor(getSampleLsmsService)
                                                 .build(),
                                         new ServiceArg("-imgFile", lsmImageFileName),
                                         new ServiceArg("-chanSpec", sif.getChanSpec()),
-                                        new ServiceArg("-colorSpec", sif.getColorSpec()),
+                                        new ServiceArg("-colorSpec", colorSpec),
+                                        new ServiceArg("-divSpec", divSpec),
                                         new ServiceArg("-laser", ""), // no laser info in the lsm
                                         new ServiceArg("-gain", ""), // no gain info in the lsm
                                         new ServiceArg("-options", args.options),

@@ -45,12 +45,6 @@ public class BasicMIPsAndMoviesProcessor extends AbstractMIPsAndMoviesProcessor 
 
     @Override
     protected String getMIPsAndMoviesArgs(MIPsAndMoviesArgs args, Path outputDir) {
-        List<FijiColor> colors = FijiUtils.getColorSpec(args.colorSpec, args.chanSpec);
-        if (colors.isEmpty()) {
-            colors = FijiUtils.getDefaultColorSpec(args.chanSpec, "RGB", '1');
-        }
-        String colorSpec = colors.stream().map(c -> String.valueOf(c.getCode())).collect(Collectors.joining(""));
-        String divSpec = colors.stream().map(c -> String.valueOf(c.getDivisor())).collect(Collectors.joining(""));
         StringJoiner builder = new StringJoiner(",");
         builder.add(outputDir.toString()); // output directory
         builder.add(StringUtils.defaultIfBlank(args.imageFilePrefix, FileUtils.getFileNameOnly(args.imageFile))); // output prefix 1
@@ -60,8 +54,8 @@ public class BasicMIPsAndMoviesProcessor extends AbstractMIPsAndMoviesProcessor 
         builder.add(args.laser == null ? "" : args.laser.toString());
         builder.add(args.gain == null ? "" : args.gain.toString());
         builder.add(args.chanSpec);
-        builder.add(colorSpec);
-        builder.add(divSpec);
+        builder.add(StringUtils.defaultIfBlank(args.colorSpec, ""));
+        builder.add(StringUtils.defaultIfBlank(args.divSpec, ""));
         builder.add(StringUtils.defaultIfBlank(args.options, DEFAULT_OPTIONS));
         return builder.toString();
     }

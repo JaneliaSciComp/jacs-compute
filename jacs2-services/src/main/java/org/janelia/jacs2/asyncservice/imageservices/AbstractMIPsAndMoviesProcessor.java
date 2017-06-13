@@ -2,7 +2,6 @@ package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -44,6 +43,8 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractBasicLifeCy
         String chanSpec;
         @Parameter(names = "-colorSpec", description = "Color spec", required = true)
         String colorSpec;
+        @Parameter(names = "-divSpec", description = "Color spec", required = true)
+        String divSpec;
         @Parameter(names = "-laser", description = "Laser", required = false)
         Integer laser;
         @Parameter(names = "-gain", description = "Gain", required = false)

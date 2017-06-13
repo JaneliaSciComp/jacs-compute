@@ -46,19 +46,13 @@ public class EnhancedMIPsAndMoviesProcessor extends AbstractMIPsAndMoviesProcess
     }
 
     protected String getMIPsAndMoviesArgs(MIPsAndMoviesArgs args, Path outputDir) {
-        List<FijiColor> colors = FijiUtils.getColorSpec(args.colorSpec, args.chanSpec);
-        if (colors.isEmpty()) {
-            colors = FijiUtils.getDefaultColorSpec(args.chanSpec, "RGB", '1');
-        }
-        String colorSpec = colors.stream().map(c -> String.valueOf(c.getCode())).collect(Collectors.joining(""));
-
         StringJoiner builder = new StringJoiner(",");
         builder.add(outputDir.toString()); // output directory
         builder.add(FileUtils.getFileNameOnly(args.imageFile)); // output prefix
         builder.add(args.mode); // mode
         builder.add(args.imageFile); // input file
         builder.add(args.chanSpec);
-        builder.add(colorSpec);
+        builder.add(StringUtils.defaultIfBlank(args.colorSpec, ""));
         builder.add(StringUtils.defaultIfBlank(args.options, DEFAULT_OPTIONS));
 
         return builder.toString();
