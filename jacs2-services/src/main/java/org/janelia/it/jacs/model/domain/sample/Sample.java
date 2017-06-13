@@ -289,8 +289,7 @@ public class Sample extends AbstractDomainObject {
     public Optional<IndexedReference<ObjectiveSample, Integer>> lookupObjectiveWithPos(String objectiveName) {
         Optional<IndexedReference<ObjectiveSample, Integer>> objective;
         if (CollectionUtils.isNotEmpty(objectiveSamples)) {
-            objective = IntStream.range(0, objectiveSamples.size())
-                    .mapToObj(pos -> new IndexedReference<>(objectiveSamples.get(pos), pos))
+            objective = IndexedReference.indexListContent(objectiveSamples, (pos, os) -> new IndexedReference<>(os, pos))
                     .filter(positionalReference -> (objectiveName == null && positionalReference.getReference().getObjective() == null
                                     || positionalReference.getReference().getObjective().equals(objectiveName)))
                     .findFirst();

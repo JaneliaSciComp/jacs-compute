@@ -78,6 +78,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
 
     static class MergeSampleTilePairsIntermediateResult extends GetSampleLsmsIntermediateResult {
 
+        private String sampleName;
         private List<MergedAndGroupedAreaTiles> areasResults;
 
         MergeSampleTilePairsIntermediateResult(Number sampleLsmsServiceDataId) {
@@ -123,6 +124,8 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     }
 
     static class MergedAndGroupedAreaTiles {
+        String sampleName;
+        String sampleEffector;
         String objective;
         String anatomicalArea;
         String areaChannelMapping;
@@ -199,6 +202,8 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 return result.getAreasResults().stream()
                         .map(tmpAreaResult -> {
                             SampleAreaResult areaResult = new SampleAreaResult();
+                            areaResult.setSampleName(tmpAreaResult.sampleName);
+                            areaResult.setSampleEffector(tmpAreaResult.sampleEffector);
                             areaResult.setObjective(tmpAreaResult.objective);
                             areaResult.setAnatomicalArea(tmpAreaResult.anatomicalArea);
                             areaResult.setResultDir(tmpAreaResult.resultsDir);
@@ -274,6 +279,8 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             channelMappingFunc = (ar, tp) -> determineChannelMappingsUsingChanSpec(tp, ar.getDefaultChanSpec(), mergeAlgorithm);
         }
         BinaryOperator<MergedAndGroupedAreaTiles> channelMappingConsensusCombiner = (MergedAndGroupedAreaTiles c1, MergedAndGroupedAreaTiles c2) -> {
+            c1.sampleName = c2.sampleName;
+            c1.sampleEffector = c2.sampleEffector;
             c1.objective = c2.objective;
             c1.anatomicalArea = c2.anatomicalArea;
             // compare if the two mapping are identical
@@ -348,6 +355,8 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                     mergeResult.setChannelColors(mcd.outputColors);
 
                     MergedAndGroupedAreaTiles areaTiles = new MergedAndGroupedAreaTiles();
+                    areaTiles.sampleName = ar.getSampleName();
+                    areaTiles.sampleEffector = ar.getSampleEffector();
                     areaTiles.objective = ar.getObjective();
                     areaTiles.anatomicalArea = ar.getName();
                     areaTiles.areaChannelMapping = LSMProcessingTools.generateOutputChannelReordering(mcd.unmergedInputChannels, mcd.outputChannels);

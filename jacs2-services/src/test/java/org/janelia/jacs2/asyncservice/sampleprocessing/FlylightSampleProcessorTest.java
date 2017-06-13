@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilderFactory;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
@@ -13,6 +14,9 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.EnhancedMIPsAndMoviesProcessor;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
@@ -29,7 +33,6 @@ import java.util.function.Consumer;
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -50,6 +53,9 @@ public class FlylightSampleProcessorTest {
     private SampleLSMSummaryProcessor sampleLSMSummaryProcessor;
     private SampleStitchProcessor sampleStitchProcessor;
     private UpdateSamplePipelineResultsProcessor updateSamplePipelineResultsProcessor;
+    private BasicMIPsAndMoviesProcessor basicMIPsAndMoviesProcessor;
+    private EnhancedMIPsAndMoviesProcessor enhancedMIPsAndMoviesProcessor;
+    private UpdateSamplePostProcessingPipelineResultsProcessor updateSamplePostProcessingPipelineResultsProcessor;
     private SampleNeuronSeparationProcessor sampleNeuronSeparationProcessor;
     private FlylightSampleProcessor flylightSampleProcessor;
     private AlignmentProcessor alignmentProcessor;
@@ -69,6 +75,9 @@ public class FlylightSampleProcessorTest {
         sampleLSMSummaryProcessor = mock(SampleLSMSummaryProcessor.class);
         sampleStitchProcessor = mock(SampleStitchProcessor.class);
         updateSamplePipelineResultsProcessor = mock(UpdateSamplePipelineResultsProcessor.class);
+        BasicMIPsAndMoviesProcessor basicMIPsAndMoviesProcessor = mock(BasicMIPsAndMoviesProcessor.class);
+        EnhancedMIPsAndMoviesProcessor enhancedMIPsAndMoviesProcessor = mock(EnhancedMIPsAndMoviesProcessor.class);
+        updateSamplePostProcessingPipelineResultsProcessor = mock(UpdateSamplePostProcessingPipelineResultsProcessor.class);
         sampleNeuronSeparationProcessor = mock(SampleNeuronSeparationProcessor.class);
         AlignmentServiceBuilderFactory alignmentServiceBuilderFactory = mock(AlignmentServiceBuilderFactory.class);
         alignmentProcessor = mock(AlignmentProcessor.class);
@@ -142,6 +151,9 @@ public class FlylightSampleProcessorTest {
                 sampleLSMSummaryProcessor,
                 sampleStitchProcessor,
                 updateSamplePipelineResultsProcessor,
+                basicMIPsAndMoviesProcessor,
+                enhancedMIPsAndMoviesProcessor,
+                updateSamplePostProcessingPipelineResultsProcessor,
                 sampleNeuronSeparationProcessor,
                 alignmentServiceBuilderFactory,
                 alignmentProcessor,

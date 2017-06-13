@@ -7,6 +7,8 @@ public class AnatomicalArea {
 
     private String datasetName;
     private Number sampleId;
+    private String sampleName;
+    private String sampleEffector;
     private String objective;
     private String name;
     private List<TileLsmPair> tileLsmPairs = new ArrayList<>();
@@ -26,6 +28,22 @@ public class AnatomicalArea {
 
     public void setSampleId(Number sampleId) {
         this.sampleId = sampleId;
+    }
+
+    public String getSampleName() {
+        return sampleName;
+    }
+
+    public String getSampleEffector() {
+        return sampleEffector;
+    }
+
+    public void setSampleEffector(String sampleEffector) {
+        this.sampleEffector = sampleEffector;
+    }
+
+    public void setSampleName(String sampleName) {
+        this.sampleName = sampleName;
     }
 
     public String getObjective() {

@@ -3,7 +3,7 @@ package org.janelia.jacs2.asyncservice.imageservices;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BasicMIPsAndMoviesResult {
+public class MIPsAndMoviesResult {
     private String resultsDir;
     private List<String> fileList = new ArrayList<>();
 

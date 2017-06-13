@@ -25,5 +25,6 @@ public interface ServiceComputation<T> {
     ServiceComputation<T> whenComplete(BiConsumer<? super T, ? super Throwable> action);
     <U, V> ServiceComputation<V> thenCombine(ServiceComputation<U> otherComputation, BiFunction<? super T, ? super U, ? extends V> fn);
     <U> ServiceComputation<U> thenCombineAll(List<ServiceComputation<?>> otherComputations, BiFunction<? super T, List<?>, ? extends U> fn);
+    <U> ServiceComputation<U> thenComposeAll(List<ServiceComputation<?>> otherComputations, BiFunction<? super T, List<?>, ? extends ServiceComputation<U>> fn);
     ServiceComputation<ContinuationCond.Cond<T>> thenSuspendUntil(ContinuationCond<T> fn);
 }

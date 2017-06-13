@@ -213,6 +213,31 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
         return next;
     }
 
+    @Override
+    public <U> ServiceComputation<U> thenComposeAll(List<ServiceComputation<?>> otherComputations, BiFunction<? super T, List<?>, ? extends ServiceComputation<U>> fn) {
+        FutureBasedServiceComputation<ServiceComputation<U>> nextStage = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(this));
+        FutureBasedServiceComputation<U> next = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(nextStage));
+        nextStage.submit(() -> {
+            try {
+                T r = waitForResult(this);
+                List<Object> otherResults = otherComputations.stream()
+                        .map(FutureBasedServiceComputation::waitForResult)
+                        .collect(Collectors.toList());
+                nextStage.complete(fn.apply(r, otherResults));
+            } catch (SuspendedException e) {
+                throw e;
+            } catch (Exception e) {
+                nextStage.completeExceptionally(e);
+            }
+            return nextStage.get();
+        });
+        next.submit(() -> {
+            applyStage(next, () -> waitForResult(nextStage), FutureBasedServiceComputation::waitForResult);
+            return next.get();
+        });
+        return next;
+    }
+
     public ServiceComputation<ContinuationCond.Cond<T>> thenSuspendUntil(ContinuationCond<T> fn) {
         FutureBasedServiceComputation<ContinuationCond.Cond<T>> next = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(this));
         next.submit(() -> {

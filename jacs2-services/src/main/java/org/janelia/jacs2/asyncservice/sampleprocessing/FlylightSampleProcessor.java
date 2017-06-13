@@ -2,14 +2,20 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Function;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.Ordering;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
+import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
 import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentProcessor;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentResultFiles;
@@ -28,6 +34,12 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.imageservices.AbstractMIPsAndMoviesProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.EnhancedMIPsAndMoviesProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.FijiUtils;
+import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesInput;
+import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -44,6 +56,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -55,6 +68,9 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
     private final WrappedServiceProcessor<SampleLSMSummaryProcessor,List<LSMSummary>> sampleLSMSummaryProcessor;
     private final WrappedServiceProcessor<SampleStitchProcessor, SampleResult> sampleStitchProcessor;
     private final WrappedServiceProcessor<UpdateSamplePipelineResultsProcessor, List<SampleProcessorResult>> updateSamplePipelineResultsProcessor;
+    private final WrappedServiceProcessor<BasicMIPsAndMoviesProcessor, MIPsAndMoviesResult> basicMIPsAndMoviesProcessor;
+    private final WrappedServiceProcessor<EnhancedMIPsAndMoviesProcessor, MIPsAndMoviesResult> enhancedMIPsAndMoviesProcessor;
+    private final WrappedServiceProcessor<UpdateSamplePostProcessingPipelineResultsProcessor, SamplePostProcessingResult> updateSamplePostProcessingPipelineResultsProcessor;
     private final WrappedServiceProcessor<SampleNeuronSeparationProcessor, NeuronSeparationFiles> sampleNeuronSeparationProcessor;
     private final WrappedServiceProcessor<AlignmentProcessor, AlignmentResultFiles> alignmentProcessor;
     private final WrappedServiceProcessor<UpdateAlignmentResultsProcessor, AlignmentResult> updateAlignmentResultsProcessor;
@@ -70,6 +86,9 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             SampleLSMSummaryProcessor sampleLSMSummaryProcessor,
                             SampleStitchProcessor sampleStitchProcessor,
                             UpdateSamplePipelineResultsProcessor updateSamplePipelineResultsProcessor,
+                            BasicMIPsAndMoviesProcessor basicMIPsAndMoviesProcessor,
+                            EnhancedMIPsAndMoviesProcessor enhancedMIPsAndMoviesProcessor,
+                            UpdateSamplePostProcessingPipelineResultsProcessor updateSamplePostProcessingPipelineResultsProcessor,
                             SampleNeuronSeparationProcessor sampleNeuronSeparationProcessor,
                             AlignmentServiceBuilderFactory alignmentServiceBuilderFactory,
                             AlignmentProcessor alignmentProcessor,
@@ -82,6 +101,9 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         this.sampleLSMSummaryProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sampleLSMSummaryProcessor);
         this.sampleStitchProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sampleStitchProcessor);
         this.updateSamplePipelineResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, updateSamplePipelineResultsProcessor);
+        this.basicMIPsAndMoviesProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, basicMIPsAndMoviesProcessor);
+        this.enhancedMIPsAndMoviesProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, enhancedMIPsAndMoviesProcessor);
+        this.updateSamplePostProcessingPipelineResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, updateSamplePostProcessingPipelineResultsProcessor);
         this.sampleNeuronSeparationProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sampleNeuronSeparationProcessor);
         this.alignmentProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, alignmentProcessor);
         this.updateAlignmentResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, updateAlignmentResultsProcessor);
@@ -121,6 +143,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         Path sampleLsmsSubDir = FileUtils.getDataPath(SampleServicesUtils.DEFAULT_WORKING_LSMS_SUBDIR, jacsServiceData.getId());
         Path sampleSummarySubDir = FileUtils.getDataPath("Summary", jacsServiceData.getId());
         Path sampleStitchingSubDir = FileUtils.getDataPath("Sample", jacsServiceData.getId());
+        Path samplePostProcessingSubDir = FileUtils.getDataPath("Post", jacsServiceData.getId());
 
         ServiceComputation<JacsServiceResult<List<SampleImageFile>>> getSampleImagesComputation =
                 getSampleImages(jacsServiceData, args.sampleId, args.sampleObjective, args.sampleArea, args.sampleDataRootDir, sampleLsmsSubDir);
@@ -148,9 +171,10 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         return getSampleImagesComputation
                 .thenCompose((JacsServiceResult<List<SampleImageFile>> lsir) -> processSampleImages( // process sample
                         jacsServiceData, args.sampleId, args.sampleObjective, args.sampleArea,
-                        args.sampleDataRootDir, sampleLsmsSubDir, sampleSummarySubDir, sampleStitchingSubDir,
+                        args.sampleDataRootDir, sampleLsmsSubDir, sampleSummarySubDir, sampleStitchingSubDir, samplePostProcessingSubDir,
                         args.mergeAlgorithm, args.channelDyeSpec, args.outputChannelOrder,
                         args.applyDistortionCorrection, args.persistResults,
+                        args.imageType, args.postProcessingMipMapsOptions, args.defaultPostProcessingColorSpec,
                         lsir.getJacsServiceData()))
                 .thenCompose((JacsServiceResult<List<SampleProcessorResult>> lspr) -> {
                     List<ServiceComputation<JacsServiceResult<NeuronSeparationFiles>>> neuronSeparationComputations = runSampleNeuronSeparations(
@@ -172,6 +196,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                     return computationFactory.newCompletedComputation(lspr)
                             .thenCombineAll(afterSampleProcessNeuronSeparationsResults, (JacsServiceResult<List<SampleProcessorResult>> lspr1, List<?> results) -> {
                                 // after all neuron separation complete run the alignments
+                                @SuppressWarnings("unchecked")
                                 List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults = (List<JacsServiceResult<NeuronSeparationFiles>>) results;
                                 Map<NeuronSeparationFiles, JacsServiceResult<NeuronSeparationFiles>> indexedNeuronSeparationResults = Maps.uniqueIndex(neuronSeparationsResults,
                                         new Function<JacsServiceResult<NeuronSeparationFiles>, NeuronSeparationFiles>() {
@@ -222,11 +247,13 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
     }
 
     private ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> processSampleImages(JacsServiceData jacsServiceData, Number sampleId, String sampleObjective, String sampleArea,
-                                                                                                   String sampleDataRootDir, Path sampleLsmsSubDir, Path sampleSummarySubDir, Path sampleStitchingSubDir,
+                                                                                                   String sampleDataRootDir, Path sampleLsmsSubDir, Path sampleSummarySubDir,
+                                                                                                   Path sampleStitchingSubDir, Path samplePostProcessingSubDir,
                                                                                                    String mergeAlgorithm, String channelDyeSpec, String outputChannelOrder,
                                                                                                    boolean applyDistortionCorrection, boolean generateMips,
+                                                                                                   String imageType, String postProcessingMipMapsOptions, String defaultPostProcessingColorSpec,
                                                                                                    JacsServiceData... deps) {
-        return sampleStitchProcessor.process(
+        ServiceComputation<JacsServiceResult<SampleResult>> processingSample = sampleStitchProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Stitch sample tiles")
                         .waitFor(deps)
@@ -243,14 +270,162 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                 new ServiceArg("-outputChannelOrder", outputChannelOrder),
                 new ServiceArg("-distortionCorrection", applyDistortionCorrection),
                 new ServiceArg("-generateMips", generateMips)
-        ).thenCompose((JacsServiceResult<SampleResult> stitchResult) -> updateSamplePipelineResultsProcessor.process(
-                        new ServiceExecutionContext.Builder(jacsServiceData)
-                                .description("Update sample results")
-                                .waitFor(stitchResult.getJacsServiceData())
-                                .build(),
-                        new ServiceArg("-sampleProcessingId", stitchResult.getJacsServiceData().getId())
-                )
         );
+
+        ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> updateProcessingSampleResults =
+                processingSample.thenCompose((JacsServiceResult<SampleResult> stitchResult) -> updateSamplePipelineResultsProcessor.process(
+                                new ServiceExecutionContext.Builder(jacsServiceData)
+                                        .description("Update sample results")
+                                        .waitFor(stitchResult.getJacsServiceData())
+                                        .build(),
+                                new ServiceArg("-sampleProcessingId", stitchResult.getJacsServiceData().getId())
+                        )
+                );
+
+        processingSample
+                .thenCombine(updateProcessingSampleResults, (JacsServiceResult<SampleResult> sampleResult, JacsServiceResult<List<SampleProcessorResult>> updateSampleResults) -> {
+                    Optional<Number> runId = updateSampleResults.getResult().stream().map(sr -> sr.getRunId()).findFirst();
+                    Multimap<String, SampleAreaResult> objectiveAreas = Multimaps.index(sampleResult.getResult().getSampleAreaResults(), SampleAreaResult::getObjective);
+                    return objectiveAreas.asMap().entrySet().stream()
+                            .map(objectiveAreasEntry -> {
+                                List<MIPsAndMoviesInput> mipsAndMoviesInputs =
+                                        objectiveAreasEntry.getValue().stream()
+                                                .filter(sar -> !sar.getAnatomicalArea().contains("-Verify"))
+                                                .flatMap(sar -> sar.getMipsAndMoviesInput().stream())
+                                                .sorted((sar1, sar2) -> ComparisonChain.start()
+                                                        .compare(sar1.getArea(), sar2.getArea(), Ordering.natural()) // Brain before VNC
+                                                        .compare(sar1.getFilepath(), sar2.getFilepath(), Ordering.natural().nullsLast())  // Order by filename
+                                                        .result())
+                                                .collect(Collectors.toList());
+                                if (objectiveAreasEntry.getKey().equals("20x") && mipsAndMoviesInputs.size() == 2 &&
+                                        mipsAndMoviesInputs.stream().map(mipsInput -> mipsInput.getArea()).collect(Collectors.toSet()).equals(ImmutableSet.of("Brain", "VNC"))) {
+                                    // Special case - if there are exactly 2 20x tile - one Brain and one VNC then generate normalized mipmaps
+                                    MIPsAndMoviesInput brainArea = mipsAndMoviesInputs.stream().filter(sar -> "Brain".equals(sar.getArea())).findFirst().orElseThrow(IllegalStateException::new);
+                                    MIPsAndMoviesInput vncArea = mipsAndMoviesInputs.stream().filter(sar -> "VNC".equals(sar.getArea())).findFirst().orElseThrow(IllegalStateException::new);
+                                    Path postProcessingResultsDir = getPostProcessingOutputDir(
+                                            samplePostProcessingSubDir,
+                                            objectiveAreasEntry.getKey(),
+                                            "NormalizedBrainVNC",
+                                            0);
+                                    return basicMIPsAndMoviesProcessor.process(
+                                            new ServiceExecutionContext.Builder(jacsServiceData)
+                                                    .description("Generate post process mipmaps")
+                                                    .waitFor(sampleResult.getJacsServiceData(), updateSampleResults.getJacsServiceData())
+                                                    .build(),
+                                            new ServiceArg("-imgFile", brainArea.getFilepath()),
+                                            new ServiceArg("-imgFilePrefix", brainArea.getOutputPrefix()),
+                                            new ServiceArg("-secondImgFile", vncArea.getFilepath()),
+                                            new ServiceArg("-secondImgFilePrefix", vncArea.getOutputPrefix()),
+                                            new ServiceArg("-mode", imageType),
+                                            new ServiceArg("-chanSpec", brainArea.getChanspec()),
+                                            new ServiceArg("-colorSpec", StringUtils.defaultIfBlank(defaultPostProcessingColorSpec, getPostProcessingColorSpec(imageType, sampleObjective, brainArea.getChanspec()))),
+                                            new ServiceArg("-resultsDir", postProcessingResultsDir.toString()),
+                                            new ServiceArg("-options", postProcessingMipMapsOptions)
+                                    ).thenCompose((JacsServiceResult<MIPsAndMoviesResult> mipsAndMoviesResult) -> updateSamplePostProcessingPipelineResultsProcessor.process(
+                                            new ServiceExecutionContext.Builder(jacsServiceData)
+                                                    .description("Update post process results")
+                                                    .waitFor(mipsAndMoviesResult.getJacsServiceData())
+                                                    .build(),
+                                            new ServiceArg("-sampleId", sampleId),
+                                            new ServiceArg("-objective", objectiveAreasEntry.getKey()),
+                                            new ServiceArg("-runId", runId.get()),
+                                            new ServiceArg("-resultRootDir", samplePostProcessingSubDir.toString()),
+                                            new ServiceArg("-resultDirs", postProcessingResultsDir.toString())
+                                    ));
+                                } else {
+                                    // generate mipmaps for each image
+                                    List<ServiceComputation<?>> mipsAndMoviesComputations =
+                                            IndexedReference.indexListContent(mipsAndMoviesInputs, (pos, mipsInput) -> new IndexedReference<>(mipsInput, pos))
+                                                    .map((IndexedReference<MIPsAndMoviesInput, Integer> indexedMipsInput) -> {
+                                                        Path postProcessingResultsDir = getPostProcessingOutputDir(
+                                                                samplePostProcessingSubDir,
+                                                                objectiveAreasEntry.getKey(),
+                                                                indexedMipsInput.getReference().getArea(),
+                                                                indexedMipsInput.getPos());
+                                                        return selectMIPsAndMoviesProcessor(objectiveAreasEntry.getKey()).process(
+                                                                new ServiceExecutionContext.Builder(jacsServiceData)
+                                                                        .description("Generate post process mipmaps")
+                                                                        .waitFor(sampleResult.getJacsServiceData(), updateSampleResults.getJacsServiceData())
+                                                                        .build(),
+                                                                new ServiceArg("-imgFile", indexedMipsInput.getReference().getFilepath()),
+                                                                new ServiceArg("-mode", imageType),
+                                                                new ServiceArg("-chanSpec", indexedMipsInput.getReference().getChanspec()),
+                                                                new ServiceArg("-colorSpec", StringUtils.defaultIfBlank(defaultPostProcessingColorSpec, getPostProcessingColorSpec(imageType, sampleObjective, indexedMipsInput.getReference().getChanspec()))),
+                                                                new ServiceArg("-resultsDir", postProcessingResultsDir.toString()),
+                                                                new ServiceArg("-options", postProcessingMipMapsOptions)
+                                                        );
+                                                    })
+                                                    .collect(Collectors.toList());
+                                    return computationFactory.newCompletedComputation(null)
+                                            .thenComposeAll(mipsAndMoviesComputations, (empty, results) -> {
+                                                @SuppressWarnings("unchecked")
+                                                List<JacsServiceResult<MIPsAndMoviesResult>> mipsAndMoviesResults = (List<JacsServiceResult<MIPsAndMoviesResult>>) results;
+                                                return updateSamplePostProcessingPipelineResultsProcessor.process(
+                                                        new ServiceExecutionContext.Builder(jacsServiceData)
+                                                                .description("Update post process results")
+                                                                .waitFor(mipsAndMoviesResults.stream().map(r -> r.getJacsServiceData()).collect(Collectors.toList()))
+                                                                .build(),
+                                                        new ServiceArg("-sampleId", sampleId),
+                                                        new ServiceArg("-objective", objectiveAreasEntry.getKey()),
+                                                        new ServiceArg("-runId", runId.get()),
+                                                        new ServiceArg("-resultRootDir", samplePostProcessingSubDir.toString()),
+                                                        new ServiceArg("-resultDirs", mipsAndMoviesResults.stream().map(r -> r.getResult().getResultsDir()).collect(Collectors.joining(",")))
+                                                );
+                                            });
+                                }
+                            })
+                            .collect(Collectors.toList());
+                });
+        return updateProcessingSampleResults;
+    }
+
+    private WrappedServiceProcessor<? extends AbstractMIPsAndMoviesProcessor, MIPsAndMoviesResult> selectMIPsAndMoviesProcessor(String objective) {
+        if ("20x".equals(objective)) {
+            return basicMIPsAndMoviesProcessor;
+        } else {
+            return enhancedMIPsAndMoviesProcessor;
+        }
+    }
+
+    private String getPostProcessingColorSpec(String mode, String objective, String chanSpec) {
+        logger.warn("No OUTPUT_COLOR_SPEC specified, attempting to guess based on objective={} and MODE={} ...", objective, mode);
+
+        if ("mcfo".equals(mode)) {
+            // MCFO is always RGB
+            return FijiUtils.getDefaultColorSpecAsString(chanSpec, "RGB", '1');
+        } else {
+            if (!"polarity".equals(mode) & chanSpec.length() == 4) {
+                // 4 channel image with unknown mode, let's assume its MCFO
+                return FijiUtils.getDefaultColorSpecAsString(chanSpec, "RGB", '1');
+            } else {
+                // Polarity and other image types (e.g. screen?) get the Yoshi treatment,
+                // with green signal on top of magenta reference for 20x and green signal on top of grey reference for 63x.
+                if ("20x".equals(objective)) {
+                    return FijiUtils.getDefaultColorSpecAsString(chanSpec, "GYC", 'M');
+                } else if ("63x".equals(objective)) {
+                    if (chanSpec.length() == 2) {
+                        return FijiUtils.getDefaultColorSpecAsString(chanSpec, "G", '1');
+                    } else {
+                        return FijiUtils.getDefaultColorSpecAsString(chanSpec, "MGR", '1');
+                    }
+                } else {
+                    return FijiUtils.getDefaultColorSpecAsString(chanSpec, "RGB", '1'); // default to RGB
+                }
+            }
+        }
+    }
+
+    private Path getPostProcessingOutputDir(Path postProcessingSubDir, String objective, String area, int resultIndex) {
+        Path postProcessingOutputDir = postProcessingSubDir;
+        if (StringUtils.isNotBlank(objective)) {
+            postProcessingOutputDir = postProcessingOutputDir.resolve(objective);
+        }
+        if (StringUtils.isBlank(area)) {
+            postProcessingOutputDir = postProcessingOutputDir.resolve(String.valueOf(resultIndex + 1));
+        } else {
+            postProcessingOutputDir = postProcessingOutputDir.resolve(area);
+        }
+        return postProcessingOutputDir;
     }
 
     private List<ServiceComputation<JacsServiceResult<NeuronSeparationFiles>>> runSampleNeuronSeparations(JacsServiceData jacsServiceData,
@@ -261,7 +436,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                     .mapToObj(pos -> new IndexedReference<>(sampleResults.get(pos), pos))
                     .map(indexedSr -> {
                         SampleProcessorResult sr = indexedSr.getReference();
-                        Path neuronSeparationOutputDir = getNeuronSeparationOutputDir(sampleDataRootDir, "Separation", sr.getResultId(), sampleResults.size(), sr.getArea(), indexedSr.getPos());
+                        Path neuronSeparationOutputDir = getNeuronSeparationOutputDir(sampleDataRootDir, "Separation", sr.getResultId(), sr.getArea(), indexedSr.getPos());
                         Path previousNeuronsResult = getPreviousSampleProcessingBasedNeuronsResultFile(jacsServiceData, sr.getSampleId(), sr.getObjective(), sr.getArea(), sr.getRunId());
                         return sampleNeuronSeparationProcessor.process(
                                 new ServiceExecutionContext.Builder(jacsServiceData)
@@ -337,19 +512,16 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         return ServiceArgs.parse(jacsServiceData.getArgsArray(), new FlylightSampleArgs());
     }
 
-    private Path getNeuronSeparationOutputDir(String sampleDataRootDir, String topSubDir, Number parentResultId, int nAreas, String area, int resultIndex) {
+    private Path getNeuronSeparationOutputDir(String sampleDataRootDir, String topSubDir, Number parentResultId, String area, int resultIndex) {
         Path neuronSeparationOutputDir;
         if (StringUtils.isNotBlank(area)) {
             neuronSeparationOutputDir = Paths.get(sampleDataRootDir)
                     .resolve(FileUtils.getDataPath(topSubDir, parentResultId))
                     .resolve(area);
-        } else if (nAreas > 1) {
-            neuronSeparationOutputDir = Paths.get(sampleDataRootDir)
-                    .resolve(FileUtils.getDataPath(topSubDir, parentResultId))
-                    .resolve("area" + resultIndex + 1);
         } else {
             neuronSeparationOutputDir = Paths.get(sampleDataRootDir)
-                    .resolve(FileUtils.getDataPath(topSubDir, parentResultId));
+                    .resolve(FileUtils.getDataPath(topSubDir, parentResultId))
+                    .resolve("area" + String.valueOf(resultIndex + 1));
         }
         return neuronSeparationOutputDir;
     }

@@ -1,0 +1,67 @@
+package org.janelia.jacs2.asyncservice.imageservices;
+
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
+import org.slf4j.Logger;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
+
+/**
+ * Generates MIPs and movies for a single input stack. Supports customizable colors
+ * and other features controlled by chanelSpec and colorSpec parameters.
+ *
+ * This service differs from the BasicMIPandMovieGenerationService in a number of important ways:
+ * 1) Supports different enhancement modes for "mcfo", "polarity", and "none".
+ * 2) Does not support legends.
+ * 3) Only supports grey reference channels.
+ */
+@Named("enhancedMIPsAndMovies")
+public class EnhancedMIPsAndMoviesProcessor extends AbstractMIPsAndMoviesProcessor {
+
+    @Inject
+    EnhancedMIPsAndMoviesProcessor(ServiceComputationFactory computationFactory,
+                                   JacsServiceDataPersistence jacsServiceDataPersistence,
+                                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                                   @PropertyValue(name = "Fiji.EnhancedMIPsAndMovies") String enhancedMIPsAndMoviesMacro,
+                                   @PropertyValue(name = "service.DefaultScratchDir") String scratchLocation,
+                                   FijiMacroProcessor fijiMacroProcessor,
+                                   VideoFormatConverterProcessor mpegConverterProcessor,
+                                   Logger logger) {
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, enhancedMIPsAndMoviesMacro, scratchLocation, fijiMacroProcessor, mpegConverterProcessor, logger);
+    }
+
+    @Override
+    public ServiceMetaData getMetadata() {
+        return ServiceArgs.getMetadata(EnhancedMIPsAndMoviesProcessor.class, new MIPsAndMoviesArgs());
+    }
+
+    protected String getMIPsAndMoviesArgs(MIPsAndMoviesArgs args, Path outputDir) {
+        List<FijiColor> colors = FijiUtils.getColorSpec(args.colorSpec, args.chanSpec);
+        if (colors.isEmpty()) {
+            colors = FijiUtils.getDefaultColorSpec(args.chanSpec, "RGB", '1');
+        }
+        String colorSpec = colors.stream().map(c -> String.valueOf(c.getCode())).collect(Collectors.joining(""));
+
+        StringJoiner builder = new StringJoiner(",");
+        builder.add(outputDir.toString()); // output directory
+        builder.add(FileUtils.getFileNameOnly(args.imageFile)); // output prefix
+        builder.add(args.mode); // mode
+        builder.add(args.imageFile); // input file
+        builder.add(args.chanSpec);
+        builder.add(colorSpec);
+        builder.add(StringUtils.defaultIfBlank(args.options, DEFAULT_OPTIONS));
+
+        return builder.toString();
+    }
+
+}

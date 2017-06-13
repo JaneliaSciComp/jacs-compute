@@ -44,7 +44,7 @@ public class SampleServicesUtils {
     }
 
     /**
-     * Updates the files from the fileGroups
+     * Updates the files from the fileGroups.
      *
      * @param objectWithFiles object to be updated
      * @param fileGroups list of filegroups
@@ -53,9 +53,7 @@ public class SampleServicesUtils {
     public static Map<String, Object> updateFiles(HasRelativeFiles objectWithFiles, List<FileGroup> fileGroups) {
         return fileGroups.stream()
                 .flatMap(group -> group.getFiles().entrySet().stream())
-                .map(fileTypeEntry -> {
-                    return DomainModelUtils.setRelativePathForFileType(objectWithFiles, fileTypeEntry.getKey(), fileTypeEntry.getValue());
-                })
+                .map(fileTypeEntry -> DomainModelUtils.setRelativePathForFileType(objectWithFiles, fileTypeEntry.getKey(), fileTypeEntry.getValue()))
                 .reduce(new LinkedHashMap<>(), (r1, r2) -> {
                     Map<String, Object> result = new LinkedHashMap<>();
                     result.putAll(r1);

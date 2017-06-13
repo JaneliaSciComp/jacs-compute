@@ -23,6 +23,13 @@ public class ServiceExecutionContext {
             return this;
         }
 
+        public Builder waitFor(List<JacsServiceData> dependenciesList) {
+            for (JacsServiceData dependency : dependenciesList) {
+                if (dependency != null) serviceExecutionContext.waitFor.add(dependency);
+            }
+            return this;
+        }
+
         public Builder waitFor(JacsServiceData... dependencies) {
             for (JacsServiceData dependency : dependencies) {
                 if (dependency != null) serviceExecutionContext.waitFor.add(dependency);

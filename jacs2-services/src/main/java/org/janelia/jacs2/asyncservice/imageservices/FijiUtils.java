@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FijiUtils {
 
@@ -83,5 +84,9 @@ public class FijiUtils {
             }
         }
         return colors;
+    }
+
+    public static String getDefaultColorSpecAsString(String chanSpec, String signalColors, char referenceColor) {
+        return getDefaultColorSpec(chanSpec, signalColors, referenceColor).stream().map(fc -> String.valueOf(fc.getCode())).collect(Collectors.joining(""));
     }
 }

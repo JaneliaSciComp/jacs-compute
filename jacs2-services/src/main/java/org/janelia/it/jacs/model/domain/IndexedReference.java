@@ -4,10 +4,21 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 /**
  * A reference to an object with an positional index which can be the corresponding index into some collection.
  */
 public class IndexedReference<T, I> {
+
+    public static <T, I> Stream<IndexedReference<T, I>> indexListContent(List<T> content, BiFunction<Integer, T, IndexedReference<T, I>> indexedMapper) {
+        return IntStream.range(0, content.size())
+                .mapToObj(pos -> indexedMapper.apply(pos, content.get(pos)));
+    }
+
     private final T reference;
     private final I pos;
 

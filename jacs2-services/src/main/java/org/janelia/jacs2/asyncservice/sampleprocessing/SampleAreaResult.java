@@ -1,8 +1,10 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesInput;
 import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
 
 import java.util.ArrayList;
@@ -11,6 +13,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SampleAreaResult {
+    private String sampleName;
+    private String sampleEffector;
     private String anatomicalArea;
     private String objective;
     private String resultDir;
@@ -26,6 +30,22 @@ public class SampleAreaResult {
     private ChannelComponents consensusChannelComponents;
     private List<MergeTilePairResult> mergeResults;
     private List<MergeTilePairResult> groupResults;
+
+    public String getSampleName() {
+        return sampleName;
+    }
+
+    public void setSampleName(String sampleName) {
+        this.sampleName = sampleName;
+    }
+
+    public String getSampleEffector() {
+        return sampleEffector;
+    }
+
+    public void setSampleEffector(String sampleEffector) {
+        this.sampleEffector = sampleEffector;
+    }
 
     public String getAnatomicalArea() {
         return anatomicalArea;
@@ -161,4 +181,39 @@ public class SampleAreaResult {
             return Collections.emptyList();
         }
     }
+
+    @JsonIgnore
+    public List<MIPsAndMoviesInput> getMipsAndMoviesInput() {
+        ImmutableList.Builder<MIPsAndMoviesInput> mipsAndMoviesInputBuilder = ImmutableList.builder();
+        if (CollectionUtils.isNotEmpty(groupResults)) {
+            groupResults.forEach(mtpr -> mipsAndMoviesInputBuilder.add(mapTilePairResultToMipsAndMoviesInput(mtpr)));
+        }
+        if (StringUtils.isNotBlank(stichFile)) {
+            MIPsAndMoviesInput stitchedMipsAndMoviesInput = new MIPsAndMoviesInput();
+            String key = StringUtils.defaultIfBlank(anatomicalArea, "stitched");
+            stitchedMipsAndMoviesInput.setFilepath(stichFile);
+            stitchedMipsAndMoviesInput.setOutputPrefix(sanitize(sampleName) + "-" + sanitize(key) + (StringUtils.isNotBlank(sampleEffector) ? "-" + sanitize(sampleEffector) : ""));
+            stitchedMipsAndMoviesInput.setChanspec(getConsensusChannelComponents().channelSpec);
+            stitchedMipsAndMoviesInput.setArea(anatomicalArea);
+            stitchedMipsAndMoviesInput.setKey(key);
+            mipsAndMoviesInputBuilder.add(stitchedMipsAndMoviesInput);
+        }
+        return mipsAndMoviesInputBuilder.build();
+    }
+
+    private MIPsAndMoviesInput mapTilePairResultToMipsAndMoviesInput(MergeTilePairResult mtpr) {
+        MIPsAndMoviesInput tprMipsAndMoviesInput = new MIPsAndMoviesInput();
+        tprMipsAndMoviesInput.setFilepath(mtpr.getMergeResultFile());
+        tprMipsAndMoviesInput.setOutputPrefix(sanitize(sampleName) + "-" + sanitize(mtpr.getTileName()) + (StringUtils.isNotBlank(sampleEffector) ? "-" + sanitize(sampleEffector) : ""));
+        tprMipsAndMoviesInput.setChanspec(mtpr.getChannelComponents().channelSpec);
+        tprMipsAndMoviesInput.setArea(anatomicalArea);
+        tprMipsAndMoviesInput.setKey(sanitize(mtpr.getTileName()));
+        return tprMipsAndMoviesInput;
+    }
+
+    private String sanitize(String s) {
+        if (s==null) return null;
+        return s.replaceAll("\\s+", "_").replaceAll("-", "_");
+    }
+
 }

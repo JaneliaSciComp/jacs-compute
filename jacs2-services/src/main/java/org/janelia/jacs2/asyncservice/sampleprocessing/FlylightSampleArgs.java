@@ -3,6 +3,8 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import com.beust.jcommander.Parameter;
 
 class FlylightSampleArgs extends SampleServiceArgs {
+    @Parameter(names = "-imageType", description = "Image type: screen, polarity, MCFO", required = false)
+    String imageType;
     @Parameter(names = "-mergeAlgorithm", description = "Merge algorithm", required = false)
     String mergeAlgorithm;
     @Parameter(names = "-channelDyeSpec", description = "Channel dye spec", required = false)
@@ -13,6 +15,10 @@ class FlylightSampleArgs extends SampleServiceArgs {
     boolean applyDistortionCorrection;
     @Parameter(names = "-basicMipMapsOptions", description = "Basic MIPS and Movies Options", required = false)
     String basicMipMapsOptions = "mips:movies:legends:bcomp";
+    @Parameter(names = "-postProcessingMipMapsOptions", description = "Post processing MIPS and Movies Options", required = false)
+    String postProcessingMipMapsOptions = "mips:movies:legends:hist";
+    @Parameter(names = "-defaultPostProcessingColorSpec", description = "Default post processing color spec", required = false)
+    String defaultPostProcessingColorSpec;
     @Parameter(names = "-skipSummary", description = "If set do not run LSM summary", required = false)
     boolean skipSummary;
     @Parameter(names = "-montageMipMaps", description = "If set montage the mipmaps", required = false)

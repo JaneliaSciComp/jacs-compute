@@ -15,7 +15,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesProcessor;
-import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesResult;
+import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -92,10 +92,10 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
                         .map(simfEntry -> {
                             JacsServiceData basicMipsAndMoviesServiceData = jacsServiceDataPersistence.findById(simfEntry.getKey());
 
-                            BasicMIPsAndMoviesResult basicMIPsAndMoviesResult = basicMIPsAndMoviesProcessor.getResultHandler().getServiceDataResult(basicMipsAndMoviesServiceData);
+                            MIPsAndMoviesResult mipsAndMoviesResult = basicMIPsAndMoviesProcessor.getResultHandler().getServiceDataResult(basicMipsAndMoviesServiceData);
                             SampleImageMIPsFile simf = simfEntry.getValue();
-                            simf.setMipsResultsDir(basicMIPsAndMoviesResult.getResultsDir());
-                            basicMIPsAndMoviesResult.getFileList().stream().forEach(simf::addMipFile);
+                            simf.setMipsResultsDir(mipsAndMoviesResult.getResultsDir());
+                            mipsAndMoviesResult.getFileList().stream().forEach(simf::addMipFile);
                             return simf;
                         })
                         .collect(Collectors.toList());

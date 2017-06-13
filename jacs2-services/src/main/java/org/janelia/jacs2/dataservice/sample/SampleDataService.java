@@ -153,6 +153,8 @@ public class SampleDataService {
                                     anatomicalArea.setDatasetName(sample.getDataSet());
                                     anatomicalArea.setName(tileAnatomicalArea);
                                     anatomicalArea.setSampleId(sample.getId());
+                                    anatomicalArea.setSampleName(sample.getName());
+                                    anatomicalArea.setSampleEffector(sample.getEffector());
                                     anatomicalArea.setObjective(objectiveSample.getObjective());
                                     anatomicalArea.setDefaultChanSpec(objectiveSample.getChanSpec());
                                     anatomicalAreaMap.put(tileAnatomicalArea, anatomicalArea);

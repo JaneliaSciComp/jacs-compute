@@ -6,7 +6,6 @@ import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.AlignmentScoreType;
 import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentProcessor;
@@ -14,7 +13,6 @@ import org.janelia.jacs2.asyncservice.alignservices.AlignmentResultFiles;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
-import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -42,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -124,9 +121,7 @@ public class UpdateAlignmentResultsProcessor extends AbstractBasicLifeCycleServi
     protected ServiceComputation<JacsServiceResult<AlignmentResult>> processing(JacsServiceResult<AlignmentResult> depResults) {
         UpdateAlignmentResultsArgs args = getArgs(depResults.getJacsServiceData());
         return computationFactory.newCompletedComputation(depResults)
-                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, !suspendUntilAllDependenciesComplete(pd.getJacsServiceData())))
-                .thenApply(pdCond -> {
-                    JacsServiceResult<AlignmentResult> pd = pdCond.getState();
+                .thenApply((JacsServiceResult<AlignmentResult> pd) -> {
                     JacsServiceData alignmentService = jacsServiceDataPersistence.findById(args.alignmentServiceId);
                     AlignmentResultFiles alignmentResultFiles = alignmentProcessor.getResultHandler().getServiceDataResult(alignmentService);
                     Properties alignmentProperties = AlignmentUtils.getAlignmentProperties(alignmentResultFiles.getAlignmentPropertiesFile());
