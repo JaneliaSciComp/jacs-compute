@@ -20,6 +20,7 @@ public interface ExternalProcessRunner {
                        JacsServiceData serviceContext);
 
     default boolean supports(ProcessingLocation processingLocation) {
-        return getClass().isAnnotationPresent(processingLocation.getProcessingAnnotationClass());
+        return getClass().isAnnotationPresent(processingLocation.getProcessingAnnotationClass()) ||
+                getClass().getSuperclass().isAnnotationPresent(((ProcessingLocation) processingLocation).getProcessingAnnotationClass()); // this is because of the proxied class
     }
 }
