@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@MdcContext
 public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBasicLifeCycleServiceProcessor<S, T> {
 
     protected static final String DY_LIBRARY_PATH_VARNAME = "LD_LIBRARY_PATH";
@@ -124,6 +123,7 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
         }
     }
 
+    @MdcContext
     protected ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> env = prepareEnvironment(jacsServiceData);
