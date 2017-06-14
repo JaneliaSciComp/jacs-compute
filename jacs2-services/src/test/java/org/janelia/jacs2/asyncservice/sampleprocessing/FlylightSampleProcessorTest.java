@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
-import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilderFactory;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
@@ -15,7 +14,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.EnhancedMIPsAndMoviesProcessor;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
@@ -38,7 +36,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,11 +50,12 @@ public class FlylightSampleProcessorTest {
     private InitializeSamplePipelineResultsProcessor initializeSamplePipelineResultsProcessor;
     private GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private SampleLSMSummaryProcessor sampleLSMSummaryProcessor;
+    private UpdateSampleSummaryResultsProcessor updateSampleSummaryResultsProcessor;
     private SampleStitchProcessor sampleStitchProcessor;
-    private UpdateSamplePipelineResultsProcessor updateSamplePipelineResultsProcessor;
+    private UpdateSampleProcessingResultsProcessor updateSampleProcessingResultsProcessor;
     private BasicMIPsAndMoviesProcessor basicMIPsAndMoviesProcessor;
     private EnhancedMIPsAndMoviesProcessor enhancedMIPsAndMoviesProcessor;
-    private UpdateSamplePostProcessingPipelineResultsProcessor updateSamplePostProcessingPipelineResultsProcessor;
+    private UpdateSamplePostProcessingResultsProcessor updateSamplePostProcessingResultsProcessor;
     private SampleNeuronSeparationProcessor sampleNeuronSeparationProcessor;
     private FlylightSampleProcessor flylightSampleProcessor;
     private AlignmentProcessor alignmentProcessor;
@@ -75,11 +73,12 @@ public class FlylightSampleProcessorTest {
         initializeSamplePipelineResultsProcessor = mock(InitializeSamplePipelineResultsProcessor.class);
         getSampleImageFilesProcessor = mock(GetSampleImageFilesProcessor.class);
         sampleLSMSummaryProcessor = mock(SampleLSMSummaryProcessor.class);
+        updateSampleSummaryResultsProcessor = mock(UpdateSampleSummaryResultsProcessor.class);
         sampleStitchProcessor = mock(SampleStitchProcessor.class);
-        updateSamplePipelineResultsProcessor = mock(UpdateSamplePipelineResultsProcessor.class);
+        updateSampleProcessingResultsProcessor = mock(UpdateSampleProcessingResultsProcessor.class);
         BasicMIPsAndMoviesProcessor basicMIPsAndMoviesProcessor = mock(BasicMIPsAndMoviesProcessor.class);
         EnhancedMIPsAndMoviesProcessor enhancedMIPsAndMoviesProcessor = mock(EnhancedMIPsAndMoviesProcessor.class);
-        updateSamplePostProcessingPipelineResultsProcessor = mock(UpdateSamplePostProcessingPipelineResultsProcessor.class);
+        updateSamplePostProcessingResultsProcessor = mock(UpdateSamplePostProcessingResultsProcessor.class);
         sampleNeuronSeparationProcessor = mock(SampleNeuronSeparationProcessor.class);
         AlignmentServiceBuilderFactory alignmentServiceBuilderFactory = mock(AlignmentServiceBuilderFactory.class);
         alignmentProcessor = mock(AlignmentProcessor.class);
@@ -150,8 +149,8 @@ public class FlylightSampleProcessorTest {
                 )
         ).thenCallRealMethod();
 
-        when(updateSamplePipelineResultsProcessor.getMetadata()).thenCallRealMethod();
-        when(updateSamplePipelineResultsProcessor.createServiceData(any(ServiceExecutionContext.class),
+        when(updateSampleProcessingResultsProcessor.getMetadata()).thenCallRealMethod();
+        when(updateSampleProcessingResultsProcessor.createServiceData(any(ServiceExecutionContext.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class)
                 )
@@ -164,11 +163,12 @@ public class FlylightSampleProcessorTest {
                 initializeSamplePipelineResultsProcessor,
                 getSampleImageFilesProcessor,
                 sampleLSMSummaryProcessor,
+                updateSampleSummaryResultsProcessor,
                 sampleStitchProcessor,
-                updateSamplePipelineResultsProcessor,
+                updateSampleProcessingResultsProcessor,
                 basicMIPsAndMoviesProcessor,
                 enhancedMIPsAndMoviesProcessor,
-                updateSamplePostProcessingPipelineResultsProcessor,
+                updateSamplePostProcessingResultsProcessor,
                 sampleNeuronSeparationProcessor,
                 alignmentServiceBuilderFactory,
                 alignmentProcessor,
@@ -210,7 +210,7 @@ public class FlylightSampleProcessorTest {
         when(sampleStitchResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(new SampleResult());
 
         ServiceResultHandler<List<SampleProcessorResult>> updateSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
-        when(updateSamplePipelineResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
+        when(updateSampleProcessingResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
         when(updateSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(new SampleProcessorResult()));
 
         int dataIndex = 0;
@@ -279,7 +279,7 @@ public class FlylightSampleProcessorTest {
                                 argThat(new ServiceArgMatcher(new ServiceArg("-generateMips", true)))
                         );
 
-                        verify(updateSamplePipelineResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
+                        verify(updateSampleProcessingResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleProcessingId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString())))
                         );
@@ -370,7 +370,7 @@ public class FlylightSampleProcessorTest {
         when(sampleStitchResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(new SampleResult());
 
         ServiceResultHandler<List<SampleProcessorResult>> updateSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
-        when(updateSamplePipelineResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
+        when(updateSampleProcessingResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
         when(updateSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class)))
                 .thenReturn(ImmutableList.of(createSampleProcessorResult(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area)));
 
@@ -441,7 +441,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-generateMips", true)))
                     );
 
-                    verify(updateSamplePipelineResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
+                    verify(updateSampleProcessingResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleProcessingId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString())))
                     );

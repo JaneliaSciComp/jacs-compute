@@ -31,14 +31,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Named("updateSamplePostProcessingResults")
-public class UpdateSamplePostProcessingPipelineResultsProcessor extends AbstractBasicLifeCycleServiceProcessor<SamplePostProcessingResult, SamplePostProcessingResult> {
+public class UpdateSamplePostProcessingResultsProcessor extends AbstractBasicLifeCycleServiceProcessor<SamplePostProcessingResult, SamplePostProcessingResult> {
 
     static class UpdateSamplePostProcessingResultsArgs extends SampleServiceArgs {
-        @Parameter(names = "-runId", description = "Sample pipeline run ID", required = true)
-        Long sampleProcessingId;
         @Parameter(names = "-samplePostSubDir", description = "Sample post processing result sub directory", required = false)
         String samplePostSubDir;
-        @Parameter(names = "-resultDirs", description = "Stitching service ID", required = false)
+        @Parameter(names = "-resultDirs", description = "list of result directories", required = false)
         List<String> resultsDirs;
     }
 
@@ -46,12 +44,12 @@ public class UpdateSamplePostProcessingPipelineResultsProcessor extends Abstract
     private final TimebasedIdentifierGenerator idGenerator;
 
     @Inject
-    UpdateSamplePostProcessingPipelineResultsProcessor(ServiceComputationFactory computationFactory,
-                                                       JacsServiceDataPersistence jacsServiceDataPersistence,
-                                                       @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                                       SampleDataService sampleDataService,
-                                                       @JacsDefault TimebasedIdentifierGenerator idGenerator,
-                                                       Logger logger) {
+    UpdateSamplePostProcessingResultsProcessor(ServiceComputationFactory computationFactory,
+                                               JacsServiceDataPersistence jacsServiceDataPersistence,
+                                               @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                                               SampleDataService sampleDataService,
+                                               @JacsDefault TimebasedIdentifierGenerator idGenerator,
+                                               Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sampleDataService = sampleDataService;
         this.idGenerator = idGenerator;
@@ -59,7 +57,7 @@ public class UpdateSamplePostProcessingPipelineResultsProcessor extends Abstract
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(UpdateSamplePostProcessingPipelineResultsProcessor.class, new UpdateSamplePostProcessingResultsArgs());
+        return ServiceArgs.getMetadata(UpdateSamplePostProcessingResultsProcessor.class, new UpdateSamplePostProcessingResultsArgs());
     }
 
     @Override
@@ -92,15 +90,16 @@ public class UpdateSamplePostProcessingPipelineResultsProcessor extends Abstract
                 .thenApply(pd -> {
                     SamplePostProcessingResult  samplePostProcessingResult = new SamplePostProcessingResult();
                     samplePostProcessingResult.setId(idGenerator.generateId());
-                    samplePostProcessingResult.setFilepath(getPostProcessingResultOutputDir(args).toString());
+                    String postProcessingOutput = getPostProcessingResultOutputDir(args).toString();
+                    samplePostProcessingResult.setFilepath(postProcessingOutput);
                     List<String> mips = args.resultsDirs.stream()
                             .map(dirName -> Paths.get(dirName))
                             .flatMap(dir -> FileUtils.lookupFiles(dir, 1, resultsPattern))
                             .map(Path::toString)
                             .collect(Collectors.toList());
-                    samplePostProcessingResult.setGroups(SampleServicesUtils.createFileGroups(getPostProcessingResultOutputDir(args).toString(), mips));
+                    samplePostProcessingResult.setGroups(SampleServicesUtils.createFileGroups(postProcessingOutput, mips));
                     Sample sample = sampleDataService.getSampleById(pd.getJacsServiceData().getOwner(), args.sampleId);
-                    sampleDataService.addSampleObjectivePipelineRunResult(sample, args.sampleObjective, args.sampleProcessingId, null, samplePostProcessingResult);
+                    sampleDataService.addSampleObjectivePipelineRunResult(sample, args.sampleObjective, args.sampleResultsId, null, samplePostProcessingResult);
                     pd.setResult(samplePostProcessingResult);
                     return pd;
                 });
@@ -111,6 +110,8 @@ public class UpdateSamplePostProcessingPipelineResultsProcessor extends Abstract
     }
 
     private Path getPostProcessingResultOutputDir(UpdateSamplePostProcessingResultsArgs args) {
-        return Paths.get(StringUtils.defaultIfBlank(args.sampleDataRootDir, ""), StringUtils.defaultIfBlank(args.samplePostSubDir, ""));
+        return FileUtils.commonPath(args.resultsDirs)
+                .map(pn -> Paths.get(pn))
+                .orElse(Paths.get(StringUtils.defaultIfBlank(args.sampleDataRootDir, ""), StringUtils.defaultIfBlank(args.samplePostSubDir, "")));
     }
 }

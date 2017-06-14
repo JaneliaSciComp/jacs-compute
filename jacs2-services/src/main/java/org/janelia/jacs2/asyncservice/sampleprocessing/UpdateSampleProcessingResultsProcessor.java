@@ -38,11 +38,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-@Named("updateSampleResults")
-public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycleServiceProcessor<List<SampleProcessorResult>, List<SampleProcessorResult>> {
+/**
+ * The services reads the results returned the specified stitch processor and adds them to the given pipeline run.
+ */
+@Named("updateSampleProcessingResults")
+public class UpdateSampleProcessingResultsProcessor extends AbstractBasicLifeCycleServiceProcessor<List<SampleProcessorResult>, List<SampleProcessorResult>> {
 
     static class UpdateSampleResultsArgs extends ServiceArgs {
-        @Parameter(names = "-sampleResultsId", description = "Sample run Id for ", required = true)
+        @Parameter(names = "-sampleResultsId", description = "Sample run Id to receive the results", required = true)
         Long sampleResultsId;
         @Parameter(names = "-sampleProcessingId", description = "Sample processing service ID", required = true)
         Long sampleProcessingId;
@@ -53,13 +56,13 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
     private final TimebasedIdentifierGenerator idGenerator;
 
     @Inject
-    UpdateSamplePipelineResultsProcessor(ServiceComputationFactory computationFactory,
-                                         JacsServiceDataPersistence jacsServiceDataPersistence,
-                                         @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                         SampleDataService sampleDataService,
-                                         SampleStitchProcessor sampleStitchProcessor,
-                                         @JacsDefault TimebasedIdentifierGenerator idGenerator,
-                                         Logger logger) {
+    UpdateSampleProcessingResultsProcessor(ServiceComputationFactory computationFactory,
+                                           JacsServiceDataPersistence jacsServiceDataPersistence,
+                                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                                           SampleDataService sampleDataService,
+                                           SampleStitchProcessor sampleStitchProcessor,
+                                           @JacsDefault TimebasedIdentifierGenerator idGenerator,
+                                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sampleDataService = sampleDataService;
         this.sampleStitchProcessor = sampleStitchProcessor;
@@ -68,7 +71,7 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(UpdateSamplePipelineResultsProcessor.class, new UpdateSampleResultsArgs());
+        return ServiceArgs.getMetadata(UpdateSampleProcessingResultsProcessor.class, new UpdateSampleResultsArgs());
     }
 
     @Override

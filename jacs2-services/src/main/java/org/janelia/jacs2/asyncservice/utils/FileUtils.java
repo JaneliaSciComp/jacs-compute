@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.utils;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.it.jacs.model.domain.IndexedReference;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +15,11 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class FileUtils {
@@ -148,4 +152,30 @@ public class FileUtils {
         }
     }
 
+    public static Optional<String> commonPath(List<String> paths) {
+        List<String> commonPathComponents = new ArrayList<>();
+        String[][] folders = new String[paths.size()][];
+        IndexedReference.indexListContent(paths, (pos, p) -> new IndexedReference<>(p, pos))
+                .forEach(indexedPath -> {
+                    folders[indexedPath.getPos()] = indexedPath.getReference().split("/");
+                });
+        for (int j = 0; j < folders[0].length; j++) {
+            String thisFolder = folders[0][j]; // grab the next folder name in the first path
+            boolean allMatched = true; // assume all have matched in case there are no more paths
+            for(int i = 1; i < folders.length && allMatched; i++) { //look at the other paths
+                if(folders[i].length < j) { // if there is no folder here
+                    allMatched = false; // no match
+                    break; // stop looking because we've gone as far as we can
+                }
+                //otherwise
+                allMatched &= folders[i][j].equals(thisFolder); //check if it matched
+            }
+            if (allMatched) {
+                commonPathComponents.add(thisFolder);
+            } else {
+                break; // stop looking
+            }
+        }
+        return commonPathComponents.isEmpty() ? Optional.empty() : Optional.of(String.join("/" + commonPathComponents));
+    }
 }

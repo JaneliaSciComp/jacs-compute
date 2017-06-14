@@ -1,12 +1,9 @@
 package org.janelia.it.jacs.model.domain.sample;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Post-processing that is run on the tile images and (if relevant) the stitched image.
@@ -19,25 +16,6 @@ import java.util.Set;
 public class SamplePostProcessingResult extends PipelineResult {
 
     private List<FileGroup> groups = new ArrayList<>();
-
-    @JsonIgnore
-    public Set<String> getGroupKeys() {
-        Set<String> groupKeys = new LinkedHashSet<>();
-        for (FileGroup fileGroup : groups) {
-            groupKeys.add(fileGroup.getKey());
-        }
-        return groupKeys;
-    }
-
-    @JsonIgnore
-    public FileGroup getGroup(String key) {
-        for (FileGroup fileGroup : groups) {
-            if (fileGroup.getKey().equals(key)) {
-                return fileGroup;
-            }
-        }
-        return null;
-    }
 
     public List<FileGroup> getGroups() {
         return groups;

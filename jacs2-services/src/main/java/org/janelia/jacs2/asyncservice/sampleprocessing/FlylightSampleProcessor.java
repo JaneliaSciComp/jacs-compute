@@ -12,6 +12,7 @@ import com.google.common.collect.Ordering;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
 import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
@@ -57,7 +58,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -68,11 +68,12 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
     private final WrappedServiceProcessor<InitializeSamplePipelineResultsProcessor, List<SamplePipelineRun>> initializeSamplePipelineResultsProcessor;
     private final WrappedServiceProcessor<GetSampleImageFilesProcessor, List<SampleImageFile>> getSampleImageFilesProcessor;
     private final WrappedServiceProcessor<SampleLSMSummaryProcessor,List<LSMSummary>> sampleLSMSummaryProcessor;
+    private final WrappedServiceProcessor<UpdateSampleSummaryResultsProcessor, List<LSMSummaryResult>> updateSampleSummaryResultsProcessor;
     private final WrappedServiceProcessor<SampleStitchProcessor, SampleResult> sampleStitchProcessor;
-    private final WrappedServiceProcessor<UpdateSamplePipelineResultsProcessor, List<SampleProcessorResult>> updateSamplePipelineResultsProcessor;
+    private final WrappedServiceProcessor<UpdateSampleProcessingResultsProcessor, List<SampleProcessorResult>> updateSampleProcessingResultsProcessor;
     private final WrappedServiceProcessor<BasicMIPsAndMoviesProcessor, MIPsAndMoviesResult> basicMIPsAndMoviesProcessor;
     private final WrappedServiceProcessor<EnhancedMIPsAndMoviesProcessor, MIPsAndMoviesResult> enhancedMIPsAndMoviesProcessor;
-    private final WrappedServiceProcessor<UpdateSamplePostProcessingPipelineResultsProcessor, SamplePostProcessingResult> updateSamplePostProcessingPipelineResultsProcessor;
+    private final WrappedServiceProcessor<UpdateSamplePostProcessingResultsProcessor, SamplePostProcessingResult> updateSamplePostProcessingResultsProcessor;
     private final WrappedServiceProcessor<SampleNeuronSeparationProcessor, NeuronSeparationFiles> sampleNeuronSeparationProcessor;
     private final WrappedServiceProcessor<AlignmentProcessor, AlignmentResultFiles> alignmentProcessor;
     private final WrappedServiceProcessor<UpdateAlignmentResultsProcessor, AlignmentResult> updateAlignmentResultsProcessor;
@@ -87,11 +88,12 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             InitializeSamplePipelineResultsProcessor initializeSamplePipelineResultsProcessor,
                             GetSampleImageFilesProcessor getSampleImageFilesProcessor,
                             SampleLSMSummaryProcessor sampleLSMSummaryProcessor,
+                            UpdateSampleSummaryResultsProcessor updateSampleSummaryResultsProcessor,
                             SampleStitchProcessor sampleStitchProcessor,
-                            UpdateSamplePipelineResultsProcessor updateSamplePipelineResultsProcessor,
+                            UpdateSampleProcessingResultsProcessor updateSampleProcessingResultsProcessor,
                             BasicMIPsAndMoviesProcessor basicMIPsAndMoviesProcessor,
                             EnhancedMIPsAndMoviesProcessor enhancedMIPsAndMoviesProcessor,
-                            UpdateSamplePostProcessingPipelineResultsProcessor updateSamplePostProcessingPipelineResultsProcessor,
+                            UpdateSamplePostProcessingResultsProcessor updateSamplePostProcessingResultsProcessor,
                             SampleNeuronSeparationProcessor sampleNeuronSeparationProcessor,
                             AlignmentServiceBuilderFactory alignmentServiceBuilderFactory,
                             AlignmentProcessor alignmentProcessor,
@@ -103,11 +105,12 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         this.initializeSamplePipelineResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, initializeSamplePipelineResultsProcessor);
         this.getSampleImageFilesProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, getSampleImageFilesProcessor);
         this.sampleLSMSummaryProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sampleLSMSummaryProcessor);
+        this.updateSampleSummaryResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, updateSampleSummaryResultsProcessor);
         this.sampleStitchProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sampleStitchProcessor);
-        this.updateSamplePipelineResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, updateSamplePipelineResultsProcessor);
+        this.updateSampleProcessingResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, updateSampleProcessingResultsProcessor);
         this.basicMIPsAndMoviesProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, basicMIPsAndMoviesProcessor);
         this.enhancedMIPsAndMoviesProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, enhancedMIPsAndMoviesProcessor);
-        this.updateSamplePostProcessingPipelineResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, updateSamplePostProcessingPipelineResultsProcessor);
+        this.updateSamplePostProcessingResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, updateSamplePostProcessingResultsProcessor);
         this.sampleNeuronSeparationProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sampleNeuronSeparationProcessor);
         this.alignmentProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, alignmentProcessor);
         this.updateAlignmentResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, updateAlignmentResultsProcessor);
@@ -174,7 +177,17 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                     new ServiceArg("-basicMipMapsOptions", args.basicMipMapsOptions),
                                     new ServiceArg("-montageMipMaps", args.montageMipMaps)
                             )
-                    );
+                    )
+                    .thenCompose((JacsServiceResult<List<LSMSummary>> lsmSummariesResult) -> updateSampleSummaryResultsProcessor.process(
+                                new ServiceExecutionContext.Builder(jacsServiceData)
+                                        .description("Update LSM summary results")
+                                        .waitFor(lsmSummariesResult.getJacsServiceData())
+                                        .build(),
+                                new ServiceArg("-sampleResultsId", sampleResultsId),
+                                new ServiceArg("-sampleSummaryId", lsmSummariesResult.getJacsServiceData().getId())
+                        )
+                    )
+            ;
         }
         return initAndGetSampleImagesComputation
                 .thenCompose((JacsServiceResult<List<SampleImageFile>> lsir) -> processSampleImages( // process sample
@@ -302,7 +315,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         );
 
         ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> updateProcessingSampleResults =
-                processingSample.thenCompose((JacsServiceResult<SampleResult> stitchResult) -> updateSamplePipelineResultsProcessor.process(
+                processingSample.thenCompose((JacsServiceResult<SampleResult> stitchResult) -> updateSampleProcessingResultsProcessor.process(
                                 new ServiceExecutionContext.Builder(jacsServiceData)
                                         .description("Update sample results")
                                         .waitFor(stitchResult.getJacsServiceData())
@@ -314,7 +327,6 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
         processingSample
                 .thenCombine(updateProcessingSampleResults, (JacsServiceResult<SampleResult> sampleResult, JacsServiceResult<List<SampleProcessorResult>> updateSampleResults) -> {
-                    Optional<Number> runId = updateSampleResults.getResult().stream().map(SampleProcessorResult::getRunId).findFirst();
                     Multimap<String, SampleAreaResult> objectiveAreas = Multimaps.index(sampleResult.getResult().getSampleAreaResults(), SampleAreaResult::getObjective);
                     return objectiveAreas.asMap().entrySet().stream()
                             .map(objectiveAreasEntry -> {
@@ -352,14 +364,14 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                             new ServiceArg("-colorSpec", StringUtils.defaultIfBlank(defaultPostProcessingColorSpec, getPostProcessingColorSpec(imageType, sampleObjective, brainArea.getChanspec()))),
                                             new ServiceArg("-resultsDir", postProcessingResultsDir.toString()),
                                             new ServiceArg("-options", postProcessingMipMapsOptions)
-                                    ).thenCompose((JacsServiceResult<MIPsAndMoviesResult> mipsAndMoviesResult) -> updateSamplePostProcessingPipelineResultsProcessor.process(
+                                    ).thenCompose((JacsServiceResult<MIPsAndMoviesResult> mipsAndMoviesResult) -> updateSamplePostProcessingResultsProcessor.process(
                                             new ServiceExecutionContext.Builder(jacsServiceData)
                                                     .description("Update post process results")
                                                     .waitFor(mipsAndMoviesResult.getJacsServiceData())
                                                     .build(),
                                             new ServiceArg("-sampleId", sampleId),
                                             new ServiceArg("-objective", objectiveAreasEntry.getKey()),
-                                            new ServiceArg("-runId", runId.get()),
+                                            new ServiceArg("-sampleResultsId", sampleResultsId),
                                             new ServiceArg("-sampleDataRootDir", sampleDataRootDir),
                                             new ServiceArg("-samplePostSubDir", samplePostProcessingSubDir.toString()),
                                             new ServiceArg("-resultDirs", postProcessingResultsDir.toString())
@@ -393,14 +405,14 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                             .thenComposeAll(mipsAndMoviesComputations, (empty, results) -> {
                                                 @SuppressWarnings("unchecked")
                                                 List<JacsServiceResult<MIPsAndMoviesResult>> mipsAndMoviesResults = (List<JacsServiceResult<MIPsAndMoviesResult>>) results;
-                                                return updateSamplePostProcessingPipelineResultsProcessor.process(
+                                                return updateSamplePostProcessingResultsProcessor.process(
                                                         new ServiceExecutionContext.Builder(jacsServiceData)
                                                                 .description("Update post process results")
                                                                 .waitFor(mipsAndMoviesResults.stream().map(JacsServiceResult::getJacsServiceData).collect(Collectors.toList()))
                                                                 .build(),
                                                         new ServiceArg("-sampleId", sampleId),
                                                         new ServiceArg("-objective", objectiveAreasEntry.getKey()),
-                                                        new ServiceArg("-runId", runId.get()),
+                                                        new ServiceArg("-sampleResultsId", sampleResultsId),
                                                         new ServiceArg("-sampleDataRootDir", sampleDataRootDir),
                                                         new ServiceArg("-samplePostSubDir", samplePostProcessingSubDir.toString()),
                                                         new ServiceArg("-resultDirs", mipsAndMoviesResults.stream().map(r -> r.getResult().getResultsDir()).collect(Collectors.joining(",")))
