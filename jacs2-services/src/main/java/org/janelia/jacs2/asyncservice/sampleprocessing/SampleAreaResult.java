@@ -192,7 +192,21 @@ public class SampleAreaResult {
             MIPsAndMoviesInput stitchedMipsAndMoviesInput = new MIPsAndMoviesInput();
             String key = StringUtils.defaultIfBlank(anatomicalArea, "stitched");
             stitchedMipsAndMoviesInput.setFilepath(stichFile);
-            stitchedMipsAndMoviesInput.setOutputPrefix(sanitize(sampleName) + "-" + sanitize(key) + (StringUtils.isNotBlank(sampleEffector) ? "-" + sanitize(sampleEffector) : ""));
+            StringBuilder prefixBuilder = new StringBuilder();
+            prefixBuilder
+                    .append(sanitize(sampleName))
+                    .append('-')
+                    .append(sanitize(key));
+            String effector;
+            if (StringUtils.isBlank(sampleEffector)) {
+                effector = "";
+            } else {
+                effector = sanitize(sampleEffector);
+            }
+            if (StringUtils.isNotBlank(effector) && prefixBuilder.indexOf(effector) == -1) {
+                prefixBuilder.append('-').append(effector);
+            }
+            stitchedMipsAndMoviesInput.setOutputPrefix(prefixBuilder.toString());
             stitchedMipsAndMoviesInput.setChanspec(getConsensusChannelComponents().channelSpec);
             stitchedMipsAndMoviesInput.setArea(anatomicalArea);
             stitchedMipsAndMoviesInput.setKey(key);
