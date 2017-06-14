@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,8 +36,8 @@ public class UpdateSamplePostProcessingPipelineResultsProcessor extends Abstract
     static class UpdateSamplePostProcessingResultsArgs extends SampleServiceArgs {
         @Parameter(names = "-runId", description = "Sample pipeline run ID", required = true)
         Long sampleProcessingId;
-        @Parameter(names = "-resultRootDir", description = "Stitching service ID", required = false)
-        String resultsRootDir;
+        @Parameter(names = "-samplePostSubDir", description = "Sample post processing result sub directory", required = false)
+        String samplePostSubDir;
         @Parameter(names = "-resultDirs", description = "Stitching service ID", required = false)
         List<String> resultsDirs;
     }
@@ -90,13 +92,13 @@ public class UpdateSamplePostProcessingPipelineResultsProcessor extends Abstract
                 .thenApply(pd -> {
                     SamplePostProcessingResult  samplePostProcessingResult = new SamplePostProcessingResult();
                     samplePostProcessingResult.setId(idGenerator.generateId());
-                    samplePostProcessingResult.setFilepath(args.resultsRootDir);
+                    samplePostProcessingResult.setFilepath(getPostProcessingResultOutputDir(args).toString());
                     List<String> mips = args.resultsDirs.stream()
                             .map(dirName -> Paths.get(dirName))
                             .flatMap(dir -> FileUtils.lookupFiles(dir, 1, resultsPattern))
-                            .map(dir -> dir.toString())
+                            .map(Path::toString)
                             .collect(Collectors.toList());
-                    samplePostProcessingResult.setGroups(SampleServicesUtils.createFileGroups(args.resultsRootDir, mips));
+                    samplePostProcessingResult.setGroups(SampleServicesUtils.createFileGroups(getPostProcessingResultOutputDir(args).toString(), mips));
                     Sample sample = sampleDataService.getSampleById(pd.getJacsServiceData().getOwner(), args.sampleId);
                     sampleDataService.addSampleObjectivePipelineRunResult(sample, args.sampleObjective, args.sampleProcessingId, null, samplePostProcessingResult);
                     pd.setResult(samplePostProcessingResult);
@@ -108,4 +110,7 @@ public class UpdateSamplePostProcessingPipelineResultsProcessor extends Abstract
         return ServiceArgs.parse(jacsServiceData.getArgsArray(), new UpdateSamplePostProcessingResultsArgs());
     }
 
+    private Path getPostProcessingResultOutputDir(UpdateSamplePostProcessingResultsArgs args) {
+        return Paths.get(StringUtils.defaultIfBlank(args.sampleDataRootDir, ""), StringUtils.defaultIfBlank(args.samplePostSubDir, ""));
+    }
 }

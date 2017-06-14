@@ -330,7 +330,8 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                             new ServiceArg("-sampleId", sampleId),
                                             new ServiceArg("-objective", objectiveAreasEntry.getKey()),
                                             new ServiceArg("-runId", runId.get()),
-                                            new ServiceArg("-resultRootDir", samplePostProcessingSubDir.toString()),
+                                            new ServiceArg("-sampleDataRootDir", sampleDataRootDir),
+                                            new ServiceArg("-samplePostSubDir", samplePostProcessingSubDir.toString()),
                                             new ServiceArg("-resultDirs", postProcessingResultsDir.toString())
                                     ));
                                 } else {
@@ -370,7 +371,8 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                                         new ServiceArg("-sampleId", sampleId),
                                                         new ServiceArg("-objective", objectiveAreasEntry.getKey()),
                                                         new ServiceArg("-runId", runId.get()),
-                                                        new ServiceArg("-resultRootDir", samplePostProcessingSubDir.toString()),
+                                                        new ServiceArg("-sampleDataRootDir", sampleDataRootDir),
+                                                        new ServiceArg("-samplePostSubDir", samplePostProcessingSubDir.toString()),
                                                         new ServiceArg("-resultDirs", mipsAndMoviesResults.stream().map(r -> r.getResult().getResultsDir()).collect(Collectors.joining(",")))
                                                 );
                                             });
