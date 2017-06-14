@@ -43,6 +43,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SampleStitchProcessorTest {
+    private static final String TEST_RESULTS_ID = "23";
+
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private SampleDataService sampleDataService;
     private GetSampleImageFilesProcessor getSampleImageFilesProcessor;
@@ -98,6 +100,7 @@ public class SampleStitchProcessorTest {
         when(mergeAndGroupSampleTilePairsProcessor.getMetadata()).thenCallRealMethod();
         when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenCallRealMethod();
         when(mergeAndGroupSampleTilePairsProcessor.createServiceData(any(ServiceExecutionContext.class),
+                        any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
@@ -197,6 +200,7 @@ public class SampleStitchProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary"))),
@@ -393,6 +397,7 @@ public class SampleStitchProcessorTest {
                 .addArg("-sampleId", String.valueOf(sampleId))
                 .addArg("-area", area)
                 .addArg("-objective", objective)
+                .addArg("-sampleResultsId", TEST_RESULTS_ID)
                 .addArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
                 .addArg("-sampleLsmsSubDir", "lsms")
                 .addArg("-sampleSummarySubDir", "summary")

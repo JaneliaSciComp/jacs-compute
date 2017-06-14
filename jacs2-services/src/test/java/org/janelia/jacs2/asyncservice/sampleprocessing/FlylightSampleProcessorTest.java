@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilderFactory;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentProcessor;
@@ -49,6 +50,7 @@ public class FlylightSampleProcessorTest {
 
     private ServiceComputationFactory computationFactory;
     private SampleDataService sampleDataService;
+    private InitializeSamplePipelineResultsProcessor initializeSamplePipelineResultsProcessor;
     private GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private SampleLSMSummaryProcessor sampleLSMSummaryProcessor;
     private SampleStitchProcessor sampleStitchProcessor;
@@ -70,7 +72,7 @@ public class FlylightSampleProcessorTest {
 
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         sampleDataService = mock(SampleDataService.class);
-
+        initializeSamplePipelineResultsProcessor = mock(InitializeSamplePipelineResultsProcessor.class);
         getSampleImageFilesProcessor = mock(GetSampleImageFilesProcessor.class);
         sampleLSMSummaryProcessor = mock(SampleLSMSummaryProcessor.class);
         sampleStitchProcessor = mock(SampleStitchProcessor.class);
@@ -98,6 +100,15 @@ public class FlylightSampleProcessorTest {
             return jacsServiceData;
         });
 
+        when(initializeSamplePipelineResultsProcessor.getMetadata()).thenCallRealMethod();
+        when(initializeSamplePipelineResultsProcessor.createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class)
+        )).thenCallRealMethod();
+
         when(getSampleImageFilesProcessor.getMetadata()).thenCallRealMethod();
         when(getSampleImageFilesProcessor.createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
@@ -109,6 +120,7 @@ public class FlylightSampleProcessorTest {
 
         when(sampleLSMSummaryProcessor.getMetadata()).thenCallRealMethod();
         when(sampleLSMSummaryProcessor.createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
@@ -133,12 +145,14 @@ public class FlylightSampleProcessorTest {
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
+                        any(ServiceArg.class),
                         any(ServiceArg.class)
                 )
         ).thenCallRealMethod();
 
         when(updateSamplePipelineResultsProcessor.getMetadata()).thenCallRealMethod();
         when(updateSamplePipelineResultsProcessor.createServiceData(any(ServiceExecutionContext.class),
+                        any(ServiceArg.class),
                         any(ServiceArg.class)
                 )
         ).thenCallRealMethod();
@@ -147,6 +161,7 @@ public class FlylightSampleProcessorTest {
                 jacsServiceDataPersistence,
                 SampleProcessorTestUtils.TEST_WORKING_DIR,
                 sampleDataService,
+                initializeSamplePipelineResultsProcessor,
                 getSampleImageFilesProcessor,
                 sampleLSMSummaryProcessor,
                 sampleStitchProcessor,
@@ -177,6 +192,10 @@ public class FlylightSampleProcessorTest {
                 "1234", "1234",
                 "1234567891234567", "234/567/1234567891234567"
         );
+
+        ServiceResultHandler<List<SamplePipelineRun>> initializeSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
+        when(initializeSamplePipelineResultsProcessor.getResultHandler()).thenReturn(initializeSamplePipelineResultsResultHandler);
+        when(initializeSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
         ServiceResultHandler<List<SampleImageFile>> getSampleImageFilesResultHandler = mock(ServiceResultHandler.class);
         when(getSampleImageFilesProcessor.getResultHandler()).thenReturn(getSampleImageFilesResultHandler);
@@ -235,6 +254,7 @@ public class FlylightSampleProcessorTest {
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
@@ -247,6 +267,7 @@ public class FlylightSampleProcessorTest {
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
@@ -258,7 +279,8 @@ public class FlylightSampleProcessorTest {
                                 argThat(new ServiceArgMatcher(new ServiceArg("-generateMips", true)))
                         );
 
-                        verify(updateSamplePipelineResultsProcessor, times(testDataIndex + 1)).createServiceData(any(ServiceExecutionContext.class),
+                        verify(updateSamplePipelineResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleProcessingId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString())))
                         );
 
@@ -333,6 +355,10 @@ public class FlylightSampleProcessorTest {
         }), eq(SampleProcessorTestUtils.TEST_SAMPLE_ID)))
                 .thenReturn(SampleProcessorTestUtils.createTestSample(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area));
 
+        ServiceResultHandler<List<SamplePipelineRun>> initializeSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
+        when(initializeSamplePipelineResultsProcessor.getResultHandler()).thenReturn(initializeSamplePipelineResultsResultHandler);
+        when(initializeSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
+
         ServiceResultHandler<List<SampleImageFile>> getSampleImageFilesResultHandler = mock(ServiceResultHandler.class);
         when(getSampleImageFilesProcessor.getResultHandler()).thenReturn(getSampleImageFilesResultHandler);
         when(getSampleImageFilesResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -395,6 +421,7 @@ public class FlylightSampleProcessorTest {
                             any(ServiceArg.class),
                             any(ServiceArg.class),
                             any(ServiceArg.class),
+                            any(ServiceArg.class),
                             any(ServiceArg.class)
                     );
 
@@ -402,6 +429,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
@@ -414,6 +442,7 @@ public class FlylightSampleProcessorTest {
                     );
 
                     verify(updateSamplePipelineResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleProcessingId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString())))
                     );
 

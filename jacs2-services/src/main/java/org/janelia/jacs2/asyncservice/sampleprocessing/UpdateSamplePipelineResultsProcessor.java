@@ -7,11 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
-import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -36,9 +34,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -46,7 +42,9 @@ import java.util.function.Function;
 public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycleServiceProcessor<List<SampleProcessorResult>, List<SampleProcessorResult>> {
 
     static class UpdateSampleResultsArgs extends ServiceArgs {
-        @Parameter(names = "-sampleProcessingId", description = "Stitching service ID", required = true)
+        @Parameter(names = "-sampleResultsId", description = "Sample run Id for ", required = true)
+        Long sampleResultsId;
+        @Parameter(names = "-sampleProcessingId", description = "Sample processing service ID", required = true)
         Long sampleProcessingId;
     }
 
@@ -104,31 +102,17 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
     protected ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> processing(JacsServiceResult<List<SampleProcessorResult>> depResults) {
         UpdateSampleResultsArgs args = getArgs(depResults.getJacsServiceData());
         return computationFactory.newCompletedComputation(depResults)
-                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, !suspendUntilAllDependenciesComplete(pd.getJacsServiceData())))
-                .thenApply(pdCond -> {
-                    JacsServiceResult<List<SampleProcessorResult>> pd = pdCond.getState();
+                .thenApply(pd -> {
                     JacsServiceData sampleProcessingService = jacsServiceDataPersistence.findById(args.sampleProcessingId);
                     SampleResult sampleResult = sampleStitchProcessor.getResultHandler().getServiceDataResult(sampleProcessingService);
                     Sample sample = sampleDataService.getSampleById(sampleProcessingService.getOwner(), sampleResult.getSampleId());
 
-                    Map<String, SamplePipelineRun> pipelineRunsByObjective = new HashMap<>();
-
                     // for all objectives collect the results and create the corresponding samplepipeline results
                     sampleResult.getSampleAreaResults().stream()
                             .forEach((SampleAreaResult sar) -> {
-                                Optional<SampleProcessingResult> optionalSampleProcessingResult = getObjectivePipelineRunResult(sample, sar);
+                                Optional<SampleProcessingResult> optionalSampleProcessingResult = createObjectivePipelineRunResult(sample, sar);
                                 if (optionalSampleProcessingResult.isPresent()) {
                                     SampleProcessingResult sampleProcessingResult = optionalSampleProcessingResult.get();
-                                    SamplePipelineRun pipelineRun = pipelineRunsByObjective.get(sar.getObjective());
-                                    if (pipelineRun == null) {
-                                        pipelineRun = new SamplePipelineRun();
-                                        pipelineRun.setId(sampleProcessingService.getId());
-                                        pipelineRun.setName(StringUtils.defaultIfBlank(sampleProcessingService.getDescription(), sampleProcessingService.getName()));
-                                        pipelineRun.setPipelineProcess(sampleProcessingService.getName());
-                                        pipelineRun.setCreationDate(sampleProcessingService.getCreationDate());
-                                        pipelineRunsByObjective.put(sar.getObjective(), pipelineRun);
-                                    }
-                                    pipelineRun.addResult(sampleProcessingResult);
 
                                     SampleProcessorResult updateResult = new SampleProcessorResult();
                                     updateResult.setSampleId(sampleResult.getSampleId());
@@ -136,7 +120,7 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
                                     updateResult.setArea(sar.getAnatomicalArea());
                                     updateResult.setResultDir(sar.getResultDir());
                                     updateResult.setAreaFile(sar.getAreaResultFile());
-                                    updateResult.setRunId(pipelineRun.getId());
+                                    updateResult.setRunId(args.sampleResultsId);
                                     updateResult.setResultId(sampleProcessingResult.getId());
                                     updateResult.setSignalChannels(sar.getConsensusChannelComponents().signalChannelsPos);
                                     updateResult.setReferenceChannel(sar.getConsensusChannelComponents().referenceChannelsPos);
@@ -145,15 +129,11 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
                                     updateResult.setNumChannels(sar.getConsensusChannelComponents().getNumChannels());
                                     updateResult.setOpticalResolution(sampleProcessingResult.getOpticalResolution());
                                     updateResult.setImageSize(sampleProcessingResult.getImageSize());
+
+                                    sampleDataService.addSampleObjectivePipelineRunResult(sample, sar.getObjective(), args.sampleResultsId, null, sampleProcessingResult);
+
                                     pd.getResult().add(updateResult);
                                 }
-                            });
-                    pipelineRunsByObjective.entrySet().stream()
-                            .forEach(objectivePipelineRunEntry -> {
-                                sampleDataService.addSampleObjectivePipelineRun(sample,
-                                        objectivePipelineRunEntry.getKey(),
-                                        objectivePipelineRunEntry.getValue());
-
                             });
                     return pd;
                 });
@@ -180,7 +160,7 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
         };
     }
 
-    private Optional<SampleProcessingResult> getObjectivePipelineRunResult(Sample sample, SampleAreaResult areaResult) {
+    private Optional<SampleProcessingResult> createObjectivePipelineRunResult(Sample sample, SampleAreaResult areaResult) {
         return sample.lookupObjective(areaResult.getObjective())
                 .map(objective -> {
                     // create entry for the corresponding service run
@@ -216,7 +196,7 @@ public class UpdateSamplePipelineResultsProcessor extends AbstractBasicLifeCycle
 
     private String getConsensusValue(List<MergeTilePairResult> mergeResults, Function<MergeTilePairResult, String>  tilePairResultMapper) {
         return mergeResults.stream()
-                .reduce((String) null, (String acValue, MergeTilePairResult mtp) -> {
+                .reduce(null, (String acValue, MergeTilePairResult mtp) -> {
                     String mtpValue = tilePairResultMapper.apply(mtp);
                     if (acValue == null) {
                         return mtpValue;

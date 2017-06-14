@@ -40,6 +40,7 @@ public class SampleLSMSummaryProcessorTest {
     private static final Long TEST_ID = 10L;
     private static final Long TEST_SAMPLE_ID = 100L;
     private static final String TEST_OWNER = "testOwner";
+    private static final String TEST_RESULTS_ID = "234";
 
     private SampleDataService sampleDataService;
     private UpdateSampleLSMMetadataProcessor updateSampleLSMMetadataProcessor;
@@ -93,12 +94,14 @@ public class SampleLSMSummaryProcessorTest {
         String objective = "objective";
         JacsServiceData testServiceData = createTestServiceData(1L,
                 TEST_SAMPLE_ID,
+                TEST_RESULTS_ID,
                 area,
                 objective,
                 null
         );
 
         when(updateSampleLSMMetadataProcessor.createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
@@ -125,6 +128,7 @@ public class SampleLSMSummaryProcessorTest {
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", String.valueOf(TEST_SAMPLE_ID)))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
+                argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", ""))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", TEST_WORKING_DIR))),
                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
@@ -141,12 +145,13 @@ public class SampleLSMSummaryProcessorTest {
         );
     }
 
-    private JacsServiceData createTestServiceData(Long serviceId, Long sampleId, String area, String objective, String channelDyeSpec) {
+    private JacsServiceData createTestServiceData(Long serviceId, Long sampleId, String resultsId, String area, String objective, String channelDyeSpec) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwner(TEST_OWNER)
                 .addArg("-sampleId", String.valueOf(sampleId))
                 .addArg("-area", area)
                 .addArg("-objective", objective)
+                .addArg("-sampleResultsId", resultsId)
                 .addArg("-sampleDataRootDir", TEST_WORKING_DIR)
                 .addArg("-sampleLsmsSubDir", "lsms")
                 .addArg("-sampleSummarySubDir", "summary")
@@ -163,6 +168,7 @@ public class SampleLSMSummaryProcessorTest {
     public void updateServiceResult() {
         JacsServiceData testServiceData = createTestServiceData(1L,
                 TEST_SAMPLE_ID,
+                TEST_RESULTS_ID,
                 "area",
                 "objective",
                 null
@@ -195,6 +201,7 @@ public class SampleLSMSummaryProcessorTest {
     public void illegalStateWhenUpdateServiceResult() {
         JacsServiceData testServiceData = createTestServiceData(1L,
                 TEST_SAMPLE_ID,
+                TEST_RESULTS_ID,
                 "area",
                 "objective",
                 null

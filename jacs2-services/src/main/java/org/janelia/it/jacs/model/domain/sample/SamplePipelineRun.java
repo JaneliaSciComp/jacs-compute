@@ -1,6 +1,5 @@
 package org.janelia.it.jacs.model.domain.sample;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.janelia.it.jacs.model.domain.IndexedReference;
 
 import java.util.ArrayList;
@@ -18,7 +17,7 @@ public class SamplePipelineRun {
     private String name;
     private String pipelineProcess;
     private Integer pipelineVersion;
-    private Date creationDate;
+    private Date creationDate = new Date();
     private List<PipelineResult> results = new ArrayList<>();
     private PipelineError error;
 

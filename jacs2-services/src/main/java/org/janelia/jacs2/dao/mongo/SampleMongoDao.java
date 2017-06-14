@@ -8,17 +8,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.PipelineResult;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.SampleDao;
-import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.model.DataInterval;
+import org.janelia.jacs2.model.DomainModelUtils;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
-import org.janelia.jacs2.model.DomainModelUtils;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -94,18 +93,33 @@ public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements S
             throw new IllegalArgumentException("Sample " + sample + " has no objective samples");
         }
         List<Bson> updatedFields = new ArrayList<>();
-        int objectiveSampleIndex = 0;
-        for (ObjectiveSample os : sample.getObjectiveSamples()) {
-            String fieldName = String.format("objectiveSamples.%d.pipelineRuns", objectiveSampleIndex);
-            if (StringUtils.equals(os.getObjective(), objective)) {
-                updatedFields.add(Updates.push(fieldName, samplePipelineRun));
-            }
-            objectiveSampleIndex++;
+        sample.lookupIndexedObjective(objective)
+                .map(indexedObjectiveSample -> {
+                            Optional<IndexedReference<SamplePipelineRun, Integer>> indexedPipelineRun = indexedObjectiveSample.getReference().findPipelineRunById(samplePipelineRun.getId());
+                            if (!indexedPipelineRun.isPresent()) {
+                                // if no pipeline run was found create one
+                                String fieldName = String.format("objectiveSamples.%d.pipelineRuns", indexedObjectiveSample.getPos());
+                                updatedFields.add(Updates.push(fieldName, samplePipelineRun));
+                                return true; // add pipeline run
+                            } else {
+                                if (StringUtils.isNotBlank(samplePipelineRun.getName())) {
+                                    String fieldName = String.format("objectiveSamples.%d.pipelineRuns.%d.name", indexedObjectiveSample.getPos(), indexedPipelineRun.get().getPos());
+                                    updatedFields.add(Updates.set(fieldName, samplePipelineRun.getName()));
+                                }
+                                if (StringUtils.isNotBlank(samplePipelineRun.getPipelineProcess())) {
+                                    String fieldName = String.format("objectiveSamples.%d.pipelineRuns.%d.pipelineProcess", indexedObjectiveSample.getPos(), indexedPipelineRun.get().getPos());
+                                    updatedFields.add(Updates.set(fieldName, samplePipelineRun.getPipelineProcess()));
+                                }
+                                return false; // update the pipeline run
+                            }
+                        }
+                )
+                .orElseThrow(() -> new IllegalArgumentException("No '" + objective + "' found for " + sample.getName()));
+        if (!updatedFields.isEmpty()) {
+            UpdateOptions updateOptions = new UpdateOptions();
+            updateOptions.upsert(false);
+            update(getUpdateMatchCriteria(sample), Updates.combine(updatedFields), updateOptions);
         }
-        UpdateOptions updateOptions = new UpdateOptions();
-        updateOptions.upsert(false);
-
-        update(getUpdateMatchCriteria(sample), Updates.combine(updatedFields), updateOptions);
     }
 
     @Override
@@ -115,7 +129,7 @@ public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements S
         }
 
         List<Bson> updatedFields = new ArrayList<>();
-        sample.lookupObjectiveWithPos(objective)
+        sample.lookupIndexedObjective(objective)
                 .flatMap(positionalObjectiveSample -> {
                     Optional<IndexedReference<SamplePipelineRun, Integer>> positionalPipelineRun = positionalObjectiveSample.getReference().findPipelineRunById(runId);
                     if (positionalPipelineRun.isPresent()) {

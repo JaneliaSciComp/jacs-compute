@@ -286,7 +286,7 @@ public class Sample extends AbstractDomainObject {
         return objective;
     }
 
-    public Optional<IndexedReference<ObjectiveSample, Integer>> lookupObjectiveWithPos(String objectiveName) {
+    public Optional<IndexedReference<ObjectiveSample, Integer>> lookupIndexedObjective(String objectiveName) {
         Optional<IndexedReference<ObjectiveSample, Integer>> objective;
         if (CollectionUtils.isNotEmpty(objectiveSamples)) {
             objective = IndexedReference.indexListContent(objectiveSamples, (pos, os) -> new IndexedReference<>(os, pos))

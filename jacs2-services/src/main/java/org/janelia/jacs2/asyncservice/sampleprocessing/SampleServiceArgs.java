@@ -22,4 +22,6 @@ class SampleServiceArgs extends ServiceArgs {
     String sampleSummarySubDir;
     @Parameter(names = "-sampleSitchingSubDir", description = "Sample stitching data subdirectory", required = false)
     String sampleSitchingSubDir;
+    @Parameter(names = "-sampleResultsId", description = "Sample results ID which may need to be passed down from the top service", required = false)
+    Long sampleResultsId;
 }

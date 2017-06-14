@@ -175,6 +175,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                             new ServiceArg("-sampleId", args.sampleId),
                             new ServiceArg("-objective", ar.getObjective()),
                             new ServiceArg("-area", ar.getName()),
+                            new ServiceArg("-sampleResultsId", args.sampleResultsId),
                             new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
                             new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),
                             new ServiceArg("-sampleSummarySubDir", args.sampleSummarySubDir),

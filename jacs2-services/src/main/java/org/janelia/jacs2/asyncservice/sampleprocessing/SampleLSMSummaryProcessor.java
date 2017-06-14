@@ -139,6 +139,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-area", args.sampleArea),
                 new ServiceArg("-objective", args.sampleObjective),
+                new ServiceArg("-sampleResultsId", args.sampleResultsId),
                 new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
                 new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
                 new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),

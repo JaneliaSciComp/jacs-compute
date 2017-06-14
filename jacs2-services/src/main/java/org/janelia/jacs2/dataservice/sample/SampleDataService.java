@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SampleDataService {
@@ -80,6 +81,24 @@ public class SampleDataService {
     public List<LSMImage> getLSMsByIds(String subjectName, List<Number> lsmIds) {
         Subject subject = subjectService.getSubjectByName(subjectName);
         return lsmImageDao.findSubtypesByIds(subject, lsmIds, LSMImage.class);
+    }
+
+    public List<ObjectiveSample> getObjectivesBySampleIdAndObjective(String subjectName, Number sampleId, String objective) {
+        Preconditions.checkArgument(sampleId != null, "Sample ID must be specified retrieving sample objectives");
+        Subject currentSubject = subjectService.getSubjectByName(subjectName);
+        Sample sample = getSampleById(currentSubject, sampleId);
+        if (sample == null) {
+            logger.info("Invalid sampleId {} or subject {} has no access", sampleId, subjectName);
+            return Collections.emptyList();
+        }
+        Predicate<ObjectiveSample> objectiveFilter = objectiveSample -> StringUtils.isBlank(objective) || objective.equals(objectiveSample.getObjective());
+        return sample.getObjectiveSamples().stream()
+                .filter(objectiveFilter)
+                .map(os -> {
+                    os.setParent(sample);
+                    return os;
+                })
+                .collect(Collectors.toList());
     }
 
     public List<AnatomicalArea> getAnatomicalAreasBySampleIdAndObjective(String subjectName, Number sampleId, String objective) {

@@ -54,6 +54,7 @@ public class ObjectiveSample {
         }
     }
 
+    @JsonIgnore
     public Sample getParent() {
         return parent;
     }

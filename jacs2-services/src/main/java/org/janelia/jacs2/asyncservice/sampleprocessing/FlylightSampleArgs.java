@@ -3,6 +3,10 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import com.beust.jcommander.Parameter;
 
 class FlylightSampleArgs extends SampleServiceArgs {
+    @Parameter(names = "-sampleResultsName", description = "The name for the sample results", required = false)
+    String sampleResultsName;
+    @Parameter(names = "-sampleProcessName", description = "The name for the sample process", required = false)
+    String sampleProcessName;
     @Parameter(names = "-imageType", description = "Image type: screen, polarity, MCFO", required = false)
     String imageType;
     @Parameter(names = "-mergeAlgorithm", description = "Merge algorithm", required = false)

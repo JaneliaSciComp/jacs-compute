@@ -15,6 +15,7 @@ import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
+import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.it.jacs.model.domain.sample.SamplePostProcessingResult;
 import org.janelia.it.jacs.model.domain.sample.SampleProcessingResult;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentProcessor;
@@ -64,6 +65,7 @@ import java.util.stream.IntStream;
 public class FlylightSampleProcessor extends AbstractServiceProcessor<List<SampleProcessorResult>> {
 
     private final SampleDataService sampleDataService;
+    private final WrappedServiceProcessor<InitializeSamplePipelineResultsProcessor, List<SamplePipelineRun>> initializeSamplePipelineResultsProcessor;
     private final WrappedServiceProcessor<GetSampleImageFilesProcessor, List<SampleImageFile>> getSampleImageFilesProcessor;
     private final WrappedServiceProcessor<SampleLSMSummaryProcessor,List<LSMSummary>> sampleLSMSummaryProcessor;
     private final WrappedServiceProcessor<SampleStitchProcessor, SampleResult> sampleStitchProcessor;
@@ -82,6 +84,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             JacsServiceDataPersistence jacsServiceDataPersistence,
                             @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                             SampleDataService sampleDataService,
+                            InitializeSamplePipelineResultsProcessor initializeSamplePipelineResultsProcessor,
                             GetSampleImageFilesProcessor getSampleImageFilesProcessor,
                             SampleLSMSummaryProcessor sampleLSMSummaryProcessor,
                             SampleStitchProcessor sampleStitchProcessor,
@@ -97,6 +100,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sampleDataService = sampleDataService;
+        this.initializeSamplePipelineResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, initializeSamplePipelineResultsProcessor);
         this.getSampleImageFilesProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, getSampleImageFilesProcessor);
         this.sampleLSMSummaryProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sampleLSMSummaryProcessor);
         this.sampleStitchProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sampleStitchProcessor);
@@ -145,12 +149,15 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         Path sampleStitchingSubDir = FileUtils.getDataPath("Sample", jacsServiceData.getId());
         Path samplePostProcessingSubDir = FileUtils.getDataPath("Post", jacsServiceData.getId());
 
-        ServiceComputation<JacsServiceResult<List<SampleImageFile>>> getSampleImagesComputation =
-                getSampleImages(jacsServiceData, args.sampleId, args.sampleObjective, args.sampleArea, args.sampleDataRootDir, sampleLsmsSubDir);
+        Number sampleResultsId = getSampleResultsId(jacsServiceData, args);
+
+        ServiceComputation<JacsServiceResult<List<SampleImageFile>>> initAndGetSampleImagesComputation =
+                initSampleResults(jacsServiceData, args.sampleId, args.sampleObjective, sampleResultsId, args.sampleResultsName, args.sampleProcessName)
+                        .thenCompose(ignored -> getSampleImages(jacsServiceData, args.sampleId, args.sampleObjective, args.sampleArea, args.sampleDataRootDir, sampleLsmsSubDir));
 
         if (!args.skipSummary) {
             // compute LSM summaries in parallel with everything else
-            getSampleImagesComputation
+            initAndGetSampleImagesComputation
                     .thenCompose((JacsServiceResult<List<SampleImageFile>> lsir) -> sampleLSMSummaryProcessor.process(
                                     new ServiceExecutionContext.Builder(jacsServiceData)
                                             .description("Create sample LSM summary")
@@ -159,6 +166,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                     new ServiceArg("-sampleId", args.sampleId),
                                     new ServiceArg("-objective", args.sampleObjective),
                                     new ServiceArg("-area", args.sampleArea),
+                                    new ServiceArg("-sampleResultsId", sampleResultsId),
                                     new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
                                     new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
                                     new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
@@ -168,9 +176,9 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             )
                     );
         }
-        return getSampleImagesComputation
+        return initAndGetSampleImagesComputation
                 .thenCompose((JacsServiceResult<List<SampleImageFile>> lsir) -> processSampleImages( // process sample
-                        jacsServiceData, args.sampleId, args.sampleObjective, args.sampleArea,
+                        jacsServiceData, args.sampleId, args.sampleObjective, args.sampleArea, sampleResultsId,
                         args.sampleDataRootDir, sampleLsmsSubDir, sampleSummarySubDir, sampleStitchingSubDir, samplePostProcessingSubDir,
                         args.mergeAlgorithm, args.channelDyeSpec, args.outputChannelOrder,
                         args.applyDistortionCorrection, args.persistResults,
@@ -232,6 +240,26 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
     }
 
+    private ServiceComputation<JacsServiceResult<List<SamplePipelineRun>>> initSampleResults(JacsServiceData jacsServiceData, Number sampleId, String sampleObjective,
+                                                                                             Number resultsId, String sampleResultName, String sampleProcessName) {
+        // results name defaults to service description and then to service name if there's no description
+        // process name default to service name
+        // results ID default to service ID
+        return initializeSamplePipelineResultsProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Initialize pipeline run")
+                        .build(),
+                new ServiceArg("-sampleId", sampleId),
+                new ServiceArg("-objective", sampleObjective),
+                new ServiceArg("-sampleResultsName", StringUtils.defaultIfBlank(sampleResultName, StringUtils.defaultIfBlank(jacsServiceData.getDescription(), jacsServiceData.getName()))),
+                new ServiceArg("-sampleProcessName", StringUtils.defaultIfBlank(sampleResultName, jacsServiceData.getName())),
+                new ServiceArg("-sampleResultsId", resultsId)
+        );
+    }
+
+    private Number getSampleResultsId(JacsServiceData jacsServiceData, FlylightSampleArgs args) {
+        return args.sampleResultsId == null ? jacsServiceData.getId() : args.sampleResultsId;
+    }
+
     private ServiceComputation<JacsServiceResult<List<SampleImageFile>>> getSampleImages(JacsServiceData jacsServiceData, Number sampleId, String sampleObjective, String sampleArea,
                                                                                          String sampleDataRootDir, Path sampleLsmsSubDir) {
         // get sample images
@@ -247,7 +275,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
     }
 
     private ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> processSampleImages(JacsServiceData jacsServiceData, Number sampleId, String sampleObjective, String sampleArea,
-                                                                                                   String sampleDataRootDir, Path sampleLsmsSubDir, Path sampleSummarySubDir,
+                                                                                                   Number sampleResultsId, String sampleDataRootDir, Path sampleLsmsSubDir, Path sampleSummarySubDir,
                                                                                                    Path sampleStitchingSubDir, Path samplePostProcessingSubDir,
                                                                                                    String mergeAlgorithm, String channelDyeSpec, String outputChannelOrder,
                                                                                                    boolean applyDistortionCorrection, boolean generateMips,
@@ -261,6 +289,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                 new ServiceArg("-sampleId", sampleId),
                 new ServiceArg("-objective", sampleObjective),
                 new ServiceArg("-area", sampleArea),
+                new ServiceArg("-sampleResultsId", sampleResultsId),
                 new ServiceArg("-sampleDataRootDir", sampleDataRootDir),
                 new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
                 new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
@@ -278,6 +307,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                         .description("Update sample results")
                                         .waitFor(stitchResult.getJacsServiceData())
                                         .build(),
+                                new ServiceArg("-sampleResultsId", sampleResultsId),
                                 new ServiceArg("-sampleProcessingId", stitchResult.getJacsServiceData().getId())
                         )
                 );
