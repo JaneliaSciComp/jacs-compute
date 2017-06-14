@@ -41,9 +41,9 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractBasicLifeCy
         String mode = "none";
         @Parameter(names = "-chanSpec", description = "Channel spec", required = true)
         String chanSpec;
-        @Parameter(names = "-colorSpec", description = "Color spec", required = true)
+        @Parameter(names = "-colorSpec", description = "Color spec", required = false)
         String colorSpec;
-        @Parameter(names = "-divSpec", description = "Color spec", required = true)
+        @Parameter(names = "-divSpec", description = "Color spec", required = false)
         String divSpec;
         @Parameter(names = "-laser", description = "Laser", required = false)
         Integer laser;
