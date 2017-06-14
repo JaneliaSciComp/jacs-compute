@@ -284,7 +284,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
         processingSample
                 .thenCombine(updateProcessingSampleResults, (JacsServiceResult<SampleResult> sampleResult, JacsServiceResult<List<SampleProcessorResult>> updateSampleResults) -> {
-                    Optional<Number> runId = updateSampleResults.getResult().stream().map(sr -> sr.getRunId()).findFirst();
+                    Optional<Number> runId = updateSampleResults.getResult().stream().map(SampleProcessorResult::getRunId).findFirst();
                     Multimap<String, SampleAreaResult> objectiveAreas = Multimaps.index(sampleResult.getResult().getSampleAreaResults(), SampleAreaResult::getObjective);
                     return objectiveAreas.asMap().entrySet().stream()
                             .map(objectiveAreasEntry -> {
@@ -298,11 +298,12 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                                         .result())
                                                 .collect(Collectors.toList());
                                 if (objectiveAreasEntry.getKey().equals("20x") && mipsAndMoviesInputs.size() == 2 &&
-                                        mipsAndMoviesInputs.stream().map(mipsInput -> mipsInput.getArea()).collect(Collectors.toSet()).equals(ImmutableSet.of("Brain", "VNC"))) {
+                                        mipsAndMoviesInputs.stream().map(MIPsAndMoviesInput::getArea).collect(Collectors.toSet()).equals(ImmutableSet.of("Brain", "VNC"))) {
                                     // Special case - if there are exactly 2 20x tile - one Brain and one VNC then generate normalized mipmaps
                                     MIPsAndMoviesInput brainArea = mipsAndMoviesInputs.stream().filter(sar -> "Brain".equals(sar.getArea())).findFirst().orElseThrow(IllegalStateException::new);
                                     MIPsAndMoviesInput vncArea = mipsAndMoviesInputs.stream().filter(sar -> "VNC".equals(sar.getArea())).findFirst().orElseThrow(IllegalStateException::new);
                                     Path postProcessingResultsDir = getPostProcessingOutputDir(
+                                            sampleDataRootDir,
                                             samplePostProcessingSubDir,
                                             objectiveAreasEntry.getKey(),
                                             "NormalizedBrainVNC",
@@ -338,6 +339,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                             IndexedReference.indexListContent(mipsAndMoviesInputs, (pos, mipsInput) -> new IndexedReference<>(mipsInput, pos))
                                                     .map((IndexedReference<MIPsAndMoviesInput, Integer> indexedMipsInput) -> {
                                                         Path postProcessingResultsDir = getPostProcessingOutputDir(
+                                                                sampleDataRootDir,
                                                                 samplePostProcessingSubDir,
                                                                 objectiveAreasEntry.getKey(),
                                                                 indexedMipsInput.getReference().getArea(),
@@ -363,7 +365,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                                 return updateSamplePostProcessingPipelineResultsProcessor.process(
                                                         new ServiceExecutionContext.Builder(jacsServiceData)
                                                                 .description("Update post process results")
-                                                                .waitFor(mipsAndMoviesResults.stream().map(r -> r.getJacsServiceData()).collect(Collectors.toList()))
+                                                                .waitFor(mipsAndMoviesResults.stream().map(JacsServiceResult::getJacsServiceData).collect(Collectors.toList()))
                                                                 .build(),
                                                         new ServiceArg("-sampleId", sampleId),
                                                         new ServiceArg("-objective", objectiveAreasEntry.getKey()),
@@ -415,8 +417,8 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         }
     }
 
-    private Path getPostProcessingOutputDir(Path postProcessingSubDir, String objective, String area, int resultIndex) {
-        Path postProcessingOutputDir = postProcessingSubDir;
+    private Path getPostProcessingOutputDir(String sampleDataRootDir, Path postProcessingSubDir, String objective, String area, int resultIndex) {
+        Path postProcessingOutputDir = Paths.get(sampleDataRootDir).resolve(postProcessingSubDir);
         if (StringUtils.isNotBlank(objective)) {
             postProcessingOutputDir = postProcessingOutputDir.resolve(objective);
         }
