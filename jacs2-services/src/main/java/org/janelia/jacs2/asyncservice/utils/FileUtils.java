@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.utils;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.IndexedReference;
@@ -16,7 +17,6 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -176,6 +176,6 @@ public class FileUtils {
                 break; // stop looking
             }
         }
-        return commonPathComponents.isEmpty() ? Optional.empty() : Optional.of(String.join("/" + commonPathComponents));
+        return commonPathComponents.isEmpty() ? Optional.empty() : Optional.of(String.join("/", commonPathComponents));
     }
 }
