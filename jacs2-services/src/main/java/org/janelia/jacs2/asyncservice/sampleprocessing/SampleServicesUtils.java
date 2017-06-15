@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
@@ -15,6 +16,8 @@ import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class SampleServicesUtils {
 
@@ -112,7 +115,7 @@ public class SampleServicesUtils {
                     }
                     DomainModelUtils.setRelativePathForFileType(group, fn.fileType, fn.fullFilepath);
                 });
-        return ImmutableList.copyOf(groups.values());
+        return groups.values().stream().map(fg -> normalize(fg)).collect(Collectors.toList());
     }
 
     private static FileType getFileType(String ext, String type) {
@@ -149,6 +152,25 @@ public class SampleServicesUtils {
             }
         }
         return null;
+    }
+
+    public static FileGroup normalize(FileGroup fileGroup) {
+        Map<FileType, Path> allFilesWithFullPath = fileGroup.getFiles().entrySet().stream()
+                .map(fileEntry -> Maps.immutableEntry(fileEntry.getKey(), fileGroup.getFullFilePath(fileEntry.getKey())))
+                .collect(Collectors.toMap(fe -> fe.getKey(), fe -> fe.getValue()));
+        Optional<String> groupCommonPath = FileUtils.commonPath(allFilesWithFullPath.values().stream().map(Path::toString).collect(Collectors.toList()));
+        FileGroup normalizedGroup;
+        if (groupCommonPath.isPresent() && !groupCommonPath.get().equals(fileGroup.getKey())) {
+            normalizedGroup = new FileGroup(fileGroup.getKey());
+            normalizedGroup.setFilepath(groupCommonPath.get());
+            allFilesWithFullPath.forEach((ft, path) -> {
+                DomainModelUtils.setRelativePathForFileType(normalizedGroup, ft, path.toString());
+            });
+        } else {
+            // either it could not find a common path or it could not do better than already is
+            normalizedGroup = fileGroup;
+        }
+        return normalizedGroup;
     }
 
 }

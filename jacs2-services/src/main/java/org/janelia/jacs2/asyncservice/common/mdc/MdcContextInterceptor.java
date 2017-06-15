@@ -15,6 +15,7 @@ public class MdcContextInterceptor {
     public Object setMdcContext(InvocationContext invocationContext)
             throws Exception {
         Object[] args = invocationContext.getParameters();
+        String currentServiceContext = MDC.get("serviceName");
         if (args != null) {
             for (Object arg : args) {
                 if (arg instanceof JacsServiceData) {
@@ -28,7 +29,13 @@ public class MdcContextInterceptor {
                 }
             }
         }
-        return invocationContext.proceed();
+        Object result = invocationContext.proceed();
+        if (currentServiceContext != null) {
+            MDC.put("serviceName", currentServiceContext);
+        } else {
+            MDC.remove("serviceName");
+        }
+        return result;
     }
 
 }

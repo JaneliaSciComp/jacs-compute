@@ -16,6 +16,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.EnhancedMIPsAndMoviesProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
@@ -76,8 +77,8 @@ public class FlylightSampleProcessorTest {
         updateSampleSummaryResultsProcessor = mock(UpdateSampleSummaryResultsProcessor.class);
         sampleStitchProcessor = mock(SampleStitchProcessor.class);
         updateSampleProcessingResultsProcessor = mock(UpdateSampleProcessingResultsProcessor.class);
-        BasicMIPsAndMoviesProcessor basicMIPsAndMoviesProcessor = mock(BasicMIPsAndMoviesProcessor.class);
-        EnhancedMIPsAndMoviesProcessor enhancedMIPsAndMoviesProcessor = mock(EnhancedMIPsAndMoviesProcessor.class);
+        basicMIPsAndMoviesProcessor = mock(BasicMIPsAndMoviesProcessor.class);
+        enhancedMIPsAndMoviesProcessor = mock(EnhancedMIPsAndMoviesProcessor.class);
         updateSamplePostProcessingResultsProcessor = mock(UpdateSamplePostProcessingResultsProcessor.class);
         sampleNeuronSeparationProcessor = mock(SampleNeuronSeparationProcessor.class);
         AlignmentServiceBuilderFactory alignmentServiceBuilderFactory = mock(AlignmentServiceBuilderFactory.class);
@@ -213,9 +214,7 @@ public class FlylightSampleProcessorTest {
         when(updateSampleProcessingResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
         when(updateSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(new SampleProcessorResult()));
 
-        int dataIndex = 0;
         for (Map.Entry<String, String> testEntry : testData.entrySet()) {
-            int testDataIndex = dataIndex;
             Long testServiceId = Long.valueOf(testEntry.getKey());
             String testSampleDir = SampleProcessorTestUtils.TEST_WORKING_DIR;
             String testLsmSubDir =  testEntry.getValue();
@@ -261,6 +260,11 @@ public class FlylightSampleProcessorTest {
                                 argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-basicMipMapsOptions", DEFAULT_MIP_MAPS_OPTIONS))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-montageMipMaps", true)))
+                        );
+
+                        verify(updateSampleSummaryResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummaryId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString())))
                         );
 
                         verify(sampleStitchProcessor).createServiceData(any(ServiceExecutionContext.class),
@@ -335,7 +339,6 @@ public class FlylightSampleProcessorTest {
                         fail(exc.toString());
                         return null;
                     });
-            dataIndex++;
         }
     }
 
@@ -367,7 +370,7 @@ public class FlylightSampleProcessorTest {
 
         ServiceResultHandler<SampleResult> sampleStitchResultHandler = mock(ServiceResultHandler.class);
         when(sampleStitchProcessor.getResultHandler()).thenReturn(sampleStitchResultHandler);
-        when(sampleStitchResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(new SampleResult());
+        when(sampleStitchResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(createSampleResult(SampleProcessorTestUtils.TEST_SAMPLE_ID, ImmutableList.of(createSampleAreaResult(objective, area))));
 
         ServiceResultHandler<List<SampleProcessorResult>> updateSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(updateSampleProcessingResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
@@ -446,6 +449,31 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleProcessingId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString())))
                     );
 
+                    verify(enhancedMIPsAndMoviesProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFile", "f1"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-mode", "MCFO"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", testSampleDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist")))
+                    );
+                    verify(enhancedMIPsAndMoviesProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFile", "f2"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-mode", "MCFO"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", testSampleDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist")))
+                    );
+                    verify(enhancedMIPsAndMoviesProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFile", "stitchedFile"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-mode", "MCFO"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", testSampleDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist")))
+                    );
+
                     verify(sampleNeuronSeparationProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
@@ -514,6 +542,7 @@ public class FlylightSampleProcessorTest {
                 .addArg("-sampleId", String.valueOf(sampleId))
                 .addArg("-area", area)
                 .addArg("-objective", objective)
+                .addArg("-imageType", "MCFO")
                 .addArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
                 .setWorkspace(SampleProcessorTestUtils.TEST_WORKING_DIR);
 
@@ -547,6 +576,38 @@ public class FlylightSampleProcessorTest {
         JacsServiceData testServiceData = testServiceDataBuilder.build();
         testServiceData.setId(serviceId);
         return testServiceData;
+    }
+
+    private SampleResult createSampleResult(Long sampleId, ImmutableList<SampleAreaResult> sars) {
+        SampleResult sr = new SampleResult();
+        sr.setSampleId(sampleId);
+        sr.setSampleAreaResults(sars);
+        return sr;
+    }
+
+    private SampleAreaResult createSampleAreaResult(String objective, String area) {
+        SampleAreaResult sar = new SampleAreaResult();
+        sar.setSampleName("testSample");
+        sar.setObjective(objective);
+        sar.setAnatomicalArea(area);
+        sar.setConsensusChannelComponents(createChannelComponents("sssr"));
+        sar.setStichFile("stitchedFile");
+        sar.setGroupResults(ImmutableList.of(createMergeTilePairResult("t1", "f1"), createMergeTilePairResult("t2", "f2")));
+        return sar;
+    }
+
+    private MergeTilePairResult createMergeTilePairResult(String tileName, String mergeResultFile) {
+        MergeTilePairResult mtpr = new MergeTilePairResult();
+        mtpr.setTileName(tileName);
+        mtpr.setMergeResultFile(mergeResultFile);
+        mtpr.setChannelComponents(createChannelComponents("sssr"));
+        return mtpr;
+    }
+
+    private ChannelComponents createChannelComponents(String channelSpec) {
+        ChannelComponents cc = new ChannelComponents();
+        cc.channelSpec = channelSpec;
+        return cc;
     }
 
     private SampleProcessorResult createSampleProcessorResult(Number sampleId, String objective, String area) {

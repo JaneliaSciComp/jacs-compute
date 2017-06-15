@@ -58,5 +58,4 @@ public class FileGroup implements HasRelativeFiles {
     public Map<String, Object> removeFileName(FileType fileType) {
         return filesImpl.removeFileName(fileType);
     }
-
 }
