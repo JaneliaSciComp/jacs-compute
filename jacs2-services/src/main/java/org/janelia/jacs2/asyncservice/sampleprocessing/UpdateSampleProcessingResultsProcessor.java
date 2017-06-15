@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * The services reads the results returned the specified stitch processor and adds them to the given pipeline run.
@@ -174,7 +175,7 @@ public class UpdateSampleProcessingResultsProcessor extends AbstractBasicLifeCyc
                     stitchResult.setFilepath(areaResult.getResultDir());
                     stitchResult.setChannelSpec(areaResult.getConsensusChannelComponents().channelSpec);
                     stitchResult.setAnatomicalArea(areaResult.getAnatomicalArea());
-                    List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(areaResult.getResultDir(), areaResult.getMipsFileList());
+                    List<FileGroup> fGroups = SampleServicesUtils.streamFileGroups(areaResult.getResultDir(), areaResult.getMipsFileList()).map(SampleServicesUtils::normalize).collect(Collectors.toList());
                     SampleServicesUtils.updateFiles(stitchResult, fGroups);
                     if (StringUtils.isNotBlank(areaResult.getAreaResultFile())) {
                         stitchResult.setFileName(FileType.LosslessStack, Paths.get(areaResult.getResultDir()).relativize(Paths.get(areaResult.getAreaResultFile())).toString());

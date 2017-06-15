@@ -115,9 +115,9 @@ public class UpdateSampleSummaryResultsProcessor extends AbstractBasicLifeCycleS
                         Optional<String> filePath = FileUtils.commonPath(mips);
                         if (filePath.isPresent()) {
                             sampleSummaryResult.setFilepath(filePath.get());
-                            sampleSummaryResult.setGroups(SampleServicesUtils.createFileGroups(filePath.get(), mips));
+                            sampleSummaryResult.setGroups(SampleServicesUtils.streamFileGroups(filePath.get(), mips).map(SampleServicesUtils::normalize).collect(Collectors.toList()));
                         } else {
-                            sampleSummaryResult.setGroups(SampleServicesUtils.createFileGroups("", mips));
+                            sampleSummaryResult.setGroups(SampleServicesUtils.streamFileGroups("", mips).map(SampleServicesUtils::normalize).collect(Collectors.toList()));
                         }
                         sampleDataService.addSampleObjectivePipelineRunResult(sample, sampleObjective.getRight(), args.sampleResultsId, null, sampleSummaryResult);
                         pd.getResult().add(sampleSummaryResult);

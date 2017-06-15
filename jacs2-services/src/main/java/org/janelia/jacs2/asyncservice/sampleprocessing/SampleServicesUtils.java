@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SampleServicesUtils {
 
@@ -66,6 +67,10 @@ public class SampleServicesUtils {
     }
 
     public static List<FileGroup> createFileGroups(String groupFilePath, List<String> filepaths) {
+        return streamFileGroups(groupFilePath, filepaths).collect(Collectors.toList());
+    }
+
+    public static Stream<FileGroup> streamFileGroups(String groupFilePath, List<String> filepaths) {
         class FileNameStruct {
             String fullFilepath;
             String nameWithExt;
@@ -115,7 +120,7 @@ public class SampleServicesUtils {
                     }
                     DomainModelUtils.setRelativePathForFileType(group, fn.fileType, fn.fullFilepath);
                 });
-        return groups.values().stream().map(fg -> normalize(fg)).collect(Collectors.toList());
+        return groups.values().stream();
     }
 
     private static FileType getFileType(String ext, String type) {

@@ -97,7 +97,7 @@ public class UpdateSamplePostProcessingResultsProcessor extends AbstractBasicLif
                             .flatMap(dir -> FileUtils.lookupFiles(dir, 1, resultsPattern))
                             .map(Path::toString)
                             .collect(Collectors.toList());
-                    samplePostProcessingResult.setGroups(SampleServicesUtils.createFileGroups(postProcessingOutput, mips));
+                    samplePostProcessingResult.setGroups(SampleServicesUtils.streamFileGroups(postProcessingOutput, mips).map(SampleServicesUtils::normalize).collect(Collectors.toList()));
                     Sample sample = sampleDataService.getSampleById(pd.getJacsServiceData().getOwner(), args.sampleId);
                     sampleDataService.addSampleObjectivePipelineRunResult(sample, args.sampleObjective, args.sampleResultsId, null, samplePostProcessingResult);
                     pd.setResult(samplePostProcessingResult);
