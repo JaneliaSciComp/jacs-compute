@@ -124,20 +124,4 @@ public class DomainModelUtils {
         }
     }
 
-    public static Map<String, Object> setRelativePathForFileType(HasRelativeFiles objWithFiles, FileType fileType, String fileName) {
-        if (StringUtils.isBlank(fileName)) {
-            return objWithFiles.removeFileName(fileType);
-        } else {
-            if (!objWithFiles.hasFilepath())
-                return objWithFiles.setFileName(fileType, fileName);
-            else if (fileName.startsWith(objWithFiles.getFilepath()) && !fileName.equals(objWithFiles.getFilepath())) {
-                Path parent = Paths.get(objWithFiles.getFilepath());
-                Path child = Paths.get(fileName);
-                return objWithFiles.setFileName(fileType, parent.relativize(child).toString());
-            } else {
-                return objWithFiles.setFileName(fileType, fileName);
-            }
-        }
-    }
-
 }

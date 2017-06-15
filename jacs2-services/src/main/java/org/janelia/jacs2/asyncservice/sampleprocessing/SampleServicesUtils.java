@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.enums.FileType;
@@ -57,7 +56,7 @@ public class SampleServicesUtils {
     public static Map<String, Object> updateFiles(HasRelativeFiles objectWithFiles, List<FileGroup> fileGroups) {
         return fileGroups.stream()
                 .flatMap(group -> group.getFiles().entrySet().stream())
-                .map(fileTypeEntry -> DomainModelUtils.setRelativePathForFileType(objectWithFiles, fileTypeEntry.getKey(), fileTypeEntry.getValue()))
+                .map(fileTypeEntry -> objectWithFiles.setFileName(fileTypeEntry.getKey(), fileTypeEntry.getValue()))
                 .reduce(new LinkedHashMap<>(), (r1, r2) -> {
                     Map<String, Object> result = new LinkedHashMap<>();
                     result.putAll(r1);
@@ -118,7 +117,7 @@ public class SampleServicesUtils {
                         group.setFilepath(StringUtils.defaultIfBlank(groupFilePath, fn.fullFilepath));
                         groups.put(fn.key, group);
                     }
-                    DomainModelUtils.setRelativePathForFileType(group, fn.fileType, fn.fullFilepath);
+                    group.setFileName(fn.fileType, fn.fullFilepath);
                 });
         return groups.values().stream();
     }
@@ -169,7 +168,7 @@ public class SampleServicesUtils {
             normalizedGroup = new FileGroup(fileGroup.getKey());
             normalizedGroup.setFilepath(groupCommonPath.get());
             allFilesWithFullPath.forEach((ft, path) -> {
-                DomainModelUtils.setRelativePathForFileType(normalizedGroup, ft, path.toString());
+                normalizedGroup.setFileName(ft, path.toString());
             });
         } else {
             // either it could not find a common path or it could not do better than already is

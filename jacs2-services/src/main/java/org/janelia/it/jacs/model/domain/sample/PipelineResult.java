@@ -26,14 +26,13 @@ public class PipelineResult implements HasIdentifier, HasRelativeFiles {
 
     private Number id;
     private String name;
-    private String filepath;
     private Date creationDate = new Date();
     private List<PipelineResult> results = new ArrayList<>();
     @JsonIgnore
     private transient PipelineResult parentResult;
 
     @JsonIgnore
-    private HasFileImpl filesImpl = new HasFileImpl();
+    private HasRelativeFilesImpl relativeFilesImpl = new HasRelativeFilesImpl();
 
     @Override
     public Number getId() {
@@ -54,11 +53,11 @@ public class PipelineResult implements HasIdentifier, HasRelativeFiles {
 
     @Override
     public String getFilepath() {
-        return filepath;
+        return relativeFilesImpl.getFilepath();
     }
 
     public void setFilepath(String filepath) {
-        this.filepath = filepath;
+        relativeFilesImpl.setFilepath(filepath);
     }
 
     public Date getCreationDate() {
@@ -83,31 +82,31 @@ public class PipelineResult implements HasIdentifier, HasRelativeFiles {
 
     @Override
     public Map<FileType, String> getFiles() {
-        return filesImpl.getFiles();
+        return relativeFilesImpl.getFiles();
     }
 
     @Override
     public String getFileName(FileType fileType) {
-        return filesImpl.getFileName(fileType);
+        return relativeFilesImpl.getFileName(fileType);
     }
 
     @Override
     public Map<String, Object> setFileName(FileType fileType, String fileName) {
-        return filesImpl.setFileName(fileType, fileName);
+        return relativeFilesImpl.setFileName(fileType, fileName);
     }
 
     @Override
     public Map<String, Object> removeFileName(FileType fileType) {
-        return filesImpl.removeFileName(fileType);
+        return relativeFilesImpl.removeFileName(fileType);
     }
 
     @JsonProperty
     public List<FileReference> getDeprecatedFiles() {
-        return filesImpl.getDeprecatedFiles();
+        return relativeFilesImpl.getDeprecatedFiles();
     }
 
     public void setDeprecatedFiles(List<FileReference> deprecatedFiles) {
-        this.filesImpl.setDeprecatedFiles(deprecatedFiles);
+        this.relativeFilesImpl.setDeprecatedFiles(deprecatedFiles);
     }
 
     @JsonIgnore

@@ -14,11 +14,14 @@ import java.nio.file.Paths;
  */
 public interface HasRelativeFiles extends HasFilepath, HasFiles {
     default Path getFullFilePath(FileType fileType) {
-        if (getFilepath() != null) {
-            return Paths.get(getFilepath(), getFileName(fileType));
-        } else {
-            return Paths.get(getFileName(fileType));
-        }
+        String fp = getFilepath();
+        String fileTypeName = getFileName(fileType);
+        if (fileTypeName == null)
+            return null;
+        else if (fp != null)
+            return Paths.get(fp, fileTypeName);
+        else
+            return Paths.get(fileTypeName);
     }
 
 }

@@ -12,9 +12,8 @@ import java.util.Map;
 public class FileGroup implements HasRelativeFiles {
 
     private String key;
-    private String filepath;
     @JsonIgnore
-    private HasFileImpl filesImpl = new HasFileImpl();
+    private HasRelativeFilesImpl relativeFilesImpl = new HasRelativeFilesImpl();
 
     public FileGroup() {
     }
@@ -33,29 +32,29 @@ public class FileGroup implements HasRelativeFiles {
 
     @Override
     public String getFilepath() {
-        return filepath;
+        return relativeFilesImpl.getFilepath();
     }
 
     public void setFilepath(String filepath) {
-        this.filepath = filepath;
+        relativeFilesImpl.setFilepath(filepath);
     }
 
     public Map<FileType, String> getFiles() {
-        return filesImpl.getFiles();
+        return relativeFilesImpl.getFiles();
     }
 
     @Override
     public String getFileName(FileType fileType) {
-        return filesImpl.getFileName(fileType);
+        return relativeFilesImpl.getFileName(fileType);
     }
 
     @Override
     public Map<String, Object> setFileName(FileType fileType, String fileName) {
-        return filesImpl.setFileName(fileType, fileName);
+        return relativeFilesImpl.setFileName(fileType, fileName);
     }
 
     @Override
     public Map<String, Object> removeFileName(FileType fileType) {
-        return filesImpl.removeFileName(fileType);
+        return relativeFilesImpl.removeFileName(fileType);
     }
 }
