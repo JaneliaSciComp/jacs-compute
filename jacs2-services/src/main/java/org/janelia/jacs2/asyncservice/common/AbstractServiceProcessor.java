@@ -102,14 +102,14 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         Map<String, Object> serviceUpdates = new LinkedHashMap<>();
         if (StringUtils.isBlank(jacsServiceData.getOutputPath())) {
             jacsServiceData.setOutputPath(getServicePath(
-                    getWorkingDirectory(jacsServiceData).toString(),
+                    StringUtils.defaultIfBlank(jacsServiceData.getWorkspace(), defaultWorkingDir),
                     jacsServiceData,
                     String.format("%s-stdout.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
             serviceUpdates.put("outputPath", jacsServiceData.getOutputPath());
         }
         if (StringUtils.isBlank(jacsServiceData.getErrorPath())) {
             jacsServiceData.setErrorPath(getServicePath(
-                    getWorkingDirectory(jacsServiceData).toString(),
+                    StringUtils.defaultIfBlank(jacsServiceData.getWorkspace(), defaultWorkingDir),
                     jacsServiceData,
                     String.format("%s-stderr.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
             serviceUpdates.put("errorPath", jacsServiceData.getErrorPath());
