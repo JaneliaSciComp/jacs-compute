@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
@@ -9,6 +10,8 @@ import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
+
+import java.util.List;
 
 public class SampleProcessorTestUtils {
 
@@ -38,6 +41,18 @@ public class SampleProcessorTestUtils {
     public static Sample createTestSample(Number sampleId, String objective, String area, TileLsmPair... tps) {
         Sample s = createTestSample(sampleId);
         s.addObjective(createTestObjective(objective, area, tps));
+        return s;
+    }
+
+    public static Sample createTestSample(Number sampleId, String objective, List<Pair<String, List<TileLsmPair>>> areasWithTiles) {
+        Sample s = createTestSample(sampleId);
+        ObjectiveSample objectiveSample = createTestObjective(objective);
+        for (Pair<String, List<TileLsmPair>> area : areasWithTiles) {
+            for (TileLsmPair tile : area.getRight()) {
+                objectiveSample.addTiles(tileFromTileLsmPair(area.getLeft(), tile));
+            }
+        }
+        s.addObjective(objectiveSample);
         return s;
     }
 
