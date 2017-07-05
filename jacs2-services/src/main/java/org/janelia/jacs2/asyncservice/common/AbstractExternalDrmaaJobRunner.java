@@ -7,24 +7,20 @@ import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.asyncservice.qualifier.ClusterJob;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
-@ClusterJob
-public class ExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
+public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
 
     private final Session drmaaSession;
 
-    @Inject
-    public ExternalDrmaaJobRunner(Session drmaaSession, JacsServiceDataPersistence jacsServiceDataPersistence, Logger logger) {
+    public AbstractExternalDrmaaJobRunner(Session drmaaSession, JacsServiceDataPersistence jacsServiceDataPersistence, Logger logger) {
         super(jacsServiceDataPersistence, logger);
         this.drmaaSession = drmaaSession;
     }
@@ -55,7 +51,12 @@ public class ExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
             jt.setOutputPath(":" + outputFile.getAbsolutePath());
             errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
             jt.setErrorPath(":" + errorFile.getAbsolutePath());
-            String nativeSpec = createNativeSpec(serviceContext);
+            Map<String, String> jobResources = serviceContext.getResources();
+            long softJobDuration = getSoftJobDurationLimitInSeconds(jobResources);
+            if (softJobDuration > 0) jt.setSoftRunDurationLimit(softJobDuration);
+            long hardJobDuration = getHardJobDurationLimitInSeconds(jobResources);
+            if (hardJobDuration > 0) jt.setHardRunDurationLimit(hardJobDuration);
+            String nativeSpec = createNativeSpec(jobResources);
             if (StringUtils.isNotBlank(nativeSpec)) {
                 jt.setNativeSpecification(nativeSpec);
             }
@@ -109,28 +110,27 @@ public class ExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
         return workingDirectory;
     }
 
-    private String createNativeSpec(JacsServiceData serviceContext) {
-        StringBuilder nativeSpecBuilder = new StringBuilder();
-        Map<String, String> jobResources = serviceContext.getResources();
-        // append accountID
-        if (StringUtils.isNotBlank(jobResources.get("gridAccountId"))) {
-            nativeSpecBuilder.append("-A ").append(jobResources.get("gridAccountId")).append(' ');
-        }
-        int nProcessingSlots = ProcessorHelper.getProcessingSlots(serviceContext);
-        if (nProcessingSlots > 1) {
-            // append processing environment
-            nativeSpecBuilder.append("-pe batch ").append(nProcessingSlots).append(' ');
-        }
-        // append grid queue
-        if (StringUtils.isNotBlank(jobResources.get("gridQueue"))) {
-            nativeSpecBuilder.append("-q ").append(jobResources.get("gridQueue")).append(' ');
-        }
-        // append grid resource limits - the resource limits must be specified as a comma delimited list of <name>'='<value>, e.g.
-        // gridResourceLimits: "short=true,scalityr=1,scalityw=1,haswell=true"
-        if (StringUtils.isNotBlank(jobResources.get("gridResourceLimits"))) {
-            nativeSpecBuilder.append("-l ").append(jobResources.get("gridResourceLimits")).append(' ');
-        }
-        return nativeSpecBuilder.toString();
+    protected abstract String createNativeSpec(Map<String, String> jobResources);
+
+    protected String getGridBillingAccount(Map<String, String> jobResources) {
+        return jobResources.get("gridAccountId");
     }
 
+    protected String getGridNodeArchitecture(Map<String, String> jobResources) {
+        return jobResources.get("gridNodeArchitecture");
+    }
+
+    protected long getSoftJobDurationLimitInSeconds(Map<String, String> jobResources) {
+        String jobDuration = StringUtils.defaultIfBlank(jobResources.get("softGridJobDurationInSeconds"), "-1");
+        return Long.parseLong(jobDuration);
+    }
+
+    protected long getHardJobDurationLimitInSeconds(Map<String, String> jobResources) {
+        String jobDuration = StringUtils.defaultIfBlank(jobResources.get("hardGridJobDurationInSeconds"), "-1");
+        return Long.parseLong(jobDuration);
+    }
+
+    protected String getGridJobResourceLimits(Map<String, String> jobResources) {
+        return jobResources.get("gridResourceLimits");
+    }
 }

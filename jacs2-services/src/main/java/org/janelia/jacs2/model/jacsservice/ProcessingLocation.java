@@ -1,13 +1,15 @@
 package org.janelia.jacs2.model.jacsservice;
 
+import org.janelia.jacs2.asyncservice.qualifier.LSFClusterJob;
 import org.janelia.jacs2.asyncservice.qualifier.LocalJob;
-import org.janelia.jacs2.asyncservice.qualifier.ClusterJob;
+import org.janelia.jacs2.asyncservice.qualifier.SGEClusterJob;
 
 import java.lang.annotation.Annotation;
 
 public enum ProcessingLocation {
     LOCAL(LocalJob.class),
-    CLUSTER(ClusterJob.class);
+    SGE_CLUSTER(SGEClusterJob.class),
+    LSF_CLUSTER(LSFClusterJob.class);
 
     private final Class<? extends Annotation> processingAnnotationClass;
 

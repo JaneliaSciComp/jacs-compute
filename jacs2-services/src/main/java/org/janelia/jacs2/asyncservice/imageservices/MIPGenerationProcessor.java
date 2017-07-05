@@ -167,7 +167,7 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Voi
     protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
         return ImmutableMap.of(
                 DY_LIBRARY_PATH_VARNAME, getUpdatedEnvValue(DY_LIBRARY_PATH_VARNAME, libraryPath),
-                "NFE_MAX_THREAD_COUNT", String.valueOf(ProcessorHelper.getProcessingSlots(jacsServiceData))
+                "NFE_MAX_THREAD_COUNT", String.valueOf(ProcessorHelper.getProcessingSlots(jacsServiceData.getResources()))
         );
     }
 

@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.util.EnumSet;
 import java.util.Map;
 
 @Named("fileCopy")
@@ -145,8 +146,8 @@ public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<Void, Fi
     protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
         ImmutableMap.Builder builder = ImmutableMap.builder();
         builder.put(DY_LIBRARY_PATH_VARNAME, getUpdatedEnvValue(DY_LIBRARY_PATH_VARNAME, libraryPath));
-        if (jacsServiceData.getProcessingLocation() != ProcessingLocation.CLUSTER) {
-            builder.put("NSLOTS", String.valueOf(ProcessorHelper.getProcessingSlots(jacsServiceData)));
+        if (jacsServiceData.getProcessingLocation() != ProcessingLocation.SGE_CLUSTER) {
+            builder.put("NSLOTS", String.valueOf(ProcessorHelper.getProcessingSlots(jacsServiceData.getResources())));
         }
         return builder.build();
     }
