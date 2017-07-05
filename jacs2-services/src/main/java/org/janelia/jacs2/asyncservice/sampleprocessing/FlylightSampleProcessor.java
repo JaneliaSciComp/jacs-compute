@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Ordering;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
@@ -204,46 +205,18 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             (args.runNeuronSeparationAfterSampleProcessing ? lspr.getResult().size() : 0),
                             args.sampleDataRootDir,
                             lspr.getJacsServiceData());
-                    if (StringUtils.isBlank(args.alignmentAlgorithm)) {
+                    if (CollectionUtils.isEmpty(args.alignmentAlgorithms)) {
                         // no alignment requested so stop here
                         return computationFactory.newCompletedComputation(lspr);
                     }
-                    AlignmentServiceBuilder alignmentServiceBuilder = alignmentServiceBuilderFactory.getServiceArgBuilder(args.alignmentAlgorithm);
-                    if (alignmentServiceBuilder == null) {
-                        // unsupported alignment algorithm
-                        return computationFactory.newCompletedComputation(lspr);
-                    }
+                    // run all requested alignments followed by the neuron separations
                     List<ServiceComputation<?>> afterSampleProcessNeuronSeparationsResults = ImmutableList.copyOf(neuronSeparationComputations);
                     return computationFactory.newCompletedComputation(lspr)
                             .thenCombineAll(afterSampleProcessNeuronSeparationsResults, (JacsServiceResult<List<SampleProcessorResult>> lspr1, List<?> results) -> {
                                 // after all neuron separation complete run the alignments
                                 @SuppressWarnings("unchecked")
                                 List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults = (List<JacsServiceResult<NeuronSeparationFiles>>) results;
-                                Map<NeuronSeparationFiles, JacsServiceResult<NeuronSeparationFiles>> indexedNeuronSeparationResults = Maps.uniqueIndex(neuronSeparationsResults,
-                                        new Function<JacsServiceResult<NeuronSeparationFiles>, NeuronSeparationFiles>() {
-                                            @Nullable
-                                            @Override
-                                            public NeuronSeparationFiles apply(JacsServiceResult<NeuronSeparationFiles> nsr) {
-                                                return nsr.getResult();
-                                            }
-                                        });
-                                List<AlignmentServiceParams> alignmentServicesParams =
-                                        alignmentServiceBuilder.getAlignmentServicesArgs(
-                                                args.alignmentAlgorithm,
-                                                args.sampleDataRootDir,
-                                                lspr1.getResult(),
-                                                neuronSeparationsResults.stream().map(JacsServiceResult::getResult).collect(Collectors.toList()));
-                                alignmentServicesParams.forEach(alignmentServiceParams -> {
-                                    JacsServiceData neuronSeparationService = indexedNeuronSeparationResults.get(alignmentServiceParams.getNeuronSeparationFiles()).getJacsServiceData();
-                                    runAlignment(jacsServiceData, alignmentServiceParams, lspr.getJacsServiceData(), neuronSeparationService)
-                                            .thenCompose((JacsServiceResult<AlignmentResult> alignmentResult) -> runAlignmentNeuronSeparation(
-                                                    jacsServiceData,
-                                                    alignmentServiceParams.getSampleProcessorResult(),
-                                                    args.sampleDataRootDir,
-                                                    alignmentResult.getResult().getAlignmentResultId(),
-                                                    alignmentServiceParams.getNeuronSeparationFiles().getConsolidatedLabelPath(),
-                                                    alignmentResult.getJacsServiceData()));
-                                });
+                                runAllAlignments(jacsServiceData, args.sampleDataRootDir, args.alignmentAlgorithms, lspr1, neuronSeparationsResults);
                                 return lspr1;
                             });
                 })
@@ -264,7 +237,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                 new ServiceArg("-sampleId", sampleId),
                 new ServiceArg("-objective", sampleObjective),
                 new ServiceArg("-sampleResultsName", StringUtils.defaultIfBlank(sampleResultName, StringUtils.defaultIfBlank(jacsServiceData.getDescription(), jacsServiceData.getName()))),
-                new ServiceArg("-sampleProcessName", StringUtils.defaultIfBlank(sampleResultName, jacsServiceData.getName())),
+                new ServiceArg("-sampleProcessName", StringUtils.defaultIfBlank(sampleProcessName, jacsServiceData.getName())),
                 new ServiceArg("-sampleResultsId", resultsId)
         );
     }
@@ -501,6 +474,45 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         );
                     })
                     .collect(Collectors.toList());
+    }
+
+    private void runAllAlignments(JacsServiceData jacsServiceData, String sampleDataRootDir, List<String> alignmentAlgorithms, JacsServiceResult<List<SampleProcessorResult>> lspr, List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults) {
+        Map<NeuronSeparationFiles, JacsServiceResult<NeuronSeparationFiles>> indexedNeuronSeparationResults = Maps.uniqueIndex(neuronSeparationsResults,
+                new Function<JacsServiceResult<NeuronSeparationFiles>, NeuronSeparationFiles>() {
+                    @Nullable
+                    @Override
+                    public NeuronSeparationFiles apply(JacsServiceResult<NeuronSeparationFiles> nsr) {
+                        return nsr.getResult();
+                    }
+                });
+
+        List<NeuronSeparationFiles> sampleNeuronSeparationFiles =  neuronSeparationsResults.stream().map(JacsServiceResult::getResult).collect(Collectors.toList());
+
+        for (String alignmentAlgorithm : alignmentAlgorithms) {
+            AlignmentServiceBuilder alignmentServiceBuilder = alignmentServiceBuilderFactory.getServiceArgBuilder(alignmentAlgorithm);
+            if (alignmentServiceBuilder == null) {
+                // unsupported alignment algorithm
+                continue;
+            }
+            List<AlignmentServiceParams> alignmentServicesParams =
+                    alignmentServiceBuilder.getAlignmentServicesArgs(
+                            alignmentAlgorithm,
+                            sampleDataRootDir,
+                            lspr.getResult(),
+                            sampleNeuronSeparationFiles);
+
+            alignmentServicesParams.forEach(alignmentServiceParams -> {
+                JacsServiceData neuronSeparationService = indexedNeuronSeparationResults.get(alignmentServiceParams.getNeuronSeparationFiles()).getJacsServiceData();
+                runAlignment(jacsServiceData, alignmentServiceParams, lspr.getJacsServiceData(), neuronSeparationService)
+                        .thenCompose((JacsServiceResult<AlignmentResult> alignmentResult) -> runAlignmentNeuronSeparation(
+                                jacsServiceData,
+                                alignmentServiceParams.getSampleProcessorResult(),
+                                sampleDataRootDir,
+                                alignmentResult.getResult().getAlignmentResultId(),
+                                alignmentServiceParams.getNeuronSeparationFiles().getConsolidatedLabelPath(),
+                                alignmentResult.getJacsServiceData()));
+            });
+        }
     }
 
     private ServiceComputation<JacsServiceResult<AlignmentResult>> runAlignment(JacsServiceData jacsServiceData, AlignmentServiceParams alignmentServiceParams, JacsServiceData... deps) {

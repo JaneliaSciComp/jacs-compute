@@ -2,6 +2,9 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 class FlylightSampleArgs extends SampleServiceArgs {
     @Parameter(names = "-sampleResultsName", description = "The name for the sample results", required = false)
     String sampleResultsName;
@@ -31,6 +34,6 @@ class FlylightSampleArgs extends SampleServiceArgs {
     boolean persistResults;
     @Parameter(names = "-runNeuronSeparationAfterSampleProcessing", description = "If specified it runs the neuron separation after sample processing", required = false)
     boolean runNeuronSeparationAfterSampleProcessing;
-    @Parameter(names = "-alignmentAlgorithm", description = "Specifies the alignment algorithm to be run", required = false)
-    String alignmentAlgorithm;
+    @Parameter(names = "-alignmentAlgorithm", description = "Specifies the alignment algorithms to be run", required = false)
+    List<String> alignmentAlgorithms = new ArrayList<>();
 }

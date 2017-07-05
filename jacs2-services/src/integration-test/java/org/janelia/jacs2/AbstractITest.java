@@ -11,7 +11,7 @@ public abstract class AbstractITest {
     @BeforeClass
     public static void setUpTestsConfig() {
         integrationTestsConfig = new ApplicationConfigProvider()
-                .fromFile("build/resources/integrationTest/jacs_test.properties")
+                .fromFile("src/integration-test/resources/jacs_test.properties")
                 .fromEnvVar("JACS2_CONFIG_TEST")
                 .build();
     }
