@@ -26,6 +26,7 @@ import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
+import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -34,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -205,6 +208,12 @@ public class FlylightSampleProcessorTest {
                 updateAlignmentResultsProcessor,
                 sampleNeuronWarpingProcessor,
                 logger);
+    }
+
+    @Test
+    public void serviceMetaData() {
+        ServiceMetaData serviceMetaData = flylightSampleProcessor.getMetadata();
+        assertThat(serviceMetaData.getServiceName(), equalTo("flylightSample"));
     }
 
     @Test
