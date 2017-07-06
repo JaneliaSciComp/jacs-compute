@@ -116,10 +116,6 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
         return jobResources.get("gridAccountId");
     }
 
-    protected String getGridNodeArchitecture(Map<String, String> jobResources) {
-        return jobResources.get("gridNodeArchitecture");
-    }
-
     protected long getSoftJobDurationLimitInSeconds(Map<String, String> jobResources) {
         String jobDuration = StringUtils.defaultIfBlank(jobResources.get("softGridJobDurationInSeconds"), "-1");
         return Long.parseLong(jobDuration);

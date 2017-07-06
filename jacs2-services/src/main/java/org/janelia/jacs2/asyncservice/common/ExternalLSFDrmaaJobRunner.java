@@ -42,7 +42,7 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
         if (StringUtils.isNotBlank(jobResources.get("gridQueue"))) {
             nativeSpecBuilder.append("-q ").append(jobResources.get("gridQueue")).append(' ');
         }
-        String gridNodeArchitecture = getGridNodeArchitecture(jobResources); // sandy, haswell, broadwell, avx2
+        String gridNodeArchitecture = ProcessorHelper.getCPUType(jobResources); // sandy, haswell, broadwell, avx2
         if (StringUtils.isNotBlank(gridNodeArchitecture)) {
             nativeSpecBuilder.append("-R")
                     .append('"')
