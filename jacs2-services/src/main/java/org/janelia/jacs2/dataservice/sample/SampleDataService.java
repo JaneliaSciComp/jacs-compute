@@ -240,4 +240,8 @@ public class SampleDataService {
     public void addSampleObjectivePipelineRunResult(Sample sample, String objective, Number runId, Number parentResultId, PipelineResult pipelineResult) {
         sampleDao.addSampleObjectivePipelineRunResult(sample, objective, runId, parentResultId, pipelineResult);
     }
+
+    public void updateSampleObjectivePipelineRunResult(Sample sample, String objective, Number runId, PipelineResult pipelineResult) {
+        sampleDao.updateSampleObjectivePipelineRunResult(sample, objective, runId, pipelineResult);
+    }
 }

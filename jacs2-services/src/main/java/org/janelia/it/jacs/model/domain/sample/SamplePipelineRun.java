@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.domain.sample;
 
 import org.janelia.it.jacs.model.domain.IndexedReference;
+import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -11,7 +12,7 @@ import java.util.stream.Stream;
 /**
  * A single service or pipeline run.
  */
-public class SamplePipelineRun {
+public class SamplePipelineRun implements HasIdentifier {
 
     private Number id;
     private String name;
@@ -21,10 +22,12 @@ public class SamplePipelineRun {
     private List<PipelineResult> results = new ArrayList<>();
     private PipelineError error;
 
+    @Override
     public Number getId() {
         return id;
     }
 
+    @Override
     public void setId(Number id) {
         this.id = id;
     }

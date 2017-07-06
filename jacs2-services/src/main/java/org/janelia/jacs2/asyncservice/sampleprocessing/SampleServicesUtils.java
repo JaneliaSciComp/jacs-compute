@@ -7,7 +7,6 @@ import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
-import org.janelia.jacs2.model.DomainModelUtils;
 
 import java.io.File;
 import java.nio.file.Path;

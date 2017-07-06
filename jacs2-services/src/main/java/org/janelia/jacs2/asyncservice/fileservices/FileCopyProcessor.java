@@ -33,7 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
-import java.util.EnumSet;
 import java.util.Map;
 
 @Named("fileCopy")

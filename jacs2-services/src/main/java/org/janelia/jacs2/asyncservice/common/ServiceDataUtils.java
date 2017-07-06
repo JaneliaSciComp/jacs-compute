@@ -59,8 +59,4 @@ public class ServiceDataUtils {
         else
             return MAPPER.convertValue(o, typeRef);
     }
-
-    public static <T> Object anyToSerializableObject(T any) {
-        return any == null ? null : MAPPER.valueToTree(any);
-    }
 }
