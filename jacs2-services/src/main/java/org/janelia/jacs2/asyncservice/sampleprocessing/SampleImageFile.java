@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class SampleImageFile {
     private Number id;
@@ -114,5 +115,16 @@ public class SampleImageFile {
 
     public void setObjective(String objective) {
         this.objective = objective;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("area", area)
+                .append("objective", objective)
+                .append("archiveFilePath", archiveFilePath)
+                .append("workingFilePath", workingFilePath)
+                .build();
     }
 }

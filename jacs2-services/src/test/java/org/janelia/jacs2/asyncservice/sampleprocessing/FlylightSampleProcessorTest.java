@@ -16,6 +16,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.EnhancedMIPsAndMoviesProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
@@ -69,6 +70,7 @@ public class FlylightSampleProcessorTest {
     private AlignmentProcessor alignmentProcessor;
     private UpdateAlignmentResultsProcessor updateAlignmentResultsProcessor;
     private SampleNeuronWarpingProcessor sampleNeuronWarpingProcessor;
+    private CleanSampleImageFilesProcessor cleanSampleImageFilesProcessor;
 
     @Before
     public void setUp() {
@@ -92,6 +94,7 @@ public class FlylightSampleProcessorTest {
         alignmentProcessor = mock(AlignmentProcessor.class);
         updateAlignmentResultsProcessor = mock(UpdateAlignmentResultsProcessor.class);
         sampleNeuronWarpingProcessor = mock(SampleNeuronWarpingProcessor.class);
+        cleanSampleImageFilesProcessor = mock(CleanSampleImageFilesProcessor.class);
 
         when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> {
             JacsServiceData sd = new JacsServiceData();
@@ -189,6 +192,19 @@ public class FlylightSampleProcessorTest {
                 )
         ).thenCallRealMethod();
 
+        when(cleanSampleImageFilesProcessor.getMetadata()).thenCallRealMethod();
+        when(cleanSampleImageFilesProcessor.createServiceData(any(ServiceExecutionContext.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class)
+                )
+        ).thenCallRealMethod();
+        when(cleanSampleImageFilesProcessor.getResultHandler()).thenCallRealMethod();
+
         flylightSampleProcessor = new FlylightSampleProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 SampleProcessorTestUtils.TEST_WORKING_DIR,
@@ -207,6 +223,7 @@ public class FlylightSampleProcessorTest {
                 alignmentProcessor,
                 updateAlignmentResultsProcessor,
                 sampleNeuronWarpingProcessor,
+                cleanSampleImageFilesProcessor,
                 logger);
     }
 

@@ -89,11 +89,6 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
     }
 
     @Override
-    public ServiceErrorChecker getErrorChecker() {
-        return new DefaultServiceErrorChecker(logger);
-    }
-
-    @Override
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
         try {
             SampleServiceArgs args = getArgs(jacsServiceData);

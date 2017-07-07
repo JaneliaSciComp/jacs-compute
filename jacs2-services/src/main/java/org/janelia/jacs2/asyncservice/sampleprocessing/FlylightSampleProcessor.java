@@ -79,6 +79,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
     private final WrappedServiceProcessor<AlignmentProcessor, AlignmentResultFiles> alignmentProcessor;
     private final WrappedServiceProcessor<UpdateAlignmentResultsProcessor, AlignmentResult> updateAlignmentResultsProcessor;
     private final WrappedServiceProcessor<SampleNeuronWarpingProcessor, NeuronSeparationFiles> sampleNeuronWarpingProcessor;
+    private final WrappedServiceProcessor<CleanSampleImageFilesProcessor, Void> cleanSampleImageFilesProcessor;
     private final AlignmentServiceBuilderFactory alignmentServiceBuilderFactory;
 
     @Inject
@@ -100,6 +101,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             AlignmentProcessor alignmentProcessor,
                             UpdateAlignmentResultsProcessor updateAlignmentResultsProcessor,
                             SampleNeuronWarpingProcessor sampleNeuronWarpingProcessor,
+                            CleanSampleImageFilesProcessor cleanSampleImageFilesProcessor,
                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sampleDataService = sampleDataService;
@@ -116,6 +118,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         this.alignmentProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, alignmentProcessor);
         this.updateAlignmentResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, updateAlignmentResultsProcessor);
         this.sampleNeuronWarpingProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sampleNeuronWarpingProcessor);
+        this.cleanSampleImageFilesProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, cleanSampleImageFilesProcessor);
         this.alignmentServiceBuilderFactory = alignmentServiceBuilderFactory;
     }
 
@@ -222,8 +225,20 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                 })
                 .thenSuspendUntil(lspr -> new ContinuationCond.Cond<>(lspr, !suspendUntilAllDependenciesComplete(jacsServiceData))) // wait for all subtasks to complete
                 .thenApply(lsprCond -> updateServiceResult(jacsServiceData, lsprCond.getState().getResult())) // update the result
+                .thenCompose(lspr -> cleanSampleImageFilesProcessor.process(
+                        new ServiceExecutionContext.Builder(jacsServiceData)
+                                .description("Remove working LSMs")
+                                .waitFor(lspr.getJacsServiceData())
+                                .build(),
+                        new ServiceArg("-sampleId", args.sampleId),
+                        new ServiceArg("-objective", args.sampleObjective),
+                        new ServiceArg("-area", args.sampleArea),
+                        new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                        new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
+                        new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
+                        new ServiceArg("-sampleSitchingSubDir", sampleStitchingSubDir.toString())
+                ).thenApply(vr -> lspr))
                 ;
-
     }
 
     private ServiceComputation<JacsServiceResult<List<SamplePipelineRun>>> initSampleResults(JacsServiceData jacsServiceData, Number sampleId, String sampleObjective,
