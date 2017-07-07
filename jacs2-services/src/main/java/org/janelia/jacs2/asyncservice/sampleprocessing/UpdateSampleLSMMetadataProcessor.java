@@ -107,9 +107,9 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<GetSampleLsmsIntermediateResult>> processing(JacsServiceResult<GetSampleLsmsIntermediateResult> depResults1) {
-        UpdateLSMsMetadataArgs args = getArgs(depResults1.getJacsServiceData());
-        return computationFactory.newCompletedComputation(depResults1)
+    protected ServiceComputation<JacsServiceResult<GetSampleLsmsIntermediateResult>> processing(JacsServiceResult<GetSampleLsmsIntermediateResult> depResults) {
+        UpdateLSMsMetadataArgs args = getArgs(depResults.getJacsServiceData());
+        return computationFactory.newCompletedComputation(depResults)
             .thenApply(pd -> {
                 JacsServiceData getSampleLsmsMetadataService = jacsServiceDataPersistence.findById(pd.getResult().getChildServiceId());
                 List<SampleImageFile> sampleImageFiles = getSampleLsmsMetadataProcessor.getResultHandler().getServiceDataResult(getSampleLsmsMetadataService);

@@ -29,7 +29,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 @Named("lsmFileMetadata")
@@ -76,8 +78,19 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<V
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                File outputFile = getOutputFile(getArgs(depResults.getJacsServiceData()));
-                return outputFile.exists() && outputFile.length() > 0;
+                File workingOutputFile = getWorkingOutputFile(getArgs(depResults.getJacsServiceData()));
+                if (workingOutputFile.exists() && workingOutputFile.length() > 0 && (System.currentTimeMillis() - workingOutputFile.lastModified() > 10000)) {
+                    // if file was not modified in the last 10s
+                    File outputFile = getOutputFile(getArgs(depResults.getJacsServiceData()));
+                    try {
+                        Files.move(workingOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                        return true;
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                } else {
+                    return false;
+                }
             }
 
             @Override
@@ -119,7 +132,7 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<V
                 .addArg(getFullExecutableName(scriptName))
                 .addArg(getInputFile(args).getAbsolutePath())
                 .addArg(">")
-                .addArg(getOutputFile(args).getAbsolutePath())
+                .addArg(getWorkingOutputFile(args).getAbsolutePath())
                 .endArgs("");
     }
 
@@ -144,4 +157,7 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<V
         return new File(args.outputLSMMetadata);
     }
 
+    private File getWorkingOutputFile(LsmFileMetadataArgs args) {
+        return new File(args.outputLSMMetadata + ".working");
+    }
 }
