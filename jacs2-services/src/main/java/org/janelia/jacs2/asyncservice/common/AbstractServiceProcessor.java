@@ -88,6 +88,10 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         return new DefaultServiceErrorChecker(logger);
     }
 
+    protected List<String> getErrors(JacsServiceData jacsServiceData) {
+        return this.getErrorChecker().collectErrors(jacsServiceData);
+    }
+
     protected Path getWorkingDirectory(JacsServiceData jacsServiceData) {
         if (StringUtils.isNotBlank(jacsServiceData.getWorkspace())) {
             return Paths.get(jacsServiceData.getWorkspace());

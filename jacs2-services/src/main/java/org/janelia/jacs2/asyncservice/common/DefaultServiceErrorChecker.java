@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.slf4j.Logger;
@@ -44,7 +43,7 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
                     if (hasErrors(s)) {
                         errors.add(s);
                     }
-                    if (StringUtils.isNotBlank(s)) logger.error(s);
+                    if (StringUtils.isNotBlank(s)) logger.info(s); // log at info level because I noticed a lot of the external tools write to stderr.
                 });
             }
         } catch (Exception e) {

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@MdcContext
 public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBasicLifeCycleServiceProcessor<S, T> {
 
     protected static final String DY_LIBRARY_PATH_VARNAME = "LD_LIBRARY_PATH";
@@ -50,7 +51,7 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
                 .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, this.hasJobFinished(pd.getJacsServiceData(), jobInfo)))
                 .thenApply(pdCond -> {
                     JacsServiceResult<S> pd = pdCond.getState();
-                    List<String> errors = this.getErrorChecker().collectErrors(pd.getJacsServiceData());
+                    List<String> errors = getErrors(pd.getJacsServiceData());
                     String errorMessage = null;
                     if (CollectionUtils.isNotEmpty(errors)) {
                         errorMessage = String.format("Process %s failed; errors found: %s", jobInfo.getScriptName(), String.join(";", errors));
@@ -123,7 +124,6 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
         }
     }
 
-    @MdcContext
     protected ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> env = prepareEnvironment(jacsServiceData);
