@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.janelia.it.jacs.model.domain.DomainConstants;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.PipelineResult;
@@ -135,11 +136,11 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
     }
 
     private Optional<ServiceComputation<PipelineResult>> setNewResultFile(JacsServiceData jacsServiceData,
-                                                                ObjectiveSample objectiveSample, SamplePipelineRun run,
-                                                                PipelineResult result, List<String> inputTypes, String outputType, boolean deleteInput) {
+                                                                          ObjectiveSample objectiveSample, SamplePipelineRun run,
+                                                                          PipelineResult result, List<String> inputTypes, String outputType, boolean deleteInput) {
         Path inputPath = result.getFullFilePath(FileType.LosslessStack);
         String inputExt = inputPath != null ? FileUtils.getFileExtensionOnly(inputPath) : null;
-        if (inputExt == null || inputExt.endsWith(outputType) || inputTypes.stream().noneMatch(inputExt::endsWith)) {
+        if (inputExt == null || inputPath.startsWith(DomainConstants.SCALITY_PATH_PREFIX) || inputExt.endsWith(outputType) || inputTypes.stream().noneMatch(inputExt::endsWith)) {
             // the input type is the same as the output or the input is not in the list of input types
             return Optional.empty();
         }
