@@ -191,7 +191,7 @@ public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements S
                         return Optional.<String>empty();
                     }
                 })
-                .ifPresent(fn -> updatedFields.add(Updates.push(fn, pipelineResult)));
+                .ifPresent(fn -> updatedFields.add(Updates.set(fn, pipelineResult)));
         if (!updatedFields.isEmpty()) {
             UpdateOptions updateOptions = new UpdateOptions();
             updateOptions.upsert(false);
