@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
@@ -56,36 +57,41 @@ public class JacsServiceDispatcher {
                     continue; // no slot available
                 }
             }
-            logger.info("Dispatch service {}", queuedService);
-            ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(queuedService);
-            serviceComputationFactory.<JacsServiceData>newComputation()
-                    .supply(() -> {
-                        logger.debug("Submit {}", queuedService);
-                        jacsServiceDataPersistence.updateServiceState(queuedService, JacsServiceState.SUBMITTED, Optional.empty());
-                        return queuedService;
-                    })
-                    .thenCompose(sd -> serviceProcessor.process(sd))
-                    .thenApply(r -> {
-                        JacsServiceData service = jacsServiceDataPersistence.findById(queuedService.getId());
-                        success(service);
-                        return r;
-                    })
-                    .exceptionally(exc -> {
-                        JacsServiceData service = jacsServiceDataPersistence.findById(queuedService.getId());
-                        fail(service, exc);
-                        throw new ComputationException(service, exc);
-                    })
-                    .whenComplete((r, exc) -> {
-                        jacsServiceQueue.completeService(queuedService);
-                        if (!queuedService.hasParentServiceId()) {
-                            // release the slot acquired before the service was started
-                            jacsServiceEngine.releaseSlot();
-                        }
-                    })
-                    ;
+            dispatchService(queuedService);
         }
     }
 
+    @MdcContext
+    private void dispatchService(JacsServiceData jacsServiceData) {
+        logger.info("Dispatch service {}", jacsServiceData);
+        ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
+        serviceComputationFactory.<JacsServiceData>newComputation()
+                .supply(() -> {
+                    jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.SUBMITTED, Optional.empty());
+                    return jacsServiceData;
+                })
+                .thenCompose(sd -> serviceProcessor.process(sd))
+                .thenApply(r -> {
+                    JacsServiceData service = jacsServiceDataPersistence.findById(jacsServiceData.getId());
+                    success(service);
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    JacsServiceData service = jacsServiceDataPersistence.findById(jacsServiceData.getId());
+                    fail(service, exc);
+                    throw new ComputationException(service, exc);
+                })
+                .whenComplete((r, exc) -> {
+                    jacsServiceQueue.completeService(jacsServiceData);
+                    if (!jacsServiceData.hasParentServiceId()) {
+                        // release the slot acquired before the service was started
+                        jacsServiceEngine.releaseSlot();
+                    }
+                })
+        ;
+    }
+
+    @MdcContext
     private void success(JacsServiceData jacsServiceData) {
         logger.info("Processing successful {}", jacsServiceData);
         if (jacsServiceData.hasCompletedSuccessfully()) {
@@ -105,6 +111,7 @@ public class JacsServiceDispatcher {
         }
     }
 
+    @MdcContext
     private void fail(JacsServiceData jacsServiceData, Throwable exc) {
         logger.error("Processing error executing {}", jacsServiceData, exc);
         if (jacsServiceData.hasCompletedUnsuccessfully()) {
