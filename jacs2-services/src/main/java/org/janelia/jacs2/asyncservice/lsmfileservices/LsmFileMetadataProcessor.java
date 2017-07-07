@@ -37,6 +37,8 @@ import java.util.Map;
 @Named("lsmFileMetadata")
 public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<Void, File> {
 
+    private static final Object RESULT_LOCK = new Object();
+
     static class LsmFileMetadataArgs extends ServiceArgs {
         @Parameter(names = "-inputLSM", description = "LSM Input file name", required = true)
         String inputLSMFile;
@@ -78,19 +80,25 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<V
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                File outputFile = getOutputFile(getArgs(depResults.getJacsServiceData()));
-                File workingOutputFile = getWorkingOutputFile(getArgs(depResults.getJacsServiceData()));
+                JacsServiceData jacsServiceData = depResults.getJacsServiceData();
+                LsmFileMetadataArgs args = getArgs(jacsServiceData);
+                File outputFile = getOutputFile(args);
+                File workingOutputFile = getWorkingOutputFile(jacsServiceData, args);
                 if (workingOutputFile.exists() && workingOutputFile.length() > 0 && (System.currentTimeMillis() - workingOutputFile.lastModified() > 10000)) {
                     // if file was not modified in the last 10s
-                    try {
-                        if (outputFile.exists()) {
-                            Files.deleteIfExists(workingOutputFile.toPath());
-                        } else {
-                            Files.move(workingOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+                    synchronized (RESULT_LOCK) {
+                        // the synchronization is required because it is possible to invoke lsmfilemetadata for the same lsm simultaneously -
+                        // once by the summary service and once by the merge and group processor
+                        try {
+                            if (outputFile.exists()) {
+                                Files.deleteIfExists(workingOutputFile.toPath());
+                            } else {
+                                Files.move(workingOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+                            }
+                            return true;
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
                         }
-                        return true;
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
                     }
                 } else {
                     return false;
@@ -126,17 +134,17 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<V
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
         LsmFileMetadataArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
-        createScript(args, externalScriptCode.getCodeWriter());
+        createScript(jacsServiceData, args, externalScriptCode.getCodeWriter());
         return externalScriptCode;
     }
 
-    private void createScript(LsmFileMetadataArgs args, ScriptWriter scriptWriter) {
+    private void createScript(JacsServiceData jacsServiceData, LsmFileMetadataArgs args, ScriptWriter scriptWriter) {
         scriptWriter
                 .addWithArgs(perlExecutable)
                 .addArg(getFullExecutableName(scriptName))
                 .addArg(getInputFile(args).getAbsolutePath())
                 .addArg(">")
-                .addArg(getWorkingOutputFile(args).getAbsolutePath())
+                .addArg(getWorkingOutputFile(jacsServiceData, args).getAbsolutePath())
                 .endArgs("");
     }
 
@@ -161,7 +169,7 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<V
         return new File(args.outputLSMMetadata);
     }
 
-    private File getWorkingOutputFile(LsmFileMetadataArgs args) {
-        return new File(args.outputLSMMetadata + ".working");
+    private File getWorkingOutputFile(JacsServiceData jacsServiceData, LsmFileMetadataArgs args) {
+        return new File(args.outputLSMMetadata + "-" + jacsServiceData.getId() + ".working");
     }
 }
