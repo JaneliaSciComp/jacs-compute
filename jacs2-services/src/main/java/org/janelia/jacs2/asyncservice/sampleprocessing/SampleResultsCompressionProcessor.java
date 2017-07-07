@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -156,6 +158,13 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
                             result.setFileName(FileType.LosslessStack, null);
                         }
                         sampleDataService.updateSampleObjectivePipelineRunResult(objectiveSample.getParent(), objectiveSample.getObjective(), run.getId(), result);
+                        if (deleteInput) {
+                            try {
+                                Files.delete(inputPath);
+                            } catch (IOException e) {
+                                logger.warn("Failed to delete {}", inputPath, e);
+                            }
+                        }
                         return result;
                     })
             );
