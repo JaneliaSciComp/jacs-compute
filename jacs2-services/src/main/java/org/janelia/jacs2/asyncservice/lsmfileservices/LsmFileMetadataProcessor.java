@@ -78,12 +78,16 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<V
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
+                File outputFile = getOutputFile(getArgs(depResults.getJacsServiceData()));
                 File workingOutputFile = getWorkingOutputFile(getArgs(depResults.getJacsServiceData()));
                 if (workingOutputFile.exists() && workingOutputFile.length() > 0 && (System.currentTimeMillis() - workingOutputFile.lastModified() > 10000)) {
                     // if file was not modified in the last 10s
-                    File outputFile = getOutputFile(getArgs(depResults.getJacsServiceData()));
                     try {
-                        Files.move(workingOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                        if (outputFile.exists()) {
+                            Files.deleteIfExists(workingOutputFile.toPath());
+                        } else {
+                            Files.move(workingOutputFile.toPath(), outputFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+                        }
                         return true;
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
