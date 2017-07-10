@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -120,4 +121,14 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         }
         throw new IllegalStateException("There are too many backups so no backup could be created for " + logFile);
     }
+
+    protected int getResourcePropertyAsInt(Map<String, String> jobResources, String propertyName, int defaultValue) {
+        String propertyValue = jobResources.get(propertyName);
+        if (StringUtils.isBlank(propertyValue)) {
+            return defaultValue;
+        } else {
+            return Integer.parseInt(propertyValue);
+        }
+    }
+
 }
