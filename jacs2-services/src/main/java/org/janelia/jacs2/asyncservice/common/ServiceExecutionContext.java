@@ -16,7 +16,6 @@ public class ServiceExecutionContext {
 
         public Builder(JacsServiceData parentServiceData) {
             serviceExecutionContext = new ServiceExecutionContext(parentServiceData);
-            processingLocation(parentServiceData.getProcessingLocation());
         }
 
         public Builder processingLocation(ProcessingLocation processingLocation) {
