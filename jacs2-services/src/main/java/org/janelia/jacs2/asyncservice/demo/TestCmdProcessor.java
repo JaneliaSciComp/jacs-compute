@@ -24,6 +24,7 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ public class TestCmdProcessor extends AbstractExeBasedServiceProcessor<Void, Voi
         @Parameter(names = "-cmd", description = "Command name", required = true)
         String cmd;
         @Parameter(names = "-cmdArgs", description = "Command arguments")
-        List<String> cmdArgs;
+        List<String> cmdArgs = new ArrayList<>();
     }
 
     @Inject
@@ -69,10 +70,6 @@ public class TestCmdProcessor extends AbstractExeBasedServiceProcessor<Void, Voi
     }
 
     private void createScript(TestCmdArgs args, ScriptWriter scriptWriter) {
-        scriptWriter
-                .add("function exitHandler() { cleanXvfb; cleanTemp; }")
-                .add("trap exitHandler EXIT\n");
-
         scriptWriter.addWithArgs(args.cmd)
                 .addArg(String.join(" ", args.cmdArgs))
                 .endArgs("");
