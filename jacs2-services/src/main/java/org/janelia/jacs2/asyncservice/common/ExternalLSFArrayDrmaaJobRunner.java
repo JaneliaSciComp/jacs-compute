@@ -57,10 +57,6 @@ public class ExternalLSFArrayDrmaaJobRunner extends AbstractExternalProcessRunne
             errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
             jt.setErrorPath(":" + errorFile.getParentFile().getAbsolutePath());
             Map<String, String> jobResources = serviceContext.getResources();
-            long softJobDuration = getSoftJobDurationLimitInSeconds(jobResources);
-            if (softJobDuration > 0) jt.setSoftRunDurationLimit(softJobDuration);
-            long hardJobDuration = getHardJobDurationLimitInSeconds(jobResources);
-            if (hardJobDuration > 0) jt.setHardRunDurationLimit(hardJobDuration);
             String nativeSpec = createNativeSpec(jobResources);
             if (StringUtils.isNotBlank(nativeSpec)) {
                 jt.setNativeSpecification(nativeSpec);
@@ -139,6 +135,14 @@ public class ExternalLSFArrayDrmaaJobRunner extends AbstractExternalProcessRunne
                     .append('"')
                     .append(' ')
             ;
+        }
+        long softJobDuration = getSoftJobDurationLimitInSeconds(jobResources) / 60;
+        if (softJobDuration > 0) {
+            nativeSpecBuilder.append("-We ").append(softJobDuration).append(' ');
+        }
+        long hardJobDuration = getHardJobDurationLimitInSeconds(jobResources) / 60;
+        if (hardJobDuration > 0) {
+            nativeSpecBuilder.append("-W ").append(hardJobDuration).append(' ');
         }
         if (StringUtils.isNotBlank(jobResources.get("gridQueue"))) {
             nativeSpecBuilder.append("-q ").append(jobResources.get("gridQueue")).append(' ');
