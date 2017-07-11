@@ -143,7 +143,7 @@ public class ExternalLSFArrayDrmaaJobRunner extends AbstractExternalProcessRunne
         }
         long hardJobDuration = getHardJobDurationLimitInSeconds(jobResources) / 60;
         if (hardJobDuration > 0) {
-            nativeSpecBuilder.append("-W ").append('"').append(hardJobDuration).append('"').append(' ');
+            nativeSpecBuilder.append("-W ").append(hardJobDuration).append(' ');
         }
         if (StringUtils.isNotBlank(jobResources.get("gridQueue"))) {
             nativeSpecBuilder.append("-q ").append(jobResources.get("gridQueue")).append(' ');
