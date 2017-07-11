@@ -58,6 +58,7 @@ public class ExternalLSFArrayDrmaaJobRunner extends AbstractExternalProcessRunne
             jt.setErrorPath(":" + errorFile.getParentFile().getAbsolutePath());
             Map<String, String> jobResources = serviceContext.getResources();
             String nativeSpec = createNativeSpec(jobResources);
+            logger.debug("Native spec: {}", nativeSpec);
             if (StringUtils.isNotBlank(nativeSpec)) {
                 jt.setNativeSpecification(nativeSpec);
             }

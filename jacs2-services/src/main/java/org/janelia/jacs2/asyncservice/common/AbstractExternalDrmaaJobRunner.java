@@ -52,10 +52,6 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
             errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
             jt.setErrorPath(":" + errorFile.getAbsolutePath());
             Map<String, String> jobResources = serviceContext.getResources();
-            long softJobDuration = getSoftJobDurationLimitInSeconds(jobResources);
-            if (softJobDuration > 0) jt.setSoftRunDurationLimit(softJobDuration);
-            long hardJobDuration = getHardJobDurationLimitInSeconds(jobResources);
-            if (hardJobDuration > 0) jt.setHardRunDurationLimit(hardJobDuration);
             String nativeSpec = createNativeSpec(jobResources);
             if (StringUtils.isNotBlank(nativeSpec)) {
                 jt.setNativeSpecification(nativeSpec);

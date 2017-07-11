@@ -39,6 +39,14 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
                     .append(' ')
             ;
         }
+        long softJobDuration = getSoftJobDurationLimitInSeconds(jobResources) / 60;
+        if (softJobDuration > 0) {
+            nativeSpecBuilder.append("-We ").append(softJobDuration).append(' ');
+        }
+        long hardJobDuration = getHardJobDurationLimitInSeconds(jobResources) / 60;
+        if (hardJobDuration > 0) {
+            nativeSpecBuilder.append("-W ").append(hardJobDuration).append(' ');
+        }
         if (StringUtils.isNotBlank(jobResources.get("gridQueue"))) {
             nativeSpecBuilder.append("-q ").append(jobResources.get("gridQueue")).append(' ');
         }
