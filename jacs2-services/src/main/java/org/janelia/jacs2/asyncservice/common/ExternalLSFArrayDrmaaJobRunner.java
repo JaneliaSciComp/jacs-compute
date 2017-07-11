@@ -134,7 +134,7 @@ public class ExternalLSFArrayDrmaaJobRunner extends AbstractExternalProcessRunne
 //                    .append("core(1)")
 //                    .append(']')
 //                    .append('"')
-                    .append(' ')
+//                    .append(' ')
             ;
         }
         long softJobDuration = getSoftJobDurationLimitInSeconds(jobResources) / 60;
