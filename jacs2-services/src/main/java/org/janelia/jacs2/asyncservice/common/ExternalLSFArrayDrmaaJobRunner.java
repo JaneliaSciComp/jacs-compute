@@ -139,11 +139,11 @@ public class ExternalLSFArrayDrmaaJobRunner extends AbstractExternalProcessRunne
         }
         long softJobDuration = getSoftJobDurationLimitInSeconds(jobResources) / 60;
         if (softJobDuration > 0) {
-            nativeSpecBuilder.append("-We ").append(softJobDuration).append(' ');
+            nativeSpecBuilder.append("-We 0:").append(softJobDuration).append(' ');
         }
         long hardJobDuration = getHardJobDurationLimitInSeconds(jobResources) / 60;
         if (hardJobDuration > 0) {
-            nativeSpecBuilder.append("-W ").append(hardJobDuration).append(' ');
+            nativeSpecBuilder.append("-W 0:").append(hardJobDuration).append(' ');
         }
         if (StringUtils.isNotBlank(jobResources.get("gridQueue"))) {
             nativeSpecBuilder.append("-q ").append(jobResources.get("gridQueue")).append(' ');
