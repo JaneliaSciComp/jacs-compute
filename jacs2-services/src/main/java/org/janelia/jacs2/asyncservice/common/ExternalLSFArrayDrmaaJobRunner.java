@@ -127,14 +127,14 @@ public class ExternalLSFArrayDrmaaJobRunner extends AbstractExternalProcessRunne
             // append processing environment
             nativeSpecBuilder
                     .append("-n ").append(nProcessingSlots).append(' ')
-//                    .append("-R ")
-//                    .append('"')
-//                    .append("affinity")
-//                    .append('[')
-//                    .append("core(1)")
-//                    .append(']')
-//                    .append('"')
-//                    .append(' ')
+                    .append("-R ")
+                    .append('"')
+                    .append("affinity")
+                    .append('[')
+                    .append("core(1)")
+                    .append(']')
+                    .append('"')
+                    .append(' ')
             ;
         }
         long softJobDuration = getSoftJobDurationLimitInSeconds(jobResources) / 60;
