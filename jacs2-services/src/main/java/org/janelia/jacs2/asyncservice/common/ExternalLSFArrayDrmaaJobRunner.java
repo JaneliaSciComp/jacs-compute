@@ -53,9 +53,9 @@ public class ExternalLSFArrayDrmaaJobRunner extends AbstractExternalProcessRunne
                 jt.setInputPath(":" + serviceContext.getInputPath());
             }
             outputFile = prepareOutputFile(serviceContext.getOutputPath(), "Output file must be set before running the service " + serviceContext.getName());
-            jt.setOutputPath(":" + outputFile.getAbsolutePath());
+            jt.setOutputPath(":" + outputFile.getParentFile().getAbsolutePath());
             errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
-            jt.setErrorPath(":" + errorFile.getAbsolutePath());
+            jt.setErrorPath(":" + errorFile.getParentFile().getAbsolutePath());
             Map<String, String> jobResources = serviceContext.getResources();
             long softJobDuration = getSoftJobDurationLimitInSeconds(jobResources);
             if (softJobDuration > 0) jt.setSoftRunDurationLimit(softJobDuration);
