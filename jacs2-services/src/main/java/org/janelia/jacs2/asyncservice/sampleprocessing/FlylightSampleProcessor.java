@@ -549,13 +549,13 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         return alignmentProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Align sample")
+                        .addResources(alignmentServiceParams.getResources())
                         .waitFor(deps)
                         .build(),
                 alignmentServiceParams.getAlignmentServiceArgsArray()
         ).thenCompose((JacsServiceResult<AlignmentResultFiles> alignmentResultFiles) -> updateAlignmentResultsProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Update alignment results")
-                        .addResources(alignmentServiceParams.getResources())
                         .waitFor(alignmentResultFiles.getJacsServiceData())
                         .build(),
                 new ServiceArg("-sampleId", alignmentServiceParams.getSampleProcessorResult().getSampleId()),
@@ -585,16 +585,16 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         .addRequiredMemoryInGB(getRequiredMemoryForNeuronSeparationByObjective(sampleProcessorResult.getObjective()))
                         .waitFor(deps)
                         .build(),
-                    new ServiceArg("-sampleId", sampleProcessorResult.getSampleId()),
-                    new ServiceArg("-objective", sampleProcessorResult.getObjective()),
-                    new ServiceArg("-runId", sampleProcessorResult.getRunId()),
-                    new ServiceArg("-resultId", alignmentResultId),
-                    new ServiceArg("-inputFile", sampleProcessorResult.getAreaFile()),
-                    new ServiceArg("-outputDir", neuronSeparationOutputDir.toString()),
-                    new ServiceArg("-signalChannels", sampleProcessorResult.getSignalChannels()),
-                    new ServiceArg("-referenceChannel", sampleProcessorResult.getReferenceChannel()),
-                    new ServiceArg("-consolidatedLabelFile", consolidatedLabelFile.toString()),
-                    new ServiceArg("-previousResultFile", previousNeuronsResult != null ? previousNeuronsResult.toString() : "")
+                new ServiceArg("-sampleId", sampleProcessorResult.getSampleId()),
+                new ServiceArg("-objective", sampleProcessorResult.getObjective()),
+                new ServiceArg("-runId", sampleProcessorResult.getRunId()),
+                new ServiceArg("-resultId", alignmentResultId),
+                new ServiceArg("-inputFile", sampleProcessorResult.getAreaFile()),
+                new ServiceArg("-outputDir", neuronSeparationOutputDir.toString()),
+                new ServiceArg("-signalChannels", sampleProcessorResult.getSignalChannels()),
+                new ServiceArg("-referenceChannel", sampleProcessorResult.getReferenceChannel()),
+                new ServiceArg("-consolidatedLabelFile", consolidatedLabelFile.toString()),
+                new ServiceArg("-previousResultFile", previousNeuronsResult != null ? previousNeuronsResult.toString() : "")
             );
     }
 
