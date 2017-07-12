@@ -74,8 +74,13 @@ public class ServiceExecutionContext {
             return this;
         }
 
-        public Builder addResource(String name, String value) {
-            serviceExecutionContext.resources.put(name, value);
+        public Builder addRequiredMemoryInGB(int mem) {
+            ProcessorHelper.setRequiredMemoryInGB(serviceExecutionContext.resources, mem);
+            return this;
+        }
+
+        public Builder addResources(Map<String, String> srcResources) {
+            serviceExecutionContext.resources.putAll(srcResources);
             return this;
         }
 

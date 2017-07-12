@@ -4,7 +4,9 @@ import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
 import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AlignmentServiceParams {
 
@@ -12,6 +14,7 @@ public class AlignmentServiceParams {
     private final SampleProcessorResult sampleProcessorResult;
     private final NeuronSeparationFiles neuronSeparationFiles;
     private final List<ServiceArg> alignmentServiceArgs;
+    private final Map<String, String> resources = new LinkedHashMap<>();
 
     public AlignmentServiceParams(String alignmentResultName, SampleProcessorResult sampleProcessorResult, NeuronSeparationFiles neuronSeparationFiles, List<ServiceArg> alignmentServiceArgs) {
         this.alignmentResultName = alignmentResultName;
@@ -38,5 +41,9 @@ public class AlignmentServiceParams {
 
     public ServiceArg[] getAlignmentServiceArgsArray() {
         return alignmentServiceArgs.toArray(new ServiceArg[alignmentServiceArgs.size()]);
+    }
+
+    public Map<String, String> getResources() {
+        return resources;
     }
 }

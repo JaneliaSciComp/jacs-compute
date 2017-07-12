@@ -475,6 +475,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         return sampleNeuronSeparationProcessor.process(
                                 new ServiceExecutionContext.Builder(jacsServiceData)
                                         .description("Separate sample neurons")
+                                        .addRequiredMemoryInGB(getRequiredMemoryForNeuronSeparationByObjective(sr.getObjective()))
                                         .waitFor(deps)
                                         .build(),
                                 new ServiceArg("-sampleId", sr.getSampleId()),
@@ -489,6 +490,20 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         );
                     })
                     .collect(Collectors.toList());
+    }
+
+    private int getRequiredMemoryForNeuronSeparationByObjective(String objective) {
+        if (StringUtils.isBlank(objective)) {
+            return 96;
+        }
+        switch(objective) {
+            case "63x":
+                return 96;
+            case "40x":
+                return 60;
+            default:
+                return 24;
+        }
     }
 
     private void runAllAlignments(JacsServiceData jacsServiceData, String sampleDataRootDir, List<String> alignmentAlgorithms, JacsServiceResult<List<SampleProcessorResult>> lspr, List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults) {
@@ -540,6 +555,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         ).thenCompose((JacsServiceResult<AlignmentResultFiles> alignmentResultFiles) -> updateAlignmentResultsProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Update alignment results")
+                        .addResources(alignmentServiceParams.getResources())
                         .waitFor(alignmentResultFiles.getJacsServiceData())
                         .build(),
                 new ServiceArg("-sampleId", alignmentServiceParams.getSampleProcessorResult().getSampleId()),
@@ -566,6 +582,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         return sampleNeuronWarpingProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Warp sample neurons")
+                        .addRequiredMemoryInGB(getRequiredMemoryForNeuronSeparationByObjective(sampleProcessorResult.getObjective()))
                         .waitFor(deps)
                         .build(),
                     new ServiceArg("-sampleId", sampleProcessorResult.getSampleId()),
