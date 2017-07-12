@@ -29,7 +29,7 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
             // append processing environment
             nativeSpecBuilder
                     .append("-n ").append(nProcessingSlots).append(' ')
-                    .append("-R")
+                    .append("-R ")
                     .append('"')
                     .append("affinity")
                     .append('[')
@@ -39,12 +39,20 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
                     .append(' ')
             ;
         }
+        long softJobDurationInMins = getSoftJobDurationLimitInSeconds(jobResources) / 60;
+        if (softJobDurationInMins > 0) {
+            nativeSpecBuilder.append("-We 0:").append(softJobDurationInMins).append(' ');
+        }
+        long hardJobDurationInMins = getHardJobDurationLimitInSeconds(jobResources) / 60;
+        if (hardJobDurationInMins > 0) {
+            nativeSpecBuilder.append("-W 0:").append(hardJobDurationInMins).append(' ');
+        }
         if (StringUtils.isNotBlank(jobResources.get("gridQueue"))) {
             nativeSpecBuilder.append("-q ").append(jobResources.get("gridQueue")).append(' ');
         }
         String gridNodeArchitecture = ProcessorHelper.getCPUType(jobResources); // sandy, haswell, broadwell, avx2
         if (StringUtils.isNotBlank(gridNodeArchitecture)) {
-            nativeSpecBuilder.append("-R")
+            nativeSpecBuilder.append("-R ")
                     .append('"')
                     .append("select")
                     .append('[')
@@ -56,7 +64,7 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
         }
         String gridResourceLimits = getGridJobResourceLimits(jobResources);
         if (StringUtils.isNotBlank(gridResourceLimits)) {
-            nativeSpecBuilder.append("-R")
+            nativeSpecBuilder.append("-R ")
                     .append('"')
                     .append(gridResourceLimits)
                     .append('"')
