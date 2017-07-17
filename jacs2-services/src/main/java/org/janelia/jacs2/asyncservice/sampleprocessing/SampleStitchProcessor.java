@@ -300,6 +300,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
     private JacsServiceData stitchTilesFromArea(JacsServiceData jacsServiceData, Path inputDir, Path outputFile, String referenceChannelNumber) {
         JacsServiceData stitchingService = vaa3dStitchAndBlendProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Stitch tiles")
+                        .addRequiredMemoryInGB(72)
                         .build(),
                 new ServiceArg("-inputDir", inputDir.toString()),
                 new ServiceArg("-outputFile", outputFile.toString()),

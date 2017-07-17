@@ -9,5 +9,5 @@ import java.lang.annotation.Target;
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD, ElementType.TYPE})
-public @interface LSFClusterJob {
+public @interface SGEDrmaaJob {
 }

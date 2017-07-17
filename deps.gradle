@@ -55,6 +55,11 @@ dependencies {
         // drmaa
         DRMAA1_LIB = "us.levk:drmaa-gridengine:6.2u5"
 
+        // http
+        HTTPCOMPONENT_VERSION = "4.5.3"
+        HTTPCOMPONENT_LIB = "org.apache.httpcomponents:httpclient:${HTTPCOMPONENT_VERSION}"
+        HTTPMIME_LIB = "org.apache.httpcomponents:httpmime:${HTTPCOMPONENT_VERSION}"
+
         // testing
         JUNIT_VERSION = "4.12"
     }

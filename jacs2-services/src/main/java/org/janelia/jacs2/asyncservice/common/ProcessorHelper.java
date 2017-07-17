@@ -50,4 +50,22 @@ public class ProcessorHelper {
         }
         return (int) Math.ceil(mem / memPerSlotInGB);
     }
+
+    public static String getGridBillingAccount(Map<String, String> jobResources) {
+        return jobResources.get("gridAccountId");
+    }
+
+    public static long getSoftJobDurationLimitInSeconds(Map<String, String> jobResources) {
+        String jobDuration = StringUtils.defaultIfBlank(jobResources.get("softGridJobDurationInSeconds"), "-1");
+        return Long.parseLong(jobDuration);
+    }
+
+    public static long getHardJobDurationLimitInSeconds(Map<String, String> jobResources) {
+        String jobDuration = StringUtils.defaultIfBlank(jobResources.get("hardGridJobDurationInSeconds"), "-1");
+        return Long.parseLong(jobDuration);
+    }
+
+    public static String getGridJobResourceLimits(Map<String, String> jobResources) {
+        return jobResources.get("gridResourceLimits");
+    }
 }

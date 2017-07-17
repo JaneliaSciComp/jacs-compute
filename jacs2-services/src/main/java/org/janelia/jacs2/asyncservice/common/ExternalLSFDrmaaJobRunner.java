@@ -2,14 +2,14 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ggf.drmaa.Session;
-import org.janelia.jacs2.asyncservice.qualifier.LSFClusterJob;
+import org.janelia.jacs2.asyncservice.qualifier.LSFDrmaaJob;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.util.Map;
 
-@LSFClusterJob
+@LSFDrmaaJob
 public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
 
     @Inject
@@ -20,7 +20,7 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
     protected String createNativeSpec(Map<String, String> jobResources) {
         StringBuilder nativeSpecBuilder = new StringBuilder();
         // append accountID for billing
-        String billingAccount = getGridBillingAccount(jobResources);
+        String billingAccount = ProcessorHelper.getGridBillingAccount(jobResources);
         if (StringUtils.isNotBlank(billingAccount)) {
             nativeSpecBuilder.append("-P ").append(billingAccount).append(' ');
         }
@@ -39,11 +39,11 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
                     .append(' ')
             ;
         }
-        long softJobDurationInMins = getSoftJobDurationLimitInSeconds(jobResources) / 60;
+        long softJobDurationInMins = ProcessorHelper.getSoftJobDurationLimitInSeconds(jobResources) / 60;
         if (softJobDurationInMins > 0) {
             nativeSpecBuilder.append("-We 0:").append(softJobDurationInMins).append(' ');
         }
-        long hardJobDurationInMins = getHardJobDurationLimitInSeconds(jobResources) / 60;
+        long hardJobDurationInMins = ProcessorHelper.getHardJobDurationLimitInSeconds(jobResources) / 60;
         if (hardJobDurationInMins > 0) {
             nativeSpecBuilder.append("-W 0:").append(hardJobDurationInMins).append(' ');
         }
@@ -62,7 +62,7 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
                     .append(' ')
             ;
         }
-        String gridResourceLimits = getGridJobResourceLimits(jobResources);
+        String gridResourceLimits = ProcessorHelper.getGridJobResourceLimits(jobResources);
         if (StringUtils.isNotBlank(gridResourceLimits)) {
             nativeSpecBuilder.append("-R ")
                     .append('"')

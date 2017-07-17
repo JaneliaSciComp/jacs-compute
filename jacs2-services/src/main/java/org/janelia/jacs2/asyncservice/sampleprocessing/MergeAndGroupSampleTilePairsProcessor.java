@@ -388,6 +388,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         Path mergedResultFileName = FileUtils.getFilePath(mergedResultDir, mergeFileNameGenerator.apply(mcd.tilePair), ".v3draw");
         if (mcd.tilePair.hasTwoLsms()) {
             mergeLsmPairsService = mergeLsmPairProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                            .addRequiredMemoryInGB(32)
                             .waitFor(deps)
                             .build(),
                     new ServiceArg("-lsm1", SampleServicesUtils.getImageFile(args.sampleDataRootDir, args.sampleLsmsSubDir,
@@ -456,6 +457,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         String referenceChannelNumber = mergeTileResults.areaChannelComponents.referenceChannelNumbers;
         JacsServiceData groupingService = vaa3dStitchGroupingProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Group tiles")
+                        .addRequiredMemoryInGB(72)
                         .waitFor(mergeTileResults.mergeTileServiceList.toArray(new JacsServiceData[mergeTileResults.mergeTileServiceList.size()]))
                         .build(),
                 new ServiceArg("-inputDir", mergeDir.toString()),

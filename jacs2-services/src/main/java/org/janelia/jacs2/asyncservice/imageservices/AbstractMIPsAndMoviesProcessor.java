@@ -128,7 +128,11 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractBasicLifeCy
             throw new ComputationException(jacsServiceData,  "Channel spec is required for " + jacsServiceData.toString());
         }
         Path temporaryOutputDir = getTemporaryOutput(args, jacsServiceData);
-        JacsServiceData fijiMacroService = fijiMacroProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
+        JacsServiceData fijiMacroService = fijiMacroProcessor.createServiceData(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Invoke Fiji macro")
+                        .addRequiredMemoryInGB(getRequiredMemoryInGB())
+                        .build(),
                 new ServiceArg("-macro", mipsAndMoviesMacro),
                 new ServiceArg("-macroArgs", getMIPsAndMoviesArgs(args, temporaryOutputDir)),
                 new ServiceArg("-temporaryOutput", temporaryOutputDir.toString()),
@@ -161,10 +165,12 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractBasicLifeCy
     }
 
     private JacsServiceData submitMpegConverterService(String aviFileName, String description, JacsServiceData jacsServiceData, JacsServiceData dep) {
-        JacsServiceData mpegConverterService = mpegConverterProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
-                .description(description)
-                .waitFor(dep)
-                .build(),
+        JacsServiceData mpegConverterService = mpegConverterProcessor.createServiceData(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description(description)
+                        .addRequiredMemoryInGB(getRequiredMemoryInGB())
+                        .waitFor(dep)
+                        .build(),
                 new ServiceArg("-input", aviFileName)
         );
         return submitDependencyIfNotFound(mpegConverterService);
@@ -189,4 +195,7 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractBasicLifeCy
         return Paths.get(args.resultsDir);
     }
 
+    private int getRequiredMemoryInGB() {
+        return 50;
+    }
 }

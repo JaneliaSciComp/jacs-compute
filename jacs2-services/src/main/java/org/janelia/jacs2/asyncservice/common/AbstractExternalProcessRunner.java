@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -34,7 +35,7 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         this.logger = logger;
     }
 
-    protected String createProcessingScript(ExternalCodeBlock externalCode, String workingDirName, JacsServiceData sd) {
+    protected String createProcessingScript(ExternalCodeBlock externalCode, Map<String, String> env, String workingDirName, JacsServiceData sd) {
         ScriptWriter scriptWriter = null;
         try {
             Preconditions.checkArgument(!externalCode.isEmpty());
@@ -45,7 +46,7 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
             Path scriptFilePath = createScriptFileName(sd, workingDirectory);
             File scriptFile = Files.createFile(scriptFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
             scriptWriter = new ScriptWriter(new BufferedWriter(new FileWriter(scriptFile)));
-            scriptWriter.add(externalCode.toString());
+            writeProcessingCode(externalCode, env, scriptWriter);
             jacsServiceDataPersistence.addServiceEvent(
                     sd,
                     JacsServiceData.createServiceEvent(JacsServiceEventTypes.CREATED_RUNNING_SCRIPT, String.format("Created the running script for %s: %s", sd.getName(), sd.getArgs()))
@@ -61,6 +62,10 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         } finally {
             if (scriptWriter != null) scriptWriter.close();
         }
+    }
+
+    protected void writeProcessingCode(ExternalCodeBlock externalCode, Map<String, String> env, ScriptWriter scriptWriter) {
+        scriptWriter.add(externalCode.toString());
     }
 
     protected File prepareOutputFile(String filepath, String errorCaseMessage) throws IOException {

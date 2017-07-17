@@ -3,13 +3,13 @@ package org.janelia.jacs2.asyncservice.common;
 import org.apache.commons.lang3.StringUtils;
 import org.ggf.drmaa.Session;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.asyncservice.qualifier.SGEClusterJob;
+import org.janelia.jacs2.asyncservice.qualifier.SGEDrmaaJob;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.util.Map;
 
-@SGEClusterJob
+@SGEDrmaaJob
 public class ExternalSGEDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
 
     @Inject
@@ -20,7 +20,7 @@ public class ExternalSGEDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
     protected String createNativeSpec(Map<String, String> jobResources) {
         StringBuilder nativeSpecBuilder = new StringBuilder();
         // append accountID for billing
-        String billingAccount = getGridBillingAccount(jobResources);
+        String billingAccount = ProcessorHelper.getGridBillingAccount(jobResources);
         if (StringUtils.isNotBlank(billingAccount)) {
             nativeSpecBuilder.append("-A ").append(billingAccount).append(' ');
         }
@@ -35,7 +35,7 @@ public class ExternalSGEDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
         }
         // append grid resource limits - the resource limits must be specified as a comma delimited list of <name>'='<value>, e.g.
         // gridResourceLimits: "short=true,scalityr=1,scalityw=1,haswell=true"
-        String gridResourceLimits = getGridJobResourceLimits(jobResources);
+        String gridResourceLimits = ProcessorHelper.getGridJobResourceLimits(jobResources);
         if (StringUtils.isNotBlank(gridResourceLimits)) {
             nativeSpecBuilder.append("-l ").append(gridResourceLimits).append(' ');
         }

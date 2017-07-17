@@ -31,7 +31,7 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
                               String workingDirName,
                               JacsServiceData serviceContext) {
         logger.debug("Begin DRMAA job invocation for {}", serviceContext);
-        String processingScript = createProcessingScript(externalCode, workingDirName, serviceContext);
+        String processingScript = createProcessingScript(externalCode, env, workingDirName, serviceContext);
         jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
         JobTemplate jt = null;
         File outputFile;
@@ -51,8 +51,7 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
             jt.setOutputPath(":" + outputFile.getAbsolutePath());
             errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
             jt.setErrorPath(":" + errorFile.getAbsolutePath());
-            Map<String, String> jobResources = serviceContext.getResources();
-            String nativeSpec = createNativeSpec(jobResources);
+            String nativeSpec = createNativeSpec(serviceContext.getResources());
             if (StringUtils.isNotBlank(nativeSpec)) {
                 jt.setNativeSpecification(nativeSpec);
             }
@@ -61,7 +60,7 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
             logger.info("Submitted job {} for {}", jobId, serviceContext);
             jacsServiceDataPersistence.addServiceEvent(
                     serviceContext,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.DRMAA_SUBMIT, String.format("Submitted job %s {%s} running: %s", serviceContext.getName(), jobId, processingScript))
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT, String.format("Submitted job %s {%s} running: %s", serviceContext.getName(), jobId, processingScript))
             );
             drmaaSession.deleteJobTemplate(jt);
             jt = null;
@@ -70,7 +69,7 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
             jacsServiceDataPersistence.updateServiceState(
                     serviceContext,
                     JacsServiceState.ERROR,
-                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.DRMAA_JOB_ERROR, String.format("Error creating DRMAA job %s - %s", serviceContext.getName(), e.getMessage())))
+                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_JOB_ERROR, String.format("Error creating DRMAA job %s - %s", serviceContext.getName(), e.getMessage())))
             );
             logger.error("Error creating a DRMAA job {} for {}", processingScript, serviceContext, e);
             throw new ComputationException(serviceContext, e);
@@ -108,21 +107,4 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
 
     protected abstract String createNativeSpec(Map<String, String> jobResources);
 
-    protected String getGridBillingAccount(Map<String, String> jobResources) {
-        return jobResources.get("gridAccountId");
-    }
-
-    protected long getSoftJobDurationLimitInSeconds(Map<String, String> jobResources) {
-        String jobDuration = StringUtils.defaultIfBlank(jobResources.get("softGridJobDurationInSeconds"), "-1");
-        return Long.parseLong(jobDuration);
-    }
-
-    protected long getHardJobDurationLimitInSeconds(Map<String, String> jobResources) {
-        String jobDuration = StringUtils.defaultIfBlank(jobResources.get("hardGridJobDurationInSeconds"), "-1");
-        return Long.parseLong(jobDuration);
-    }
-
-    protected String getGridJobResourceLimits(Map<String, String> jobResources) {
-        return jobResources.get("gridResourceLimits");
-    }
 }

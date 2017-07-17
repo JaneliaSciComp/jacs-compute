@@ -136,18 +136,30 @@ public class ScriptWriter {
         return this;
     }
 
-    public ScriptWriter setVar(String var, String value) throws IOException {
-        w.append(indent).append(var).append('=').append(value).append('\n');
+    public ScriptWriter setVar(String var, String value) {
+        try {
+            w.append(indent).append(var).append('=').append(value).append('\n');
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         return this;
     }
 
-    public ScriptWriter exportVar(String var, String value) throws IOException {
-        w.append(indent).append("export ").append(var).append('=').append(value).append('\n');
+    public ScriptWriter exportVar(String var, String value) {
+        try {
+            w.append(indent).append("export ").append(var).append('=').append(value).append('\n');
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         return this;
     }
 
-    public ScriptWriter echo(String line) throws IOException {
-        w.append(indent).append("echo ").append('"').append(line).append('"').append('\n');
+    public ScriptWriter echo(String line) {
+        try {
+            w.append(indent).append("echo ").append('"').append(line).append('"').append('\n');
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         return this;
     }
 

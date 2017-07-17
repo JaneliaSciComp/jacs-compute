@@ -28,7 +28,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                               String workingDirName,
                               JacsServiceData serviceContext) {
         logger.debug("Begin local process invocation for {}", serviceContext);
-        String processingScript = createProcessingScript(externalCode, workingDirName, serviceContext);
+        String processingScript = createProcessingScript(externalCode, env, workingDirName, serviceContext);
         jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
         File outputFile;
         File errorFile;
