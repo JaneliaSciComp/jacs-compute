@@ -23,10 +23,24 @@ public class SingleInputAlignmentServiceBuilder implements AlignmentServiceBuild
     private static final long LARGE_FILE_SIZE_THRESHOLD_COMPRESSED = (2L * 1024L * 1024L * 1024L);
 
     private static final Set<String> SUPPORTED_ALGORITHMS = ImmutableSet.of(
-            "flyalign20x_JBA_Qiscore",
             "brainalign40xMCFO_INT",
             "brainalign40x_512px_INT",
-            "brainalign63xFlpout_1024px_INT"
+            "brainalign63xFlpout_1024px_INT",
+            "brainalign63xFlpout_512px_INT",
+            "brainalign63xLexAGAL4_1024px_INT",
+            "brainalign63xLexAGAL4_512px_INT",
+            "brainalignPolarity20xBrainVNCRescale",
+            "brainalignPolarity20xBrainVNCRescale_dpx",
+            "brainalignPolarityPair_1024px_INT",
+            "brainalignPolarityPair_dpx_1024px_INT",
+            "brainalignPolarityPair_ds_dpx_1024px_INT_v3",
+            "flyalign20xVNC_CMTK",
+            "flyalign20x_INT",
+            "flyalign20x_JBA_Qiscore",
+            "flyalign20x_dpx_1024px_INT",
+            "flybrainaligner20x_ditp_JBA",
+            "flyleftopticlobealign_512px_INT_MT",
+            "flyrightopticlobealign_512px_INT_MT"
     );
 
     @Override
