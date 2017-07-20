@@ -63,7 +63,7 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
                 .thenSuspendUntil((PeriodicResultCheck state) -> {
                     long currentTime = System.currentTimeMillis();
                     boolean result = state.checkTime < currentTime && hasJobFinished(periodicResultCheck.depsResult.getJacsServiceData(), jobInfo);
-                    if (jobIntervalCheck > 0) {
+                    if (jobIntervalCheck > 0 && state.checkTime < currentTime) {
                         state.checkTime = currentTime + jobIntervalCheck;
                     }
                     return new ContinuationCond.Cond<>(state, result);
