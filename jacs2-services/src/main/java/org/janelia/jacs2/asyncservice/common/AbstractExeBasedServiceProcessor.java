@@ -25,6 +25,16 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
 
     protected static final String DY_LIBRARY_PATH_VARNAME = "LD_LIBRARY_PATH";
 
+    protected static class PeriodicResultCheck<R> {
+        JacsServiceResult<R> depsResult;
+        long checkTime;
+
+        protected PeriodicResultCheck(JacsServiceResult<R> depsResult) {
+            this.depsResult = depsResult;
+            this.checkTime = -1;
+        }
+    }
+
     private final String executablesBaseDir;
     private final Instance<ExternalProcessRunner> serviceRunners;
     private final ThrottledProcessesQueue throttledProcessesQueue;
@@ -49,18 +59,9 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
     @Override
     protected ServiceComputation<JacsServiceResult<S>> processing(JacsServiceResult<S> depsResult) {
         ExeJobInfo jobInfo = runExternalProcess(depsResult.getJacsServiceData());
-        class PeriodicResultCheck {
-            JacsServiceResult<S> depsResult;
-            long checkTime;
-
-            PeriodicResultCheck(JacsServiceResult<S> depsResult) {
-                this.depsResult = depsResult;
-                this.checkTime = -1;
-            }
-        }
-        PeriodicResultCheck periodicResultCheck = new PeriodicResultCheck(depsResult);
+        PeriodicResultCheck<S> periodicResultCheck = new PeriodicResultCheck<>(depsResult);
         return computationFactory.newCompletedComputation(periodicResultCheck)
-                .thenSuspendUntil((PeriodicResultCheck state) -> {
+                .thenSuspendUntil((PeriodicResultCheck<S> state) -> {
                     long currentTime = System.currentTimeMillis();
                     boolean result = state.checkTime < currentTime && hasJobFinished(periodicResultCheck.depsResult.getJacsServiceData(), jobInfo);
                     if (jobIntervalCheck > 0 && state.checkTime < currentTime) {
