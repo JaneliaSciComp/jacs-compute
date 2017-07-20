@@ -43,7 +43,7 @@ public class JacsServiceRegistry implements ServiceRegistry {
                 }
             }
             logger.error("NO Service found for {}", serviceName);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             logger.error("Error while looking up {}", serviceName, e);
         }
         return null;
