@@ -35,17 +35,21 @@ public class JacsServiceRegistry implements ServiceRegistry {
 
     @Override
     public ServiceProcessor<?> lookupService(String serviceName) {
-        for (ServiceProcessor<?> service : getAllServices(anyServiceSource)) {
-            if (serviceName.equals(service.getMetadata().getServiceName())) {
-                logger.trace("Service found for {}", serviceName);
-                return service;
+        try {
+            for (ServiceProcessor<?> service : getAllServices(anyServiceSource)) {
+                if (serviceName.equals(service.getMetadata().getServiceName())) {
+                    logger.trace("Service found for {}", serviceName);
+                    return service;
+                }
             }
+            logger.error("NO Service found for {}", serviceName);
+        } catch (Exception e) {
+            logger.error("Error while looking up {}", serviceName, e);
         }
-        logger.error("NO Service found for {}", serviceName);
         return null;
     }
 
-    private List<ServiceProcessor<?>> getAllServices(Instance<ServiceProcessor<?>> services) {
+    private List<ServiceProcessor<?>> getAllServices(@Any Instance<ServiceProcessor<?>> services) {
         List<ServiceProcessor<?>> allServices = new ArrayList<>();
         for (ServiceProcessor<?> service : services) {
             allServices.add(service);
