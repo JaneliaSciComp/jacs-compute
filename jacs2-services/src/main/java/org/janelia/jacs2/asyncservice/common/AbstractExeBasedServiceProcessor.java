@@ -62,8 +62,10 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
         return computationFactory.newCompletedComputation(periodicResultCheck)
                 .thenSuspendUntil((PeriodicResultCheck state) -> {
                     long currentTime = System.currentTimeMillis();
-                    boolean result = state.checkTime <= currentTime && hasJobFinished(periodicResultCheck.depsResult.getJacsServiceData(), jobInfo);
-                    state.checkTime = currentTime + jobIntervalCheck;
+                    boolean result = state.checkTime < currentTime && hasJobFinished(periodicResultCheck.depsResult.getJacsServiceData(), jobInfo);
+                    if (jobIntervalCheck > 0) {
+                        state.checkTime = currentTime + jobIntervalCheck;
+                    }
                     return new ContinuationCond.Cond<>(state, result);
                 })
                 .thenApply(pdCond -> {
