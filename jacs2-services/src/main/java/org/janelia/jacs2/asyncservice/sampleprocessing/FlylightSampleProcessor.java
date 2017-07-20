@@ -219,7 +219,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                 // after all neuron separation complete run the alignments
                                 @SuppressWarnings("unchecked")
                                 List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults = (List<JacsServiceResult<NeuronSeparationFiles>>) results;
-                                runAllAlignments(jacsServiceData, args.sampleDataRootDir, args.alignmentAlgorithms, lspr1, neuronSeparationsResults);
+                                runAllAlignments(args.sampleId, jacsServiceData, args.sampleDataRootDir, args.alignmentAlgorithms, lspr1, neuronSeparationsResults);
                                 return lspr1;
                             });
                 })
@@ -506,7 +506,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         }
     }
 
-    private void runAllAlignments(JacsServiceData jacsServiceData, String sampleDataRootDir, List<String> alignmentAlgorithms, JacsServiceResult<List<SampleProcessorResult>> lspr, List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults) {
+    private void runAllAlignments(Number sampleId, JacsServiceData jacsServiceData, String sampleDataRootDir, List<String> alignmentAlgorithms, JacsServiceResult<List<SampleProcessorResult>> lspr, List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults) {
         Map<NeuronSeparationFiles, JacsServiceResult<NeuronSeparationFiles>> indexedNeuronSeparationResults = Maps.uniqueIndex(neuronSeparationsResults,
                 new Function<JacsServiceResult<NeuronSeparationFiles>, NeuronSeparationFiles>() {
                     @Nullable
@@ -518,6 +518,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
         List<NeuronSeparationFiles> sampleNeuronSeparationFiles =  neuronSeparationsResults.stream().map(JacsServiceResult::getResult).collect(Collectors.toList());
 
+        Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), sampleId);
         for (String alignmentAlgorithm : alignmentAlgorithms) {
             AlignmentServiceBuilder alignmentServiceBuilder = alignmentServiceBuilderFactory.getServiceArgBuilder(alignmentAlgorithm);
             if (alignmentServiceBuilder == null) {
@@ -526,6 +527,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
             }
             List<AlignmentServiceParams> alignmentServicesParams =
                     alignmentServiceBuilder.getAlignmentServicesArgs(
+                            sample,
                             alignmentAlgorithm,
                             sampleDataRootDir,
                             lspr.getResult(),

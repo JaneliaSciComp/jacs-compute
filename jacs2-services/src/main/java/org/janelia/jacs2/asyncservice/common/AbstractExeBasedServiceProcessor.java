@@ -29,6 +29,7 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
     private final Instance<ExternalProcessRunner> serviceRunners;
     private final ThrottledProcessesQueue throttledProcessesQueue;
     private final ApplicationConfig applicationConfig;
+    private final int jobIntervalCheck;
 
     public AbstractExeBasedServiceProcessor(ServiceComputationFactory computationFactory,
                                             JacsServiceDataPersistence jacsServiceDataPersistence,
@@ -42,15 +43,31 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
         this.executablesBaseDir = applicationConfig.getStringPropertyValue("Executables.ModuleBase");
         this.throttledProcessesQueue = throttledProcessesQueue;
         this.applicationConfig = applicationConfig;
+        this.jobIntervalCheck = applicationConfig.getIntegerPropertyValue("service.exejob.checkIntervalInMillis", 0);
     }
 
     @Override
     protected ServiceComputation<JacsServiceResult<S>> processing(JacsServiceResult<S> depsResult) {
         ExeJobInfo jobInfo = runExternalProcess(depsResult.getJacsServiceData());
-        return computationFactory.newCompletedComputation(depsResult)
-                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, this.hasJobFinished(pd.getJacsServiceData(), jobInfo)))
+        class PeriodicResultCheck {
+            JacsServiceResult<S> depsResult;
+            long checkTime;
+
+            PeriodicResultCheck(JacsServiceResult<S> depsResult) {
+                this.depsResult = depsResult;
+                this.checkTime = -1;
+            }
+        }
+        PeriodicResultCheck periodicResultCheck = new PeriodicResultCheck(depsResult);
+        return computationFactory.newCompletedComputation(periodicResultCheck)
+                .thenSuspendUntil((PeriodicResultCheck state) -> {
+                    long currentTime = System.currentTimeMillis();
+                    boolean result = state.checkTime <= currentTime && hasJobFinished(periodicResultCheck.depsResult.getJacsServiceData(), jobInfo);
+                    state.checkTime = currentTime + jobIntervalCheck;
+                    return new ContinuationCond.Cond<>(state, result);
+                })
                 .thenApply(pdCond -> {
-                    JacsServiceResult<S> pd = pdCond.getState();
+                    JacsServiceResult<S> pd = pdCond.getState().depsResult;
                     List<String> errors = getErrors(pd.getJacsServiceData());
                     String errorMessage = null;
                     if (CollectionUtils.isNotEmpty(errors)) {

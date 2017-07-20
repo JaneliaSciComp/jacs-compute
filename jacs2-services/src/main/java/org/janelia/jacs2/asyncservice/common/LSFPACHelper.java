@@ -1,74 +1,95 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.collect.ImmutableList;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.ConnectionReuseStrategy;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.entity.EntityBuilder;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.FormBodyPart;
-import org.apache.http.entity.mime.FormBodyPartBuilder;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MIME;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.ByteArrayBody;
-import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.util.EntityUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.glassfish.jersey.media.multipart.BodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.MultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.media.multipart.MultiPartMediaTypes;
+import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 import javax.net.ssl.SSLContext;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
-import java.io.IOException;
-import java.util.Arrays;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Form;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.List;
 
 public class LSFPACHelper {
 
-    private static class SessionToken {
-        String platformToken;
-        String sessionId;
+    private static class LSFToken {
+        public String token;
+
+        @Override
+        public String toString() {
+            return ToStringBuilder.reflectionToString(this);
+        }
+    }
+
+    public static class LSFJobs {
+        @JsonProperty("@total")
+        public String total;
+        @JsonProperty("Job")
+        public List<LSFJob> lsfJobs;
+
+        @Override
+        public String toString() {
+            return ToStringBuilder.reflectionToString(this);
+        }
+    }
+
+    public static class LSFJob {
+        public String id;
+        public String user;
+        public String cmd;
+        public String exitCode;
+        public String status;
+
+        @Override
+        public String toString() {
+            return ToStringBuilder.reflectionToString(this);
+        }
     }
 
     private final String lsfPacUrl;
     private final String lsfUser;
     private final String lsfPassword;
     private final Logger logger;
+    private final ObjectMapper objectMapper;
 
     public LSFPACHelper(String lsfPacUrl, String lsfUser, String lsfPassword, Logger logger) {
         this.lsfPacUrl = lsfPacUrl;
         this.lsfUser = lsfUser;
         this.lsfPassword = lsfPassword;
         this.logger = logger;
+        this.objectMapper = ObjectMapperFactory.instance().newObjectMapper().configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
     }
 
     private String login() {
-        String authenticationEndpoint = lsfPacUrl + "/platform/ws/logon";
-        CloseableHttpClient httpclient = null;
+        String apiEndpoint = "/platform/webservice/logon/";
+        Client httpclient = null;
         try {
-            httpclient = getHttpClient();
-            HttpPost httpPost = new HttpPost(authenticationEndpoint);
+            httpclient = createHttpClient();
+            WebTarget target = createTarget(httpclient, apiEndpoint);
 
-            httpPost.setEntity(EntityBuilder
-                            .create()
-                            .setText(new StringBuilder()
+            Response response = target.request(MediaType.APPLICATION_JSON)
+                    .post(Entity.entity(new StringBuilder()
                                     .append("<User>")
                                     .append("<name>")
                                     .append(lsfUser)
@@ -77,80 +98,100 @@ public class LSFPACHelper {
                                     .append(lsfPassword)
                                     .append("</pass>")
                                     .append("</User>")
-                                    .toString())
-                            .setContentType(ContentType.APPLICATION_XML)
-                            .build()
-            );
-            setRequestHeaders(httpPost, null);
-            CloseableHttpResponse response = httpclient.execute(httpPost);
-            System.out.println(Arrays.asList(response.getAllHeaders()));
-            HttpEntity resEntity = response.getEntity();
-            Document doc = parseResultEntity(resEntity);
-            System.out.println(doc.getElementsByTagName("token").item(0).getTextContent().trim());
-            return doc.getElementsByTagName("token").item(0).getTextContent().trim();
+                                    .toString(),
+                            MediaType.APPLICATION_XML));
+            String entityBody = response.readEntity(String.class);
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                String errmessage;
+                if (StringUtils.isNotBlank(entityBody)) {
+                    errmessage = objectMapper.readTree(entityBody).get("message").asText();
+                } else {
+                    errmessage = response.getStatusInfo().getReasonPhrase();
+                }
+                throw new IllegalStateException(apiEndpoint + " returned with " + response.getStatus() + ": " + errmessage);
+            }
+            LSFToken token = objectMapper.readValue(entityBody, LSFToken.class);
+            return token.token;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
             if (httpclient != null) {
-                try {
-                    httpclient.close();
-                } catch (IOException ignore) {
-                    logger.debug("Error closing the http client", ignore);
-                }
+                httpclient.close();
             }
         }
     }
 
     private void logout(String authToken) {
-        String authenticationEndpoint = lsfPacUrl + "/platform/ws/logout";
-        CloseableHttpClient httpclient = null;
+        String apiEndpoint = "/platform/ws/logout";
+        Client httpclient = null;
         try {
-            httpclient = getHttpClient();
-            HttpPost httpRequest = new HttpPost(authenticationEndpoint);
-            setRequestHeaders(httpRequest, authToken);
-            CloseableHttpResponse response = httpclient.execute(httpRequest);
-            System.out.println("Status " + response.getStatusLine());
-            HttpEntity resEntity = response.getEntity();
-            System.out.println("LOGOUT " + EntityUtils.toString(resEntity));
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-       } finally {
-            if (httpclient != null) {
-                try {
-                    httpclient.close();
-                } catch (IOException ignore) {
-                    logger.debug("Error closing the http client", ignore);
-                }
-            }
-        }
-    }
+            httpclient = createHttpClient();
+            WebTarget target = createTarget(httpclient, apiEndpoint);
 
-    public String getJobStatus(String jobId) {
-        String jobInfoEndpoint = lsfPacUrl + "/platform/ws/jobs/" + jobId;
-        String authToken = login();
-        CloseableHttpClient httpclient = null;
-        try {
-            httpclient = getHttpClient();
-            HttpGet httpRequest = new HttpGet(jobInfoEndpoint);
-            setRequestHeaders(httpRequest, authToken);
-            CloseableHttpResponse response = httpclient.execute(httpRequest);
-            System.out.println("Status " + response.getStatusLine());
-            System.out.println(Arrays.asList(response.getAllHeaders()));
-            HttpEntity resEntity = response.getEntity();
-            return EntityUtils.toString(resEntity);
-//            Document resDoc = parseResultEntity(resEntity);
-//            XPath xpath = XPathFactory.newInstance().newXPath();
-//            XPathExpression expr = xpath.compile("/Jobs/Job/status/text()");
-//            return (String) expr.evaluate(resDoc, XPathConstants.STRING);
+            Response response = setRequestHeaders(target.request(MediaType.APPLICATION_JSON), authToken)
+                    .post(Entity.text(""));
+
+            String entityBody = response.readEntity(String.class);
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                String errmessage;
+                if (StringUtils.isNotBlank(entityBody)) {
+                    errmessage = objectMapper.readTree(entityBody).get("message").asText();
+                } else {
+                    errmessage = response.getStatusInfo().getReasonPhrase();
+                }
+                throw new IllegalStateException(apiEndpoint + " returned with " + response.getStatus() + ": " + errmessage);
+            }
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
             if (httpclient != null) {
-                try {
-                    httpclient.close();
-                } catch (IOException ignore) {
-                    logger.debug("Error closing the http client", ignore);
+                httpclient.close();
+            }
+        }
+    }
+
+    /**
+     * Get job(s) info.
+     * @param jobId is an LSF job ID. This can be an ID of an array job so the result can be for a list of jobs actually
+     *              that are all part of the same array job.
+     * @return
+     */
+    public LSFJobs getJobInfo(String jobId) {
+        String apiEndpoint = "/platform/ws/jobs/fullinfo";
+        String authToken = login();
+        Client httpclient = null;
+        try {
+            httpclient = createHttpClient();
+            WebTarget target = createTarget(httpclient, apiEndpoint)
+                    .queryParam("id", jobId)
+                    .queryParam("user", lsfUser)
+                    ;
+
+            Response response = setRequestHeaders(target.request(MediaType.APPLICATION_JSON), authToken)
+                        .get();
+            String entityBody = response.readEntity(String.class);
+            String errmessage = null;
+            if (StringUtils.isNotBlank(entityBody)) {
+                JsonNode errMessageNode = objectMapper.readTree(entityBody).get("message");
+                if (errMessageNode == null) {
+                    errMessageNode = objectMapper.readTree(entityBody).get("errMsg");
                 }
+                if (errMessageNode != null) {
+                    errmessage = errMessageNode.asText();
+                }
+            }
+            if (response.getStatus() != Response.Status.OK.getStatusCode() || StringUtils.isNotBlank(errmessage)) {
+                if (StringUtils.isBlank(errmessage)) {
+                    errmessage = response.getStatusInfo().getReasonPhrase();
+                }
+                throw new IllegalStateException(apiEndpoint + " returned with " + response.getStatus() + ": " + errmessage);
+            }
+            return objectMapper.readValue(entityBody, LSFJobs.class);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpclient != null) {
+                httpclient.close();
             }
             logout(authToken);
         }
@@ -158,122 +199,176 @@ public class LSFPACHelper {
 
     public String submitJob(String remoteCommand, String workingDirectory, String outputFile, String errorFile,
                             String nativeSpec) {
-        String submitJobEndpoint = lsfPacUrl + "/platform/ws/jobs/submit";
+        String apiEndpoint = "/platform/ws/jobs/submit";
         String authToken = login();
-        CloseableHttpClient httpclient = null;
+        Client httpclient = null;
         try {
-            httpclient = getHttpClient();
-            HttpPost httpRequest = new HttpPost(submitJobEndpoint);
-            setRequestHeaders(httpRequest, authToken);
+            httpclient = createHttpClient();
+            StringBuilder extraParamsBuilder = new StringBuilder();
+            if (StringUtils.isNotBlank(nativeSpec)) {
+                extraParamsBuilder.append(nativeSpec)
+                    .append(' ');
+            }
+            extraParamsBuilder.append("-cwd ").append(workingDirectory);
+
             String appDataFormat = "<AppParam><id>%s</id><value>%s</value><type></type></AppParam>";
-            MultipartEntityBuilder dataBuilder = MultipartEntityBuilder.create()
-                    .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
-                    .addTextBody("COMMANDTORUN", String.format(appDataFormat, "COMMANDTORUN", remoteCommand), ContentType.APPLICATION_XML)
-                    .addTextBody("OUTPUT_FILE", String.format(appDataFormat, "OUTPUT_FILE", outputFile), ContentType.APPLICATION_XML)
-                    .addTextBody("ERROR_FILE", String.format(appDataFormat, "ERROR_FILE", errorFile), ContentType.APPLICATION_XML)
-                    .addTextBody("EXTRA_PARAMS", String.format(appDataFormat, "EXTRA_PARAMS", nativeSpec), ContentType.APPLICATION_XML)
+            MultiPart dataField = new MultiPart(MultiPartMediaTypes.MULTIPART_MIXED_TYPE)
+                    .bodyPart(
+                            new BodyPart(MediaType.APPLICATION_XML_TYPE)
+                                    .contentDisposition(FormDataContentDisposition.name("COMMANDTORUN").build())
+                                    .entity(String.format(appDataFormat, "COMMANDTORUN", remoteCommand)))
+                    .bodyPart(
+                            new BodyPart(MediaType.APPLICATION_XML_TYPE)
+                                    .contentDisposition(FormDataContentDisposition.name("OUTPUT_FILE").build())
+                                    .entity(String.format(appDataFormat, "OUTPUT_FILE", outputFile)))
+                    .bodyPart(
+                            new BodyPart(MediaType.APPLICATION_XML_TYPE)
+                                    .contentDisposition(FormDataContentDisposition.name("ERROR_FILE").build())
+                                    .entity(String.format(appDataFormat, "ERROR_FILE", errorFile)))
+                    .bodyPart(
+                            new BodyPart(MediaType.APPLICATION_XML_TYPE)
+                                    .contentDisposition(FormDataContentDisposition.name("EXTRA_PARAMS").build())
+                                    .entity(String.format(appDataFormat, "EXTRA_PARAMS", extraParamsBuilder.toString())))
                     ;
 
-            MultipartEntityBuilder reqEntityBuilder = MultipartEntityBuilder.create()
-                    .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
-                    .addPart("AppName", new StringBody(String.valueOf("generic"), ContentType.TEXT_PLAIN))
-                    .addTextBody("data", dataBuilder.build().toString(), ContentType.MULTIPART_FORM_DATA)
+            MultiPart submitForm = new MultiPart(MultiPartMediaTypes.MULTIPART_MIXED_TYPE)
+                    .bodyPart(
+                            new BodyPart()
+                                    .contentDisposition(FormDataContentDisposition.name("AppName").build())
+                                    .entity("generic")
+                    )
+                    .bodyPart(
+                            new BodyPart(MultiPartMediaTypes.MULTIPART_MIXED_TYPE)
+                                    .contentDisposition(FormDataContentDisposition.name("data").build())
+                                    .entity(dataField)
+                    )
                     ;
-            httpRequest.setEntity(reqEntityBuilder.build());
-            System.out.println("Submitted request " + EntityUtils.toString(httpRequest.getEntity()) + " to " + submitJobEndpoint);
-            CloseableHttpResponse response = httpclient.execute(httpRequest);
-            System.out.println("Status " + response.getStatusLine());
-            HttpEntity resEntity = response.getEntity();
-            String job = EntityUtils.toString(resEntity);
-            System.out.println("SUBMITTED " + job);
-            return job;
+
+            WebTarget target = createTarget(httpclient, apiEndpoint);
+
+            Response response = setRequestHeaders(target.request(MediaType.APPLICATION_JSON), authToken)
+                    .post(Entity.entity(submitForm, submitForm.getMediaType()))
+                    ;
+
+            String entityBody = response.readEntity(String.class);
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                String errmessage;
+                if (StringUtils.isNotBlank(entityBody)) {
+                    errmessage = objectMapper.readTree(entityBody).get("message").asText();
+                } else {
+                    errmessage = response.getStatusInfo().getReasonPhrase();
+                }
+                throw new IllegalStateException(apiEndpoint + " returned with " + response.getStatus() + ": " + errmessage);
+            }
+            LSFJob submittedJob = objectMapper.readValue(entityBody, LSFJob.class);
+            return submittedJob.id;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
             if (httpclient != null) {
-                try {
-                    httpclient.close();
-                } catch (IOException ignore) {
-                    logger.debug("Error closing the http client", ignore);
-                }
+                httpclient.close();
             }
+            logout(authToken);
         }
     }
 
     public void killJob(String jobId) {
-        String killJobEndpoint = lsfPacUrl + "/platform/ws/jobs/kill";
+        String apiEndpoint = "/platform/ws/jobs/kill";
         String authToken = login();
-        CloseableHttpClient httpclient = null;
+        Client httpclient = null;
         try {
-            httpclient = getHttpClient();
-            HttpPost httpRequest = new HttpPost(killJobEndpoint);
-            setRequestHeaders(httpRequest, authToken);
-            httpRequest.setEntity(EntityBuilder
-                            .create()
-                            .setText(new StringBuilder()
-                                    .append("ids=").append(jobId)
-                                    .toString())
-                            .setContentType(ContentType.APPLICATION_FORM_URLENCODED)
-                            .build()
-            );
-            CloseableHttpResponse response = httpclient.execute(httpRequest);
-            HttpEntity resEntity = response.getEntity();
-            EntityUtils.consumeQuietly(resEntity);
+            httpclient = createHttpClient();
+
+            Form submitForm = new Form()
+                    .param("ids", jobId)
+                    .param("username", lsfUser);
+
+            WebTarget target = createTarget(httpclient, apiEndpoint);
+
+            Response response = setRequestHeaders(target.request(MediaType.APPLICATION_JSON), authToken)
+                    .post(Entity.form(submitForm))
+                    ;
+
+            String entityBody = response.readEntity(String.class);
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                String errmessage;
+                if (StringUtils.isNotBlank(entityBody)) {
+                    errmessage = objectMapper.readTree(entityBody).get("message").asText();
+                } else {
+                    errmessage = response.getStatusInfo().getReasonPhrase();
+                }
+                throw new IllegalStateException(apiEndpoint + " returned with " + response.getStatus() + ": " + errmessage);
+            }
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
             if (httpclient != null) {
-                try {
-                    httpclient.close();
-                } catch (IOException ignore) {
-                    logger.debug("Error closing the http client", ignore);
-                }
+                httpclient.close();
             }
+            logout(authToken);
         }
     }
 
-    private CloseableHttpClient getHttpClient() throws Exception {
-        SSLContext sslContext = new SSLContextBuilder()
-                .loadTrustMaterial(null, (certificate, authType) -> true).build();
+    private Client createHttpClient() throws Exception {
+        SSLContext sslContext = SSLContext.getInstance("TLSv1");
+        TrustManager[] trustManagers = {
+                new X509TrustManager() {
+                    @Override
+                    public void checkClientTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
+                        // Everyone is trusted
+                    }
 
-        CloseableHttpClient httpClient = HttpClients.custom()
-                .setSSLContext(sslContext)
-                .setSSLHostnameVerifier(new NoopHostnameVerifier())
+                    @Override
+                    public void checkServerTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
+                        // Everyone is trusted
+                    }
+
+                    @Override
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                }
+        };
+        sslContext.init(null, trustManagers, new SecureRandom());
+
+        return ClientBuilder.newBuilder()
+                .sslContext(sslContext)
+                .hostnameVerifier((s, sslSession) -> true)
+                .register(MultiPartFeature.class)
                 .build();
-
-        return httpClient;
     }
 
-    private Document parseResultEntity(HttpEntity resEntity) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        return builder.parse(resEntity.getContent());
+    private WebTarget createTarget(Client httpClient, String path) {
+        return httpClient.target(lsfPacUrl).path(path);
     }
 
-    private void setRequestHeaders(HttpRequestBase httpRequest, String authToken) {
-        httpRequest.addHeader("Accept", "application/xml");
-        httpRequest.addHeader("Content-Type", "application/xml");
+    private Invocation.Builder setRequestHeaders(Invocation.Builder requestBuilder, String authToken) {
         if (StringUtils.isNotBlank(authToken)) {
             String platformToken = authToken.replace("\"", "#quote#");
-            System.out.println("PLATFORM TOKEN:" + platformToken);
-            httpRequest.addHeader("platform_token", platformToken);
-            httpRequest.addHeader("Cookie", "platform_token=" + platformToken);
-            httpRequest.addHeader("REMOTE_USER", lsfUser);
+            requestBuilder.header("platform_token", platformToken);
+            requestBuilder.header("Cookie", "platform_token=" + platformToken);
         }
+        return requestBuilder;
     }
 
     public static void main(String[] args) {
-        String jobId = "87718%5B1%5D";
+        String jobId = "509355";
         LSFPACHelper lsfPacHelper = new LSFPACHelper("https://lsf-pac:8443", args[0], args[1], LoggerFactory.getLogger(LSFPACHelper.class));
-//        String status = lsfPacHelper.getJobStatus(jobId);
-//        System.out.println("Job " + jobId + " status " + status);
-        String newJob = lsfPacHelper.submitJob(
-                "/home/goinac/Work/jacs-2/local/test/testCmd.sh 'display this' /home/goinac/Work/jacs-2/local/test/flylightSample.20x.sh",
-                "/home/goinac/Work/jacs-2/tt/tempWorkingDir",
-                "/home/goinac/Work/jacs-2/tt/tempWorkingDir/test.out",
-                "/home/goinac/Work/jacs-2/tt/tempWorkingDir/test.err",
-                "-P jacs -n 1 -R \"select[haswell]\"");
-        System.out.println("New Job " + newJob);
+
+//        jobId = lsfPacHelper.submitJob(
+//                "/home/goinac/Work/jacs-2/local/test/testCmd.sh 'display this' /home/goinac/Work/jacs-2/local/test/flylightSample.20x.sh",
+//                "/home/goinac/Work/jacs-2/tt/tempWorkingDir",
+//                "/home/goinac/Work/jacs-2/tt/tempWorkingDir/test.out",
+//                "/home/goinac/Work/jacs-2/tt/tempWorkingDir/test.err",
+//                "-P jacs -n 1 -R \"select[haswell]\"");
+//        System.out.println("New Job: " + jobId + "#");
+
+        LSFJobs lsfJobs = lsfPacHelper.getJobInfo(jobId);
+        System.out.println("Jobs " + lsfJobs);
+
+//        lsfPacHelper.killJob(jobId);
+//        LSFJobs lsfKilledJob = lsfPacHelper.getJobInfo(jobId);
+//        System.out.println("Killed Job " + lsfKilledJob);
+
     }
 }

@@ -22,7 +22,24 @@ public class LSFPACJobInfo implements ExeJobInfo {
 
     @Override
     public boolean isDone() {
-        return done; // FIXME
+        if (done) return done;
+        LSFPACHelper.LSFJobs lsfJobs = lsfPacHelper.getJobInfo(jobId);
+        if (lsfJobs.lsfJobs == null) {
+            return done;
+        }
+        boolean doneResult = true;
+        for (LSFPACHelper.LSFJob lsfJob : lsfJobs.lsfJobs) {
+            switch (lsfJob.status.toUpperCase()) {
+                case "DONE":
+                    break;
+                case "EXIT": // The job has terminated with a non-zero status
+                    failed = true;
+                default: // for every other status the job(Array) is not done
+                    doneResult = false;
+            }
+        }
+        done = doneResult;
+        return done;
     }
 
     @Override

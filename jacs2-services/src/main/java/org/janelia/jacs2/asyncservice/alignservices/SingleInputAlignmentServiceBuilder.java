@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.alignservices;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
@@ -34,7 +35,8 @@ public class SingleInputAlignmentServiceBuilder implements AlignmentServiceBuild
     }
 
     @Override
-    public List<AlignmentServiceParams> getAlignmentServicesArgs(String alignmentAlgorithm,
+    public List<AlignmentServiceParams> getAlignmentServicesArgs(Sample sample,
+                                                                 String alignmentAlgorithm,
                                                                  String sampleDataRootDir,
                                                                  List<SampleProcessorResult> sampleProcessorResults,
                                                                  List<NeuronSeparationFiles> neuronSeparationResults) {
@@ -46,7 +48,7 @@ public class SingleInputAlignmentServiceBuilder implements AlignmentServiceBuild
             }
             NeuronSeparationFiles neuronSeparationFiles = neuronSeparationResults.get(resultIndex);
             AlignmentServiceParams alignmentServiceParams = new AlignmentServiceParams(
-                    "Fly 20x Alignment",
+                    "Fly Alignment",
                     sampleProcessorResult,
                     neuronSeparationFiles,
                     ImmutableList.of(
@@ -57,6 +59,8 @@ public class SingleInputAlignmentServiceBuilder implements AlignmentServiceBuild
                             new ServiceArg("-i1Dims", sampleProcessorResult.getImageSize()),
                             new ServiceArg("-o", getAlignmentOutputDir(sampleDataRootDir, "Alignment", sampleProcessorResult.getResultId(), sampleProcessorResults.size(), sampleProcessorResult.getArea(), resultIndex++).toString()),
                             new ServiceArg("-i1Neurons", neuronSeparationFiles.getConsolidatedLabelPath().toString()),
+                            new ServiceArg("-gender", sample.getGender()),
+                            new ServiceArg("-mountingProtocol", sample.getMountingProtocol()),
                             new ServiceArg("-alignmentAlgorithm", alignmentAlgorithm)
                     )
             );
