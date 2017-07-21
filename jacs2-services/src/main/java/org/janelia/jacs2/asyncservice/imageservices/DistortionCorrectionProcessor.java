@@ -86,7 +86,9 @@ public class DistortionCorrectionProcessor extends AbstractBasicLifeCycleService
     }
 
     private JacsServiceData createFijiService(DistortionCorrectionArgs args, JacsServiceData jacsServiceData) {
-        return fijiMacroProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
+        return fijiMacroProcessor.createServiceData(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .build(),
                 new ServiceArg("-macro", distortionCorrectionMacro),
                 new ServiceArg("-macroArgs", getMacroArgs(args)),
                 new ServiceArg("-finalOutput", getOutputDir(args).toString()),

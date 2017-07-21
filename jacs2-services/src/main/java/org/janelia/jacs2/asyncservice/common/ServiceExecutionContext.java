@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import com.google.common.base.Preconditions;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
@@ -15,6 +16,7 @@ public class ServiceExecutionContext {
         private final ServiceExecutionContext serviceExecutionContext;
 
         public Builder(JacsServiceData parentServiceData) {
+            Preconditions.checkArgument(parentServiceData != null);
             serviceExecutionContext = new ServiceExecutionContext(parentServiceData);
         }
 
@@ -101,7 +103,7 @@ public class ServiceExecutionContext {
     private List<Number> waitForIds = new ArrayList<>();
     private Map<String, String> resources = new LinkedHashMap<>();
 
-    public ServiceExecutionContext(JacsServiceData parentServiceData) {
+    private ServiceExecutionContext(JacsServiceData parentServiceData) {
         this.parentServiceData = parentServiceData;
     }
 

@@ -94,7 +94,9 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
     @Override
     protected JacsServiceResult<GetSampleLsmsIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         SampleServiceArgs args = getArgs(jacsServiceData);
-        JacsServiceData getSampleLsmMetadataServiceRef = getSampleLsmsMetadataProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
+        JacsServiceData getSampleLsmMetadataServiceRef = getSampleLsmsMetadataProcessor.createServiceData(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .build(),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),

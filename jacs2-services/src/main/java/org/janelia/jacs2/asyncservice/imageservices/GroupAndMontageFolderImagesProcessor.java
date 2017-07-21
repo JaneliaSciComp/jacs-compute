@@ -134,7 +134,9 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
         List<MontageFolderIntermediateResult> montageServiceResults = imageGroups.asMap().entrySet().stream()
                 .map(group -> {
                     Path montageOutput = getMontageOutput(args, group.getKey());
-                    JacsServiceData montageServiceRef = montageImagesProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
+                    JacsServiceData montageServiceRef = montageImagesProcessor.createServiceData(
+                            new ServiceExecutionContext.Builder(jacsServiceData)
+                                    .build(),
                             new ServiceArg("-inputFiles", group.getValue().stream().map(p -> p.toString()).collect(Collectors.joining(","))),
                             new ServiceArg("-tilesPerSide", tilesPerSide),
                             new ServiceArg("-output", montageOutput.toString())

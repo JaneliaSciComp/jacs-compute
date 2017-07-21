@@ -59,7 +59,7 @@ public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     for (int i = 0; i < args.levelCount; i++) {
                         String testName = args.testName + ".Level1Test" + i;
                         JacsServiceData j =
-                                level1ComputeTestProcessor.createServiceData(new ServiceExecutionContext(jsd));
+                                level1ComputeTestProcessor.createServiceData(new ServiceExecutionContext.Builder(jsd).build());
                         j.addArg("-testName");
                         j.addArg(testName);
                         logger.info("adding level1ComputeTest " + testName);

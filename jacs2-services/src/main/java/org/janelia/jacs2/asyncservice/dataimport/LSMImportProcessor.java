@@ -159,7 +159,9 @@ public class LSMImportProcessor extends AbstractBasicLifeCycleServiceProcessor<L
                         logger.error("No dataset record found for {}", lineEntries.getKey());
                         return null;
                     }
-                    JacsServiceData sageLoaderService = sageLoaderProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
+                    JacsServiceData sageLoaderService = sageLoaderProcessor.createServiceData(
+                            new ServiceExecutionContext.Builder(jacsServiceData)
+                                    .build(),
                             new ServiceArg("-lab", imageLine.getLab()),
                             new ServiceArg("-line", imageLine.getLab()),
                             new ServiceArg("-configFile", ds.getSageConfigPath()),

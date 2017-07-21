@@ -65,7 +65,7 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     logger.info("Beginning loop to create IntegerTests and save to queue");
                     for (int i = 0; i < args.integerServiceCount; i++) {
                         String testName = args.testName + ".IntegerTest" + i;
-                        JacsServiceData j = integerComputeTestProcessor.createServiceData(new ServiceExecutionContext(jsd));
+                        JacsServiceData j = integerComputeTestProcessor.createServiceData(new ServiceExecutionContext.Builder(jsd).build());
                         j.addArg("-testName");
                         j.addArg(testName);
                         logger.info("adding integerComputeTest " + testName);
@@ -78,7 +78,7 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     logger.info("Beginning loop to create FloatTests and save to queue");
                     for (int i = 0; i < args.floatServiceCount; i++) {
                         String testName = args.testName + ".FloatTest" + i;
-                        JacsServiceData j = floatComputeTestProcessor.createServiceData(new ServiceExecutionContext(jsdCond.getState()));
+                        JacsServiceData j = floatComputeTestProcessor.createServiceData(new ServiceExecutionContext.Builder(jsdCond.getState()).build());
                         j.addArg("-testName");
                         j.addArg(testName);
                         logger.info("adding floatComputeTest " + testName);

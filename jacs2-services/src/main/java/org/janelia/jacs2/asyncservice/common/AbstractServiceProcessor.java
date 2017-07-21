@@ -57,12 +57,12 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         }
         if (executionContext.getProcessingLocation() != null) {
             jacsServiceDataBuilder.setProcessingLocation(executionContext.getProcessingLocation());
-        } else if (executionContext.getParentServiceData() != null) {
+        } else {
             jacsServiceDataBuilder.setProcessingLocation(executionContext.getParentServiceData().getProcessingLocation());
         }
         if (executionContext.getWorkingDirectory() != null) {
             jacsServiceDataBuilder.setWorkspace(executionContext.getWorkingDirectory());
-        } else if (executionContext.getParentServiceData() != null) {
+        } else {
             Path parentWorkingDir = getWorkingDirectory(executionContext.getParentServiceData());
             jacsServiceDataBuilder.setWorkspace(Objects.toString(parentWorkingDir, null));
         }
@@ -76,9 +76,7 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         if (StringUtils.isNotBlank(executionContext.getErrorPath())) {
             jacsServiceDataBuilder.setErrorPath(executionContext.getErrorPath());
         }
-        if (executionContext.getParentServiceData() != null) {
-            jacsServiceDataBuilder.copyResourcesFrom(executionContext.getParentServiceData().getResources());
-        }
+        jacsServiceDataBuilder.copyResourcesFrom(executionContext.getParentServiceData().getResources());
         jacsServiceDataBuilder.copyResourcesFrom(executionContext.getResources());
         executionContext.getWaitFor().forEach(jacsServiceDataBuilder::addDependency);
         executionContext.getWaitForIds().forEach(jacsServiceDataBuilder::addDependencyId);

@@ -233,7 +233,9 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     protected JacsServiceResult<MergeSampleTilePairsIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         ConvertTileToImageArgs args = getArgs(jacsServiceData);
 
-        JacsServiceData updateSampleLSMMetadataServiceRef = updateSampleLSMMetadataProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
+        JacsServiceData updateSampleLSMMetadataServiceRef = updateSampleLSMMetadataProcessor.createServiceData(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .build(),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),

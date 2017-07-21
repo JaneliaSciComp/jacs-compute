@@ -77,7 +77,9 @@ public class GetSampleLsmsMetadataProcessor extends AbstractBasicLifeCycleServic
     protected JacsServiceResult<GetSampleLsmsIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
         SampleServiceArgs args = getArgs(jacsServiceData);
 
-        JacsServiceData getSampleLsmsServiceRef = getSampleImageFilesProcessor.createServiceData(new ServiceExecutionContext(jacsServiceData),
+        JacsServiceData getSampleLsmsServiceRef = getSampleImageFilesProcessor.createServiceData(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .build(),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),
