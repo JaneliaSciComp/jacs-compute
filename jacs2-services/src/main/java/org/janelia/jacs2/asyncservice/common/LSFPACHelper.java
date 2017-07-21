@@ -351,24 +351,4 @@ public class LSFPACHelper {
         return requestBuilder;
     }
 
-    public static void main(String[] args) {
-        String jobId = "509355";
-        LSFPACHelper lsfPacHelper = new LSFPACHelper("https://lsf-pac:8443", args[0], args[1], LoggerFactory.getLogger(LSFPACHelper.class));
-
-//        jobId = lsfPacHelper.submitJob(
-//                "/home/goinac/Work/jacs-2/local/test/testCmd.sh 'display this' /home/goinac/Work/jacs-2/local/test/flylightSample.20x.sh",
-//                "/home/goinac/Work/jacs-2/tt/tempWorkingDir",
-//                "/home/goinac/Work/jacs-2/tt/tempWorkingDir/test.out",
-//                "/home/goinac/Work/jacs-2/tt/tempWorkingDir/test.err",
-//                "-P jacs -n 1 -R \"select[haswell]\"");
-//        System.out.println("New Job: " + jobId + "#");
-
-        LSFJobs lsfJobs = lsfPacHelper.getJobInfo(jobId);
-        System.out.println("Jobs " + lsfJobs);
-
-//        lsfPacHelper.killJob(jobId);
-//        LSFJobs lsfKilledJob = lsfPacHelper.getJobInfo(jobId);
-//        System.out.println("Killed Job " + lsfKilledJob);
-
-    }
 }
