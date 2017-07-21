@@ -105,7 +105,6 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
             @Override
             public List<LSMSummary> collectResult(JacsServiceResult<?> depResults) {
                 SampleLSMSummaryIntermediateResult result = (SampleLSMSummaryIntermediateResult) depResults.getResult();
-                SampleLSMSummaryArgs args = getArgs(depResults.getJacsServiceData());
                 return result.montageCalls.stream()
                         .map(mc -> {
                             LSMSummary lsmSummary = new LSMSummary();
@@ -135,6 +134,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
         // update sample's LSMs
         JacsServiceData updateSampleLsmMetadataService = updateSampleLSMMetadataProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Update sample LSM metadata")
+                        .registerNotifications(jacsServiceData.findRegisteredNotificationByProcessingStage(FlylightSampleEvents.LSM_METADATA))
                         .build(),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-area", args.sampleArea),
@@ -149,6 +149,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
         JacsServiceData getSampleMipMapsService = getSampleMIPsAndMoviesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Generate MIPs and Movies for the sample")
                         .waitFor(updateSampleLsmMetadataService)
+                        .registerNotifications(jacsServiceData.findRegisteredNotificationByProcessingStage(FlylightSampleEvents.SUMMARY_MIPMAPS))
                         .build(),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-area", args.sampleArea),

@@ -49,6 +49,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -166,31 +167,37 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
             // compute LSM summaries in parallel with everything else
             initAndGetSampleImagesComputation
                     .thenCompose((JacsServiceResult<List<SampleImageFile>> lsir) -> sampleLSMSummaryProcessor.process(
-                                    new ServiceExecutionContext.Builder(jacsServiceData)
-                                            .description("Create sample LSM summary")
-                                            .waitFor(lsir.getJacsServiceData())
-                                            .build(),
-                                    new ServiceArg("-sampleId", args.sampleId),
-                                    new ServiceArg("-objective", args.sampleObjective),
-                                    new ServiceArg("-area", args.sampleArea),
-                                    new ServiceArg("-sampleResultsId", sampleResultsId),
-                                    new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
-                                    new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
-                                    new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
-                                    new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
-                                    new ServiceArg("-basicMipMapsOptions", args.basicMipMapsOptions),
-                                    new ServiceArg("-montageMipMaps", args.montageMipMaps)
+                            new ServiceExecutionContext.Builder(jacsServiceData)
+                                    .description("Create sample LSM summary")
+                                    .waitFor(lsir.getJacsServiceData())
+                                    .registerNotification(new RegisteredJacsNotification(FlylightSampleEvents.LSM_METADATA)
+                                            .withDefaultLifecycleStages()
+                                            .addNotificationField("sampleId", args.sampleId))
+                                    .registerNotification(new RegisteredJacsNotification(FlylightSampleEvents.SUMMARY_MIPMAPS)
+                                            .withDefaultLifecycleStages()
+                                            .addNotificationField("sampleId", args.sampleId))
+                                    .build(),
+                                            new ServiceArg("-sampleId", args.sampleId),
+                                            new ServiceArg("-objective", args.sampleObjective),
+                                            new ServiceArg("-area", args.sampleArea),
+                                            new ServiceArg("-sampleResultsId", sampleResultsId),
+                                            new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                                            new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
+                                            new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
+                                            new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
+                                            new ServiceArg("-basicMipMapsOptions", args.basicMipMapsOptions),
+                                            new ServiceArg("-montageMipMaps", args.montageMipMaps)
+                                    )
+                    )
+                            .thenCompose((JacsServiceResult<List<LSMSummary>> lsmSummariesResult) -> updateSampleSummaryResultsProcessor.process(
+                                            new ServiceExecutionContext.Builder(jacsServiceData)
+                                                    .description("Update LSM summary results")
+                                                    .waitFor(lsmSummariesResult.getJacsServiceData())
+                                                    .build(),
+                                            new ServiceArg("-sampleResultsId", sampleResultsId),
+                                            new ServiceArg("-sampleSummaryId", lsmSummariesResult.getJacsServiceData().getId())
+                                    )
                             )
-                    )
-                    .thenCompose((JacsServiceResult<List<LSMSummary>> lsmSummariesResult) -> updateSampleSummaryResultsProcessor.process(
-                                new ServiceExecutionContext.Builder(jacsServiceData)
-                                        .description("Update LSM summary results")
-                                        .waitFor(lsmSummariesResult.getJacsServiceData())
-                                        .build(),
-                                new ServiceArg("-sampleResultsId", sampleResultsId),
-                                new ServiceArg("-sampleSummaryId", lsmSummariesResult.getJacsServiceData().getId())
-                        )
-                    )
             ;
         }
         return initAndGetSampleImagesComputation

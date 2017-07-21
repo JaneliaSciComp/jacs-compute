@@ -1,5 +1,6 @@
 package org.janelia.jacs2.model.jacsservice;
 
+import java.util.List;
 import java.util.Map;
 
 public class JacsServiceDataBuilder {
@@ -84,6 +85,11 @@ public class JacsServiceDataBuilder {
 
     public JacsServiceDataBuilder copyResourcesFrom(Map<String, String> resources) {
         serviceData.getResources().putAll(resources);
+        return this;
+    }
+
+    public JacsServiceDataBuilder registerNotifications(List<RegisteredJacsNotification> notifications) {
+        notifications.forEach(serviceData::addRegisteredNotification);
         return this;
     }
 

@@ -2,6 +2,7 @@ package org.janelia.jacs2.model.jacsservice;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
@@ -52,6 +53,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private Date processStartTime = new Date();
     private Date creationDate = new Date();
     private Date modificationDate = new Date();
+    private List<RegisteredJacsNotification> registeredNotifications = new ArrayList<>();
     @JsonIgnore
     private JacsServiceData parentService;
     @JsonIgnore
@@ -275,6 +277,25 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public void clearResources() {
         this.resources.clear();
+    }
+
+    public List<RegisteredJacsNotification> getRegisteredNotifications() {
+        return registeredNotifications;
+    }
+
+    public void setRegisteredNotifications(List<RegisteredJacsNotification> registeredNotifications) {
+        this.registeredNotifications = registeredNotifications;
+    }
+
+    public List<RegisteredJacsNotification> findRegisteredNotificationByProcessingStage(String processingStage) {
+        return registeredNotifications.stream()
+                .filter(rn -> StringUtils.isBlank(processingStage) && StringUtils.isBlank(rn.getProcessingStage()) ||
+                                StringUtils.isNotBlank(processingStage) && StringUtils.isNotBlank(rn.getProcessingStage()) && processingStage.equals(rn.getProcessingStage()))
+                .collect(Collectors.toList());
+    }
+
+    public void addRegisteredNotification(RegisteredJacsNotification registeredNotification) {
+        registeredNotifications.add(registeredNotification);
     }
 
     public Object getSerializableResult() {

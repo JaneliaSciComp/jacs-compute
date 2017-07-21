@@ -4,11 +4,13 @@ import com.google.common.base.Preconditions;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class ServiceExecutionContext {
 
@@ -86,6 +88,17 @@ public class ServiceExecutionContext {
             return this;
         }
 
+        public Builder registerNotification(RegisteredJacsNotification registeredNotification) {
+            if (registeredNotification != null)
+                serviceExecutionContext.registeredNotifications.add(registeredNotification);
+            return this;
+        }
+
+        public Builder registerNotifications(List<RegisteredJacsNotification> registeredNotifications) {
+            serviceExecutionContext.registeredNotifications.addAll(registeredNotifications);
+            return this;
+        }
+
         public ServiceExecutionContext build() {
             return serviceExecutionContext;
         }
@@ -99,9 +112,10 @@ public class ServiceExecutionContext {
     private String workingDirectory;
     private JacsServiceState serviceState;
     private String description;
-    private List<JacsServiceData> waitFor = new ArrayList<>();
-    private List<Number> waitForIds = new ArrayList<>();
-    private Map<String, String> resources = new LinkedHashMap<>();
+    private final List<JacsServiceData> waitFor = new ArrayList<>();
+    private final List<Number> waitForIds = new ArrayList<>();
+    private final Map<String, String> resources = new LinkedHashMap<>();
+    private final List<RegisteredJacsNotification> registeredNotifications = new ArrayList<>();
 
     private ServiceExecutionContext(JacsServiceData parentServiceData) {
         this.parentServiceData = parentServiceData;
@@ -149,5 +163,9 @@ public class ServiceExecutionContext {
 
     Map<String, String> getResources() {
         return resources;
+    }
+
+    public List<RegisteredJacsNotification> getRegisteredNotifications() {
+        return registeredNotifications;
     }
 }

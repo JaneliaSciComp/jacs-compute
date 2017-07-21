@@ -1,11 +1,13 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -67,6 +69,7 @@ public class JacsServiceDispatcher {
         ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
         serviceComputationFactory.<JacsServiceData>newComputation()
                 .supply(() -> {
+                    sendNotification(jacsServiceData, RegisteredJacsNotification.LifecycleStage.START_PROCESSING);
                     jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.SUBMITTED, Optional.empty());
                     return jacsServiceData;
                 })
@@ -94,18 +97,19 @@ public class JacsServiceDispatcher {
     @MdcContext
     private void success(JacsServiceData jacsServiceData) {
         logger.info("Processing successful {}", jacsServiceData);
-        if (jacsServiceData.hasCompletedSuccessfully()) {
-            // nothing to do
-            logger.debug("Service {} has already been marked as successful", jacsServiceData);
-            return;
-        }
         if (jacsServiceData.hasCompletedUnsuccessfully()) {
             logger.warn("Attempted to overwrite failed state with success for {}", jacsServiceData);
         }
-        jacsServiceDataPersistence.updateServiceState(
-                jacsServiceData,
-                JacsServiceState.SUCCESSFUL,
-                Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully")));
+        if (jacsServiceData.hasCompletedSuccessfully()) {
+            // nothing to do
+            logger.debug("Service {} has already been marked as successful", jacsServiceData);
+        } else {
+            jacsServiceDataPersistence.updateServiceState(
+                    jacsServiceData,
+                    JacsServiceState.SUCCESSFUL,
+                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully")));
+        }
+        sendNotification(jacsServiceData, RegisteredJacsNotification.LifecycleStage.SUCCESSFUL_PROCESSING);
         if (!jacsServiceData.hasParentServiceId()) {
             archiveServiceData(jacsServiceData.getId());
         }
@@ -114,19 +118,32 @@ public class JacsServiceDispatcher {
     @MdcContext
     private void fail(JacsServiceData jacsServiceData, Throwable exc) {
         logger.error("Processing error executing {}", jacsServiceData, exc);
-        if (jacsServiceData.hasCompletedUnsuccessfully()) {
-            // nothing to do
-            logger.debug("Service {} has already been marked as failed", jacsServiceData);
-            return;
-        }
         if (jacsServiceData.hasCompletedSuccessfully()) {
             logger.warn("Service {} has failed after has already been markes as successfully completed", jacsServiceData);
         }
-        jacsServiceDataPersistence.updateServiceState(
-                jacsServiceData,
-                JacsServiceState.ERROR,
-                Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage()))));
+        if (jacsServiceData.hasCompletedUnsuccessfully()) {
+            // nothing to do
+            logger.debug("Service {} has already been marked as failed", jacsServiceData);
+        } else {
+            jacsServiceDataPersistence.updateServiceState(
+                    jacsServiceData,
+                    JacsServiceState.ERROR,
+                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage()))));
+        }
+        sendNotification(jacsServiceData, RegisteredJacsNotification.LifecycleStage.FAILED_PROCESSING);
    }
+
+    private void sendNotification(JacsServiceData sd, RegisteredJacsNotification.LifecycleStage lifecycleStage) {
+        sd.getRegisteredNotifications()
+                .stream()
+                .filter(rn -> StringUtils.isBlank(rn.getProcessingStage()))
+                .filter(rn -> rn.getRegisteredLifecycleStages().contains(lifecycleStage))
+                .forEach(rn -> sendNotification(sd, lifecycleStage, rn));
+    }
+
+    private void sendNotification(JacsServiceData sd, RegisteredJacsNotification.LifecycleStage lifecycleStage, RegisteredJacsNotification rn) {
+        logger.info("Service {} - stage {}: {}", sd, lifecycleStage, rn);
+    }
 
     private void archiveServiceData(Number serviceId) {
         JacsServiceData jacsServiceDataHierarchy = jacsServiceDataPersistence.findServiceHierarchy(serviceId);

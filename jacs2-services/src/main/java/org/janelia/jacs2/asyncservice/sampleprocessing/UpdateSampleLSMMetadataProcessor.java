@@ -29,6 +29,7 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -96,6 +97,7 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
         SampleServiceArgs args = getArgs(jacsServiceData);
         JacsServiceData getSampleLsmMetadataServiceRef = getSampleLsmsMetadataProcessor.createServiceData(
                 new ServiceExecutionContext.Builder(jacsServiceData)
+                        .registerNotifications(jacsServiceData.findRegisteredNotificationByProcessingStage(FlylightSampleEvents.LSM_METADATA))
                         .build(),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-objective", args.sampleObjective),

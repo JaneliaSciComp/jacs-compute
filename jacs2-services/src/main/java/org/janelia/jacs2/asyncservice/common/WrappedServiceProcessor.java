@@ -43,22 +43,22 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
     @Override
     public ServiceComputation<JacsServiceResult<T>> process(JacsServiceData jacsServiceData) {
         return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenApply(sd -> submit(sd))
-                .thenSuspendUntil(sd -> new ContinuationCond.Cond<>(sd, isDone(sd)))
-                .thenApply(sdCond -> getResult(sdCond.getState()));
+                .thenApply(sd -> new PeriodicallyCheckableState<>(submit(sd), ProcessorHelper.getSoftJobDurationLimitInSeconds(jacsServiceData.getResources()) / 100)) // divide the job running time in 100 parts
+                .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceData> sdState) -> new ContinuationCond.Cond<>(sdState, sdState.updateCheckTime() && isDone(sdState)))
+                .thenApply((ContinuationCond.Cond<PeriodicallyCheckableState<JacsServiceData>> sdStateCond) -> getResult(sdStateCond.getState()));
     }
 
     private JacsServiceData submit(JacsServiceData jacsServiceData) {
         return jacsServiceDataPersistence.createServiceIfNotFound(jacsServiceData);
     }
 
-    private boolean isDone(JacsServiceData jacsServiceData) {
-        JacsServiceData refreshServiceData = jacsServiceDataPersistence.findById(jacsServiceData.getId());
+    private boolean isDone(PeriodicallyCheckableState<JacsServiceData> jacsServiceDataState) {
+        JacsServiceData refreshServiceData = jacsServiceDataPersistence.findById(jacsServiceDataState.getState().getId());
         return refreshServiceData.hasCompleted();
     }
 
-    private JacsServiceResult<T> getResult(JacsServiceData jacsServiceData) {
-        JacsServiceData refreshServiceData = jacsServiceDataPersistence.findById(jacsServiceData.getId());
+    private JacsServiceResult<T> getResult(PeriodicallyCheckableState<JacsServiceData> jacsServiceDataState) {
+        JacsServiceData refreshServiceData = jacsServiceDataPersistence.findById(jacsServiceDataState.getState().getId());
         if (refreshServiceData.hasCompletedUnsuccessfully()) {
             throw new ComputationException(refreshServiceData);
         }
