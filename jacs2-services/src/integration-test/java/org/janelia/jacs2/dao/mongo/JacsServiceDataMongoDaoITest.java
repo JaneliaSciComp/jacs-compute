@@ -11,7 +11,7 @@ import org.hamcrest.Matchers;
 import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.jacs2.dao.JacsServiceDataDao;
 import org.janelia.jacs2.model.DataInterval;
-import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -84,9 +85,9 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
     @Test
     public void persistServiceData() {
         JacsServiceData si = persistServiceWithEvents(createTestService("s", ProcessingLocation.LOCAL),
-                ImmutableList.of(
-                        new RegisteredJacsNotification().addNotificationField("nf1", "nv1").withDefaultLifecycleStages(),
-                        new RegisteredJacsNotification().addNotificationField("nf2", "nv2").forLifecycleStage(RegisteredJacsNotification.LifecycleStage.FAILED_PROCESSING)
+                ImmutableMap.of(
+                        "s1", new JacsNotification().addNotificationField("nf1", "nv1").withDefaultLifecycleStages(),
+                        "s2", new JacsNotification().addNotificationField("nf2", "nv2").forLifecycleStage(JacsNotification.LifecycleStage.FAILED_PROCESSING)
                 ),
                 createTestServiceEvent("e1", "v1"),
                 createTestServiceEvent("e2", "v2"));
@@ -97,9 +98,9 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
     @Test
     public void addServiceEvent() {
         JacsServiceData si = persistServiceWithEvents(createTestService("s", ProcessingLocation.LOCAL),
-                ImmutableList.of(
-                        new RegisteredJacsNotification().addNotificationField("nf1", "nv1").withDefaultLifecycleStages(),
-                        new RegisteredJacsNotification().addNotificationField("nf2", "nv2").forLifecycleStage(RegisteredJacsNotification.LifecycleStage.FAILED_PROCESSING)
+                ImmutableMap.of(
+                        "s1", new JacsNotification().addNotificationField("nf1", "nv1").withDefaultLifecycleStages(),
+                        "s2", new JacsNotification().addNotificationField("nf2", "nv2").forLifecycleStage(JacsNotification.LifecycleStage.FAILED_PROCESSING)
                 ),
                 createTestServiceEvent("e1", "v1"),
                 createTestServiceEvent("e2", "v2"));
@@ -119,9 +120,9 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
     @Test
     public void persistServiceHierarchyOneAtATime() {
         JacsServiceData si1 = persistServiceWithEvents(createTestService("s1", ProcessingLocation.LOCAL),
-                ImmutableList.of(
-                        new RegisteredJacsNotification().addNotificationField("nf1", "nv1"),
-                        new RegisteredJacsNotification().addNotificationField("nf2", "nv2")
+                ImmutableMap.of(
+                        "s1", new JacsNotification().addNotificationField("nf1", "nv1"),
+                        "s2", new JacsNotification().addNotificationField("nf2", "nv2")
                 ));
         JacsServiceData retrievedSi1 = testDao.findById(si1.getId());
         assertThat(retrievedSi1, allOf(
@@ -218,20 +219,20 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         );
         servicesInQueuedState.stream().forEach(s -> {
             s.setState(JacsServiceState.QUEUED);
-            persistServiceWithEvents(s, ImmutableList.of(
-                            new RegisteredJacsNotification().addNotificationField("nf1", "nv1").withDefaultLifecycleStages(),
-                            new RegisteredJacsNotification().addNotificationField("nf2", "nv2").withDefaultLifecycleStages()
+            persistServiceWithEvents(s, ImmutableMap.of(
+                            "s1", new JacsNotification().addNotificationField("nf1", "nv1").withDefaultLifecycleStages(),
+                            "s2", new JacsNotification().addNotificationField("nf2", "nv2").withDefaultLifecycleStages()
                     )
             );
         });
         servicesInRunningState.stream().forEach(s -> {
             s.setState(JacsServiceState.RUNNING);
-            persistServiceWithEvents(s, ImmutableList.of());
+            persistServiceWithEvents(s, ImmutableMap.of());
         });
         servicesInCanceledState.stream().forEach(s -> {
             s.setState(JacsServiceState.CANCELED);
-            persistServiceWithEvents(s, ImmutableList.of(
-                            new RegisteredJacsNotification().addNotificationField("nf1", "nv1").forLifecycleStage(RegisteredJacsNotification.LifecycleStage.START_PROCESSING)
+            persistServiceWithEvents(s, ImmutableMap.of(
+                            "s1", new JacsNotification().addNotificationField("nf1", "nv1").forLifecycleStage(JacsNotification.LifecycleStage.START_PROCESSING)
                     )
             );
         });
@@ -265,15 +266,15 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         );
         servicesInQueuedState.stream().forEach(s -> {
             s.setState(JacsServiceState.QUEUED);
-            persistServiceWithEvents(s, ImmutableList.of());
+            persistServiceWithEvents(s, ImmutableMap.of());
         });
         servicesInRunningState.stream().forEach(s -> {
             s.setState(JacsServiceState.RUNNING);
-            persistServiceWithEvents(s, ImmutableList.of());
+            persistServiceWithEvents(s, ImmutableMap.of());
         });
         servicesInCanceledState.stream().forEach(s -> {
             s.setState(JacsServiceState.CANCELED);
-            persistServiceWithEvents(s, ImmutableList.of());
+            persistServiceWithEvents(s, ImmutableMap.of());
         });
         String testQueueId = "testQueueId";
         PageRequest pageRequest = new PageRequest();
@@ -318,15 +319,15 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         );
         servicesInQueuedState.stream().forEach(s -> {
             s.setState(JacsServiceState.QUEUED);
-            persistServiceWithEvents(s, ImmutableList.of());
+            persistServiceWithEvents(s, ImmutableMap.of());
         });
         servicesInRunningState.stream().forEach(s -> {
             s.setState(JacsServiceState.RUNNING);
-            persistServiceWithEvents(s, ImmutableList.of());
+            persistServiceWithEvents(s, ImmutableMap.of());
         });
         servicesInCanceledState.stream().forEach(s -> {
             s.setState(JacsServiceState.CANCELED);
-            persistServiceWithEvents(s, ImmutableList.of());
+            persistServiceWithEvents(s, ImmutableMap.of());
         });
         String testQueueId = "testQueueId";
         PageRequest pageRequest = new PageRequest();
@@ -434,7 +435,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
             s.setState(JacsServiceState.QUEUED);
             s.setCreationDate(calDate.getTime());
             calDate.add(Calendar.DATE, 1);
-            persistServiceWithEvents(s, ImmutableList.of());
+            persistServiceWithEvents(s, ImmutableMap.of());
             testServices.add(s);
         });
         u2Services.stream().forEach(s -> {
@@ -442,19 +443,17 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
             s.setState(JacsServiceState.RUNNING);
             s.setCreationDate(calDate.getTime());
             calDate.add(Calendar.DATE, 1);
-            persistServiceWithEvents(s, ImmutableList.of());
+            persistServiceWithEvents(s, ImmutableMap.of());
             testServices.add(s);
         });
         return testServices;
     }
 
-    private JacsServiceData persistServiceWithEvents(JacsServiceData si, List<RegisteredJacsNotification> notifications, JacsServiceEvent... jacsServiceEvents) {
+    private JacsServiceData persistServiceWithEvents(JacsServiceData si, Map<String, JacsNotification> processingStageNotifications, JacsServiceEvent... jacsServiceEvents) {
         for (JacsServiceEvent se : jacsServiceEvents) {
             si.addNewEvent(se);
         }
-        for (RegisteredJacsNotification notification : notifications) {
-            si.addRegisteredNotification(notification);
-        }
+        processingStageNotifications.forEach(si::setProcessingStageNotification);
         testDao.save(si);
         return si;
     }

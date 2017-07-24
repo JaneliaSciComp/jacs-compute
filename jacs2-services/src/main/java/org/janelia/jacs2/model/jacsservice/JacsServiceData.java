@@ -2,6 +2,7 @@ package org.janelia.jacs2.model.jacsservice;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
@@ -10,6 +11,7 @@ import org.janelia.jacs2.model.BaseEntity;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -53,7 +55,8 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private Date processStartTime = new Date();
     private Date creationDate = new Date();
     private Date modificationDate = new Date();
-    private List<RegisteredJacsNotification> registeredNotifications = new ArrayList<>();
+    private JacsNotification processingNotification;
+    private Map<String, JacsNotification> processingStagedNotifications = new HashMap<>();
     @JsonIgnore
     private JacsServiceData parentService;
     @JsonIgnore
@@ -279,23 +282,37 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.resources.clear();
     }
 
-    public List<RegisteredJacsNotification> getRegisteredNotifications() {
-        return registeredNotifications;
+    public JacsNotification getProcessingNotification() {
+        return processingNotification;
     }
 
-    public void setRegisteredNotifications(List<RegisteredJacsNotification> registeredNotifications) {
-        this.registeredNotifications = registeredNotifications;
+    public void setProcessingNotification(JacsNotification processingNotification) {
+        this.processingNotification = processingNotification;
     }
 
-    public List<RegisteredJacsNotification> findRegisteredNotificationByProcessingStage(String processingStage) {
-        return registeredNotifications.stream()
-                .filter(rn -> StringUtils.isBlank(processingStage) && StringUtils.isBlank(rn.getProcessingStage()) ||
-                                StringUtils.isNotBlank(processingStage) && StringUtils.isNotBlank(rn.getProcessingStage()) && processingStage.equals(rn.getProcessingStage()))
-                .collect(Collectors.toList());
+    public Map<String, JacsNotification> getProcessingStagedNotifications() {
+        return processingStagedNotifications;
     }
 
-    public void addRegisteredNotification(RegisteredJacsNotification registeredNotification) {
-        registeredNotifications.add(registeredNotification);
+    public void setProcessingStagedNotifications(Map<String, JacsNotification> processingStagedNotifications) {
+        this.processingStagedNotifications = processingStagedNotifications;
+    }
+
+    public Optional<JacsNotification> getProcessingStageNotification(String processingStage, JacsNotification defaultNotification) {
+        JacsNotification stageNotification = processingStagedNotifications.get(processingStage);
+        if (stageNotification == null) {
+            if (defaultNotification == null)
+                return Optional.empty();
+            else
+                return Optional.of(defaultNotification);
+        } else
+            return Optional.of(new JacsNotification(stageNotification));
+    }
+
+    public void setProcessingStageNotification(String processingStage, JacsNotification notification) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(processingStage));
+        Preconditions.checkArgument(notification != null);
+        processingStagedNotifications.put(processingStage, notification);
     }
 
     public Object getSerializableResult() {

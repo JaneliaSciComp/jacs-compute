@@ -226,8 +226,9 @@ public class SampleStitchProcessorTest {
                 "membrane_flag=Alexa Fluor 594";
         String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
 
+        Long testSampleId = SampleProcessorTestUtils.TEST_SAMPLE_ID;
         JacsServiceData testServiceData = createTestServiceData(1L,
-                SampleProcessorTestUtils.TEST_SAMPLE_ID,
+                testSampleId,
                 area,
                 objective,
                 mergeAlgorithm,
@@ -249,6 +250,7 @@ public class SampleStitchProcessorTest {
                 sd.setId(id);
                 sd.setSerializableResult(ImmutableList.of(
                         createSampleAreaResult(
+                                testSampleId,
                                 objective,
                                 "a" + id,
                                 ImmutableList.of(
@@ -357,8 +359,9 @@ public class SampleStitchProcessorTest {
         verify(successful).accept(any());
     }
 
-    private SampleAreaResult createSampleAreaResult(String objective, String areaName, List<MergeTilePairResult> mergedTiles, List<MergeTilePairResult> groupedTiles) {
+    private SampleAreaResult createSampleAreaResult(Number sampleId, String objective, String areaName, List<MergeTilePairResult> mergedTiles, List<MergeTilePairResult> groupedTiles) {
         SampleAreaResult ar = new SampleAreaResult();
+        ar.setSampleId(sampleId);
         ar.setResultDir(new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + areaName).getAbsolutePath());
         ar.setMergeRelativeSubDir("merge");
         ar.setGroupRelativeSubDir("group");

@@ -19,6 +19,7 @@ import org.janelia.jacs2.asyncservice.imageservices.GroupAndMontageFolderImagesP
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
@@ -134,7 +135,14 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
         // update sample's LSMs
         JacsServiceData updateSampleLsmMetadataService = updateSampleLSMMetadataProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Update sample LSM metadata")
-                        .registerNotifications(jacsServiceData.findRegisteredNotificationByProcessingStage(FlylightSampleEvents.LSM_METADATA))
+                        .registerProcessingStageNotification(
+                                FlylightSampleEvents.LSM_METADATA,
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.LSM_METADATA, new JacsNotification())
+                                        .map(n -> n.addNotificationField("sampleId", args.sampleId)
+                                                        .addNotificationField("objective", args.sampleObjective)
+                                                        .addNotificationField("area", args.sampleArea)
+                                        )
+                        )
                         .build(),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-area", args.sampleArea),
@@ -149,7 +157,14 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
         JacsServiceData getSampleMipMapsService = getSampleMIPsAndMoviesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Generate MIPs and Movies for the sample")
                         .waitFor(updateSampleLsmMetadataService)
-                        .registerNotifications(jacsServiceData.findRegisteredNotificationByProcessingStage(FlylightSampleEvents.SUMMARY_MIPMAPS))
+                        .registerProcessingStageNotification(
+                                FlylightSampleEvents.SUMMARY_MIPMAPS,
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.SUMMARY_MIPMAPS, new JacsNotification().withDefaultLifecycleStages())
+                                        .map(n -> n.addNotificationField("sampleId", args.sampleId)
+                                                        .addNotificationField("objective", args.sampleObjective)
+                                                        .addNotificationField("area", args.sampleArea)
+                                        )
+                        )
                         .build(),
                 new ServiceArg("-sampleId", args.sampleId.toString()),
                 new ServiceArg("-area", args.sampleArea),

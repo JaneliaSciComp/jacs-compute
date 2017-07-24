@@ -7,7 +7,7 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
-import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -69,7 +69,7 @@ public class JacsServiceDispatcher {
         ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
         serviceComputationFactory.<JacsServiceData>newComputation()
                 .supply(() -> {
-                    sendNotification(jacsServiceData, RegisteredJacsNotification.LifecycleStage.START_PROCESSING);
+                    sendNotification(jacsServiceData, JacsNotification.LifecycleStage.START_PROCESSING);
                     jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.SUBMITTED, Optional.empty());
                     return jacsServiceData;
                 })
@@ -109,7 +109,7 @@ public class JacsServiceDispatcher {
                     JacsServiceState.SUCCESSFUL,
                     Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully")));
         }
-        sendNotification(jacsServiceData, RegisteredJacsNotification.LifecycleStage.SUCCESSFUL_PROCESSING);
+        sendNotification(jacsServiceData, JacsNotification.LifecycleStage.SUCCESSFUL_PROCESSING);
         if (!jacsServiceData.hasParentServiceId()) {
             archiveServiceData(jacsServiceData.getId());
         }
@@ -130,18 +130,16 @@ public class JacsServiceDispatcher {
                     JacsServiceState.ERROR,
                     Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage()))));
         }
-        sendNotification(jacsServiceData, RegisteredJacsNotification.LifecycleStage.FAILED_PROCESSING);
+        sendNotification(jacsServiceData, JacsNotification.LifecycleStage.FAILED_PROCESSING);
    }
 
-    private void sendNotification(JacsServiceData sd, RegisteredJacsNotification.LifecycleStage lifecycleStage) {
-        sd.getRegisteredNotifications()
-                .stream()
-                .filter(rn -> StringUtils.isBlank(rn.getProcessingStage()))
-                .filter(rn -> rn.getRegisteredLifecycleStages().contains(lifecycleStage))
-                .forEach(rn -> sendNotification(sd, lifecycleStage, rn));
+    private void sendNotification(JacsServiceData sd, JacsNotification.LifecycleStage lifecycleStage) {
+        if (sd.getProcessingNotification() != null && sd.getProcessingNotification().getRegisteredLifecycleStages().contains(lifecycleStage)) {
+            sendNotification(sd, lifecycleStage, sd.getProcessingNotification());
+        }
     }
 
-    private void sendNotification(JacsServiceData sd, RegisteredJacsNotification.LifecycleStage lifecycleStage, RegisteredJacsNotification rn) {
+    private void sendNotification(JacsServiceData sd, JacsNotification.LifecycleStage lifecycleStage, JacsNotification rn) {
         logger.info("Service {} - stage {}: {}", sd, lifecycleStage, rn);
     }
 

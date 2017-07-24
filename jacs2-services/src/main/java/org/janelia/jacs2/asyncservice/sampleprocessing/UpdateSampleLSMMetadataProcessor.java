@@ -24,12 +24,12 @@ import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMMetadata;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.model.DomainModelUtils;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -97,9 +97,16 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
         SampleServiceArgs args = getArgs(jacsServiceData);
         JacsServiceData getSampleLsmMetadataServiceRef = getSampleLsmsMetadataProcessor.createServiceData(
                 new ServiceExecutionContext.Builder(jacsServiceData)
-                        .registerNotifications(jacsServiceData.findRegisteredNotificationByProcessingStage(FlylightSampleEvents.LSM_METADATA))
+                        .registerProcessingStageNotification(
+                                FlylightSampleEvents.LSM_METADATA,
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.LSM_METADATA, new JacsNotification())
+                                        .map(n -> n.addNotificationField("sampleId", args.sampleId)
+                                                        .addNotificationField("objective", args.sampleObjective)
+                                                        .addNotificationField("area", args.sampleArea)
+                                        )
+                        )
                         .build(),
-                new ServiceArg("-sampleId", args.sampleId.toString()),
+                new ServiceArg("-sampleId", args.sampleId),
                 new ServiceArg("-objective", args.sampleObjective),
                 new ServiceArg("-area", args.sampleArea),
                 new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),

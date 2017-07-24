@@ -44,6 +44,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
@@ -124,6 +125,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     }
 
     static class MergedAndGroupedAreaTiles {
+        Number sampleId;
         String sampleName;
         String sampleEffector;
         String objective;
@@ -200,8 +202,9 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             public List<SampleAreaResult> collectResult(JacsServiceResult<?> depResults) {
                 MergeSampleTilePairsIntermediateResult result = (MergeSampleTilePairsIntermediateResult) depResults.getResult();
                 return result.getAreasResults().stream()
-                        .map(tmpAreaResult -> {
+                        .map((MergedAndGroupedAreaTiles tmpAreaResult) -> {
                             SampleAreaResult areaResult = new SampleAreaResult();
+                            areaResult.setSampleId(tmpAreaResult.sampleId);
                             areaResult.setSampleName(tmpAreaResult.sampleName);
                             areaResult.setSampleEffector(tmpAreaResult.sampleEffector);
                             areaResult.setObjective(tmpAreaResult.objective);
@@ -281,6 +284,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             channelMappingFunc = (ar, tp) -> determineChannelMappingsUsingChanSpec(tp, ar.getDefaultChanSpec(), mergeAlgorithm);
         }
         BinaryOperator<MergedAndGroupedAreaTiles> channelMappingConsensusCombiner = (MergedAndGroupedAreaTiles c1, MergedAndGroupedAreaTiles c2) -> {
+            c1.sampleId = c2.sampleId;
             c1.sampleName = c2.sampleName;
             c1.sampleEffector = c2.sampleEffector;
             c1.objective = c2.objective;
@@ -357,6 +361,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                     mergeResult.setChannelColors(mcd.outputColors);
 
                     MergedAndGroupedAreaTiles areaTiles = new MergedAndGroupedAreaTiles();
+                    areaTiles.sampleId = ar.getSampleId();
                     areaTiles.sampleName = ar.getSampleName();
                     areaTiles.sampleEffector = ar.getSampleEffector();
                     areaTiles.objective = ar.getObjective();
@@ -389,9 +394,18 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         Path channelMappingInput;
         Path mergedResultFileName = FileUtils.getFilePath(mergedResultDir, mergeFileNameGenerator.apply(mcd.tilePair), ".v3draw");
         if (mcd.tilePair.hasTwoLsms()) {
-            mergeLsmPairsService = mergeLsmPairProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+            mergeLsmPairsService = mergeLsmPairProcessor.createServiceData(
+                    new ServiceExecutionContext.Builder(jacsServiceData)
                             .addRequiredMemoryInGB(32)
                             .waitFor(deps)
+                            .registerProcessingNotification(
+                                    jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new JacsNotification().withDefaultLifecycleStages())
+                                            .map(n -> n.addNotificationField("sampleId", ar.getSampleId())
+                                                            .addNotificationField("sampleName", ar.getSampleName())
+                                                            .addNotificationField("objective", ar.getObjective())
+                                                            .addNotificationField("area", ar.getName())
+                                            )
+                            )
                             .build(),
                     new ServiceArg("-lsm1", SampleServicesUtils.getImageFile(args.sampleDataRootDir, args.sampleLsmsSubDir,
                             ar.getObjective(),
@@ -439,6 +453,14 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         // since the channels were in the right order no re-ordering of the channels is necessary
         JacsServiceData mapChannelsService = vaa3dChannelMapProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .waitFor(mergeLsmPairsService)
+                        .registerProcessingNotification(new JacsNotification()
+                                        .withDefaultLifecycleStages()
+                                        .addNotificationField("sampleId", ar.getSampleId())
+                                        .addNotificationField("sampleName", ar.getSampleName())
+                                        .addNotificationField("objective", ar.getObjective())
+                                        .addNotificationField("area", ar.getName())
+                                        .addNotificationField("mapping", mcd.mapping)
+                        )
                         .build(),
                 new ServiceArg("-inputFile", channelMappingInput.toString()),
                 new ServiceArg("-outputFile", mergedResultFileName.toString()),

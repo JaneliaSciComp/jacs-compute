@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SampleAreaResult {
+    private Number sampleId;
     private String sampleName;
     private String sampleEffector;
     private String anatomicalArea;
@@ -30,6 +31,14 @@ public class SampleAreaResult {
     private ChannelComponents consensusChannelComponents;
     private List<MergeTilePairResult> mergeResults;
     private List<MergeTilePairResult> groupResults;
+
+    public Number getSampleId() {
+        return sampleId;
+    }
+
+    public void setSampleId(Number sampleId) {
+        this.sampleId = sampleId;
+    }
 
     public String getSampleName() {
         return sampleName;

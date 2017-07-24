@@ -20,6 +20,7 @@ import org.janelia.jacs2.asyncservice.imageservices.FijiUtils;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -135,8 +136,9 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
     protected ServiceComputation<JacsServiceResult<GetSampleMIPsIntermediateResult>> processing(JacsServiceResult<GetSampleMIPsIntermediateResult> depResults) {
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
-                    SampleMIPsAndMoviesArgs args = getArgs(pd.getJacsServiceData());
-                    JacsServiceData getSampleLsmsService = jacsServiceDataPersistence.findById(depResults.getResult().getChildServiceId());
+                    JacsServiceData jacsServiceData = pd.getJacsServiceData();
+                    SampleMIPsAndMoviesArgs args = getArgs(jacsServiceData);
+                    JacsServiceData getSampleLsmsService = jacsServiceDataPersistence.findById(pd.getResult().getChildServiceId());
                     List<SampleImageFile> sampleImageFiles = getSampleImageFilesProcessor.getResultHandler().getServiceDataResult(getSampleLsmsService);
                     sampleImageFiles.stream()
                             .forEach(sif -> {
@@ -152,8 +154,16 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
                                 }
                                 String colorSpec = colors.stream().map(c -> String.valueOf(c.getCode())).collect(Collectors.joining(""));
                                 String divSpec = colors.stream().map(c -> String.valueOf(c.getDivisor())).collect(Collectors.joining(""));
-                                JacsServiceData basicMipMapsService = basicMIPsAndMoviesProcessor.createServiceData(new ServiceExecutionContext.Builder(depResults.getJacsServiceData())
+                                JacsServiceData basicMipMapsService = basicMIPsAndMoviesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                                                 .waitFor(getSampleLsmsService)
+                                                .registerProcessingNotification(
+                                                        jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.SUMMARY_MIPMAPS, new JacsNotification().withDefaultLifecycleStages())
+                                                                .map(n -> n.addNotificationField("sampleId", sif.getSampleId())
+                                                                                .addNotificationField("lsmId", sif.getId())
+                                                                                .addNotificationField("objective", sif.getObjective())
+                                                                                .addNotificationField("area", sif.getArea())
+                                                                )
+                                                )
                                                 .build(),
                                         new ServiceArg("-imgFile", lsmImageFileName),
                                         new ServiceArg("-chanSpec", sif.getChanSpec()),
@@ -167,7 +177,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServi
                                 basicMipMapsService = submitDependencyIfNotFound(basicMipMapsService);
                                 SampleImageMIPsFile sampleImageMIPsFile = new SampleImageMIPsFile();
                                 sampleImageMIPsFile.setSampleImageFile(sif);
-                                depResults.getResult().addSampleImageMipsFile(basicMipMapsService.getId(), sampleImageMIPsFile);
+                                pd.getResult().addSampleImageMipsFile(basicMipMapsService.getId(), sampleImageMIPsFile);
                             });
                     return pd;
                 });

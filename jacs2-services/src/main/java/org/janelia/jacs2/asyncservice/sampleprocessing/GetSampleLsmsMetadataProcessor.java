@@ -13,6 +13,7 @@ import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.lsmfileservices.LsmFileMetadataProcessor;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -90,6 +91,14 @@ public class GetSampleLsmsMetadataProcessor extends AbstractServiceProcessor<Lis
                             return lsmFileMetadataProcessor.process(
                                     new ServiceExecutionContext.Builder(jacsServiceData)
                                             .waitFor(sifr.getJacsServiceData())
+                                            .registerProcessingNotification(
+                                                    jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.LSM_METADATA, new JacsNotification())
+                                                            .map(n -> n.addNotificationField("sampleId", sif.getSampleId())
+                                                                            .addNotificationField("lsmId", sif.getId())
+                                                                            .addNotificationField("objective", sif.getObjective())
+                                                                            .addNotificationField("area", sif.getArea())
+                                                            )
+                                            )
                                             .build(),
                                     new ServiceArg("-inputLSM", lsmImageFile.getAbsolutePath()),
                                     new ServiceArg("-outputLSMMetadata", lsmMetadataFile.getAbsolutePath())

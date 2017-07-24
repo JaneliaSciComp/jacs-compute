@@ -49,7 +49,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -170,13 +170,23 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             new ServiceExecutionContext.Builder(jacsServiceData)
                                     .description("Create sample LSM summary")
                                     .waitFor(lsir.getJacsServiceData())
-                                    .registerNotification(new RegisteredJacsNotification(FlylightSampleEvents.LSM_METADATA)
-                                            .withDefaultLifecycleStages()
-                                            .addNotificationField("sampleId", args.sampleId))
-                                    .registerNotification(new RegisteredJacsNotification(FlylightSampleEvents.SUMMARY_MIPMAPS)
-                                            .withDefaultLifecycleStages()
-                                            .addNotificationField("sampleId", args.sampleId))
-                                    .build(),
+                                    .registerProcessingStageNotification(
+                                            FlylightSampleEvents.LSM_METADATA,
+                                            jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.LSM_METADATA, new JacsNotification().withDefaultLifecycleStages())
+                                                    .map(n -> n.addNotificationField("sampleId", args.sampleId)
+                                                                    .addNotificationField("objective", args.sampleObjective)
+                                                                    .addNotificationField("area", args.sampleArea)
+                                                    )
+                                    )
+                                    .registerProcessingStageNotification(
+                                            FlylightSampleEvents.SUMMARY_MIPMAPS,
+                                            jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.SUMMARY_MIPMAPS, new JacsNotification().withDefaultLifecycleStages())
+                                                    .map(n -> n.addNotificationField("sampleId", args.sampleId)
+                                                                    .addNotificationField("objective", args.sampleObjective)
+                                                                    .addNotificationField("area", args.sampleArea)
+                                                    )
+                                    )
+                                   .build(),
                                             new ServiceArg("-sampleId", args.sampleId),
                                             new ServiceArg("-objective", args.sampleObjective),
                                             new ServiceArg("-area", args.sampleArea),
@@ -296,6 +306,22 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Stitch sample tiles")
                         .waitFor(deps)
+                        .registerProcessingStageNotification(
+                                FlylightSampleEvents.MERGE_LSMS,
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new JacsNotification().withDefaultLifecycleStages())
+                                        .map(n -> n.addNotificationField("sampleId", sampleId)
+                                                        .addNotificationField("objective", sampleObjective)
+                                                        .addNotificationField("area", sampleArea)
+                                        )
+                        )
+                        .registerProcessingStageNotification(
+                                FlylightSampleEvents.STITCH_TILES,
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.STITCH_TILES, new JacsNotification().withDefaultLifecycleStages())
+                                        .map(n -> n.addNotificationField("sampleId", sampleId)
+                                                        .addNotificationField("objective", sampleObjective)
+                                                        .addNotificationField("area", sampleArea)
+                                        )
+                        )
                         .build(),
                 new ServiceArg("-sampleId", sampleId),
                 new ServiceArg("-objective", sampleObjective),

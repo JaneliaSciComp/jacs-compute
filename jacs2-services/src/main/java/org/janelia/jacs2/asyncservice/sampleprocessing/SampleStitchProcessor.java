@@ -24,6 +24,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
@@ -171,6 +172,14 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                     // merge sample LSMs if needed
                     JacsServiceData mergeTilePairsService = mergeAndGroupSampleTilePairsProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                                     .waitFor(getSampleLsmsService)
+                                    .registerProcessingStageNotification(
+                                            FlylightSampleEvents.MERGE_LSMS,
+                                            jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new JacsNotification().withDefaultLifecycleStages())
+                                                    .map(n -> n.addNotificationField("sampleId", args.sampleId)
+                                                                    .addNotificationField("objective", ar.getObjective())
+                                                                    .addNotificationField("area", ar.getName())
+                                                    )
+                                    )
                                     .build(),
                             new ServiceArg("-sampleId", args.sampleId),
                             new ServiceArg("-objective", ar.getObjective()),
@@ -250,7 +259,8 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                         mipsDir = areaResultsDir.resolve(MIPS_DIRNAME);
                         Path stitchingFile = FileUtils.getFilePath(stitchingDir, stitchedFileNameGenerator.apply(groupedArea), ".v3draw");
                         String referenceChannelNumber = groupedArea.getConsensusChannelComponents().referenceChannelNumbers;
-                        stitichingService = stitchTilesFromArea(depResults.getJacsServiceData(), groupDir, stitchingFile, referenceChannelNumber);
+                        stitichingService = stitchTilesFromArea(depResults.getJacsServiceData(), groupDir, stitchingFile,
+                                groupedArea.getSampleId(), groupedArea.getObjective(), groupedArea.getAnatomicalArea(), referenceChannelNumber);
                         // use the stitched file to generate the mips
                         tileFile = Optional.of(stitchingFile);
                         groupedArea.setStitchRelativeSubDir(STITCH_DIRNAME);
@@ -297,10 +307,17 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
         return groupedAreas.size() == uniqueGroupedAreasCount;
     }
 
-    private JacsServiceData stitchTilesFromArea(JacsServiceData jacsServiceData, Path inputDir, Path outputFile, String referenceChannelNumber) {
+    private JacsServiceData stitchTilesFromArea(JacsServiceData jacsServiceData, Path inputDir, Path outputFile, Number sampleId, String objective, String area, String referenceChannelNumber) {
         JacsServiceData stitchingService = vaa3dStitchAndBlendProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Stitch tiles")
                         .addRequiredMemoryInGB(72)
+                        .registerProcessingNotification(
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.STITCH_TILES, new JacsNotification().withDefaultLifecycleStages())
+                                        .map(n -> n.addNotificationField("sampleId", sampleId)
+                                                        .addNotificationField("objective", objective)
+                                                        .addNotificationField("area", area)
+                                        )
+                        )
                         .build(),
                 new ServiceArg("-inputDir", inputDir.toString()),
                 new ServiceArg("-outputFile", outputFile.toString()),

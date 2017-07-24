@@ -1,6 +1,5 @@
 package org.janelia.jacs2.model.jacsservice;
 
-import java.util.List;
 import java.util.Map;
 
 public class JacsServiceDataBuilder {
@@ -88,8 +87,18 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
-    public JacsServiceDataBuilder registerNotifications(List<RegisteredJacsNotification> notifications) {
-        notifications.forEach(serviceData::addRegisteredNotification);
+    public JacsServiceDataBuilder registerProcessingNotification(JacsNotification notification) {
+        serviceData.setProcessingNotification(notification);
+        return this;
+    }
+
+    public JacsServiceDataBuilder registerProcessingStageNotification(String processingStage, JacsNotification notification) {
+        serviceData.setProcessingStageNotification(processingStage, notification);
+        return this;
+    }
+
+    public JacsServiceDataBuilder registerProcessingStageNotifications(Map<String, JacsNotification> notifications) {
+        serviceData.setProcessingStagedNotifications(notifications);
         return this;
     }
 

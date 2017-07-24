@@ -1,12 +1,14 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
-import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,14 +90,18 @@ public class ServiceExecutionContext {
             return this;
         }
 
-        public Builder registerNotification(RegisteredJacsNotification registeredNotification) {
-            if (registeredNotification != null)
-                serviceExecutionContext.registeredNotifications.add(registeredNotification);
+        public Builder registerProcessingNotification(Optional<JacsNotification> processingNotification) {
+            processingNotification.ifPresent(n -> serviceExecutionContext.processingNotification = n);
             return this;
         }
 
-        public Builder registerNotifications(List<RegisteredJacsNotification> registeredNotifications) {
-            serviceExecutionContext.registeredNotifications.addAll(registeredNotifications);
+        public Builder registerProcessingNotification(JacsNotification processingNotification) {
+            serviceExecutionContext.processingNotification = processingNotification;
+            return this;
+        }
+
+        public Builder registerProcessingStageNotification(String processingStage, Optional<JacsNotification> processingStageNotification) {
+            processingStageNotification.ifPresent(n -> serviceExecutionContext.processingStageNotifications.put(processingStage, n));
             return this;
         }
 
@@ -115,7 +121,8 @@ public class ServiceExecutionContext {
     private final List<JacsServiceData> waitFor = new ArrayList<>();
     private final List<Number> waitForIds = new ArrayList<>();
     private final Map<String, String> resources = new LinkedHashMap<>();
-    private final List<RegisteredJacsNotification> registeredNotifications = new ArrayList<>();
+    private JacsNotification processingNotification;
+    private final Map<String, JacsNotification> processingStageNotifications = new HashMap<>();
 
     private ServiceExecutionContext(JacsServiceData parentServiceData) {
         this.parentServiceData = parentServiceData;
@@ -165,7 +172,11 @@ public class ServiceExecutionContext {
         return resources;
     }
 
-    public List<RegisteredJacsNotification> getRegisteredNotifications() {
-        return registeredNotifications;
+    JacsNotification getProcessingNotification() {
+        return processingNotification;
+    }
+
+    Map<String, JacsNotification> getProcessingStageNotifications() {
+        return processingStageNotifications;
     }
 }
