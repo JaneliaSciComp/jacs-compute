@@ -107,10 +107,10 @@ Here are a few service invocation examples:
 curl --request POST --url http://goinac-ws1:8080/jacs/jacs-api/v2/async-services/getSampleMIPsAndMovies --header 'acc: application/json' --header 'content-type: application/json' --data '{"processingLocation": "LOCAL", "args": ["-sampleId", "2230165384508473442" ,"-objective", "20x", "-sampleDataDir", "/home/goinac/Work/jacs-2/tt/missing"]}'
 `
 
-* Generate LSM metadata for a single LSM file on the cluster
+* Generate LSM metadata for a single LSM file on the LSF cluster
 
 `
-curl --request POST --url http://goinac-ws1:8080/jacs/jacs-api/v2/async-services/lsmFileMetadata --header 'acc: application/json' --header 'content-type: application/json' --header 'postman-token: c8f66acb-91e1-00a7-944a-12da50719688' --data '{"processingLocation": "CLUSTER", "args": ["-inputLSM", "/home/goinac/Work/jacs-2/tt/missing/f1.lsm", "-outputLSMMetadata", "/home/goinac/Work/jacs-2/tt/missing/f1.json"]}'
+curl --request POST --url http://goinac-ws1:8080/jacs/jacs-api/v2/async-services/lsmFileMetadata --header 'acc: application/json' --header 'content-type: application/json' --header 'postman-token: c8f66acb-91e1-00a7-944a-12da50719688' --data '{"processingLocation": "LSF_DRMAA", "args": ["-inputLSM", "/home/goinac/Work/jacs-2/tt/missing/f1.lsm", "-outputLSMMetadata", "/home/goinac/Work/jacs-2/tt/missing/f1.json"]}'
 `
 
 * Generate sample LSM metadata:
@@ -119,10 +119,10 @@ curl --request POST --url http://goinac-ws1:8080/jacs/jacs-api/v2/async-services
 curl --request POST --url http://goinac-ws1:8080/jacs/jacs-api/v2/async-services/getSampleLsmMetadata --header 'acc: application/json' --header 'content-type: application/json' --data '{"processingLocation": "LOCAL", "args": ["-sampleId", "2230165384508473442" , "-objective", "20x", "-sampleDataDir", "/home/goinac/Work/jacs-2/tt/missing"]}'
 `
 
-* Run a Fiji macro on the cluster
+* Run a Fiji macro on the LSF cluster
 
 `
-curl --request POST --url http://goinac-ws1:8080/jacs/jacs-api/v2/async-services/fijiMacro --header 'acc: application/json' --header 'cache-control: no-cache' --header 'content-type: application/json' --header 'postman-token: 224b8f88-fd54-69f9-457f-0ec5e6c23a1f' --data '{"processingLocation": "CLUSTER",	"args": ["-macro", "Basic_MIP_StackAvi.ijm" , "-macroArgs", "/home/goinac/Work/jacs-2/tt/missing/mips,FLPO_20160121130448632_61713,,/home/goinac/Work/jacs-2/tt/missing/FLPO_20160121130448632_61713.lsm,,,,r,1,2,mips:movies:legends:bcomp"],"resources": {"gridAccountId": "jacs", "gridPE": "batch 8", "gridResourceLimits": "haswell=true,h_rt=1200" }}'
+curl --request POST --url http://goinac-ws1:8080/jacs/jacs-api/v2/async-services/fijiMacro --header 'acc: application/json' --header 'cache-control: no-cache' --header 'content-type: application/json' --header 'postman-token: 224b8f88-fd54-69f9-457f-0ec5e6c23a1f' --data '{"processingLocation": "LSF_DRMAA",	"args": ["-macro", "Basic_MIP_StackAvi.ijm" , "-macroArgs", "/home/goinac/Work/jacs-2/tt/missing/mips,FLPO_20160121130448632_61713,,/home/goinac/Work/jacs-2/tt/missing/FLPO_20160121130448632_61713.lsm,,,,r,1,2,mips:movies:legends:bcomp"],"resources": {"gridAccountId": "jacs", "gridPE": "batch 8", "gridResourceLimits": "haswell=true,h_rt=1200" }}'
 `
 
 * Run the aligner
