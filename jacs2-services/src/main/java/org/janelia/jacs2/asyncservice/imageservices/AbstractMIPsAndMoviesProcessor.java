@@ -3,8 +3,9 @@ package org.janelia.jacs2.asyncservice.imageservices;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -13,18 +14,22 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public abstract class AbstractMIPsAndMoviesProcessor extends AbstractBasicLifeCycleServiceProcessor<JacsServiceData, MIPsAndMoviesResult> {
+public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProcessor<MIPsAndMoviesResult> {
 
     protected static final String DEFAULT_OPTIONS = "mips:movies";
 
@@ -57,8 +62,8 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractBasicLifeCy
 
     private final String mipsAndMoviesMacro;
     private final String scratchLocation;
-    private final FijiMacroProcessor fijiMacroProcessor;
-    private final VideoFormatConverterProcessor mpegConverterProcessor;
+    private final WrappedServiceProcessor<FijiMacroProcessor, Void> fijiMacroProcessor;
+    private final WrappedServiceProcessor<VideoFormatConverterProcessor, File> mpegConverterProcessor;
 
     AbstractMIPsAndMoviesProcessor(ServiceComputationFactory computationFactory,
                                    JacsServiceDataPersistence jacsServiceDataPersistence,
@@ -71,8 +76,8 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractBasicLifeCy
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.mipsAndMoviesMacro = mipsAndMoviesMacro;
         this.scratchLocation =scratchLocation;
-        this.fijiMacroProcessor = fijiMacroProcessor;
-        this.mpegConverterProcessor = mpegConverterProcessor;
+        this.fijiMacroProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, fijiMacroProcessor);
+        this.mpegConverterProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, mpegConverterProcessor);
     }
 
     @Override
@@ -105,30 +110,52 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractBasicLifeCy
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<MIPsAndMoviesResult>> process(JacsServiceData jacsServiceData) {
         MIPsAndMoviesArgs args = getArgs(jacsServiceData);
         try {
             Files.createDirectories(getResultsDir(args));
         } catch (IOException e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
+        return processFijiService(jacsServiceData, args)
+                .thenCompose((JacsServiceResult<Void> voidResult) -> {
+                    final String aviResults = "glob:**/*.avi";
+                    // collect generated AVIs and convert them to MPEGs
+                    List<ServiceComputation<?>> avi2MpegComputations =
+                            FileUtils.lookupFiles(getResultsDir(args), 1, aviResults)
+                                    .map((Path aviPath) -> mpegConverterProcessor.process(
+                                                    new ServiceExecutionContext.Builder(jacsServiceData)
+                                                            .description("Convert AVI to MPEG")
+                                                            .addRequiredMemoryInGB(getRequiredMemoryInGB())
+                                                            .waitFor(voidResult.getJacsServiceData())
+                                                            .build(),
+                                                    new ServiceArg("-input", aviPath.toString())
+                                            ).thenApply(pd -> {
+                                                try {
+                                                    FileUtils.deletePath(aviPath);
+                                                } catch (IOException e) {
+                                                    logger.warn("Error removing {}", aviPath, e);
+                                                }
+                                                return pd.getResult();
+                                            })
+                                    )
+                                    .collect(Collectors.toList());
+                    return computationFactory
+                            .newCompletedComputation(voidResult)
+                            .thenCombineAll(avi2MpegComputations, (JacsServiceResult<Void> vr, List<?> mpegResults) -> (List<File>) mpegResults);
+                })
+                .thenSuspendUntil((List<File> mpegResults) -> new ContinuationCond.Cond<>(mpegResults, !suspendUntilAllDependenciesComplete(jacsServiceData)))
+                .thenApply(mpegResultsCond -> this.updateServiceResult(jacsServiceData, this.getResultHandler().collectResult(new JacsServiceResult<Void>(jacsServiceData))))
+                .thenApply(this::removeTempDir)
+                ;
     }
 
-    @Override
-    protected JacsServiceResult<JacsServiceData> submitServiceDependencies(JacsServiceData jacsServiceData) {
-        MIPsAndMoviesArgs args = getArgs(jacsServiceData);
-        JacsServiceData fijiServiceData = submitFijiService(args, jacsServiceData);
-        logger.debug("Submitted FIJI service {}", fijiServiceData);
-        return new JacsServiceResult<>(jacsServiceData, fijiServiceData);
-    }
-
-    private JacsServiceData submitFijiService(MIPsAndMoviesArgs args, JacsServiceData jacsServiceData) {
+    private ServiceComputation<JacsServiceResult<Void>> processFijiService(JacsServiceData jacsServiceData, MIPsAndMoviesArgs args) {
         if (StringUtils.isBlank(args.chanSpec)) {
             throw new ComputationException(jacsServiceData,  "Channel spec is required for " + jacsServiceData.toString());
         }
         Path temporaryOutputDir = getTemporaryOutput(args, jacsServiceData);
-        JacsServiceData fijiMacroService = fijiMacroProcessor.createServiceData(
+        return fijiMacroProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Invoke Fiji macro")
                         .addRequiredMemoryInGB(getRequiredMemoryInGB())
@@ -142,8 +169,6 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractBasicLifeCy
                 new ServiceArg("-resultsPatterns", "*.png"),
                 new ServiceArg("-resultsPatterns", "*.avi")
         );
-        logger.debug("Submit FIJI service {}", fijiMacroService);
-        return submitDependencyIfNotFound(fijiMacroService);
     }
 
     protected Path getTemporaryOutput(MIPsAndMoviesArgs args, JacsServiceData jacsServiceData) {
@@ -152,32 +177,7 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractBasicLifeCy
 
     protected abstract String getMIPsAndMoviesArgs(MIPsAndMoviesArgs args, Path outputDir);
 
-    @Override
-    protected ServiceComputation<JacsServiceResult<JacsServiceData>> processing(JacsServiceResult<JacsServiceData> depResults) {
-        return computationFactory.newCompletedComputation(depResults)
-                .thenApply(pd -> {
-                    MIPsAndMoviesResult result = getResultHandler().collectResult(pd);
-                    result.getFileList().stream()
-                            .filter(f -> f.endsWith(".avi"))
-                            .forEach(f -> submitMpegConverterService(f, "Convert AVI to MPEG", pd.getJacsServiceData(), pd.getResult()));
-                    return pd;
-                });
-    }
-
-    private JacsServiceData submitMpegConverterService(String aviFileName, String description, JacsServiceData jacsServiceData, JacsServiceData dep) {
-        JacsServiceData mpegConverterService = mpegConverterProcessor.createServiceData(
-                new ServiceExecutionContext.Builder(jacsServiceData)
-                        .description(description)
-                        .addRequiredMemoryInGB(getRequiredMemoryInGB())
-                        .waitFor(dep)
-                        .build(),
-                new ServiceArg("-input", aviFileName)
-        );
-        return submitDependencyIfNotFound(mpegConverterService);
-    }
-
-    @Override
-    protected JacsServiceResult<MIPsAndMoviesResult> postProcessing(JacsServiceResult<MIPsAndMoviesResult> sr) {
+    private JacsServiceResult<MIPsAndMoviesResult> removeTempDir(JacsServiceResult<MIPsAndMoviesResult> sr) {
         try {
             Path temporaryOutputDir = getServicePath(scratchLocation, sr.getJacsServiceData());
             FileUtils.deletePath(temporaryOutputDir);
