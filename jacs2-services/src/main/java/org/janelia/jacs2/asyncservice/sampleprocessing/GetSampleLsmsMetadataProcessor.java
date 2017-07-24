@@ -60,8 +60,8 @@ public class GetSampleLsmsMetadataProcessor extends AbstractServiceProcessor<Lis
 
             @Override
             public List<SampleImageFile> collectResult(JacsServiceResult<?> depResults) {
-                JacsServiceResult<List<SampleImageFile>> intermediateResult = (JacsServiceResult<List<SampleImageFile>>)depResults;
-                return intermediateResult.getResult();
+                JacsServiceResult<List<SampleImageFile>> result = (JacsServiceResult<List<SampleImageFile>>)depResults;
+                return result.getResult();
             }
 
             public List<SampleImageFile> getServiceDataResult(JacsServiceData jacsServiceData) {
@@ -84,7 +84,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractServiceProcessor<Lis
         ).thenCompose((JacsServiceResult<List<SampleImageFile>> sifr) -> {
             List<SampleImageFile> sampleImageFiles = sifr.getResult();
             List<ServiceComputation<?>> lsmMetadataComputations = sampleImageFiles.stream()
-                    .map(sif -> {
+                    .map((SampleImageFile sif) -> {
                         File lsmImageFile = new File(sif.getWorkingFilePath());
                         File lsmMetadataFile = SampleServicesUtils.getImageMetadataFile(args.sampleDataRootDir, args.sampleSummarySubDir, sif.getObjective(), sif.getArea(), lsmImageFile).toFile();
                         if (!lsmMetadataFile.exists()) {
