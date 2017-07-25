@@ -11,6 +11,7 @@ import org.hamcrest.Matchers;
 import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.jacs2.dao.JacsServiceDataDao;
 import org.janelia.jacs2.model.DataInterval;
+import org.janelia.jacs2.model.jacsservice.JacsServiceLifecycleStage;
 import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
@@ -87,7 +88,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         JacsServiceData si = persistServiceWithEvents(createTestService("s", ProcessingLocation.LOCAL),
                 ImmutableMap.of(
                         "s1", new RegisteredJacsNotification().addNotificationField("nf1", "nv1").withDefaultLifecycleStages(),
-                        "s2", new RegisteredJacsNotification().addNotificationField("nf2", "nv2").forLifecycleStage(RegisteredJacsNotification.LifecycleStage.FAILED_PROCESSING)
+                        "s2", new RegisteredJacsNotification().addNotificationField("nf2", "nv2").forLifecycleStage(JacsServiceLifecycleStage.FAILED_PROCESSING)
                 ),
                 createTestServiceEvent("e1", "v1"),
                 createTestServiceEvent("e2", "v2"));
@@ -100,7 +101,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         JacsServiceData si = persistServiceWithEvents(createTestService("s", ProcessingLocation.LOCAL),
                 ImmutableMap.of(
                         "s1", new RegisteredJacsNotification().addNotificationField("nf1", "nv1").withDefaultLifecycleStages(),
-                        "s2", new RegisteredJacsNotification().addNotificationField("nf2", "nv2").forLifecycleStage(RegisteredJacsNotification.LifecycleStage.FAILED_PROCESSING)
+                        "s2", new RegisteredJacsNotification().addNotificationField("nf2", "nv2").forLifecycleStage(JacsServiceLifecycleStage.FAILED_PROCESSING)
                 ),
                 createTestServiceEvent("e1", "v1"),
                 createTestServiceEvent("e2", "v2"));
@@ -232,7 +233,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         servicesInCanceledState.stream().forEach(s -> {
             s.setState(JacsServiceState.CANCELED);
             persistServiceWithEvents(s, ImmutableMap.of(
-                            "s1", new RegisteredJacsNotification().addNotificationField("nf1", "nv1").forLifecycleStage(RegisteredJacsNotification.LifecycleStage.START_PROCESSING)
+                            "s1", new RegisteredJacsNotification().addNotificationField("nf1", "nv1").forLifecycleStage(JacsServiceLifecycleStage.START_PROCESSING)
                     )
             );
         });

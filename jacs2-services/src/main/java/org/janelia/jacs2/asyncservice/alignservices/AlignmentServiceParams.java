@@ -11,13 +11,15 @@ import java.util.Map;
 public class AlignmentServiceParams {
 
     private final String alignmentResultName;
+    private final String alignmentAlgorithm;
     private final SampleProcessorResult sampleProcessorResult;
     private final NeuronSeparationFiles neuronSeparationFiles;
     private final List<ServiceArg> alignmentServiceArgs;
     private final Map<String, String> resources = new LinkedHashMap<>();
 
-    public AlignmentServiceParams(String alignmentResultName, SampleProcessorResult sampleProcessorResult, NeuronSeparationFiles neuronSeparationFiles, List<ServiceArg> alignmentServiceArgs) {
+    public AlignmentServiceParams(String alignmentResultName, String alignmentAlgorithm, SampleProcessorResult sampleProcessorResult, NeuronSeparationFiles neuronSeparationFiles, List<ServiceArg> alignmentServiceArgs) {
         this.alignmentResultName = alignmentResultName;
+        this.alignmentAlgorithm = alignmentAlgorithm;
         this.sampleProcessorResult = sampleProcessorResult;
         this.neuronSeparationFiles = neuronSeparationFiles;
         this.alignmentServiceArgs = alignmentServiceArgs;
@@ -25,6 +27,10 @@ public class AlignmentServiceParams {
 
     public String getAlignmentResultName() {
         return alignmentResultName;
+    }
+
+    public String getAlignmentAlgorithm() {
+        return alignmentAlgorithm;
     }
 
     public SampleProcessorResult getSampleProcessorResult() {

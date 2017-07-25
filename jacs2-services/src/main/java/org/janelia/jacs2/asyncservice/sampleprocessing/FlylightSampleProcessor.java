@@ -513,6 +513,14 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                         .description("Separate sample neurons")
                                         .addRequiredMemoryInGB(getRequiredMemoryForNeuronSeparationByObjective(sr.getObjective()))
                                         .waitFor(deps)
+                                        .registerProcessingStageNotification(
+                                                FlylightSampleEvents.NEURON_SEPARATION,
+                                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.NEURON_SEPARATION, new RegisteredJacsNotification().withDefaultLifecycleStages())
+                                                        .map(n -> n.addNotificationField("sampleId", sr.getSampleId())
+                                                                        .addNotificationField("objective", sr.getObjective())
+                                                                        .addNotificationField("area", sr.getArea())
+                                                        )
+                                        )
                                         .build(),
                                 new ServiceArg("-sampleId", sr.getSampleId()),
                                 new ServiceArg("-objective", sr.getObjective()),
@@ -589,6 +597,14 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         .description("Align sample")
                         .addResources(alignmentServiceParams.getResources())
                         .waitFor(deps)
+                        .registerProcessingNotification(
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.ALIGNMENT, new RegisteredJacsNotification().withDefaultLifecycleStages())
+                                        .map(n -> n.addNotificationField("sampleId", alignmentServiceParams.getSampleProcessorResult().getSampleId())
+                                                        .addNotificationField("objective", alignmentServiceParams.getSampleProcessorResult().getObjective())
+                                                        .addNotificationField("area", alignmentServiceParams.getSampleProcessorResult().getArea())
+                                                        .addNotificationField("alignmentAlgorithm", alignmentServiceParams.getAlignmentAlgorithm())
+                                        )
+                        )
                         .build(),
                 alignmentServiceParams.getAlignmentServiceArgsArray()
         ).thenCompose((JacsServiceResult<AlignmentResultFiles> alignmentResultFiles) -> updateAlignmentResultsProcessor.process(
@@ -621,6 +637,14 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Warp sample neurons")
                         .addRequiredMemoryInGB(getRequiredMemoryForNeuronSeparationByObjective(sampleProcessorResult.getObjective()))
+                        .registerProcessingStageNotification(
+                                FlylightSampleEvents.NEURON_WARPING,
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.NEURON_WARPING, new RegisteredJacsNotification().withDefaultLifecycleStages())
+                                        .map(n -> n.addNotificationField("sampleId", sampleProcessorResult.getSampleId())
+                                                        .addNotificationField("objective", sampleProcessorResult.getObjective())
+                                                        .addNotificationField("area", sampleProcessorResult.getArea())
+                                        )
+                        )
                         .waitFor(deps)
                         .build(),
                 new ServiceArg("-sampleId", sampleProcessorResult.getSampleId()),

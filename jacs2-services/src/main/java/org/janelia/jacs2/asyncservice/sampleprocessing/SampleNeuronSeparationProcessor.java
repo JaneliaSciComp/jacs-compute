@@ -16,6 +16,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -78,6 +79,9 @@ public class SampleNeuronSeparationProcessor extends AbstractServiceProcessor<Ne
         SampleNeuronSeparationArgs args = getArgs(jacsServiceData);
         return neuronSeparationProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Separate sample neurons")
+                        .registerProcessingNotification(
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.NEURON_SEPARATION, null)
+                        )
                         .build(),
                 new ServiceArg("-inputFile", args.inputFile),
                 new ServiceArg("-outputDir", args.outputDir),

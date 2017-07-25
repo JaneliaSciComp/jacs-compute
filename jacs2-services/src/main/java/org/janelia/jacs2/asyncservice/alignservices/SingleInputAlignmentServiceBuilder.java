@@ -63,6 +63,7 @@ public class SingleInputAlignmentServiceBuilder implements AlignmentServiceBuild
             NeuronSeparationFiles neuronSeparationFiles = neuronSeparationResults.get(resultIndex);
             AlignmentServiceParams alignmentServiceParams = new AlignmentServiceParams(
                     "Fly Alignment",
+                    alignmentAlgorithm,
                     sampleProcessorResult,
                     neuronSeparationFiles,
                     ImmutableList.of(

@@ -1,10 +1,13 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
-import org.hamcrest.Matchers;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
+import org.janelia.jacs2.dao.JacsNotificationDao;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
+import org.janelia.jacs2.model.jacsservice.JacsServiceLifecycleStage;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -32,7 +35,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,6 +45,7 @@ public class JacsServiceDispatcherTest {
 
     private ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
+    private JacsNotificationDao jacsNotificationDao;
     private JacsServiceQueue jacsServiceQueue;
     private JacsServiceEngine jacsServiceEngine;
     private Instance<ServiceRegistry> serviceRegistrarSource;
@@ -55,6 +59,7 @@ public class JacsServiceDispatcherTest {
         serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
 
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        jacsNotificationDao = mock(JacsNotificationDao.class);
         serviceRegistrarSource = mock(Instance.class);
         serviceRegistry = mock(ServiceRegistry.class);
         jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, "queue", 10, logger);
@@ -62,6 +67,7 @@ public class JacsServiceDispatcherTest {
         testDispatcher = new JacsServiceDispatcher(serviceComputationFactory,
                 jacsServiceQueue,
                 jacsServiceDataPersistence,
+                jacsNotificationDao,
                 jacsServiceEngine,
                 logger);
         when(serviceRegistrarSource.get()).thenReturn(serviceRegistry);
@@ -87,15 +93,16 @@ public class JacsServiceDispatcherTest {
         assertThat(serviceData.getId(), equalTo(TEST_ID));
     }
 
-    private JacsServiceData createTestService(Long serviceId, String serviceName) {
+    private JacsServiceData createTestService(Long serviceId, String serviceName, RegisteredJacsNotification processingNotification) {
         JacsServiceData testService = new JacsServiceData();
         testService.setId(serviceId);
         testService.setName(serviceName);
+        testService.setProcessingNotification(processingNotification);
         return testService;
     }
 
     private JacsServiceData enqueueTestService(String serviceName) {
-        JacsServiceData testService = createTestService(TEST_ID, serviceName);
+        JacsServiceData testService = createTestService(TEST_ID, serviceName, new RegisteredJacsNotification().withDefaultLifecycleStages().addNotificationField("f1", "v1"));
         return jacsServiceQueue.enqueueService(testService);
     }
 
@@ -121,7 +128,7 @@ public class JacsServiceDispatcherTest {
 
     @Test
     public void runServiceFromPersistenceStore() {
-        JacsServiceData testServiceData = createTestService(1L, "persistedService");
+        JacsServiceData testServiceData = createTestService(1L, "persistedService", new RegisteredJacsNotification().withDefaultLifecycleStages().addNotificationField("f1", "v1"));
 
         PageResult<JacsServiceData> nonEmptyPageResult = new PageResult<>();
         nonEmptyPageResult.setResultList(ImmutableList.of(testServiceData));
@@ -178,6 +185,27 @@ public class JacsServiceDispatcherTest {
                             }
                         })
                 );
+        verify(jacsNotificationDao)
+                .save(argThat(new ArgumentMatcher<JacsNotification>() {
+                    @Override
+                    public boolean matches(JacsNotification argument) {
+                        return argument.getNotificationStage() == JacsServiceLifecycleStage.START_PROCESSING;
+                    }
+                }));
+        verify(jacsNotificationDao)
+                .save(argThat(new ArgumentMatcher<JacsNotification>() {
+                    @Override
+                    public boolean matches(JacsNotification argument) {
+                        return argument.getNotificationStage() == JacsServiceLifecycleStage.SUCCESSFUL_PROCESSING;
+                    }
+                }));
+        verify(jacsNotificationDao, never())
+                .save(argThat(new ArgumentMatcher<JacsNotification>() {
+                    @Override
+                    public boolean matches(JacsNotification argument) {
+                        return argument.getNotificationStage() == JacsServiceLifecycleStage.FAILED_PROCESSING;
+                    }
+                }));
         assertThat(testServiceData.getState(), equalTo(JacsServiceState.SUCCESSFUL));
     }
 
@@ -233,6 +261,27 @@ public class JacsServiceDispatcherTest {
                             }
                         })
                 );
+        verify(jacsNotificationDao)
+                .save(argThat(new ArgumentMatcher<JacsNotification>() {
+                    @Override
+                    public boolean matches(JacsNotification argument) {
+                        return argument.getNotificationStage() == JacsServiceLifecycleStage.START_PROCESSING;
+                    }
+                }));
+        verify(jacsNotificationDao, never())
+                .save(argThat(new ArgumentMatcher<JacsNotification>() {
+                    @Override
+                    public boolean matches(JacsNotification argument) {
+                        return argument.getNotificationStage() == JacsServiceLifecycleStage.SUCCESSFUL_PROCESSING;
+                    }
+                }));
+        verify(jacsNotificationDao)
+                .save(argThat(new ArgumentMatcher<JacsNotification>() {
+                    @Override
+                    public boolean matches(JacsNotification argument) {
+                        return argument.getNotificationStage() == JacsServiceLifecycleStage.FAILED_PROCESSING;
+                    }
+                }));
         assertThat(testServiceData.getState(), equalTo(JacsServiceState.ERROR));
     }
 

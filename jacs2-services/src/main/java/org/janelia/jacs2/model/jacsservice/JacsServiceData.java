@@ -64,10 +64,12 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private Set<Number> dependenciesIds = new LinkedHashSet<>();
     private Long serviceTimeout;
 
+    @Override
     public Number getId() {
         return id;
     }
 
+    @Override
     public void setId(Number id) {
         this.id = id;
     }

@@ -13,13 +13,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class RegisteredJacsNotification implements Serializable {
-    public enum LifecycleStage {
-        START_PROCESSING,
-        SUCCESSFUL_PROCESSING,
-        FAILED_PROCESSING
-    }
 
-    private Set<LifecycleStage> registeredLifecycleStages = new HashSet<>();
+    private Set<JacsServiceLifecycleStage> registeredLifecycleStages = new HashSet<>();
     private Map<String, String> notificationData = new LinkedHashMap<>();
 
     public RegisteredJacsNotification() {
@@ -31,27 +26,27 @@ public class RegisteredJacsNotification implements Serializable {
         notificationData.putAll(n.notificationData);
     }
 
-    public Set<LifecycleStage> getRegisteredLifecycleStages() {
+    public Set<JacsServiceLifecycleStage> getRegisteredLifecycleStages() {
         return registeredLifecycleStages;
     }
 
-    public void setRegisteredLifecycleStages(Set<LifecycleStage> registeredLifecycleStages) {
+    public void setRegisteredLifecycleStages(Set<JacsServiceLifecycleStage> registeredLifecycleStages) {
         this.registeredLifecycleStages = registeredLifecycleStages;
     }
 
     public RegisteredJacsNotification withDefaultLifecycleStages() {
-        registeredLifecycleStages.addAll(EnumSet.allOf(LifecycleStage.class));
+        registeredLifecycleStages.addAll(EnumSet.allOf(JacsServiceLifecycleStage.class));
         return this;
     }
 
-    public RegisteredJacsNotification forLifecycleStage(Set<LifecycleStage> lifecycleStages) {
-        for (LifecycleStage lifecycleStage : lifecycleStages)
+    public RegisteredJacsNotification forLifecycleStage(Set<JacsServiceLifecycleStage> lifecycleStages) {
+        for (JacsServiceLifecycleStage lifecycleStage : lifecycleStages)
             registeredLifecycleStages.add(lifecycleStage);
         return this;
     }
 
-    public RegisteredJacsNotification forLifecycleStage(LifecycleStage ...lifecycleStages) {
-        for (LifecycleStage lifecycleStage : lifecycleStages)
+    public RegisteredJacsNotification forLifecycleStage(JacsServiceLifecycleStage...lifecycleStages) {
+        for (JacsServiceLifecycleStage lifecycleStage : lifecycleStages)
             registeredLifecycleStages.add(lifecycleStage);
         return this;
     }

@@ -2,9 +2,12 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
+import org.janelia.jacs2.dao.JacsNotificationDao;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.model.jacsservice.JacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
+import org.janelia.jacs2.model.jacsservice.JacsServiceLifecycleStage;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.slf4j.Logger;
@@ -21,6 +24,7 @@ public class JacsServiceDispatcher {
     private ServiceComputationFactory serviceComputationFactory;
     private JacsServiceQueue jacsServiceQueue;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
+    private JacsNotificationDao jacsNotificationDao;
     private JacsServiceEngine jacsServiceEngine;
     private Logger logger;
 
@@ -32,11 +36,13 @@ public class JacsServiceDispatcher {
     public JacsServiceDispatcher(ServiceComputationFactory serviceComputationFactory,
                                  JacsServiceQueue jacsServiceQueue,
                                  JacsServiceDataPersistence jacsServiceDataPersistence,
+                                 JacsNotificationDao jacsNotificationDao,
                                  JacsServiceEngine jacsServiceEngine,
                                  Logger logger) {
         this.serviceComputationFactory = serviceComputationFactory;
         this.jacsServiceQueue = jacsServiceQueue;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
+        this.jacsNotificationDao = jacsNotificationDao;
         this.jacsServiceEngine = jacsServiceEngine;
         this.logger = logger;
     }
@@ -68,7 +74,7 @@ public class JacsServiceDispatcher {
         ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
         serviceComputationFactory.<JacsServiceData>newComputation()
                 .supply(() -> {
-                    sendNotification(jacsServiceData, RegisteredJacsNotification.LifecycleStage.START_PROCESSING);
+                    sendNotification(jacsServiceData, JacsServiceLifecycleStage.START_PROCESSING);
                     jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.SUBMITTED, Optional.empty());
                     return jacsServiceData;
                 })
@@ -108,7 +114,7 @@ public class JacsServiceDispatcher {
                     JacsServiceState.SUCCESSFUL,
                     Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully")));
         }
-        sendNotification(jacsServiceData, RegisteredJacsNotification.LifecycleStage.SUCCESSFUL_PROCESSING);
+        sendNotification(jacsServiceData, JacsServiceLifecycleStage.SUCCESSFUL_PROCESSING);
         if (!jacsServiceData.hasParentServiceId()) {
             archiveServiceData(jacsServiceData.getId());
         }
@@ -129,17 +135,21 @@ public class JacsServiceDispatcher {
                     JacsServiceState.ERROR,
                     Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage()))));
         }
-        sendNotification(jacsServiceData, RegisteredJacsNotification.LifecycleStage.FAILED_PROCESSING);
+        sendNotification(jacsServiceData, JacsServiceLifecycleStage.FAILED_PROCESSING);
    }
 
-    private void sendNotification(JacsServiceData sd, RegisteredJacsNotification.LifecycleStage lifecycleStage) {
+    private void sendNotification(JacsServiceData sd, JacsServiceLifecycleStage lifecycleStage) {
         if (sd.getProcessingNotification() != null && sd.getProcessingNotification().getRegisteredLifecycleStages().contains(lifecycleStage)) {
             sendNotification(sd, lifecycleStage, sd.getProcessingNotification());
         }
     }
 
-    private void sendNotification(JacsServiceData sd, RegisteredJacsNotification.LifecycleStage lifecycleStage, RegisteredJacsNotification rn) {
+    private void sendNotification(JacsServiceData sd, JacsServiceLifecycleStage lifecycleStage, RegisteredJacsNotification rn) {
         logger.info("Service {} - stage {}: {}", sd, lifecycleStage, rn);
+        JacsNotification jacsNotification = new JacsNotification();
+        jacsNotification.setNotificationData(rn.getNotificationData());
+        jacsNotification.setNotificationStage(lifecycleStage);
+        jacsNotificationDao.save(jacsNotification);
     }
 
     private void archiveServiceData(Number serviceId) {

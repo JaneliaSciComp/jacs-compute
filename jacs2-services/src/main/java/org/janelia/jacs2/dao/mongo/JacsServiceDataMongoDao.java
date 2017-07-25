@@ -39,7 +39,7 @@ import static com.mongodb.client.model.Filters.in;
 import static com.mongodb.client.model.Filters.lt;
 
 /**
- * Mongo based implementation of JacsServiceDataDao
+ * Mongo based implementation of JacsServiceDataDao.
  */
 public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> implements JacsServiceDataDao {
 
