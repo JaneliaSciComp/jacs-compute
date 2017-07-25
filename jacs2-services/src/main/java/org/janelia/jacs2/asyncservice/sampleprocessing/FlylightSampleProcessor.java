@@ -58,6 +58,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -232,13 +233,18 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                     // run all requested alignments followed by the neuron separations
                     List<ServiceComputation<?>> afterSampleProcessNeuronSeparationsResults = ImmutableList.copyOf(neuronSeparationComputations);
                     return computationFactory.newCompletedComputation(lspr)
-                            .thenCombineAll(afterSampleProcessNeuronSeparationsResults, (JacsServiceResult<List<SampleProcessorResult>> lspr1, List<?> results) -> {
+                            .thenComposeAll(afterSampleProcessNeuronSeparationsResults, (JacsServiceResult<List<SampleProcessorResult>> lspr1, List<?> results) -> {
                                 // after all neuron separation complete run the alignments
                                 @SuppressWarnings("unchecked")
                                 List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults = (List<JacsServiceResult<NeuronSeparationFiles>>) results;
-                                runAllAlignments(args.sampleId, jacsServiceData, args.sampleDataRootDir, args.alignmentAlgorithms, lspr1, neuronSeparationsResults);
-                                return lspr1;
-                            });
+                                List<ServiceComputation<?>> alignmentComputations = new ArrayList<>();
+                                alignmentComputations.addAll(
+                                        runAllAlignments(args.sampleId, jacsServiceData, args.sampleDataRootDir, args.alignmentAlgorithms, lspr1, neuronSeparationsResults)
+                                );
+                                return computationFactory.newCompletedComputation(lspr1)
+                                        .thenCombineAll(alignmentComputations, (lspr2, alignmentResults) -> lspr2);
+                            })
+                            ;
                 })
                 .thenSuspendUntil((JacsServiceResult<List<SampleProcessorResult>> lspr) -> new ContinuationCond.Cond<>(lspr, !suspendUntilAllDependenciesComplete(jacsServiceData))) // wait for all subtasks to complete
                 .thenApply((ContinuationCond.Cond<JacsServiceResult<List<SampleProcessorResult>>> lsprCond) -> {
@@ -568,7 +574,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         }
     }
 
-    private void runAllAlignments(Number sampleId, JacsServiceData jacsServiceData, String sampleDataRootDir, List<String> alignmentAlgorithms, JacsServiceResult<List<SampleProcessorResult>> lspr, List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults) {
+    private List<ServiceComputation<JacsServiceResult<NeuronSeparationFiles>>> runAllAlignments(Number sampleId, JacsServiceData jacsServiceData, String sampleDataRootDir, List<String> alignmentAlgorithms, JacsServiceResult<List<SampleProcessorResult>> lspr, List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults) {
         Map<NeuronSeparationFiles, JacsServiceResult<NeuronSeparationFiles>> indexedNeuronSeparationResults = Maps.uniqueIndex(neuronSeparationsResults,
                 new Function<JacsServiceResult<NeuronSeparationFiles>, NeuronSeparationFiles>() {
                     @Nullable
@@ -581,6 +587,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         List<NeuronSeparationFiles> sampleNeuronSeparationFiles =  neuronSeparationsResults.stream().map(JacsServiceResult::getResult).collect(Collectors.toList());
 
         Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), sampleId);
+        List<ServiceComputation<JacsServiceResult<NeuronSeparationFiles>>> alignmentFollowedByNeuronWarpingComputations = new ArrayList<>();
         for (String alignmentAlgorithm : alignmentAlgorithms) {
             AlignmentServiceBuilder alignmentServiceBuilder = alignmentServiceBuilderFactory.getServiceArgBuilder(alignmentAlgorithm);
             if (alignmentServiceBuilder == null) {
@@ -597,16 +604,19 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
             alignmentServicesParams.forEach(alignmentServiceParams -> {
                 JacsServiceData neuronSeparationService = indexedNeuronSeparationResults.get(alignmentServiceParams.getNeuronSeparationFiles()).getJacsServiceData();
-                runAlignment(jacsServiceData, alignmentServiceParams, lspr.getJacsServiceData(), neuronSeparationService)
-                        .thenCompose((JacsServiceResult<AlignmentResult> alignmentResult) -> runAlignmentNeuronSeparation(
-                                jacsServiceData,
-                                alignmentServiceParams.getSampleProcessorResult(),
-                                sampleDataRootDir,
-                                alignmentResult.getResult().getAlignmentResultId(),
-                                alignmentServiceParams.getNeuronSeparationFiles().getConsolidatedLabelPath(),
-                                alignmentResult.getJacsServiceData()));
+                alignmentFollowedByNeuronWarpingComputations.add(
+                        runAlignment(jacsServiceData, alignmentServiceParams, lspr.getJacsServiceData(), neuronSeparationService)
+                                .thenCompose((JacsServiceResult<AlignmentResult> alignmentResult) -> runAlignmentNeuronSeparation(
+                                        jacsServiceData,
+                                        alignmentServiceParams.getSampleProcessorResult(),
+                                        sampleDataRootDir,
+                                        alignmentResult.getResult().getAlignmentResultId(),
+                                        alignmentServiceParams.getNeuronSeparationFiles().getConsolidatedLabelPath(),
+                                        alignmentResult.getJacsServiceData()))
+                );
             });
         }
+        return alignmentFollowedByNeuronWarpingComputations;
     }
 
     private ServiceComputation<JacsServiceResult<AlignmentResult>> runAlignment(JacsServiceData jacsServiceData, AlignmentServiceParams alignmentServiceParams, JacsServiceData... deps) {
