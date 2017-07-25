@@ -80,6 +80,7 @@ public class SampleNeuronSeparationProcessor extends AbstractServiceProcessor<Ne
         return neuronSeparationProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Separate sample neurons")
                         .registerProcessingNotification(
+                                FlylightSampleEvents.NEURON_SEPARATION,
                                 jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.NEURON_SEPARATION, null)
                         )
                         .build(),

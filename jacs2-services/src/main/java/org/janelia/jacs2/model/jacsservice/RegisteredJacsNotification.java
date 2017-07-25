@@ -14,6 +14,7 @@ import java.util.Set;
 
 public class RegisteredJacsNotification implements Serializable {
 
+    private String eventName;
     private Set<JacsServiceLifecycleStage> registeredLifecycleStages = new HashSet<>();
     private Map<String, String> notificationData = new LinkedHashMap<>();
 
@@ -22,8 +23,22 @@ public class RegisteredJacsNotification implements Serializable {
     }
 
     public RegisteredJacsNotification(RegisteredJacsNotification n) {
+        this.eventName = n.eventName;
         registeredLifecycleStages.addAll(n.registeredLifecycleStages);
         notificationData.putAll(n.notificationData);
+    }
+
+    public String getEventName() {
+        return eventName;
+    }
+
+    public void setEventName(String eventName) {
+        this.eventName = eventName;
+    }
+
+    public RegisteredJacsNotification withEventName(String eventName) {
+        this.eventName = eventName;
+        return this;
     }
 
     public Set<JacsServiceLifecycleStage> getRegisteredLifecycleStages() {
@@ -89,6 +104,7 @@ public class RegisteredJacsNotification implements Serializable {
         RegisteredJacsNotification that = (RegisteredJacsNotification) o;
 
         return new EqualsBuilder()
+                .append(eventName, that.eventName)
                 .append(notificationData, that.notificationData)
                 .isEquals();
     }
@@ -96,6 +112,7 @@ public class RegisteredJacsNotification implements Serializable {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
+                .append(eventName)
                 .append(notificationData)
                 .toHashCode();
     }

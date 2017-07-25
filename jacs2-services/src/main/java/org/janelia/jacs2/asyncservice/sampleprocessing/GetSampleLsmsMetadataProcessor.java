@@ -92,6 +92,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractServiceProcessor<Lis
                                     new ServiceExecutionContext.Builder(jacsServiceData)
                                             .waitFor(sifr.getJacsServiceData())
                                             .registerProcessingNotification(
+                                                    FlylightSampleEvents.LSM_METADATA,
                                                     jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.LSM_METADATA, new RegisteredJacsNotification())
                                                             .map(n -> n.addNotificationField("sampleId", sif.getSampleId())
                                                                             .addNotificationField("lsmId", sif.getId())

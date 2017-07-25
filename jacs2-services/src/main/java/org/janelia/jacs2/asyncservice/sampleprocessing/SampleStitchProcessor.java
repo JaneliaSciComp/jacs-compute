@@ -312,6 +312,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                         .description("Stitch tiles")
                         .addRequiredMemoryInGB(72)
                         .registerProcessingNotification(
+                                FlylightSampleEvents.STITCH_TILES,
                                 jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.STITCH_TILES, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                         .map(n -> n.addNotificationField("sampleId", sampleId)
                                                         .addNotificationField("objective", objective)

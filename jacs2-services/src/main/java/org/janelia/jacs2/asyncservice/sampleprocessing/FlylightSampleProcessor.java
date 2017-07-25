@@ -378,6 +378,15 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                             new ServiceExecutionContext.Builder(jacsServiceData)
                                                     .description("Generate post process mipmaps")
                                                     .waitFor(sampleResult.getJacsServiceData(), updateSampleResults.getJacsServiceData())
+                                                    .registerProcessingNotification(
+                                                            FlylightSampleEvents.MIPMAPS,
+                                                            jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MIPMAPS, new RegisteredJacsNotification().withDefaultLifecycleStages())
+                                                                    .map(n -> n.addNotificationField("sampleId", sampleId)
+                                                                                    .addNotificationField("brainLSM", brainArea.getFilepath())
+                                                                                    .addNotificationField("vncLSM", vncArea.getFilepath())
+                                                                                    .addNotificationField("objective", sampleObjective)
+                                                                    )
+                                                    )
                                                     .build(),
                                             new ServiceArg("-imgFile", brainArea.getFilepath()),
                                             new ServiceArg("-imgFilePrefix", brainArea.getOutputPrefix()),
@@ -415,6 +424,15 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                                                 new ServiceExecutionContext.Builder(jacsServiceData)
                                                                         .description("Generate post process mipmaps")
                                                                         .waitFor(sampleResult.getJacsServiceData(), updateSampleResults.getJacsServiceData())
+                                                                        .registerProcessingNotification(
+                                                                                FlylightSampleEvents.MIPMAPS,
+                                                                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MIPMAPS, new RegisteredJacsNotification().withDefaultLifecycleStages())
+                                                                                        .map(n -> n.addNotificationField("sampleId", sampleId)
+                                                                                                        .addNotificationField("area", indexedMipsInput.getReference().getArea())
+                                                                                                        .addNotificationField("objective", sampleObjective)
+                                                                                                        .addNotificationField("lsmFile", indexedMipsInput.getReference().getFilepath())
+                                                                                        )
+                                                                        )
                                                                         .build(),
                                                                 new ServiceArg("-imgFile", indexedMipsInput.getReference().getFilepath()),
                                                                 new ServiceArg("-mode", imageType),
@@ -598,6 +616,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         .addResources(alignmentServiceParams.getResources())
                         .waitFor(deps)
                         .registerProcessingNotification(
+                                FlylightSampleEvents.ALIGNMENT,
                                 jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.ALIGNMENT, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                         .map(n -> n.addNotificationField("sampleId", alignmentServiceParams.getSampleProcessorResult().getSampleId())
                                                         .addNotificationField("objective", alignmentServiceParams.getSampleProcessorResult().getObjective())
@@ -657,7 +676,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                 new ServiceArg("-referenceChannel", sampleProcessorResult.getReferenceChannel()),
                 new ServiceArg("-consolidatedLabelFile", consolidatedLabelFile.toString()),
                 new ServiceArg("-previousResultFile", previousNeuronsResult != null ? previousNeuronsResult.toString() : "")
-            );
+        );
     }
 
     private FlylightSampleArgs getArgs(JacsServiceData jacsServiceData) {

@@ -81,6 +81,7 @@ public class SampleNeuronWarpingProcessor extends AbstractServiceProcessor<Neuro
         return neuronWarpingProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Warp sample neurons")
                         .registerProcessingNotification(
+                                FlylightSampleEvents.NEURON_WARPING,
                                 jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.NEURON_WARPING, null)
                         )
                         .build(),

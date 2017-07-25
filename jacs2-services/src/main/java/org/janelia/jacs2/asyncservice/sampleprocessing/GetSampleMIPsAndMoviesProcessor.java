@@ -116,6 +116,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractServiceProcessor<Li
                                 new ServiceExecutionContext.Builder(jacsServiceData)
                                         .waitFor(sifr.getJacsServiceData())
                                         .registerProcessingNotification(
+                                                FlylightSampleEvents.SUMMARY_MIPMAPS,
                                                 jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.SUMMARY_MIPMAPS, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                                         .map(n -> n.addNotificationField("sampleId", sif.getSampleId())
                                                                         .addNotificationField("lsmId", sif.getId())

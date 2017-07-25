@@ -148,6 +148,7 @@ public class JacsServiceDispatcher {
         JacsNotification jacsNotification = new JacsNotification();
         jacsNotification.setNotificationData(rn.getNotificationData());
         jacsNotification.setNotificationStage(lifecycleStage);
+        jacsNotification.getNotificationData().put("args", sd.getArgs().toString());
         logger.info("Service {} -> {}", sd, jacsNotification);
         jacsNotificationDao.save(jacsNotification);
     }

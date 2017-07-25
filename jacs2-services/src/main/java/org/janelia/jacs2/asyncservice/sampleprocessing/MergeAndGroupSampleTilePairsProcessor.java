@@ -399,6 +399,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                             .addRequiredMemoryInGB(32)
                             .waitFor(deps)
                             .registerProcessingNotification(
+                                    FlylightSampleEvents.MERGE_LSMS,
                                     jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                             .map(n -> n.addNotificationField("sampleId", ar.getSampleId())
                                                             .addNotificationField("sampleName", ar.getSampleName())

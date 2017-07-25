@@ -89,8 +89,8 @@ public class ServiceExecutionContext {
             return this;
         }
 
-        public Builder registerProcessingNotification(Optional<RegisteredJacsNotification> processingNotification) {
-            processingNotification.ifPresent(n -> serviceExecutionContext.processingNotification = n);
+        public Builder registerProcessingNotification(String processingEvent, Optional<RegisteredJacsNotification> processingNotification) {
+            processingNotification.ifPresent(n -> serviceExecutionContext.processingNotification = n.withEventName(processingEvent));
             return this;
         }
 
