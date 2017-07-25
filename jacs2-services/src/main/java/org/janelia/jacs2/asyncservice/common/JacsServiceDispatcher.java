@@ -80,14 +80,13 @@ public class JacsServiceDispatcher {
                 })
                 .thenCompose(sd -> serviceProcessor.process(sd))
                 .thenApply(r -> {
-                    JacsServiceData service = jacsServiceDataPersistence.findById(jacsServiceData.getId());
-                    success(service);
+                    success(jacsServiceData);
                     return r;
                 })
                 .exceptionally(exc -> {
                     JacsServiceData service = jacsServiceDataPersistence.findById(jacsServiceData.getId());
-                    fail(service, exc);
-                    throw new ComputationException(service, exc);
+                    fail(jacsServiceData, exc);
+                    throw new ComputationException(jacsServiceData, exc);
                 })
                 .whenComplete((r, exc) -> {
                     jacsServiceQueue.completeService(jacsServiceData);
@@ -100,42 +99,52 @@ public class JacsServiceDispatcher {
     }
 
     @MdcContext
-    private void success(JacsServiceData jacsServiceData) {
-        logger.info("Processing successful {}", jacsServiceData);
-        if (jacsServiceData.hasCompletedUnsuccessfully()) {
-            logger.warn("Attempted to overwrite failed state with success for {}", jacsServiceData);
+    private void success(JacsServiceData serviceData) {
+        logger.info("Processing successful {}", serviceData);
+        JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
+        if (latestServiceData== null) {
+            logger.warn("NO Service not found for {} - probably it was already archived", serviceData);
+            return;
         }
-        if (jacsServiceData.hasCompletedSuccessfully()) {
+        if (latestServiceData.hasCompletedUnsuccessfully()) {
+            logger.warn("Attempted to overwrite failed state with success for {}", latestServiceData);
+        }
+        if (latestServiceData.hasCompletedSuccessfully()) {
             // nothing to do
-            logger.debug("Service {} has already been marked as successful", jacsServiceData);
+            logger.debug("Service {} has already been marked as successful", latestServiceData);
         } else {
             jacsServiceDataPersistence.updateServiceState(
-                    jacsServiceData,
+                    latestServiceData,
                     JacsServiceState.SUCCESSFUL,
                     Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully")));
         }
-        sendNotification(jacsServiceData, JacsServiceLifecycleStage.SUCCESSFUL_PROCESSING);
-        if (!jacsServiceData.hasParentServiceId()) {
-            archiveServiceData(jacsServiceData.getId());
+        sendNotification(latestServiceData, JacsServiceLifecycleStage.SUCCESSFUL_PROCESSING);
+        if (!latestServiceData.hasParentServiceId()) {
+            archiveServiceData(latestServiceData.getId());
         }
     }
 
     @MdcContext
-    private void fail(JacsServiceData jacsServiceData, Throwable exc) {
-        logger.error("Processing error executing {}", jacsServiceData, exc);
-        if (jacsServiceData.hasCompletedSuccessfully()) {
-            logger.warn("Service {} has failed after has already been markes as successfully completed", jacsServiceData);
+    private void fail(JacsServiceData serviceData, Throwable exc) {
+        logger.error("Processing error executing {}: {}", serviceData, exc);
+        JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
+        if (latestServiceData== null) {
+            logger.warn("NO Service not found for {} - probably it was already archived", serviceData);
+            return;
         }
-        if (jacsServiceData.hasCompletedUnsuccessfully()) {
+        if (latestServiceData.hasCompletedSuccessfully()) {
+            logger.warn("Service {} has failed after has already been markes as successfully completed", latestServiceData);
+        }
+        if (latestServiceData.hasCompletedUnsuccessfully()) {
             // nothing to do
-            logger.debug("Service {} has already been marked as failed", jacsServiceData);
+            logger.debug("Service {} has already been marked as failed", latestServiceData);
         } else {
             jacsServiceDataPersistence.updateServiceState(
-                    jacsServiceData,
+                    latestServiceData,
                     JacsServiceState.ERROR,
                     Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage()))));
         }
-        sendNotification(jacsServiceData, JacsServiceLifecycleStage.FAILED_PROCESSING);
+        sendNotification(latestServiceData, JacsServiceLifecycleStage.FAILED_PROCESSING);
    }
 
     private void sendNotification(JacsServiceData sd, JacsServiceLifecycleStage lifecycleStage) {

@@ -42,8 +42,9 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
 
     @Override
     public ServiceComputation<JacsServiceResult<T>> process(JacsServiceData jacsServiceData) {
-        return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenApply(sd -> new PeriodicallyCheckableState<>(submit(sd), ProcessorHelper.getSoftJobDurationLimitInSeconds(jacsServiceData.getResources()) / 100)) // divide the job running time in 100 parts
+        JacsServiceData submittedService = submit(jacsServiceData);
+        PeriodicallyCheckableState<JacsServiceData> submittedServiceStateCheck = new PeriodicallyCheckableState<>(submittedService, ProcessorHelper.getSoftJobDurationLimitInSeconds(jacsServiceData.getResources()) / 100);
+        return computationFactory.newCompletedComputation(submittedServiceStateCheck)
                 .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceData> sdState) -> new ContinuationCond.Cond<>(sdState, sdState.updateCheckTime() && isDone(sdState)))
                 .thenApply((ContinuationCond.Cond<PeriodicallyCheckableState<JacsServiceData>> sdStateCond) -> getResult(sdStateCond.getState()));
     }

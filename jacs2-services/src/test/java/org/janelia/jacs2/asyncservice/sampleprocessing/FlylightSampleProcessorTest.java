@@ -16,7 +16,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.EnhancedMIPsAndMoviesProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
@@ -183,6 +182,20 @@ public class FlylightSampleProcessorTest {
 
         when(enhancedMIPsAndMoviesProcessor.getMetadata()).thenCallRealMethod();
         when(enhancedMIPsAndMoviesProcessor.createServiceData(any(ServiceExecutionContext.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class)
+                )
+        ).thenCallRealMethod();
+
+        when(sampleNeuronSeparationProcessor.getMetadata()).thenCallRealMethod();
+        when(sampleNeuronSeparationProcessor.createServiceData(any(ServiceExecutionContext.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
+                        any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
