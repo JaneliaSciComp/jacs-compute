@@ -145,10 +145,10 @@ public class JacsServiceDispatcher {
     }
 
     private void sendNotification(JacsServiceData sd, JacsServiceLifecycleStage lifecycleStage, RegisteredJacsNotification rn) {
-        logger.info("Service {} - stage {}: {}", sd, lifecycleStage, rn);
         JacsNotification jacsNotification = new JacsNotification();
         jacsNotification.setNotificationData(rn.getNotificationData());
         jacsNotification.setNotificationStage(lifecycleStage);
+        logger.info("Service {} -> {}", sd, jacsNotification);
         jacsNotificationDao.save(jacsNotification);
     }
 
