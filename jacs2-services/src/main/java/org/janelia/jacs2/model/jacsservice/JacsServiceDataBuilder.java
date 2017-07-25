@@ -87,17 +87,17 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
-    public JacsServiceDataBuilder registerProcessingNotification(JacsNotification notification) {
+    public JacsServiceDataBuilder registerProcessingNotification(RegisteredJacsNotification notification) {
         serviceData.setProcessingNotification(notification);
         return this;
     }
 
-    public JacsServiceDataBuilder registerProcessingStageNotification(String processingStage, JacsNotification notification) {
+    public JacsServiceDataBuilder registerProcessingStageNotification(String processingStage, RegisteredJacsNotification notification) {
         serviceData.setProcessingStageNotification(processingStage, notification);
         return this;
     }
 
-    public JacsServiceDataBuilder registerProcessingStageNotifications(Map<String, JacsNotification> notifications) {
+    public JacsServiceDataBuilder registerProcessingStageNotifications(Map<String, RegisteredJacsNotification> notifications) {
         serviceData.setProcessingStagedNotifications(notifications);
         return this;
     }

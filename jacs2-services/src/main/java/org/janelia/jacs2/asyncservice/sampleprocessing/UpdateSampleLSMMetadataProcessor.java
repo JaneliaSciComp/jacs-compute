@@ -24,7 +24,7 @@ import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMMetadata;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.model.DomainModelUtils;
-import org.janelia.jacs2.model.jacsservice.JacsNotification;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
@@ -99,7 +99,7 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .registerProcessingStageNotification(
                                 FlylightSampleEvents.LSM_METADATA,
-                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.LSM_METADATA, new JacsNotification())
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.LSM_METADATA, new RegisteredJacsNotification())
                                         .map(n -> n.addNotificationField("sampleId", args.sampleId)
                                                         .addNotificationField("objective", args.sampleObjective)
                                                         .addNotificationField("area", args.sampleArea)

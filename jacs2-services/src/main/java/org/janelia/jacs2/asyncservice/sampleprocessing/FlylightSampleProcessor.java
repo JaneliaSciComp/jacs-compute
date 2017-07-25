@@ -49,7 +49,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsNotification;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -172,7 +172,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                     .waitFor(lsir.getJacsServiceData())
                                     .registerProcessingStageNotification(
                                             FlylightSampleEvents.LSM_METADATA,
-                                            jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.LSM_METADATA, new JacsNotification().withDefaultLifecycleStages())
+                                            jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.LSM_METADATA, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                                     .map(n -> n.addNotificationField("sampleId", args.sampleId)
                                                                     .addNotificationField("objective", args.sampleObjective)
                                                                     .addNotificationField("area", args.sampleArea)
@@ -180,7 +180,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                     )
                                     .registerProcessingStageNotification(
                                             FlylightSampleEvents.SUMMARY_MIPMAPS,
-                                            jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.SUMMARY_MIPMAPS, new JacsNotification().withDefaultLifecycleStages())
+                                            jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.SUMMARY_MIPMAPS, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                                     .map(n -> n.addNotificationField("sampleId", args.sampleId)
                                                                     .addNotificationField("objective", args.sampleObjective)
                                                                     .addNotificationField("area", args.sampleArea)
@@ -308,7 +308,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         .waitFor(deps)
                         .registerProcessingStageNotification(
                                 FlylightSampleEvents.MERGE_LSMS,
-                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new JacsNotification().withDefaultLifecycleStages())
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                         .map(n -> n.addNotificationField("sampleId", sampleId)
                                                         .addNotificationField("objective", sampleObjective)
                                                         .addNotificationField("area", sampleArea)
@@ -316,7 +316,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         )
                         .registerProcessingStageNotification(
                                 FlylightSampleEvents.STITCH_TILES,
-                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.STITCH_TILES, new JacsNotification().withDefaultLifecycleStages())
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.STITCH_TILES, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                         .map(n -> n.addNotificationField("sampleId", sampleId)
                                                         .addNotificationField("objective", sampleObjective)
                                                         .addNotificationField("area", sampleArea)

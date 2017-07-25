@@ -12,7 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class JacsNotification implements Serializable {
+public class RegisteredJacsNotification implements Serializable {
     public enum LifecycleStage {
         START_PROCESSING,
         SUCCESSFUL_PROCESSING,
@@ -22,11 +22,11 @@ public class JacsNotification implements Serializable {
     private Set<LifecycleStage> registeredLifecycleStages = new HashSet<>();
     private Map<String, String> notificationData = new LinkedHashMap<>();
 
-    public JacsNotification() {
+    public RegisteredJacsNotification() {
         // Empty ctor
     }
 
-    public JacsNotification(JacsNotification n) {
+    public RegisteredJacsNotification(RegisteredJacsNotification n) {
         registeredLifecycleStages.addAll(n.registeredLifecycleStages);
         notificationData.putAll(n.notificationData);
     }
@@ -39,18 +39,18 @@ public class JacsNotification implements Serializable {
         this.registeredLifecycleStages = registeredLifecycleStages;
     }
 
-    public JacsNotification withDefaultLifecycleStages() {
+    public RegisteredJacsNotification withDefaultLifecycleStages() {
         registeredLifecycleStages.addAll(EnumSet.allOf(LifecycleStage.class));
         return this;
     }
 
-    public JacsNotification forLifecycleStage(Set<LifecycleStage> lifecycleStages) {
+    public RegisteredJacsNotification forLifecycleStage(Set<LifecycleStage> lifecycleStages) {
         for (LifecycleStage lifecycleStage : lifecycleStages)
             registeredLifecycleStages.add(lifecycleStage);
         return this;
     }
 
-    public JacsNotification forLifecycleStage(LifecycleStage ...lifecycleStages) {
+    public RegisteredJacsNotification forLifecycleStage(LifecycleStage ...lifecycleStages) {
         for (LifecycleStage lifecycleStage : lifecycleStages)
             registeredLifecycleStages.add(lifecycleStage);
         return this;
@@ -64,18 +64,18 @@ public class JacsNotification implements Serializable {
         this.notificationData = notificationData;
     }
 
-    public JacsNotification addNotificationField(String name, String value) {
+    public RegisteredJacsNotification addNotificationField(String name, String value) {
         if (StringUtils.isNotBlank(value))
             notificationData.put(name, value);
         return this;
     }
 
-    public JacsNotification addNotificationField(String name, Number value) {
+    public RegisteredJacsNotification addNotificationField(String name, Number value) {
         notificationData.put(name, value.toString());
         return this;
     }
 
-    public JacsNotification addNotificationFields(Map<String, String> notificationData) {
+    public RegisteredJacsNotification addNotificationFields(Map<String, String> notificationData) {
         this.notificationData.putAll(notificationData);
         return this;
     }
@@ -91,7 +91,7 @@ public class JacsNotification implements Serializable {
 
         if (o == null || getClass() != o.getClass()) return false;
 
-        JacsNotification that = (JacsNotification) o;
+        RegisteredJacsNotification that = (RegisteredJacsNotification) o;
 
         return new EqualsBuilder()
                 .append(notificationData, that.notificationData)

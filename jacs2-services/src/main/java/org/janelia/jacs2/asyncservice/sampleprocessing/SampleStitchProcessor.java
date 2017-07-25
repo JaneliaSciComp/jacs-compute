@@ -24,7 +24,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.model.jacsservice.JacsNotification;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
@@ -174,7 +174,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                                     .waitFor(getSampleLsmsService)
                                     .registerProcessingStageNotification(
                                             FlylightSampleEvents.MERGE_LSMS,
-                                            jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new JacsNotification().withDefaultLifecycleStages())
+                                            jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                                     .map(n -> n.addNotificationField("sampleId", args.sampleId)
                                                                     .addNotificationField("objective", ar.getObjective())
                                                                     .addNotificationField("area", ar.getName())
@@ -312,7 +312,7 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                         .description("Stitch tiles")
                         .addRequiredMemoryInGB(72)
                         .registerProcessingNotification(
-                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.STITCH_TILES, new JacsNotification().withDefaultLifecycleStages())
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.STITCH_TILES, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                         .map(n -> n.addNotificationField("sampleId", sampleId)
                                                         .addNotificationField("objective", objective)
                                                         .addNotificationField("area", area)

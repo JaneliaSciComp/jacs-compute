@@ -55,8 +55,8 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private Date processStartTime = new Date();
     private Date creationDate = new Date();
     private Date modificationDate = new Date();
-    private JacsNotification processingNotification;
-    private Map<String, JacsNotification> processingStagedNotifications = new HashMap<>();
+    private RegisteredJacsNotification processingNotification;
+    private Map<String, RegisteredJacsNotification> processingStagedNotifications = new HashMap<>();
     @JsonIgnore
     private JacsServiceData parentService;
     @JsonIgnore
@@ -282,34 +282,34 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.resources.clear();
     }
 
-    public JacsNotification getProcessingNotification() {
+    public RegisteredJacsNotification getProcessingNotification() {
         return processingNotification;
     }
 
-    public void setProcessingNotification(JacsNotification processingNotification) {
+    public void setProcessingNotification(RegisteredJacsNotification processingNotification) {
         this.processingNotification = processingNotification;
     }
 
-    public Map<String, JacsNotification> getProcessingStagedNotifications() {
+    public Map<String, RegisteredJacsNotification> getProcessingStagedNotifications() {
         return processingStagedNotifications;
     }
 
-    public void setProcessingStagedNotifications(Map<String, JacsNotification> processingStagedNotifications) {
+    public void setProcessingStagedNotifications(Map<String, RegisteredJacsNotification> processingStagedNotifications) {
         this.processingStagedNotifications = processingStagedNotifications;
     }
 
-    public Optional<JacsNotification> getProcessingStageNotification(String processingStage, JacsNotification defaultNotification) {
-        JacsNotification stageNotification = processingStagedNotifications.get(processingStage);
+    public Optional<RegisteredJacsNotification> getProcessingStageNotification(String processingStage, RegisteredJacsNotification defaultNotification) {
+        RegisteredJacsNotification stageNotification = processingStagedNotifications.get(processingStage);
         if (stageNotification == null) {
             if (defaultNotification == null)
                 return Optional.empty();
             else
                 return Optional.of(defaultNotification);
         } else
-            return Optional.of(new JacsNotification(stageNotification));
+            return Optional.of(new RegisteredJacsNotification(stageNotification));
     }
 
-    public void setProcessingStageNotification(String processingStage, JacsNotification notification) {
+    public void setProcessingStageNotification(String processingStage, RegisteredJacsNotification notification) {
         Preconditions.checkArgument(StringUtils.isNotBlank(processingStage));
         Preconditions.checkArgument(notification != null);
         processingStagedNotifications.put(processingStage, notification);

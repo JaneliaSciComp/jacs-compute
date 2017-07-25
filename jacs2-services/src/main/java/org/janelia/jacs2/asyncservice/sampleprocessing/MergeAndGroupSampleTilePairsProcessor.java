@@ -44,7 +44,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.model.jacsservice.JacsNotification;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
@@ -399,7 +399,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                             .addRequiredMemoryInGB(32)
                             .waitFor(deps)
                             .registerProcessingNotification(
-                                    jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new JacsNotification().withDefaultLifecycleStages())
+                                    jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                             .map(n -> n.addNotificationField("sampleId", ar.getSampleId())
                                                             .addNotificationField("sampleName", ar.getSampleName())
                                                             .addNotificationField("objective", ar.getObjective())
@@ -453,7 +453,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         // since the channels were in the right order no re-ordering of the channels is necessary
         JacsServiceData mapChannelsService = vaa3dChannelMapProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .waitFor(mergeLsmPairsService)
-                        .registerProcessingNotification(new JacsNotification()
+                        .registerProcessingNotification(new RegisteredJacsNotification()
                                         .withDefaultLifecycleStages()
                                         .addNotificationField("sampleId", ar.getSampleId())
                                         .addNotificationField("sampleName", ar.getSampleName())

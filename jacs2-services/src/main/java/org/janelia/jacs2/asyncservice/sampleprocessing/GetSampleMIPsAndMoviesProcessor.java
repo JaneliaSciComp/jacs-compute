@@ -20,7 +20,7 @@ import org.janelia.jacs2.asyncservice.imageservices.FijiUtils;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.model.jacsservice.JacsNotification;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -116,7 +116,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractServiceProcessor<Li
                                 new ServiceExecutionContext.Builder(jacsServiceData)
                                         .waitFor(sifr.getJacsServiceData())
                                         .registerProcessingNotification(
-                                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.SUMMARY_MIPMAPS, new JacsNotification().withDefaultLifecycleStages())
+                                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.SUMMARY_MIPMAPS, new RegisteredJacsNotification().withDefaultLifecycleStages())
                                                         .map(n -> n.addNotificationField("sampleId", sif.getSampleId())
                                                                         .addNotificationField("lsmId", sif.getId())
                                                                         .addNotificationField("objective", sif.getObjective())
