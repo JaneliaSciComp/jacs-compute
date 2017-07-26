@@ -454,7 +454,9 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         // since the channels were in the right order no re-ordering of the channels is necessary
         JacsServiceData mapChannelsService = vaa3dChannelMapProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .waitFor(mergeLsmPairsService)
-                        .registerProcessingNotification(new RegisteredJacsNotification()
+                        .registerProcessingNotification(
+                                FlylightSampleEvents.MAP_CHANNELS,
+                                new RegisteredJacsNotification()
                                         .withDefaultLifecycleStages()
                                         .addNotificationField("sampleId", ar.getSampleId())
                                         .addNotificationField("sampleName", ar.getSampleName())

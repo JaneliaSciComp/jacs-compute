@@ -16,6 +16,7 @@ public class JacsNotification implements BaseEntity, HasIdentifier {
 
     @JsonProperty("_id")
     private Number id;
+    private String eventName;
     private Date notificationDate = new Date();
     private JacsServiceLifecycleStage notificationStage;
     private Map<String, String> notificationData;
@@ -28,6 +29,14 @@ public class JacsNotification implements BaseEntity, HasIdentifier {
     @Override
     public void setId(Number id) {
         this.id = id;
+    }
+
+    public String getEventName() {
+        return eventName;
+    }
+
+    public void setEventName(String eventName) {
+        this.eventName = eventName;
     }
 
     public Date getNotificationDate() {

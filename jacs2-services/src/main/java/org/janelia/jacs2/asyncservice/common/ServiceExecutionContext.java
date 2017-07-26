@@ -94,7 +94,10 @@ public class ServiceExecutionContext {
             return this;
         }
 
-        public Builder registerProcessingNotification(RegisteredJacsNotification processingNotification) {
+        public Builder registerProcessingNotification(String processingEvent, RegisteredJacsNotification processingNotification) {
+            if (processingNotification != null) {
+                processingNotification.setEventName(processingEvent);
+            }
             serviceExecutionContext.processingNotification = processingNotification;
             return this;
         }

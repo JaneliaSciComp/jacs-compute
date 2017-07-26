@@ -155,6 +155,7 @@ public class JacsServiceDispatcher {
 
     private void sendNotification(JacsServiceData sd, JacsServiceLifecycleStage lifecycleStage, RegisteredJacsNotification rn) {
         JacsNotification jacsNotification = new JacsNotification();
+        jacsNotification.setEventName(rn.getEventName());
         jacsNotification.setNotificationData(rn.getNotificationData());
         jacsNotification.setNotificationStage(lifecycleStage);
         jacsNotification.getNotificationData().put("args", sd.getArgs().toString());
