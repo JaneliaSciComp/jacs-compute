@@ -2,9 +2,9 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
-import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -14,6 +14,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.MIPGenerationProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.StitchAndBlendResult;
@@ -23,7 +24,6 @@ import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
@@ -34,45 +34,15 @@ import javax.inject.Named;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Named("sampleStitcher")
-public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcessor<SampleStitchProcessor.StitchProcessingIntermediateResult, SampleResult> {
+public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult> {
 
     private static final String STITCH_DIRNAME = "stitch";
     private static final String MIPS_DIRNAME = "mips";
-
-    static class StitchProcessingIntermediateResult extends SampleIntermediateResult {
-        private final List<Number> mergeTilePairServiceIds;
-        private final List<AreaStitchingIntermediateResult> stitchedAreasResults = new ArrayList<>();
-
-        StitchProcessingIntermediateResult(Number getSampleLsmsServiceDataId, List<Number> mergeTilePairServiceIds) {
-            super(getSampleLsmsServiceDataId);
-            this.mergeTilePairServiceIds = mergeTilePairServiceIds;
-        }
-
-        List<Number> getMergeTilePairServiceIds() {
-            return mergeTilePairServiceIds;
-        }
-    }
-
-    static class AreaStitchingIntermediateResult {
-        private final SampleAreaResult sampleAreaResult;
-        private final Optional<Path> areaResultFile;
-        private Optional<Number> stichingServiceId;
-        private Optional<Number> mipsServiceId;
-
-        public AreaStitchingIntermediateResult(SampleAreaResult sampleAreaResult, Optional<Path> areaResultFile, Optional<Number> stichingServiceId, Optional<Number> mipsServiceId) {
-            this.sampleAreaResult = sampleAreaResult;
-            this.areaResultFile = areaResultFile;
-            this.stichingServiceId = stichingServiceId;
-            this.mipsServiceId = mipsServiceId;
-        }
-    }
 
     static class SampleStitchArgs extends SampleServiceArgs {
         @Parameter(names = "-mergeAlgorithm", description = "Merge algorithm", required = false)
@@ -87,30 +57,24 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
         boolean generateMips;
     }
 
-    private final SampleDataService sampleDataService;
-    private final GetSampleImageFilesProcessor getSampleImageFilesProcessor;
-    private final MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor;
-    private final Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor;
-    private final MIPGenerationProcessor mipGenerationProcessor;
+    private final WrappedServiceProcessor<MergeAndGroupSampleTilePairsProcessor, List<SampleAreaResult>> mergeAndGroupSampleTilePairsProcessor;
+    private final WrappedServiceProcessor<Vaa3dStitchAndBlendProcessor, StitchAndBlendResult> vaa3dStitchAndBlendProcessor;
+    private final WrappedServiceProcessor<MIPGenerationProcessor, List<File>> mipGenerationProcessor;
     private final TimebasedIdentifierGenerator idGenerator;
 
     @Inject
     SampleStitchProcessor(ServiceComputationFactory computationFactory,
                           JacsServiceDataPersistence jacsServiceDataPersistence,
                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                          SampleDataService sampleDataService,
-                          GetSampleImageFilesProcessor getSampleImageFilesProcessor,
                           MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor,
                           Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor,
                           MIPGenerationProcessor mipGenerationProcessor,
                           @JacsDefault TimebasedIdentifierGenerator idGenerator,
                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.sampleDataService = sampleDataService;
-        this.getSampleImageFilesProcessor = getSampleImageFilesProcessor;
-        this.mergeAndGroupSampleTilePairsProcessor = mergeAndGroupSampleTilePairsProcessor;
-        this.vaa3dStitchAndBlendProcessor = vaa3dStitchAndBlendProcessor;
-        this.mipGenerationProcessor = mipGenerationProcessor;
+        this.mergeAndGroupSampleTilePairsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, mergeAndGroupSampleTilePairsProcessor);
+        this.vaa3dStitchAndBlendProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, vaa3dStitchAndBlendProcessor);
+        this.mipGenerationProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, mipGenerationProcessor);
         this.idGenerator = idGenerator;
     }
 
@@ -129,20 +93,8 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
 
             @Override
             public SampleResult collectResult(JacsServiceResult<?> depResults) {
-                SampleStitchArgs args = getArgs(depResults.getJacsServiceData());
-                StitchProcessingIntermediateResult result = (StitchProcessingIntermediateResult) depResults.getResult();
-                SampleResult sampleResult = new SampleResult();
-                sampleResult.setSampleId(args.sampleId);
-                sampleResult.setSampleAreaResults(result.stitchedAreasResults.stream()
-                        .map(ar -> {
-                            SampleAreaResult sar = ar.sampleAreaResult;
-                            if (ar.areaResultFile.isPresent()) {
-                                sar.setAreaResultFile(ar.areaResultFile.get().toString());
-                            }
-                            return sar;
-                        })
-                        .collect(Collectors.toList()));
-                return sampleResult;
+                JacsServiceResult<SampleResult> intermediateResult = (JacsServiceResult<SampleResult>)depResults;
+                return intermediateResult.getResult();
             }
 
             public SampleResult getServiceDataResult(JacsServiceData jacsServiceData) {
@@ -152,85 +104,50 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
     }
 
     @Override
-    protected JacsServiceResult<StitchProcessingIntermediateResult> submitServiceDependencies(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<SampleResult>> process(JacsServiceData jacsServiceData) {
         SampleStitchArgs args = getArgs(jacsServiceData);
-        // get sample's LSMs
-        JacsServiceData getSampleLsmsServiceRef = getSampleImageFilesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+        return mergeAndGroupSampleTilePairsProcessor.process(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Merge and group tiles")
+                        .registerProcessingStageNotification(
+                                FlylightSampleEvents.MERGE_LSMS,
+                                jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new RegisteredJacsNotification().withDefaultLifecycleStages())
+                                        .map(n -> n.addNotificationField("sampleId", args.sampleId)
+                                                        .addNotificationField("objective", args.sampleObjective)
+                                                        .addNotificationField("area", args.sampleArea)
+                                        )
+                        )
                         .build(),
-                new ServiceArg("-sampleId", args.sampleId),
-                new ServiceArg("-objective", args.sampleObjective),
-                new ServiceArg("-area", args.sampleArea),
-                new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
-                new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir)
-        );
-        JacsServiceData getSampleLsmsService = submitDependencyIfNotFound(getSampleLsmsServiceRef);
-        List<AnatomicalArea> anatomicalAreas =
-                sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective, args.sampleArea);
-        // invoke child file copy services for all LSM files
-        List<Number> mergeTilePairServiceIds = anatomicalAreas.stream()
-                .map(ar -> {
-                    // merge sample LSMs if needed
-                    JacsServiceData mergeTilePairsService = mergeAndGroupSampleTilePairsProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
-                                    .waitFor(getSampleLsmsService)
-                                    .registerProcessingStageNotification(
-                                            FlylightSampleEvents.MERGE_LSMS,
-                                            jacsServiceData.getProcessingStageNotification(FlylightSampleEvents.MERGE_LSMS, new RegisteredJacsNotification().withDefaultLifecycleStages())
-                                                    .map(n -> n.addNotificationField("sampleId", args.sampleId)
-                                                                    .addNotificationField("objective", ar.getObjective())
-                                                                    .addNotificationField("area", ar.getName())
-                                                    )
-                                    )
-                                    .build(),
-                            new ServiceArg("-sampleId", args.sampleId),
-                            new ServiceArg("-objective", ar.getObjective()),
-                            new ServiceArg("-area", ar.getName()),
-                            new ServiceArg("-sampleResultsId", args.sampleResultsId),
-                            new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
-                            new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),
-                            new ServiceArg("-sampleSummarySubDir", args.sampleSummarySubDir),
-                            new ServiceArg("-sampleSitchingSubDir", args.sampleSitchingSubDir),
-                            new ServiceArg("-mergeAlgorithm", args.mergeAlgorithm),
-                            new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
-                            new ServiceArg("-outputChannelOrder", args.outputChannelOrder),
-                            new ServiceArg("-distortionCorrection", args.applyDistortionCorrection)
-                    );
-                    mergeTilePairsService = submitDependencyIfNotFound(mergeTilePairsService);
-                    return mergeTilePairsService;
-                })
-                .map(JacsServiceData::getId)
-                .collect(Collectors.toList())
-                ;
-
-        return new JacsServiceResult<>(jacsServiceData, new StitchProcessingIntermediateResult(getSampleLsmsService.getId(), mergeTilePairServiceIds));
+                        new ServiceArg("-sampleId", args.sampleId),
+                        new ServiceArg("-objective", args.sampleObjective),
+                        new ServiceArg("-area", args.sampleArea),
+                        new ServiceArg("-sampleResultsId", args.sampleResultsId),
+                        new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                        new ServiceArg("-sampleLsmsSubDir", args.sampleLsmsSubDir),
+                        new ServiceArg("-sampleSummarySubDir", args.sampleSummarySubDir),
+                        new ServiceArg("-sampleSitchingSubDir", args.sampleSitchingSubDir),
+                        new ServiceArg("-mergeAlgorithm", args.mergeAlgorithm),
+                        new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
+                        new ServiceArg("-outputChannelOrder", args.outputChannelOrder),
+                        new ServiceArg("-distortionCorrection", args.applyDistortionCorrection)
+        )
+        .thenCompose((JacsServiceResult<List<SampleAreaResult>> mergeResults) -> {
+            List<ServiceComputation<?>> stitchComputations = ImmutableList.copyOf(stitchTiles(jacsServiceData, mergeResults, args.generateMips));
+            return computationFactory.newCompletedComputation(mergeResults)
+                    .thenCombineAll(stitchComputations, (mr, groupedAreas) -> (List<SampleAreaResult>) groupedAreas);
+        })
+        .thenSuspendUntil((List<SampleAreaResult> stitchedAreaResults) -> new ContinuationCond.Cond<>(stitchedAreaResults, !suspendUntilAllDependenciesComplete(jacsServiceData)))
+        .thenApply((ContinuationCond.Cond<List<SampleAreaResult>> stitchedAreaResultsCond) -> {
+            SampleResult sampleResult = new SampleResult();
+            sampleResult.setSampleId(args.sampleId);
+            sampleResult.setSampleAreaResults(stitchedAreaResultsCond.getState());
+            return this.updateServiceResult(jacsServiceData, sampleResult);
+        })
+        ;
     }
 
-    @Override
-    protected ServiceComputation<JacsServiceResult<StitchProcessingIntermediateResult>> processing(JacsServiceResult<StitchProcessingIntermediateResult> depResults) {
-        return computationFactory.newCompletedComputation(depResults)
-                .thenApply(pd -> {
-                    pd.getResult().stitchedAreasResults.addAll(stitchTiles(pd));
-                    return pd;
-                })
-                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, !suspendUntilAllDependenciesComplete(pd.getJacsServiceData())))
-                .thenApply(pdCond -> {
-                    JacsServiceResult<StitchProcessingIntermediateResult> pd = pdCond.getState();
-                    pd.getResult().stitchedAreasResults.stream()
-                            .forEach(this::updateStitchingResult)
-                    ;
-                    return pd;
-                })
-                ;
-    }
-
-    private List<AreaStitchingIntermediateResult> stitchTiles(JacsServiceResult<StitchProcessingIntermediateResult> depResults) {
-        SampleStitchArgs args = getArgs(depResults.getJacsServiceData());
-        List<SampleAreaResult> allGroupedAreasResults = depResults.getResult().getMergeTilePairServiceIds().stream()
-                .flatMap(mtpsId -> {
-                    JacsServiceData mergeTilePairService = jacsServiceDataPersistence.findById(mtpsId);
-                    List<SampleAreaResult> mergeTilePairResults = mergeAndGroupSampleTilePairsProcessor.getResultHandler().getServiceDataResult(mergeTilePairService);
-                    return mergeTilePairResults.stream();
-                })
-                .collect(Collectors.toList());
+    private List<ServiceComputation<SampleAreaResult>> stitchTiles(JacsServiceData jacsServiceData, JacsServiceResult<List<SampleAreaResult>> mergeAndGroupedResults, boolean generateMips) {
+        List<SampleAreaResult> allGroupedAreasResults = mergeAndGroupedResults.getResult();
         Function<SampleAreaResult, String> stitchedFileNameGenerator;
         if (canUseAreaNameAsMergeFile(allGroupedAreasResults)) {
             stitchedFileNameGenerator = groupedArea -> {
@@ -246,48 +163,60 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
         }
         return allGroupedAreasResults.stream()
                 .map((SampleAreaResult groupedArea) -> {
-                    JacsServiceData stitichingService = null;
                     Path areaResultsDir = Paths.get(groupedArea.getResultDir());
-                    Optional<Path> tileFile;
-                    Optional<Number> stitchingServiceId;
-                    Optional<Number> mipsServiceId;
-                    Path mipsDir;
+                    String referenceChannelNumber = groupedArea.getConsensusChannelComponents().referenceChannelNumbers;
                     if (groupedArea.getGroupResults().size() > 1) {
                         // if the area has more than 1 tile then stitch them together
                         Path groupDir = areaResultsDir.resolve(groupedArea.getGroupRelativeSubDir());
                         Path stitchingDir = areaResultsDir.resolve(STITCH_DIRNAME);
-                        mipsDir = areaResultsDir.resolve(MIPS_DIRNAME);
+                        Path mipsDir = areaResultsDir.resolve(MIPS_DIRNAME);
                         Path stitchingFile = FileUtils.getFilePath(stitchingDir, stitchedFileNameGenerator.apply(groupedArea), ".v3draw");
-                        String referenceChannelNumber = groupedArea.getConsensusChannelComponents().referenceChannelNumbers;
-                        stitichingService = stitchTilesFromArea(depResults.getJacsServiceData(), groupDir, stitchingFile,
-                                groupedArea.getSampleId(), groupedArea.getObjective(), groupedArea.getAnatomicalArea(), referenceChannelNumber);
-                        // use the stitched file to generate the mips
-                        tileFile = Optional.of(stitchingFile);
-                        groupedArea.setStitchRelativeSubDir(STITCH_DIRNAME);
-                        stitchingServiceId = Optional.of(stitichingService.getId());
-                    } else {
-                        // no need for stitching so simply take the result of the merge to generate the mips
-                        tileFile = groupedArea.getGroupResults().stream()
+                        return stitchTilesFromArea(jacsServiceData,
+                                groupDir, stitchingFile,
+                                groupedArea.getSampleId(), groupedArea.getObjective(), groupedArea.getAnatomicalArea(), referenceChannelNumber,
+                                mergeAndGroupedResults.getJacsServiceData())
+                                .thenCompose((JacsServiceResult<StitchAndBlendResult> stitchResult) -> {
+                                    groupedArea.setStitchRelativeSubDir(STITCH_DIRNAME);
+                                    groupedArea.setAreaResultFile(stitchResult.getResult().getStitchedFile().getAbsolutePath());
+                                    groupedArea.setStichFile(stitchResult.getResult().getStitchedFile().getAbsolutePath());
+                                    groupedArea.setStitchInfoFile(stitchResult.getResult().getStitchedImageInfoFile().getAbsolutePath());
+                                    if (generateMips) {
+                                        return generateMips(jacsServiceData, Paths.get(groupedArea.getStichFile()), mipsDir,
+                                                groupedArea.getConsensusChannelComponents().signalChannelsPos, referenceChannelNumber,
+                                                stitchResult.getJacsServiceData())
+                                                .thenApply(generateMipsResult -> {
+                                                    List<File> mips = generateMipsResult.getResult();
+                                                    groupedArea.addMips(mips.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
+                                                    return groupedArea;
+                                                })
+                                                ;
+                                    } else {
+                                        return computationFactory.newCompletedComputation(groupedArea);
+                                    }
+                                })
+                        ;
+                    } else if (generateMips) {
+                        return groupedArea.getGroupResults().stream()
+                                .filter(tp -> StringUtils.isNotBlank(tp.getMergeResultFile()))
                                 .map(tp -> Paths.get(tp.getMergeResultFile()))
-                                .findFirst();
-                        if (tileFile.isPresent()) {
-                            mipsDir = areaResultsDir.resolve(MIPS_DIRNAME);
-                        } else {
-                            mipsDir = null;
-                        }
-                        stitchingServiceId = Optional.empty();
-                    }
-                    if (args.generateMips && tileFile.isPresent()) {
-                        JacsServiceData mipsService = generateMips(depResults.getJacsServiceData(), tileFile.get(), mipsDir,
-                                groupedArea.getConsensusChannelComponents().signalChannelsPos,
-                                groupedArea.getConsensusChannelComponents().referenceChannelsPos,
-                                stitichingService);
-                        groupedArea.setMipsRelativeSubDir(MIPS_DIRNAME);
-                        mipsServiceId = Optional.of(mipsService.getId());
+                                .findFirst()
+                                .map(mergeResultPath -> {
+                                    Path mipsDir = areaResultsDir.resolve(MIPS_DIRNAME);
+                                    groupedArea.setAreaResultFile(mergeResultPath.toString());
+                                    return generateMips(jacsServiceData, mergeResultPath, mipsDir,
+                                            groupedArea.getConsensusChannelComponents().signalChannelsPos, referenceChannelNumber,
+                                            mergeAndGroupedResults.getJacsServiceData())
+                                            .thenApply(generateMipsResult -> {
+                                                List<File> mips = generateMipsResult.getResult();
+                                                groupedArea.addMips(mips.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
+                                                return groupedArea;
+                                            })
+                                            ;
+                                })
+                                .orElse(computationFactory.newCompletedComputation(groupedArea));
                     } else {
-                        mipsServiceId = Optional.empty();
+                        return computationFactory.newCompletedComputation(groupedArea);
                     }
-                    return new AreaStitchingIntermediateResult(groupedArea, tileFile, stitchingServiceId, mipsServiceId);
                 })
                 .collect(Collectors.toList())
                 ;
@@ -307,9 +236,10 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
         return groupedAreas.size() == uniqueGroupedAreasCount;
     }
 
-    private JacsServiceData stitchTilesFromArea(JacsServiceData jacsServiceData, Path inputDir, Path outputFile, Number sampleId, String objective, String area, String referenceChannelNumber) {
-        JacsServiceData stitchingService = vaa3dStitchAndBlendProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+    private ServiceComputation<JacsServiceResult<StitchAndBlendResult>> stitchTilesFromArea(JacsServiceData jacsServiceData, Path inputDir, Path outputFile, Number sampleId, String objective, String area, String referenceChannelNumber, JacsServiceData... deps) {
+        return vaa3dStitchAndBlendProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Stitch tiles")
+                        .waitFor(deps)
                         .addRequiredMemoryInGB(72)
                         .registerProcessingNotification(
                                 FlylightSampleEvents.STITCH_TILES,
@@ -324,11 +254,10 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                 new ServiceArg("-outputFile", outputFile.toString()),
                 new ServiceArg("-refchannel", referenceChannelNumber)
         );
-        return submitDependencyIfNotFound(stitchingService);
     }
 
-    private JacsServiceData generateMips(JacsServiceData jacsServiceData, Path tileFile, Path outputDir, String signalChannels, String referenceChannel, JacsServiceData... deps) {
-        JacsServiceData mipsService = mipGenerationProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+    private ServiceComputation<JacsServiceResult<List<File>>> generateMips(JacsServiceData jacsServiceData, Path tileFile, Path outputDir, String signalChannels, String referenceChannel, JacsServiceData... deps) {
+        return mipGenerationProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Generate mips")
                         .waitFor(deps)
                         .build(),
@@ -338,21 +267,6 @@ public class SampleStitchProcessor extends AbstractBasicLifeCycleServiceProcesso
                 new ServiceArg("-referenceChannel", referenceChannel),
                 new ServiceArg("-imgFormat", "png")
         );
-        return submitDependencyIfNotFound(mipsService);
-    }
-
-    private void updateStitchingResult(AreaStitchingIntermediateResult areaResults) {
-        areaResults.stichingServiceId.ifPresent(serviceId -> {
-            JacsServiceData sd = jacsServiceDataPersistence.findById(serviceId);
-            StitchAndBlendResult stitchResult = vaa3dStitchAndBlendProcessor.getResultHandler().getServiceDataResult(sd);
-            areaResults.sampleAreaResult.setStitchInfoFile(stitchResult.getStitchedImageInfoFile().getAbsolutePath());
-            areaResults.sampleAreaResult.setStichFile(stitchResult.getStitchedFile().getAbsolutePath());
-        });
-        areaResults.mipsServiceId.ifPresent(serviceId -> {
-            JacsServiceData sd = jacsServiceDataPersistence.findById(serviceId);
-            List<File> mips = mipGenerationProcessor.getResultHandler().getServiceDataResult(sd);
-            areaResults.sampleAreaResult.addMips(mips.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
-        });
     }
 
     private SampleStitchArgs getArgs(JacsServiceData jacsServiceData) {

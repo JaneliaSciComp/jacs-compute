@@ -2,14 +2,11 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
-import org.hamcrest.Matchers;
-import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
-import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
-import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
+import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
@@ -19,7 +16,6 @@ import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor
 import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
@@ -31,23 +27,19 @@ import java.io.File;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SampleStitchProcessorTest {
     private static final String TEST_RESULTS_ID = "23";
+    public static final String TEST_SIGNAL_CHANNELS = "0 1";
+    private static final String TEST_REFERENCE_CHANNELS = "3";
 
-    private JacsServiceDataPersistence jacsServiceDataPersistence;
-    private SampleDataService sampleDataService;
-    private GetSampleImageFilesProcessor getSampleImageFilesProcessor;
     private MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor;
     private Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor;
     private MIPGenerationProcessor mipGenerationProcessor;
@@ -58,12 +50,9 @@ public class SampleStitchProcessorTest {
         Logger logger = mock(Logger.class);
 
         ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
-
-        jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         TimebasedIdentifierGenerator idGenerator = mock(TimebasedIdentifierGenerator.class);
 
-        sampleDataService = mock(SampleDataService.class);
-        getSampleImageFilesProcessor = mock(GetSampleImageFilesProcessor.class);
         mergeAndGroupSampleTilePairsProcessor = mock(MergeAndGroupSampleTilePairsProcessor.class);
         vaa3dStitchAndBlendProcessor = mock(Vaa3dStitchAndBlendProcessor.class);
         mipGenerationProcessor = mock(MIPGenerationProcessor.class);
@@ -71,11 +60,7 @@ public class SampleStitchProcessorTest {
         when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> {
             JacsServiceData sd = new JacsServiceData();
             sd.setId(invocation.getArgument(0));
-            return sd;
-        });
-        when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class))).then(invocation -> {
-            JacsServiceData sd = new JacsServiceData();
-            sd.setId(invocation.getArgument(0));
+            sd.setState(JacsServiceState.SUCCESSFUL);
             return sd;
         });
 
@@ -88,17 +73,7 @@ public class SampleStitchProcessorTest {
 
         when(idGenerator.generateId()).thenReturn(SampleProcessorTestUtils.TEST_SERVICE_ID);
 
-        when(getSampleImageFilesProcessor.getMetadata()).thenCallRealMethod();
-        when(getSampleImageFilesProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
-        )).thenCallRealMethod();
-
         when(mergeAndGroupSampleTilePairsProcessor.getMetadata()).thenCallRealMethod();
-        when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenCallRealMethod();
         when(mergeAndGroupSampleTilePairsProcessor.createServiceData(any(ServiceExecutionContext.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
@@ -136,8 +111,6 @@ public class SampleStitchProcessorTest {
         sampleStitchProcessor = new SampleStitchProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 SampleProcessorTestUtils.TEST_WORKING_DIR,
-                sampleDataService,
-                getSampleImageFilesProcessor,
                 mergeAndGroupSampleTilePairsProcessor,
                 vaa3dStitchAndBlendProcessor,
                 mipGenerationProcessor,
@@ -146,87 +119,53 @@ public class SampleStitchProcessorTest {
     }
 
     @Test
-    public void submitDependencies() {
-        String area = "area";
-        String objective = "objective";
+    public void processThatRequireStitching() {
+        String area = "brain";
+        String objective = "40x";
         String mergeAlgorithm = "FLYLIGHT_ORDERED";
         String channelDyeSpec = "reference=Alexa Fluor 488,Cy2;" +
                 "membrane_ha=,ATTO 647,Alexa Fluor 633,Alexa Fluor 647,Cy5;" +
                 "membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;" +
                 "membrane_flag=Alexa Fluor 594";
         String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
-
-        JacsServiceData testServiceData = createTestServiceData(1L,
-                SampleProcessorTestUtils.TEST_SAMPLE_ID,
-                area,
-                objective,
-                mergeAlgorithm,
-                channelDyeSpec,
-                outputChannelOrder,
-                true,
-                true
-        );
-
-        AnatomicalArea testAnatomicalArea = SampleProcessorTestUtils.createTestAnatomicalArea(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area, null,
-                SampleProcessorTestUtils.createTestLsmPair(
-                        SampleProcessorTestUtils.TEST_TILE_NAME,
-                        SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
-                        SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0),
-                SampleProcessorTestUtils.createTestLsmPair(
-                        SampleProcessorTestUtils.TEST_TILE_NAME,
-                        SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
-                        SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0),
-                SampleProcessorTestUtils.createTestLsmPair(
-                        SampleProcessorTestUtils.TEST_TILE_NAME,
-                        SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
-                        SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0)
-        );
-        when(sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(null, SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area))
-                .thenReturn(ImmutableList.of(testAnatomicalArea, testAnatomicalArea));
-
-        JacsServiceResult<SampleStitchProcessor.StitchProcessingIntermediateResult> result = sampleStitchProcessor.submitServiceDependencies(testServiceData);
-
-        verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms")))
-        );
-
-        int mergeInvocations = 2;
-
-        verify(mergeAndGroupSampleTilePairsProcessor, times(mergeInvocations)).createServiceData(any(ServiceExecutionContext.class),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
-                argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true)))
-        );
-
-        assertThat(result.getResult().getChildServiceId(), notNullValue());
-        assertThat(result.getResult().getMergeTilePairServiceIds(), Matchers.hasSize(mergeInvocations));
-    }
-
-    @Test
-    public void processingWhenMultipleTilesRequireStitching() {
-        String area = "area";
-        String objective = "objective";
-        String mergeAlgorithm = "FLYLIGHT_ORDERED";
-        String channelDyeSpec = "reference=Alexa Fluor 488,Cy2;" +
-                "membrane_ha=,ATTO 647,Alexa Fluor 633,Alexa Fluor 647,Cy5;" +
-                "membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;" +
-                "membrane_flag=Alexa Fluor 594";
-        String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
-
         Long testSampleId = SampleProcessorTestUtils.TEST_SAMPLE_ID;
+
+
+        ServiceResultHandler<List<SampleAreaResult>> mergeAndGroupSampleTilePairsResultHandler = mock(ServiceResultHandler.class);
+        when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenReturn(mergeAndGroupSampleTilePairsResultHandler);
+        when(mergeAndGroupSampleTilePairsResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            return ImmutableList.of(
+                    createSampleAreaResult(
+                            testSampleId,
+                            objective,
+                            area,
+                            ImmutableList.of(
+                                    createTilePairResult("t1", "rt1"),
+                                    createTilePairResult("t2", "rt2")
+                            ),
+                            ImmutableList.of(
+                                    createTilePairResult("tm1", "rtm1"),
+                                    createTilePairResult("tm2", "rtm2")
+                            )
+                    )
+            );
+        });
+
+        ServiceResultHandler<StitchAndBlendResult> vaa3dStitchAndBlendResultHandler = mock(ServiceResultHandler.class);
+        when(vaa3dStitchAndBlendProcessor.getResultHandler()).thenReturn(vaa3dStitchAndBlendResultHandler);
+        when(vaa3dStitchAndBlendResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            StitchAndBlendResult stitchAndBlendResult = new StitchAndBlendResult();
+            stitchAndBlendResult.setStitchedFile(new File("stitched"));
+            stitchAndBlendResult.setStitchedImageInfoFile(new File("stitchInfo"));
+            return stitchAndBlendResult;
+        });
+
+        ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
+        when(mipGenerationProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
+        when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            return ImmutableList.of(new File("mip1"), new File("mip2"));
+        });
+
         JacsServiceData testServiceData = createTestServiceData(1L,
                 testSampleId,
                 area,
@@ -237,124 +176,367 @@ public class SampleStitchProcessorTest {
                 true,
                 true
         );
-        Number getSampleLsmsServiceId = 10L;
-        List<Number> mergeTilePairServiceIds = ImmutableList.of(11L, 12L, 13L);
 
-        JacsServiceResult<SampleStitchProcessor.StitchProcessingIntermediateResult> intermediateResults = new JacsServiceResult<>(
-                        testServiceData,
-                        new SampleStitchProcessor.StitchProcessingIntermediateResult(getSampleLsmsServiceId, mergeTilePairServiceIds)
-        );
-        mergeTilePairServiceIds.forEach(id -> {
-            when(jacsServiceDataPersistence.findById(id)).then(invocation -> {
-                JacsServiceData sd = new JacsServiceData();
-                sd.setId(id);
-                sd.setSerializableResult(ImmutableList.of(
-                        createSampleAreaResult(
-                                testSampleId,
-                                objective,
-                                "a" + id,
-                                ImmutableList.of(
-                                        createTilePairResult("t1"),
-                                        createTilePairResult("t2")
-                                ),
-                                ImmutableList.of(
-                                        createTilePairResult("tm1"),
-                                        createTilePairResult("tm2")
-                                )
-                        )));
-                return sd;
-            });
-        });
-        ServiceResultHandler<StitchAndBlendResult> vaa3dResultHandler = mock(ServiceResultHandler.class);
-        when(vaa3dResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
-            StitchAndBlendResult stitchResult = new StitchAndBlendResult();
-            stitchResult.setStitchedImageInfoFile(new File("src/test/resources/testdata/stitch/imageInfo.tc"));
-            stitchResult.setStitchedFile(new File("stitched.v3draw"));
-            return stitchResult;
-        });
-        ServiceResultHandler<List<File>> mipResultHandler = mock(ServiceResultHandler.class);
-        when(mipResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> ImmutableList.of(new File("i1.png"), new File("i2.png")));
-
-        when(vaa3dStitchAndBlendProcessor.getResultHandler()).thenReturn(vaa3dResultHandler);
-        when(mipGenerationProcessor.getResultHandler()).thenReturn(mipResultHandler);
-
-        Sample testSample = SampleProcessorTestUtils.createTestSample(SampleProcessorTestUtils.TEST_SAMPLE_ID);
-        ObjectiveSample testObjective = SampleProcessorTestUtils.createTestObjective(objective);
-        testSample.addObjective(testObjective);
-        testObjective.addTiles(
-                SampleProcessorTestUtils.tileFromTileLsmPair(
-                        "a11",
-                        SampleProcessorTestUtils.createTestLsmPair(
-                                SampleProcessorTestUtils.TEST_TILE_NAME,
-                                SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
-                                SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0)),
-                SampleProcessorTestUtils.tileFromTileLsmPair(
-                        "a12",
-                        SampleProcessorTestUtils.createTestLsmPair(
-                                SampleProcessorTestUtils.TEST_TILE_NAME,
-                                SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
-                                SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0)),
-                SampleProcessorTestUtils.tileFromTileLsmPair(
-                        "a13",
-                        SampleProcessorTestUtils.createTestLsmPair(
-                                SampleProcessorTestUtils.TEST_TILE_NAME,
-                                SampleProcessorTestUtils.TEST_LSM_1, SampleProcessorTestUtils.TEST_LSM1_METADATA, null, 0,
-                                SampleProcessorTestUtils.TEST_LSM_2, SampleProcessorTestUtils.TEST_LSM2_METADATA, null, 0))
-                );
-
-        when(sampleDataService.getSampleById(null, SampleProcessorTestUtils.TEST_SAMPLE_ID)).thenReturn(testSample);
-
+        ServiceComputation<JacsServiceResult<SampleResult>> stitchProcessing = sampleStitchProcessor.process(testServiceData);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
-        sampleStitchProcessor.processing(intermediateResults)
-            .thenApply(sir -> {
-                successful.accept(sir);
-                // verify the stitcher was invoked
-                verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a11/group").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a11/stitch/stitched-objectivea11.v3draw").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", "3")))
-                );
-                verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a12/group").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a12/stitch/stitched-objectivea12.v3draw").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", "3")))
-                );
-                verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a13/group").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a13/stitch/stitched-objectivea13.v3draw").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", "3")))
-                );
-                // verify the mips generator was invoked
-                verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a11/stitch/stitched-objectivea11.v3draw").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a11/mips").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "2"))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
-                );
-                verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a12/stitch/stitched-objectivea12.v3draw").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a12/mips").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "2"))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
-                );
-                verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a13/stitch/stitched-objectivea13.v3draw").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + "a13/mips").getAbsolutePath()))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "2"))),
-                        argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
-                );
-                return null;
-            })
-            .exceptionally(exc -> {
-                failure.accept(exc);
-                fail(exc.toString());
-                return null;
-            })
-            ;
+        stitchProcessing
+                .thenApply(r -> {
+                    successful.accept(r);
+
+                    verify(mergeAndGroupSampleTilePairsProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true)))
+                    );
+
+                    verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/group").getAbsolutePath()))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/stitch/" + "stitched-" + objective + area + ".v3draw").getAbsolutePath()))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", TEST_REFERENCE_CHANNELS)))
+                    );
+
+                    verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", new File("stitched").getAbsolutePath()))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/mips").getAbsolutePath()))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", TEST_SIGNAL_CHANNELS))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", TEST_REFERENCE_CHANNELS))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
+                    );
+
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    failure.accept(exc);
+                    fail(exc.toString());
+                    return null;
+                });
+
+        verify(failure, never()).accept(any());
+        verify(successful).accept(any());
+    }
+
+    @Test
+    public void processWithStitchingAndNoMips() {
+        String area = "brain";
+        String objective = "40x";
+        String mergeAlgorithm = "FLYLIGHT_ORDERED";
+        String channelDyeSpec = "reference=Alexa Fluor 488,Cy2;" +
+                "membrane_ha=,ATTO 647,Alexa Fluor 633,Alexa Fluor 647,Cy5;" +
+                "membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;" +
+                "membrane_flag=Alexa Fluor 594";
+        String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
+        Long testSampleId = SampleProcessorTestUtils.TEST_SAMPLE_ID;
+
+        ServiceResultHandler<List<SampleAreaResult>> mergeAndGroupSampleTilePairsResultHandler = mock(ServiceResultHandler.class);
+        when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenReturn(mergeAndGroupSampleTilePairsResultHandler);
+        when(mergeAndGroupSampleTilePairsResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            return ImmutableList.of(
+                    createSampleAreaResult(
+                            testSampleId,
+                            objective,
+                            area,
+                            ImmutableList.of(
+                                    createTilePairResult("t1", "rt1"),
+                                    createTilePairResult("t2", "rt2")
+                            ),
+                            ImmutableList.of(
+                                    createTilePairResult("tm1", "rtm1"),
+                                    createTilePairResult("tm2", "rtm2")
+                            )
+                    )
+            );
+        });
+
+        ServiceResultHandler<StitchAndBlendResult> vaa3dStitchAndBlendResultHandler = mock(ServiceResultHandler.class);
+        when(vaa3dStitchAndBlendProcessor.getResultHandler()).thenReturn(vaa3dStitchAndBlendResultHandler);
+        when(vaa3dStitchAndBlendResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            StitchAndBlendResult stitchAndBlendResult = new StitchAndBlendResult();
+            stitchAndBlendResult.setStitchedFile(new File("stitched"));
+            stitchAndBlendResult.setStitchedImageInfoFile(new File("stitchInfo"));
+            return stitchAndBlendResult;
+        });
+
+        ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
+        when(mipGenerationProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
+        when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            return ImmutableList.of(new File("mip1"), new File("mip2"));
+        });
+
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                testSampleId,
+                area,
+                objective,
+                mergeAlgorithm,
+                channelDyeSpec,
+                outputChannelOrder,
+                true,
+                false
+        );
+
+        ServiceComputation<JacsServiceResult<SampleResult>> stitchProcessing = sampleStitchProcessor.process(testServiceData);
+        Consumer successful = mock(Consumer.class);
+        Consumer failure = mock(Consumer.class);
+        stitchProcessing
+                .thenApply(r -> {
+                    successful.accept(r);
+
+                    verify(mergeAndGroupSampleTilePairsProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true)))
+                    );
+
+                    verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/group").getAbsolutePath()))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/stitch/" + "stitched-" + objective + area + ".v3draw").getAbsolutePath()))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", TEST_REFERENCE_CHANNELS)))
+                    );
+
+                    verify(mipGenerationProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class)
+                    );
+
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    failure.accept(exc);
+                    fail(exc.toString());
+                    return null;
+                });
+
+        verify(failure, never()).accept(any());
+        verify(successful).accept(any());
+    }
+
+    @Test
+    public void processWithoutStitching() {
+        String area = "brain";
+        String objective = "20x";
+        String mergeAlgorithm = "FLYLIGHT_ORDERED";
+        String channelDyeSpec = "reference=Alexa Fluor 488,Cy2;" +
+                "membrane_ha=,ATTO 647,Alexa Fluor 633,Alexa Fluor 647,Cy5;" +
+                "membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;" +
+                "membrane_flag=Alexa Fluor 594";
+        String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
+        Long testSampleId = SampleProcessorTestUtils.TEST_SAMPLE_ID;
+
+
+        ServiceResultHandler<List<SampleAreaResult>> mergeAndGroupSampleTilePairsResultHandler = mock(ServiceResultHandler.class);
+        when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenReturn(mergeAndGroupSampleTilePairsResultHandler);
+        when(mergeAndGroupSampleTilePairsResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            return ImmutableList.of(
+                    createSampleAreaResult(
+                            testSampleId,
+                            objective,
+                            area,
+                            ImmutableList.of(
+                                    createTilePairResult("t1", "rt1")
+                            ),
+                            ImmutableList.of(
+                                    createTilePairResult("tm1", "rtm1")
+                            )
+                    )
+            );
+        });
+
+        ServiceResultHandler<StitchAndBlendResult> vaa3dStitchAndBlendResultHandler = mock(ServiceResultHandler.class);
+        when(vaa3dStitchAndBlendProcessor.getResultHandler()).thenReturn(vaa3dStitchAndBlendResultHandler);
+        when(vaa3dStitchAndBlendResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            StitchAndBlendResult stitchAndBlendResult = new StitchAndBlendResult();
+            stitchAndBlendResult.setStitchedFile(new File("stitched"));
+            stitchAndBlendResult.setStitchedImageInfoFile(new File("stitchInfo"));
+            return stitchAndBlendResult;
+        });
+
+        ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
+        when(mipGenerationProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
+        when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            return ImmutableList.of(new File("mip1"), new File("mip2"));
+        });
+
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                testSampleId,
+                area,
+                objective,
+                mergeAlgorithm,
+                channelDyeSpec,
+                outputChannelOrder,
+                true,
+                true
+        );
+
+        ServiceComputation<JacsServiceResult<SampleResult>> stitchProcessing = sampleStitchProcessor.process(testServiceData);
+        Consumer successful = mock(Consumer.class);
+        Consumer failure = mock(Consumer.class);
+        stitchProcessing
+                .thenApply(r -> {
+                    successful.accept(r);
+
+                    verify(mergeAndGroupSampleTilePairsProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true)))
+                    );
+
+                    verify(vaa3dStitchAndBlendProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class)
+                    );
+
+                    verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", "rtm1"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/mips").getAbsolutePath()))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", TEST_SIGNAL_CHANNELS))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", TEST_REFERENCE_CHANNELS))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
+                    );
+
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    failure.accept(exc);
+                    fail(exc.toString());
+                    return null;
+                });
+
+        verify(failure, never()).accept(any());
+        verify(successful).accept(any());
+    }
+
+    @Test
+    public void processWithoutStitchingAndWithNoMips() {
+        String area = "brain";
+        String objective = "20x";
+        String mergeAlgorithm = "FLYLIGHT_ORDERED";
+        String channelDyeSpec = "reference=Alexa Fluor 488,Cy2;" +
+                "membrane_ha=,ATTO 647,Alexa Fluor 633,Alexa Fluor 647,Cy5;" +
+                "membrane_v5=Alexa Fluor 546,Alexa Fluor 555,Alexa Fluor 568,DY-547;" +
+                "membrane_flag=Alexa Fluor 594";
+        String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
+        Long testSampleId = SampleProcessorTestUtils.TEST_SAMPLE_ID;
+
+
+        ServiceResultHandler<List<SampleAreaResult>> mergeAndGroupSampleTilePairsResultHandler = mock(ServiceResultHandler.class);
+        when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenReturn(mergeAndGroupSampleTilePairsResultHandler);
+        when(mergeAndGroupSampleTilePairsResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            return ImmutableList.of(
+                    createSampleAreaResult(
+                            testSampleId,
+                            objective,
+                            area,
+                            ImmutableList.of(
+                                    createTilePairResult("t1", "rt1")
+                            ),
+                            ImmutableList.of(
+                                    createTilePairResult("tm1", "rtm1")
+                            )
+                    )
+            );
+        });
+
+        ServiceResultHandler<StitchAndBlendResult> vaa3dStitchAndBlendResultHandler = mock(ServiceResultHandler.class);
+        when(vaa3dStitchAndBlendProcessor.getResultHandler()).thenReturn(vaa3dStitchAndBlendResultHandler);
+        when(vaa3dStitchAndBlendResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            StitchAndBlendResult stitchAndBlendResult = new StitchAndBlendResult();
+            stitchAndBlendResult.setStitchedFile(new File("stitched"));
+            stitchAndBlendResult.setStitchedImageInfoFile(new File("stitchInfo"));
+            return stitchAndBlendResult;
+        });
+
+        ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
+        when(mipGenerationProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
+        when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
+            return ImmutableList.of(new File("mip1"), new File("mip2"));
+        });
+
+        JacsServiceData testServiceData = createTestServiceData(1L,
+                testSampleId,
+                area,
+                objective,
+                mergeAlgorithm,
+                channelDyeSpec,
+                outputChannelOrder,
+                true,
+                false
+        );
+
+        ServiceComputation<JacsServiceResult<SampleResult>> stitchProcessing = sampleStitchProcessor.process(testServiceData);
+        Consumer successful = mock(Consumer.class);
+        Consumer failure = mock(Consumer.class);
+        stitchProcessing
+                .thenApply(r -> {
+                    successful.accept(r);
+
+                    verify(mergeAndGroupSampleTilePairsProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true)))
+                    );
+
+                    verify(vaa3dStitchAndBlendProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class)
+                    );
+
+                    verify(mipGenerationProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class)
+                    );
+
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    failure.accept(exc);
+                    fail(exc.toString());
+                    return null;
+                });
+
         verify(failure, never()).accept(any());
         verify(successful).accept(any());
     }
@@ -373,20 +555,21 @@ public class SampleStitchProcessorTest {
         return ar;
     }
 
-    private MergeTilePairResult createTilePairResult(String tn) {
+    private MergeTilePairResult createTilePairResult(String tn, String mergeResultFn) {
         MergeTilePairResult tpr = new MergeTilePairResult();
         tpr.setTileName(tn);
         tpr.setImageSize("10x20x30");
         tpr.setOpticalResolution("0.45x0.45");
+        tpr.setMergeResultFile(mergeResultFn);
         return tpr;
     }
 
     private ChannelComponents createChannelComponents() {
         ChannelComponents chComp = new ChannelComponents();
         chComp.channelSpec = "ssr";
-        chComp.signalChannelsPos = "0 1";
+        chComp.signalChannelsPos = TEST_SIGNAL_CHANNELS;
         chComp.referenceChannelsPos = "2";
-        chComp.referenceChannelNumbers = "3";
+        chComp.referenceChannelNumbers = TEST_REFERENCE_CHANNELS;
         return chComp;
     }
 

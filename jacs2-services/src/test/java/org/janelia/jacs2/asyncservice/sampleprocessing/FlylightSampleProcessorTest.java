@@ -53,7 +53,6 @@ public class FlylightSampleProcessorTest {
     private static final String TEST_AREA_FILE = "anAreaFile.txt";
     private static final String TEST_MIPS_DIR = "mipsDir";
 
-    private ServiceComputationFactory computationFactory;
     private SampleDataService sampleDataService;
     private InitializeSamplePipelineResultsProcessor initializeSamplePipelineResultsProcessor;
     private GetSampleImageFilesProcessor getSampleImageFilesProcessor;
@@ -76,7 +75,7 @@ public class FlylightSampleProcessorTest {
     public void setUp() {
         Logger logger = mock(Logger.class);
 
-        computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
 
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         sampleDataService = mock(SampleDataService.class);
