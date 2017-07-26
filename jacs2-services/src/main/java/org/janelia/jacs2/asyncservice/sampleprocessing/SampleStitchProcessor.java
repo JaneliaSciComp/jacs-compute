@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
@@ -32,6 +33,8 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -187,6 +190,34 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
                                                 .thenApply(generateMipsResult -> {
                                                     List<File> mips = generateMipsResult.getResult();
                                                     groupedArea.addMips(mips.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
+                                                    if (CollectionUtils.isNotEmpty(groupedArea.getGroupResults())) {
+                                                        groupedArea.getGroupResults()
+                                                                .stream()
+                                                                .filter((MergeTilePairResult mtpr) -> StringUtils.isNotBlank(mtpr.getMergeResultFile()))
+                                                                .map((MergeTilePairResult mtpr) -> Paths.get(mtpr.getMergeResultFile()))
+                                                                .forEach((Path mtprPath) -> {
+                                                                    try {
+                                                                        Files.deleteIfExists(mtprPath);
+                                                                    } catch (IOException e) {
+                                                                        logger.warn("Error while removing {}", mtprPath, e);
+                                                                    }
+                                                                })
+                                                        ;
+                                                    }
+                                                    if (CollectionUtils.isNotEmpty(groupedArea.getMergeResults())) {
+                                                        groupedArea.getMergeResults()
+                                                                .stream()
+                                                                .filter((MergeTilePairResult mtpr) -> StringUtils.isNotBlank(mtpr.getMergeResultFile()))
+                                                                .map((MergeTilePairResult mtpr) -> Paths.get(mtpr.getMergeResultFile()))
+                                                                .forEach((Path mtprPath) -> {
+                                                                    try {
+                                                                        Files.deleteIfExists(mtprPath);
+                                                                    } catch (IOException e) {
+                                                                        logger.warn("Error while removing {}", mtprPath, e);
+                                                                    }
+                                                                })
+                                                        ;
+                                                    }
                                                     return groupedArea;
                                                 })
                                                 ;
@@ -194,7 +225,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
                                         return computationFactory.newCompletedComputation(groupedArea);
                                     }
                                 })
-                        ;
+                                ;
                     } else if (generateMips) {
                         return groupedArea.getGroupResults().stream()
                                 .filter(tp -> StringUtils.isNotBlank(tp.getMergeResultFile()))
