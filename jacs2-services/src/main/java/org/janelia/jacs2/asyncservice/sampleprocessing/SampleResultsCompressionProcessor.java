@@ -25,6 +25,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -51,11 +52,11 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
         @Parameter(names = "-resultId", description = "Run ID to be updated with the corresponding fragment results.", required = false)
         Long pipelineResultId;
         @Parameter(names = {"-inputFileType"}, description = "Input file type", required = true)
-        List<String> inputFileTypes;
+        List<String> inputFileTypes = new ArrayList<>();
         @Parameter(names = {"-outputFileType"}, description = "Output file type", required = true)
         String outputFileType;
-        @Parameter(names = "-deleteInput", arity = 0, description = "If set the input will be deleted", required = false)
-        boolean deleteInput = false;
+        @Parameter(names = "-keepInput", arity = 0, description = "If set the uncompressed input will not be removed", required = false)
+        boolean keepInput = false;
     }
 
     private final SampleDataService sampleDataService;
@@ -119,7 +120,7 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
                         .map(indexedResult -> indexedResult.getReference())
                         .filter((PipelineResult result) -> args.pipelineResultId == null || result.sameId(args.pipelineResultId))
                         .forEach((PipelineResult result) -> {
-                            setNewResultFile(jacsServiceData, objectiveSample, run, result, args.inputFileTypes, args.outputFileType, args.deleteInput)
+                            setNewResultFile(jacsServiceData, objectiveSample, run, result, args.inputFileTypes, args.outputFileType, !args.keepInput)
                                     .ifPresent(updateResultComputations::add);
                         });
             }
@@ -137,7 +138,8 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
 
     private Optional<ServiceComputation<PipelineResult>> setNewResultFile(JacsServiceData jacsServiceData,
                                                                           ObjectiveSample objectiveSample, SamplePipelineRun run,
-                                                                          PipelineResult result, List<String> inputTypes, String outputType, boolean deleteInput) {
+                                                                          PipelineResult result, List<String> inputTypes, String outputType,
+                                                                          boolean deleteUncompressedInput) {
         Path inputPath = result.getFullFilePath(FileType.LosslessStack);
         String inputExt = inputPath != null ? FileUtils.getFileExtensionOnly(inputPath) : null;
         if (inputExt == null || inputPath.startsWith(DomainConstants.SCALITY_PATH_PREFIX) || inputExt.endsWith(outputType) || inputTypes.stream().noneMatch(inputExt::endsWith)) {
@@ -150,16 +152,27 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
             return Optional.of(
                     fileCopyProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                                     .description("Convert input file")
+                                    .registerProcessingNotification(
+                                            FlylightSampleEvents.COMPRESS_RESULTS,
+                                            new RegisteredJacsNotification().withDefaultLifecycleStages()
+                                                    .addNotificationField("sampleId", objectiveSample.getParent().getId())
+                                                    .addNotificationField("objective", objectiveSample.getObjective())
+                                                    .addNotificationField("run", run.getId())
+                                                    .addNotificationField("result", result.getId())
+                                                    .addNotificationField("input", inputPath.toString())
+                                                    .addNotificationField("output", newOutputPath.toString())
+                                                    .addNotificationField("removeInput", String.valueOf(deleteUncompressedInput))
+                                    )
                                     .build(),
                             new ServiceArg("-src", inputPath.toString()),
                             new ServiceArg("-dst", newOutputPath.toString())
                     ).thenApply((JacsServiceResult<File> fr) -> {
                         setOutput(result, outputType, newOutputPath);
-                        if (deleteInput) {
+                        if (deleteUncompressedInput) {
                             result.setFileName(FileType.LosslessStack, null);
                         }
                         sampleDataService.updateSampleObjectivePipelineRunResult(objectiveSample.getParent(), objectiveSample.getObjective(), run.getId(), result);
-                        if (deleteInput) {
+                        if (deleteUncompressedInput) {
                             try {
                                 Files.delete(inputPath);
                             } catch (IOException e) {

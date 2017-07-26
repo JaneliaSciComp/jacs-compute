@@ -36,4 +36,10 @@ class FlylightSampleArgs extends SampleServiceArgs {
     boolean runNeuronSeparationAfterSampleProcessing;
     @Parameter(names = "-alignmentAlgorithm", description = "Specifies the alignment algorithms to be run", required = false)
     List<String> alignmentAlgorithms = new ArrayList<>();
+    @Parameter(names = {"-compressTypes"}, description = "Result file types to be compressed", required = false)
+    List<String> resultFileTypesToBeCompressed = new ArrayList<>();
+    @Parameter(names = {"-compressedFileType"}, description = "Compressed file type", required = false)
+    String compressedFileType;
+    @Parameter(names = "-keepUncompressedResults", description = "If set it keeps uncompressed results in case any compression is performed ", required = false)
+    boolean keepUncompressedResults;
 }

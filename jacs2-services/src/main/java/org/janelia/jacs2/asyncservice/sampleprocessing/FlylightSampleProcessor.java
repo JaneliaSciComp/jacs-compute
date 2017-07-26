@@ -15,6 +15,7 @@ import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
 import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
+import org.janelia.it.jacs.model.domain.sample.PipelineResult;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
 import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
@@ -82,6 +83,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
     private final WrappedServiceProcessor<UpdateAlignmentResultsProcessor, AlignmentResult> updateAlignmentResultsProcessor;
     private final WrappedServiceProcessor<SampleNeuronWarpingProcessor, NeuronSeparationFiles> sampleNeuronWarpingProcessor;
     private final WrappedServiceProcessor<CleanSampleImageFilesProcessor, Void> cleanSampleImageFilesProcessor;
+    private final WrappedServiceProcessor<SampleResultsCompressionProcessor, List<PipelineResult>> sampleResultsCompressionProcessor;
     private final AlignmentServiceBuilderFactory alignmentServiceBuilderFactory;
 
     @Inject
@@ -104,6 +106,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             UpdateAlignmentResultsProcessor updateAlignmentResultsProcessor,
                             SampleNeuronWarpingProcessor sampleNeuronWarpingProcessor,
                             CleanSampleImageFilesProcessor cleanSampleImageFilesProcessor,
+                            SampleResultsCompressionProcessor sampleResultsCompressionProcessor,
                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sampleDataService = sampleDataService;
@@ -121,6 +124,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         this.updateAlignmentResultsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, updateAlignmentResultsProcessor);
         this.sampleNeuronWarpingProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sampleNeuronWarpingProcessor);
         this.cleanSampleImageFilesProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, cleanSampleImageFilesProcessor);
+        this.sampleResultsCompressionProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sampleResultsCompressionProcessor);
         this.alignmentServiceBuilderFactory = alignmentServiceBuilderFactory;
     }
 
@@ -247,21 +251,50 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             ;
                 })
                 .thenSuspendUntil((JacsServiceResult<List<SampleProcessorResult>> lspr) -> new ContinuationCond.Cond<>(lspr, !suspendUntilAllDependenciesComplete(jacsServiceData))) // wait for all subtasks to complete
-                .thenApply((ContinuationCond.Cond<JacsServiceResult<List<SampleProcessorResult>>> lsprCond) -> {
-                    cleanSampleImageFilesProcessor.process(
-                            new ServiceExecutionContext.Builder(jacsServiceData)
-                                    .description("Remove working LSMs")
-                                    .waitFor(lsprCond.getState().getJacsServiceData())
-                                    .build(),
-                            new ServiceArg("-sampleId", args.sampleId),
-                            new ServiceArg("-objective", args.sampleObjective),
-                            new ServiceArg("-area", args.sampleArea),
-                            new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
-                            new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
-                            new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
-                            new ServiceArg("-sampleSitchingSubDir", sampleStitchingSubDir.toString())
-                    );
-                    return lsprCond.getState();
+                .thenCompose((ContinuationCond.Cond<JacsServiceResult<List<SampleProcessorResult>>> lsprCond) -> {
+                    if (CollectionUtils.isNotEmpty(args.resultFileTypesToBeCompressed) && StringUtils.isNotBlank(args.compressedFileType)) {
+                        return computationFactory.newCompletedComputation(lsprCond.getState())
+                                .thenCombineAll(ImmutableList.of(
+                                        sampleResultsCompressionProcessor.process(
+                                                new ServiceExecutionContext.Builder(jacsServiceData)
+                                                        .description("Compress results")
+                                                        .waitFor(lsprCond.getState().getJacsServiceData())
+                                                        .build(),
+                                                new ServiceArg("-sampleId", args.sampleId),
+                                                new ServiceArg("-objective", args.sampleObjective),
+                                                new ServiceArg("-inputFileType", String.join(",", args.resultFileTypesToBeCompressed)),
+                                                new ServiceArg("-outputFileType", args.compressedFileType),
+                                                new ServiceArg("-keepInput", args.keepUncompressedResults)
+                                        ),
+                                        cleanSampleImageFilesProcessor.process(
+                                                new ServiceExecutionContext.Builder(jacsServiceData)
+                                                        .description("Remove working LSMs")
+                                                        .waitFor(lsprCond.getState().getJacsServiceData())
+                                                        .build(),
+                                                new ServiceArg("-sampleId", args.sampleId),
+                                                new ServiceArg("-objective", args.sampleObjective),
+                                                new ServiceArg("-area", args.sampleArea),
+                                                new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                                                new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
+                                                new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
+                                                new ServiceArg("-sampleSitchingSubDir", sampleStitchingSubDir.toString())
+                                        )
+                                ), (lspr, results) -> lspr);
+                    } else {
+                        return cleanSampleImageFilesProcessor.process(
+                                new ServiceExecutionContext.Builder(jacsServiceData)
+                                        .description("Remove working LSMs")
+                                        .waitFor(lsprCond.getState().getJacsServiceData())
+                                        .build(),
+                                new ServiceArg("-sampleId", args.sampleId),
+                                new ServiceArg("-objective", args.sampleObjective),
+                                new ServiceArg("-area", args.sampleArea),
+                                new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                                new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
+                                new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
+                                new ServiceArg("-sampleSitchingSubDir", sampleStitchingSubDir.toString())
+                        ).thenApply(r -> lsprCond.getState());
+                    }
                 })
                 .thenApply((JacsServiceResult<List<SampleProcessorResult>> lspr) -> this.updateServiceResult(jacsServiceData, lspr.getResult()))  // update the Flylight result
                 ;

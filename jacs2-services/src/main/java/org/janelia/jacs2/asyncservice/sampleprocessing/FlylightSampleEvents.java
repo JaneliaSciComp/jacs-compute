@@ -10,4 +10,5 @@ public class FlylightSampleEvents {
     public static final String NEURON_SEPARATION = "neuronSeparation";
     public static final String ALIGNMENT = "alignment";
     public static final String NEURON_WARPING = "neuronWarping";
+    public static final String COMPRESS_RESULTS = "compressResults";
 }

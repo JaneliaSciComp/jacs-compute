@@ -70,6 +70,7 @@ public class FlylightSampleProcessorTest {
     private UpdateAlignmentResultsProcessor updateAlignmentResultsProcessor;
     private SampleNeuronWarpingProcessor sampleNeuronWarpingProcessor;
     private CleanSampleImageFilesProcessor cleanSampleImageFilesProcessor;
+    private SampleResultsCompressionProcessor sampleResultsCompressionProcessor;
 
     @Before
     public void setUp() {
@@ -94,6 +95,7 @@ public class FlylightSampleProcessorTest {
         updateAlignmentResultsProcessor = mock(UpdateAlignmentResultsProcessor.class);
         sampleNeuronWarpingProcessor = mock(SampleNeuronWarpingProcessor.class);
         cleanSampleImageFilesProcessor = mock(CleanSampleImageFilesProcessor.class);
+        sampleResultsCompressionProcessor = mock(SampleResultsCompressionProcessor.class);
 
         when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> {
             JacsServiceData sd = new JacsServiceData();
@@ -237,6 +239,7 @@ public class FlylightSampleProcessorTest {
                 updateAlignmentResultsProcessor,
                 sampleNeuronWarpingProcessor,
                 cleanSampleImageFilesProcessor,
+                sampleResultsCompressionProcessor,
                 logger);
     }
 
