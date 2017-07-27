@@ -190,6 +190,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
                                                 .thenApply(generateMipsResult -> {
                                                     List<File> mips = generateMipsResult.getResult();
                                                     groupedArea.addMips(mips.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
+                                                    // if there were multiple tiles stitched together - cleanup the v3draw image files corresponding to the tiles.
                                                     if (CollectionUtils.isNotEmpty(groupedArea.getGroupResults())) {
                                                         groupedArea.getGroupResults()
                                                                 .stream()
