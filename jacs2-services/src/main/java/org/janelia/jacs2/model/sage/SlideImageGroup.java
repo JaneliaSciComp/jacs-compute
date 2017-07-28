@@ -5,6 +5,9 @@ import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * SlideImageGroup groups a list of lsms by the anatomical area.
+ */
 public class SlideImageGroup {
 
     private final String tag;

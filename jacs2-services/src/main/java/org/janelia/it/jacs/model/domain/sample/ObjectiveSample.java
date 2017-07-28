@@ -87,4 +87,10 @@ public class ObjectiveSample {
         }
     }
 
+    public Optional<IndexedReference<SampleTile, Integer>> findSampleTile(String tileName, String areaName) {
+        return IntStream.range(0, tiles.size())
+                .mapToObj(pos -> new IndexedReference<>(tiles.get(pos), pos))
+                .filter(positionalReference -> positionalReference.getReference().getName().equals(tileName) && positionalReference.getReference().getAnatomicalArea().equals(areaName))
+                .findFirst();
+    }
 }

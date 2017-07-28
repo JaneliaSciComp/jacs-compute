@@ -1,17 +1,29 @@
 package org.janelia.jacs2.model;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.jacs2.model.sage.SlideImage;
 import org.janelia.jacs2.model.sage.SlideImageGroup;
+import org.reflections.ReflectionUtils;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 
 public class SampleUtils {
+    private static final String NO_CONSENSUS_VALUE = "No Consensus";
+
     public static LSMImage createLSMFromSlideImage(SlideImage slideImage) {
         LSMImage lsmImage = new LSMImage();
         lsmImage.setSageId(slideImage.getId());
@@ -24,7 +36,7 @@ public class SampleUtils {
         lsmImage.setCaptureDate(slideImage.getCaptureDate());
         lsmImage.setCreatedBy(slideImage.getCreatedBy());
         lsmImage.setName(slideImage.getName());
-        lsmImage.setTmogDate(slideImage.getCreateDate());
+        lsmImage.setTmogDate(Objects.requireNonNull(slideImage.getCreateDate()));
 
         String lsmFileName = StringUtils.defaultIfBlank(slideImage.getJfsPath(), slideImage.getPath());
         if (StringUtils.isNotBlank(lsmFileName)) lsmImage.setFileName(FileType.LosslessStack, lsmFileName);
@@ -379,8 +391,86 @@ public class SampleUtils {
     }
 
     public static Map<String, Object> updateSampleAttributes(Sample sample, Collection<SlideImageGroup> objectiveGroups) {
-        Map<String, Object> updatedFields = new LinkedHashMap<>();
-        // TODO
-        return updatedFields;
+        Set<String> nonConsesusFieldNames = new HashSet<>();
+        Map<String, Object> consensusLsmFieldValues = new LinkedHashMap<>();
+
+        Map<String, SageField> lsmSageAttrs = getSageFields(LSMImage.class, sf -> sf.getKey());
+        objectiveGroups.stream()
+                .flatMap(slideImageGroup -> slideImageGroup.getImages().stream())
+                .forEach((LSMImage lsm) -> {
+                    lsmSageAttrs.forEach((fkey, sageField) -> {
+                        String fieldName = sageField.field.getName();
+                        if (!nonConsesusFieldNames.contains(fieldName)) {
+                            // only do this if there's been no conflict for the field so far
+                            Object sageFieldValue = null;
+                            try {
+                                sageFieldValue = sageField.field.get(lsm);
+                                if (consensusLsmFieldValues.containsKey(fieldName)) {
+                                    if ("tmogDate".equals(fieldName)) {
+                                        // tmog is treated differently - simply take the max
+                                        Date tmogDate = (Date) sageFieldValue;
+                                        Date currentTmogDate = (Date) consensusLsmFieldValues.get(fieldName);
+                                        if (currentTmogDate == null || tmogDate.after(currentTmogDate)) {
+                                            consensusLsmFieldValues.put(fieldName, tmogDate);
+                                        }
+                                    } else {
+                                        Object existingConsensusValue = consensusLsmFieldValues.get(fieldName);
+                                        if (!Objects.equals(existingConsensusValue, sageFieldValue)) {
+                                            nonConsesusFieldNames.add(fieldName);
+                                            if (String.class.equals(sageField.field.getType())) {
+                                                consensusLsmFieldValues.put(fieldName, NO_CONSENSUS_VALUE);
+                                            } else {
+                                                consensusLsmFieldValues.put(fieldName, null);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    consensusLsmFieldValues.put(fieldName, sageFieldValue);
+                                }
+                            } catch (IllegalAccessException e) {
+                                throw new IllegalArgumentException(e);
+                            }
+                        }
+                    });
+                });
+
+        Map<String, Object> sampleFields = new LinkedHashMap<>();
+        Map<String, SageField> sampleSageAttrs = getSageFields(Sample.class, sf -> sf.field.getName());
+        consensusLsmFieldValues.forEach((fieldName, fieldValue) -> {
+            if (sampleSageAttrs.containsKey(fieldName)) {
+                try {
+                    sampleSageAttrs.get(fieldName).field.set(sample, fieldValue);
+                    sampleFields.put(fieldName, fieldValue);
+                } catch (IllegalAccessException e) {
+                    throw new IllegalArgumentException(e);
+                }
+            }
+        });
+        return sampleFields;
     }
+
+    private static class SageField {
+        String cvName;
+        String termName;
+        Field field;
+        String getKey() {
+            return cvName+"_"+termName;
+        }
+    }
+
+    private static <D extends DomainObject> Map<String, SageField> getSageFields(Class<D> dType, Function<SageField, String> keyMapper) {
+        Map<String, SageField> sageFields = new HashMap<>();
+        for (Field field : ReflectionUtils.getAllFields(dType)) {
+            SAGEAttribute sageAttribute = field.getAnnotation(SAGEAttribute.class);
+            if (sageAttribute!=null) {
+                SageField attr = new SageField();
+                attr.cvName = sageAttribute.cvName();
+                attr.termName = sageAttribute.termName();
+                attr.field = field;
+                sageFields.put(keyMapper.apply(attr), attr);
+            }
+        }
+        return sageFields;
+    }
+
 }

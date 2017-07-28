@@ -8,6 +8,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A sample tile consists of a set of LSMs with the same objective,
@@ -58,6 +59,15 @@ public class SampleTile implements HasFiles {
 
     public Reference getLsmReferenceAt(int index) {
         return lsmReferences != null && index < lsmReferences.size() ? lsmReferences.get(index) : null;
+    }
+
+    public Optional<Reference> findLsmReference(LSMImage lsmImage) {
+        if (lsmReferences == null) {
+            return Optional.empty();
+        } else {
+            Reference lsmImageReference = Reference.createFor(lsmImage);
+            return lsmReferences.stream().filter(lsmReference -> lsmReference.equals(lsmImageReference)).findFirst();
+        }
     }
 
     @Override
