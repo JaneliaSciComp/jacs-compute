@@ -60,6 +60,8 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
     private static final String DEFAULT_SAMPLE_NAME_PATTERN = "{Line}-{Slide Code}";
 
     static class LSMImportArgs extends ServiceArgs {
+        @Parameter(names = "-sageUser", description = "Sage loader user", required = false)
+        String sageUser = "jacs";
         @Parameter(names = "-dataset", description = "Data set name or identifier", required = false)
         String dataset;
         @Parameter(names = "-imageLine", description = "Image line name", required = false)
@@ -150,6 +152,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                     return sageLoaderProcessor.process(
                             new ServiceExecutionContext.Builder(jacsServiceData)
                                     .build(),
+                            new ServiceArg("-sageUser", args.sageUser),
                             new ServiceArg("-lab", imageLine.getLab()),
                             new ServiceArg("-line", imageLine.getName()),
                             new ServiceArg("-configFile", ds.getSageConfigPath()),

@@ -40,7 +40,7 @@ import java.util.Set;
 public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
 
     static class SageLoaderArgs extends ServiceArgs {
-        @Parameter(names = "-sageUser", description = "Sage loader user", required = true)
+        @Parameter(names = "-sageUser", description = "Sage loader user", required = false)
         String sageUser = "jacs";
         @Parameter(names = "-sampleFiles", description = "Sample files", required = true)
         List<String> sampleFiles = new ArrayList<>();
