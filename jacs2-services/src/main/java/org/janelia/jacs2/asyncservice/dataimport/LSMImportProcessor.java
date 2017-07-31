@@ -46,6 +46,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -64,9 +65,13 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         @Parameter(names = "-imageLine", description = "Image line name", required = false)
         String imageLine;
         @Parameter(names = "-slideCodes", description = "Slide codes", required = false)
-        List<String> slideCodes;
+        List<String> slideCodes = new ArrayList();
         @Parameter(names = "-lsmNames", description = "LSM names", required = false)
-        List<String> lsmNames;
+        List<String> lsmNames = new ArrayList();
+
+        List<String> getValues(List<String> paramValues) {
+            return paramValues.stream().filter(StringUtils::isNotBlank).map(String::trim).collect(Collectors.toList());
+        }
     }
 
     private final WrappedServiceProcessor<SageLoaderProcessor, Void> sageLoaderProcessor;
@@ -121,8 +126,8 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         LSMImportArgs args = getArgs(jacsServiceData);
         if (StringUtils.isBlank(args.dataset) &&
                 StringUtils.isBlank(args.imageLine) &&
-                CollectionUtils.isEmpty(args.slideCodes) &&
-                CollectionUtils.isEmpty(args.lsmNames)) {
+                CollectionUtils.isEmpty(args.getValues(args.slideCodes)) &&
+                CollectionUtils.isEmpty(args.getValues(args.lsmNames))) {
             throw new IllegalArgumentException("No filtering parameter has been specified for the LSM import from Sage.");
         }
         List<SlideImage> slideImages = retrieveSageImages(jacsServiceData.getOwner(), args);
@@ -192,7 +197,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
             }
             datasetIdentifer = ds.getIdentifier();
         }
-        return sageDataService.getMatchingImages(datasetIdentifer, args.imageLine, args.slideCodes, args.lsmNames, new PageRequest());
+        return sageDataService.getMatchingImages(datasetIdentifer, args.imageLine, args.getValues(args.slideCodes), args.getValues(args.lsmNames), new PageRequest());
     }
 
     private LSMImage importLsm(String owner, LSMImage lsmImage) {
