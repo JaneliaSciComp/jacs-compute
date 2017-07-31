@@ -6,18 +6,24 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.DomainObject;
+import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
-import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
+import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DomainModelUtils {
     private static LoadingCache<String, Class<? extends BaseEntity>> ENTITY_CLASS_CACHE = CacheBuilder.newBuilder()
@@ -120,4 +126,52 @@ public class DomainModelUtils {
         }
     }
 
+    public static <D extends DomainObject> Map<String, Object> getFieldValues(D dObj) {
+        try {
+            Map<String, Object> objectFields = new HashMap<>();
+            for (Field field : ReflectionUtils.getAllFields(dObj.getClass())) {
+                objectFields.put(field.getName(), field.get(dObj));
+            }
+            return objectFields;
+        } catch (IllegalAccessException e) {
+            throw new UndeclaredThrowableException(e);
+        }
+    }
+
+    /**
+     * Given a variable naming pattern, replace the variables with values from the given map. The pattern syntax is as follows:
+     * {Variable Name} - Variable by name
+     * {Variable Name|Fallback} - Variable, with a fallback value
+     * {Variable Name|Fallback|"Value"} - Multiple fallback with static value
+     * @param pattern
+     * @param valuesContext
+     * @return processed output string
+     */
+    public static String replaceVariables(String pattern, Map<String, Object> valuesContext) {
+        Pattern regexPattern = Pattern.compile("\\{(.+?)\\}");
+        Matcher matcher = regexPattern.matcher(pattern);
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            String template = matcher.group(1);
+            String replacement = null;
+            for (String templatePart : template.split("\\|")) {
+                String attrLabel = templatePart.trim();
+                if (attrLabel.matches("\"(.*?)\"")) {
+                    replacement = attrLabel.substring(1, attrLabel.length()-1);
+                } else {
+                    Object value = valuesContext.get(attrLabel);
+                    replacement = value == null ? null : value.toString();
+                }
+                if (replacement != null) {
+                    matcher.appendReplacement(buffer, replacement);
+                    break;
+                }
+            }
+            if (replacement == null) {
+                matcher.appendReplacement(buffer, ""); // no valid value was found
+            }
+        }
+        matcher.appendTail(buffer);
+        return buffer.toString();
+    }
 }

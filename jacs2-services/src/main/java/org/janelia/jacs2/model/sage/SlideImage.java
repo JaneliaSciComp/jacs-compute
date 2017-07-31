@@ -1,6 +1,7 @@
 package org.janelia.jacs2.model.sage;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.jacs2.model.BaseEntity;
 
@@ -562,4 +563,18 @@ public class SlideImage implements BaseEntity {
         }
     }
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("lab", lab)
+                .append("dataset", dataset)
+                .append("lineName", lineName)
+                .append("slideCode", slideCode)
+                .append("name", name)
+                .append("area", area)
+                .append("objective", objective)
+                .append("tile", tile)
+                .build();
+    }
 }

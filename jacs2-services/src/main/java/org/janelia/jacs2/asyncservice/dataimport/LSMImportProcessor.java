@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
@@ -19,6 +20,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
@@ -29,6 +31,7 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.DataInterval;
+import org.janelia.jacs2.model.DomainModelUtils;
 import org.janelia.jacs2.model.SampleUtils;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
@@ -43,6 +46,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +55,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Named("lsmImport")
-public class LSMImportProcessor extends AbstractServiceProcessor<Void> {
+public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportResult>> {
+    private static final String DEFAULT_SAMPLE_NAME_PATTERN = "{Line}-{Slide Code}";
 
     static class LSMImportArgs extends ServiceArgs {
         @Parameter(names = "-dataset", description = "Data set name or identifier", required = false)
@@ -91,27 +96,28 @@ public class LSMImportProcessor extends AbstractServiceProcessor<Void> {
     }
 
     @Override
-    public ServiceResultHandler<Void> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<Void>() {
+    public ServiceResultHandler<List<LSMImportResult>> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<List<LSMImportResult>>() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
             @Override
-            public Void collectResult(JacsServiceResult<?> depResults) {
-                return null;
+            public List<LSMImportResult> collectResult(JacsServiceResult<?> depResults) {
+                JacsServiceResult<List<LSMImportResult>> intermediateResult = (JacsServiceResult<List<LSMImportResult>>)depResults;
+                return intermediateResult.getResult();
             }
 
             @Override
-            public Void getServiceDataResult(JacsServiceData jacsServiceData) {
-                return null;
+            public List<LSMImportResult> getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<LSMImportResult>>() {});
             }
         };
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<List<LSMImportResult>>> process(JacsServiceData jacsServiceData) {
         LSMImportArgs args = getArgs(jacsServiceData);
         if (StringUtils.isBlank(args.dataset) &&
                 StringUtils.isBlank(args.imageLine) &&
@@ -125,7 +131,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<Void> {
                                 si -> new ImageLine(si.getLab(), si.getDataset(), si.getLineName()),
                                 Collectors.mapping(Function.identity(), Collectors.toList()))
                 );
-        labImages.entrySet().stream()
+        List<ServiceComputation<List<LSMImportResult>>> lsmImportComputations = labImages.entrySet().stream()
                 .map(lineEntries -> {
                     ImageLine imageLine = lineEntries.getKey();
                     List<SlideImage> lineImages = lineEntries.getValue();
@@ -133,8 +139,8 @@ public class LSMImportProcessor extends AbstractServiceProcessor<Void> {
                     String owner = jacsServiceData.getOwner();
                     DataSet ds = datasetService.getDatasetByNameOrIdentifier(owner, imageLine.getDataset());
                     if (ds == null) {
-                        logger.error("No dataset record found for {}", lineEntries.getKey());
-                        return null;
+                        logger.error("No dataset record found for {} : {}", owner, lineEntries.getKey());
+                        throw new IllegalArgumentException("Invalid dataset identifier " + owner + ":" + imageLine.getDataset());
                     }
                     return sageLoaderProcessor.process(
                             new ServiceExecutionContext.Builder(jacsServiceData)
@@ -161,14 +167,17 @@ public class LSMImportProcessor extends AbstractServiceProcessor<Void> {
                             allLsmsPerSlideCode.put(slideCode, matchingLsms.getResultList());
                         });
                         return allLsmsPerSlideCode;
-                    }).thenApply((Map<String, List<LSMImage>> groupedLsmsBySlideCode) -> createSamplesFromSlideGroups(owner, ds, groupedLsmsBySlideCode))
-                    ;
+                    }).thenApply((Map<String, List<LSMImage>> groupedLsmsBySlideCode) -> createSamplesFromSlideGroups(owner, ds, groupedLsmsBySlideCode));
                 })
-                .filter(r -> r != null)
                 .collect(Collectors.toList());
-        return null; // !!!!!!!!!!!!!!!!!!! FIXME
+        return computationFactory.newCompletedComputation(jacsServiceData)
+                .thenCombineAll(ImmutableList.copyOf(lsmImportComputations), (sd, listOflsmImportResults) -> this.updateServiceResult(
+                        sd,
+                        ((List<List<LSMImportResult>>) listOflsmImportResults).stream()
+                                .flatMap(Collection::stream)
+                                .collect(Collectors.toList()))
+                );
     }
-
 
     private LSMImportArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(jacsServiceData.getArgsArray(), new LSMImportArgs());
@@ -202,24 +211,30 @@ public class LSMImportProcessor extends AbstractServiceProcessor<Void> {
         }
     }
 
-    private List<Sample> createSamplesFromSlideGroups(String owner, DataSet dataSet, Map<String, List<LSMImage>> groupedLsmsBySlideCode) {
+    private List<LSMImportResult> createSamplesFromSlideGroups(String owner, DataSet dataSet, Map<String, List<LSMImage>> groupedLsmsBySlideCode) {
         return groupedLsmsBySlideCode.entrySet().stream()
                 .map(slideLsmsEntry -> createSampleFromSlideGroup(owner, dataSet, slideLsmsEntry.getKey(), slideLsmsEntry.getValue()))
                 .collect(Collectors.toList());
     }
 
-    private Sample createSampleFromSlideGroup(String owner, DataSet dataSet, String slideCode, List<LSMImage> lsmImages) {
+    private LSMImportResult createSampleFromSlideGroup(String owner, DataSet dataSet, String slideCode, List<LSMImage> lsmImages) {
         logger.info("Creating or updating sample {} : {} ", dataSet.getIdentifier(), slideCode);
         Map<String, Map<SampleTileKey, SlideImageGroup>> lsmsGroupedByAbjectiveAndArea = groupLsmImagesByObjectiveAndArea(lsmImages);
         Optional<Sample> existingSample = findBestSampleMatch(owner, dataSet, slideCode);
         if (!existingSample.isPresent()) {
             // create a new Sample
-            return createNewSample(owner, dataSet, slideCode, lsmsGroupedByAbjectiveAndArea);
+            Sample newSample = createNewSample(owner, dataSet, slideCode, lsmsGroupedByAbjectiveAndArea);
+            return new LSMImportResult(dataSet.getIdentifier(), newSample.getId(), newSample.getName(), true);
         } else {
             Sample updatedSample = existingSample.get();
-            updateSample(updatedSample, lsmsGroupedByAbjectiveAndArea);
-            return updatedSample;
+            updateSample(dataSet, updatedSample, lsmsGroupedByAbjectiveAndArea);
+            return new LSMImportResult(dataSet.getIdentifier(), updatedSample.getId(), updatedSample.getName(), false);
         }
+    }
+
+    private String getSampleNamePattern(DataSet dataSet) {
+        String sampleNamePattern = dataSet==null ? null : dataSet.getSampleNamePattern();
+        return sampleNamePattern == null ? DEFAULT_SAMPLE_NAME_PATTERN : sampleNamePattern;
     }
 
     private Sample createNewSample(String owner, DataSet dataSet, String slideCode, Map<String, Map<SampleTileKey, SlideImageGroup>> lsmsGroupedByAbjectiveAndArea) {
@@ -240,6 +255,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<Void> {
         lsmsGroupedByAbjectiveAndArea.forEach((objective, areas) -> {
             newSample.addObjective(createNewObjective(objective, areas, lsmUpdates));
         });
+        newSample.setName(DomainModelUtils.replaceVariables(getSampleNamePattern(dataSet), DomainModelUtils.getFieldValues(newSample)));
         sampleDataService.createSample(newSample);
         Reference newSampleRef = Reference.createFor(newSample);
 
@@ -259,7 +275,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<Void> {
         return newSample;
     }
 
-    private void updateSample(Sample sample, Map<String, Map<SampleTileKey, SlideImageGroup>> lsmsGroupedByAbjectiveAndArea) {
+    private void updateSample(DataSet dataSet, Sample sample, Map<String, Map<SampleTileKey, SlideImageGroup>> lsmsGroupedByAbjectiveAndArea) {
         Map<String, Object> updatedSampleFields = SampleUtils.updateSampleAttributes(
                 sample,
                 lsmsGroupedByAbjectiveAndArea
@@ -305,6 +321,11 @@ public class LSMImportProcessor extends AbstractServiceProcessor<Void> {
         });
         // persist Sample updates
         updatedSampleFields.put("objectiveSamples", sample.getObjectiveSamples());
+        String sampleNameAfterUpdates = DomainModelUtils.replaceVariables(getSampleNamePattern(dataSet), DomainModelUtils.getFieldValues(sample));
+        if (!StringUtils.equals(sampleNameAfterUpdates, sample.getName())) {
+            sample.setName(sampleNameAfterUpdates);
+            updatedSampleFields.put("name", sampleNameAfterUpdates);
+        }
         sampleDataService.updateSample(sample, updatedSampleFields);
         // persist LSM updates
         lsmUpdates.forEach((lsm, updates) -> sampleDataService.updateLSM(lsm, updates));
