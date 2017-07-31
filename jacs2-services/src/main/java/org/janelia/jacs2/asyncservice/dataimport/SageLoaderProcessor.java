@@ -3,10 +3,12 @@ package org.janelia.jacs2.asyncservice.dataimport;
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
@@ -89,6 +91,15 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void, 
         return new VoidServiceResultHandler();
     }
 
+    @Override
+    public ServiceErrorChecker getErrorChecker() {
+        return new DefaultServiceErrorChecker(logger) {
+            @Override
+            protected boolean checkStdOutErrors(String s) {
+                return false;
+            }
+        };
+    }
 
     @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
@@ -107,6 +118,7 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void, 
                 .addArgs("-config", args.sageConfigFile)
                 .addArgs("-grammar", args.sageGrammarFile)
                 .addArgs("-lab", args.lab)
+                .addArgs("-line", args.line)
                 .addArgFlag("-debug", args.debugFlag);
 
         scriptWriter.endArgs("");

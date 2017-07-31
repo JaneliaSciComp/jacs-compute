@@ -24,26 +24,22 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
 
     public List<String> collectErrors(JacsServiceData jacsServiceData) {
         List<String> errors = new ArrayList<>();
+        collectErrorsFromStdOut(jacsServiceData, errors);
+        collectErrorsFromStdErr(jacsServiceData, errors);
+        return errors;
+    }
+
+    protected void collectErrorsFromStdOut(JacsServiceData jacsServiceData, List<String> errors) {
         InputStream outputStream = null;
-        InputStream errorStream = null;
         try {
             if (StringUtils.isNotBlank(jacsServiceData.getOutputPath()) && new File(jacsServiceData.getOutputPath()).exists()) {
                 outputStream = new FileInputStream(jacsServiceData.getOutputPath());
                 streamHandler(outputStream, s -> {
-                    if (hasErrors(s)) {
+                    if (checkStdOutErrors(s)) {
                         logger.error(s);
                         errors.add(s);
                     }
                     if (StringUtils.isNotBlank(s)) logger.debug(s);
-                });
-            }
-            if (StringUtils.isNotBlank(jacsServiceData.getErrorPath()) && new File(jacsServiceData.getErrorPath()).exists()) {
-                errorStream = new FileInputStream(jacsServiceData.getErrorPath());
-                streamHandler(errorStream, s -> {
-                    if (hasErrors(s)) {
-                        errors.add(s);
-                    }
-                    if (StringUtils.isNotBlank(s)) logger.info(s); // log at info level because I noticed a lot of the external tools write to stderr.
                 });
             }
         } catch (Exception e) {
@@ -56,6 +52,25 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
                     logger.warn("Output stream close error", e);
                 }
             }
+        }
+    }
+
+    protected void collectErrorsFromStdErr(JacsServiceData jacsServiceData, List<String> errors) {
+        InputStream errorStream = null;
+        try {
+            if (StringUtils.isNotBlank(jacsServiceData.getErrorPath()) && new File(jacsServiceData.getErrorPath()).exists()) {
+                errorStream = new FileInputStream(jacsServiceData.getErrorPath());
+                streamHandler(errorStream, s -> {
+                    if (checkStdErrErrors(s)) {
+                        errors.add(s);
+                    }
+                    if (StringUtils.isNotBlank(s))
+                        logger.info(s); // log at info level because I noticed a lot of the external tools write to stderr.
+                });
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
             if (errorStream != null) {
                 try {
                     errorStream.close();
@@ -64,7 +79,15 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
                 }
             }
         }
-        return errors;
+
+    }
+
+    protected boolean checkStdOutErrors(String s) {
+        return hasErrors(s);
+    }
+
+    private boolean checkStdErrErrors(String s) {
+        return hasErrors(s);
     }
 
     private void streamHandler(InputStream outStream, Consumer<String> lineConsumer) {
