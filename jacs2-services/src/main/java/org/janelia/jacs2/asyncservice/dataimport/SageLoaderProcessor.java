@@ -140,9 +140,11 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void, 
             Path workingDirectory = getWorkingDirectory(jacsServiceData);
             Files.createDirectories(workingDirectory);
             Path sageWorkingFile = FileUtils.getFilePath(workingDirectory, "SageFileList.txt");
-            Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-            Files.createFile(sageWorkingFile, PosixFilePermissions.asFileAttribute(perms)).toFile();
-            Files.write(sageWorkingFile, args.sampleFiles, StandardOpenOption.WRITE);
+            if (!Files.exists(sageWorkingFile)) {
+                Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw----");
+                Files.createFile(sageWorkingFile, PosixFilePermissions.asFileAttribute(perms)).toFile();
+                Files.write(sageWorkingFile, args.sampleFiles, StandardOpenOption.WRITE);
+            }
             return sageWorkingFile;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
