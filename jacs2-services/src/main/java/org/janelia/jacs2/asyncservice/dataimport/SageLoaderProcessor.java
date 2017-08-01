@@ -94,7 +94,12 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void, 
                                         imagesFound = Integer.parseInt(imagesFoundLineMatcher.group(1));
                                     }
                                     if (imagesFound != nExpectedImages && !devMode) {
-                                        errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound);
+                                        // this can happen for at least two reason - one is that the images are really missing
+                                        // and the second one if the images are found in the sage database it's possible that
+                                        // the grammar errored out because some of the tools hard-coded in the grammar are not
+                                        // where they are expected, e.g. they are expected in /usr/local/pipeline but in fact are
+                                        // in /misc/local/pipeline
+                                        errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound + " (check that grammar pipeline tools are in the right location)");
                                     }
                                 } else if (devMode && imagesFound != nExpectedImages) {
                                     // In dev mode, we can accept images that were inserted by the SAGE loader
@@ -104,7 +109,7 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void, 
                                             imagesInserted = Integer.parseInt(imagesInsertedLineMatcher.group(1));
                                         }
                                         if (imagesFound + imagesInserted != nExpectedImages) {
-                                            errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound  + " and inserted " + imagesInserted);
+                                            errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound  + " and inserted " + imagesInserted + " (check that grammar pipeline tools are in the right location)");
                                         }
                                     }
                                 }
