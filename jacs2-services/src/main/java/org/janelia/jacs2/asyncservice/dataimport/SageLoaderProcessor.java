@@ -90,7 +90,7 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void, 
         this.perlExecutable = perlExecutable;
         this.perlModule = perlModule;
         this.scriptName = scriptName;
-        this.devMode = !"production".equals(applicationConfig.getStringPropertyValue("sage.write.environment"));
+        this.devMode = !"production".equals(applicationConfig.getStringPropertyValue("Sage.write.environment"));
     }
 
     @Override
