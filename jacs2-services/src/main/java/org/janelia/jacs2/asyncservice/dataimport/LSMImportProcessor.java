@@ -70,6 +70,8 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         List<String> slideCodes = new ArrayList();
         @Parameter(names = "-lsmNames", description = "LSM names", required = false)
         List<String> lsmNames = new ArrayList();
+        @Parameter(names = "-debug", description = "Debug flag", required = false)
+        boolean debugFlag;
 
         List<String> getValues(List<String> paramValues) {
             return paramValues.stream().filter(StringUtils::isNotBlank).map(String::trim).collect(Collectors.toList());
@@ -157,7 +159,8 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                             new ServiceArg("-line", imageLine.getName()),
                             new ServiceArg("-configFile", ds.getSageConfigPath()),
                             new ServiceArg("-grammarFile", ds.getSageGrammarPath()),
-                            new ServiceArg("-sampleFiles", String.join(",", slideImageNames))
+                            new ServiceArg("-sampleFiles", String.join(",", slideImageNames)),
+                            new ServiceArg("-debug", args.debugFlag)
                     ).thenApply(vr -> lineImages.stream()
                                     .map(SampleUtils::createLSMFromSlideImage)
                                     .map(lsm -> importLsm(owner, lsm))
