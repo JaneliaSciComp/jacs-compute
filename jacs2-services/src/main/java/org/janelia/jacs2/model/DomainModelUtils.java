@@ -130,6 +130,7 @@ public class DomainModelUtils {
         try {
             Map<String, Object> objectFields = new HashMap<>();
             for (Field field : ReflectionUtils.getAllFields(dObj.getClass())) {
+                field.setAccessible(true);
                 objectFields.put(field.getName(), field.get(dObj));
             }
             return objectFields;

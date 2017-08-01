@@ -403,7 +403,7 @@ public class SampleUtils {
                         if (!nonConsesusFieldNames.contains(fieldName)) {
                             // only do this if there's been no conflict for the field so far
                             Object sageFieldValue = null;
-                            try {
+                            try {sageField.field.setAccessible(true);
                                 sageFieldValue = sageField.field.get(lsm);
                                 if (consensusLsmFieldValues.containsKey(fieldName)) {
                                     if ("tmogDate".equals(fieldName)) {
@@ -439,7 +439,9 @@ public class SampleUtils {
         consensusLsmFieldValues.forEach((fieldName, fieldValue) -> {
             if (sampleSageAttrs.containsKey(fieldName)) {
                 try {
-                    sampleSageAttrs.get(fieldName).field.set(sample, fieldValue);
+                    Field sampleField = sampleSageAttrs.get(fieldName).field;
+                    sampleField.setAccessible(true);
+                    sampleField.set(sample, fieldValue);
                     sampleFields.put(fieldName, fieldValue);
                 } catch (IllegalAccessException e) {
                     throw new IllegalArgumentException(e);
