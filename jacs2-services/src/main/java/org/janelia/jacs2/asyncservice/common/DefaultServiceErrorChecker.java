@@ -90,7 +90,7 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
         return hasErrors(s);
     }
 
-    private void streamHandler(InputStream outStream, Consumer<String> lineConsumer) {
+    protected void streamHandler(InputStream outStream, Consumer<String> lineConsumer) {
         BufferedReader outputReader = new BufferedReader(new InputStreamReader(outStream));
         for (;;) {
             try {
