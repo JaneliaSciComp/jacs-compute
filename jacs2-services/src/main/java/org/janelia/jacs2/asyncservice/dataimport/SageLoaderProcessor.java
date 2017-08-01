@@ -66,6 +66,67 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void, 
         boolean debugFlag;
     }
 
+    class SageLoaderErrorChecker extends DefaultServiceErrorChecker {
+
+        public SageLoaderErrorChecker(Logger logger) {
+            super(logger);
+        }
+
+        @Override
+        protected void collectErrorsFromStdOut(JacsServiceData jacsServiceData, List<String> errors) {
+            SageLoaderArgs args = getArgs(jacsServiceData);
+            int nExpectedImages = CollectionUtils.size(args.sampleFiles);
+            InputStream outputStream = null;
+            try {
+                if (StringUtils.isNotBlank(jacsServiceData.getOutputPath()) && new File(jacsServiceData.getOutputPath()).exists()) {
+                    outputStream = new FileInputStream(jacsServiceData.getOutputPath());
+                    streamHandler(outputStream, new Consumer<String>() {
+                        private int imagesFound = 0;
+                        private int imagesInserted = 0;
+
+                        @Override
+                        public void accept(String s) {
+                            if (StringUtils.isNotBlank(s)) {
+                                logger.debug(s);
+                                Matcher imagesFoundLineMatcher = IMAGES_FOUND.matcher(s);
+                                if (imagesFoundLineMatcher.matches()) {
+                                    if (imagesFoundLineMatcher.groupCount() == 1) {
+                                        imagesFound = Integer.parseInt(imagesFoundLineMatcher.group(1));
+                                    }
+                                    if (imagesFound != nExpectedImages && !devMode) {
+                                        errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound);
+                                    }
+                                } else if (devMode && imagesFound != nExpectedImages) {
+                                    // In dev mode, we can accept images that were inserted by the SAGE loader
+                                    Matcher imagesInsertedLineMatcher = IMAGES_INSERTED.matcher(s);
+                                    if (imagesInsertedLineMatcher.matches()) {
+                                        if (imagesInsertedLineMatcher.groupCount() == 1) {
+                                            imagesInserted = Integer.parseInt(imagesInsertedLineMatcher.group(1));
+                                        }
+                                        if (imagesFound + imagesInserted != nExpectedImages) {
+                                            errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound  + " and inserted " + imagesInserted);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            } finally {
+                if (outputStream != null) {
+                    try {
+                        outputStream.close();
+                    } catch (IOException e) {
+                        logger.warn("Output stream close error", e);
+                    }
+                }
+            }
+        }
+
+    }
+
     private static final Pattern IMAGES_FOUND = Pattern.compile("Images found:(?:\\W)*([\\d]*)");
     private static final Pattern IMAGES_INSERTED = Pattern.compile("Images inserted:(?:\\W)*([\\d]*)");
     private static final String PERLLIB_VARNAME = "PERL5LIB";
@@ -105,62 +166,7 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void, 
 
     @Override
     public ServiceErrorChecker getErrorChecker() {
-        return new DefaultServiceErrorChecker(logger) {
-
-            @Override
-            protected void collectErrorsFromStdOut(JacsServiceData jacsServiceData, List<String> errors) {
-                SageLoaderArgs args = getArgs(jacsServiceData);
-                int nExpectedImages = CollectionUtils.size(args.sampleFiles);
-                InputStream outputStream = null;
-                try {
-                    if (StringUtils.isNotBlank(jacsServiceData.getOutputPath()) && new File(jacsServiceData.getOutputPath()).exists()) {
-                        outputStream = new FileInputStream(jacsServiceData.getOutputPath());
-                        streamHandler(outputStream, new Consumer<String>() {
-                            private int imagesFound = 0;
-                            private int imagesInserted = 0;
-
-                            @Override
-                            public void accept(String s) {
-                                if (StringUtils.isNotBlank(s)) {
-                                    logger.debug(s);
-                                    Matcher imagesFoundLineMatcher = IMAGES_FOUND.matcher(s);
-                                    if (imagesFoundLineMatcher.matches()) {
-                                        if (imagesFoundLineMatcher.groupCount() == 1) {
-                                            imagesFound = Integer.parseInt(imagesFoundLineMatcher.group(1));
-                                        }
-                                        if (imagesFound != nExpectedImages && !devMode) {
-                                            errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound);
-                                        }
-                                    } else if (devMode && imagesFound != nExpectedImages) {
-                                        // In dev mode, we can accept images that were inserted by the SAGE loader
-                                        Matcher imagesInsertedLineMatcher = IMAGES_INSERTED.matcher(s);
-                                        if (imagesInsertedLineMatcher.matches()) {
-                                            if (imagesInsertedLineMatcher.groupCount() == 1) {
-                                                imagesInserted = Integer.parseInt(imagesInsertedLineMatcher.group(1));
-                                            }
-                                            if (imagesFound + imagesInserted != nExpectedImages) {
-                                                errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound  + " and inserted " + imagesInserted);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                    }
-                } catch (Exception e) {
-                    throw new IllegalStateException(e);
-                } finally {
-                    if (outputStream != null) {
-                        try {
-                            outputStream.close();
-                        } catch (IOException e) {
-                            logger.warn("Output stream close error", e);
-                        }
-                    }
-                }
-
-            }
-        };
+        return new SageLoaderErrorChecker(logger);
     }
 
     @Override

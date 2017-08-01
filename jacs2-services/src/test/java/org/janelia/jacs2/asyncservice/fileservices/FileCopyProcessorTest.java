@@ -44,7 +44,7 @@ public class FileCopyProcessorTest {
     private String defaultWorkingDir = "testWorking";
     private String executablesBaseDir = "testTools";
 
-    private FileCopyProcessor testProcessor;
+    private FileCopyProcessor fileCopyProcessor;
     private File testDirectory;
 
     @Before
@@ -57,7 +57,7 @@ public class FileCopyProcessorTest {
                 ImmutableMap.of("Executables.ModuleBase", executablesBaseDir))
                 .build();
 
-        testProcessor = new FileCopyProcessor(serviceComputationFactory,
+        fileCopyProcessor = new FileCopyProcessor(serviceComputationFactory,
                 jacsServiceDataPersistence,
                 null, // serviceRunners are not essential for these unit tests
                 defaultWorkingDir,
@@ -82,7 +82,7 @@ public class FileCopyProcessorTest {
                 .addArg("-src", "/home/testSource")
                 .addArg("-dst", testDestFile.getAbsolutePath())
                 .build();
-        testProcessor.prepareProcessing(testServiceData);
+        fileCopyProcessor.prepareProcessing(testServiceData);
         assertTrue(testDestFile.getParentFile().exists());
     }
 
@@ -112,7 +112,7 @@ public class FileCopyProcessorTest {
 
     private void verifyCompletionWithException(JacsServiceData testServiceData) throws ExecutionException, InterruptedException {
         expectedException.expect(ComputationException.class);
-        testProcessor.prepareProcessing(testServiceData);
+        fileCopyProcessor.prepareProcessing(testServiceData);
     }
 
     @Test
@@ -126,7 +126,7 @@ public class FileCopyProcessorTest {
                 .addArg("-convert8")
                 .build();
         assertTrue(Files.exists(testSourcePath));
-        testProcessor.postProcessing(new JacsServiceResult<>(testServiceData, testDestFile));
+        fileCopyProcessor.postProcessing(new JacsServiceResult<>(testServiceData, testDestFile));
         assertTrue(Files.notExists(testSourcePath));
     }
 
@@ -142,7 +142,7 @@ public class FileCopyProcessorTest {
                     .addArg("-convert8")
                     .build();
             expectedException.expect(UncheckedIOException.class);
-            testProcessor.postProcessing(new JacsServiceResult<>(testServiceData, testDestFile));
+            fileCopyProcessor.postProcessing(new JacsServiceResult<>(testServiceData, testDestFile));
             assertTrue(Files.exists(testSourcePath));
         } finally {
             Files.deleteIfExists(testSourcePath);
@@ -159,7 +159,7 @@ public class FileCopyProcessorTest {
                     .addArg("-dst", testDestFile.getAbsolutePath())
                     .addArg("-convert8")
                     .build();
-            testProcessor.postProcessing(new JacsServiceResult<>(testServiceData, testDestFile));
+            fileCopyProcessor.postProcessing(new JacsServiceResult<>(testServiceData, testDestFile));
             assertTrue(Files.exists(testSourcePath));
         } finally {
             Files.deleteIfExists(testSourcePath);
@@ -174,7 +174,7 @@ public class FileCopyProcessorTest {
                 .addArg("-src", testSource)
                 .addArg("-dst", testDestFile.getAbsolutePath())
                 .build();
-        ExternalCodeBlock copyScript = testProcessor.prepareExternalScript(testServiceData);
+        ExternalCodeBlock copyScript = fileCopyProcessor.prepareExternalScript(testServiceData);
         assertThat(copyScript.toString(),
                 equalTo(executablesBaseDir + "/" + scriptName + " " + testSource + " " + testDestFile.getAbsolutePath() + " \n"));
     }
@@ -189,7 +189,7 @@ public class FileCopyProcessorTest {
                 .addArg("-mv")
                 .addArg("-convert8")
                 .build();
-        ExternalCodeBlock copyScript = testProcessor.prepareExternalScript(testServiceData);
+        ExternalCodeBlock copyScript = fileCopyProcessor.prepareExternalScript(testServiceData);
         assertThat(copyScript.toString(),
                 equalTo(executablesBaseDir + "/" + scriptName + " " + testSource + " " + testDestFile.getAbsolutePath() + " 8 \n"));
     }
@@ -204,7 +204,7 @@ public class FileCopyProcessorTest {
                 .addArg("-mv")
                 .addArg("-convert8")
                 .build();
-        Map<String, String> env = testProcessor.prepareEnvironment(testServiceData);
+        Map<String, String> env = fileCopyProcessor.prepareEnvironment(testServiceData);
         assertThat(env, hasEntry(equalTo("LD_LIBRARY_PATH"), containsString(libraryPath)));
     }
 
