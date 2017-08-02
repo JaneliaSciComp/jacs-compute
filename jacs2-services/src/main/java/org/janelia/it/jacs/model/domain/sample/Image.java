@@ -8,6 +8,7 @@ import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 
 import java.util.List;
 import java.util.Map;
@@ -17,13 +18,21 @@ import java.util.Map;
  */
 @MongoMapping(collectionName="image", label="Image")
 public class Image extends AbstractDomainObject implements HasRelativeFiles {
-    @SAGEAttribute(cvName="jacs_calculated", termName="image_size")
+    @SAGEAttribute(cvName = "jacs_calculated", termName = "image_size")
+    @SearchAttribute(key = "image_size_s", label = "Image Size")
     private String imageSize;
-    @SAGEAttribute(cvName="jacs_calculated", termName="optical_resolution")
+
+    @SAGEAttribute(cvName = "jacs_calculated", termName = "optical_resolution")
+    @SearchAttribute(key = "optical_res_s", label = "Optical Resolution")
     private String opticalResolution;
+
+    @SearchAttribute(key = "objective_txt", label = "Objective", facet = "objective_s")
     private String objective;
-    @SAGEAttribute(cvName="light_imagery", termName="channels")
+
+    @SAGEAttribute(cvName = "light_imagery", termName = "channels")
+    @SearchAttribute(key = "num_channels_i", label = "Num Channels", facet = "num_channels_i")
     private Integer numChannels;
+
     // files are in fact alternate representations of this image instance
     @JsonIgnore
     private HasRelativeFilesImpl relativeFilesImpl = new HasRelativeFilesImpl();

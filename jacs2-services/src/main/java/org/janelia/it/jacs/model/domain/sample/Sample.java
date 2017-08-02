@@ -53,71 +53,71 @@ public class Sample extends AbstractDomainObject {
     @SearchAttribute(key = "genotype_txt", label = "Genotype")
     private String genotype;
 
-    @SAGEAttribute(cvName="line", termName="flycore_id")
-    @SearchAttribute(key="flycore_id_i",label="Fly Core Id")
+    @SAGEAttribute(cvName = "line", termName = "flycore_id")
+    @SearchAttribute(key = "flycore_id_i", label = "Fly Core Id")
     private Integer flycoreId;
 
-    @SAGEAttribute(cvName="light_imagery", termName="imaging_project")
-    @SearchAttribute(key="img_proj_txt",label="Imaging Project")
+    @SAGEAttribute(cvName = "light_imagery", termName = "imaging_project")
+    @SearchAttribute(key = "img_proj_txt", label = "Imaging Project")
     private String imagingProject;
 
-    @SAGEAttribute(cvName="light_imagery", termName="driver")
-    @SearchAttribute(key="driver_txt",label="Driver")
+    @SAGEAttribute(cvName = "light_imagery", termName = "driver")
+    @SearchAttribute(key = "driver_txt", label = "Driver")
     private String driver;
 
-    @SAGEAttribute(cvName="line", termName="flycore_project")
-    @SearchAttribute(key="fcproj_txt",label="Fly Core Project")
+    @SAGEAttribute(cvName = "line", termName = "flycore_project")
+    @SearchAttribute(key = "fcproj_txt", label = "Fly Core Project")
     private String flycoreProject;
 
-    @SAGEAttribute(cvName="line", termName="flycore_lab")
-    @SearchAttribute(key="fclab_s",label="Fly Core Lab Id")
+    @SAGEAttribute(cvName = "line", termName = "flycore_lab")
+    @SearchAttribute(key = "fclab_s", label = "Fly Core Lab Id")
     private String flycoreLabId;
 
-    @SAGEAttribute(cvName="light_imagery", termName="family")
-    @SearchAttribute(key="family_txt",label="Image Family")
+    @SAGEAttribute(cvName = "light_imagery", termName = "family")
+    @SearchAttribute(key = "family_txt", label = "Image Family")
     private String imageFamily;
 
-    @SAGEAttribute(cvName="image_query", termName="line")
-    @SearchAttribute(key="line_txt",label="Line")
+    @SAGEAttribute(cvName = "image_query", termName = "line")
+    @SearchAttribute(key = "line_txt", label = "Line")
     private String line;
 
-    @SAGEAttribute(cvName="light_imagery", termName="vt_line")
-    @SearchAttribute(key="vtline_txt",label="VT Line")
+    @SAGEAttribute(cvName = "light_imagery", termName = "vt_line")
+    @SearchAttribute(key = "vtline_txt", label = "VT Line")
     private String vtLine;
 
-    @SAGEAttribute(cvName="light_imagery", termName="publishing_name")
-    @SearchAttribute(key="pubname_txt",label="Publishing Name")
+    @SAGEAttribute(cvName = "light_imagery", termName = "publishing_name")
+    @SearchAttribute(key = "pubname_txt", label = "Publishing Name")
     private String publishingName;
 
-    @SAGEAttribute(cvName="light_imagery", termName="published_externally")
-    @SearchAttribute(key="pubext_b",label="Published Externally")
+    @SAGEAttribute(cvName = "light_imagery", termName = "published_externally")
+    @SearchAttribute(key = "pubext_b", label = "Published Externally")
     private String publishedExternally;
 
-    @SAGEAttribute(cvName="light_imagery", termName="slide_code")
-    @SearchAttribute(key="slide_code_txt",label="Slide Code")
+    @SAGEAttribute(cvName = "light_imagery", termName = "slide_code")
+    @SearchAttribute(key = "slide_code_txt", label = "Slide Code")
     private String slideCode;
 
-    @SAGEAttribute(cvName="fly", termName="cross_barcode")
-    @SearchAttribute(key="cross_barcode_txt",label="Cross Barcode")
+    @SAGEAttribute(cvName = "fly", termName = "cross_barcode")
+    @SearchAttribute(key = "cross_barcode_txt", label = "Cross Barcode")
     private Integer crossBarcode;
 
-    @SearchAttribute(key="status_txt",label="Status",facet="status_s")
+    @SearchAttribute(key = "status_txt", label = "Status", facet = "status_s")
     private String status;
 
-    @SearchAttribute(key="sage_synced_b",label="SAGE Synchronized",facet="sage_synced_b")
+    @SearchAttribute(key = "sage_synced_b", label = "SAGE Synchronized", facet = "sage_synced_b")
     private boolean sageSynced = false;
 
-    @SearchAttribute(key="compression_txt",label="Compression Type")
+    @SearchAttribute(key = "compression_txt", label = "Compression Type")
     private String compressionType;
 
-    @SAGEAttribute(cvName="image_query", termName="create_date")
-    @SearchAttribute(key="tmog_dt",label="TMOG Date")
+    @SAGEAttribute(cvName = "image_query", termName = "create_date")
+    @SearchAttribute(key = "tmog_dt", label = "TMOG Date")
     private Date tmogDate;
 
-    @SearchAttribute(key="completion_dt",label="Completion Date")
+    @SearchAttribute(key = "completion_dt", label = "Completion Date")
     private Date completionDate;
 
-    @SearchAttribute(key="usage_bytes_l",label="Disk Space Usage (Bytes)")
+    @SearchAttribute(key = "usage_bytes_l", label = "Disk Space Usage (Bytes)")
     private Long diskSpaceUsage;
 
     private List<ObjectiveSample> objectiveSamples = new ArrayList<>();
