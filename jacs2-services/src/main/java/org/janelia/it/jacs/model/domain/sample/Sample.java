@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.domain.sample;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
@@ -279,7 +280,8 @@ public class Sample extends AbstractDomainObject {
         Optional<ObjectiveSample> objective = Optional.empty();
         if (CollectionUtils.isNotEmpty(objectiveSamples)) {
             objective = objectiveSamples.stream()
-                    .filter(o -> objectiveName == null && o.getObjective() == null || o.getObjective().equals(objectiveName))
+                    .filter(o -> StringUtils.isBlank(objectiveName) && StringUtils.isBlank(o.getObjective())
+                            || o.getObjective().equals(objectiveName))
                     .findFirst();
         }
         return objective;
@@ -289,7 +291,7 @@ public class Sample extends AbstractDomainObject {
         Optional<IndexedReference<ObjectiveSample, Integer>> objective;
         if (CollectionUtils.isNotEmpty(objectiveSamples)) {
             objective = IndexedReference.indexListContent(objectiveSamples, (pos, os) -> new IndexedReference<>(os, pos))
-                    .filter(positionalReference -> (objectiveName == null && positionalReference.getReference().getObjective() == null
+                    .filter(positionalReference -> (StringUtils.isBlank(objectiveName) && StringUtils.isBlank(positionalReference.getReference().getObjective())
                                     || positionalReference.getReference().getObjective().equals(objectiveName)))
                     .findFirst();
         } else {
