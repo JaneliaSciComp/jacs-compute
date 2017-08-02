@@ -32,7 +32,7 @@ public class Reference {
 
     public static Reference createFor(DomainObject domainObject) {
         Preconditions.checkArgument(domainObject != null);
-        return new Reference(domainObject.getClass().getName(), domainObject.getId());
+        return new Reference(domainObject.getClass().getSimpleName(), domainObject.getId());
     }
 
     public Reference() {
