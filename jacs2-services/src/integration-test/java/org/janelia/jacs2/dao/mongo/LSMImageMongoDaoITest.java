@@ -1,8 +1,10 @@
 package org.janelia.jacs2.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Matchers;
 import org.hamcrest.beans.HasPropertyWithValue;
+import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.jacs2.dao.LSMImageDao;
 import org.janelia.jacs2.model.page.PageRequest;
@@ -14,14 +16,18 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.IsIn.isIn;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage> {
     private List<LSMImage> testData = new ArrayList<>();
@@ -93,16 +99,58 @@ public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage
                 });
     }
 
+    @Test
+    public void updateSampleRefs() {
+        List<LSMImage> testImages = createMultipleTestItems(10);
+        int sageIdGroups = 3;
+        testImages.stream()
+                .map(im -> {
+                    im.setSageId((im.getSageId() % sageIdGroups) + 1);
+                    return im;
+                })
+                .forEach(testDao::save);
+        Reference newSampleRef = Reference.createFor("Sample#456");
+        Map<String, Object> updatedFields = ImmutableMap.of("sampleRef", newSampleRef);
+        testImages.stream()
+                .forEach(im -> testDao.update(im, updatedFields));
+
+        PageRequest pageRequest = new PageRequest();
+        PageResult<LSMImage> result = testDao.findAll(pageRequest);
+        assertThat(result.getResultList(), hasSize(testImages.size()));
+        assertTrue(result.getResultList().stream().allMatch(im -> newSampleRef.equals(im.getSampleRef())));
+    }
+
+    @Test
+    public void updateSampleRefsToNull() {
+        List<LSMImage> testImages = createMultipleTestItems(10);
+        int sageIdGroups = 3;
+        testImages.stream()
+                .map(im -> {
+                    im.setSageId((im.getSageId() % sageIdGroups) + 1);
+                    return im;
+                })
+                .forEach(testDao::save);
+        Map<String, Object> updatedFields = new HashMap<>();
+        updatedFields.put("sampleRef", null);
+        testImages.stream()
+                .forEach(im -> testDao.update(im, updatedFields));
+        PageRequest pageRequest = new PageRequest();
+        PageResult<LSMImage> result = testDao.findAll(pageRequest);
+        assertThat(result.getResultList(), hasSize(testImages.size()));
+        assertTrue(result.getResultList().stream().allMatch(im -> im.getSampleRef() == null));
+    }
+
     @Override
     protected List<LSMImage> createMultipleTestItems(int nItems) {
         List<LSMImage> testItems = new ArrayList<>();
+        Reference sampleRef = Reference.createFor("Sample#12345");
         for (int i = 0; i < nItems; i++) {
-            testItems.add(createImage(i + 1, "l" + (i + 1), "a" + (i + 1)));
+            testItems.add(createImage(i % 2 == 0 ? sampleRef : null, i + 1, "l" + (i + 1), "a" + (i + 1)));
         }
         return testItems;
     }
 
-    private LSMImage createImage(int sageId, String line, String area) {
+    private LSMImage createImage(Reference sampleRef, int sageId, String line, String area) {
         LSMImage lsmImage = new LSMImage();
         lsmImage.setChannelColors("cygkrgb");
         lsmImage.setChannelDyeNames("dye");
@@ -112,6 +160,7 @@ public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage
         lsmImage.setAnatomicalArea(area);
         lsmImage.setSageId(sageId);
         lsmImage.setOwnerKey(TEST_OWNER_KEY);
+        lsmImage.setSampleRef(sampleRef);
         testData.add(lsmImage);
         return lsmImage;
     }
