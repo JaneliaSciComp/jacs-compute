@@ -10,12 +10,14 @@ import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
+import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.reflections.ReflectionUtils;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -131,7 +133,12 @@ public class DomainModelUtils {
             Map<String, Object> objectFields = new HashMap<>();
             for (Field field : ReflectionUtils.getAllFields(dObj.getClass())) {
                 field.setAccessible(true);
-                objectFields.put(field.getName(), field.get(dObj));
+                Object fieldValue = field.get(dObj);
+                objectFields.put(field.getName(), fieldValue);
+                SearchAttribute searchAttrAnnotation = field.getAnnotation(SearchAttribute.class);
+                if (searchAttrAnnotation != null && StringUtils.isNotBlank(searchAttrAnnotation.label())) {
+                    objectFields.put(searchAttrAnnotation.label(), fieldValue);
+                }
             }
             return objectFields;
         } catch (IllegalAccessException e) {

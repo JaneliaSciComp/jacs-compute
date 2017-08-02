@@ -6,6 +6,7 @@ import org.janelia.it.jacs.model.domain.AbstractDomainObject;
 import org.janelia.it.jacs.model.domain.IndexedReference;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
+import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,52 +21,105 @@ import java.util.Optional;
  */
 @MongoMapping(collectionName="sample", label="Sample")
 public class Sample extends AbstractDomainObject {
-    @SAGEAttribute(cvName="light_imagery", termName="age")
+    @SAGEAttribute(cvName = "light_imagery", termName = "age")
+    @SearchAttribute(key = "age_txt", label = "Age", facet = "age_s")
     private String age;
-    @SAGEAttribute(cvName="light_imagery", termName="data_set")
+
+    @SAGEAttribute(cvName = "light_imagery", termName = "data_set")
+    @SearchAttribute(key = "data_set_txt", label = "Data Set", facet = "data_set_s")
     private String dataSet;
-    @SAGEAttribute(cvName="fly", termName="effector")
+
+    @SAGEAttribute(cvName = "fly", termName = "effector")
+    @SearchAttribute(key = "effector_txt", label = "Effector")
     private String effector;
-    @SAGEAttribute(cvName="line", termName="flycore_alias")
+
+    @SAGEAttribute(cvName = "line", termName = "flycore_alias")
+    @SearchAttribute(key = "fcalias_s", label = "Fly Core Alias")
     private String flycoreAlias;
-    @SAGEAttribute(cvName="light_imagery", termName="gender")
+
+    @SAGEAttribute(cvName = "light_imagery", termName = "gender")
+    @SearchAttribute(key = "gender_txt", label = "Gender", facet = "gender_s")
     private String gender;
-    @SAGEAttribute(cvName="light_imagery", termName="mounting_protocol")
+
+    @SAGEAttribute(cvName = "light_imagery", termName = "mounting_protocol")
+    @SearchAttribute(key = "mount_protocol_txt", label = "Mounting Protocol")
     private String mountingProtocol;
-    @SAGEAttribute(cvName="line_query", termName="organism")
+
+    @SAGEAttribute(cvName = "line_query", termName = "organism")
+    @SearchAttribute(key = "organism_txt", label = "Organism")
     private String organism;
-    @SAGEAttribute(cvName="line", termName="genotype")
+
+    @SAGEAttribute(cvName = "line", termName = "genotype")
+    @SearchAttribute(key = "genotype_txt", label = "Genotype")
     private String genotype;
+
     @SAGEAttribute(cvName="line", termName="flycore_id")
+    @SearchAttribute(key="flycore_id_i",label="Fly Core Id")
     private Integer flycoreId;
+
     @SAGEAttribute(cvName="light_imagery", termName="imaging_project")
+    @SearchAttribute(key="img_proj_txt",label="Imaging Project")
     private String imagingProject;
+
     @SAGEAttribute(cvName="light_imagery", termName="driver")
+    @SearchAttribute(key="driver_txt",label="Driver")
     private String driver;
+
     @SAGEAttribute(cvName="line", termName="flycore_project")
+    @SearchAttribute(key="fcproj_txt",label="Fly Core Project")
     private String flycoreProject;
+
     @SAGEAttribute(cvName="line", termName="flycore_lab")
+    @SearchAttribute(key="fclab_s",label="Fly Core Lab Id")
     private String flycoreLabId;
+
     @SAGEAttribute(cvName="light_imagery", termName="family")
+    @SearchAttribute(key="family_txt",label="Image Family")
     private String imageFamily;
+
     @SAGEAttribute(cvName="image_query", termName="line")
+    @SearchAttribute(key="line_txt",label="Line")
     private String line;
+
     @SAGEAttribute(cvName="light_imagery", termName="vt_line")
+    @SearchAttribute(key="vtline_txt",label="VT Line")
     private String vtLine;
+
     @SAGEAttribute(cvName="light_imagery", termName="publishing_name")
+    @SearchAttribute(key="pubname_txt",label="Publishing Name")
     private String publishingName;
+
     @SAGEAttribute(cvName="light_imagery", termName="published_externally")
+    @SearchAttribute(key="pubext_b",label="Published Externally")
     private String publishedExternally;
+
     @SAGEAttribute(cvName="light_imagery", termName="slide_code")
+    @SearchAttribute(key="slide_code_txt",label="Slide Code")
     private String slideCode;
+
     @SAGEAttribute(cvName="fly", termName="cross_barcode")
+    @SearchAttribute(key="cross_barcode_txt",label="Cross Barcode")
     private Integer crossBarcode;
+
+    @SearchAttribute(key="status_txt",label="Status",facet="status_s")
     private String status;
+
+    @SearchAttribute(key="sage_synced_b",label="SAGE Synchronized",facet="sage_synced_b")
     private boolean sageSynced = false;
+
+    @SearchAttribute(key="compression_txt",label="Compression Type")
     private String compressionType;
+
     @SAGEAttribute(cvName="image_query", termName="create_date")
+    @SearchAttribute(key="tmog_dt",label="TMOG Date")
     private Date tmogDate;
+
+    @SearchAttribute(key="completion_dt",label="Completion Date")
     private Date completionDate;
+
+    @SearchAttribute(key="usage_bytes_l",label="Disk Space Usage (Bytes)")
+    private Long diskSpaceUsage;
+
     private List<ObjectiveSample> objectiveSamples = new ArrayList<>();
 
     public String getDataSet() {
@@ -266,6 +320,14 @@ public class Sample extends AbstractDomainObject {
 
     public void setSageSynced(boolean sageSynced) {
         this.sageSynced = sageSynced;
+    }
+
+    public Long getDiskSpaceUsage() {
+        return diskSpaceUsage;
+    }
+
+    public void setDiskSpaceUsage(Long diskSpaceUsage) {
+        this.diskSpaceUsage = diskSpaceUsage;
     }
 
     public List<ObjectiveSample> getObjectiveSamples() {
