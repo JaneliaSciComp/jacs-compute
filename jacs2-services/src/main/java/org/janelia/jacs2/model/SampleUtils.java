@@ -414,7 +414,7 @@ public class SampleUtils {
                                             consensusLsmFieldValues.put(fieldName, new SetFieldValueHandler<>(tmogDate));
                                         }
                                     } else {
-                                        Object existingConsensusValue = consensusLsmFieldValues.get(fieldName);
+                                        Object existingConsensusValue = consensusLsmFieldValues.get(fieldName).getFieldValue();
                                         if (!Objects.equals(existingConsensusValue, sageFieldValue)) {
                                             nonConsesusFieldNames.add(fieldName);
                                             if (String.class.equals(sageField.field.getType())) {
