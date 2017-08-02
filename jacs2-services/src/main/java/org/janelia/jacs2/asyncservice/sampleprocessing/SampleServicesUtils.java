@@ -7,6 +7,7 @@ import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.sample.FileGroup;
 import org.janelia.it.jacs.model.domain.sample.Image;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -52,12 +53,12 @@ public class SampleServicesUtils {
      * @param fileGroups list of filegroups
      * @return true if the object has been changed
      */
-    public static Map<String, Object> updateFiles(HasRelativeFiles objectWithFiles, List<FileGroup> fileGroups) {
+    public static Map<String, EntityFieldValueHandler<?>> updateFiles(HasRelativeFiles objectWithFiles, List<FileGroup> fileGroups) {
         return fileGroups.stream()
                 .flatMap(group -> group.getFiles().entrySet().stream())
                 .map(fileTypeEntry -> objectWithFiles.setFileName(fileTypeEntry.getKey(), fileTypeEntry.getValue()))
                 .reduce(new LinkedHashMap<>(), (r1, r2) -> {
-                    Map<String, Object> result = new LinkedHashMap<>();
+                    Map<String, EntityFieldValueHandler<?>> result = new LinkedHashMap<>();
                     result.putAll(r1);
                     result.putAll(r2);
                     return result;

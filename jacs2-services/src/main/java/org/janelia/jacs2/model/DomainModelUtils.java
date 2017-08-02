@@ -120,7 +120,7 @@ public class DomainModelUtils {
         return mongoMapping;
     }
 
-    public static Map<String, Object> setFullPathForFileType(HasFiles objWithFiles, FileType fileType, String fileName) {
+    public static Map<String, EntityFieldValueHandler<?>> setFullPathForFileType(HasFiles objWithFiles, FileType fileType, String fileName) {
         if (StringUtils.isBlank(fileName)) {
             return objWithFiles.removeFileName(fileType);
         } else {

@@ -11,6 +11,8 @@ import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
 import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.jacs2.model.DataInterval;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.page.SortCriteria;
@@ -222,12 +224,12 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
                 createSampleObjective("new_o2"),
                 createSampleObjective("new_o3")));
         testSample.setUpdatedDate(new Date());
-        Map<String, Object> updates = new LinkedHashMap<>();
-        updates.put("flycoreAlias", testSample.getFlycoreAlias());
-        updates.put("dataSet", testSample.getDataSet());
-        updates.put("line", testSample.getLine());
-        updates.put("effector", testSample.getEffector());
-        updates.put("objectiveSamples", testSample.getObjectiveSamples());
+        Map<String, EntityFieldValueHandler<?>> updates = new LinkedHashMap<>();
+        updates.put("flycoreAlias", new SetFieldValueHandler<>(testSample.getFlycoreAlias()));
+        updates.put("dataSet", new SetFieldValueHandler<>(testSample.getDataSet()));
+        updates.put("line", new SetFieldValueHandler<>(testSample.getLine()));
+        updates.put("effector", new SetFieldValueHandler<>(testSample.getEffector()));
+        updates.put("objectiveSamples", new SetFieldValueHandler<>(testSample.getObjectiveSamples()));
         testDao.update(testSample, updates);
     }
 

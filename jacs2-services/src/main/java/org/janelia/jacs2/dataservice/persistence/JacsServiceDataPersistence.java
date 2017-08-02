@@ -3,6 +3,8 @@ package org.janelia.jacs2.dataservice.persistence;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.dao.JacsServiceDataDao;
 import org.janelia.jacs2.model.DataInterval;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
@@ -112,7 +114,7 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    public void update(JacsServiceData jacsServiceData, Map<String, Object> fieldsToUpdate) {
+    public void update(JacsServiceData jacsServiceData, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         if (jacsServiceData.hasId()) {
             super.update(jacsServiceData, fieldsToUpdate);
         }
@@ -125,7 +127,7 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
             addServiceEvent(
                     jacsServiceData,
                     JacsServiceData.createServiceEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from " + oldServiceState + " -> " + newServiceState));
-            if (jacsServiceData.hasId()) update(jacsServiceData, ImmutableMap.of("state", newServiceState));
+            if (jacsServiceData.hasId()) update(jacsServiceData, ImmutableMap.of("state", new SetFieldValueHandler<>(newServiceState)));
         }
         if (serviceEvent.isPresent()) addServiceEvent(jacsServiceData, serviceEvent.get());
     }

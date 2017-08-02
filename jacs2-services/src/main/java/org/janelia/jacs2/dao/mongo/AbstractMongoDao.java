@@ -1,7 +1,5 @@
 package org.janelia.jacs2.dao.mongo;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.FindIterable;
@@ -17,11 +15,12 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.dao.AbstractDao;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
 import org.janelia.jacs2.dao.ReadWriteDao;
+import org.janelia.jacs2.model.AppendFieldValueHandler;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.page.SortCriteria;
@@ -160,14 +159,14 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     }
 
     @Override
-    public void update(T entity, Map<String, Object> fieldsToUpdate) {
+    public void update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);
         update(entity, fieldsToUpdate, updateOptions);
 
     }
 
-    private long update(T entity, Map<String, Object> fieldsToUpdate, UpdateOptions updateOptions) {
+    private long update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate, UpdateOptions updateOptions) {
         return update(getUpdateMatchCriteria(entity), getUpdates(fieldsToUpdate), updateOptions);
     }
 
@@ -177,7 +176,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         return result.getMatchedCount();
     }
 
-    protected Bson getUpdates(Map<String, Object> fieldsToUpdate) {
+    protected Bson getUpdates(Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         List<Bson> fieldUpdates = fieldsToUpdate.entrySet().stream()
                 .map(e -> getFieldUpdate(e.getKey(), e.getValue()))
                 .collect(Collectors.toList());
@@ -202,17 +201,22 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         delete(entity);
     }
 
-    private Bson getFieldUpdate(String fieldName, Object value) {
-        if (value == null) {
+    private Bson getFieldUpdate(String fieldName, EntityFieldValueHandler<?> valueHandler) {
+        if (valueHandler == null || valueHandler.getFieldValue() == null) {
             return Updates.unset(fieldName);
-        } else if (value instanceof Iterable) {
-            if (Set.class.isAssignableFrom(value.getClass())) {
-                return Updates.addEachToSet(fieldName, ImmutableList.copyOf((Iterable) value));
+        } else if (valueHandler instanceof AppendFieldValueHandler) {
+            Object value = valueHandler.getFieldValue();
+            if (value instanceof Iterable) {
+                if (Set.class.isAssignableFrom(value.getClass())) {
+                    return Updates.addEachToSet(fieldName, ImmutableList.copyOf((Iterable) value));
+                } else {
+                    return Updates.pushEach(fieldName, ImmutableList.copyOf((Iterable) value));
+                }
             } else {
-                return Updates.pushEach(fieldName, ImmutableList.copyOf((Iterable) value));
+                return Updates.push(fieldName, value);
             }
         } else {
-            return Updates.set(fieldName, value);
+            return Updates.set(fieldName, valueHandler.getFieldValue());
         }
     }
 }

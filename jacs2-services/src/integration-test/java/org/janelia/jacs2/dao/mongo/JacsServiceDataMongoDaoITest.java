@@ -11,6 +11,7 @@ import org.hamcrest.Matchers;
 import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.jacs2.dao.JacsServiceDataDao;
 import org.janelia.jacs2.model.DataInterval;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.jacsservice.JacsServiceLifecycleStage;
 import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.page.PageRequest;
@@ -107,7 +108,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestServiceEvent("e2", "v2"));
         testDao.addServiceEvent(si, createTestServiceEvent("e3", "v3"));
         testDao.addServiceEvent(si, createTestServiceEvent("e4", "v4"));
-        testDao.update(si, ImmutableMap.of("state", JacsServiceState.RUNNING));
+        testDao.update(si, ImmutableMap.of("state", new SetFieldValueHandler<>(JacsServiceState.RUNNING)));
         JacsServiceData retrievedSi = testDao.findById(si.getId());
         assertThat(retrievedSi.getName(), equalTo(si.getName()));
         assertThat(retrievedSi.getEvents(),

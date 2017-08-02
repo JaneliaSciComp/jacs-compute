@@ -8,6 +8,7 @@ import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
 
 import java.util.List;
 import java.util.Map;
@@ -76,12 +77,12 @@ public class NeuronFragment extends AbstractDomainObject implements HasRelativeF
     }
 
     @Override
-    public Map<String, Object> setFileName(FileType fileType, String fileName) {
+    public Map<String, EntityFieldValueHandler<?>> setFileName(FileType fileType, String fileName) {
         return relativeFilesImpl.setFileName(fileType, fileName);
     }
 
     @Override
-    public Map<String, Object> removeFileName(FileType fileType) {
+    public Map<String, EntityFieldValueHandler<?>> removeFileName(FileType fileType) {
         return relativeFilesImpl.removeFileName(fileType);
     }
 

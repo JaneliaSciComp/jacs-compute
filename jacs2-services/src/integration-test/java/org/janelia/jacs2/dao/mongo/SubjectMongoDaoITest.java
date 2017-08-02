@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.dao.SubjectDao;
 import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.page.SortCriteria;
@@ -81,9 +82,9 @@ public class SubjectMongoDaoITest extends AbstractMongoDaoITest<Subject> {
         testSubject.addGroup("newGroup1");
         testSubject.addGroup("newGroup2");
         testSubject.setFullName(testFullname);
-        testDao.update(testSubject, ImmutableMap.<String, Object>of(
-                "groups", testSubject.getGroups(),
-                "fullName", testSubject.getFullName())
+        testDao.update(testSubject, ImmutableMap.of(
+                "groups", new SetFieldValueHandler<>(testSubject.getGroups()),
+                "fullName", new SetFieldValueHandler<>(testSubject.getFullName()))
         );
         Subject retrievedSample = testDao.findById(testSubject.getId());
         assertThat(retrievedSample, hasProperty("key", equalTo("user:s1")));

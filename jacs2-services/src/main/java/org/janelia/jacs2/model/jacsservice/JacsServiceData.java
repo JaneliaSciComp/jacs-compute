@@ -8,6 +8,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.it.jacs.model.domain.interfaces.HasIdentifier;
 import org.janelia.it.jacs.model.domain.support.MongoMapping;
 import org.janelia.jacs2.model.BaseEntity;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -362,8 +364,8 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         return parentService;
     }
 
-    public Map<String, Object> updateParentService(JacsServiceData parentService) {
-        Map<String, Object> updatedFields = new LinkedHashMap<>();
+    public Map<String, EntityFieldValueHandler<?>> updateParentService(JacsServiceData parentService) {
+        Map<String, EntityFieldValueHandler<?>> updatedFields = new LinkedHashMap<>();
         if (parentService != null) {
             if (this.parentService == null) {
                 this.parentService = parentService;
@@ -371,17 +373,17 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
             }
             if (this.getParentServiceId() == null) {
                 setParentServiceId(parentService.getId());
-                updatedFields.put("parentServiceId", getParentServiceId());
+                updatedFields.put("parentServiceId", new SetFieldValueHandler<>(getParentServiceId()));
             }
             if (parentService.getRootServiceId() == null) {
                 setRootServiceId(parentService.getId());
             } else {
                 setRootServiceId(parentService.getRootServiceId());
             }
-            updatedFields.put("rootServiceId", getRootServiceId());
+            updatedFields.put("rootServiceId", new SetFieldValueHandler<>(getRootServiceId()));
             if (priority == null || priority() <= parentService.priority()) {
                 priority = parentService.priority() + 1;
-                updatedFields.put("priority", priority);
+                updatedFields.put("priority", new SetFieldValueHandler<>(priority));
             }
         } else {
             this.parentService = null;

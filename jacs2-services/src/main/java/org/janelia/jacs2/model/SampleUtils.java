@@ -113,286 +113,286 @@ public class SampleUtils {
         return lsmImage;
     }
 
-    public static Map<String, Object> updateLsmAttributes(LSMImage src, LSMImage dst) {
-        Map<String, Object> updatedFields = new LinkedHashMap<>();
+    public static Map<String, EntityFieldValueHandler<?>> updateLsmAttributes(LSMImage src, LSMImage dst) {
+        Map<String, EntityFieldValueHandler<?>> updatedFields = new LinkedHashMap<>();
         if (src.getPublishingName() != null) {
             dst.setPublishingName(src.getPublishingName());
-            updatedFields.put("publishingName", src.getPublishingName());
+            updatedFields.put("publishingName", new SetFieldValueHandler<>(src.getPublishingName()));
         }
         if (src.getPublishedExternally() != null) {
             dst.setPublishedExternally(src.getPublishedExternally());
-            updatedFields.put("publishedExternally",src.getPublishedExternally());
+            updatedFields.put("publishedExternally", new SetFieldValueHandler<>(src.getPublishedExternally()));
         }
         if (src.getRepresentative() != null) {
             dst.setRepresentative(src.getRepresentative());
-            updatedFields.put("representative",src.getRepresentative());
+            updatedFields.put("representative", new SetFieldValueHandler<>(src.getRepresentative()));
         }
         if (src.getAge() != null) {
             dst.setAge(src.getAge());
-            updatedFields.put("age",src.getAge());
+            updatedFields.put("age", new SetFieldValueHandler<>(src.getAge()));
         }
         if (src.getAnnotatedBy() != null) {
             dst.setAnnotatedBy(src.getAnnotatedBy());
-            updatedFields.put("annotatedBy",src.getAnnotatedBy());
+            updatedFields.put("annotatedBy", new SetFieldValueHandler<>(src.getAnnotatedBy()));
         }
         if (src.getBcCorrection1() != null) {
             dst.setBcCorrection1(src.getBcCorrection1());
-            updatedFields.put("bcCorrection1",src.getBcCorrection1());
+            updatedFields.put("bcCorrection1", new SetFieldValueHandler<>(src.getBcCorrection1()));
         }
         if (src.getBcCorrection2() != null) {
             dst.setBcCorrection2(src.getBcCorrection2());
-            updatedFields.put("bcCorrection2",src.getBcCorrection2());
+            updatedFields.put("bcCorrection2", new SetFieldValueHandler<>(src.getBcCorrection2()));
         }
         if (src.getBitsPerSample() != null) {
             dst.setBitsPerSample(src.getBitsPerSample());
-            updatedFields.put("bitsPerSample",src.getBitsPerSample());
+            updatedFields.put("bitsPerSample", new SetFieldValueHandler<>(src.getBitsPerSample()));
         }
         if (src.getChanSpec() != null) {
             dst.setChanSpec(src.getChanSpec());
-            updatedFields.put("chanSpec",src.getChanSpec());
+            updatedFields.put("chanSpec", new SetFieldValueHandler<>(src.getChanSpec()));
         }
         if (src.getDetectionChannel1DetectorGain() != null) {
             dst.setDetectionChannel1DetectorGain(src.getDetectionChannel1DetectorGain());
-            updatedFields.put("detectionChannel1DetectorGain",src.getDetectionChannel1DetectorGain());
+            updatedFields.put("detectionChannel1DetectorGain", new SetFieldValueHandler<>(src.getDetectionChannel1DetectorGain()));
         }
         if (src.getDetectionChannel2DetectorGain() != null) {
             dst.setDetectionChannel2DetectorGain(src.getDetectionChannel2DetectorGain());
-            updatedFields.put("detectionChannel2DetectorGain",src.getDetectionChannel2DetectorGain());
+            updatedFields.put("detectionChannel2DetectorGain", new SetFieldValueHandler<>(src.getDetectionChannel2DetectorGain()));
         }
         if (src.getDetectionChannel3DetectorGain() != null) {
             dst.setDetectionChannel3DetectorGain(src.getDetectionChannel3DetectorGain());
-            updatedFields.put("detectionChannel3DetectorGain",src.getDetectionChannel3DetectorGain());
+            updatedFields.put("detectionChannel3DetectorGain", new SetFieldValueHandler<>(src.getDetectionChannel3DetectorGain()));
         }
         if (src.getDriver() != null) {
             dst.setDriver(src.getDriver());
-            updatedFields.put("driver",src.getDriver());
+            updatedFields.put("driver", new SetFieldValueHandler<>(src.getDriver()));
         }
         if (src.getFileSize() != null) {
             dst.setFileSize(src.getFileSize());
-            updatedFields.put("fileSize",src.getFileSize());
+            updatedFields.put("fileSize", new SetFieldValueHandler<>(src.getFileSize()));
         }
         if (src.getEffector() != null) {
             dst.setEffector(src.getEffector());
-            updatedFields.put("effector",src.getEffector());
+            updatedFields.put("effector", new SetFieldValueHandler<>(src.getEffector()));
         }
         if (src.getCrossBarcode() != null) {
             dst.setCrossBarcode(src.getCrossBarcode());
-            updatedFields.put("crossBarcode",src.getCrossBarcode());
+            updatedFields.put("crossBarcode", new SetFieldValueHandler<>(src.getCrossBarcode()));
         }
         if (src.getGender() != null) {
             dst.setGender(src.getGender());
-            updatedFields.put("gender",src.getGender());
+            updatedFields.put("gender", new SetFieldValueHandler<>(src.getGender()));
         }
         if (src.getFullAge() != null) {
             dst.setFullAge(src.getFullAge());
-            updatedFields.put("fullAge",src.getFullAge());
+            updatedFields.put("fullAge", new SetFieldValueHandler<>(src.getFullAge()));
         }
         if (src.getMountingProtocol() != null) {
             dst.setMountingProtocol(src.getMountingProtocol());
-            updatedFields.put("mountingProtocol",src.getMountingProtocol());
+            updatedFields.put("mountingProtocol", new SetFieldValueHandler<>(src.getMountingProtocol()));
         }
         if (src.getHeatShockHour() != null) {
             dst.setHeatShockHour(src.getHeatShockHour());
-            updatedFields.put("heatShockHour",src.getHeatShockHour());
+            updatedFields.put("heatShockHour", new SetFieldValueHandler<>(src.getHeatShockHour()));
         }
         if (src.getHeatShockInterval() != null) {
             dst.setHeatShockInterval(src.getHeatShockInterval());
-            updatedFields.put("heatShockInterval",src.getHeatShockInterval());
+            updatedFields.put("heatShockInterval", new SetFieldValueHandler<>(src.getHeatShockInterval()));
         }
         if (src.getHeatShockMinutes() != null) {
             dst.setHeatShockMinutes(src.getHeatShockMinutes());
-            updatedFields.put("heatShockMinutes",src.getHeatShockMinutes());
+            updatedFields.put("heatShockMinutes", new SetFieldValueHandler<>(src.getHeatShockMinutes()));
         }
         if (src.getIlluminationChannel1Name() != null) {
             dst.setIlluminationChannel1Name(src.getIlluminationChannel1Name());
-            updatedFields.put("illuminationChannel1Name",src.getIlluminationChannel1Name());
+            updatedFields.put("illuminationChannel1Name", new SetFieldValueHandler<>(src.getIlluminationChannel1Name()));
         }
         if (src.getIlluminationChannel2Name() != null) {
             dst.setIlluminationChannel2Name(src.getIlluminationChannel2Name());
-            updatedFields.put("illuminationChannel2Name",src.getIlluminationChannel2Name());
+            updatedFields.put("illuminationChannel2Name", new SetFieldValueHandler<>(src.getIlluminationChannel2Name()));
         }
         if (src.getIlluminationChannel3Name() != null) {
             dst.setIlluminationChannel3Name(src.getIlluminationChannel3Name());
-            updatedFields.put("illuminationChannel3Name",src.getIlluminationChannel3Name());
+            updatedFields.put("illuminationChannel3Name", new SetFieldValueHandler<>(src.getIlluminationChannel3Name()));
         }
         if (src.getIlluminationChannel1PowerBC1() != null) {
             dst.setIlluminationChannel1PowerBC1(src.getIlluminationChannel1PowerBC1());
-            updatedFields.put("illuminationChannel1PowerBC1",src.getIlluminationChannel1PowerBC1());
+            updatedFields.put("illuminationChannel1PowerBC1", new SetFieldValueHandler<>(src.getIlluminationChannel1PowerBC1()));
         }
         if (src.getIlluminationChannel2PowerBC1() != null) {
             dst.setIlluminationChannel2PowerBC1(src.getIlluminationChannel2PowerBC1());
-            updatedFields.put("illuminationChannel2PowerBC1",src.getIlluminationChannel2PowerBC1());
+            updatedFields.put("illuminationChannel2PowerBC1", new SetFieldValueHandler<>(src.getIlluminationChannel2PowerBC1()));
         }
         if (src.getIlluminationChannel3PowerBC1() != null) {
             dst.setIlluminationChannel3PowerBC1(src.getIlluminationChannel3PowerBC1());
-            updatedFields.put("illuminationChannel3PowerBC1",src.getIlluminationChannel3PowerBC1());
+            updatedFields.put("illuminationChannel3PowerBC1", new SetFieldValueHandler<>(src.getIlluminationChannel3PowerBC1()));
         }
         if (src.getImageFamily() != null) {
             dst.setImageFamily(src.getImageFamily());
-            updatedFields.put("imageFamily",src.getImageFamily());
+            updatedFields.put("imageFamily", new SetFieldValueHandler<>(src.getImageFamily()));
         }
         if (src.getImagingProject() != null) {
             dst.setImagingProject(src.getImagingProject());
-            updatedFields.put("imagingProject",src.getImagingProject());
+            updatedFields.put("imagingProject", new SetFieldValueHandler<>(src.getImagingProject()));
         }
         if (src.getInterpolationElapsed() != null) {
             dst.setInterpolationElapsed(src.getInterpolationElapsed());
-            updatedFields.put("interpolationElapsed",src.getInterpolationElapsed());
+            updatedFields.put("interpolationElapsed", new SetFieldValueHandler<>(src.getInterpolationElapsed()));
         }
         if (src.getInterpolationStart() != null) {
             dst.setInterpolationStart(src.getInterpolationStart());
-            updatedFields.put("interpolationStart",src.getInterpolationStart());
+            updatedFields.put("interpolationStart", new SetFieldValueHandler<>(src.getInterpolationStart()));
         }
         if (src.getInterpolationStop() != null) {
             dst.setInterpolationStop(src.getInterpolationStop());
-            updatedFields.put("interpolationStop",src.getInterpolationStop());
+            updatedFields.put("interpolationStop", new SetFieldValueHandler<>(src.getInterpolationStop()));
         }
         if (src.getMicroscope() != null) {
             dst.setMicroscope(src.getMicroscope());
-            updatedFields.put("microscope",src.getMicroscope());
+            updatedFields.put("microscope", new SetFieldValueHandler<>(src.getMicroscope()));
         }
         if (src.getMicroscopeFilename() != null) {
             dst.setMicroscopeFilename(src.getMicroscopeFilename());
-            updatedFields.put("microscopeFilename",src.getMicroscopeFilename());
+            updatedFields.put("microscopeFilename", new SetFieldValueHandler<>(src.getMicroscopeFilename()));
         }
         if (src.getMacAddress() != null) {
             dst.setMacAddress(src.getMacAddress());
-            updatedFields.put("macAddress",src.getMacAddress());
+            updatedFields.put("macAddress", new SetFieldValueHandler<>(src.getMacAddress()));
         }
         if (src.getSampleZeroTime() != null) {
             dst.setSampleZeroTime(src.getSampleZeroTime());
-            updatedFields.put("sampleZeroTime",src.getSampleZeroTime());
+            updatedFields.put("sampleZeroTime", new SetFieldValueHandler<>(src.getSampleZeroTime()));
         }
         if (src.getSampleZeroZ() != null) {
             dst.setSampleZeroZ(src.getSampleZeroZ());
-            updatedFields.put("sampleZeroZ",src.getSampleZeroZ());
+            updatedFields.put("sampleZeroZ", new SetFieldValueHandler<>(src.getSampleZeroZ()));
         }
         if (src.getScanStart() != null) {
             dst.setScanStart(src.getScanStart());
-            updatedFields.put("scanStart",src.getScanStart());
+            updatedFields.put("scanStart", new SetFieldValueHandler<>(src.getScanStart()));
         }
         if (src.getScanStop() != null) {
             dst.setScanStop(src.getScanStop());
-            updatedFields.put("scanStop",src.getScanStop());
+            updatedFields.put("scanStop", new SetFieldValueHandler<>(src.getScanStop()));
         }
         if (src.getScanType() != null) {
             dst.setScanType(src.getScanType());
-            updatedFields.put("scanType",src.getScanType());
+            updatedFields.put("scanType", new SetFieldValueHandler<>(src.getScanType()));
         }
         if (src.getScreenState() != null) {
             dst.setScreenState(src.getScreenState());
-            updatedFields.put("screenState",src.getScreenState());
+            updatedFields.put("screenState", new SetFieldValueHandler<>(src.getScreenState()));
         }
         if (src.getSlideCode() != null) {
             dst.setSlideCode(src.getSlideCode());
-            updatedFields.put("slideCode",src.getSlideCode());
+            updatedFields.put("slideCode", new SetFieldValueHandler<>(src.getSlideCode()));
         }
         if (src.getTissueOrientation() != null) {
             dst.setTissueOrientation(src.getTissueOrientation());
-            updatedFields.put("tissueOrientation",src.getTissueOrientation());
+            updatedFields.put("tissueOrientation", new SetFieldValueHandler<>(src.getTissueOrientation()));
         }
         if (src.getTotalPixels() != null) {
             dst.setTotalPixels(src.getTotalPixels());
-            updatedFields.put("totalPixels",src.getTotalPixels());
+            updatedFields.put("totalPixels", new SetFieldValueHandler<>(src.getTotalPixels()));
         }
         if (src.getTracks() != null) {
             dst.setTracks(src.getTracks());
-            updatedFields.put("tracks",src.getTracks());
+            updatedFields.put("tracks", new SetFieldValueHandler<>(src.getTracks()));
         }
         if (src.getVoxelSizeX() != null) {
             dst.setVoxelSizeX(src.getVoxelSizeX());
-            updatedFields.put("voxelSizeX",src.getVoxelSizeX());
+            updatedFields.put("voxelSizeX", new SetFieldValueHandler<>(src.getVoxelSizeX()));
         }
         if (src.getVoxelSizeY() != null) {
             dst.setVoxelSizeY(src.getVoxelSizeY());
-            updatedFields.put("voxelSizeY",src.getVoxelSizeY());
+            updatedFields.put("voxelSizeY", new SetFieldValueHandler<>(src.getVoxelSizeY()));
         }
         if (src.getVoxelSizeZ() != null) {
             dst.setVoxelSizeZ(src.getVoxelSizeZ());
-            updatedFields.put("voxelSizeZ",src.getVoxelSizeZ());
+            updatedFields.put("voxelSizeZ", new SetFieldValueHandler<>(src.getVoxelSizeZ()));
         }
         if (src.getDimensionX() != null) {
             dst.setDimensionX(src.getDimensionX());
-            updatedFields.put("dimensionX",src.getDimensionX());
+            updatedFields.put("dimensionX", new SetFieldValueHandler<>(src.getDimensionX()));
         }
         if (src.getDimensionY() != null) {
             dst.setDimensionY(src.getDimensionY());
-            updatedFields.put("dimensionY",src.getDimensionY());
+            updatedFields.put("dimensionY", new SetFieldValueHandler<>(src.getDimensionY()));
         }
         if (src.getDimensionZ() != null) {
             dst.setDimensionZ(src.getDimensionZ());
-            updatedFields.put("dimensionZ",src.getDimensionZ());
+            updatedFields.put("dimensionZ", new SetFieldValueHandler<>(src.getDimensionZ()));
         }
         if (src.getZoomX() != null) {
             dst.setZoomX(src.getZoomX());
-            updatedFields.put("zoomX",src.getZoomX());
+            updatedFields.put("zoomX", new SetFieldValueHandler<>(src.getZoomX()));
         }
         if (src.getZoomY() != null) {
             dst.setZoomY(src.getZoomY());
-            updatedFields.put("zoomY",src.getZoomY());
+            updatedFields.put("zoomY", new SetFieldValueHandler<>(src.getZoomY()));
         }
         if (src.getZoomZ() != null) {
             dst.setZoomZ(src.getZoomZ());
-            updatedFields.put("zoomZ",src.getZoomZ());
+            updatedFields.put("zoomZ", new SetFieldValueHandler<>(src.getZoomZ()));
         }
         if (src.getVtLine() != null) {
             dst.setVtLine(src.getVtLine());
-            updatedFields.put("vtLine",src.getVtLine());
+            updatedFields.put("vtLine", new SetFieldValueHandler<>(src.getVtLine()));
         }
         if (src.getQiScore() != null) {
             dst.setQiScore(src.getQiScore());
-            updatedFields.put("qiScore",src.getQiScore());
+            updatedFields.put("qiScore", new SetFieldValueHandler<>(src.getQiScore()));
         }
         if (src.getQmScore() != null) {
             dst.setQmScore(src.getQmScore());
-            updatedFields.put("qmScore",src.getQmScore());
+            updatedFields.put("qmScore", new SetFieldValueHandler<>(src.getQmScore()));
         }
         if (src.getOrganism() != null) {
             dst.setOrganism(src.getOrganism());
-            updatedFields.put("organism",src.getOrganism());
+            updatedFields.put("organism",new SetFieldValueHandler<>(src.getOrganism()));
         }
         if (src.getGenotype() != null) {
             dst.setGenotype(src.getGenotype());
-            updatedFields.put("genotype",src.getGenotype());
+            updatedFields.put("genotype", new SetFieldValueHandler<>(src.getGenotype()));
         }
         if (src.getFlycoreId() != null) {
             dst.setFlycoreId(src.getFlycoreId());
-            updatedFields.put("flycoreId",src.getFlycoreId());
+            updatedFields.put("flycoreId", new SetFieldValueHandler<>(src.getFlycoreId()));
         }
         if (src.getFlycoreAlias() != null) {
             dst.setFlycoreAlias(src.getFlycoreAlias());
-            updatedFields.put("flycoreAlias",src.getFlycoreAlias());
+            updatedFields.put("flycoreAlias", new SetFieldValueHandler<>(src.getFlycoreAlias()));
         }
         if (src.getFlycoreLabId() != null) {
             dst.setFlycoreLabId(src.getFlycoreLabId());
-            updatedFields.put("flycoreLabId",src.getFlycoreLabId());
+            updatedFields.put("flycoreLabId", new SetFieldValueHandler<>(src.getFlycoreLabId()));
         }
         if (src.getFlycoreLandingSite() != null) {
             dst.setFlycoreLandingSite(src.getFlycoreLandingSite());
-            updatedFields.put("flycoreLandingSite",src.getFlycoreLandingSite());
+            updatedFields.put("flycoreLandingSite", new SetFieldValueHandler<>(src.getFlycoreLandingSite()));
         }
         if (src.getFlycorePermission() != null) {
             dst.setFlycorePermission(src.getFlycorePermission());
-            updatedFields.put("flycorePermission",src.getFlycorePermission());
+            updatedFields.put("flycorePermission", new SetFieldValueHandler<>(src.getFlycorePermission()));
         }
         if (src.getFlycoreProject() != null) {
             dst.setFlycoreProject(src.getFlycoreProject());
-            updatedFields.put("flycoreProject",src.getFlycoreProject());
+            updatedFields.put("flycoreProject", new SetFieldValueHandler<>(src.getFlycoreProject()));
         }
         if (src.getFlycorePSubcategory() != null) {
             dst.setFlycorePSubcategory(src.getFlycorePSubcategory());
-            updatedFields.put("flycorePSubcategory",src.getFlycorePSubcategory());
+            updatedFields.put("flycorePSubcategory", new SetFieldValueHandler<>(src.getFlycorePSubcategory()));
         }
         if (src.getLineHide() != null) {
             dst.setLineHide(src.getLineHide());
-            updatedFields.put("lineHide", src.getLineHide());
+            updatedFields.put("lineHide", new SetFieldValueHandler<>(src.getLineHide()));
         }
         return updatedFields;
     }
 
-    public static Map<String, Object> updateSampleAttributes(Sample sample, Collection<SlideImageGroup> objectiveGroups) {
+    public static Map<String, EntityFieldValueHandler<?>> updateSampleAttributes(Sample sample, Collection<SlideImageGroup> objectiveGroups) {
         Set<String> nonConsesusFieldNames = new HashSet<>();
-        Map<String, Object> consensusLsmFieldValues = new LinkedHashMap<>();
+        Map<String, EntityFieldValueHandler<?>> consensusLsmFieldValues = new LinkedHashMap<>();
 
         Map<String, SageField> lsmSageAttrs = getSageFields(LSMImage.class, sf -> sf.getKey());
         objectiveGroups.stream()
@@ -411,21 +411,21 @@ public class SampleUtils {
                                         Date tmogDate = (Date) sageFieldValue;
                                         Date currentTmogDate = (Date) consensusLsmFieldValues.get(fieldName);
                                         if (currentTmogDate == null || tmogDate.after(currentTmogDate)) {
-                                            consensusLsmFieldValues.put(fieldName, tmogDate);
+                                            consensusLsmFieldValues.put(fieldName, new SetFieldValueHandler<>(tmogDate));
                                         }
                                     } else {
                                         Object existingConsensusValue = consensusLsmFieldValues.get(fieldName);
                                         if (!Objects.equals(existingConsensusValue, sageFieldValue)) {
                                             nonConsesusFieldNames.add(fieldName);
                                             if (String.class.equals(sageField.field.getType())) {
-                                                consensusLsmFieldValues.put(fieldName, NO_CONSENSUS_VALUE);
+                                                consensusLsmFieldValues.put(fieldName, new SetFieldValueHandler<>(NO_CONSENSUS_VALUE));
                                             } else {
-                                                consensusLsmFieldValues.put(fieldName, null);
+                                                consensusLsmFieldValues.put(fieldName, new SetFieldValueHandler<>(null));
                                             }
                                         }
                                     }
                                 } else {
-                                    consensusLsmFieldValues.put(fieldName, sageFieldValue);
+                                    consensusLsmFieldValues.put(fieldName, new SetFieldValueHandler<>(sageFieldValue));
                                 }
                             } catch (IllegalAccessException e) {
                                 throw new IllegalArgumentException(e);
@@ -434,7 +434,7 @@ public class SampleUtils {
                     });
                 });
 
-        Map<String, Object> sampleFields = new LinkedHashMap<>();
+        Map<String, EntityFieldValueHandler<?>> sampleFields = new LinkedHashMap<>();
         Map<String, SageField> sampleSageAttrs = getSageFields(Sample.class, sf -> sf.field.getName());
         consensusLsmFieldValues.forEach((fieldName, fieldValue) -> {
             if (sampleSageAttrs.containsKey(fieldName)) {

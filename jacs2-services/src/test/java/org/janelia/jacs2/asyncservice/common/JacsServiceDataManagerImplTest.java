@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.junit.Before;
@@ -41,7 +42,7 @@ public class JacsServiceDataManagerImplTest {
         when(jacsServiceDataPersistence.findServiceHierarchy(TEST_ID)).thenReturn(existingData);
         JacsServiceData updatedData = jacsServiceDataManager.updateService(TEST_ID, newData);
         assertThat(updatedData.getState(), equalTo(newData.getState()));
-        verify(jacsServiceDataPersistence).update(existingData, ImmutableMap.of("state", JacsServiceState.RUNNING));
+        verify(jacsServiceDataPersistence).update(existingData, ImmutableMap.of("state", new SetFieldValueHandler<>(JacsServiceState.RUNNING)));
     }
 
     @Test
@@ -51,7 +52,7 @@ public class JacsServiceDataManagerImplTest {
         when(jacsServiceDataPersistence.findServiceHierarchy(TEST_ID)).thenReturn(existingData);
         JacsServiceData updatedData = jacsServiceDataManager.updateService(TEST_ID, newData);
         assertThat(updatedData.getState(), equalTo(newData.getState()));
-        verify(jacsServiceDataPersistence).update(existingData, ImmutableMap.of("state", JacsServiceState.RUNNING));
+        verify(jacsServiceDataPersistence).update(existingData, ImmutableMap.of("state", new SetFieldValueHandler<>(JacsServiceState.RUNNING)));
     }
 
     private JacsServiceData createServiceData(String name, JacsServiceState state, Integer priority) {

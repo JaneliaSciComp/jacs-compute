@@ -7,6 +7,8 @@ import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.it.jacs.model.domain.Reference;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.jacs2.dao.LSMImageDao;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.page.SortCriteria;
@@ -110,7 +112,7 @@ public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage
                 })
                 .forEach(testDao::save);
         Reference newSampleRef = Reference.createFor("Sample#456");
-        Map<String, Object> updatedFields = ImmutableMap.of("sampleRef", newSampleRef);
+        Map<String, EntityFieldValueHandler<?>> updatedFields = ImmutableMap.of("sampleRef", new SetFieldValueHandler<>(newSampleRef));
         testImages.stream()
                 .forEach(im -> testDao.update(im, updatedFields));
 
@@ -130,8 +132,8 @@ public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage
                     return im;
                 })
                 .forEach(testDao::save);
-        Map<String, Object> updatedFields = new HashMap<>();
-        updatedFields.put("sampleRef", null);
+        Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
+        updatedFields.put("sampleRef", new SetFieldValueHandler<>(null));
         testImages.stream()
                 .forEach(im -> testDao.update(im, updatedFields));
         PageRequest pageRequest = new PageRequest();

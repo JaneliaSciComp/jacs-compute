@@ -1,6 +1,7 @@
 package org.janelia.jacs2.dataservice.persistence;
 
 import org.janelia.jacs2.dao.ReadWriteDao;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
 
 import javax.enterprise.inject.Instance;
 import java.util.Collection;
@@ -45,7 +46,7 @@ public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
         }
     }
 
-    public void update(T t, Map<String, Object> fieldsToUpdate) {
+    public void update(T t, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         D dao = daoSource.get();
         try {
             dao.update(t, fieldsToUpdate);

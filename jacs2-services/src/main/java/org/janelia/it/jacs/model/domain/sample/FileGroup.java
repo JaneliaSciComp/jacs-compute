@@ -3,6 +3,7 @@ package org.janelia.it.jacs.model.domain.sample;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
 
 import java.util.Map;
 
@@ -49,12 +50,12 @@ public class FileGroup implements HasRelativeFiles {
     }
 
     @Override
-    public Map<String, Object> setFileName(FileType fileType, String fileName) {
+    public Map<String, EntityFieldValueHandler<?>> setFileName(FileType fileType, String fileName) {
         return relativeFilesImpl.setFileName(fileType, fileName);
     }
 
     @Override
-    public Map<String, Object> removeFileName(FileType fileType) {
+    public Map<String, EntityFieldValueHandler<?>> removeFileName(FileType fileType) {
         return relativeFilesImpl.removeFileName(fileType);
     }
 }

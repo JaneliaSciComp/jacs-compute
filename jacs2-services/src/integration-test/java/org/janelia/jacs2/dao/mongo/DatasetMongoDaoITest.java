@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import org.janelia.it.jacs.model.domain.Subject;
 import org.janelia.jacs2.dao.DatasetDao;
 import org.janelia.it.jacs.model.domain.sample.DataSet;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.page.SortCriteria;
@@ -102,7 +103,7 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
         DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(), ImmutableList.of("subject:verify"));
         testDao.save(testDataset);
         testDataset.setOwnerKey("subject:verify");
-        testDao.update(testDataset, ImmutableMap.of("ownerKey", testDataset.getOwnerKey()));
+        testDao.update(testDataset, ImmutableMap.of("ownerKey", new SetFieldValueHandler<>(testDataset.getOwnerKey())));
         DataSet retrievedDataset = testDao.findById(testDataset.getId());
         assertThat(retrievedDataset, hasProperty("ownerKey", equalTo("subject:verify")));
         assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));

@@ -32,7 +32,9 @@ import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.model.DataInterval;
 import org.janelia.jacs2.model.DomainModelUtils;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
 import org.janelia.jacs2.model.SampleUtils;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.janelia.jacs2.model.page.PageRequest;
@@ -264,7 +266,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                         .flatMap((Map<SampleTileKey, SlideImageGroup> area) -> area.values().stream())
                         .collect(Collectors.toList())
         );
-        Map<LSMImage, Map<String, Object>> lsmUpdates = new LinkedHashMap<>();
+        Map<LSMImage, Map<String, EntityFieldValueHandler<?>>> lsmUpdates = new LinkedHashMap<>();
         lsmsGroupedByAbjectiveAndArea.forEach((objective, areas) -> {
             newSample.addObjective(createNewObjective(objective, areas, lsmUpdates));
         });
@@ -275,13 +277,13 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         // update LSM's sampleRef
         lsmsGroupedByAbjectiveAndArea.forEach((objective, areas) -> areas.forEach((tileKey, areaGroup) -> areaGroup.getImages().forEach(lsm -> {
                     lsm.setSampleRef(newSampleRef);
-                    Map<String, Object> updatedLsmFields = lsmUpdates.get(lsm);
+                    Map<String, EntityFieldValueHandler<?>> updatedLsmFields = lsmUpdates.get(lsm);
                     if (updatedLsmFields == null) {
                         updatedLsmFields = new LinkedHashMap<>();
                         lsmUpdates.put(lsm, updatedLsmFields);
                     }
                     lsm.setSampleRef(newSampleRef);
-                    updatedLsmFields.put("sampleRef", newSampleRef);
+                    updatedLsmFields.put("sampleRef", new SetFieldValueHandler<>(newSampleRef));
                 }
         )));
         lsmUpdates.forEach((lsm, updates) -> sampleDataService.updateLSM(lsm, updates));
@@ -289,7 +291,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
     }
 
     private void updateSample(DataSet dataSet, Sample sample, Map<String, Map<SampleTileKey, SlideImageGroup>> lsmsGroupedByAbjectiveAndArea) {
-        Map<String, Object> updatedSampleFields = SampleUtils.updateSampleAttributes(
+        Map<String, EntityFieldValueHandler<?>> updatedSampleFields = SampleUtils.updateSampleAttributes(
                 sample,
                 lsmsGroupedByAbjectiveAndArea
                         .values()
@@ -297,7 +299,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                         .flatMap((Map<SampleTileKey, SlideImageGroup> area) -> area.values().stream())
                         .collect(Collectors.toList())
         );
-        Map<LSMImage, Map<String, Object>> lsmUpdates = new LinkedHashMap<>();
+        Map<LSMImage, Map<String, EntityFieldValueHandler<?>>> lsmUpdates = new LinkedHashMap<>();
         lsmsGroupedByAbjectiveAndArea.forEach((String objective, Map<SampleTileKey, SlideImageGroup> areas) -> {
             sample.lookupObjective(objective)
                     .map(existingObjectiveSample -> {
@@ -333,18 +335,18 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                     });
         });
         // persist Sample updates
-        updatedSampleFields.put("objectiveSamples", sample.getObjectiveSamples());
+        updatedSampleFields.put("objectiveSamples", new SetFieldValueHandler<>(sample.getObjectiveSamples()));
         String sampleNameAfterUpdates = DomainModelUtils.replaceVariables(getSampleNamePattern(dataSet), DomainModelUtils.getFieldValues(sample));
         if (!StringUtils.equals(sampleNameAfterUpdates, sample.getName())) {
             sample.setName(sampleNameAfterUpdates);
-            updatedSampleFields.put("name", sampleNameAfterUpdates);
+            updatedSampleFields.put("name", new SetFieldValueHandler<>(sampleNameAfterUpdates));
         }
         sampleDataService.updateSample(sample, updatedSampleFields);
         // persist LSM updates
         lsmUpdates.forEach((lsm, updates) -> sampleDataService.updateLSM(lsm, updates));
     }
 
-    private ObjectiveSample createNewObjective(String objectiveName, Map<SampleTileKey, SlideImageGroup> objectiveAreas, Map<LSMImage, Map<String, Object>> lsmUpdates) {
+    private ObjectiveSample createNewObjective(String objectiveName, Map<SampleTileKey, SlideImageGroup> objectiveAreas, Map<LSMImage, Map<String, EntityFieldValueHandler<?>>> lsmUpdates) {
         ObjectiveSample objectiveSample = new ObjectiveSample();
         objectiveSample.setObjective(objectiveName);
         objectiveAreas.forEach((tileKey, areaGroup) -> {
@@ -354,7 +356,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         return objectiveSample;
     }
 
-    private SampleTile createNewSampleTile(SampleTileKey tileKey, SlideImageGroup areaGroup, Map<LSMImage, Map<String, Object>> lsmUpdates) {
+    private SampleTile createNewSampleTile(SampleTileKey tileKey, SlideImageGroup areaGroup, Map<LSMImage, Map<String, EntityFieldValueHandler<?>>> lsmUpdates) {
         SampleTile tile = new SampleTile();
         tile.setAnatomicalArea(tileKey.getArea());
         tile.setName(tileKey.getTileName());
@@ -365,15 +367,15 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         return tile;
     }
 
-    private void updateLsmTileName(LSMImage lsm, String tileName, Map<LSMImage, Map<String, Object>> lsmUpdates) {
+    private void updateLsmTileName(LSMImage lsm, String tileName, Map<LSMImage, Map<String, EntityFieldValueHandler<?>>> lsmUpdates) {
         if (StringUtils.isBlank(lsm.getTile())) {
-            Map<String, Object> updatedLsmFields = lsmUpdates.get(lsm);
+            Map<String, EntityFieldValueHandler<?>> updatedLsmFields = lsmUpdates.get(lsm);
             if (updatedLsmFields == null) {
                 updatedLsmFields = new LinkedHashMap<>();
                 lsmUpdates.put(lsm, updatedLsmFields);
             }
             lsm.setTile(tileName);
-            updatedLsmFields.put("tile", tileName);
+            updatedLsmFields.put("tile", new SetFieldValueHandler<>(tileName));
         }
     }
 
@@ -405,7 +407,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                     .forEach(s -> {
                         s.setSageSynced(false);
                         s.setStatus(SampleProcessingStatus.Retired.name());
-                        sampleDataService.updateSample(s, ImmutableMap.of("sageSynced", s.isSageSynced(), "status", s.getStatus()));
+                        sampleDataService.updateSample(s, ImmutableMap.of("sageSynced", new SetFieldValueHandler<>(s.isSageSynced()), "status", new SetFieldValueHandler<>(s.getStatus())));
                     });
             return Optional.of(selectedSample);
         }

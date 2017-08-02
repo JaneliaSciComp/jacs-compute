@@ -12,6 +12,8 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.imageservices.GroupAndMontageFolderImagesProcessor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.junit.Before;
@@ -191,9 +193,9 @@ public class SampleLSMSummaryProcessorTest {
                         hasItem(new HasPropertyWithValue<>("mipsResultsDir", equalTo(montageParameters.montageData.getMipsResultsDir())))
                 )
         );
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("files.ReferenceMip", "i1_reference.png");
-        updates.put("files.SignalMip", "i1_signal.png");
+        Map<String, EntityFieldValueHandler<?>> updates = new HashMap<>();
+        updates.put("files.ReferenceMip", new SetFieldValueHandler<>("i1_reference.png"));
+        updates.put("files.SignalMip", new SetFieldValueHandler<>("i1_signal.png"));
         verify(sampleDataService).updateLSM(lsm, updates);
     }
 

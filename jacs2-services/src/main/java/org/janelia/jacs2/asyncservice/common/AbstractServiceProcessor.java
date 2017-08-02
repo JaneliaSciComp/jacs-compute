@@ -7,6 +7,8 @@ import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
@@ -109,21 +111,21 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         }
     }
 
-    protected Map<String, Object> setOutputAndErrorPaths(JacsServiceData jacsServiceData) {
-        Map<String, Object> serviceUpdates = new LinkedHashMap<>();
+    protected Map<String, EntityFieldValueHandler<?>> setOutputAndErrorPaths(JacsServiceData jacsServiceData) {
+        Map<String, EntityFieldValueHandler<?>> serviceUpdates = new LinkedHashMap<>();
         if (StringUtils.isBlank(jacsServiceData.getOutputPath())) {
             jacsServiceData.setOutputPath(getServicePath(
                     StringUtils.defaultIfBlank(jacsServiceData.getWorkspace(), defaultWorkingDir),
                     jacsServiceData,
                     String.format("%s-stdout.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
-            serviceUpdates.put("outputPath", jacsServiceData.getOutputPath());
+            serviceUpdates.put("outputPath", new SetFieldValueHandler<>(jacsServiceData.getOutputPath()));
         }
         if (StringUtils.isBlank(jacsServiceData.getErrorPath())) {
             jacsServiceData.setErrorPath(getServicePath(
                     StringUtils.defaultIfBlank(jacsServiceData.getWorkspace(), defaultWorkingDir),
                     jacsServiceData,
                     String.format("%s-stderr.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
-            serviceUpdates.put("errorPath", jacsServiceData.getErrorPath());
+            serviceUpdates.put("errorPath", new SetFieldValueHandler<>(jacsServiceData.getErrorPath()));
         }
         jacsServiceDataPersistence.update(jacsServiceData, serviceUpdates);
         return serviceUpdates;

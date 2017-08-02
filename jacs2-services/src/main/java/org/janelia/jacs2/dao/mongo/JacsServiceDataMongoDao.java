@@ -15,6 +15,8 @@ import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.JacsServiceDataDao;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.model.DataInterval;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
@@ -174,14 +176,14 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     @Override
     public void saveServiceHierarchy(JacsServiceData serviceData) {
         List<JacsServiceData> toBeInserted = new ArrayList<>();
-        Map<JacsServiceData, Map<String, Object>> toBeUpdated = new LinkedHashMap<>();
+        Map<JacsServiceData, Map<String, EntityFieldValueHandler<?>>> toBeUpdated = new LinkedHashMap<>();
         List<JacsServiceData> serviceHierarchy = serviceData.serviceHierarchyStream().map(s -> {
             if (s.getId() == null) {
                 s.setId(idGenerator.generateId());
                 toBeInserted.add(s);
                 s.updateParentService(s.getParentService());
             } else {
-                Map<String, Object> updates = s.updateParentService(s.getParentService());
+                Map<String, EntityFieldValueHandler<?>> updates = s.updateParentService(s.getParentService());
                 if (toBeUpdated.get(s) == null) {
                     toBeUpdated.put(s, updates);
                 } else {
@@ -193,7 +195,7 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
         serviceHierarchy.stream().forEach(sd -> {
             sd.getDependencies().forEach(dependency -> sd.addServiceDependencyId(dependency));
             if (toBeUpdated.get(sd) != null) {
-                toBeUpdated.get(sd).put("dependenciesIds", sd.getDependenciesIds());
+                toBeUpdated.get(sd).put("dependenciesIds", new SetFieldValueHandler<>(sd.getDependenciesIds()));
             }
         });
         mongoCollection.insertMany(toBeInserted);
@@ -201,10 +203,10 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     }
 
     @Override
-    public void update(JacsServiceData entity, Map<String, Object> fieldsToUpdate) {
-        Map<String, Object> fieldsWithUpdatedDate = new LinkedHashMap<>(fieldsToUpdate);
+    public void update(JacsServiceData entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+        Map<String, EntityFieldValueHandler<?>> fieldsWithUpdatedDate = new LinkedHashMap<>(fieldsToUpdate);
         entity.setModificationDate(new Date());
-        fieldsWithUpdatedDate.put("modificationDate", entity.getModificationDate());
+        fieldsWithUpdatedDate.put("modificationDate", new SetFieldValueHandler<>(entity.getModificationDate()));
         super.update(entity, fieldsWithUpdatedDate);
     }
 
@@ -224,9 +226,9 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     @Override
     public void updateServiceResult(JacsServiceData serviceData) {
         serviceData.setModificationDate(new Date());
-        Map<String, Object> updatedFields = new HashMap<>();
-        updatedFields.put("serializableResult", serviceData.getSerializableResult());
-        updatedFields.put("modificationDate", serviceData.getModificationDate());
+        Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
+        updatedFields.put("serializableResult", new SetFieldValueHandler<>(serviceData.getSerializableResult()));
+        updatedFields.put("modificationDate", new SetFieldValueHandler<>(serviceData.getModificationDate()));
         update(serviceData, updatedFields);
     }
 }

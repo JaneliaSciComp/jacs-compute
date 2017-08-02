@@ -19,6 +19,7 @@ import org.janelia.jacs2.asyncservice.imageservices.GroupAndMontageFolderImagesP
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
 import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
@@ -233,7 +234,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
     private void updateLSM(LSMImage lsmImage, LSMSummary lsmSummary) {
         logger.info("Update LSM {} with {}", lsmImage, lsmSummary);
         List<FileGroup> fGroups = SampleServicesUtils.createFileGroups(lsmImage.getFilepath(), lsmSummary.getMips());
-        Map<String, Object> updates = SampleServicesUtils.updateFiles(lsmImage, fGroups);
+        Map<String, EntityFieldValueHandler<?>> updates = SampleServicesUtils.updateFiles(lsmImage, fGroups);
         sampleDataService.updateLSM(lsmImage, updates);
     }
 }

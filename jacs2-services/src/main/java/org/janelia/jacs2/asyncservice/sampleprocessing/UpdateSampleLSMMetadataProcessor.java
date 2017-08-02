@@ -24,6 +24,8 @@ import org.janelia.jacs2.asyncservice.sampleprocessing.zeiss.LSMMetadata;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.model.DomainModelUtils;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -158,14 +160,14 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
                 }
             });
         }
-        Map<String, Object> updatedLsmFields = new LinkedHashMap<>();
+        Map<String, EntityFieldValueHandler<?>> updatedLsmFields = new LinkedHashMap<>();
         if (CollectionUtils.isNotEmpty(colors)) {
             lsm.setChannelColors(Joiner.on(',').join(colors));
-            updatedLsmFields.put("channelColors", lsm.getChannelColors());
+            updatedLsmFields.put("channelColors", new SetFieldValueHandler<>(lsm.getChannelColors()));
         }
         if (CollectionUtils.isNotEmpty(dyeNames)) {
             lsm.setChannelDyeNames(Joiner.on(',').join(dyeNames));
-            updatedLsmFields.put("channelDyeNames", lsm.getChannelDyeNames());
+            updatedLsmFields.put("channelDyeNames", new SetFieldValueHandler<>(lsm.getChannelDyeNames()));
         }
         if (StringUtils.isBlank(lsm.getChanSpec())) {
             updatedLsmFields.putAll(updateChanSpec(lsm, channelDyeSpec));
@@ -174,8 +176,8 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
         sampleDataService.updateLSM(lsm, updatedLsmFields);
    }
 
-    private Map<String, Object> updateChanSpec(LSMImage lsm, String channelDyeSpec) {
-        Map<String, Object> updatedLsmFields = new LinkedHashMap<>();
+    private Map<String, EntityFieldValueHandler<?>> updateChanSpec(LSMImage lsm, String channelDyeSpec) {
+        Map<String, EntityFieldValueHandler<?>> updatedLsmFields = new LinkedHashMap<>();
         Set<String> referenceDyes = new LinkedHashSet<>();
         if (StringUtils.isNotBlank(channelDyeSpec)) {
             Pair<Multimap<String, String>, Map<String, String>> channelDyesMapData = LSMProcessingTools.parseChannelDyeSpec(channelDyeSpec);
@@ -199,11 +201,11 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
             }
             // For legacy LSMs without chanspec or dyespec, we assume that the reference is the first channel and the rest are signal
             lsm.setChanSpec(LSMProcessingTools.createChanSpec(numChannels, 1));
-            updatedLsmFields.put("chanSpec", lsm.getChanSpec());
+            updatedLsmFields.put("chanSpec", new SetFieldValueHandler<>(lsm.getChanSpec()));
         } else {
             List<String> channelDyeNames = LSMProcessingTools.parseChannelComponents(lsm.getChannelDyeNames());
             lsm.setChanSpec(LSMProcessingTools.createChanSpec(channelDyeNames, referenceDyes));
-            updatedLsmFields.put("chanSpec", lsm.getChanSpec());
+            updatedLsmFields.put("chanSpec", new SetFieldValueHandler<>(lsm.getChanSpec()));
         }
         return updatedLsmFields;
     }

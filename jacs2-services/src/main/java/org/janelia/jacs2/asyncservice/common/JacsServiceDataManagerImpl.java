@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.DataInterval;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -39,18 +41,18 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
         if (existingService == null) {
             return null;
         }
-        Map<String, Object> updates = new LinkedHashMap<>();
+        Map<String, EntityFieldValueHandler<?>> updates = new LinkedHashMap<>();
         if (serviceData.getState() != null) {
             existingService.setState(serviceData.getState());
-            updates.put("state", serviceData.getState());
+            updates.put("state", new SetFieldValueHandler<>(serviceData.getState()));
         }
         if (serviceData.getServiceTimeout() != null) {
             existingService.setServiceTimeout(serviceData.getServiceTimeout());
-            updates.put("serviceTimeout", serviceData.getServiceTimeout());
+            updates.put("serviceTimeout", new SetFieldValueHandler<>(serviceData.getServiceTimeout()));
         }
         if (StringUtils.isNotBlank(serviceData.getWorkspace())) {
             existingService.setWorkspace(serviceData.getWorkspace());
-            updates.put("workspace", serviceData.getWorkspace());
+            updates.put("workspace", new SetFieldValueHandler<>(serviceData.getWorkspace()));
         }
         if (!updates.isEmpty()) {
             jacsServiceDataPersistence.update(existingService, updates);
@@ -60,7 +62,7 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
             newPriorities.entrySet().forEach(sdpEntry -> {
                 JacsServiceData sd = sdpEntry.getKey();
                 sd.setPriority(sdpEntry.getValue());
-                jacsServiceDataPersistence.update(sd, ImmutableMap.of("priority", sd.getPriority()));
+                jacsServiceDataPersistence.update(sd, ImmutableMap.of("priority", new SetFieldValueHandler<>(sd.getPriority())));
             });
         }
         return existingService;

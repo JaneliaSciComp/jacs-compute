@@ -19,6 +19,7 @@ import org.janelia.it.jacs.model.domain.sample.SampleTile;
 import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
 import org.janelia.jacs2.dataservice.subject.SubjectService;
 import org.janelia.jacs2.model.DataInterval;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
 import org.janelia.jacs2.model.page.PageRequest;
 import org.janelia.jacs2.model.page.PageResult;
 import org.janelia.jacs2.dataservice.DomainObjectService;
@@ -225,11 +226,11 @@ public class SampleDataService {
         sampleDao.save(sample);
     }
 
-    public void updateLSM(LSMImage lsmImage, Map<String, Object> updatedFields) {
+    public void updateLSM(LSMImage lsmImage, Map<String, EntityFieldValueHandler<?>> updatedFields) {
         lsmImageDao.update(lsmImage, updatedFields);
     }
 
-    public void updateSample(Sample sample, Map<String, Object> updatedFields) {
+    public void updateSample(Sample sample, Map<String, EntityFieldValueHandler<?>> updatedFields) {
         sampleDao.update(sample, updatedFields);
     }
 

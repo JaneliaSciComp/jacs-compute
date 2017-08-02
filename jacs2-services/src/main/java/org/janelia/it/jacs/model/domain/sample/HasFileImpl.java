@@ -6,6 +6,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.janelia.it.jacs.model.domain.FileReference;
 import org.janelia.it.jacs.model.domain.enums.FileType;
 import org.janelia.it.jacs.model.domain.interfaces.HasFiles;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.jacs2.model.SetFieldValueHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,29 +31,29 @@ public class HasFileImpl implements HasFiles {
     }
 
     @Override
-    public Map<String, Object> setFileName(FileType fileType, String fileName) {
+    public Map<String, EntityFieldValueHandler<?>> setFileName(FileType fileType, String fileName) {
         if (StringUtils.isBlank(fileName)) {
             return removeFileName(fileType);
         } else {
-            Map<String, Object> updates = new LinkedHashMap<>();
+            Map<String, EntityFieldValueHandler<?>> updates = new LinkedHashMap<>();
             String existingFile = getFileName(fileType);
             if (StringUtils.isNotBlank(existingFile) && !StringUtils.equals(existingFile, fileName)) {
                 deprecatedFiles.add(new FileReference(fileType, existingFile));
-                updates.put("deprecatedFiles", deprecatedFiles);
+                updates.put("deprecatedFiles", new SetFieldValueHandler<>(deprecatedFiles));
             }
             files.put(fileType, fileName);
-            updates.put("files." + fileType.name(), fileName);
+            updates.put("files." + fileType.name(), new SetFieldValueHandler<>(fileName));
             return updates;
         }
     }
 
     @Override
-    public Map<String, Object> removeFileName(FileType fileType) {
-        Map<String, Object> updates = new LinkedHashMap<>();
+    public Map<String, EntityFieldValueHandler<?>> removeFileName(FileType fileType) {
+        Map<String, EntityFieldValueHandler<?>> updates = new LinkedHashMap<>();
         String existingFile = getFileName(fileType);
         if (StringUtils.isNotBlank(existingFile)) {
             deprecatedFiles.add(new FileReference(fileType, existingFile));
-            updates.put("deprecatedFiles", deprecatedFiles);
+            updates.put("deprecatedFiles", new SetFieldValueHandler<>(deprecatedFiles));
         }
         files.remove(fileType);
         updates.put("files." + fileType.name(), null);

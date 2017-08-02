@@ -1,6 +1,7 @@
 package org.janelia.it.jacs.model.domain.interfaces;
 
 import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.jacs2.model.EntityFieldValueHandler;
 
 import java.util.Map;
 
@@ -16,6 +17,6 @@ public interface HasFiles {
         String fn = getFileName(fileType);
         return fn != null && fn.trim().length() > 0;
     }
-    Map<String, Object> setFileName(FileType fileType, String fileName);
-    Map<String, Object> removeFileName(FileType fileType);
+    Map<String, EntityFieldValueHandler<?>> setFileName(FileType fileType, String fileName);
+    Map<String, EntityFieldValueHandler<?>> removeFileName(FileType fileType);
 }
