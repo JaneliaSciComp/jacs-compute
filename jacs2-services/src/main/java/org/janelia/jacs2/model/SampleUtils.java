@@ -441,7 +441,7 @@ public class SampleUtils {
                 try {
                     Field sampleField = sampleSageAttrs.get(fieldName).field;
                     sampleField.setAccessible(true);
-                    sampleField.set(sample, fieldValue);
+                    sampleField.set(sample, fieldValue.getFieldValue());
                     sampleFields.put(fieldName, fieldValue);
                 } catch (IllegalAccessException e) {
                     throw new IllegalArgumentException(e);
