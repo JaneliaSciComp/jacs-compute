@@ -235,10 +235,12 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         if (!existingSample.isPresent()) {
             // create a new Sample
             Sample newSample = createNewSample(owner, dataSet, slideCode, lsmsGroupedByAbjectiveAndArea);
+            logger.info("Created new sample {} for dataset {} and slideCode {}", newSample, dataSet, slideCode);
             return new LSMImportResult(dataSet.getIdentifier(), newSample.getId(), newSample.getName(), true);
         } else {
             Sample updatedSample = existingSample.get();
             updateSample(dataSet, updatedSample, lsmsGroupedByAbjectiveAndArea);
+            logger.info("Updated sample {} for dataset {} and slideCode {} with {}", updatedSample, dataSet, slideCode, lsmImages);
             return new LSMImportResult(dataSet.getIdentifier(), updatedSample.getId(), updatedSample.getName(), false);
         }
     }
