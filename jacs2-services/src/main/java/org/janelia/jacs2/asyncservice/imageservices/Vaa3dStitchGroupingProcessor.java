@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Named("vaa3dStitchGrouping")
-public class Vaa3dStitchGroupingProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class Vaa3dStitchGroupingProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     private static final String GROUPS_FILENAME = "igroups.txt";
 

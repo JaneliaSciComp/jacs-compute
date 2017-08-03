@@ -33,7 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-public abstract class AbstractAlignmentProcessor extends AbstractExeBasedServiceProcessor<Void, AlignmentResultFiles> {
+public abstract class AbstractAlignmentProcessor extends AbstractExeBasedServiceProcessor<AlignmentResultFiles> {
 
     private final String alignmentRunner;
     private final String libraryPath;

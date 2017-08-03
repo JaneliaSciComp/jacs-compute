@@ -33,7 +33,7 @@ import java.util.Map;
  * it tries to form a square from the list of provided images.
  */
 @Named("montageImages")
-public class MontageImagesProcessor extends AbstractExeBasedServiceProcessor<Void, File> {
+public class MontageImagesProcessor extends AbstractExeBasedServiceProcessor<File> {
 
     static class MontageImagesArgs extends ServiceArgs {
         @Parameter(names = "-inputFiles", description = "List of input files to be montaged together. As a note this file will not try to group the provided inputs.", required = true)

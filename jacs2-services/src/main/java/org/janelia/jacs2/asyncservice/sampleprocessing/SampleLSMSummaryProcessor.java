@@ -34,7 +34,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Named("sampleLSMSummary")
-public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProcessor<SampleLSMSummaryProcessor.SampleLSMSummaryIntermediateResult, List<LSMSummary>> {
+public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProcessor<List<LSMSummary>, SampleLSMSummaryProcessor.SampleLSMSummaryIntermediateResult> {
 
     static class MontageParameters {
         final Optional<Number> montageServiceId;

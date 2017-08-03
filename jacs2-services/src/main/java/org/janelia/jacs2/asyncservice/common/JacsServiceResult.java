@@ -2,15 +2,19 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 
-public final class JacsServiceResult<T> {
+/**
+ * Jacs service result.
+ * @param <R> result type.
+ */
+public final class JacsServiceResult<R> {
     private final JacsServiceData jacsServiceData;
-    private T result;
+    private R result;
 
     public JacsServiceResult(JacsServiceData jacsServiceData) {
         this.jacsServiceData = jacsServiceData;
     }
 
-    public JacsServiceResult(JacsServiceData jacsServiceData, T result) {
+    public JacsServiceResult(JacsServiceData jacsServiceData, R result) {
         this.jacsServiceData = jacsServiceData;
         this.result = result;
     }
@@ -19,11 +23,11 @@ public final class JacsServiceResult<T> {
         return jacsServiceData;
     }
 
-    public final T getResult() {
+    public final R getResult() {
         return result;
     }
 
-    public final void setResult(T result) {
+    public final void setResult(R result) {
         this.result = result;
     }
 }

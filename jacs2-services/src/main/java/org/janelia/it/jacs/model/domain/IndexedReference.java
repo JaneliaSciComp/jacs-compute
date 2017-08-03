@@ -11,6 +11,8 @@ import java.util.stream.Stream;
 
 /**
  * A reference to an object with an positional index which can be the corresponding index into some collection.
+ * @param <T> the type of the encapsulated object.
+ * @param <I> the type of the indexing object.
  */
 public class IndexedReference<T, I> {
 

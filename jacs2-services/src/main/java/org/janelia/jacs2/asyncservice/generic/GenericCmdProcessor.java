@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 @Named("genericCmd")
-public class GenericCmdProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
+public class GenericCmdProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
     static class GenericCmdArgs extends ServiceArgs {
         @Parameter(names = "-cmd", description = "Command name", required = true)

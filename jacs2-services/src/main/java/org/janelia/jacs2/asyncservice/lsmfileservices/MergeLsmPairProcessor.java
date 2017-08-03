@@ -32,7 +32,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 @Named("mergeLsms")
-public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcessor<MergeLsmPairProcessor.MergeLsmIntermediateResult, File> {
+public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcessor<File, MergeLsmPairProcessor.MergeLsmIntermediateResult> {
 
     static class MergeLsmIntermediateResult {
         final Number mergeChannelsServiceId;

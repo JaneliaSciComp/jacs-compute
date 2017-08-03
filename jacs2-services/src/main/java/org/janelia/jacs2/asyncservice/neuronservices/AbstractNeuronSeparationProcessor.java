@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<Void, NeuronSeparationFiles> {
+public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<NeuronSeparationFiles> {
 
     static class NeuronSeparationArgs extends ServiceArgs {
         @Parameter(names = {"-inputFile"}, description = "Input file name", required = true)

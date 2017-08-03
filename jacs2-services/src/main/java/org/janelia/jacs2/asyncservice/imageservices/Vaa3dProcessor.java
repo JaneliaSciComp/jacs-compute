@@ -33,7 +33,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 @Named("vaa3d")
-public class Vaa3dProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
+public class Vaa3dProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
     static class Vaa3dArgs extends ServiceArgs {
         @Parameter(names = "-vaa3dArgs", description = "Arguments for vaa3d")

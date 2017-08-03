@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
-import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -30,7 +29,7 @@ public class AbstractExeBasedServiceProcessorTest {
     private static final String TEST_WORKING_DIR = "testDir";
     private static final String TEST_EXE_DIR = "testToolsDir";
 
-    private static class TestExternalProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
+    private static class TestExternalProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
         public TestExternalProcessor(ServiceComputationFactory computationFactory,
                                      JacsServiceDataPersistence jacsServiceDataPersistence,
@@ -63,7 +62,7 @@ public class AbstractExeBasedServiceProcessorTest {
         }
     }
 
-    private AbstractExeBasedServiceProcessor<Void, Void> testProcessor;
+    private AbstractExeBasedServiceProcessor<Void> testProcessor;
     private ExternalProcessRunner processRunner;
 
     @Before

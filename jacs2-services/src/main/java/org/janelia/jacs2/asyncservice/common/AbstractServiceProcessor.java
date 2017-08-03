@@ -29,7 +29,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 @MdcContext
-public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T> {
+public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R> {
 
     protected final ServiceComputationFactory computationFactory;
     protected final JacsServiceDataPersistence jacsServiceDataPersistence;
@@ -88,8 +88,8 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
     }
 
     @Override
-    public ServiceResultHandler<T> getResultHandler() {
-        return new EmptyServiceResultHandler<T>();
+    public ServiceResultHandler<R> getResultHandler() {
+        return new EmptyServiceResultHandler<R>();
     }
 
     @Override
@@ -227,7 +227,7 @@ public abstract class AbstractServiceProcessor<T> implements ServiceProcessor<T>
         }
     }
 
-    protected JacsServiceResult<T> updateServiceResult(JacsServiceData jacsServiceData, T result) {
+    protected JacsServiceResult<R> updateServiceResult(JacsServiceData jacsServiceData, R result) {
         this.getResultHandler().updateServiceDataResult(jacsServiceData, result);
         jacsServiceDataPersistence.updateServiceResult(jacsServiceData);
         return new JacsServiceResult<>(jacsServiceData, result);

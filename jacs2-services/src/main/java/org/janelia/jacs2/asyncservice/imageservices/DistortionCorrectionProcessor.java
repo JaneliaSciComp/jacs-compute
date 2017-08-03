@@ -26,7 +26,7 @@ import java.nio.file.Paths;
 import java.util.StringJoiner;
 
 @Named("distortionCorrection")
-public class DistortionCorrectionProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class DistortionCorrectionProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     static class DistortionCorrectionArgs extends ServiceArgs {
         @Parameter(names = "-inputFile", description = "Input file", required = true)

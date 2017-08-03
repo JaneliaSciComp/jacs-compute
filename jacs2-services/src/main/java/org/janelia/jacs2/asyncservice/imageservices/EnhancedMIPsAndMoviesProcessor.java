@@ -12,9 +12,7 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.StringJoiner;
-import java.util.stream.Collectors;
 
 /**
  * Generates MIPs and movies for a single input stack. Supports customizable colors

@@ -35,7 +35,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Map;
 
 @Named("lsmFileMetadata")
-public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<Void, File> {
+public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<File> {
 
     private static final Object RESULT_LOCK = new Object();
 

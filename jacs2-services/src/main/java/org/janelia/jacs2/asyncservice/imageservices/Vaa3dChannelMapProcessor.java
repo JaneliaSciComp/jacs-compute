@@ -38,7 +38,7 @@ import java.util.StringJoiner;
 import java.util.UUID;
 
 @Named("vaa3dChannelMap")
-public class Vaa3dChannelMapProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class Vaa3dChannelMapProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     static class Vaa3dChannelMapArgs extends ServiceArgs {
         @Parameter(names = "-inputFile", description = "Input file", required = true)

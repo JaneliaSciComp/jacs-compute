@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 @Named("flirt")
-public class FlirtProcessor extends AbstractExeBasedServiceProcessor<Void, List<File>> {
+public class FlirtProcessor extends AbstractExeBasedServiceProcessor<List<File>> {
 
     static class FlirtArgs extends ServiceArgs {
         @Parameter(names = {"-in", "-input"}, description = "Input volume")

@@ -45,7 +45,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Named("updateSampleLSMMetadata")
-public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServiceProcessor<GetSampleLsmsIntermediateResult, List<SampleImageFile>> {
+public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServiceProcessor<List<SampleImageFile>, GetSampleLsmsIntermediateResult> {
 
     static class UpdateLSMsMetadataArgs extends SampleServiceArgs {
         @Parameter(names = "-channelDyeSpec", description = "Channel dye spec", required = false)

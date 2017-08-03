@@ -27,7 +27,7 @@ import java.nio.file.Files;
 import java.util.StringJoiner;
 
 @Named("vaa3dConverter")
-public class Vaa3dConverterProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class Vaa3dConverterProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     static class Vaa3dConverterArgs extends ServiceArgs {
         @Parameter(names = "-input", description = "Input file", required = true)

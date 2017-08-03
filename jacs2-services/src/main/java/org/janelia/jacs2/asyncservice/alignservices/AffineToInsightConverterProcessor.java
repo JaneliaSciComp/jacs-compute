@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Named("afine2InsightConverter")
-public class AffineToInsightConverterProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class AffineToInsightConverterProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     static class AfineToInsightConverterArgs extends ServiceArgs {
         @Parameter(names = "-input", description = "Input file", required = true)

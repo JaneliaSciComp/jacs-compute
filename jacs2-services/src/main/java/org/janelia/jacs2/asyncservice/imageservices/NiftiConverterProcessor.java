@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Named("niftiConverter")
-public class NiftiConverterProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, List<File>> {
+public class NiftiConverterProcessor extends AbstractBasicLifeCycleServiceProcessor<List<File>, Void> {
 
     static class Vaa3dNiftiConverterArgs extends ServiceArgs {
         @Parameter(names = "-input", description = "Input file", required = true)

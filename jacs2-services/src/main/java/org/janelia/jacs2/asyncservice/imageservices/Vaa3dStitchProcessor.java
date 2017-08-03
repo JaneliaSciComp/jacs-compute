@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Named("vaa3dStitch")
-public class Vaa3dStitchProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class Vaa3dStitchProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     private static final String STITCHED_IMAGE_INFO_FILENAME = "stitched_image.tc";
 

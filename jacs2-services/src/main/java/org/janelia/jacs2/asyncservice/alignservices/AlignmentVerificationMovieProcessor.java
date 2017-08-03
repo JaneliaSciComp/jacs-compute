@@ -31,7 +31,7 @@ import java.nio.file.Paths;
  * AlignmentVerificationMovieProcessor generates the alignment verification movie.
  */
 @Named("alignmentVerificationMovie")
-public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     static class AlignmentVerificationMoviewArgs extends ServiceArgs {
         @Parameter(names = {"-s", "-subject"}, description = "Subject file", required = true)

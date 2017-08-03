@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Named("fileMove")
-public class FileMoveProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class FileMoveProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     public static class FileMoveArgs extends ServiceArgs {
         @Parameter(names = {"-input", "-source"}, description = "Source name", required = true)

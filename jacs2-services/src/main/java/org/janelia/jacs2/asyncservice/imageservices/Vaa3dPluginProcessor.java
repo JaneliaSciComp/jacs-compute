@@ -33,7 +33,7 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 @Named("vaa3dPlugin")
-public class Vaa3dPluginProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, List<File>> {
+public class Vaa3dPluginProcessor extends AbstractBasicLifeCycleServiceProcessor<List<File>, Void> {
 
     static class Vaa3dPluginArgs extends ServiceArgs {
         @Parameter(names = {"-x", "-plugin"}, description = "Vaa3d plugin name", required = true)

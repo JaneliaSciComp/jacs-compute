@@ -44,7 +44,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Named("mipGeneration")
-public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Void, List<File>> {
+public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<List<File>> {
 
     static class MIPGenerationArgs extends ServiceArgs {
         @Parameter(names = "-inputFile", description = "The name of the input file", required = true)

@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  * Create a square montage from PNGs in a given directory.
  */
 @Named("groupAndMontageImages")
-public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycleServiceProcessor<List<GroupAndMontageFolderImagesProcessor.MontageFolderIntermediateResult>, Map<String, String>> {
+public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycleServiceProcessor<Map<String, String>, List<GroupAndMontageFolderImagesProcessor.MontageFolderIntermediateResult>> {
 
     static class MontageFolderIntermediateResult {
         private final Number montageServiceId;

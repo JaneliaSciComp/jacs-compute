@@ -50,7 +50,7 @@ import java.util.Set;
  * Merge paired LSMs into a v3draw (see jacsV1 Vaa3DBulkMergeService).
  */
 @Named("mergeChannels")
-public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Void, File> {
+public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<File> {
 
     static class ChannelMergeArgs extends ServiceArgs {
         @Parameter(names = "-chInput1", description = "File containing the first set of channels", required = true)

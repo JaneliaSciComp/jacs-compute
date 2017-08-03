@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Named("vaa3dBlend")
-public class Vaa3dBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class Vaa3dBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     static class Vaa3dBlendArgs extends ServiceArgs {
         @Parameter(names = "-inputDir", description = "Input file", required = true)

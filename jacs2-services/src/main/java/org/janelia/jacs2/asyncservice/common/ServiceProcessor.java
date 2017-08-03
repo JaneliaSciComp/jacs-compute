@@ -5,9 +5,9 @@ import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 
 /**
  * Service processor parameterized on the result type
- * @param <T> result type
+ * @param <R> result type
  */
-public interface ServiceProcessor<T> {
+public interface ServiceProcessor<R> {
     /**
      * @return service metadata
      */
@@ -24,14 +24,14 @@ public interface ServiceProcessor<T> {
     /**
      * @return service result handler
      */
-    ServiceResultHandler<T> getResultHandler();
+    ServiceResultHandler<R> getResultHandler();
 
     /**
      * @return service error checker
      */
     ServiceErrorChecker getErrorChecker();
 
-    ServiceComputation<JacsServiceResult<T>> process(JacsServiceData jacsServiceData);
+    ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData);
 
     /**
      * Default process mechanism given the execution context and the service arguments.
@@ -39,7 +39,7 @@ public interface ServiceProcessor<T> {
      * @param args service arguments.
      * @return service information.
      */
-    default ServiceComputation<JacsServiceResult<T>> process(ServiceExecutionContext executionContext, ServiceArg... args) {
+    default ServiceComputation<JacsServiceResult<R>> process(ServiceExecutionContext executionContext, ServiceArg... args) {
         return process(createServiceData(executionContext, args));
     }
 }

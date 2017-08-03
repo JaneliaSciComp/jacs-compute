@@ -47,7 +47,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Named("sageLoader")
-public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
+public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
     static class SageLoaderArgs extends ServiceArgs {
         @Parameter(names = "-sageUser", description = "Sage loader user", required = false)

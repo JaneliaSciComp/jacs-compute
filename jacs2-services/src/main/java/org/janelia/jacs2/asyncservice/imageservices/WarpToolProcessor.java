@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Named("warpTool")
-public class WarpToolProcessor extends AbstractExeBasedServiceProcessor<Void, Void> {
+public class WarpToolProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
     static class WarpToolArgs extends ServiceArgs {
         @Parameter(names = {"-d", "-dims"}, description = "Scene dimensionality")

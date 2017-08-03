@@ -32,7 +32,7 @@ import java.nio.file.Paths;
  * then the processor fails otherwise it simply overwrites it.
  */
 @Named("linkData")
-public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, File> {
+public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     public static class LinkDataArgs extends ServiceArgs {
         @Parameter(names = {"-input", "-source"}, description = "Source name", required = true)

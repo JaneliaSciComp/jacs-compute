@@ -4,7 +4,6 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
@@ -29,8 +28,6 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

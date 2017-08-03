@@ -33,7 +33,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 
 @Named("mpegConverter")
-public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProcessor<Void, File> {
+public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProcessor<File> {
 
     static class ConverterArgs extends ServiceArgs {
         private static final String DEFAULT_OUTPUT_EXT = ".mp4";

@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Named("vaa3dStitchAndBlend")
-public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<Vaa3dStitchAndBlendProcessor.StitchAndBlendIntermediateResult, StitchAndBlendResult> {
+public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<StitchAndBlendResult, Vaa3dStitchAndBlendProcessor.StitchAndBlendIntermediateResult> {
 
     private static final java.lang.String DEFAULT_BLEND_OUTPUT = "output.v3draw";
 

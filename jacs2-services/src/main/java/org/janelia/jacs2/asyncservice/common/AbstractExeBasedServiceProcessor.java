@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @MdcContext
-public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBasicLifeCycleServiceProcessor<S, T> {
+public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicLifeCycleServiceProcessor<R, Void> {
 
     protected static final String DY_LIBRARY_PATH_VARNAME = "LD_LIBRARY_PATH";
 
@@ -47,14 +47,14 @@ public abstract class AbstractExeBasedServiceProcessor<S, T> extends AbstractBas
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<S>> processing(JacsServiceResult<S> depsResult) {
+    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) {
         ExeJobInfo jobInfo = runExternalProcess(depsResult.getJacsServiceData());
-        PeriodicallyCheckableState<JacsServiceResult<S>> periodicResultCheck = new PeriodicallyCheckableState<>(depsResult, jobIntervalCheck);
+        PeriodicallyCheckableState<JacsServiceResult<Void>> periodicResultCheck = new PeriodicallyCheckableState<>(depsResult, jobIntervalCheck);
         return computationFactory.newCompletedComputation(periodicResultCheck)
-                .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceResult<S>> state) -> new ContinuationCond.Cond<>(state,
+                .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceResult<Void>> state) -> new ContinuationCond.Cond<>(state,
                         periodicResultCheck.updateCheckTime() && hasJobFinished(periodicResultCheck.getState().getJacsServiceData(), jobInfo)))
                 .thenApply(pdCond -> {
-                    JacsServiceResult<S> pd = pdCond.getState().getState();
+                    JacsServiceResult<Void> pd = pdCond.getState().getState();
                     List<String> errors = getErrors(pd.getJacsServiceData());
                     String errorMessage = null;
                     if (CollectionUtils.isNotEmpty(errors)) {

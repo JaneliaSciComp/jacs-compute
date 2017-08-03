@@ -8,13 +8,13 @@ import org.slf4j.Logger;
 /**
  * Abstract implementation of a service processor that "encodes" the life cycle of a computation. The class is parameterized
  * on a type dependent on the child services &lt;S&gt; and the result type of this service &lt;T&gt;.
- * @param <S> a specific type that defines the child services results. This doesn't necessarily have to contain the results of the
+ * @param <R> represents the result type
+ * @param <S> is the type of an intermediate result that depends on the child services results. This doesn't necessarily have to contain the results of the
  *           child services but it can contain useful data related to the child service that could be used to derive the result of the
- *           current service
- * @param <T> represents the result type
+ *           current service.
  */
 @MdcContext
-public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends AbstractServiceProcessor<T> {
+public abstract class AbstractBasicLifeCycleServiceProcessor<R, S> extends AbstractServiceProcessor<R> {
 
     public AbstractBasicLifeCycleServiceProcessor(ServiceComputationFactory computationFactory,
                                                   JacsServiceDataPersistence jacsServiceDataPersistence,
@@ -24,7 +24,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<T>> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData) {
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(this::prepareProcessing)
                 .thenApply(this::submitServiceDependencies)
@@ -64,13 +64,13 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<S, T> extends Abstr
         return false;
     }
 
-    protected JacsServiceResult<T> updateServiceResult(JacsServiceResult<S> depsResult) {
-        T r = this.getResultHandler().collectResult(depsResult);
+    protected JacsServiceResult<R> updateServiceResult(JacsServiceResult<S> depsResult) {
+        R r = this.getResultHandler().collectResult(depsResult);
         JacsServiceData jacsServiceData = depsResult.getJacsServiceData();
         return updateServiceResult(jacsServiceData, r);
     }
 
-    protected JacsServiceResult<T> postProcessing(JacsServiceResult<T> sr) {
+    protected JacsServiceResult<R> postProcessing(JacsServiceResult<R> sr) {
         return sr;
     }
 }

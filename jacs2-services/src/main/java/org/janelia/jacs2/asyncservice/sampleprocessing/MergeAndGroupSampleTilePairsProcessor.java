@@ -75,7 +75,7 @@ import java.util.stream.Stream;
  * Merge and group sample tile pairs  (see jacsV1 Vaa3DConvertToSampleImageService + jacsV1 Vaa3dStichAndGroupingService).
  */
 @Named("mergeAndGroupSampleTilePairs")
-public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycleServiceProcessor<MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult, List<SampleAreaResult>> {
+public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycleServiceProcessor<List<SampleAreaResult>, MergeAndGroupSampleTilePairsProcessor.MergeSampleTilePairsIntermediateResult> {
 
     static class MergeSampleTilePairsIntermediateResult extends GetSampleLsmsIntermediateResult {
 

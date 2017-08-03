@@ -27,7 +27,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 
 @Named("archivedLsmMetadata")
-public class ArchivedLsmMetadataProcessor extends AbstractBasicLifeCycleServiceProcessor<ArchivedLsmMetadataProcessor.ChildServiceData, File> {
+public class ArchivedLsmMetadataProcessor extends AbstractBasicLifeCycleServiceProcessor<File, ArchivedLsmMetadataProcessor.ChildServiceData> {
 
     static class ChildServiceData {
         final Number fileCopyServiceDataId;

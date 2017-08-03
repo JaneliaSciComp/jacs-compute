@@ -36,7 +36,7 @@ import java.nio.file.Files;
 import java.util.Map;
 
 @Named("fileCopy")
-public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<Void, File> {
+public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<File> {
 
     public static class FileCopyArgs extends ServiceArgs {
         @Parameter(names = "-src", description = "Source file name", required = true)

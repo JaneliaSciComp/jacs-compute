@@ -13,7 +13,7 @@ import javax.inject.Named;
 import java.util.Date;
 
 @Named("level1ComputeTest")
-public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, Long> {
+public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServiceProcessor<Long, Void> {
 
     private static final int DEFAULT_INTEGER_SERVICES=10;
     private static final int DEFAULT_FLOAT_SERVICES=5;
