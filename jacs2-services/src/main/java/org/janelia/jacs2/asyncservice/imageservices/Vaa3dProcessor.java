@@ -113,7 +113,7 @@ public class Vaa3dProcessor extends AbstractExeBasedServiceProcessor<Void> {
     }
 
     private Vaa3dArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new Vaa3dArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new Vaa3dArgs());
     }
 
     private String getExecutable() {

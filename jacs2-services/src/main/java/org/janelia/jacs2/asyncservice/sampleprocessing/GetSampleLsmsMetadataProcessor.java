@@ -121,7 +121,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractServiceProcessor<Lis
     }
 
     private SampleServiceArgs getArgs(JacsServiceData jacsServiceData) {
-        return SampleServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleServiceArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SampleServiceArgs());
     }
 
 }

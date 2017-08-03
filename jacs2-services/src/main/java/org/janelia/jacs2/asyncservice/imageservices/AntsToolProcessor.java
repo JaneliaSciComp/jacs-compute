@@ -174,9 +174,7 @@ public class AntsToolProcessor extends AbstractExeBasedServiceProcessor<Void> {
     }
 
     private AntsToolArgs getArgs(JacsServiceData jacsServiceData) {
-        AntsToolArgs args = new AntsToolArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new AntsToolArgs());
     }
 
     private String getExecutable() {

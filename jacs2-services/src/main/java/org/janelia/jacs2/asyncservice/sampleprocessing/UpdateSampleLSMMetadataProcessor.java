@@ -141,7 +141,7 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
     }
 
     private UpdateLSMsMetadataArgs getArgs(JacsServiceData jacsServiceData) {
-        return SampleServiceArgs.parse(jacsServiceData.getArgsArray(), new UpdateLSMsMetadataArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new UpdateLSMsMetadataArgs());
     }
 
     private void updateLSM(LSMImage lsm, String lsmMetadataFilePath, String channelDyeSpec) {

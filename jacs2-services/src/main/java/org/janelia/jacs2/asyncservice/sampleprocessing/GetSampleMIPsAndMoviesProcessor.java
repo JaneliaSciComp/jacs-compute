@@ -169,6 +169,6 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractServiceProcessor<Li
     }
 
     private SampleMIPsAndMoviesArgs getArgs(JacsServiceData jacsServiceData) {
-        return SampleServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleMIPsAndMoviesArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SampleMIPsAndMoviesArgs());
     }
 }

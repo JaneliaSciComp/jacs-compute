@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @MdcContext
@@ -129,6 +131,33 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         }
         jacsServiceDataPersistence.update(jacsServiceData, serviceUpdates);
         return serviceUpdates;
+    }
+
+    protected String[] getJacsServiceArgsArray(JacsServiceData jacsServiceData) {
+        if (jacsServiceData.getActualArgs() == null) {
+            Predicate<String> isForwardedArg = arg -> arg != null && arg.startsWith("|>");
+            boolean forwardedArgumentsFound = jacsServiceData.getArgs().stream().anyMatch(isForwardedArg);
+            List<String> actualServiceArgs;
+            if (!forwardedArgumentsFound) {
+                actualServiceArgs = ImmutableList.copyOf(jacsServiceData.getArgs());
+            } else {
+                List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(jacsServiceData);
+                List<Object> serviceDependenciesResults = serviceDependencies.stream().filter(sd -> sd.getSerializableResult() != null).map(sd -> sd.getSerializableResult()).collect(Collectors.toList());
+                actualServiceArgs = jacsServiceData.getArgs().stream().map(arg -> {
+                    if (isForwardedArg.test(arg)) {
+                        return eval(arg.substring(2), serviceDependenciesResults);
+                    } else {
+                        return arg;
+                    }
+                }).collect(Collectors.toList());
+            }
+            jacsServiceData.setActualArgs(actualServiceArgs);
+        }
+        return jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
+    }
+
+    private String eval(String arg, List<Object> forwardedResults) {
+        return arg; /// !!!!!!!!!!!!!!!!!!!!!!! FIXME
     }
 
     protected Path getServicePath(String baseDir, JacsServiceData jacsServiceData, String... more) {

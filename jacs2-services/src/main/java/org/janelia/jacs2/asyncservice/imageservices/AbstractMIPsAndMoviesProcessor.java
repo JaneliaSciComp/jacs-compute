@@ -188,7 +188,7 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
     }
 
     protected MIPsAndMoviesArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new MIPsAndMoviesArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new MIPsAndMoviesArgs());
     }
 
     protected Path getResultsDir(MIPsAndMoviesArgs args) {

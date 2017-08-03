@@ -178,7 +178,7 @@ public class MergeLsmPairProcessor extends AbstractBasicLifeCycleServiceProcesso
     }
 
     private MergeLsmPairArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new MergeLsmPairArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new MergeLsmPairArgs());
     }
 
     private Path getLsm1(MergeLsmPairArgs args) {

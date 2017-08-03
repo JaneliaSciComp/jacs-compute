@@ -85,7 +85,7 @@ public class Vaa3dCmdProcessor extends AbstractExeBasedServiceProcessor<Void> {
     }
 
     private Vaa3dCmdArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new Vaa3dCmdArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new Vaa3dCmdArgs());
     }
 
     private String getExecutable() {

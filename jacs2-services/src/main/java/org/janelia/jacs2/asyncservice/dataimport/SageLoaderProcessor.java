@@ -205,7 +205,7 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void> 
     }
 
     private SageLoaderArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new SageLoaderArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SageLoaderArgs());
     }
 
     private Path getWorkingSageFileList(JacsServiceData jacsServiceData, SageLoaderArgs args) {

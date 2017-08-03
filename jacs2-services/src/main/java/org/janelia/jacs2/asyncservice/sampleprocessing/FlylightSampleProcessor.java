@@ -723,7 +723,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
     }
 
     private FlylightSampleArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new FlylightSampleArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new FlylightSampleArgs());
     }
 
     private Path getNeuronSeparationOutputDir(String sampleDataRootDir, String topSubDir, Number parentResultId, String area, int resultIndex) {

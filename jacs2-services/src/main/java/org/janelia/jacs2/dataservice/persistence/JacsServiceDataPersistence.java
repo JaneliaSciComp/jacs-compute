@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServiceDataDao, JacsServiceData, Number> {
 
@@ -82,6 +84,17 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
             return jacsServiceDataDao.findChildServices(serviceId);
+        } finally {
+            daoSource.destroy(jacsServiceDataDao);
+        }
+    }
+
+    public List<JacsServiceData> findServiceDependencies(JacsServiceData jacsServiceData) {
+        JacsServiceDataDao jacsServiceDataDao = daoSource.get();
+        try {
+            List<JacsServiceData> dependencies = jacsServiceDataDao.findByIds(jacsServiceData.getDependenciesIds());
+            List<JacsServiceData> childServices = jacsServiceDataDao.findChildServices(jacsServiceData.getId());
+            return Stream.concat(dependencies.stream(), childServices.stream()).collect(Collectors.toList());
         } finally {
             daoSource.destroy(jacsServiceDataDao);
         }

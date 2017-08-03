@@ -111,9 +111,7 @@ public class MontageImagesProcessor extends AbstractExeBasedServiceProcessor<Fil
     }
 
     private MontageImagesArgs getArgs(JacsServiceData jacsServiceData) {
-        MontageImagesArgs args = new MontageImagesArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new MontageImagesArgs());
     }
 
     private File getMontageOutput(MontageImagesArgs args) {

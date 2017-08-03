@@ -116,7 +116,7 @@ public class InitializeSamplePipelineResultsProcessor extends AbstractBasicLifeC
     }
 
     private InitSampleResultsArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new InitSampleResultsArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new InitSampleResultsArgs());
     }
 
 }

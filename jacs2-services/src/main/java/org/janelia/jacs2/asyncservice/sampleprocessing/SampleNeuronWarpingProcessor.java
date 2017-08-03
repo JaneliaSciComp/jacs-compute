@@ -106,7 +106,7 @@ public class SampleNeuronWarpingProcessor extends AbstractServiceProcessor<Neuro
     }
 
     private SampleNeuronWarpingArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleNeuronWarpingArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SampleNeuronWarpingArgs());
     }
 
 }

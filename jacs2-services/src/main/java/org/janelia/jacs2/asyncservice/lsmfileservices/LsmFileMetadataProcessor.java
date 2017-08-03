@@ -156,9 +156,7 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<F
     }
 
     private LsmFileMetadataArgs getArgs(JacsServiceData jacsServiceData) {
-        LsmFileMetadataArgs args = new LsmFileMetadataArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LsmFileMetadataArgs());
     }
 
     private File getInputFile(LsmFileMetadataArgs args) {

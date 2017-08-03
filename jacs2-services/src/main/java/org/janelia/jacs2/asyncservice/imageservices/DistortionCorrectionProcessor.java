@@ -106,7 +106,7 @@ public class DistortionCorrectionProcessor extends AbstractBasicLifeCycleService
     }
 
     private DistortionCorrectionArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new DistortionCorrectionArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new DistortionCorrectionArgs());
     }
 
     private Path getInputFile(DistortionCorrectionArgs args) {

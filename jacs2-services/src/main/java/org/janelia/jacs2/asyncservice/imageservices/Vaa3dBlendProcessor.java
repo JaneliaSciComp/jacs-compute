@@ -99,7 +99,7 @@ public class Vaa3dBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<
     }
 
     private Vaa3dBlendArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new Vaa3dBlendArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new Vaa3dBlendArgs());
     }
 
     private Path getOutputFile(Vaa3dBlendArgs args) {

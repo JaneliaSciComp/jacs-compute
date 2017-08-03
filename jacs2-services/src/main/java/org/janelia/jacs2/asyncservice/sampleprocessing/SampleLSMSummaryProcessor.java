@@ -228,7 +228,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
     }
 
     private SampleLSMSummaryArgs getArgs(JacsServiceData jacsServiceData) {
-        return SampleServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleLSMSummaryArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SampleLSMSummaryArgs());
     }
 
     private void updateLSM(LSMImage lsmImage, LSMSummary lsmSummary) {

@@ -152,9 +152,7 @@ public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<File> {
     }
 
     private FileCopyArgs getArgs(JacsServiceData jacsServiceData) {
-        FileCopyArgs fileCopyArgs = new FileCopyArgs();
-        new JCommander(fileCopyArgs).parse(jacsServiceData.getArgsArray());
-        return fileCopyArgs;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new FileCopyArgs());
     }
 
     private File getSourceFile(FileCopyArgs args) {

@@ -218,7 +218,7 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
     }
 
     private Vaa3dStitchAndBlendArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new Vaa3dStitchAndBlendArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new Vaa3dStitchAndBlendArgs());
     }
 
     private Path getInputDir(Vaa3dStitchAndBlendArgs args) {

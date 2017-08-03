@@ -124,6 +124,6 @@ public class UpdateSampleSummaryResultsProcessor extends AbstractBasicLifeCycleS
     }
 
     private UpdateSampleSummaryResultsArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new UpdateSampleSummaryResultsArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new UpdateSampleSummaryResultsArgs());
     }
 }

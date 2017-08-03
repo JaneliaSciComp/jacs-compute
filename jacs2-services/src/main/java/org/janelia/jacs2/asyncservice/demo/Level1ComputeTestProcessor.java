@@ -29,10 +29,6 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
 
     private long resultComputationTime;
 
-    public static Level1ComputeTestArgs getArgs(JacsServiceData jacsServiceData) {
-        return Level1ComputeTestArgs.parse(jacsServiceData.getArgsArray(), new Level1ComputeTestArgs());
-    }
-
     private final IntegerComputeTestProcessor integerComputeTestProcessor;
     private final FloatComputeTestProcessor floatComputeTestProcessor;
 
@@ -110,6 +106,10 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
     @Override
     public ServiceErrorChecker getErrorChecker() {
         throw new UnsupportedOperationException();
+    }
+
+    private Level1ComputeTestArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new Level1ComputeTestArgs());
     }
 
 }

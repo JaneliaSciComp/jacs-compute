@@ -285,9 +285,7 @@ public class FlirtProcessor extends AbstractExeBasedServiceProcessor<List<File>>
     }
 
     private FlirtArgs getArgs(JacsServiceData jacsServiceData) {
-        FlirtArgs args = new FlirtArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new FlirtArgs());
     }
 
     private Path getOutputAffine(FlirtArgs args) {

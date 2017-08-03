@@ -141,7 +141,7 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
     }
 
     private SampleServiceArgs getArgs(JacsServiceData jacsServiceData) {
-        return SampleServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleServiceArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SampleServiceArgs());
     }
 
 }

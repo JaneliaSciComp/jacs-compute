@@ -47,6 +47,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private String outputPath;
     private String errorPath;
     private List<String> args = new ArrayList<>();
+    private List<String> actualArgs;
     private Map<String, String> env = new LinkedHashMap<>();
     private Map<String, String> resources = new LinkedHashMap<>(); // this could/should be used for grid jobs resources
     private Object serializableResult;
@@ -172,15 +173,6 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.args = args;
     }
 
-    @JsonIgnore
-    public String[] getArgsArray() {
-        if (args == null) {
-            return new String[0];
-        } else {
-            return args.toArray(new String[0]);
-        }
-    }
-
     public void addArg(String arg) {
         if (this.args == null) {
             this.args = new ArrayList<>();
@@ -192,6 +184,14 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         if (this.args != null) {
             this.args.clear();
         }
+    }
+
+    public List<String> getActualArgs() {
+        return actualArgs;
+    }
+
+    public void setActualArgs(List<String> actualArgs) {
+        this.actualArgs = actualArgs;
     }
 
     public String getWorkspace() {

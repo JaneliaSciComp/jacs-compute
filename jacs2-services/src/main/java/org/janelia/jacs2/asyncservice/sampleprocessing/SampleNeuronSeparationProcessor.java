@@ -105,7 +105,7 @@ public class SampleNeuronSeparationProcessor extends AbstractServiceProcessor<Ne
     }
 
     private SampleNeuronSeparationArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleNeuronSeparationArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SampleNeuronSeparationArgs());
     }
 
 }

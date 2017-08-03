@@ -111,8 +111,6 @@ public class NiftiConverterProcessor extends AbstractBasicLifeCycleServiceProces
     }
 
     private Vaa3dNiftiConverterArgs getArgs(JacsServiceData jacsServiceData) {
-        Vaa3dNiftiConverterArgs args = new Vaa3dNiftiConverterArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new Vaa3dNiftiConverterArgs());
     }
 }

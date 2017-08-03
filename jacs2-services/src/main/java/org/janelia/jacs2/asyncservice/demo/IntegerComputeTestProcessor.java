@@ -107,7 +107,7 @@ public class IntegerComputeTestProcessor extends AbstractServiceProcessor<Long> 
     }
 
     private IntegerComputeTestArgs getArgs(JacsServiceData jacsServiceData) {
-        return IntegerComputeTestArgs.parse(jacsServiceData.getArgsArray(), new IntegerComputeTestArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new IntegerComputeTestArgs());
     }
 
 }

@@ -85,7 +85,7 @@ public class CleanSampleImageFilesProcessor extends AbstractServiceProcessor<Voi
     }
 
     private SampleServiceArgs getArgs(JacsServiceData jacsServiceData) {
-        return SampleServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleServiceArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SampleServiceArgs());
     }
 
 }

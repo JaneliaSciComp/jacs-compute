@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.neuronservices;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
@@ -74,9 +73,7 @@ public class NeuronWarpingProcessor extends AbstractNeuronSeparationProcessor {
     }
 
     protected NeuronWarpingArgs getArgs(JacsServiceData jacsServiceData) {
-        NeuronWarpingArgs args = new NeuronWarpingArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new NeuronWarpingArgs());
     }
 
     private Path getConsolidatedLabelFile(NeuronWarpingArgs args) {

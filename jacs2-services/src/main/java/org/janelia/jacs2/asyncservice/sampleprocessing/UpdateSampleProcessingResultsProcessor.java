@@ -221,7 +221,7 @@ public class UpdateSampleProcessingResultsProcessor extends AbstractBasicLifeCyc
     }
 
     private UpdateSampleResultsArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new UpdateSampleResultsArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new UpdateSampleResultsArgs());
     }
 
 }

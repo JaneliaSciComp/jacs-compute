@@ -135,7 +135,7 @@ public class WarpToolProcessor extends AbstractExeBasedServiceProcessor<Void> {
     }
 
     private WarpToolArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new WarpToolArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new WarpToolArgs());
     }
 
     private String getExecutable() {

@@ -193,7 +193,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
     }
 
     private LSMImportArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new LSMImportArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LSMImportArgs());
     }
 
     private List<SlideImage> retrieveSageImages(String subject, LSMImportArgs args) {

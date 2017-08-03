@@ -117,9 +117,7 @@ public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<Fi
     }
 
     private LinkDataArgs getArgs(JacsServiceData jacsServiceData) {
-        LinkDataArgs linkDataArgs = new LinkDataArgs();
-        new JCommander(linkDataArgs).parse(jacsServiceData.getArgsArray());
-        return linkDataArgs;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LinkDataArgs());
     }
 
     private Path getSourceFile(LinkDataArgs args) {

@@ -114,7 +114,7 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
     }
 
     private LockSampleArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new LockSampleArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LockSampleArgs());
     }
 
 }

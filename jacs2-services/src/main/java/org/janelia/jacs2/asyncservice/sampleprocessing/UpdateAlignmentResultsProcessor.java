@@ -199,7 +199,7 @@ public class UpdateAlignmentResultsProcessor extends AbstractBasicLifeCycleServi
     }
 
     private UpdateAlignmentResultsArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new UpdateAlignmentResultsArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new UpdateAlignmentResultsArgs());
     }
 
     private String getScore(Properties alignmentProperties, String scoreProperty) {

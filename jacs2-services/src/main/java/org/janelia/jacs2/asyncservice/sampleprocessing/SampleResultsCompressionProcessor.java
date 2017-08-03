@@ -133,7 +133,7 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
     }
 
     private SampleResultsCompressionArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleResultsCompressionArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SampleResultsCompressionArgs());
     }
 
     private Optional<ServiceComputation<PipelineResult>> setNewResultFile(JacsServiceData jacsServiceData,

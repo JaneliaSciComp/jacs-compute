@@ -26,10 +26,6 @@ public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
 
     private long resultComputationTime;
 
-    public static Level2ComputeTestArgs getArgs(JacsServiceData jacsServiceData) {
-        return Level2ComputeTestArgs.parse(jacsServiceData.getArgsArray(), new Level2ComputeTestArgs());
-    }
-
     private final Level1ComputeTestProcessor level1ComputeTestProcessor;
 
     @Inject
@@ -92,6 +88,9 @@ public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
         throw new UnsupportedOperationException();
     }
 
+    private Level2ComputeTestArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new Level2ComputeTestArgs());
+    }
 
 }
 

@@ -172,7 +172,7 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Lis
     }
 
     private MIPGenerationArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new MIPGenerationArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new MIPGenerationArgs());
     }
 
     private String getExecutable() {

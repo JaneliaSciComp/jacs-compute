@@ -137,7 +137,7 @@ public class Vaa3dPluginProcessor extends AbstractBasicLifeCycleServiceProcessor
     }
 
     private Vaa3dPluginArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new Vaa3dPluginArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new Vaa3dPluginArgs());
     }
 
 }

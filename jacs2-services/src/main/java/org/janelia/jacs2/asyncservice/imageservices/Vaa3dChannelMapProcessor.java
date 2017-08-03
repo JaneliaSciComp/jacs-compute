@@ -182,7 +182,7 @@ public class Vaa3dChannelMapProcessor extends AbstractBasicLifeCycleServiceProce
     }
 
     private Vaa3dChannelMapArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new Vaa3dChannelMapArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new Vaa3dChannelMapArgs());
     }
 
     private Path getInputFile(Vaa3dChannelMapArgs args) {

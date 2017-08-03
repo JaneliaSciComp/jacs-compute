@@ -30,10 +30,6 @@ public class FloatComputeTestProcessor extends AbstractServiceProcessor<Long> {
         String testName="FloatComputeTest";
     }
 
-    public static FloatComputeTestArgs getArgs(JacsServiceData jacsServiceData) {
-        return FloatComputeTestArgs.parse(jacsServiceData.getArgsArray(), new FloatComputeTestArgs());
-    }
-
     private long resultComputationTime;
 
     @Inject
@@ -111,6 +107,10 @@ public class FloatComputeTestProcessor extends AbstractServiceProcessor<Long> {
     @Override
     public ServiceErrorChecker getErrorChecker() {
         throw new UnsupportedOperationException();
+    }
+
+    private FloatComputeTestArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new FloatComputeTestArgs());
     }
 
 }

@@ -112,9 +112,7 @@ public class FileMoveProcessor extends AbstractBasicLifeCycleServiceProcessor<Fi
     }
 
     private FileMoveArgs getArgs(JacsServiceData jacsServiceData) {
-        FileMoveArgs fileMoveArgs = new FileMoveArgs();
-        new JCommander(fileMoveArgs).parse(jacsServiceData.getArgsArray());
-        return fileMoveArgs;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new FileMoveArgs());
     }
 
     private Path getSourceFile(FileMoveArgs args) {

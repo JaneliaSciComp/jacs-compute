@@ -70,9 +70,7 @@ public class AffineToInsightConverterProcessor extends AbstractBasicLifeCycleSer
     }
 
     private AfineToInsightConverterArgs getArgs(JacsServiceData jacsServiceData) {
-        AfineToInsightConverterArgs args = new AfineToInsightConverterArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new AfineToInsightConverterArgs());
     }
 
     private Path getInput(AfineToInsightConverterArgs args) {

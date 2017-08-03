@@ -579,7 +579,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     }
 
     private ConvertTileToImageArgs getArgs(JacsServiceData jacsServiceData) {
-        return SampleServiceArgs.parse(jacsServiceData.getArgsArray(), new ConvertTileToImageArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ConvertTileToImageArgs());
     }
 
     private MergeChannelsData determineChannelMappingUsingDyeSpec(TileLsmPair tilePair,

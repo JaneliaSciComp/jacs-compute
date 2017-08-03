@@ -101,7 +101,7 @@ public class Vaa3dStitchProcessor extends AbstractBasicLifeCycleServiceProcessor
     }
 
     private Vaa3dStitchArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new Vaa3dStitchArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new Vaa3dStitchArgs());
     }
 
     private Path getOutputFile(Vaa3dStitchArgs args) {

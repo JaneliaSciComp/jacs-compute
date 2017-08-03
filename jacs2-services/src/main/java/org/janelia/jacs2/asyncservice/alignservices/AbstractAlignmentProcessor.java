@@ -11,6 +11,7 @@ import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
@@ -195,9 +196,7 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
     }
 
     protected AlignmentArgs getArgs(JacsServiceData jacsServiceData) {
-        AlignmentArgs args = new AlignmentArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new AlignmentArgs());
     }
 
     protected AlignmentInput getAlignmentFirstInput(AlignmentArgs args) {

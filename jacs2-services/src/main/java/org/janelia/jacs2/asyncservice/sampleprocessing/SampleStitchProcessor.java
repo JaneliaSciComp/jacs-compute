@@ -302,7 +302,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
     }
 
     private SampleStitchArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new SampleStitchArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SampleStitchArgs());
     }
 
 }

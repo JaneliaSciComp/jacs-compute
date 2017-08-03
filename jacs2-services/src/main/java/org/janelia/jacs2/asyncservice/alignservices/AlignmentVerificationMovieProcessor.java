@@ -158,7 +158,7 @@ public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleS
     }
 
     private AlignmentVerificationMoviewArgs getArgs(JacsServiceData jacsServiceData) {
-        return AlignmentVerificationMoviewArgs.parse(jacsServiceData.getArgsArray(), new AlignmentVerificationMoviewArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new AlignmentVerificationMoviewArgs());
     }
 
     private Path getSubjectFile(AlignmentVerificationMoviewArgs args) {

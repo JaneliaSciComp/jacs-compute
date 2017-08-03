@@ -192,9 +192,7 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
     }
 
     private FijiMacroArgs getArgs(JacsServiceData jacsServiceData) {
-        FijiMacroArgs args = new FijiMacroArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new FijiMacroArgs());
     }
 
     private String getFijiExecutable() {

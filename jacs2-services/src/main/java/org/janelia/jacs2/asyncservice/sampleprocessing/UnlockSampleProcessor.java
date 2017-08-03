@@ -87,7 +87,7 @@ public class UnlockSampleProcessor extends AbstractServiceProcessor<Void> {
     }
 
     private UnlockSampleArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new UnlockSampleArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new UnlockSampleArgs());
     }
 
 }

@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.neuronservices;
 
-import com.beust.jcommander.JCommander;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -56,9 +55,7 @@ public class NeuronSeparationProcessor extends AbstractNeuronSeparationProcessor
     }
 
     protected NeuronSeparationArgs getArgs(JacsServiceData jacsServiceData) {
-        NeuronSeparationArgs args = new NeuronSeparationArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new NeuronSeparationArgs());
     }
 
 }

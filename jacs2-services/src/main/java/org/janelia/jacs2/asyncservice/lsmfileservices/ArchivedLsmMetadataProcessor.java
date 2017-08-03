@@ -104,7 +104,7 @@ public class ArchivedLsmMetadataProcessor extends AbstractServiceProcessor<File>
     }
 
     private ArchivedLsmMetadataArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new ArchivedLsmMetadataArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ArchivedLsmMetadataArgs());
     }
 
     private File getInputFile(ArchivedLsmMetadataArgs args) {

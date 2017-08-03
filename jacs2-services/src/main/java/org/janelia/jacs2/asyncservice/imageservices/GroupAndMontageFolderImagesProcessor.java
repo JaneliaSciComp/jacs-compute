@@ -154,9 +154,7 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
     }
 
     private MontageFolderImagesArgs getArgs(JacsServiceData jacsServiceData) {
-        MontageFolderImagesArgs args = new MontageFolderImagesArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new MontageFolderImagesArgs());
     }
 
     private Path getOutputDir(MontageFolderImagesArgs args) {

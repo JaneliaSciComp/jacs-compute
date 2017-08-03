@@ -106,7 +106,7 @@ public class UpdateSamplePostProcessingResultsProcessor extends AbstractBasicLif
     }
 
     private UpdateSamplePostProcessingResultsArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new UpdateSamplePostProcessingResultsArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new UpdateSamplePostProcessingResultsArgs());
     }
 
     private Path getPostProcessingResultOutputDir(UpdateSamplePostProcessingResultsArgs args) {

@@ -147,7 +147,7 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
     }
 
     private ConverterArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new ConverterArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ConverterArgs());
     }
 
     private File getOutputFile(ConverterArgs args) {

@@ -120,7 +120,7 @@ public class Vaa3dConverterProcessor extends AbstractBasicLifeCycleServiceProces
     }
 
     private Vaa3dConverterArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(jacsServiceData.getArgsArray(), new Vaa3dConverterArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new Vaa3dConverterArgs());
     }
 
 }

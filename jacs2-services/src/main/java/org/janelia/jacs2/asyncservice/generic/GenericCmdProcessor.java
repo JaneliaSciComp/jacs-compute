@@ -81,9 +81,7 @@ public class GenericCmdProcessor extends AbstractExeBasedServiceProcessor<Void> 
     }
 
     private GenericCmdArgs getArgs(JacsServiceData jacsServiceData) {
-        GenericCmdArgs args = new GenericCmdArgs();
-        new JCommander(args).parse(jacsServiceData.getArgsArray());
-        return args;
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new GenericCmdArgs());
     }
 
 }

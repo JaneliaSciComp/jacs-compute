@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.fileservices;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -26,7 +25,7 @@ import java.nio.file.Paths;
 @Named("fileRemove")
 public class FileRemoveProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, Void> {
 
-    public static class FileMoveArgs extends ServiceArgs {
+    public static class FileRemoveArgs extends ServiceArgs {
         @Parameter(names = {"-file"}, description = "File name", required = true)
         String file;
     }
@@ -41,7 +40,7 @@ public class FileRemoveProcessor extends AbstractBasicLifeCycleServiceProcessor<
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(FileRemoveProcessor.class, new FileMoveArgs());
+        return ServiceArgs.getMetadata(FileRemoveProcessor.class, new FileRemoveArgs());
     }
 
     @Override
@@ -54,7 +53,7 @@ public class FileRemoveProcessor extends AbstractBasicLifeCycleServiceProcessor<
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
                     try {
-                        FileMoveArgs args = getArgs(pd.getJacsServiceData());
+                        FileRemoveArgs args = getArgs(pd.getJacsServiceData());
                         Path filePath = getFile(args);
                         if (Files.exists(filePath)) {
                             Files.delete(filePath);
@@ -66,13 +65,11 @@ public class FileRemoveProcessor extends AbstractBasicLifeCycleServiceProcessor<
                 });
     }
 
-    private FileMoveArgs getArgs(JacsServiceData jacsServiceData) {
-        FileMoveArgs fileMoveArgs = new FileMoveArgs();
-        new JCommander(fileMoveArgs).parse(jacsServiceData.getArgsArray());
-        return fileMoveArgs;
+    private FileRemoveArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new FileRemoveArgs());
     }
 
-    private Path getFile(FileMoveArgs args) {
+    private Path getFile(FileRemoveArgs args) {
         return Paths.get(args.file);
     }
 }

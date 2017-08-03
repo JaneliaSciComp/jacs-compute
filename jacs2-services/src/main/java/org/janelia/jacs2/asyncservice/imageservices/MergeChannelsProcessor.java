@@ -205,7 +205,7 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Fil
     }
 
     private ChannelMergeArgs getArgs(JacsServiceData jacsServiceData) {
-        return ChannelMergeArgs.parse(jacsServiceData.getArgsArray(), new ChannelMergeArgs());
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ChannelMergeArgs());
     }
 
     private String getExecutable() {
