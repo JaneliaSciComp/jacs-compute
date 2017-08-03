@@ -410,7 +410,7 @@ public class SampleUtils {
                                         // tmog is treated differently - simply take the max
                                         Date tmogDate = (Date) sageFieldValue;
                                         EntityFieldValueHandler<Date> currentTmogDateHandler = (EntityFieldValueHandler<Date>) consensusLsmFieldValues.get(fieldName);
-                                        if (currentTmogDateHandler == null || tmogDate.after(currentTmogDateHandler.getFieldValue())) {
+                                        if (currentTmogDateHandler == null || tmogDate != null && tmogDate.after(currentTmogDateHandler.getFieldValue())) {
                                             consensusLsmFieldValues.put(fieldName, new SetFieldValueHandler<>(tmogDate));
                                         }
                                     } else {
@@ -425,7 +425,8 @@ public class SampleUtils {
                                         }
                                     }
                                 } else {
-                                    consensusLsmFieldValues.put(fieldName, new SetFieldValueHandler<>(sageFieldValue));
+                                    if (!"tmogDate".equals(fieldName) || sageFieldValue != null) // if it's the first encountered tmogDate only set it the value is not null
+                                        consensusLsmFieldValues.put(fieldName, new SetFieldValueHandler<>(sageFieldValue));
                                 }
                             } catch (IllegalAccessException e) {
                                 throw new IllegalArgumentException(e);
