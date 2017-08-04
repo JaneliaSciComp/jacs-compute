@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import static org.hamcrest.collection.IsArrayContainingInOrder.arrayContaining;
@@ -37,11 +38,13 @@ public class AbstractServiceProcessorTest {
     static private class T2 {
         final private String t2F1;
         final private String t2F2;
+        final private Number t2Number;
         final private String[] t2ArrayField;
 
-        T2(String t2F1, String t2F2, String[] t2ArrayField) {
+        T2(String t2F1, String t2F2, Number t2Number, String[] t2ArrayField) {
             this.t2F1 = t2F1;
             this.t2F2 = t2F2;
+            this.t2Number = t2Number;
             this.t2ArrayField = t2ArrayField;
         }
     }
@@ -102,9 +105,11 @@ public class AbstractServiceProcessorTest {
                                 new T2[] {
                                         new T2("0 t2F1 value",
                                                 "0 t2F2 value",
+                                                100L,
                                                 new String[]{"0 t2vof_1", "0 t2vof_2"}),
                                         new T2("1 t2F1 value",
                                                 "1 t2F2 value",
+                                                200L,
                                                 new String[]{"1 t2vof_1", "1 t2vof_2"})
                                 }
                         ),
@@ -120,16 +125,19 @@ public class AbstractServiceProcessorTest {
                                 new T2[] {
                                         new T2("0 t2F1 value",
                                                 "0 t2F2 value",
+                                                300L,
                                                 new String[]{"0 t2vof_1", "0 t2vof_2"}),
                                         new T2("1 t2F1 value",
                                                 "1 t2F2 value",
+                                                400L,
                                                 new String[]{"1 t2vof_1", "1 t2vof_2"})
                                 }
                         ),
                         new String[] {
-                                "arg1", "|>${t1F1}", "arg2", "|>${t1F2}", "arg3", "|>${t1ArrayField[0]}", "arg4", "|>${t1ArrayField[1]}", "|>${t1ObjectArrayField[1].t2F2}", "|>${t1ObjectArrayField[2].t2F2}"
+                                "arg1", "|>${t1F1}", "arg2", "|>${t1F2}", "arg3", "|>${t1ArrayField[0]}", "arg4", "|>${t1ArrayField[1]}", "|>${t1ObjectArrayField[1].t2F2}", "|>${t1ObjectArrayField[2].t2F2}",
+                                "|>${t1ObjectArrayField[0].t2Number}", "|>${t1ObjectArrayField[1].t2Number}"
                         },
-                        new String[]{"arg1", "t1F1 value", "arg2", "${t1F2}", "arg3", "t1vof_1", "arg4", "t1vof_2", "1 t2F2 value", "${t1ObjectArrayField[2].t2F2}"}
+                        new String[]{"arg1", "t1F1 value", "arg2", "${t1F2}", "arg3", "t1vof_1", "arg4", "t1vof_2", "1 t2F2 value", "${t1ObjectArrayField[2].t2F2}", "300", "400"}
                 ),
                 new TestData(
                         "s1",
@@ -137,14 +145,25 @@ public class AbstractServiceProcessorTest {
                         new String[] {"s1"}
                 ),
                 new TestData(
+                        new BigInteger("123456789123456789123456789"),
+                        new String[] {"|>${result}"},
+                        new String[] {"123456789123456789123456789"}
+                ),
+                new TestData(
+                        123456789123456789L,
+                        new String[] {"|>${result}"},
+                        new String[] {"123456789123456789"}
+                ),
+                new TestData(
                         new Object[]{
                                 "s1",
                                 "s2",
                                 "s3",
-                                new T2("1 t2F1 value", "1 t2F2 value", new String[]{"1 t2vof_1", "1 t2vof_2"})
+                                new T2("1 t2F1 value", "1 t2F2 value", 500L, new String[]{"1 t2vof_1", "1 t2vof_2"}),
+                                600L
                         },
-                        new String[]{"|>${result[0]}", "|>${result[1]}", "|>this is ${result[3].t2F1}", "|>${result[3].t2ArrayField[1]}"},
-                        new String[]{"s1", "s2", "this is 1 t2F1 value", "1 t2vof_2"}
+                        new String[]{"|>${result[0]}", "|>${result[1]}", "|>this is ${result[3].t2F1}", "|>${result[3].t2ArrayField[1]}", "|>${result[4]}"},
+                        new String[]{"s1", "s2", "this is 1 t2F1 value", "1 t2vof_2", "600"}
                 )
         );
         Long predecessorId = 1L;
