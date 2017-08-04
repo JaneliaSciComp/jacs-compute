@@ -5,6 +5,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -99,6 +100,15 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     public ServiceErrorChecker getErrorChecker() {
         return new DefaultServiceErrorChecker(logger);
     }
+
+    @Override
+    public ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData) {
+        return computationFactory.newCompletedComputation(jacsServiceData)
+                .thenSuspendUntil(sd -> new ContinuationCond.Cond<>(sd, !suspendUntilAllDependenciesComplete(sd)))
+                .thenCompose(sdCond -> localProcess(sdCond.getState()));
+    }
+
+    abstract protected ServiceComputation<JacsServiceResult<R>> localProcess(JacsServiceData jacsServiceData);
 
     protected List<String> getErrors(JacsServiceData jacsServiceData) {
         return this.getErrorChecker().collectErrors(jacsServiceData);

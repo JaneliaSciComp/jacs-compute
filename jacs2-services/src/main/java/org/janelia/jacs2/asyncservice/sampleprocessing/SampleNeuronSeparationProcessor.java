@@ -75,7 +75,7 @@ public class SampleNeuronSeparationProcessor extends AbstractServiceProcessor<Ne
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<NeuronSeparationFiles>> process(JacsServiceData jacsServiceData) {
+    protected ServiceComputation<JacsServiceResult<NeuronSeparationFiles>> localProcess(JacsServiceData jacsServiceData) {
         SampleNeuronSeparationArgs args = getArgs(jacsServiceData);
         return neuronSeparationProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Separate sample neurons")

@@ -76,7 +76,7 @@ public class SampleNeuronWarpingProcessor extends AbstractServiceProcessor<Neuro
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<NeuronSeparationFiles>> process(JacsServiceData jacsServiceData) {
+    protected ServiceComputation<JacsServiceResult<NeuronSeparationFiles>> localProcess(JacsServiceData jacsServiceData) {
         SampleNeuronWarpingArgs args = getArgs(jacsServiceData);
         return neuronWarpingProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Warp sample neurons")

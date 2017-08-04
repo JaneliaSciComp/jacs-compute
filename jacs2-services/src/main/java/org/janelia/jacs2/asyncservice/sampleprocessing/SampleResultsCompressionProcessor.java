@@ -102,7 +102,7 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<List<PipelineResult>>> process(JacsServiceData jacsServiceData) {
+    protected ServiceComputation<JacsServiceResult<List<PipelineResult>>> localProcess(JacsServiceData jacsServiceData) {
         SampleResultsCompressionArgs args = getArgs(jacsServiceData);
         List<ObjectiveSample> objectivesSample =
                 sampleDataService.getObjectivesBySampleIdAndObjective(

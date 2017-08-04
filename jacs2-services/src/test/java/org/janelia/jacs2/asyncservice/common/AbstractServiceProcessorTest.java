@@ -64,7 +64,7 @@ public class AbstractServiceProcessorTest {
         }
 
         @Override
-        public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
+        public ServiceComputation<JacsServiceResult<Void>> localProcess(JacsServiceData jacsServiceData) {
             return null; // not important
         }
     }

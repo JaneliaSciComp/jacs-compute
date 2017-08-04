@@ -128,7 +128,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<List<LSMImportResult>>> process(JacsServiceData jacsServiceData) {
+    protected ServiceComputation<JacsServiceResult<List<LSMImportResult>>> localProcess(JacsServiceData jacsServiceData) {
         LSMImportArgs args = getArgs(jacsServiceData);
         if (StringUtils.isBlank(args.dataset) &&
                 StringUtils.isBlank(args.imageLine) &&

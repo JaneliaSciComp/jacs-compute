@@ -24,7 +24,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<R, S> extends Abstr
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData) {
+    protected ServiceComputation<JacsServiceResult<R>> localProcess(JacsServiceData jacsServiceData) {
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(this::prepareProcessing)
                 .thenApply(this::submitServiceDependencies)
