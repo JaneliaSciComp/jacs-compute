@@ -128,7 +128,7 @@ public class DomainModelUtils {
         }
     }
 
-    public static <D extends DomainObject> Map<String, Object> getFieldValues(D dObj) {
+    public static <D> Map<String, Object> getFieldValues(D dObj) {
         try {
             Map<String, Object> objectFields = new HashMap<>();
             for (Field field : ReflectionUtils.getAllFields(dObj.getClass())) {

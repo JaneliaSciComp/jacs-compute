@@ -276,13 +276,11 @@ class AlignmentServicesInvocationHelper {
     }
 
     JacsServiceData submitNewServiceDependency(JacsServiceData jacsServiceData, JacsServiceData dependency) {
-        Optional<JacsServiceData> existingDependency = jacsServiceData.findSimilarDependency(dependency);
-        if (existingDependency.isPresent()) {
-            return existingDependency.get();
-        } else {
-            jacsServiceDataPersistence.saveHierarchy(dependency);
-            return dependency;
-        }
+        return jacsServiceData.findSimilarDependency(dependency)
+                    .orElseGet(() -> {
+                        jacsServiceDataPersistence.saveHierarchy(dependency);
+                        return dependency;
+                    });
     }
 
     JacsServiceData warp(Path input, Path output, List<Path> references,

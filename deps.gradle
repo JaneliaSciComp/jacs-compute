@@ -2,6 +2,7 @@ dependencies {
     project.ext {
         GUAVA_LIB = "com.google.guava:guava:19.0"
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
+
         // logging
         SLF4J_VERSION = "1.7.21"
         LOGBACK_VERSION = "1.1.7"
@@ -53,6 +54,9 @@ dependencies {
         JACKSON_DATABIND_LIB = "com.fasterxml.jackson.core:jackson-databind:${JACKSON_VERSION}"
         JACKSON_DATATYPE_JODA_LIB = "com.fasterxml.jackson.datatype:jackson-datatype-joda:${JACKSON_VERSION}"
         JACKSON_JAXRS_JSON_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${JACKSON_VERSION}"
+
+        // expressions
+	JUEL_LIB = "de.odysseus.juel:juel-impl:2.2.7"
 
         // drmaa
         DRMAA1_LIB = "us.levk:drmaa-gridengine:6.2u5"
