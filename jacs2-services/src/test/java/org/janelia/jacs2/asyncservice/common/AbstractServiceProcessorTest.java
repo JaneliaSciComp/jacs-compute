@@ -143,8 +143,8 @@ public class AbstractServiceProcessorTest {
                                 "s3",
                                 new T2("1 t2F1 value", "1 t2F2 value", new String[]{"1 t2vof_1", "1 t2vof_2"})
                         },
-                        new String[]{"|>${result[0]}", "|>${result[1]}", "|>${result[3].t2F1}", "|>${result[3].t2ArrayField[1]}"},
-                        new String[]{"s1", "s2", "1 t2F1 value", "1 t2vof_2"}
+                        new String[]{"|>${result[0]}", "|>${result[1]}", "|>this is ${result[3].t2F1}", "|>${result[3].t2ArrayField[1]}"},
+                        new String[]{"s1", "s2", "this is 1 t2F1 value", "1 t2vof_2"}
                 )
         );
         Long predecessorId = 1L;
