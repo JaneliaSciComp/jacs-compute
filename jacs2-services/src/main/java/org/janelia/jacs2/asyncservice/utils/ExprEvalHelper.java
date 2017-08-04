@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import de.odysseus.el.ExpressionFactoryImpl;
 import de.odysseus.el.util.SimpleContext;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
-import org.janelia.jacs2.model.DomainModelUtils;
 
 import javax.el.ExpressionFactory;
 import javax.el.PropertyNotFoundException;
@@ -28,7 +27,7 @@ public class ExprEvalHelper {
         ExpressionFactory factory = new ExpressionFactoryImpl();
         for (Object result : forwardedResults) {
             SimpleContext context = new SimpleContext();
-            Map<String, Object> resultFields = convertObjectToMap(objectMapper, result); // DomainModelUtils.getFieldValues(result);
+            Map<String, Object> resultFields = convertObjectToMap(objectMapper, result);
             resultFields.forEach((field, value) -> {
                 context.setVariable(field, factory.createValueExpression(value, Object.class));
             });

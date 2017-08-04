@@ -1,22 +1,13 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.ImmutableList;
-import de.odysseus.el.ExpressionFactoryImpl;
-import de.odysseus.el.util.SimpleContext;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
-import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.DomainModelUtils;
 import org.janelia.jacs2.model.EntityFieldValueHandler;
 import org.janelia.jacs2.model.SetFieldValueHandler;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -26,9 +17,6 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 import org.slf4j.Logger;
 
-import javax.el.ExpressionFactory;
-import javax.el.ValueExpression;
-import java.beans.Beans;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -172,37 +160,6 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         }
         return jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
     }
-
-//    private String eval(String argExpr, List<Object> forwardedResults) {
-//        ObjectMapper objectMapper = ObjectMapperFactory.instance()
-//                .newMongoCompatibleObjectMapper()
-//                .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-//        ExpressionFactory factory = new ExpressionFactoryImpl();
-//        for (Object result : forwardedResults) {
-//            SimpleContext context = new SimpleContext();
-//            JsonNode resultNode = objectMapper.valueToTree(result);
-//            if (!resultNode.isContainerNode()) {
-//                context.setVariable("result", factory.createValueExpression(resultNode, JsonNode.class));
-//            } else if (resultNode.isArray()) {
-//                context.setVariable("result", factory.createValueExpression(resultNode, JsonNode.class));
-//            } else { // isObject
-//                resultNode.fields().forEachRemaining(fieldEntry -> {
-//                    context.setVariable(fieldEntry.getKey(), factory.createValueExpression(fieldEntry.getValue(), JsonNode.class));
-//                });
-//            }
-//
-////            DomainModelUtils.getFieldValues(result).forEach((field, value) -> context.setVariable(field, factory.createValueExpression(value, Object.class)));
-//
-//            ValueExpression argValExpr = factory.createValueExpression(context, argExpr, Object.class);
-//            Object argValue = argValExpr.getValue(context);
-//            if (argValue == null) {
-//                continue;
-//            } else {
-//                return argValue.toString();
-//            }
-//        }
-//        return argExpr;
-//    }
 
     protected Path getServicePath(String baseDir, JacsServiceData jacsServiceData, String... more) {
         ImmutableList.Builder<String> pathElemsBuilder = ImmutableList.<String>builder()

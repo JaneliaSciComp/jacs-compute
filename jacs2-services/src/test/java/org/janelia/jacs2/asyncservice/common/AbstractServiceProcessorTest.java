@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
@@ -21,7 +20,7 @@ public class AbstractServiceProcessorTest {
 
     private static final String TEST_WORKING_DIR = "testDir";
 
-    static class T1 {
+    static private class T1 {
         final private String t1F1;
         final private String t1F2;
         final private String[] t1ArrayField;
@@ -35,7 +34,7 @@ public class AbstractServiceProcessorTest {
         }
     }
 
-    static class T2 {
+    static private class T2 {
         final private String t2F1;
         final private String t2F2;
         final private String[] t2ArrayField;
