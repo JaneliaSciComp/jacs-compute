@@ -50,7 +50,7 @@ public class IntegerComputeTestProcessor extends AbstractServiceProcessor<Long> 
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Long>> localProcess(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<Long>> process(JacsServiceData jacsServiceData) {
         logger.debug("process() start");
         IntegerComputeTestArgs args = getArgs(jacsServiceData);
         int matrixSize = args.matrixSize;

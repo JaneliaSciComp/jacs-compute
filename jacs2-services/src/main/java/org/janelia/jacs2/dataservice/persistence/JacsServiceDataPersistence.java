@@ -14,6 +14,7 @@ import org.janelia.jacs2.model.page.PageResult;
 
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +94,7 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
             List<JacsServiceData> dependencies = jacsServiceDataDao.findByIds(jacsServiceData.getDependenciesIds());
-            List<JacsServiceData> childServices = jacsServiceDataDao.findChildServices(jacsServiceData.getId());
+            List<JacsServiceData> childServices = jacsServiceData.hasId() ? jacsServiceDataDao.findChildServices(jacsServiceData.getId()) : Collections.emptyList();
             return Stream.concat(dependencies.stream(), childServices.stream()).collect(Collectors.toList());
         } finally {
             daoSource.destroy(jacsServiceDataDao);

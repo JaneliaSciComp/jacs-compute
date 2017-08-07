@@ -46,7 +46,7 @@ public class FloatComputeTestProcessor extends AbstractServiceProcessor<Long> {
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Long>> localProcess(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<Long>> process(JacsServiceData jacsServiceData) {
         String serviceName=getArgs(jacsServiceData).testName;
         logger.debug(serviceName +" start");
         FloatComputeTestArgs args = getArgs(jacsServiceData);

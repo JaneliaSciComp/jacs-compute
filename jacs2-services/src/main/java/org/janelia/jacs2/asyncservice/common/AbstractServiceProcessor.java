@@ -101,15 +101,6 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         return new DefaultServiceErrorChecker(logger);
     }
 
-    @Override
-    public ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData) {
-        return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenSuspendUntil(sd -> new ContinuationCond.Cond<>(sd, !suspendUntilAllDependenciesComplete(sd)))
-                .thenCompose(sdCond -> localProcess(sdCond.getState()));
-    }
-
-    abstract protected ServiceComputation<JacsServiceResult<R>> localProcess(JacsServiceData jacsServiceData);
-
     protected List<String> getErrors(JacsServiceData jacsServiceData) {
         return this.getErrorChecker().collectErrors(jacsServiceData);
     }
@@ -222,11 +213,8 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
                 return new JacsServiceResult<>(sdp, true);
             }
             // check if the children and the immediate dependencies are done
-            List<JacsServiceData> childServices = jacsServiceDataPersistence.findChildServices(sdp.getId());
-            List<JacsServiceData> dependentServices = jacsServiceDataPersistence.findByIds(sdp.getDependenciesIds());
-            Stream.concat(
-                    childServices.stream(),
-                    dependentServices.stream())
+            List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(sdp);
+            serviceDependencies.stream()
                     .forEach(sd -> {
                         if (!sd.hasCompleted()) {
                             running.add(sd);

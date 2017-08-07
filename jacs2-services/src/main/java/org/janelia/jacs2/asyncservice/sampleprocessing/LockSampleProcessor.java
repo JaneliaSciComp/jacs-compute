@@ -86,7 +86,7 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<String>> localProcess(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<String>> process(JacsServiceData jacsServiceData) {
         LockSampleArgs args = getArgs(jacsServiceData);
 
         DataHolder<String> lockHolder = new DataHolder<>();

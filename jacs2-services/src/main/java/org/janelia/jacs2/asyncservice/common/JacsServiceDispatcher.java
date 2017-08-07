@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.dao.JacsNotificationDao;
@@ -14,6 +15,8 @@ import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -73,23 +76,23 @@ public class JacsServiceDispatcher {
         logger.info("Dispatch service {}", jacsServiceData);
         ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
         serviceComputationFactory.<JacsServiceData>newComputation()
-                .supply(() -> {
+                .supply(() -> jacsServiceData)
+                .thenSuspendUntil(new SuspendServiceContinuationCond(jacsServiceDataPersistence, logger).negate())
+                .thenApply((ContinuationCond.Cond<JacsServiceData> sdCond) -> {
                     sendNotification(jacsServiceData, JacsServiceLifecycleStage.START_PROCESSING);
-                    jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.SUBMITTED, Optional.empty());
-                    return jacsServiceData;
+                    return sdCond.getState();
                 })
                 .thenCompose(sd -> serviceProcessor.process(sd))
                 .thenApply(r -> {
-                    success(jacsServiceData);
+                    success(r.getJacsServiceData());
                     return r;
                 })
                 .exceptionally(exc -> {
-                    JacsServiceData service = jacsServiceDataPersistence.findById(jacsServiceData.getId());
                     fail(jacsServiceData, exc);
                     throw new ComputationException(jacsServiceData, exc);
                 })
                 .whenComplete((r, exc) -> {
-                    jacsServiceQueue.completeService(jacsServiceData);
+                    jacsServiceQueue.completeService(r.getJacsServiceData());
                     if (!jacsServiceData.hasParentServiceId()) {
                         // release the slot acquired before the service was started
                         jacsServiceEngine.releaseSlot();

@@ -156,13 +156,6 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
     @Override
     public ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> process(JacsServiceData jacsServiceData) {
-        return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenSuspendUntil(sd -> new ContinuationCond.Cond<>(sd, !suspendUntilAllDependenciesComplete(sd)))
-                .thenCompose(sdCond -> localProcess(sdCond.getState()));
-    }
-
-    @Override
-    protected ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> localProcess(JacsServiceData jacsServiceData) {
         FlylightSampleArgs args = getArgs(jacsServiceData);
         Path sampleLsmsSubDir = FileUtils.getDataPath(SampleServicesUtils.DEFAULT_WORKING_LSMS_SUBDIR, jacsServiceData.getId());
         Path sampleSummarySubDir = FileUtils.getDataPath("Summary", jacsServiceData.getId());

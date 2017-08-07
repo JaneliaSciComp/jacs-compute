@@ -107,7 +107,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<SampleResult>> localProcess(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<SampleResult>> process(JacsServiceData jacsServiceData) {
         SampleStitchArgs args = getArgs(jacsServiceData);
         return mergeAndGroupSampleTilePairsProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)

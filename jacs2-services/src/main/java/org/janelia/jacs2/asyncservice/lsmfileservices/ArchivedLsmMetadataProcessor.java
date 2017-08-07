@@ -73,7 +73,7 @@ public class ArchivedLsmMetadataProcessor extends AbstractServiceProcessor<File>
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<File>> localProcess(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<File>> process(JacsServiceData jacsServiceData) {
         ArchivedLsmMetadataArgs args = getArgs(jacsServiceData);
         File lsmMetadataFile = getOutputFile(args);
         File workingLsmFile = getWorkingLsmFile(jacsServiceData, lsmMetadataFile);

@@ -1,7 +1,13 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import java.util.function.Function;
+
+/**
+ * Interface to check the continuation condition based on a provided state.
+ * @param <S> state type
+ */
 @FunctionalInterface
-public interface ContinuationCond<T> {
+public interface ContinuationCond<S> {
     class Cond<T> {
         private final T state;
         private final boolean condValue;
@@ -22,6 +28,15 @@ public interface ContinuationCond<T> {
         public boolean isNotCondValue() {
             return !isCondValue();
         }
+
     }
-    Cond<T> checkCond(T state);
+    Cond<S> checkCond(S state);
+
+    default ContinuationCond<S> negate() {
+        return (S state) -> {
+            Cond<S> cond = checkCond(state);
+            return new Cond<>(cond.state, !cond.condValue);
+        };
+    }
+
 }

@@ -110,7 +110,7 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<MIPsAndMoviesResult>> localProcess(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<MIPsAndMoviesResult>> process(JacsServiceData jacsServiceData) {
         MIPsAndMoviesArgs args = getArgs(jacsServiceData);
         try {
             Files.createDirectories(getResultsDir(args));

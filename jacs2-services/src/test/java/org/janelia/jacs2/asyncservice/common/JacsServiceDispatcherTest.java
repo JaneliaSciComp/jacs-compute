@@ -170,7 +170,7 @@ public class JacsServiceDispatcherTest {
         verify(jacsServiceDataPersistence)
                 .updateServiceState(
                         testServiceData,
-                        JacsServiceState.SUBMITTED,
+                        JacsServiceState.RUNNING,
                         Optional.empty());
         verify(jacsServiceDataPersistence)
                 .updateServiceState(
@@ -213,10 +213,11 @@ public class JacsServiceDispatcherTest {
         ServiceProcessor testProcessor = mock(ServiceProcessor.class);
 
         when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> testServiceData);
+        when(jacsServiceDataPersistence.findServiceDependencies(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
         when(serviceRegistry.lookupService(testServiceData.getName())).thenReturn(testProcessor);
 
         if (exc == null) {
-            when(testProcessor.process(any(JacsServiceData.class))).thenAnswer(invocation -> serviceComputationFactory.newCompletedComputation(null));
+            when(testProcessor.process(any(JacsServiceData.class))).thenAnswer(invocation -> serviceComputationFactory.newCompletedComputation(new JacsServiceResult<>(testServiceData)));
         } else {
             when(testProcessor.process(any(JacsServiceData.class))).thenAnswer(invocation -> serviceComputationFactory.newFailedComputation(exc));
         }
@@ -246,7 +247,7 @@ public class JacsServiceDispatcherTest {
         verify(jacsServiceDataPersistence)
                 .updateServiceState(
                         testServiceData,
-                        JacsServiceState.SUBMITTED,
+                        JacsServiceState.RUNNING,
                         Optional.empty());
         verify(jacsServiceDataPersistence)
                 .updateServiceState(

@@ -71,7 +71,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractServiceProcessor<Lis
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<List<SampleImageFile>>> localProcess(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<List<SampleImageFile>>> process(JacsServiceData jacsServiceData) {
         SampleServiceArgs args = getArgs(jacsServiceData);
         return getSampleImageFilesProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)

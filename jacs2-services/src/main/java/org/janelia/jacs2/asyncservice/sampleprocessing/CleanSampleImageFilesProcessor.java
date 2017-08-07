@@ -54,7 +54,7 @@ public class CleanSampleImageFilesProcessor extends AbstractServiceProcessor<Voi
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Void>> localProcess(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         SampleServiceArgs args = getArgs(jacsServiceData);
         List<AnatomicalArea> anatomicalAreas =
                 sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective, args.sampleArea);

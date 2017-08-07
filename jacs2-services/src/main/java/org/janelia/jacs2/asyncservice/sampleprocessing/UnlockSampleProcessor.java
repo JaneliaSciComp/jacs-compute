@@ -67,7 +67,7 @@ public class UnlockSampleProcessor extends AbstractServiceProcessor<Void> {
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Void>> localProcess(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         UnlockSampleArgs args = getArgs(jacsServiceData);
 
         Sample sample = sampleDataService.getSampleById(null, args.sampleId);

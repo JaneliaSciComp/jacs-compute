@@ -42,7 +42,7 @@ public abstract class AbstractDomainObject implements DomainObject {
     @JsonIgnore
     @Override
     public String getEntityRefId() {
-        return getEntityName() + "#" + (getId() != null ? getId() : "");
+        return getEntityName() + "#" + (hasId() ? getId() : "");
     }
 
     @JsonIgnore

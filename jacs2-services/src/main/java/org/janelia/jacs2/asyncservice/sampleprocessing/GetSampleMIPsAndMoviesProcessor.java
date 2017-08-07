@@ -86,7 +86,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractServiceProcessor<Li
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<List<SampleImageMIPsFile>>> localProcess(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<List<SampleImageMIPsFile>>> process(JacsServiceData jacsServiceData) {
         SampleMIPsAndMoviesArgs args = getArgs(jacsServiceData);
         return getSampleImageFilesProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
