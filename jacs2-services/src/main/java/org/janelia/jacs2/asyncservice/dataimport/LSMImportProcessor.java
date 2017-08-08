@@ -165,6 +165,14 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                             new ServiceArg("-debug", args.debugFlag)
                     ).thenApply(vr -> lineImages.stream()
                                     .map(SampleUtils::createLSMFromSlideImage)
+                                    .map(lsm -> {
+                                        if (StringUtils.isNotBlank(owner)) {
+                                            lsm.setOwnerKey("user:" + owner);
+                                        }
+                                        lsm.setWriters(ds.getWriters());
+                                        lsm.setReaders(ds.getReaders());
+                                        return lsm;
+                                    })
                                     .map(lsm -> importLsm(owner, lsm))
                                     .map(lsm -> lsm.getSlideCode())
                                     .collect(Collectors.toSet())
@@ -254,7 +262,9 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
 
     private Sample createNewSample(String owner, DataSet dataSet, String slideCode, Map<String, Map<SampleTileKey, SlideImageGroup>> lsmsGroupedByAbjectiveAndArea) {
         Sample newSample = new Sample();
-        newSample.setOwnerKey("user:" + owner);
+        if (StringUtils.isNotBlank(owner)) {
+            newSample.setOwnerKey("user:" + owner);
+        }
         newSample.setDataSet(dataSet.getIdentifier());
         newSample.setSlideCode(slideCode);
         newSample.setStatus(SampleProcessingStatus.New.name());
