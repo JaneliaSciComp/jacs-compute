@@ -12,6 +12,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.SuspendServiceContinuationCond;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesProcessor;
@@ -104,7 +105,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractServiceProcessor<Li
                         if (!sif.isChanSpecDefined()) {
                             throw new ComputationException(jacsServiceData, "No channel spec for LSM " + sif.getId());
                         }
-                        Path resultsDir =  getResultsDir(args, sif.getArea(), sif.getObjective(), new File(lsmImageFileName));
+                        Path resultsDir = getResultsDir(args, sif.getArea(), sif.getObjective(), new File(lsmImageFileName));
                         // get color spec from the LSM
                         List<FijiColor> colors = FijiUtils.getColorSpec(sif.getColorSpec(), sif.getChanSpec());
                         if (colors.isEmpty()) {
@@ -142,11 +143,11 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractServiceProcessor<Li
                         });
                     })
                     .collect(Collectors.toList());
-                    ;
+            ;
             return computationFactory
                     .newCompletedComputation(sampleImageFiles)
                     .thenCombineAll(basicMIPsComputations, (List<SampleImageFile> sifs, List<?> lsmsWithMIPs) -> (List<SampleImageMIPsFile>) lsmsWithMIPs);
-        }).thenSuspendUntil((List<SampleImageMIPsFile> lsmsWithMIPs) -> new ContinuationCond.Cond<>(lsmsWithMIPs, !suspendUntilAllDependenciesComplete(jacsServiceData))
+        }).thenSuspendUntil(this.suspendCondition(jacsServiceData)
         ).thenApply((ContinuationCond.Cond<List<SampleImageMIPsFile>> lsmsWithMIPsCond) -> this.updateServiceResult(jacsServiceData, lsmsWithMIPsCond.getState()))
         ;
     }

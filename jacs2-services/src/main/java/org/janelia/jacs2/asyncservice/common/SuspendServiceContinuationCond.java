@@ -1,59 +1,68 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * SuspendServiceContinuationCond implements a Continuation that may suspend a service if its dependencies are not complete.
  */
-public class SuspendServiceContinuationCond implements ContinuationCond<JacsServiceData> {
+public class SuspendServiceContinuationCond<S> implements ContinuationCond<S> {
 
+    private final ContinuationCond<JacsServiceData> dependenciesCompletedCont;
+    private final Function<S, JacsServiceData> stateToServiceDataMapper;
+    private final BiFunction<S, JacsServiceData, S> serviceDataToStateMapper;
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
     private final Logger logger;
 
-    public SuspendServiceContinuationCond(JacsServiceDataPersistence jacsServiceDataPersistence, Logger logger) {
+    public SuspendServiceContinuationCond(Function<S, JacsServiceData> stateToServiceDataMapper,
+                                          BiFunction<S, JacsServiceData, S> serviceDataToStateMapper,
+                                          JacsServiceDataPersistence jacsServiceDataPersistence,
+                                          Logger logger) {
+        this(new ServiceDependenciesCompletedContinuationCond(jacsServiceDataPersistence, logger),
+                stateToServiceDataMapper,
+                serviceDataToStateMapper,
+                jacsServiceDataPersistence,
+                logger
+        );
+    }
+
+    public SuspendServiceContinuationCond(ContinuationCond<JacsServiceData> dependenciesCompletedCont,
+                                          Function<S, JacsServiceData> stateToServiceDataMapper,
+                                          BiFunction<S, JacsServiceData, S> serviceDataToStateMapper,
+                                          JacsServiceDataPersistence jacsServiceDataPersistence,
+                                          Logger logger) {
+        this.dependenciesCompletedCont = dependenciesCompletedCont;
+        this.stateToServiceDataMapper = stateToServiceDataMapper;
+        this.serviceDataToStateMapper = serviceDataToStateMapper;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.logger = logger;
     }
 
     /**
-     * @param serviceData
+     * @param state
      * @return a condition that evaluates to true if the service argument needs to be suspended.
      */
     @Override
-    public Cond<JacsServiceData> checkCond(JacsServiceData serviceData) {
-        JacsServiceData updatedServiceData = refreshServiceData(serviceData);
-
+    public Cond<S> checkCond(S state) {
+        JacsServiceData updatedServiceData = refreshServiceData(stateToServiceDataMapper.apply(state));
         if (updatedServiceData.hasCompleted()) {
-            return new Cond<>(updatedServiceData, false);
+            return new Cond<>(serviceDataToStateMapper.apply(state, updatedServiceData), false);
         }
-
-        List<JacsServiceData> runningDependencies = new ArrayList<>();
-        List<JacsServiceData> failedDependencies = new ArrayList<>();
-        // check if the children and the immediate dependencies are done
-        List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(updatedServiceData);
-        verifyAndFailIfAnyDependencyFailed(updatedServiceData, failedDependencies);
-        serviceDependencies.stream()
-                .forEach(sd -> {
-                    if (!sd.hasCompleted()) {
-                        runningDependencies.add(sd);
-                    } else if (sd.hasCompletedUnsuccessfully()) {
-                        failedDependencies.add(sd);
-                    }
-                });
-        if (CollectionUtils.isEmpty(runningDependencies)) {
-            return new Cond<>(resumeService(updatedServiceData), false);
-        }
-        verifyAndFailIfTimeOut(updatedServiceData);
-        return new Cond<>(suspendService(updatedServiceData), true);
+        Cond<JacsServiceData> dependenciesCompletedCond = dependenciesCompletedCont.checkCond(updatedServiceData);
+        return new Cond<>(
+                serviceDataToStateMapper.apply(
+                        state,
+                        dependenciesCompletedCond.isCondValue()
+                                ? this.resumeService(dependenciesCompletedCond.getState())
+                                : this.suspendService(dependenciesCompletedCond.getState())),
+                dependenciesCompletedCond.isNotCondValue()
+        );
     }
 
     private JacsServiceData refreshServiceData(JacsServiceData jacsServiceData) {
@@ -73,31 +82,6 @@ public class SuspendServiceContinuationCond implements ContinuationCond<JacsServ
             jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.SUSPENDED, Optional.empty());
         }
         return jacsServiceData;
-    }
-
-    private void verifyAndFailIfAnyDependencyFailed(JacsServiceData jacsServiceData, List<JacsServiceData> failedDependencies) {
-        if (CollectionUtils.isNotEmpty(failedDependencies)) {
-            jacsServiceDataPersistence.updateServiceState(
-                    jacsServiceData,
-                    JacsServiceState.CANCELED,
-                    Optional.of(JacsServiceData.createServiceEvent(
-                            JacsServiceEventTypes.CANCELED,
-                            String.format("Canceled because one or more service dependencies finished unsuccessfully: %s", failedDependencies))));
-            logger.warn("Service {} canceled because of {}", jacsServiceData, failedDependencies);
-            throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getEntityRefId() + " canceled");
-        }
-    }
-
-    private void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
-        long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
-        if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
-            jacsServiceDataPersistence.updateServiceState(
-                    jacsServiceData,
-                    JacsServiceState.TIMEOUT,
-                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart))));
-            logger.warn("Service {} timed out after {}ms", jacsServiceData, timeSinceStart);
-            throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " timed out");
-        }
     }
 
 }

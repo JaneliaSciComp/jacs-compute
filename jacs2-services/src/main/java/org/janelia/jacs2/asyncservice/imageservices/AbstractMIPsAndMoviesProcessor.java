@@ -144,7 +144,7 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
                             .newCompletedComputation(voidResult)
                             .thenCombineAll(avi2MpegComputations, (JacsServiceResult<Void> vr, List<?> mpegResults) -> (List<File>) mpegResults);
                 })
-                .thenSuspendUntil((List<File> mpegResults) -> new ContinuationCond.Cond<>(mpegResults, !suspendUntilAllDependenciesComplete(jacsServiceData)))
+                .thenSuspendUntil(this.suspendCondition(jacsServiceData))
                 .thenApply(mpegResultsCond -> this.updateServiceResult(jacsServiceData, this.getResultHandler().collectResult(new JacsServiceResult<Void>(jacsServiceData))))
                 .thenApply(this::removeTempDir)
                 ;

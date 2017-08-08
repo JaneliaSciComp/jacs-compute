@@ -139,7 +139,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
             return computationFactory.newCompletedComputation(mergeResults)
                     .thenCombineAll(stitchComputations, (mr, groupedAreas) -> (List<SampleAreaResult>) groupedAreas);
         })
-        .thenSuspendUntil((List<SampleAreaResult> stitchedAreaResults) -> new ContinuationCond.Cond<>(stitchedAreaResults, !suspendUntilAllDependenciesComplete(jacsServiceData)))
+        .thenSuspendUntil(this.suspendCondition(jacsServiceData))
         .thenApply((ContinuationCond.Cond<List<SampleAreaResult>> stitchedAreaResultsCond) -> {
             SampleResult sampleResult = new SampleResult();
             sampleResult.setSampleId(args.sampleId);

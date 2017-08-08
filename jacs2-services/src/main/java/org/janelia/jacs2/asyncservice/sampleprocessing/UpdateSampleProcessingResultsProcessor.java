@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The services reads the results returned the specified stitch processor and adds them to the given pipeline run.
@@ -143,24 +144,14 @@ public class UpdateSampleProcessingResultsProcessor extends AbstractBasicLifeCyc
                 });
     }
 
-    protected Function<JacsServiceData, JacsServiceResult<Boolean>> areAllDependenciesDoneFunc() {
-        return sdp -> {
-            UpdateSampleResultsArgs args = getArgs(sdp);
-            JacsServiceData sampleProcessingService = jacsServiceDataPersistence.findById(args.sampleProcessingId);
-            if (sampleProcessingService.hasCompletedUnsuccessfully()) {
-                jacsServiceDataPersistence.updateServiceState(
-                        sdp,
-                        JacsServiceState.CANCELED,
-                        Optional.of(JacsServiceData.createServiceEvent(
-                                JacsServiceEventTypes.CANCELED,
-                                String.format("Canceled because service %d finished unsuccessfully", sampleProcessingService.getId()))));
-                logger.warn("Service {} canceled because of {}", sdp, sampleProcessingService);
-                throw new ComputationException(sdp, "Service " + sdp.getId() + " canceled");
-            } else if (sampleProcessingService.hasCompletedSuccessfully()) {
-                return new JacsServiceResult<>(sdp, true);
-            }
-            verifyAndFailIfTimeOut(sdp);
-            return new JacsServiceResult<>(sdp, false);
+    @Override
+    protected Function<JacsServiceData, Stream<JacsServiceData>> dependenciesGetterFunc() {
+        return (JacsServiceData serviceData) -> {
+            UpdateSampleResultsArgs args = getArgs(serviceData);
+            return Stream.concat(
+                    jacsServiceDataPersistence.findServiceDependencies(serviceData).stream(),
+                    Stream.of(jacsServiceDataPersistence.findById(args.sampleProcessingId))
+            );
         };
     }
 

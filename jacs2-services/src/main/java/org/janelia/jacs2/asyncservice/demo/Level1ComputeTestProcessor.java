@@ -69,7 +69,7 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     }
                     return jsd;
                 })
-                .thenSuspendUntil(jsd -> new ContinuationCond.Cond<>(jsd, !suspendUntilAllDependenciesComplete(jacsServiceData)))
+                .thenSuspendUntil(this.suspendCondition(jacsServiceData))
                 .thenApply(jsdCond -> {
                     logger.info("Beginning loop to create FloatTests and save to queue");
                     for (int i = 0; i < args.floatServiceCount; i++) {
@@ -82,7 +82,7 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     }
                     return jsdCond.getState();
                 })
-                .thenSuspendUntil(jsd -> new ContinuationCond.Cond<>(jsd, !suspendUntilAllDependenciesComplete(jacsServiceData)))
+                .thenSuspendUntil(this.suspendCondition(jacsServiceData))
                 .thenApply(jsdCond -> {
                     logger.info("All tests complete for service " + serviceName);
                     long endTime = new Date().getTime();

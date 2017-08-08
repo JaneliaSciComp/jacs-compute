@@ -36,6 +36,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.SuspendServiceContinuationCond;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.AbstractMIPsAndMoviesProcessor;
@@ -250,7 +251,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             })
                             ;
                 })
-                .thenSuspendUntil((JacsServiceResult<List<SampleProcessorResult>> lspr) -> new ContinuationCond.Cond<>(lspr, !suspendUntilAllDependenciesComplete(jacsServiceData))) // wait for all subtasks to complete
+                .thenSuspendUntil(this.suspendCondition(jacsServiceData))
                 .thenCompose((ContinuationCond.Cond<JacsServiceResult<List<SampleProcessorResult>>> lsprCond) -> {
                     if (CollectionUtils.isNotEmpty(args.resultFileTypesToBeCompressed) && StringUtils.isNotBlank(args.compressedFileType)) {
                         return computationFactory.newCompletedComputation(lsprCond.getState())

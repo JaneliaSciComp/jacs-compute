@@ -5,6 +5,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.sampleprocessing.SampleImageMIPsFile;
 import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -176,83 +177,25 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         return jacsServiceDataPersistence.createServiceIfNotFound(dependency);
     }
 
-    /**
-     * Suspend the service until the given service is done or until all dependencies are done
-     * @param jacsServiceData service data
-     * @return true if the service has been suspended
-     */
-    protected boolean suspendUntilAllDependenciesComplete(JacsServiceData jacsServiceData) {
-        if (jacsServiceData.hasCompleted()) {
-            return false;
-        }
-        return areAllDependenciesDoneFunc()
-                .andThen(pd -> {
-                    JacsServiceData sd = pd.getJacsServiceData();
-                    boolean depsCompleted = pd.getResult();
-                    if (depsCompleted) {
-                        resumeSuspendedService(sd);
-                        return false;
-                    } else {
-                        suspendService(sd);
-                        return true;
-                    }
-                })
-                .apply(jacsServiceData);
+    protected <S> ContinuationCond<S> suspendCondition(JacsServiceData jacsServiceData) {
+        return new SuspendServiceContinuationCond<>(
+                new ServiceDependenciesCompletedContinuationCond(dependenciesGetterFunc(), jacsServiceDataPersistence, logger),
+                (S state) -> jacsServiceData,
+                (S state, JacsServiceData tmpSd) -> state,
+                jacsServiceDataPersistence,
+                logger
+        ).negate();
     }
 
-    /**
-     * This function is related to the state monad bind operator in which a state is a function from a
-     * state to a (state, value) pair.
-     * @return a function from a servicedata to a service data. The function's application updates the service data.
-     */
-    protected Function<JacsServiceData, JacsServiceResult<Boolean>> areAllDependenciesDoneFunc() {
-        return sdp -> {
-            List<JacsServiceData> running = new ArrayList<>();
-            List<JacsServiceData> failed = new ArrayList<>();
-            if (!sdp.hasId()) {
-                return new JacsServiceResult<>(sdp, true);
-            }
-            // check if the children and the immediate dependencies are done
-            List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(sdp);
-            serviceDependencies.stream()
-                    .forEach(sd -> {
-                        if (!sd.hasCompleted()) {
-                            running.add(sd);
-                        } else if (sd.hasCompletedUnsuccessfully()) {
-                            failed.add(sd);
-                        }
-                    });
-            if (CollectionUtils.isNotEmpty(failed)) {
-                jacsServiceDataPersistence.updateServiceState(
-                        sdp,
-                        JacsServiceState.CANCELED,
-                        Optional.of(JacsServiceData.createServiceEvent(
-                                JacsServiceEventTypes.CANCELED,
-                                String.format("Canceled because one or more service dependencies finished unsuccessfully: %s", failed))));
-                logger.warn("Service {} canceled because of {}", sdp, failed);
-                throw new ComputationException(sdp, "Service " + sdp.getId() + " canceled");
-            }
-            if (CollectionUtils.isEmpty(running)) {
-                return new JacsServiceResult<>(sdp, true);
-            }
-            verifyAndFailIfTimeOut(sdp);
-            return new JacsServiceResult<>(sdp, false);
-        };
+    protected Function<JacsServiceData, Stream<JacsServiceData>> dependenciesGetterFunc() {
+        return (JacsServiceData serviceData) -> jacsServiceDataPersistence.findServiceDependencies(serviceData).stream();
     }
 
     protected boolean areAllDependenciesDone(JacsServiceData jacsServiceData) {
-        return areAllDependenciesDoneFunc().apply(jacsServiceData).getResult();
-    }
-
-    protected void resumeSuspendedService(JacsServiceData jacsServiceData) {
-        jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.RUNNING, Optional.empty());
-    }
-
-    protected void suspendService(JacsServiceData jacsServiceData) {
-        if (!jacsServiceData.hasBeenSuspended()) {
-            // if the service has not completed yet and it's not already suspended - update the state to suspended
-            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.SUSPENDED, Optional.empty());
-        }
+        return new ServiceDependenciesCompletedContinuationCond(
+                dependenciesGetterFunc(),
+                jacsServiceDataPersistence,
+                logger).checkCond(jacsServiceData).isCondValue();
     }
 
     protected JacsServiceResult<R> updateServiceResult(JacsServiceData jacsServiceData, R result) {

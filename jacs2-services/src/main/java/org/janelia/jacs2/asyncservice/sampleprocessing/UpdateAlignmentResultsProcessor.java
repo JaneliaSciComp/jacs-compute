@@ -43,6 +43,7 @@ import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Named("updateAlignmentResults")
 public class UpdateAlignmentResultsProcessor extends AbstractBasicLifeCycleServiceProcessor<AlignmentResult, AlignmentResult> {
@@ -177,24 +178,14 @@ public class UpdateAlignmentResultsProcessor extends AbstractBasicLifeCycleServi
                 });
     }
 
-    protected Function<JacsServiceData, JacsServiceResult<Boolean>> areAllDependenciesDoneFunc() {
-        return sdp -> {
-            UpdateAlignmentResultsArgs args = getArgs(sdp);
-            JacsServiceData alignmentService = jacsServiceDataPersistence.findById(args.alignmentServiceId);
-            if (alignmentService.hasCompletedUnsuccessfully()) {
-                jacsServiceDataPersistence.updateServiceState(
-                        sdp,
-                        JacsServiceState.CANCELED,
-                        Optional.of(JacsServiceData.createServiceEvent(
-                                JacsServiceEventTypes.CANCELED,
-                                String.format("Canceled because service %d finished unsuccessfully", alignmentService.getId()))));
-                logger.warn("Service {} canceled because of {}", sdp, alignmentService);
-                throw new ComputationException(sdp, "Service " + sdp.getId() + " canceled");
-            } else if (alignmentService.hasCompletedSuccessfully()) {
-                return new JacsServiceResult<>(sdp, true);
-            }
-            verifyAndFailIfTimeOut(sdp);
-            return new JacsServiceResult<>(sdp, false);
+    @Override
+    protected Function<JacsServiceData, Stream<JacsServiceData>> dependenciesGetterFunc() {
+        return (JacsServiceData serviceData) -> {
+            UpdateAlignmentResultsArgs args = getArgs(serviceData);
+            return Stream.concat(
+                    jacsServiceDataPersistence.findServiceDependencies(serviceData).stream(),
+                    Stream.of(jacsServiceDataPersistence.findById(args.alignmentServiceId))
+            );
         };
     }
 

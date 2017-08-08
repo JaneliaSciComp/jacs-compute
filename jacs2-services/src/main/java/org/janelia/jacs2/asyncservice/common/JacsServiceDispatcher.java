@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 @ApplicationScoped
 public class JacsServiceDispatcher {
@@ -77,7 +78,11 @@ public class JacsServiceDispatcher {
         ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
         serviceComputationFactory.<JacsServiceData>newComputation()
                 .supply(() -> jacsServiceData)
-                .thenSuspendUntil(new SuspendServiceContinuationCond(jacsServiceDataPersistence, logger).negate())
+                .thenSuspendUntil(new SuspendServiceContinuationCond<>(
+                        Function.<JacsServiceData>identity(),
+                        (JacsServiceData sd, JacsServiceData tmpSd) -> tmpSd,
+                        jacsServiceDataPersistence,
+                        logger).negate())
                 .thenApply((ContinuationCond.Cond<JacsServiceData> sdCond) -> {
                     sendNotification(jacsServiceData, JacsServiceLifecycleStage.START_PROCESSING);
                     return sdCond.getState();

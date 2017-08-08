@@ -64,11 +64,16 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
         vaa3dStitchGroupingProcessor = mock(Vaa3dStitchGroupingProcessor.class);
         sampleDataService = mock(SampleDataService.class);
 
-        when(jacsServiceDataPersistence.findServiceHierarchy(any(Number.class))).then(invocation -> {
+        when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> {
             JacsServiceData sd = new JacsServiceData();
             sd.setId(invocation.getArgument(0));
             return sd;
         });
+
+        when(jacsServiceDataPersistence.findServiceDependencies(any(JacsServiceData.class))).then(invocation -> {
+            return ImmutableList.of();
+        });
+
 
         when(jacsServiceDataPersistence.createServiceIfNotFound(any(JacsServiceData.class))).then(invocation -> {
             JacsServiceData jacsServiceData = invocation.getArgument(0);

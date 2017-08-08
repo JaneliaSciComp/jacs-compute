@@ -27,6 +27,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.SuspendServiceContinuationCond;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.fileservices.LinkDataProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dChannelMapProcessor;
@@ -251,7 +252,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
 
         // the LSM metadata is required for generating the merge tile commands so I am waiting until update completes
         return computationFactory.newCompletedComputation(sampleLsmsMetadataService)
-                .thenSuspendUntil(lsmMD -> new ContinuationCond.Cond<>(lsmMD, !suspendUntilAllDependenciesComplete(jacsServiceData)))
+                .thenSuspendUntil(this.suspendCondition(jacsServiceData))
                 .thenApply(lsmMDCond -> {
                     if (lsmMDCond.getState().hasCompletedUnsuccessfully()) {
                         logger.error("Abandon the rest of the merge process because it could not generate/update sample LSMs metadata");

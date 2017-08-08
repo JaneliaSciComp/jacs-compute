@@ -28,7 +28,11 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<R, S> extends Abstr
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenApply(this::prepareProcessing)
                 .thenApply(this::submitServiceDependencies)
-                .thenSuspendUntil(pd ->  new ContinuationCond.Cond<>(pd, !suspendUntilAllDependenciesComplete(pd.getJacsServiceData())))
+                .thenSuspendUntil(new SuspendServiceContinuationCond<>(
+                        (JacsServiceResult<S> pd) -> pd.getJacsServiceData(),
+                        (JacsServiceResult<S> pd, JacsServiceData sd) -> new JacsServiceResult<>(sd, pd.getResult()),
+                        jacsServiceDataPersistence,
+                        logger).negate())
                 .thenCompose(pdCond -> this.processing(pdCond.getState()))
                 .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, this.isResultReady(pd)))
                 .thenApply(pdCond -> this.updateServiceResult(pdCond.getState()))

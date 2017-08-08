@@ -116,7 +116,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractServiceProcessor<Lis
             return computationFactory
                     .newCompletedComputation(sampleImageFiles)
                     .thenCombineAll(lsmMetadataComputations, (List<SampleImageFile> sifs, List<?> lsmsWithMetadataResults) -> (List<SampleImageFile>) lsmsWithMetadataResults);
-        }).thenSuspendUntil((List<SampleImageFile> lsmsWithMetadata) -> new ContinuationCond.Cond<>(lsmsWithMetadata, !suspendUntilAllDependenciesComplete(jacsServiceData))
+        }).thenSuspendUntil(this.suspendCondition(jacsServiceData)
         ).thenApply((ContinuationCond.Cond<List<SampleImageFile>> lsmsWithMetadataCond) -> this.updateServiceResult(jacsServiceData, lsmsWithMetadataCond.getState()));
     }
 
