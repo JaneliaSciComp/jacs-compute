@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.lsmfileservices;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;

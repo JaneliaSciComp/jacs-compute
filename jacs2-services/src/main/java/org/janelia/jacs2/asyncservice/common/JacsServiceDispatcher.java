@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.dao.JacsNotificationDao;
@@ -15,8 +14,6 @@ import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 

@@ -3,7 +3,6 @@ package org.janelia.jacs2.asyncservice;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import java.util.List;
 
-
 public class ServerStats {
     private int runningServicesCount;
     private int availableSlots;

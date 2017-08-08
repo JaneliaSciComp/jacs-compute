@@ -4,11 +4,9 @@ import java.util.Map;
 
 public class JacsServiceDataBuilder {
 
-    private final JacsServiceData serviceContext;
     private final JacsServiceData serviceData;
 
     public JacsServiceDataBuilder(JacsServiceData serviceContext) {
-        this.serviceContext = serviceContext;
         this.serviceData = new JacsServiceData();
         if (serviceContext != null) {
             serviceData.setOwner(serviceContext.getOwner());

@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableListMultimap;

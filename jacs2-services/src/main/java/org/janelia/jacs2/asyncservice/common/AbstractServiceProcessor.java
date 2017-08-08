@@ -1,12 +1,9 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleImageMIPsFile;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -21,7 +18,6 @@ import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
