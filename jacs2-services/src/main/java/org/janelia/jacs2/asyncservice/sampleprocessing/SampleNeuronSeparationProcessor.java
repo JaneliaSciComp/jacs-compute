@@ -28,7 +28,7 @@ public class SampleNeuronSeparationProcessor extends AbstractServiceProcessor<Ne
     static class SampleNeuronSeparationArgs extends ServiceArgs {
         @Parameter(names = "-sampleId", description = "Sample ID", required = true)
         Long sampleId;
-        @Parameter(names = "-objective", description = "Sample objective for which to update the separation result.", required = true)
+        @Parameter(names = "-objective", description = "Sample objective for which to update the separation result.", required = false)
         String sampleObjective;
         @Parameter(names = "-runId", description = "Run ID to be updated with the corresponding fragment results.", required = true)
         Long pipelineRunId;
