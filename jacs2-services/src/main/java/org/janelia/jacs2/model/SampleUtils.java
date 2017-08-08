@@ -111,6 +111,7 @@ public class SampleUtils {
         lsmImage.setFlycorePSubcategory(slideImage.getFlycorePSubcategory());
         lsmImage.setLineHide(slideImage.getLineHide());
 
+        lsmImage.setNumChannels(slideImage.getNumChannels());
         lsmImage.setOpticalResolution(slideImage.getOpticalResolution());
         lsmImage.setImageSize(slideImage.getImageSize());
         return lsmImage;
@@ -394,6 +395,10 @@ public class SampleUtils {
         if (src.getLineHide() != null) {
             dst.setLineHide(src.getLineHide());
             updatedFields.put("lineHide", new SetFieldValueHandler<>(src.getLineHide()));
+        }
+        if (src.getNumChannels() != null) {
+            dst.setNumChannels(src.getNumChannels());
+            updatedFields.put("numChannels", new SetFieldValueHandler<>(src.getNumChannels()));
         }
         return updatedFields;
     }

@@ -10,7 +10,6 @@ import org.janelia.it.jacs.model.domain.support.MongoMapping;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
 import org.janelia.it.jacs.model.domain.support.SearchAttribute;
 import org.janelia.jacs2.model.EntityFieldValueHandler;
-import org.janelia.jacs2.model.SetFieldValueHandler;
 
 import java.util.List;
 import java.util.Map;

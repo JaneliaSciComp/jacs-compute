@@ -18,7 +18,7 @@ public interface HasRelativeFiles extends HasFilepath, HasFiles {
         String fileTypeName = getFileName(fileType);
         if (fileTypeName == null)
             return null;
-        else if (fp != null && fp.trim().length() > 0)
+        else if (fp != null && fp.trim().length() > 0 && !fileTypeName.startsWith("/"))
             return Paths.get(fp, fileTypeName);
         else
             return Paths.get(fileTypeName);
