@@ -39,7 +39,10 @@ public class SampleUtils {
         lsmImage.setTmogDate(Objects.requireNonNull(slideImage.getCreateDate()));
 
         String lsmFileName = StringUtils.defaultIfBlank(slideImage.getJfsPath(), slideImage.getPath());
-        if (StringUtils.isNotBlank(lsmFileName)) lsmImage.setFileName(FileType.LosslessStack, lsmFileName);
+        if (StringUtils.isNotBlank(lsmFileName)) {
+            lsmImage.setFilepath(lsmFileName);
+            lsmImage.setFileName(FileType.LosslessStack, lsmFileName);
+        }
 
         lsmImage.setRepresentative(slideImage.getRepresentative());
         lsmImage.setAge(slideImage.getAge());
@@ -115,6 +118,11 @@ public class SampleUtils {
 
     public static Map<String, EntityFieldValueHandler<?>> updateLsmAttributes(LSMImage src, LSMImage dst) {
         Map<String, EntityFieldValueHandler<?>> updatedFields = new LinkedHashMap<>();
+        if (src.getFilepath() != null) {
+            dst.setFilepath(src.getFilepath());
+            updatedFields.put("filepath", new SetFieldValueHandler<>(src.getFilepath()));
+            updatedFields.putAll(DomainModelUtils.setFullPathForFileType(dst, FileType.LosslessStack, src.getFilepath()));
+        }
         if (src.getPublishingName() != null) {
             dst.setPublishingName(src.getPublishingName());
             updatedFields.put("publishingName", new SetFieldValueHandler<>(src.getPublishingName()));
