@@ -18,8 +18,6 @@ class FlylightSampleArgs extends SampleServiceArgs {
     String channelDyeSpec;
     @Parameter(names = "-outputChannelOrder", description = "Output channel order", required = false)
     String outputChannelOrder;
-    @Parameter(names = "-distortionCorrection", description = "If specified apply distortion correction", required = false)
-    boolean applyDistortionCorrection;
     @Parameter(names = "-basicMipMapsOptions", description = "Basic MIPS and Movies Options", required = false)
     String basicMipMapsOptions = "mips:movies:legends:bcomp";
     @Parameter(names = "-postProcessingMipMapsOptions", description = "Post processing MIPS and Movies Options", required = false)

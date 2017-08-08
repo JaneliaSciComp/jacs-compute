@@ -220,7 +220,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         jacsServiceData, args.sampleId, args.sampleObjective, args.sampleArea, sampleResultsId,
                         args.sampleDataRootDir, sampleLsmsSubDir, sampleSummarySubDir, sampleStitchingSubDir, samplePostProcessingSubDir,
                         args.mergeAlgorithm, args.channelDyeSpec, args.outputChannelOrder,
-                        args.applyDistortionCorrection, args.persistResults,
+                        args.persistResults,
                         args.imageType, args.postProcessingMipMapsOptions, args.defaultPostProcessingColorSpec,
                         lsir.getJacsServiceData()))
                 .thenCompose((JacsServiceResult<List<SampleProcessorResult>> lspr) -> {
@@ -338,7 +338,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                                                                                    Number sampleResultsId, String sampleDataRootDir, Path sampleLsmsSubDir, Path sampleSummarySubDir,
                                                                                                    Path sampleStitchingSubDir, Path samplePostProcessingSubDir,
                                                                                                    String mergeAlgorithm, String channelDyeSpec, String outputChannelOrder,
-                                                                                                   boolean applyDistortionCorrection, boolean generateMips,
+                                                                                                   boolean generateMips,
                                                                                                    String imageType, String postProcessingMipMapsOptions, String defaultPostProcessingColorSpec,
                                                                                                    JacsServiceData... deps) {
         ServiceComputation<JacsServiceResult<SampleResult>> processingSample = sampleStitchProcessor.process(
@@ -373,7 +373,6 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                 new ServiceArg("-mergeAlgorithm", mergeAlgorithm),
                 new ServiceArg("-channelDyeSpec", channelDyeSpec),
                 new ServiceArg("-outputChannelOrder", outputChannelOrder),
-                new ServiceArg("-distortionCorrection", applyDistortionCorrection),
                 new ServiceArg("-generateMips", generateMips)
         );
 

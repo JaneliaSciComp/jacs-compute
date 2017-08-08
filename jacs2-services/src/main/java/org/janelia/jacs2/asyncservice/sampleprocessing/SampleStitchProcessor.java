@@ -54,8 +54,6 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
         String channelDyeSpec;
         @Parameter(names = "-outputChannelOrder", description = "Output channel order", required = false)
         String outputChannelOrder;
-        @Parameter(names = "-distortionCorrection", description = "If specified apply distortion correction", required = false)
-        boolean applyDistortionCorrection;
         @Parameter(names = "-generateMips", description = "If specified it generates the mips", required = false)
         boolean generateMips;
     }
@@ -131,8 +129,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
                         new ServiceArg("-sampleSitchingSubDir", args.sampleSitchingSubDir),
                         new ServiceArg("-mergeAlgorithm", args.mergeAlgorithm),
                         new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
-                        new ServiceArg("-outputChannelOrder", args.outputChannelOrder),
-                        new ServiceArg("-distortionCorrection", args.applyDistortionCorrection)
+                        new ServiceArg("-outputChannelOrder", args.outputChannelOrder)
         )
         .thenCompose((JacsServiceResult<List<SampleAreaResult>> mergeResults) -> {
             List<ServiceComputation<?>> stitchComputations = ImmutableList.copyOf(stitchTiles(jacsServiceData, mergeResults, args.generateMips));

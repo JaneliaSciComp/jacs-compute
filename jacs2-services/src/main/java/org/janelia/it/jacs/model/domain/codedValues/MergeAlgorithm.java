@@ -3,7 +3,8 @@ package org.janelia.it.jacs.model.domain.codedValues;
 public enum MergeAlgorithm {
 
     FLYLIGHT("FlyLight LSM Pair Merge (3/2 to 4 channels)"),
-    FLYLIGHT_ORDERED("FlyLight LSM Pair Merge (Consistent Ordering)");
+    FLYLIGHT_ORDERED("FlyLight LSM Pair Merge (Consistent Ordering)"),
+    DISTORTION_CORRECTION_MERGE("FlyLight LSM Pair Merge with Distortion Correction (Consistent Ordering)");
 
     private String name;
 

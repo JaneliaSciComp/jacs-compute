@@ -147,8 +147,6 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         String channelDyeSpec;
         @Parameter(names = "-outputChannelOrder", description = "Output channel order", required = false)
         String outputChannelOrder;
-        @Parameter(names = "-distortionCorrection", description = "If specified apply distortion correction", required = false)
-        boolean applyDistortionCorrection;
     }
 
     private static final String MERGE_DIRNAME = "merge";
@@ -271,7 +269,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective, args.sampleArea);
         BiFunction<AnatomicalArea, TileLsmPair, MergeChannelsData> channelMappingFunc;
         MergeAlgorithm mergeAlgorithm = getMergeAlgorithm(args.mergeAlgorithm);
-        String multiscanBlendVersion = (args.applyDistortionCorrection || mergeAlgorithm == MergeAlgorithm.FLYLIGHT_ORDERED) ? "2" : null;
+        String multiscanBlendVersion = (mergeAlgorithm == MergeAlgorithm.DISTORTION_CORRECTION_MERGE || mergeAlgorithm == MergeAlgorithm.FLYLIGHT_ORDERED) ? "2" : null;
 
         if (StringUtils.isNotBlank(args.channelDyeSpec) && StringUtils.isNotBlank(args.outputChannelOrder)) {
             // if it uses the channel dye spec and the output channel order is specified use the dye spec to deternine the ordering
@@ -314,7 +312,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
             mergeFileNameGenerator = tp -> tp.getNonNullableTileName() + "tile-" + idGenerator.generateId();
         }
         return anatomicalAreas.stream()
-                .map(ar -> mergeChannelsForAllTilesFromAnArea(ar, multiscanBlendVersion, channelMappingFunc, mergeFileNameGenerator,
+                .map(ar -> mergeChannelsForAllTilesFromAnArea(ar, mergeAlgorithm, multiscanBlendVersion, channelMappingFunc, mergeFileNameGenerator,
                         channelMappingConsensusCombiner, jacsServiceData, args, sampleLsmsMetadataService))
                 .map(atr -> {
                     // if there is more than one tile in the current area then group the tiles for stitching
@@ -339,6 +337,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     }
 
     private MergedAndGroupedAreaTiles mergeChannelsForAllTilesFromAnArea(AnatomicalArea ar,
+                                                                         MergeAlgorithm mergeAlgorithm,
                                                                          String multiscanBlendVersion,
                                                                          BiFunction<AnatomicalArea, TileLsmPair, MergeChannelsData> channelMappingFunc,
                                                                          Function <TileLsmPair, String> mergeFileNameGenerator,
@@ -348,7 +347,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                                                                          JacsServiceData... deps) {
         return ar.getTileLsmPairs().stream()
                 .map((TileLsmPair tp) -> channelMappingFunc.apply(ar, tp)) // determine channel mapping
-                .map((MergeChannelsData mcd) -> mergeChannelsForATilePair(ar, mcd, multiscanBlendVersion, mergeFileNameGenerator, jacsServiceData, args, deps)) // merge channels from a tile pair
+                .map((MergeChannelsData mcd) -> mergeChannelsForATilePair(ar, mcd, mergeAlgorithm, multiscanBlendVersion, mergeFileNameGenerator, jacsServiceData, args, deps)) // merge channels from a tile pair
                 .reduce(new MergedAndGroupedAreaTiles(), (MergedAndGroupedAreaTiles ac, MergeChannelsData mcd) -> { // generate consensus result
                     MergeTilePairResult mergeResult = new MergeTilePairResult();
                     mergeResult.setTileName(mcd.tilePair.getTileName());
@@ -378,6 +377,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
 
     private MergeChannelsData mergeChannelsForATilePair(AnatomicalArea ar,
                                                         MergeChannelsData mcd,
+                                                        MergeAlgorithm mergeAlgorithm,
                                                         String multiscanBlendVersion,
                                                         Function<TileLsmPair, String> mergeFileNameGenerator,
                                                         JacsServiceData jacsServiceData,
@@ -417,7 +417,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                             mcd.tilePair.getSecondLsm()).toString()),
                     new ServiceArg("-microscope1", mcd.tilePair.getFirstLsm().getMicroscope()),
                     new ServiceArg("-microscope2", mcd.tilePair.getSecondLsm().getMicroscope()),
-                    new ServiceArg("-distortionCorrection", args.applyDistortionCorrection),
+                    new ServiceArg("-distortionCorrection", mergeAlgorithm == MergeAlgorithm.DISTORTION_CORRECTION_MERGE),
                     new ServiceArg("-multiscanVersion", multiscanBlendVersion),
                     new ServiceArg("-outputFile", mergedResultFileName.toString())
             );

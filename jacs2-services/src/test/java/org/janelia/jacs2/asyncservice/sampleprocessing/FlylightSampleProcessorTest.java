@@ -155,7 +155,6 @@ public class FlylightSampleProcessorTest {
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
-                        any(ServiceArg.class),
                         any(ServiceArg.class)
                 )
         ).thenCallRealMethod();
@@ -297,7 +296,6 @@ public class FlylightSampleProcessorTest {
                     outputChannelOrder,
                     false, // do not skipSummary
                     true, // montageMipMaps
-                    true, // distortionCorrection
                     true, // persistResults (mipmaps)
                     false, // no neuron separation
                     null   // no alignment
@@ -349,7 +347,6 @@ public class FlylightSampleProcessorTest {
                                 argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-generateMips", true)))
                         );
 
@@ -476,7 +473,6 @@ public class FlylightSampleProcessorTest {
                 outputChannelOrder,
                 true, // skipSummary
                 true, // montageMipMaps
-                true, // distortionCorrection
                 true, // persistResults (mipmaps)
                 true, // run post sample processing neuron separation
                 null   // no alignment
@@ -523,7 +519,6 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-generateMips", true)))
                     );
 
@@ -695,7 +690,6 @@ public class FlylightSampleProcessorTest {
                 outputChannelOrder,
                 true, // skipSummary
                 true, // montageMipMaps
-                true, // distortionCorrection
                 true, // persistResults (mipmaps)
                 true, // run post sample processing neuron separation
                 null   // no alignment
@@ -742,7 +736,6 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-generateMips", true)))
                     );
 
@@ -842,7 +835,6 @@ public class FlylightSampleProcessorTest {
                                                   String channelDyeSpec, String outputChannelOrder,
                                                   boolean skipSummary,
                                                   boolean montageMipMaps,
-                                                  boolean useDistortionCorrection,
                                                   boolean persistResults,
                                                   boolean runNeuronSeparationAfterSampleProcessing,
                                                   String alignmentAlgorithm) {
@@ -872,9 +864,6 @@ public class FlylightSampleProcessorTest {
 
         if (montageMipMaps)
             testServiceDataBuilder.addArg("-montageMipMaps");
-
-        if (useDistortionCorrection)
-            testServiceDataBuilder.addArg("-distortionCorrection");
 
         if (persistResults)
             testServiceDataBuilder.addArg("-persistResults");

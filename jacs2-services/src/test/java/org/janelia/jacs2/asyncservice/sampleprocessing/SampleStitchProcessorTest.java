@@ -85,7 +85,6 @@ public class SampleStitchProcessorTest {
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
-                        any(ServiceArg.class),
                         any(ServiceArg.class)
                 )
         ).thenCallRealMethod();
@@ -173,7 +172,6 @@ public class SampleStitchProcessorTest {
                 mergeAlgorithm,
                 channelDyeSpec,
                 outputChannelOrder,
-                true,
                 true
         );
 
@@ -195,8 +193,7 @@ public class SampleStitchProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true)))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)))
                     );
 
                     verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
@@ -279,7 +276,6 @@ public class SampleStitchProcessorTest {
                 mergeAlgorithm,
                 channelDyeSpec,
                 outputChannelOrder,
-                true,
                 false
         );
 
@@ -301,8 +297,7 @@ public class SampleStitchProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true)))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)))
                     );
 
                     verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
@@ -384,7 +379,6 @@ public class SampleStitchProcessorTest {
                 mergeAlgorithm,
                 channelDyeSpec,
                 outputChannelOrder,
-                true,
                 true
         );
 
@@ -406,8 +400,7 @@ public class SampleStitchProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true)))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)))
                     );
 
                     verify(vaa3dStitchAndBlendProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
@@ -489,7 +482,6 @@ public class SampleStitchProcessorTest {
                 mergeAlgorithm,
                 channelDyeSpec,
                 outputChannelOrder,
-                true,
                 false
         );
 
@@ -511,8 +503,7 @@ public class SampleStitchProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-distortionCorrection", true)))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)))
                     );
 
                     verify(vaa3dStitchAndBlendProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
@@ -577,7 +568,6 @@ public class SampleStitchProcessorTest {
                                                   Long sampleId, String area, String objective,
                                                   String mergeAlgorithm,
                                                   String channelDyeSpec, String outputChannelOrder,
-                                                  boolean useDistortionCorrection,
                                                   boolean generateMips) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .addArg("-sampleId", String.valueOf(sampleId))
@@ -598,9 +588,6 @@ public class SampleStitchProcessorTest {
 
         if (StringUtils.isNotBlank(outputChannelOrder))
             testServiceDataBuilder.addArg("-outputChannelOrder", outputChannelOrder);
-
-        if (useDistortionCorrection)
-            testServiceDataBuilder.addArg("-distortionCorrection");
 
         if (generateMips)
             testServiceDataBuilder.addArg("-generateMips");
