@@ -158,6 +158,13 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                     ImageLine imageLine = lineEntries.getKey();
                     List<SlideImage> lineImages = lineEntries.getValue();
                     List<String> slideImageNames = lineImages.stream().map(SlideImage::getName).collect(Collectors.toList());
+                    Map<String, List<SlideImage>> slideImagesToImportBySlideCode =
+                            lineImages.stream().collect(
+                                    Collectors.groupingBy(
+                                            lineImage -> lineImage.getSlideCode(),
+                                            Collectors.mapping(Function.identity(), Collectors.toList())
+                                    )
+                            );
                     String owner = jacsServiceData.getOwner();
                     DataSet ds = datasetService.getDatasetByNameOrIdentifier(owner, imageLine.getDataset());
                     if (ds == null) {
@@ -192,6 +199,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                         slideCodes.stream().forEach(slideCode -> {
                             LSMImage lsmRef = new LSMImage();
                             lsmRef.setDataSet(ds.getIdentifier());
+                            lsmRef.setLine(imageLine.getName());
                             lsmRef.setSlideCode(slideCode);
                             PageRequest pageRequest = new PageRequest();
                             pageRequest.setSortCriteria(ImmutableList.of(new SortCriteria("tmogDate", SortDirection.ASC)));
@@ -199,7 +207,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                             allLsmsPerSlideCode.put(slideCode, matchingLsms.getResultList());
                         });
                         return allLsmsPerSlideCode;
-                    }).thenApply((Map<String, List<LSMImage>> groupedLsmsBySlideCode) -> createSamplesFromSlideGroups(owner, ds, groupedLsmsBySlideCode));
+                    }).thenApply((Map<String, List<LSMImage>> allLsmsForEnteredSlideCodes) -> createSamplesFromSlideGroups(owner, ds, imageLine.getName(), slideImagesToImportBySlideCode, allLsmsForEnteredSlideCodes));
                 })
                 .collect(Collectors.toList());
         return computationFactory.newCompletedComputation(jacsServiceData)
@@ -259,26 +267,27 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         }
     }
 
-    private List<LSMImportResult> createSamplesFromSlideGroups(String owner, DataSet dataSet, Map<String, List<LSMImage>> groupedLsmsBySlideCode) {
-        return groupedLsmsBySlideCode.entrySet().stream()
-                .map(slideLsmsEntry -> createSampleFromSlideGroup(owner, dataSet, slideLsmsEntry.getKey(), slideLsmsEntry.getValue()))
+    private List<LSMImportResult> createSamplesFromSlideGroups(String owner, DataSet dataSet, String line, Map<String, List<SlideImage>> imagesToImportBySlideCode, Map<String, List<LSMImage>> allLsmsForEnteredSlideCodes) {
+        return allLsmsForEnteredSlideCodes.entrySet().stream()
+                .map(slideLsmsEntry -> createSampleFromSlideGroup(owner, dataSet, line, slideLsmsEntry.getKey(), imagesToImportBySlideCode.get(slideLsmsEntry.getKey()), slideLsmsEntry.getValue()))
                 .collect(Collectors.toList());
     }
 
-    private LSMImportResult createSampleFromSlideGroup(String owner, DataSet dataSet, String slideCode, List<LSMImage> lsmImages) {
-        logger.info("Creating or updating sample {} : {} ", dataSet.getIdentifier(), slideCode);
+    private LSMImportResult createSampleFromSlideGroup(String owner, DataSet dataSet, String line, String slideCode, List<SlideImage> importedImages, List<LSMImage> lsmImages) {
+        List<String> importedImageNames = importedImages.stream().map(image -> image.getName()).collect(Collectors.toList());
+        logger.info("Creating or updating sample {} : {} : {} with {}", dataSet.getIdentifier(), line, slideCode, importedImageNames);
         Map<String, Map<SampleTileKey, SlideImageGroup>> lsmsGroupedByAbjectiveAndArea = groupLsmImagesByObjectiveAndArea(lsmImages);
         Optional<Sample> existingSample = findBestSampleMatch(owner, dataSet, slideCode);
         if (!existingSample.isPresent()) {
             // create a new Sample
             Sample newSample = createNewSample(owner, dataSet, slideCode, lsmsGroupedByAbjectiveAndArea);
             logger.info("Created new sample {} for dataset {} and slideCode {}", newSample, dataSet, slideCode);
-            return new LSMImportResult(dataSet.getIdentifier(), newSample.getId(), newSample.getName(), true);
+            return new LSMImportResult(dataSet.getIdentifier(), newSample.getId(), newSample.getName(), line, slideCode, importedImageNames, true);
         } else {
             Sample updatedSample = existingSample.get();
             updateSample(dataSet, updatedSample, lsmsGroupedByAbjectiveAndArea);
             logger.info("Updated sample {} for dataset {} and slideCode {} with {}", updatedSample, dataSet, slideCode, lsmImages);
-            return new LSMImportResult(dataSet.getIdentifier(), updatedSample.getId(), updatedSample.getName(), false);
+            return new LSMImportResult(dataSet.getIdentifier(), updatedSample.getId(), updatedSample.getName(), line, slideCode, importedImageNames, false);
         }
     }
 
