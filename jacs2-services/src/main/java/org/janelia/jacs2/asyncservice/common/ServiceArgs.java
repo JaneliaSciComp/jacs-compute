@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
 
 import javax.inject.Named;
@@ -31,4 +32,8 @@ public class ServiceArgs {
         return smd;
     }
 
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
 }

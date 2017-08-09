@@ -4,6 +4,8 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.Reference;
@@ -54,6 +56,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -77,6 +80,12 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
 
         List<String> getValues(List<String> paramValues) {
             return paramValues.stream().filter(StringUtils::isNotBlank).map(String::trim).collect(Collectors.toList());
+        }
+
+        boolean hasOnlyLsmNamesFilter() {
+            // check if the only filter(s) set are the lsmNames and maybe the dataset
+            return StringUtils.isBlank(imageLine) && CollectionUtils.isEmpty(getValues(slideCodes)) &&
+                    CollectionUtils.isNotEmpty(getValues(lsmNames));
         }
     }
 
@@ -137,6 +146,8 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
             throw new IllegalArgumentException("No filtering parameter has been specified for the LSM import from Sage.");
         }
         List<SlideImage> slideImages = retrieveSageImages(jacsServiceData.getOwner(), args);
+        checkRetrievedSageImages(slideImages, args);
+
         Map<ImageLine, List<SlideImage>> labImages =
                 slideImages.stream().collect(Collectors.groupingBy(
                                 si -> new ImageLine(si.getLab(), si.getDataset(), si.getLineName()),
@@ -214,6 +225,22 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
             datasetIdentifer = ds.getIdentifier();
         }
         return sageDataService.getMatchingImages(datasetIdentifer, args.imageLine, args.getValues(args.slideCodes), args.getValues(args.lsmNames), new PageRequest());
+    }
+
+    private void checkRetrievedSageImages(List<SlideImage> slideImages, LSMImportArgs args) {
+        if (slideImages.isEmpty()) {
+            throw new IllegalArgumentException("No image found in sage to match " + args.toString());
+        }
+        if (args.hasOnlyLsmNamesFilter() && slideImages.size() != args.lsmNames.size()) {
+            Set<String> requestedLsms = ImmutableSet.copyOf(args.lsmNames);
+            Set<String> foundLsms = slideImages.stream().map(si -> si.getName()).collect(Collectors.toSet());
+
+            // if the size of the given parameters doesn't match
+            if (requestedLsms.size() != foundLsms.size()) {
+                logger.error("Requested {} lsms ({}) but found {} sage images ({})", requestedLsms.size(), requestedLsms, foundLsms.size(), foundLsms);
+                throw new IllegalArgumentException("Not all requested LSMs were found - " + Sets.difference(requestedLsms, foundLsms).immutableCopy() + " were not found");
+            }
+        }
     }
 
     private LSMImage importLsm(String owner, LSMImage lsmImage) {
