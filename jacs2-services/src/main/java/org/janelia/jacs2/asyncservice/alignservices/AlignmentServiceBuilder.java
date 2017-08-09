@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface AlignmentServiceBuilder {
     boolean supports(String algorithm);
-    List<AlignmentServiceParams> getAlignmentServicesArgs(Sample sample, String alignmentAlgorithm, String sampleDataRootDir, List<SampleProcessorResult> sampleProcessorResults, List<NeuronSeparationFiles> neuronSeparationResults);
+    List<AlignmentServiceParams> getAlignmentServicesArgs(Sample sample, String alignmentAlgorithm, String alignmentResultName, String sampleDataRootDir, List<SampleProcessorResult> sampleProcessorResults, List<NeuronSeparationFiles> neuronSeparationResults);
 }

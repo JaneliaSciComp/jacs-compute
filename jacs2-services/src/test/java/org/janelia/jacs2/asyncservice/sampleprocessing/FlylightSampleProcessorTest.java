@@ -298,7 +298,8 @@ public class FlylightSampleProcessorTest {
                     true, // montageMipMaps
                     true, // persistResults (mipmaps)
                     false, // no neuron separation
-                    null   // no alignment
+                    null,  // no alignment algorithm
+                    null   // no alignment result
             );
             testServiceData.setId(testServiceId);
 
@@ -379,6 +380,7 @@ public class FlylightSampleProcessorTest {
                         );
 
                         verify(updateAlignmentResultsProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
+                                any(ServiceArg.class),
                                 any(ServiceArg.class),
                                 any(ServiceArg.class),
                                 any(ServiceArg.class),
@@ -475,7 +477,8 @@ public class FlylightSampleProcessorTest {
                 true, // montageMipMaps
                 true, // persistResults (mipmaps)
                 true, // run post sample processing neuron separation
-                null   // no alignment
+                null, // no alignment algorithm
+                null  // no alignment result
         );
         testServiceData.setId(Long.valueOf(testServiceId));
 
@@ -589,6 +592,7 @@ public class FlylightSampleProcessorTest {
                             any(ServiceArg.class),
                             any(ServiceArg.class),
                             any(ServiceArg.class),
+                            any(ServiceArg.class),
                             any(ServiceArg.class)
                     );
 
@@ -692,7 +696,8 @@ public class FlylightSampleProcessorTest {
                 true, // montageMipMaps
                 true, // persistResults (mipmaps)
                 true, // run post sample processing neuron separation
-                null   // no alignment
+                null, // no alignment algorithm
+                null  // no alignment result
         );
         testServiceData.setId(Long.valueOf(testServiceId));
 
@@ -804,6 +809,7 @@ public class FlylightSampleProcessorTest {
                             any(ServiceArg.class),
                             any(ServiceArg.class),
                             any(ServiceArg.class),
+                            any(ServiceArg.class),
                             any(ServiceArg.class)
                     );
 
@@ -837,7 +843,8 @@ public class FlylightSampleProcessorTest {
                                                   boolean montageMipMaps,
                                                   boolean persistResults,
                                                   boolean runNeuronSeparationAfterSampleProcessing,
-                                                  String alignmentAlgorithm) {
+                                                  String alignmentAlgorithm,
+                                                  String alignmentResult) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwner("testOwner")
                 .addArg("-sampleId", String.valueOf(sampleId));
@@ -870,6 +877,9 @@ public class FlylightSampleProcessorTest {
 
         if (StringUtils.isNotBlank(alignmentAlgorithm))
             testServiceDataBuilder.addArg("-alignmentAlgorithm", alignmentAlgorithm);
+
+        if (StringUtils.isNotBlank(alignmentResult))
+            testServiceDataBuilder.addArg("-alignmentResultName", alignmentResult);
 
         if (runNeuronSeparationAfterSampleProcessing)
             testServiceDataBuilder.addArg("-runNeuronSeparationAfterSampleProcessing");

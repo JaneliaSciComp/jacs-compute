@@ -51,6 +51,7 @@ public class SingleInputAlignmentServiceBuilder implements AlignmentServiceBuild
     @Override
     public List<AlignmentServiceParams> getAlignmentServicesArgs(Sample sample,
                                                                  String alignmentAlgorithm,
+                                                                 String alignmentResultName,
                                                                  String sampleDataRootDir,
                                                                  List<SampleProcessorResult> sampleProcessorResults,
                                                                  List<NeuronSeparationFiles> neuronSeparationResults) {
@@ -62,8 +63,8 @@ public class SingleInputAlignmentServiceBuilder implements AlignmentServiceBuild
             }
             NeuronSeparationFiles neuronSeparationFiles = neuronSeparationResults.get(resultIndex);
             AlignmentServiceParams alignmentServiceParams = new AlignmentServiceParams(
-                    "Fly Alignment",
                     alignmentAlgorithm,
+                    alignmentResultName,
                     sampleProcessorResult,
                     neuronSeparationFiles,
                     ImmutableList.of(

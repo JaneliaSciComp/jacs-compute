@@ -10,14 +10,14 @@ import java.util.Map;
 
 public class AlignmentServiceParams {
 
-    private final String alignmentResultName;
     private final String alignmentAlgorithm;
+    private final String alignmentResultName;
     private final SampleProcessorResult sampleProcessorResult;
     private final NeuronSeparationFiles neuronSeparationFiles;
     private final List<ServiceArg> alignmentServiceArgs;
     private final Map<String, String> resources = new LinkedHashMap<>();
 
-    public AlignmentServiceParams(String alignmentResultName, String alignmentAlgorithm, SampleProcessorResult sampleProcessorResult, NeuronSeparationFiles neuronSeparationFiles, List<ServiceArg> alignmentServiceArgs) {
+    public AlignmentServiceParams(String alignmentAlgorithm, String alignmentResultName, SampleProcessorResult sampleProcessorResult, NeuronSeparationFiles neuronSeparationFiles, List<ServiceArg> alignmentServiceArgs) {
         this.alignmentResultName = alignmentResultName;
         this.alignmentAlgorithm = alignmentAlgorithm;
         this.sampleProcessorResult = sampleProcessorResult;
