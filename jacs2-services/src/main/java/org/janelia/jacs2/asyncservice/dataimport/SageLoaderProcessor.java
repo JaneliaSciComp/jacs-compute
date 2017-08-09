@@ -109,7 +109,10 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void> 
                                             imagesInserted = Integer.parseInt(imagesInsertedLineMatcher.group(1));
                                         }
                                         if (imagesFound + imagesInserted != nExpectedImages) {
-                                            errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound  + " and inserted " + imagesInserted + " (check that grammar pipeline tools are in the right location)");
+                                            String zeroFoundMessage = imagesFound + imagesInserted == 0
+                                                    ? " (if 0 check that grammar pipeline tools are in the right location)"
+                                                    : "";
+                                            errors.add("Not all images found - expected " + nExpectedImages + " but found " + imagesFound  + " and inserted " + imagesInserted + zeroFoundMessage);
                                         }
                                     }
                                 }
@@ -212,7 +215,7 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void> 
         try {
             Path workingDirectory = getWorkingDirectory(jacsServiceData);
             Files.createDirectories(workingDirectory);
-            Path sageWorkingFile = FileUtils.getFilePath(workingDirectory, "SageFileList.txt");
+            Path sageWorkingFile = FileUtils.getFilePath(workingDirectory, "SageFileList_" + jacsServiceData.getId() + ".txt");
             if (!Files.exists(sageWorkingFile)) {
                 Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw----");
                 Files.createFile(sageWorkingFile, PosixFilePermissions.asFileAttribute(perms)).toFile();

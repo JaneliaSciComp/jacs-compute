@@ -217,7 +217,7 @@ public class SageLoaderProcessorTest {
         SageLoaderProcessor sageLoaderProcessor = createSageLoaderProcessor("dev");
 
         List<String> errors =  sageLoaderProcessor.getErrorChecker().collectErrors(testService);
-        assertThat(errors, hasItem("Not all images found - expected 5 but only found 3 and inserted 1 (check that grammar pipeline tools are in the right location)"));
+        assertThat(errors, hasItem("Not all images found - expected 5 but found 3 and inserted 1"));
     }
 
     @Test
