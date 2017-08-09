@@ -236,7 +236,7 @@ public class SageJdbcDao implements SageDao {
         si.setLineName(rs.getString("ln_name"));
         si.setSlideCode(rs.getString("sc_value"));
         si.setArea(rs.getString("area_value"));
-        si.setObjective(rs.getString("objective_value"));
+        si.setObjectiveName(rs.getString("objective_value"));
         si.setTile(rs.getString("tile_value"));
         return si;
     }

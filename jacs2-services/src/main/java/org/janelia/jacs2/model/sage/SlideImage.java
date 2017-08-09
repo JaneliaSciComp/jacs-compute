@@ -23,7 +23,7 @@ public class SlideImage implements BaseEntity {
     private String lineName;
     private String slideCode;
     private String area;
-    private String objective;
+    private String objectiveName;
     private String tile;
     private Map<String, String> properties = new LinkedHashMap<>();
 
@@ -139,12 +139,12 @@ public class SlideImage implements BaseEntity {
     }
 
     @SAGEAttribute(cvName = "light_imagery", termName = "objective")
-    public String getObjective() {
-        return StringUtils.defaultIfBlank(objective, "");
+    public String getObjectiveName() {
+        return StringUtils.defaultIfBlank(objectiveName, "");
     }
 
-    public void setObjective(String objective) {
-        this.objective = objective;
+    public void setObjectiveName(String objectiveName) {
+        this.objectiveName = objectiveName;
     }
 
     @SAGEAttribute(cvName = "light_imagery", termName = "tile")
@@ -578,7 +578,7 @@ public class SlideImage implements BaseEntity {
                 .append("slideCode", slideCode)
                 .append("name", name)
                 .append("area", area)
-                .append("objective", objective)
+                .append("objectiveName", objectiveName)
                 .append("tile", tile)
                 .build();
     }

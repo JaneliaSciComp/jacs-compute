@@ -3,6 +3,7 @@ package org.janelia.jacs2.model;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.enums.FileType;
+import org.janelia.it.jacs.model.domain.enums.ObjectiveType;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 import org.janelia.it.jacs.model.domain.sample.Sample;
 import org.janelia.it.jacs.model.domain.support.SAGEAttribute;
@@ -31,7 +32,7 @@ public class SampleUtils {
         lsmImage.setLine(slideImage.getLineName());
         lsmImage.setSlideCode(slideImage.getSlideCode());
         lsmImage.setAnatomicalArea(slideImage.getArea());
-        lsmImage.setObjectiveName(slideImage.getObjective());
+        lsmImage.setObjectiveName(slideImage.getObjectiveName());
         lsmImage.setTile(slideImage.getTile());
         lsmImage.setCaptureDate(slideImage.getCaptureDate());
         lsmImage.setCreatedBy(slideImage.getCreatedBy());
@@ -111,10 +112,22 @@ public class SampleUtils {
         lsmImage.setFlycorePSubcategory(slideImage.getFlycorePSubcategory());
         lsmImage.setLineHide(slideImage.getLineHide());
 
+        lsmImage.setObjective(getObjective(slideImage.getObjectiveName()));
         lsmImage.setNumChannels(slideImage.getNumChannels());
         lsmImage.setOpticalResolution(slideImage.getOpticalResolution());
         lsmImage.setImageSize(slideImage.getImageSize());
         return lsmImage;
+    }
+
+    private static String getObjective(String objectiveName) {
+        if (StringUtils.isNotBlank(objectiveName)) {
+            for (ObjectiveType objectiveType : ObjectiveType.values()) {
+                if (objectiveName.contains(objectiveType.getObjectiveType())) {
+                    return objectiveType.getObjectiveType();
+                }
+            }
+        }
+        return "";
     }
 
     public static Map<String, EntityFieldValueHandler<?>> updateLsmAttributes(LSMImage src, LSMImage dst) {
@@ -399,6 +412,14 @@ public class SampleUtils {
         if (src.getNumChannels() != null) {
             dst.setNumChannels(src.getNumChannels());
             updatedFields.put("numChannels", new SetFieldValueHandler<>(src.getNumChannels()));
+        }
+        if (src.getObjectiveName() != null) {
+            dst.setObjectiveName(src.getObjectiveName());
+            updatedFields.put("objectiveName", new SetFieldValueHandler<>(src.getObjectiveName()));
+        }
+        if (src.getObjective() != null) {
+            dst.setObjective(src.getObjective());
+            updatedFields.put("objective", new SetFieldValueHandler<>(src.getObjective()));
         }
         return updatedFields;
     }
