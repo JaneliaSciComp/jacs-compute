@@ -370,6 +370,12 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                                                         return tileLsmReference;
                                                     });
                                         });
+                                        int sampleNumSignals = tileGroup.countTileSignalChannels();
+                                        int sampleNumChannels = sampleNumSignals + 1;
+                                        if (StringUtils.isBlank(existingObjectiveSample.getChanSpec()) || sampleNumChannels > existingObjectiveSample.getChanSpec().length()) {
+                                            String chanSpec = LSMProcessingTools.createChanSpec(sampleNumChannels, sampleNumChannels);
+                                            existingObjectiveSample.setChanSpec(chanSpec);
+                                        }
                                         return existingSampleTile;
                                     })
                                     .orElseGet(() -> {
