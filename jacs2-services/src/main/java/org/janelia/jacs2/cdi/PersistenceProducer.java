@@ -34,9 +34,18 @@ public class PersistenceProducer {
 
     @ApplicationScoped
     @Produces
-    public MongoClient createMongoClient(ObjectMapperFactory objectMapperFactory) {
+    public MongoClient createMongoClient(
+            @PropertyValue(name = "MongoDB.ThreadsAllowedToBlockForConnectionMultiplier") int threadsAllowedToBlockMultiplier,
+            @PropertyValue(name = "MongoDB.ConnectionsPerHost") int connectionsPerHost,
+            @PropertyValue(name = "MongoDB.ConnectTimeout") int connectTimeout,
+            ObjectMapperFactory objectMapperFactory) {
         CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(objectMapperFactory);
-        MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder().codecRegistry(codecRegistry);
+        MongoClientOptions.Builder optionsBuilder =
+                MongoClientOptions.builder()
+                        .threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockMultiplier)
+                        .connectionsPerHost(connectionsPerHost)
+                        .connectTimeout(connectTimeout)
+                        .codecRegistry(codecRegistry);
         MongoClientURI mongoConnectionString = new MongoClientURI(nmongoConnectionURL, optionsBuilder);
         MongoClient mongoClient = new MongoClient(mongoConnectionString);
         return mongoClient;
