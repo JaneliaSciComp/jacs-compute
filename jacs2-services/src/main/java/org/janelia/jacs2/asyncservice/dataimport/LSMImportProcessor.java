@@ -326,35 +326,17 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
 
         // update LSM's sampleRef
         lsmsGroupedByAbjectiveAndArea.forEach((objective, areas) -> {
-            int sampleNumSignals = areas.entrySet().stream()
-                    .map((Map.Entry<SampleTileKey, SlideImageGroup> tileEntry) -> {
-                        SlideImageGroup areaGroup = tileEntry.getValue();
-                        areaGroup.getImages().forEach((LSMImage lsm) -> {
-                                    Map<String, EntityFieldValueHandler<?>> updatedLsmFields = lsmUpdates.get(lsm);
-                                    if (updatedLsmFields == null) {
-                                        updatedLsmFields = new LinkedHashMap<>();
-                                        lsmUpdates.put(lsm, updatedLsmFields);
-                                    }
-                                    lsm.setSampleRef(newSampleRef);
-                                    updatedLsmFields.put("sampleRef", new SetFieldValueHandler<>(newSampleRef));
-                                }
-                        );
-                        return areaGroup.countTileSignalChannels();
-                    })
-                    .reduce(0, (n1, n2) -> {
-                        if (n1 == 0) {
-                            return n2;
-                        } else {
-                            if (n1 != n2 && n2 != 0) {
-                                logger.warn("There is no consensus between tiles regarding the number of signal channels {} vs {}",
-                                        n1, n2);
-                            }
-                            return n1;
-                        }
-                    });
-            int sampleNumChannels = sampleNumSignals + 1;
-            String chanSpec = LSMProcessingTools.createChanSpec(sampleNumChannels, sampleNumChannels);
-            newSampleObjectives.get(objective).setChanSpec(chanSpec);
+            areas.forEach((SampleTileKey tileKey, SlideImageGroup areaGroup) -> {
+                areaGroup.getImages().forEach((LSMImage lsm) -> {
+                    Map<String, EntityFieldValueHandler<?>> updatedLsmFields = lsmUpdates.get(lsm);
+                    if (updatedLsmFields == null) {
+                        updatedLsmFields = new LinkedHashMap<>();
+                        lsmUpdates.put(lsm, updatedLsmFields);
+                    }
+                    lsm.setSampleRef(newSampleRef);
+                    updatedLsmFields.put("sampleRef", new SetFieldValueHandler<>(newSampleRef));
+                });
+            });
         });
         lsmUpdates.forEach((lsm, updates) -> sampleDataService.updateLSM(lsm, updates));
         return newSample;
@@ -370,15 +352,15 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                         .collect(Collectors.toList())
         );
         Map<LSMImage, Map<String, EntityFieldValueHandler<?>>> lsmUpdates = new LinkedHashMap<>();
-        lsmsGroupedByAbjectiveAndArea.forEach((String objective, Map<SampleTileKey, SlideImageGroup> areas) -> {
+        lsmsGroupedByAbjectiveAndArea.forEach((String objective, Map<SampleTileKey, SlideImageGroup> sampleTileGroups) -> {
             sample.lookupObjective(objective)
                     .map(existingObjectiveSample -> {
-                        areas.forEach((tileKey, areaGroup) -> {
+                        sampleTileGroups.forEach((tileKey, tileGroup) -> {
                             existingObjectiveSample.findSampleTile(tileKey.getTileName(), tileKey.getArea())
                                     .map(indexedSampleTile -> {
                                         SampleTile existingSampleTile = indexedSampleTile.getReference();
                                         // for existing tiles check if all lsms are present
-                                        areaGroup.getImages().forEach(lsm -> {
+                                        tileGroup.getImages().forEach(lsm -> {
                                             existingSampleTile.findLsmReference(lsm)
                                                     .orElseGet(() -> {
                                                         // if lsm reference not found make sure we update the lsm tile name
@@ -391,15 +373,23 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                                         return existingSampleTile;
                                     })
                                     .orElseGet(() -> {
-                                        SampleTile newSampleTile = createNewSampleTile(tileKey, areaGroup, lsmUpdates);
+                                        SampleTile newSampleTile = createNewSampleTile(tileKey, tileGroup, lsmUpdates);
                                         existingObjectiveSample.addTiles(newSampleTile);
+                                        if (StringUtils.isBlank(existingObjectiveSample.getChanSpec())) {
+                                            int sampleNumSignals = tileGroup.countTileSignalChannels();
+                                            if (sampleNumSignals > 0) {
+                                                int sampleNumChannels = sampleNumSignals + 1;
+                                                String chanSpec = LSMProcessingTools.createChanSpec(sampleNumChannels, sampleNumChannels);
+                                                existingObjectiveSample.setChanSpec(chanSpec);
+                                            }
+                                        }
                                         return newSampleTile;
                                     });
                         });
                         return existingObjectiveSample;
                     })
                     .orElseGet(() -> {
-                        ObjectiveSample newObjectiveSample = createNewObjective(objective, areas, lsmUpdates);
+                        ObjectiveSample newObjectiveSample = createNewObjective(objective, sampleTileGroups, lsmUpdates);
                         sample.addObjective(newObjectiveSample);
                         return newObjectiveSample;
                     });
@@ -416,13 +406,33 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         lsmUpdates.forEach((lsm, updates) -> sampleDataService.updateLSM(lsm, updates));
     }
 
-    private ObjectiveSample createNewObjective(String objectiveName, Map<SampleTileKey, SlideImageGroup> objectiveAreas, Map<LSMImage, Map<String, EntityFieldValueHandler<?>>> lsmUpdates) {
+    private ObjectiveSample createNewObjective(String objectiveName, Map<SampleTileKey, SlideImageGroup> objectiveTileGroups, Map<LSMImage, Map<String, EntityFieldValueHandler<?>>> lsmUpdates) {
         ObjectiveSample objectiveSample = new ObjectiveSample();
         objectiveSample.setObjective(objectiveName);
-        objectiveAreas.forEach((tileKey, areaGroup) -> {
-            SampleTile tile = createNewSampleTile(tileKey, areaGroup, lsmUpdates);
-            objectiveSample.addTiles(tile);
-        });
+        int sampleNumSignals = objectiveTileGroups.entrySet().stream()
+                .map((Map.Entry<SampleTileKey, SlideImageGroup> tileEntry) -> {
+                    SampleTileKey tileKey = tileEntry.getKey();
+                    SlideImageGroup tileGroup = tileEntry.getValue();
+                    SampleTile tile = createNewSampleTile(tileKey, tileGroup, lsmUpdates);
+                    objectiveSample.addTiles(tile);
+                    return tileGroup.countTileSignalChannels();
+                })
+                .reduce(0, (n1, n2) -> {
+                    if (n1 == 0) {
+                        return n2;
+                    } else {
+                        if (n1 != n2 && n2 != 0) {
+                            logger.warn("There is no consensus between tiles regarding the number of signal channels {} vs {}",
+                                    n1, n2);
+                        }
+                        return n1;
+                    }
+                });
+        if (sampleNumSignals > 0) {
+            int sampleNumChannels = sampleNumSignals + 1;
+            String chanSpec = LSMProcessingTools.createChanSpec(sampleNumChannels, sampleNumChannels);
+            objectiveSample.setChanSpec(chanSpec);
+        }
         return objectiveSample;
     }
 
