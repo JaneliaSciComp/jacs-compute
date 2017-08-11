@@ -1,5 +1,6 @@
 package org.janelia.jacs2.model.sage;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.sample.LSMImage;
 
 import java.util.ArrayList;
@@ -37,5 +38,31 @@ public class SlideImageGroup {
 
     public void addImage(LSMImage lsmImage) {
         images.add(lsmImage);
+    }
+
+    public int countTileSignalChannelsUsingChanSpec() {
+        return images.stream()
+                .map(lsm -> lsm.getChanSpec())
+                .filter(chanSpec -> StringUtils.isNotBlank(chanSpec))
+                .flatMap((String chanSpec) -> chanSpec.chars().mapToObj(i -> (char) i))
+                .filter((Character chan) -> chan.equals('s'))
+                .reduce(0, (totalSignalChannels, chan) -> totalSignalChannels++, (n1, n2) -> n1 + n2);
+    }
+
+    public int countTileSignalChannelsUsingNumChannels() {
+        return images.stream()
+                .map(lsm -> lsm.getNumChannels())
+                .filter(numChannels -> numChannels != null && numChannels > 0)
+                .map(numChannels -> numChannels -1)
+                .reduce(0, (n1, n2) -> n1 + n2);
+    }
+
+    public int  countTileSignalChannels() {
+        int nSignalChannels = countTileSignalChannelsUsingChanSpec();
+        if (nSignalChannels > 0) {
+            return nSignalChannels;
+        } else {
+            return countTileSignalChannelsUsingNumChannels();
+        }
     }
 }

@@ -27,6 +27,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.imageservices.tools.LSMProcessingTools;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.dataset.DatasetService;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -313,25 +314,48 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                         .collect(Collectors.toList())
         );
         Map<LSMImage, Map<String, EntityFieldValueHandler<?>>> lsmUpdates = new LinkedHashMap<>();
+        Map<String, ObjectiveSample> newSampleObjectives = new LinkedHashMap<>();
         lsmsGroupedByAbjectiveAndArea.forEach((objective, areas) -> {
-            newSample.addObjective(createNewObjective(objective, areas, lsmUpdates));
+            ObjectiveSample objectiveSample = createNewObjective(objective, areas, lsmUpdates);
+            newSample.addObjective(objectiveSample);
+            newSampleObjectives.put(objective, objectiveSample);
         });
         newSample.setName(DomainModelUtils.replaceVariables(getSampleNamePattern(dataSet), DomainModelUtils.getFieldValues(newSample)));
         sampleDataService.createSample(newSample);
         Reference newSampleRef = Reference.createFor(newSample);
 
         // update LSM's sampleRef
-        lsmsGroupedByAbjectiveAndArea.forEach((objective, areas) -> areas.forEach((tileKey, areaGroup) -> areaGroup.getImages().forEach(lsm -> {
-                    lsm.setSampleRef(newSampleRef);
-                    Map<String, EntityFieldValueHandler<?>> updatedLsmFields = lsmUpdates.get(lsm);
-                    if (updatedLsmFields == null) {
-                        updatedLsmFields = new LinkedHashMap<>();
-                        lsmUpdates.put(lsm, updatedLsmFields);
-                    }
-                    lsm.setSampleRef(newSampleRef);
-                    updatedLsmFields.put("sampleRef", new SetFieldValueHandler<>(newSampleRef));
-                }
-        )));
+        lsmsGroupedByAbjectiveAndArea.forEach((objective, areas) -> {
+            int sampleNumSignals = areas.entrySet().stream()
+                    .map((Map.Entry<SampleTileKey, SlideImageGroup> tileEntry) -> {
+                        SlideImageGroup areaGroup = tileEntry.getValue();
+                        areaGroup.getImages().forEach((LSMImage lsm) -> {
+                                    Map<String, EntityFieldValueHandler<?>> updatedLsmFields = lsmUpdates.get(lsm);
+                                    if (updatedLsmFields == null) {
+                                        updatedLsmFields = new LinkedHashMap<>();
+                                        lsmUpdates.put(lsm, updatedLsmFields);
+                                    }
+                                    lsm.setSampleRef(newSampleRef);
+                                    updatedLsmFields.put("sampleRef", new SetFieldValueHandler<>(newSampleRef));
+                                }
+                        );
+                        return areaGroup.countTileSignalChannels();
+                    })
+                    .reduce(0, (n1, n2) -> {
+                        if (n1 == 0) {
+                            return n2;
+                        } else {
+                            if (n1 != n2 && n2 != 0) {
+                                logger.warn("There is no consensus between tiles regarding the number of signal channels {} vs {}",
+                                        n1, n2);
+                            }
+                            return n1;
+                        }
+                    });
+            int sampleNumChannels = sampleNumSignals + 1;
+            String chanSpec = LSMProcessingTools.createChanSpec(sampleNumChannels, sampleNumChannels);
+            newSampleObjectives.get(objective).setChanSpec(chanSpec);
+        });
         lsmUpdates.forEach((lsm, updates) -> sampleDataService.updateLSM(lsm, updates));
         return newSample;
     }
