@@ -96,7 +96,11 @@ public class SageJdbcDaoTest {
         testDao.findMatchingSlideImages("wangk11_kw_mcfo_images",
                 "JRC_SS46543",
                 ImmutableList.of("20170427_21_E6", "20170427_21_E7"),
-                ImmutableList.of("20170501/FLFL_20170503155545197_286220.lsm", "20170501/FLFL_20170503155558312_286224.lsm", "20170501/FLFL_20170503155511097_286213.lsm"), 1, 2);
+                ImmutableList.of(
+                        "20170501/FLFL_20170503155545197_286220.lsm",
+                        "20170501/FLFL_20170503155558312_286224.lsm",
+                        "20170501/FLFL_20170503155511097_286213.lsm",
+                        "FLFL_20170503155511097_286214.lsm"), 1, 2);
         // verify line property CVs
         verify(testConnection).prepareStatement(
                 "select distinct cv.id as cv_id,cv.name as cv_name,cv_term.id cv_term_id,cv_term.name cv_term_name " +
@@ -151,7 +155,7 @@ public class SageJdbcDaoTest {
                         imagePropertyJoin("area", "area") +
                         imagePropertyJoin("objective", "objective") +
                         imagePropertyJoin("tile", "tile") +
-                        "where ds_ip.value = ? and ln.name = ? and sc_ip.value in (?,?) and im.name in (?,?,?) " +
+                        "where ds_ip.value = ? and ln.name = ? and sc_ip.value in (?,?) and im.name in (?,?,?) and (im.name like ?) " +
                         "group by ln.id, im.id " +
                         "limit ? offset ?",
                 ResultSet.TYPE_FORWARD_ONLY,
@@ -260,7 +264,12 @@ public class SageJdbcDaoTest {
         testDao.findMatchingSlideImages(null,
                 null,
                 ImmutableList.of("20170427_21_E6", "20170427_21_E7"),
-                ImmutableList.of("20170501/FLFL_20170503155545197_286220.lsm", "20170501/FLFL_20170503155558312_286224.lsm", "20170501/FLFL_20170503155511097_286213.lsm"), 0, 2);
+                ImmutableList.of(
+                        "20170501/FLFL_20170503155545197_286220.lsm",
+                        "20170501/FLFL_20170503155558312_286224.lsm",
+                        "20170501/FLFL_20170503155511097_286213.lsm",
+                        "FLFL_20170503155511097_286214.lsm",
+                        "FLFL_20170503155511097_286215.lsm"), 0, 2);
         verify(testConnection).prepareStatement("select " +
                         "im.id im_id,im.name im_name,im.url im_url,im.path im_path,im.jfs_path im_jfs_path,im.line_id im_line_id,im.family_id im_family_id," +
                         "im.capture_date im_capture_date,im.representative im_representative,im.created_by im_created_by,im.create_date im_create_date,ln.id ln_id," +
@@ -287,7 +296,7 @@ public class SageJdbcDaoTest {
                         imagePropertyJoin("area", "area") +
                         imagePropertyJoin("objective", "objective") +
                         imagePropertyJoin("tile", "tile") +
-                        "where sc_ip.value in (?,?) and im.name in (?,?,?) " +
+                        "where sc_ip.value in (?,?) and im.name in (?,?,?) and (im.name like ? or im.name like ?) " +
                         "group by ln.id, im.id " +
                         "limit ?",
                 ResultSet.TYPE_FORWARD_ONLY,

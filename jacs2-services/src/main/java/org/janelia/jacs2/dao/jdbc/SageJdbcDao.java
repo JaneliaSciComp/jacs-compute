@@ -105,8 +105,30 @@ public class SageJdbcDao implements SageDao {
             if (CollectionUtils.isNotEmpty(slideCodes)) {
                 whereBuilder.add("sc_ip.value in (" + Joiner.on(',').join(Collections.nCopies(slideCodes.size(), '?')) + ")");
             }
+            List<String> fullLsmNames = new ArrayList<>();
+            List<String> simpleLsmNames = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(lsmNames)) {
-                whereBuilder.add("im.name in (" + Joiner.on(',').join(Collections.nCopies(lsmNames.size(), '?')) + ")");
+                lsmNames.stream()
+                        .filter(lsmName -> StringUtils.isNotBlank(lsmName))
+                        .forEach(lsmName -> {
+                            int pathSeparatorIndex = lsmName.indexOf('/');
+                            if (pathSeparatorIndex > 0) {
+                                fullLsmNames.add(lsmName);
+                            } else if (pathSeparatorIndex == 0 && lsmName.length() > 1) {
+                                simpleLsmNames.add(lsmName.substring(0));
+                            } else if (pathSeparatorIndex == -1) {
+                                simpleLsmNames.add(lsmName);
+                            }
+                        });
+            }
+            if (CollectionUtils.isNotEmpty(fullLsmNames)) {
+                whereBuilder.add("im.name in (" + Joiner.on(',').join(Collections.nCopies(fullLsmNames.size(), '?')) + ")");
+            }
+            if (CollectionUtils.isNotEmpty(simpleLsmNames)) {
+                String orSimpleLsmNameCond = simpleLsmNames.stream()
+                        .map(lsmName -> "im.name like ?")
+                        .reduce("", (c1, c2) -> StringUtils.isBlank(c1) ? c2 : c1 + " or " + c2);
+                whereBuilder.add("(" + orSimpleLsmNameCond + ")");
             }
             queryBuilder
                     .append("where ")
@@ -136,9 +158,13 @@ public class SageJdbcDao implements SageDao {
             if (CollectionUtils.isNotEmpty(slideCodes)) {
                 for (String sc : slideCodes) pstmt.setString(fieldIndex++, sc);
             }
-            if (CollectionUtils.isNotEmpty(lsmNames)) {
-                for (String lsmName : lsmNames) pstmt.setString(fieldIndex++, lsmName);
+            if (CollectionUtils.isNotEmpty(fullLsmNames)) {
+                for (String lsmName : fullLsmNames) pstmt.setString(fieldIndex++, lsmName);
             }
+            if (CollectionUtils.isNotEmpty(simpleLsmNames)) {
+                for (String lsmName : simpleLsmNames) pstmt.setString(fieldIndex++, "%" + lsmName);
+            }
+
             if (offset > 0 && length > 0) {
                 pstmt.setInt(fieldIndex++, length);
                 pstmt.setInt(fieldIndex++, offset);
