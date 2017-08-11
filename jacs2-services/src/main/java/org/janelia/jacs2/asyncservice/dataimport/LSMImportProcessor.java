@@ -240,8 +240,8 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         if (slideImages.isEmpty()) {
             throw new IllegalArgumentException("No image found in sage to match " + args.toString());
         }
-        if (args.hasOnlyLsmNamesFilter() && slideImages.size() != args.lsmNames.size()) {
-            Set<String> requestedLsms = ImmutableSet.copyOf(args.lsmNames);
+        if (args.hasOnlyLsmNamesFilter() && slideImages.size() != args.getValues(args.lsmNames).size()) {
+            Set<String> requestedLsms = ImmutableSet.copyOf(args.getValues(args.lsmNames));
             Set<String> foundLsms = slideImages.stream().map(si -> si.getName()).collect(Collectors.toSet());
 
             // if the size of the given parameters doesn't match
