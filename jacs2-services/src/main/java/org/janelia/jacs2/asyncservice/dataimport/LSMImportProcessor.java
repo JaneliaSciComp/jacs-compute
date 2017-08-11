@@ -375,13 +375,11 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                                     .orElseGet(() -> {
                                         SampleTile newSampleTile = createNewSampleTile(tileKey, tileGroup, lsmUpdates);
                                         existingObjectiveSample.addTiles(newSampleTile);
-                                        if (StringUtils.isBlank(existingObjectiveSample.getChanSpec())) {
-                                            int sampleNumSignals = tileGroup.countTileSignalChannels();
-                                            if (sampleNumSignals > 0) {
-                                                int sampleNumChannels = sampleNumSignals + 1;
-                                                String chanSpec = LSMProcessingTools.createChanSpec(sampleNumChannels, sampleNumChannels);
-                                                existingObjectiveSample.setChanSpec(chanSpec);
-                                            }
+                                        int sampleNumSignals = tileGroup.countTileSignalChannels();
+                                        int sampleNumChannels = sampleNumSignals + 1;
+                                        if (StringUtils.isBlank(existingObjectiveSample.getChanSpec()) || sampleNumChannels > existingObjectiveSample.getChanSpec().length()) {
+                                            String chanSpec = LSMProcessingTools.createChanSpec(sampleNumChannels, sampleNumChannels);
+                                            existingObjectiveSample.setChanSpec(chanSpec);
                                         }
                                         return newSampleTile;
                                     });

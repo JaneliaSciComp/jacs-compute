@@ -11,6 +11,7 @@ import org.janelia.jacs2.model.sage.SlideImage;
 import org.janelia.jacs2.model.sage.SlideImageGroup;
 import org.reflections.ReflectionUtils;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Date;
@@ -36,13 +37,13 @@ public class SampleUtils {
         lsmImage.setTile(slideImage.getTile());
         lsmImage.setCaptureDate(slideImage.getCaptureDate());
         lsmImage.setCreatedBy(slideImage.getCreatedBy());
-        lsmImage.setName(slideImage.getName());
+        lsmImage.setName(getLsmNameFromSlideImageName(slideImage));
         lsmImage.setTmogDate(Objects.requireNonNull(slideImage.getCreateDate()));
 
-        String lsmFileName = StringUtils.defaultIfBlank(slideImage.getJfsPath(), slideImage.getPath());
-        if (StringUtils.isNotBlank(lsmFileName)) {
-            lsmImage.setFilepath(lsmFileName);
-            lsmImage.setFileName(FileType.LosslessStack, lsmFileName);
+        String lsmFilepath = slideImage.getFilepath();
+        if (StringUtils.isNotBlank(lsmFilepath)) {
+            lsmImage.setFilepath(lsmFilepath);
+            lsmImage.setFileName(FileType.LosslessStack, lsmFilepath);
         }
 
         lsmImage.setRepresentative(slideImage.getRepresentative());
@@ -117,6 +118,16 @@ public class SampleUtils {
         lsmImage.setOpticalResolution(slideImage.getOpticalResolution());
         lsmImage.setImageSize(slideImage.getImageSize());
         return lsmImage;
+    }
+
+    private static String getLsmNameFromSlideImageName(SlideImage slideImage) {
+        // get the name from the JFS path if available otherwise get it from image query name
+        String lsmFilepath = slideImage.getFilepath();
+        if (StringUtils.isBlank(lsmFilepath)) {
+            return null;
+        } else {
+            return new File(lsmFilepath).getName();
+        }
     }
 
     private static String getObjective(String objectiveName) {

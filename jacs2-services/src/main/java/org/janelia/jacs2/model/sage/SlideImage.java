@@ -568,6 +568,16 @@ public class SlideImage implements BaseEntity {
         }
     }
 
+    public String getFilepath() {
+        String filepath = getJfsPath();
+        if (StringUtils.isBlank(filepath)) {
+            filepath = getPath();
+            return StringUtils.isNotBlank(filepath) ? filepath : getName();
+        } else {
+            return filepath;
+        }
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
