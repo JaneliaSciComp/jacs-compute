@@ -185,9 +185,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                     ).thenApply(vr -> lineImages.stream()
                                     .map(SampleUtils::createLSMFromSlideImage)
                                     .map(lsm -> {
-                                        if (StringUtils.isNotBlank(owner)) {
-                                            lsm.setOwnerKey("user:" + owner);
-                                        }
+                                        lsm.setOwnerKey(ds.getOwnerKey());
                                         lsm.setWriters(ds.getWriters());
                                         lsm.setReaders(ds.getReaders());
                                         return lsm;
@@ -208,7 +206,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                             allLsmsPerSlideCode.put(slideCode, matchingLsms.getResultList());
                         });
                         return allLsmsPerSlideCode;
-                    }).thenApply((Map<String, List<LSMImage>> allLsmsForEnteredSlideCodes) -> createSamplesFromSlideGroups(owner, ds, imageLine.getName(), slideImagesToImportBySlideCode, allLsmsForEnteredSlideCodes));
+                    }).thenApply((Map<String, List<LSMImage>> allLsmsForEnteredSlideCodes) -> createSamplesFromSlideGroups(ds, imageLine.getName(), slideImagesToImportBySlideCode, allLsmsForEnteredSlideCodes));
                 })
                 .collect(Collectors.toList());
         return computationFactory.newCompletedComputation(jacsServiceData)
@@ -268,20 +266,20 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         }
     }
 
-    private List<LSMImportResult> createSamplesFromSlideGroups(String owner, DataSet dataSet, String line, Map<String, List<SlideImage>> imagesToImportBySlideCode, Map<String, List<LSMImage>> allLsmsForEnteredSlideCodes) {
+    private List<LSMImportResult> createSamplesFromSlideGroups(DataSet dataSet, String line, Map<String, List<SlideImage>> imagesToImportBySlideCode, Map<String, List<LSMImage>> allLsmsForEnteredSlideCodes) {
         return allLsmsForEnteredSlideCodes.entrySet().stream()
-                .map(slideLsmsEntry -> createSampleFromSlideGroup(owner, dataSet, line, slideLsmsEntry.getKey(), imagesToImportBySlideCode.get(slideLsmsEntry.getKey()), slideLsmsEntry.getValue()))
+                .map(slideLsmsEntry -> createSampleFromSlideGroup(dataSet, line, slideLsmsEntry.getKey(), imagesToImportBySlideCode.get(slideLsmsEntry.getKey()), slideLsmsEntry.getValue()))
                 .collect(Collectors.toList());
     }
 
-    private LSMImportResult createSampleFromSlideGroup(String owner, DataSet dataSet, String line, String slideCode, List<SlideImage> importedImages, List<LSMImage> lsmImages) {
+    private LSMImportResult createSampleFromSlideGroup(DataSet dataSet, String line, String slideCode, List<SlideImage> importedImages, List<LSMImage> lsmImages) {
         List<String> importedImageNames = importedImages.stream().map(image -> image.getName()).collect(Collectors.toList());
         logger.info("Creating or updating sample {} : {} : {} with {}", dataSet.getIdentifier(), line, slideCode, importedImageNames);
         Map<String, Map<SampleTileKey, SlideImageGroup>> lsmsGroupedByAbjectiveAndArea = groupLsmImagesByObjectiveAndArea(lsmImages);
-        Optional<Sample> existingSample = findBestSampleMatch(owner, dataSet, slideCode);
+        Optional<Sample> existingSample = findBestSampleMatch(dataSet, slideCode);
         if (!existingSample.isPresent()) {
             // create a new Sample
-            Sample newSample = createNewSample(owner, dataSet, slideCode, lsmsGroupedByAbjectiveAndArea);
+            Sample newSample = createNewSample(dataSet, slideCode, lsmsGroupedByAbjectiveAndArea);
             logger.info("Created new sample {} for dataset {} and slideCode {}", newSample, dataSet, slideCode);
             return new LSMImportResult(dataSet.getIdentifier(), newSample.getId(), newSample.getName(), line, slideCode, importedImageNames, true);
         } else {
@@ -297,11 +295,11 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         return sampleNamePattern == null ? DEFAULT_SAMPLE_NAME_PATTERN : sampleNamePattern;
     }
 
-    private Sample createNewSample(String owner, DataSet dataSet, String slideCode, Map<String, Map<SampleTileKey, SlideImageGroup>> lsmsGroupedByAbjectiveAndArea) {
+    private Sample createNewSample(DataSet dataSet, String slideCode, Map<String, Map<SampleTileKey, SlideImageGroup>> lsmsGroupedByAbjectiveAndArea) {
         Sample newSample = new Sample();
-        if (StringUtils.isNotBlank(owner)) {
-            newSample.setOwnerKey("user:" + owner);
-        }
+        newSample.setOwnerKey(dataSet.getOwnerKey());
+        newSample.setWriters(dataSet.getWriters());
+        newSample.setReaders(dataSet.getReaders());
         newSample.setDataSet(dataSet.getIdentifier());
         newSample.setSlideCode(slideCode);
         newSample.setStatus(SampleProcessingStatus.New.name());
@@ -463,14 +461,14 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         }
     }
 
-    private Optional<Sample> findBestSampleMatch(String owner, DataSet dataSet, String slideCode) {
+    private Optional<Sample> findBestSampleMatch(DataSet dataSet, String slideCode) {
         Sample sampleRef = new Sample();
         sampleRef.setDataSet(dataSet.getIdentifier());
         sampleRef.setSlideCode(slideCode);
 
         PageRequest pageRequest = new PageRequest();
         pageRequest.setSortCriteria(ImmutableList.of(new SortCriteria("creationDate", SortDirection.DESC)));
-        PageResult<Sample> sampleCandidates = sampleDataService.searchSamples(owner, sampleRef, new DataInterval<>(null, null), pageRequest);
+        PageResult<Sample> sampleCandidates = sampleDataService.searchSamples(dataSet.getOwnerKey(), sampleRef, new DataInterval<>(null, null), pageRequest);
 
         if (sampleCandidates.isEmpty()) {
             return Optional.empty();

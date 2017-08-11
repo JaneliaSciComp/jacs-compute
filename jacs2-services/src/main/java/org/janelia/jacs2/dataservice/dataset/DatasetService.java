@@ -19,7 +19,7 @@ public class DatasetService {
     }
 
     public DataSet getDatasetByNameOrIdentifier(String subjectName, String datasetNameOrIdentifier) {
-        Subject subject = subjectService.getSubjectByName(subjectName);
+        Subject subject = subjectService.getSubjectByNameOrKey(subjectName);
         return datasetDao.findByNameOrIdentifier(subject, datasetNameOrIdentifier);
     }
 }

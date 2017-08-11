@@ -2,6 +2,7 @@ package org.janelia.jacs2.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.it.jacs.model.domain.Subject;
@@ -36,7 +37,13 @@ public class LSMImageMongoDao extends AbstractImageMongoDao<LSMImage> implements
             filtersBuilder.add(eq("name", pattern.getName()));
         }
         if (StringUtils.isNotBlank(pattern.getOwnerKey())) {
-            filtersBuilder.add(eq("ownerKey", pattern.getOwnerKey()));
+            // lookup samples that have a matching owner or don't have it set at all.
+            filtersBuilder.add(
+                    Filters.or(
+                            eq("ownerKey", pattern.getOwnerKey()),
+                            Filters.exists("ownerKey", false)
+                    )
+            );
         }
         if (StringUtils.isNotBlank(pattern.getAge())) {
             filtersBuilder.add(eq("age", pattern.getAge()));

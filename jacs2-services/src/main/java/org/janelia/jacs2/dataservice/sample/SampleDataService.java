@@ -62,7 +62,7 @@ public class SampleDataService {
     }
 
     public Sample getSampleById(String subjectName, Number sampleId) {
-        Subject subject = subjectService.getSubjectByName(subjectName);
+        Subject subject = subjectService.getSubjectByNameOrKey(subjectName);
         return getSampleById(subject, sampleId);
     }
 
@@ -80,13 +80,13 @@ public class SampleDataService {
     }
 
     public List<LSMImage> getLSMsByIds(String subjectName, List<Number> lsmIds) {
-        Subject subject = subjectService.getSubjectByName(subjectName);
+        Subject subject = subjectService.getSubjectByNameOrKey(subjectName);
         return lsmImageDao.findSubtypesByIds(subject, lsmIds, LSMImage.class);
     }
 
     public List<ObjectiveSample> getObjectivesBySampleIdAndObjective(String subjectName, Number sampleId, String objective) {
         Preconditions.checkArgument(sampleId != null, "Sample ID must be specified retrieving sample objectives");
-        Subject currentSubject = subjectService.getSubjectByName(subjectName);
+        Subject currentSubject = subjectService.getSubjectByNameOrKey(subjectName);
         Sample sample = getSampleById(currentSubject, sampleId);
         if (sample == null) {
             logger.info("Invalid sampleId {} or subject {} has no access", sampleId, subjectName);
@@ -112,7 +112,7 @@ public class SampleDataService {
 
     private List<AnatomicalArea> getAnatomicalAreasBySampleIdAndObjective(String subjectName, Number sampleId, String objective, Optional<String> anatomicalAreaName) {
         Preconditions.checkArgument(sampleId != null, "Sample ID must be specified for anatomical area retrieval");
-        Subject currentSubject = subjectService.getSubjectByName(subjectName);
+        Subject currentSubject = subjectService.getSubjectByNameOrKey(subjectName);
         Sample sample = getSampleById(currentSubject, sampleId);
         if (sample == null) {
             logger.info("Invalid sampleId {} or subject {} has no access", sampleId, subjectName);
@@ -205,12 +205,12 @@ public class SampleDataService {
     }
 
     public PageResult<LSMImage> searchLsms(String subjectName, LSMImage pattern, PageRequest pageRequest) {
-        Subject subject = subjectService.getSubjectByName(subjectName);
+        Subject subject = subjectService.getSubjectByNameOrKey(subjectName);
         return lsmImageDao.findMatchingLSMs(subject, pattern, pageRequest);
     }
 
     public PageResult<Sample> searchSamples(String subjectName, Sample pattern, DataInterval<Date> tmogInterval, PageRequest pageRequest) {
-        Subject subject = subjectService.getSubjectByName(subjectName);
+        Subject subject = subjectService.getSubjectByNameOrKey(subjectName);
         return sampleDao.findMatchingSamples(subject, pattern, tmogInterval, pageRequest);
     }
 

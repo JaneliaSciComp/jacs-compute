@@ -4,6 +4,7 @@ import com.google.common.base.Splitter;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.it.jacs.model.domain.DomainObject;
 import org.janelia.it.jacs.model.domain.Subject;
@@ -61,11 +62,16 @@ public class DomainModelUtils {
     }
 
     private static List<String> getSubjectKeyComponents(String subjectKey) {
-        List<String> subjectKeyComponents = Splitter.on(':').trimResults().splitToList(subjectKey);
-        if (subjectKeyComponents.size() != 2) {
-            throw new IllegalArgumentException("Invalid subject key '" + subjectKey + "' - expected format <type>:<name>");
+        if (StringUtils.isBlank(subjectKey)) {
+            return ImmutableList.of("", "");
+        } else {
+            int separatorIndex = subjectKey.indexOf(':');
+            if (separatorIndex == -1) {
+                return ImmutableList.of("", subjectKey);
+            } else {
+                return ImmutableList.of(subjectKey.substring(0, separatorIndex), subjectKey.substring(separatorIndex + 1));
+            }
         }
-        return subjectKeyComponents;
     }
 
     public static boolean isAdminOrUndefined(Subject subject) {

@@ -66,7 +66,7 @@ public class SampleDataServiceTest {
     @Test
     public void retrieveSampleWhenSubjectDoesNotHaveReadPerms() {
         when(sampleDao.findById(TEST_SAMPLE_ID)).thenReturn(createTestSample());
-        when(subjectService.getSubjectByName(TEST_SUBJECT)).thenReturn(createTestSubject("other"));
+        when(subjectService.getSubjectByNameOrKey(TEST_SUBJECT)).thenReturn(createTestSubject("other"));
         assertThatThrownBy(() -> testService.getSampleById(TEST_SUBJECT, TEST_SAMPLE_ID))
                 .isInstanceOf(SecurityException.class)
                 .hasMessage("Subject user:other does not have read access to sample: " + TEST_SAMPLE_ID);
@@ -75,7 +75,7 @@ public class SampleDataServiceTest {
     @Test
     public void retrieveSampleWhenSubjectHasReadPerms() {
         when(sampleDao.findById(TEST_SAMPLE_ID)).thenReturn(createTestSample());
-        when(subjectService.getSubjectByName(TEST_SUBJECT)).thenReturn(createTestSubject("other", "testGroup"));
+        when(subjectService.getSubjectByNameOrKey(TEST_SUBJECT)).thenReturn(createTestSubject("other", "testGroup"));
         Sample testSample = testService.getSampleById(TEST_SUBJECT, TEST_SAMPLE_ID);
         assertNotNull(testSample);
     }
