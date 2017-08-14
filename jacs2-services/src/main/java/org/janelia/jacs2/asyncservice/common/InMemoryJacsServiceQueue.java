@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
@@ -25,8 +26,11 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.PriorityBlockingQueue;
 
+@Singleton
 @ApplicationScoped
 public class InMemoryJacsServiceQueue implements JacsServiceQueue {
+    private static final Object ACCESS_LOCK = new Object();
+
     private static final int DEFAULT_MAX_READY_CAPACITY = 20;
     private static final long MAX_WAIT_IN_SUBMIT_STATE_MILLIS = 300000; // 5min
 
@@ -75,11 +79,13 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
 
     @Override
     public JacsServiceData dequeService() {
-        JacsServiceData queuedService = getWaitingService();
-        if (queuedService == null && enqueueAvailableServices(EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED))) {
-            queuedService = getWaitingService();
+        synchronized (ACCESS_LOCK) {
+            JacsServiceData queuedService = getWaitingService();
+            if (queuedService == null && enqueueAvailableServices(EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED))) {
+                queuedService = getWaitingService();
+            }
+            return queuedService;
         }
-        return queuedService;
     }
 
     @Override
@@ -90,28 +96,38 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     }
 
     @Override
-    public synchronized void abortService(JacsServiceData jacsServiceData) {
-        submittedServicesSet.remove(jacsServiceData.getId());
+    public void abortService(JacsServiceData jacsServiceData) {
+        synchronized (ACCESS_LOCK) {
+            submittedServicesSet.remove(jacsServiceData.getId());
+        }
     }
 
     @Override
-    public synchronized void completeService(JacsServiceData jacsServiceData) {
-        submittedServicesSet.remove(jacsServiceData.getId());
+    public void completeService(JacsServiceData jacsServiceData) {
+        synchronized (ACCESS_LOCK) {
+            submittedServicesSet.remove(jacsServiceData.getId());
+        }
     }
 
     @Override
-    public synchronized int getReadyServicesSize() {
-        return waitingServices.size();
+    public int getReadyServicesSize() {
+        synchronized (ACCESS_LOCK) {
+            return waitingServices.size();
+        }
     }
 
     @Override
-    public synchronized int getPendingServicesSize() {
-        return submittedServicesSet.size();
+    public int getPendingServicesSize() {
+        synchronized (ACCESS_LOCK) {
+            return submittedServicesSet.size();
+        }
     }
 
     @Override
-    public synchronized List<Number> getPendingServices() {
-        return ImmutableList.copyOf(submittedServicesSet);
+    public List<Number> getPendingServices() {
+        synchronized (ACCESS_LOCK) {
+            return ImmutableList.copyOf(submittedServicesSet);
+        }
     }
 
     @Override
@@ -124,62 +140,72 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
         this.maxReadyCapacity = maxReadyCapacity <= 0 ? DEFAULT_MAX_READY_CAPACITY : maxReadyCapacity;
     }
 
-    private synchronized boolean addWaitingService(JacsServiceData jacsServiceData) {
-        Number jacsServiceId = jacsServiceData.getId();
-        if (waitingServicesSet.contains(jacsServiceId)) {
-            return true;
-        } else if (submittedServicesSet.contains(jacsServiceId)) {
-            if (EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED).contains(jacsServiceData.getState())) {
-                if (jacsServiceData.getModificationDate() != null && System.currentTimeMillis() - jacsServiceData.getModificationDate().getTime() > MAX_WAIT_IN_SUBMIT_STATE_MILLIS)
-                // requeue to the service
-                submittedServicesSet.remove(jacsServiceId);
-            } else {
+    private boolean addWaitingService(JacsServiceData jacsServiceData) {
+        synchronized (ACCESS_LOCK) {
+            Number jacsServiceId = jacsServiceData.getId();
+            if (waitingServicesSet.contains(jacsServiceId)) {
+                logger.debug("Service {} already waiting in the queue {}", jacsServiceData, this);
+                return true;
+            } else if (submittedServicesSet.contains(jacsServiceId)) {
+                if (EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED).contains(jacsServiceData.getState())) {
+                    if (jacsServiceData.getModificationDate() != null && System.currentTimeMillis() - jacsServiceData.getModificationDate().getTime() > MAX_WAIT_IN_SUBMIT_STATE_MILLIS) {
+                        // requeue the service
+                        logger.debug("Prepare service {} for re-enqueuing it into {}", jacsServiceData, this);
+                        abortService(jacsServiceData);
+                    }
+                } else {
+                    logger.debug("Service {} already found in the queue {} as submitted", jacsServiceData, this);
+                    return true;
+                }
+            }
+            boolean added = waitingServices.offer(jacsServiceData);
+            if (added) {
+                logger.debug("Enqueued service {} into {}", jacsServiceData, this);
+                waitingServicesSet.add(jacsServiceId);
+                if (jacsServiceData.getState() == JacsServiceState.CREATED) {
+                    jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.QUEUED, Optional.<JacsServiceEvent>empty());
+                }
+            }
+            return added;
+        }
+    }
+
+    private boolean enqueueAvailableServices(Set<JacsServiceState> jacsServiceStates) {
+        synchronized (ACCESS_LOCK) {
+            int availableSpaces = maxReadyCapacity;
+            PageRequest servicePageRequest = new PageRequest();
+            servicePageRequest.setPageSize(availableSpaces);
+            servicePageRequest.setSortCriteria(new ArrayList<>(ImmutableList.of(
+                    new SortCriteria("priority", SortDirection.DESC),
+                    new SortCriteria("creationDate"))));
+            PageResult<JacsServiceData> services = jacsServiceDataPersistence.claimServiceByQueueAndState(queueId, jacsServiceStates, servicePageRequest);
+            if (CollectionUtils.isNotEmpty(services.getResultList())) {
+                services.getResultList().stream().forEach(serviceData -> {
+                    try {
+                        Preconditions.checkArgument(serviceData.getId() != null, "Invalid service ID");
+                        addWaitingService(serviceData);
+                    } catch (Exception e) {
+                        logger.error("Internal error - no computation can be created for {}", serviceData);
+                    }
+                });
+                noWaitingSpaceAvailable = waitingCapacity() <= 0;
                 return true;
             }
+            return false;
         }
-        boolean added = waitingServices.offer(jacsServiceData);
-        if (added) {
-            logger.debug("Enqueued service {} into {}", jacsServiceData, this);
-            waitingServicesSet.add(jacsServiceData.getId());
-            if (jacsServiceData.getState() == JacsServiceState.CREATED) {
-                jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.QUEUED, Optional.<JacsServiceEvent>empty());
+    }
+
+    private JacsServiceData getWaitingService() {
+        synchronized (ACCESS_LOCK) {
+            JacsServiceData jacsServiceData = waitingServices.poll();
+            if (jacsServiceData != null) {
+                logger.debug("Retrieved waiting service {}", jacsServiceData);
+                Number serviceId = jacsServiceData.getId();
+                submittedServicesSet.add(serviceId);
+                waitingServicesSet.remove(serviceId);
             }
+            return jacsServiceData;
         }
-        return added;
-    }
-
-    private synchronized boolean enqueueAvailableServices(Set<JacsServiceState> jacsServiceStates) {
-        int availableSpaces = maxReadyCapacity;
-        PageRequest servicePageRequest = new PageRequest();
-        servicePageRequest.setPageSize(availableSpaces);
-        servicePageRequest.setSortCriteria(new ArrayList<>(ImmutableList.of(
-                new SortCriteria("priority", SortDirection.DESC),
-                new SortCriteria("creationDate"))));
-        PageResult<JacsServiceData> services = jacsServiceDataPersistence.claimServiceByQueueAndState(queueId, jacsServiceStates, servicePageRequest);
-        if (CollectionUtils.isNotEmpty(services.getResultList())) {
-            services.getResultList().stream().forEach(serviceData -> {
-                try {
-                    Preconditions.checkArgument(serviceData.getId() != null, "Invalid service ID");
-                    addWaitingService(serviceData);
-                } catch (Exception e) {
-                    logger.error("Internal error - no computation can be created for {}", serviceData);
-                }
-            });
-            noWaitingSpaceAvailable = waitingCapacity() <= 0;
-            return true;
-        }
-        return false;
-    }
-
-    private synchronized JacsServiceData getWaitingService() {
-        JacsServiceData jacsServiceData = waitingServices.poll();
-        if (jacsServiceData != null) {
-            logger.debug("Retrieved waiting service {}", jacsServiceData);
-            Number serviceId = jacsServiceData.getId();
-            submittedServicesSet.add(serviceId);
-            waitingServicesSet.remove(serviceId);
-        }
-        return jacsServiceData;
     }
 
     private int waitingCapacity() {
