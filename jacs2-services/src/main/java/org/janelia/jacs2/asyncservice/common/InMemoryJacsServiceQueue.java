@@ -26,7 +26,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.PriorityBlockingQueue;
 
-@Singleton
 @ApplicationScoped
 public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     private static final Object ACCESS_LOCK = new Object();
