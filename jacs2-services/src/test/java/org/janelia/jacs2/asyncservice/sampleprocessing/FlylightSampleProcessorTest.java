@@ -310,11 +310,13 @@ public class FlylightSampleProcessorTest {
                     .thenApply(r -> {
                         successful.accept(r);
 
+                        String expectedSampleRootDir = testSampleDir + "/" + testServiceData.getOwner();
+
                         verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)))
                         );
 
@@ -323,7 +325,7 @@ public class FlylightSampleProcessorTest {
                                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
@@ -341,7 +343,7 @@ public class FlylightSampleProcessorTest {
                                 argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir))),
@@ -489,11 +491,13 @@ public class FlylightSampleProcessorTest {
                 .thenApply(r -> {
                     successful.accept(r);
 
+                    String expectedSampleRootDir = testSampleDir + "/" + testServiceData.getOwner();
+
                     verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)))
                     );
 
@@ -515,7 +519,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir))),
@@ -535,7 +539,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-mode", "MCFO"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", testSampleDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist")))
                     );
                     verify(enhancedMIPsAndMoviesProcessor).createServiceData(any(ServiceExecutionContext.class),
@@ -543,7 +547,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-mode", "MCFO"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", testSampleDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist")))
                     );
                     verify(enhancedMIPsAndMoviesProcessor).createServiceData(any(ServiceExecutionContext.class),
@@ -551,7 +555,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-mode", "MCFO"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", testSampleDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist")))
                     );
 
@@ -559,7 +563,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-samplePostSubDir", "Post" + "/" + testLsmSubDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-resultDirs", String.join(",", TEST_MIPS_DIR, TEST_MIPS_DIR, TEST_MIPS_DIR))))
                     );
@@ -570,7 +574,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", testSampleDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/" + area))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/" + area))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-previousResultFile", "")))
@@ -707,12 +711,13 @@ public class FlylightSampleProcessorTest {
         flylightProcessing
                 .thenApply(r -> {
                     successful.accept(r);
+                    String expectedSampleRootDir = testSampleDir + "/" + testServiceData.getOwner();
 
                     verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-area", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)))
                     );
 
@@ -734,7 +739,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-area", ""))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", testSampleDir))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir))),
@@ -757,7 +762,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-mode", "MCFO"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", testSampleDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/NormalizedBrainVNC"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/NormalizedBrainVNC"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist")))
                     );
 
@@ -765,9 +770,9 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-samplePostSubDir", "Post" + "/" + testLsmSubDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultDirs", testSampleDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/NormalizedBrainVNC")))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-resultDirs", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/NormalizedBrainVNC")))
                     );
 
                     verify(sampleNeuronSeparationProcessor).createServiceData(any(ServiceExecutionContext.class),
@@ -776,7 +781,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", testSampleDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/Brain"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/Brain"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-previousResultFile", "")))
@@ -787,7 +792,7 @@ public class FlylightSampleProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", testSampleDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/VNC"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/VNC"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-previousResultFile", "")))

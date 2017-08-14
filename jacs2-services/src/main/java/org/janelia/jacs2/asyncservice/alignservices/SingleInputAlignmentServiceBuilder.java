@@ -12,7 +12,6 @@ import org.janelia.jacs2.asyncservice.utils.FileUtils;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -52,7 +51,7 @@ public class SingleInputAlignmentServiceBuilder implements AlignmentServiceBuild
     public List<AlignmentServiceParams> getAlignmentServicesArgs(Sample sample,
                                                                  String alignmentAlgorithm,
                                                                  String alignmentResultName,
-                                                                 String sampleDataRootDir,
+                                                                 Path sampleDataRootDir,
                                                                  List<SampleProcessorResult> sampleProcessorResults,
                                                                  List<NeuronSeparationFiles> neuronSeparationResults) {
         List<AlignmentServiceParams> alignmentServicesParams = new ArrayList<>();
@@ -97,18 +96,18 @@ public class SingleInputAlignmentServiceBuilder implements AlignmentServiceBuild
         }
     }
 
-    private Path getAlignmentOutputDir(String sampleDataRootDir, String subDir, Number parentResultId, int nAreas, String area, int resultIndex) {
+    private Path getAlignmentOutputDir(Path sampleDataRootDir, String subDir, Number parentResultId, int nAreas, String area, int resultIndex) {
         Path alignmentOutputDir;
         if (StringUtils.isNotBlank(area)) {
-            alignmentOutputDir = Paths.get(sampleDataRootDir)
+            alignmentOutputDir = sampleDataRootDir
                     .resolve(FileUtils.getDataPath(subDir, parentResultId))
                     .resolve(area);
         } else if (nAreas > 1) {
-            alignmentOutputDir = Paths.get(sampleDataRootDir)
+            alignmentOutputDir = sampleDataRootDir
                     .resolve(FileUtils.getDataPath(subDir, parentResultId.toString()))
                     .resolve("area" + resultIndex + 1);
         } else {
-            alignmentOutputDir = Paths.get(sampleDataRootDir)
+            alignmentOutputDir = sampleDataRootDir
                     .resolve(FileUtils.getDataPath(subDir, parentResultId.toString()));
         }
         return alignmentOutputDir;

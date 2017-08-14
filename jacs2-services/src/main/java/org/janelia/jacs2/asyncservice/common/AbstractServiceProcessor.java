@@ -160,8 +160,11 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     protected Path getServicePath(String baseDir, JacsServiceData jacsServiceData, String... more) {
-        ImmutableList.Builder<String> pathElemsBuilder = ImmutableList.<String>builder()
-                .add(jacsServiceData.getName());
+        ImmutableList.Builder<String> pathElemsBuilder = ImmutableList.<String>builder();
+        if (StringUtils.isNotBlank(jacsServiceData.getOwner())) {
+            pathElemsBuilder.add(jacsServiceData.getOwner());
+        }
+        pathElemsBuilder.add(jacsServiceData.getName());
         if (jacsServiceData.hasId()) {
             pathElemsBuilder.addAll(FileUtils.getTreePathComponentsForId(jacsServiceData.getId()));
         }

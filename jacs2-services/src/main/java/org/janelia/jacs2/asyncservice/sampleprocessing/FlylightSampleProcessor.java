@@ -159,6 +159,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
     @Override
     public ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> process(JacsServiceData jacsServiceData) {
         FlylightSampleArgs args = getArgs(jacsServiceData);
+        Path sampleDataRootDir = getSampleDataRootDir(jacsServiceData, args);
         Path sampleLsmsSubDir = FileUtils.getDataPath(SampleServicesUtils.DEFAULT_WORKING_LSMS_SUBDIR, jacsServiceData.getId());
         Path sampleSummarySubDir = FileUtils.getDataPath("Summary", jacsServiceData.getId());
         Path sampleStitchingSubDir = FileUtils.getDataPath("Sample", jacsServiceData.getId());
@@ -168,7 +169,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
         ServiceComputation<JacsServiceResult<List<SampleImageFile>>> initAndGetSampleImagesComputation =
                 initSampleResults(jacsServiceData, args.sampleId, args.sampleObjective, sampleResultsId, args.sampleResultsName, args.sampleProcessName)
-                        .thenCompose(ignored -> getSampleImages(jacsServiceData, args.sampleId, args.sampleObjective, args.sampleArea, args.sampleDataRootDir, sampleLsmsSubDir));
+                        .thenCompose(ignored -> getSampleImages(jacsServiceData, args.sampleId, args.sampleObjective, args.sampleArea, sampleDataRootDir, sampleLsmsSubDir));
 
         if (!args.skipSummary) {
             // compute LSM summaries in parallel with everything else
@@ -198,7 +199,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                             new ServiceArg("-objective", args.sampleObjective),
                                             new ServiceArg("-area", args.sampleArea),
                                             new ServiceArg("-sampleResultsId", sampleResultsId),
-                                            new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                                            new ServiceArg("-sampleDataRootDir", sampleDataRootDir.toString()),
                                             new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
                                             new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
                                             new ServiceArg("-channelDyeSpec", args.channelDyeSpec),
@@ -220,7 +221,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         return initAndGetSampleImagesComputation
                 .thenCompose((JacsServiceResult<List<SampleImageFile>> lsir) -> processSampleImages( // process sample
                         jacsServiceData, args.sampleId, args.sampleObjective, args.sampleArea, sampleResultsId,
-                        args.sampleDataRootDir, sampleLsmsSubDir, sampleSummarySubDir, sampleStitchingSubDir, samplePostProcessingSubDir,
+                        sampleDataRootDir, sampleLsmsSubDir, sampleSummarySubDir, sampleStitchingSubDir, samplePostProcessingSubDir,
                         args.mergeAlgorithm, args.channelDyeSpec, args.outputChannelOrder,
                         args.persistResults,
                         args.imageType, args.postProcessingMipMapsOptions, args.defaultPostProcessingColorSpec,
@@ -230,7 +231,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             jacsServiceData,
                             lspr.getResult(),
                             (args.runNeuronSeparationAfterSampleProcessing ? lspr.getResult().size() : 0),
-                            args.sampleDataRootDir,
+                            sampleDataRootDir,
                             lspr.getJacsServiceData());
                     if (CollectionUtils.isEmpty(args.alignmentAlgorithms)) {
                         // no alignment requested so stop here
@@ -245,7 +246,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                 List<JacsServiceResult<NeuronSeparationFiles>> neuronSeparationsResults = (List<JacsServiceResult<NeuronSeparationFiles>>) results;
                                 List<ServiceComputation<?>> alignmentComputations = new ArrayList<>();
                                 alignmentComputations.addAll(
-                                        runAllAlignments(args.sampleId, jacsServiceData, args.sampleDataRootDir, args.alignmentAlgorithms, args.alignmentResultNames, lspr1, neuronSeparationsResults)
+                                        runAllAlignments(args.sampleId, jacsServiceData, sampleDataRootDir, args.alignmentAlgorithms, args.alignmentResultNames, lspr1, neuronSeparationsResults)
                                 );
                                 return computationFactory.newCompletedComputation(lspr1)
                                         .thenCombineAll(alignmentComputations, (lspr2, alignmentResults) -> lspr2);
@@ -276,7 +277,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                                 new ServiceArg("-sampleId", args.sampleId),
                                                 new ServiceArg("-objective", args.sampleObjective),
                                                 new ServiceArg("-area", args.sampleArea),
-                                                new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                                                new ServiceArg("-sampleDataRootDir", sampleDataRootDir.toString()),
                                                 new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
                                                 new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
                                                 new ServiceArg("-sampleSitchingSubDir", sampleStitchingSubDir.toString())
@@ -291,7 +292,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                 new ServiceArg("-sampleId", args.sampleId),
                                 new ServiceArg("-objective", args.sampleObjective),
                                 new ServiceArg("-area", args.sampleArea),
-                                new ServiceArg("-sampleDataRootDir", args.sampleDataRootDir),
+                                new ServiceArg("-sampleDataRootDir", sampleDataRootDir.toString()),
                                 new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
                                 new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
                                 new ServiceArg("-sampleSitchingSubDir", sampleStitchingSubDir.toString())
@@ -323,7 +324,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
     }
 
     private ServiceComputation<JacsServiceResult<List<SampleImageFile>>> getSampleImages(JacsServiceData jacsServiceData, Number sampleId, String sampleObjective, String sampleArea,
-                                                                                         String sampleDataRootDir, Path sampleLsmsSubDir) {
+                                                                                         Path sampleDataRootDir, Path sampleLsmsSubDir) {
         // get sample images
         return getSampleImageFilesProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Retrieve sample LSMs")
@@ -331,14 +332,14 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                 new ServiceArg("-sampleId", sampleId),
                 new ServiceArg("-objective", sampleObjective),
                 new ServiceArg("-area", sampleArea),
-                new ServiceArg("-sampleDataRootDir", sampleDataRootDir),
+                new ServiceArg("-sampleDataRootDir", sampleDataRootDir.toString()),
                 new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString())
         );
     }
 
-    private ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> processSampleImages(JacsServiceData jacsServiceData, Number sampleId, String sampleObjective, String sampleArea,
-                                                                                                   Number sampleResultsId, String sampleDataRootDir, Path sampleLsmsSubDir, Path sampleSummarySubDir,
-                                                                                                   Path sampleStitchingSubDir, Path samplePostProcessingSubDir,
+    private ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> processSampleImages(JacsServiceData jacsServiceData,
+                                                                                                   Number sampleId, String sampleObjective, String sampleArea, Number sampleResultsId,
+                                                                                                   Path sampleDataRootDir, Path sampleLsmsSubDir, Path sampleSummarySubDir, Path sampleStitchingSubDir, Path samplePostProcessingSubDir,
                                                                                                    String mergeAlgorithm, String channelDyeSpec, String outputChannelOrder,
                                                                                                    boolean generateMips,
                                                                                                    String imageType, String postProcessingMipMapsOptions, String defaultPostProcessingColorSpec,
@@ -368,7 +369,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                 new ServiceArg("-objective", sampleObjective),
                 new ServiceArg("-area", sampleArea),
                 new ServiceArg("-sampleResultsId", sampleResultsId),
-                new ServiceArg("-sampleDataRootDir", sampleDataRootDir),
+                new ServiceArg("-sampleDataRootDir", sampleDataRootDir.toString()),
                 new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
                 new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
                 new ServiceArg("-sampleSitchingSubDir", sampleStitchingSubDir.toString()),
@@ -445,7 +446,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                             new ServiceArg("-sampleId", sampleId),
                                             new ServiceArg("-objective", objectiveAreasEntry.getKey()),
                                             new ServiceArg("-sampleResultsId", sampleResultsId),
-                                            new ServiceArg("-sampleDataRootDir", sampleDataRootDir),
+                                            new ServiceArg("-sampleDataRootDir", sampleDataRootDir.toString()),
                                             new ServiceArg("-samplePostSubDir", samplePostProcessingSubDir.toString()),
                                             new ServiceArg("-resultDirs", postProcessingResultsDir.toString())
                                     ));
@@ -495,7 +496,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                                         new ServiceArg("-sampleId", sampleId),
                                                         new ServiceArg("-objective", objectiveAreasEntry.getKey()),
                                                         new ServiceArg("-sampleResultsId", sampleResultsId),
-                                                        new ServiceArg("-sampleDataRootDir", sampleDataRootDir),
+                                                        new ServiceArg("-sampleDataRootDir", sampleDataRootDir.toString()),
                                                         new ServiceArg("-samplePostSubDir", samplePostProcessingSubDir.toString()),
                                                         new ServiceArg("-resultDirs", mipsAndMoviesResults.stream().map(r -> r.getResult().getResultsDir()).collect(Collectors.joining(",")))
                                                 );
@@ -543,8 +544,8 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         }
     }
 
-    private Path getPostProcessingOutputDir(String sampleDataRootDir, Path postProcessingSubDir, String objective, String area, int resultIndex) {
-        Path postProcessingOutputDir = Paths.get(sampleDataRootDir).resolve(postProcessingSubDir);
+    private Path getPostProcessingOutputDir(Path sampleDataRootDir, Path postProcessingSubDir, String objective, String area, int resultIndex) {
+        Path postProcessingOutputDir = sampleDataRootDir.resolve(postProcessingSubDir);
         if (StringUtils.isNotBlank(objective)) {
             postProcessingOutputDir = postProcessingOutputDir.resolve(objective);
         }
@@ -558,7 +559,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
     private List<ServiceComputation<JacsServiceResult<NeuronSeparationFiles>>> runSampleNeuronSeparations(JacsServiceData jacsServiceData,
                                                                                                           List<SampleProcessorResult> sampleResults, int nSampleResults,
-                                                                                                          String sampleDataRootDir,
+                                                                                                          Path sampleDataRootDir,
                                                                                                           JacsServiceData... deps) {
         return IntStream.range(0, nSampleResults)
                     .mapToObj(pos -> new IndexedReference<>(sampleResults.get(pos), pos))
@@ -608,7 +609,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         }
     }
 
-    private List<ServiceComputation<JacsServiceResult<NeuronSeparationFiles>>> runAllAlignments(Number sampleId, JacsServiceData jacsServiceData, String sampleDataRootDir,
+    private List<ServiceComputation<JacsServiceResult<NeuronSeparationFiles>>> runAllAlignments(Number sampleId, JacsServiceData jacsServiceData, Path sampleDataRootDir,
                                                                                                 List<String> alignmentAlgorithms,
                                                                                                 List<String> alignmentResultNames,
                                                                                                 JacsServiceResult<List<SampleProcessorResult>> lspr,
@@ -695,11 +696,11 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
     private ServiceComputation<JacsServiceResult<NeuronSeparationFiles>> runAlignmentNeuronSeparation(JacsServiceData jacsServiceData,
                                                                                                       SampleProcessorResult sampleProcessorResult,
-                                                                                                      String sampleDataRootDir,
+                                                                                                      Path sampleDataRootDir,
                                                                                                       Number alignmentResultId,
                                                                                                       Path consolidatedLabelFile,
                                                                                                       JacsServiceData... deps) {
-        Path neuronSeparationOutputDir = Paths.get(sampleDataRootDir).resolve(FileUtils.getDataPath("Separation", alignmentResultId));
+        Path neuronSeparationOutputDir = sampleDataRootDir.resolve(FileUtils.getDataPath("Separation", alignmentResultId));
         Path previousNeuronsResult = getPreviousAlignmentBasedNeuronsResultFile(
                 jacsServiceData, sampleProcessorResult.getSampleId(),
                 sampleProcessorResult.getObjective(),
@@ -737,14 +738,23 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new FlylightSampleArgs());
     }
 
-    private Path getNeuronSeparationOutputDir(String sampleDataRootDir, String topSubDir, Number parentResultId, String area, int resultIndex) {
+    private Path getSampleDataRootDir(JacsServiceData jacsServiceData, FlylightSampleArgs args) {
+        Path baseSampleDataRootDir = Paths.get(args.sampleDataRootDir);
+        if (StringUtils.isNotBlank(jacsServiceData.getOwner()) && !baseSampleDataRootDir.endsWith(jacsServiceData.getOwner())) {
+            return baseSampleDataRootDir.resolve(jacsServiceData.getOwner());
+        } else {
+            return baseSampleDataRootDir;
+        }
+    }
+
+    private Path getNeuronSeparationOutputDir(Path sampleDataRootDir, String topSubDir, Number parentResultId, String area, int resultIndex) {
         Path neuronSeparationOutputDir;
         if (StringUtils.isNotBlank(area)) {
-            neuronSeparationOutputDir = Paths.get(sampleDataRootDir)
+            neuronSeparationOutputDir = sampleDataRootDir
                     .resolve(FileUtils.getDataPath(topSubDir, parentResultId))
                     .resolve(area);
         } else {
-            neuronSeparationOutputDir = Paths.get(sampleDataRootDir)
+            neuronSeparationOutputDir = sampleDataRootDir
                     .resolve(FileUtils.getDataPath(topSubDir, parentResultId))
                     .resolve("area" + String.valueOf(resultIndex + 1));
         }
