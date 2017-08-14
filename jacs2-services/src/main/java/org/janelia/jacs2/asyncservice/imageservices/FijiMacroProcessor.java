@@ -4,7 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
+import org.janelia.jacs2.asyncservice.common.CoreDumpServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
@@ -86,26 +86,7 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
     @Override
     public ServiceErrorChecker getErrorChecker() {
-        return new DefaultServiceErrorChecker(logger) {
-            @Override
-            protected boolean hasErrors(String l) {
-                if (StringUtils.isNotBlank(l)) {
-                    if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
-                        // core dump is still an error
-                        logger.error(l);
-                        return true;
-                    } else if (l.matches("(?i:.*(error|exception).*)")) {
-                        // ignore any exception for Fiji - just log it
-                        logger.warn(l);
-                        return false;
-                    } else {
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-            }
-        };
+        return new CoreDumpServiceErrorChecker(logger);
     }
 
     @Override

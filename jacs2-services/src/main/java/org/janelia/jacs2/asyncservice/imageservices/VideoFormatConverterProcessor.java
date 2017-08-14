@@ -4,9 +4,11 @@ import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.CoreDumpServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
@@ -77,23 +79,6 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
-        try {
-            ConverterArgs args = getArgs(jacsServiceData);
-            if (StringUtils.isBlank(args.input)) {
-                throw new ComputationException(jacsServiceData, "Input must be specified");
-            }
-            File outputFile = getOutputFile(args);
-            Files.createDirectories(outputFile.getParentFile().toPath());
-        } catch (ComputationException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ComputationException(jacsServiceData, e);
-        }
-        return super.prepareProcessing(jacsServiceData);
-    }
-
-    @Override
     public ServiceResultHandler<File> getResultHandler() {
         return new AbstractSingleFileServiceResultHandler() {
 
@@ -110,6 +95,28 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
                 return getOutputFile(args);
             }
         };
+    }
+
+    @Override
+    public ServiceErrorChecker getErrorChecker() {
+        return new CoreDumpServiceErrorChecker(logger);
+    }
+
+    @Override
+    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+        try {
+            ConverterArgs args = getArgs(jacsServiceData);
+            if (StringUtils.isBlank(args.input)) {
+                throw new ComputationException(jacsServiceData, "Input must be specified");
+            }
+            File outputFile = getOutputFile(args);
+            Files.createDirectories(outputFile.getParentFile().toPath());
+        } catch (ComputationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ComputationException(jacsServiceData, e);
+        }
+        return super.prepareProcessing(jacsServiceData);
     }
 
     @Override

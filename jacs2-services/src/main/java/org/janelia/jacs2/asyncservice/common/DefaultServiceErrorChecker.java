@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 
 public class DefaultServiceErrorChecker implements ServiceErrorChecker {
 
-    private final Logger logger;
+    protected final Logger logger;
 
     public DefaultServiceErrorChecker(Logger logger) {
         this.logger = logger;
