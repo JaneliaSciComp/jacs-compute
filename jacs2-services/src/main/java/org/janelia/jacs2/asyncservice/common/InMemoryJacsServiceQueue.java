@@ -141,26 +141,13 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
 
     private boolean addWaitingService(JacsServiceData jacsServiceData) {
         synchronized (ACCESS_LOCK) {
-            Number jacsServiceId = jacsServiceData.getId();
-            if (waitingServicesSet.contains(jacsServiceId)) {
-                logger.debug("Service {} already waiting in the queue {}", jacsServiceData, this);
+            if (isInMemory(jacsServiceData)) {
                 return true;
-            } else if (submittedServicesSet.contains(jacsServiceId)) {
-                if (EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED).contains(jacsServiceData.getState())) {
-                    if (jacsServiceData.getModificationDate() != null && System.currentTimeMillis() - jacsServiceData.getModificationDate().getTime() > MAX_WAIT_IN_SUBMIT_STATE_MILLIS) {
-                        // requeue the service
-                        logger.debug("Prepare service {} for re-enqueuing it into {}", jacsServiceData, this);
-                        abortService(jacsServiceData);
-                    }
-                } else {
-                    logger.debug("Service {} already found in the queue {} as submitted", jacsServiceData, this);
-                    return true;
-                }
             }
             boolean added = waitingServices.offer(jacsServiceData);
             if (added) {
                 logger.debug("Enqueued service {} into {}", jacsServiceData, this);
-                waitingServicesSet.add(jacsServiceId);
+                waitingServicesSet.add(jacsServiceData.getId());
                 if (jacsServiceData.getState() == JacsServiceState.CREATED) {
                     jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.QUEUED, Optional.<JacsServiceEvent>empty());
                 }
@@ -212,4 +199,27 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
         return remainingCapacity < 0 ? 0 : remainingCapacity;
     }
 
+    private boolean isInMemory(JacsServiceData jacsServiceData) {
+        Number jacsServiceId = jacsServiceData.getId();
+        if (waitingServicesSet.contains(jacsServiceId)) {
+            logger.debug("Service {} already waiting in the queue {}", jacsServiceData, this);
+            return true;
+        } else if (submittedServicesSet.contains(jacsServiceId)) {
+            if (EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED).contains(jacsServiceData.getState())) {
+                if (jacsServiceData.getModificationDate() != null && System.currentTimeMillis() - jacsServiceData.getModificationDate().getTime() > MAX_WAIT_IN_SUBMIT_STATE_MILLIS) {
+                    // requeue the service
+                    logger.debug("Remove stale service {} from {}", jacsServiceData, this);
+                    abortService(jacsServiceData);
+                    return false;
+                } else {
+                    return true;
+                }
+            } else {
+                logger.debug("Service {} already found in the queue {} as submitted", jacsServiceData, this);
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
 }
