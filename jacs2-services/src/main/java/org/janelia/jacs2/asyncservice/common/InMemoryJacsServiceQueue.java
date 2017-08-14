@@ -28,6 +28,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 @ApplicationScoped
 public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     private static final int DEFAULT_MAX_READY_CAPACITY = 20;
+    private static final long MAX_WAIT_IN_SUBMIT_STATE_MILLIS = 300000; // 5min
 
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private Queue<JacsServiceData> waitingServices;
@@ -124,13 +125,19 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     }
 
     private synchronized boolean addWaitingService(JacsServiceData jacsServiceData) {
-        boolean added = false;
-        if (submittedServicesSet.contains(jacsServiceData.getId())
-                || waitingServicesSet.contains(jacsServiceData.getId())) {
-            // service is already waiting or running
+        Number jacsServiceId = jacsServiceData.getId();
+        if (waitingServicesSet.contains(jacsServiceId)) {
             return true;
+        } else if (submittedServicesSet.contains(jacsServiceId)) {
+            if (EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED).contains(jacsServiceData.getState())) {
+                if (jacsServiceData.getModificationDate() != null && System.currentTimeMillis() - jacsServiceData.getModificationDate().getTime() > MAX_WAIT_IN_SUBMIT_STATE_MILLIS)
+                // requeue to the service
+                submittedServicesSet.remove(jacsServiceId);
+            } else {
+                return true;
+            }
         }
-        added = waitingServices.offer(jacsServiceData);
+        boolean added = waitingServices.offer(jacsServiceData);
         if (added) {
             logger.debug("Enqueued service {} into {}", jacsServiceData, this);
             waitingServicesSet.add(jacsServiceData.getId());
@@ -153,10 +160,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
             services.getResultList().stream().forEach(serviceData -> {
                 try {
                     Preconditions.checkArgument(serviceData.getId() != null, "Invalid service ID");
-                    if (!submittedServicesSet.contains(serviceData.getId()) &&
-                            !waitingServicesSet.contains(serviceData.getId())) {
-                        addWaitingService(serviceData);
-                    }
+                    addWaitingService(serviceData);
                 } catch (Exception e) {
                     logger.error("Internal error - no computation can be created for {}", serviceData);
                 }

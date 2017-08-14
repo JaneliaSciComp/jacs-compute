@@ -14,6 +14,7 @@ import org.bson.conversions.Bson;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.dao.JacsServiceDataDao;
 import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.jacs2.model.AppendFieldValueHandler;
 import org.janelia.jacs2.model.DataInterval;
 import org.janelia.jacs2.model.EntityFieldValueHandler;
 import org.janelia.jacs2.model.SetFieldValueHandler;
@@ -218,17 +219,15 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
 
     @Override
     public void addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
-        UpdateOptions updateOptions = new UpdateOptions();
-        updateOptions.upsert(false);
-        update(getUpdateMatchCriteria(jacsServiceData), Updates.push("events", serviceEvent), updateOptions);
+        Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
+        updatedFields.put("events", new AppendFieldValueHandler<>(serviceEvent));
+        update(jacsServiceData, updatedFields);
     }
 
     @Override
     public void updateServiceResult(JacsServiceData serviceData) {
-        serviceData.setModificationDate(new Date());
         Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
         updatedFields.put("serializableResult", new SetFieldValueHandler<>(serviceData.getSerializableResult()));
-        updatedFields.put("modificationDate", new SetFieldValueHandler<>(serviceData.getModificationDate()));
         update(serviceData, updatedFields);
     }
 }

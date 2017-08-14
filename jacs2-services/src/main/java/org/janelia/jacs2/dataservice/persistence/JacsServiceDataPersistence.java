@@ -14,12 +14,14 @@ import org.janelia.jacs2.model.page.PageResult;
 
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -136,14 +138,27 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
 
     public void updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, Optional<JacsServiceEvent> serviceEvent) {
         JacsServiceState oldServiceState = jacsServiceData.getState();
-        jacsServiceData.setState(newServiceState);
+        List<Consumer<JacsServiceDataDao>> actions = new ArrayList<>();
         if (newServiceState != oldServiceState) {
-            addServiceEvent(
-                    jacsServiceData,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from " + oldServiceState + " -> " + newServiceState));
-            if (jacsServiceData.hasId()) update(jacsServiceData, ImmutableMap.of("state", new SetFieldValueHandler<>(newServiceState)));
+            jacsServiceData.setState(newServiceState);
+            JacsServiceEvent updateStateEvent = JacsServiceData.createServiceEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from " + oldServiceState + " -> " + newServiceState);
+            jacsServiceData.addNewEvent(updateStateEvent);
+
+            actions.add(dao -> dao.addServiceEvent(jacsServiceData, updateStateEvent));
+            actions.add(dao -> dao.update(jacsServiceData, ImmutableMap.of("state", new SetFieldValueHandler<>(newServiceState))));
         }
-        if (serviceEvent.isPresent()) addServiceEvent(jacsServiceData, serviceEvent.get());
+        serviceEvent.ifPresent(anotherEvent -> {
+            jacsServiceData.addNewEvent(anotherEvent);
+            actions.add(dao -> dao.addServiceEvent(jacsServiceData, anotherEvent));
+        });
+        if (jacsServiceData.hasId() && !actions.isEmpty()) {
+            JacsServiceDataDao jacsServiceDataDao = daoSource.get();
+            try {
+                actions.forEach(action -> action.accept(jacsServiceDataDao));
+            } finally {
+                daoSource.destroy(jacsServiceDataDao);
+            }
+        }
     }
 
     public void addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
