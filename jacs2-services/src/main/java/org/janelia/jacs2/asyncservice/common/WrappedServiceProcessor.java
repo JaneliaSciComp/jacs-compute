@@ -42,11 +42,17 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
 
     @Override
     public ServiceComputation<JacsServiceResult<T>> process(JacsServiceData jacsServiceData) {
+        StackTraceElement[] capturedStackTrace = new Throwable().getStackTrace();
         JacsServiceData submittedService = submit(jacsServiceData);
         PeriodicallyCheckableState<JacsServiceData> submittedServiceStateCheck = new PeriodicallyCheckableState<>(submittedService, ProcessorHelper.getSoftJobDurationLimitInSeconds(jacsServiceData.getResources()) / 100);
         return computationFactory.newCompletedComputation(submittedServiceStateCheck)
                 .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceData> sdState) -> new ContinuationCond.Cond<>(sdState, sdState.updateCheckTime() && isDone(sdState)))
-                .thenApply((ContinuationCond.Cond<PeriodicallyCheckableState<JacsServiceData>> sdStateCond) -> getResult(sdStateCond.getState()));
+                .thenApply((ContinuationCond.Cond<PeriodicallyCheckableState<JacsServiceData>> sdStateCond) -> getResult(sdStateCond.getState()))
+                .exceptionally(exc -> {
+                    ComputationException computationException = new ComputationException(jacsServiceData, exc);
+                    computationException.setStackTrace(capturedStackTrace);
+                    throw computationException;
+                });
     }
 
     private JacsServiceData submit(JacsServiceData jacsServiceData) {
@@ -60,9 +66,10 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
 
     private JacsServiceResult<T> getResult(PeriodicallyCheckableState<JacsServiceData> jacsServiceDataState) {
         JacsServiceData refreshServiceData = jacsServiceDataPersistence.findById(jacsServiceDataState.getState().getId());
-        if (refreshServiceData.hasCompletedUnsuccessfully()) {
-            throw new ComputationException(refreshServiceData);
+        if (refreshServiceData.hasCompletedSuccessfully()) {
+            return new JacsServiceResult<T>(refreshServiceData, wrappedProcessor.getResultHandler().getServiceDataResult(refreshServiceData));
+        } else {
+            return new JacsServiceResult<T>(refreshServiceData);
         }
-        return new JacsServiceResult<T>(refreshServiceData, wrappedProcessor.getResultHandler().getServiceDataResult(refreshServiceData));
     }
 }
