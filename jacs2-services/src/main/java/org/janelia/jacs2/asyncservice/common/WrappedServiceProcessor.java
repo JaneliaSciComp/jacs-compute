@@ -69,7 +69,7 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
         if (refreshServiceData.hasCompletedSuccessfully()) {
             return new JacsServiceResult<T>(refreshServiceData, wrappedProcessor.getResultHandler().getServiceDataResult(refreshServiceData));
         } else {
-            return new JacsServiceResult<T>(refreshServiceData);
+            throw new ComputationException(refreshServiceData);
         }
     }
 }

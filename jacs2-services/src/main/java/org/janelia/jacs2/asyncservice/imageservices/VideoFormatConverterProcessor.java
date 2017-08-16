@@ -108,6 +108,8 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
             ConverterArgs args = getArgs(jacsServiceData);
             if (StringUtils.isBlank(args.input)) {
                 throw new ComputationException(jacsServiceData, "Input must be specified");
+            } else if (Files.notExists(Paths.get(args.input))) {
+                throw new ComputationException(jacsServiceData, "Input '" + args.input + "' not found");
             }
             File outputFile = getOutputFile(args);
             Files.createDirectories(outputFile.getParentFile().toPath());
