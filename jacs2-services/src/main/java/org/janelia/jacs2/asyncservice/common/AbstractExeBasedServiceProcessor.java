@@ -119,7 +119,6 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
 
     protected String getUpdatedEnvValue(String varName, String addedValue) {
         Preconditions.checkArgument(StringUtils.isNotBlank(addedValue), "Cannot update environment variable " + varName + " with a null or empty value");
-//        Optional<String> currentValue =
         return getEnvVar(varName)
                 .map(currentValue -> addedValue + ":" + currentValue)
                 .orElse(addedValue)
@@ -134,7 +133,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                 "service." + jacsServiceData.getName() + ".maxRunningProcesses",
                 defaultMaxRunningProcesses);
         ExternalProcessRunner processRunner =
-                new ThrottledExternalProcessRunner(throttledProcessesQueue, jacsServiceData.getName(), getProcessRunner(jacsServiceData.getProcessingLocation()), maxRunningProcesses);
+                new ThrottledExternalProcessRunner(throttledProcessesQueue, jacsServiceData.getName(), getProcessRunner(jacsServiceData), maxRunningProcesses);
         return processRunner.runCmds(
                 script,
                 env,
@@ -142,14 +141,27 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                 jacsServiceData);
     }
 
-    private ExternalProcessRunner getProcessRunner(ProcessingLocation processingLocation) {
-        ProcessingLocation location = processingLocation == null ? ProcessingLocation.LOCAL : processingLocation;
+    private ExternalProcessRunner getProcessRunner(JacsServiceData jacsServiceData) {
+        ProcessingLocation location = jacsServiceData.getProcessingLocation();
+        if (location == null) {
+            // if processing location is not set, use a default location (if needed it can be service specific)
+            String defaultProcessingLocation = applicationConfig.getStringPropertyValue("service.defaultProcessingLocation", ProcessingLocation.LOCAL.name());
+            String defaultServiceProcessingLocation = applicationConfig.getStringPropertyValue(
+                    "service." + jacsServiceData.getName() + ".defaultProcessingLocation",
+                    defaultProcessingLocation);
+            try {
+                location = ProcessingLocation.valueOf(defaultServiceProcessingLocation);
+            } catch (Exception e) {
+                logger.warn("Invalid default service processing location: {} / {} - defaulting to LOCAL", defaultProcessingLocation, defaultServiceProcessingLocation, e);
+                location = ProcessingLocation.LOCAL; // default to local if something is miss configured
+            }
+        }
         for (ExternalProcessRunner serviceRunner : serviceRunners) {
             if (serviceRunner.supports(location)) {
                 return serviceRunner;
             }
         }
-        throw new IllegalArgumentException("Unsupported runner: " + processingLocation);
+        throw new IllegalArgumentException("Unsupported runner: " + location);
     }
 
 }

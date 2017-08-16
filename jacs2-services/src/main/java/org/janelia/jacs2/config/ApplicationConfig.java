@@ -7,6 +7,10 @@ public class ApplicationConfig extends Properties {
         return getProperty(name);
     }
 
+    public String getStringPropertyValue(String name, String defaultValue) {
+        return getProperty(name, defaultValue);
+    }
+
     public Boolean getBooleanPropertyValue(String name) {
         String stringValue = getStringPropertyValue(name);
         return stringValue == null ? false : Boolean.valueOf(stringValue);

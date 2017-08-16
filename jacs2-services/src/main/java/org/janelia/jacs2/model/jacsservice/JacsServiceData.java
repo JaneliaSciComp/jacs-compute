@@ -38,7 +38,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private String name;
     private String description;
     private String version;
-    private ProcessingLocation processingLocation = ProcessingLocation.LOCAL;
+    private ProcessingLocation processingLocation;
     private JacsServiceState state = JacsServiceState.CREATED;
     private Integer priority = 0;
     private String owner;
