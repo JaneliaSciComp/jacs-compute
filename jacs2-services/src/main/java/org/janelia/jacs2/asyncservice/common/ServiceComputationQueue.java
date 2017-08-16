@@ -1,13 +1,20 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import org.janelia.jacs2.cdi.qualifier.TaskQueuePoll;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 public class ServiceComputationQueue {
@@ -17,9 +24,12 @@ public class ServiceComputationQueue {
         return task.isDone();
     }
 
-    private ExecutorService taskExecutor;
-    private ExecutorService queueInspector;
     private BlockingQueue<ServiceComputationTask<?>> taskQueue;
+    private ExecutorService taskExecutor;
+    private ScheduledExecutorService taskQueueScheduler;
+    private Logger logger;
+    private int initialDelay;
+    private int period;
 
     ServiceComputationQueue() {
         // CDI ctor
@@ -27,26 +37,39 @@ public class ServiceComputationQueue {
     }
 
     @Inject
-    public ServiceComputationQueue(ExecutorService taskExecutor, @TaskQueuePoll ExecutorService queueInspector) {
+    public ServiceComputationQueue(ExecutorService taskExecutor,
+                                   @PropertyValue(name = "service.taskQueue.InitialDelayInMillis") int initialDelay,
+                                   @PropertyValue(name = "service.taskQueue.PeriodInMillis") int period,
+                                   @PropertyValue(name = "service.taskQueue.ThreadPoolSize") int taskQueuePoolSize,
+                                   Logger logger) {
         this();
         this.taskExecutor = taskExecutor;
-        this.queueInspector = queueInspector;
+        this.initialDelay = initialDelay > 0 ? initialDelay : 0;
+        this.period = period == 0 ? 10 : period;
+        this.logger = logger;
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("JACS-taskQueue-%d")
+                .setDaemon(true)
+                .build();
+        this.taskQueueScheduler = Executors.newScheduledThreadPool(taskQueuePoolSize, threadFactory);
+    }
+
+    private void doWork() {
+        try {
+            cycleThroughAvailableTasks();
+        } catch (Exception e) {
+            logger.error("Critical error - running computation tasks", e);
+        }
     }
 
     @PostConstruct
-    void initialize() {
-       this.queueInspector.submit(() -> executeTasks());
+    public void initialize() {
+        taskQueueScheduler.scheduleAtFixedRate(() -> doWork(), initialDelay, period, TimeUnit.MILLISECONDS);
     }
 
-    private void executeTasks() {
-        for (;;) {
-            try {
-                cycleThroughAvailableTasks();
-                Thread.sleep(50L);
-            } catch (InterruptedException e) {
-                break;
-            }
-        }
+    @PreDestroy
+    public void destroy() {
+        taskQueueScheduler.shutdownNow();
     }
 
     private void cycleThroughAvailableTasks() {

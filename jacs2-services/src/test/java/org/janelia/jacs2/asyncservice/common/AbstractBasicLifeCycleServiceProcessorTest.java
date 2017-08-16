@@ -79,7 +79,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
 
         @Override
         protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
-            return computationFactory.newFailedComputation(new ComputationException(depResults.getJacsServiceData()));
+            return computationFactory.newFailedComputation(new ComputationException(depResults.getJacsServiceData(), "Processing failed"));
         }
 
     }

@@ -8,10 +8,6 @@ import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 public class ComputationException extends RuntimeException {
     private JacsServiceData jacsServiceData;
 
-    public ComputationException(JacsServiceData jacsServiceData) {
-        this.jacsServiceData = jacsServiceData;
-    }
-
     public ComputationException(JacsServiceData jacsServiceData, String message) {
         super(message);
         this.jacsServiceData = jacsServiceData;
