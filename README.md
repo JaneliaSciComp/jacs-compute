@@ -1,6 +1,6 @@
-# Setting up the development environment
+`# Setting up the development environment
 
-To build the application you can either install gradle locally on your machine using the appropriate package manager for your OS
+To build the application you can either install gradle 4.x locally on your machine using the appropriate package manager for your OS
 (brew or macports for OSX, yum for Centos based Linux distros, apt-get for Debian based Linux distros) or use gradle scripts packaged
 with the project.
 
