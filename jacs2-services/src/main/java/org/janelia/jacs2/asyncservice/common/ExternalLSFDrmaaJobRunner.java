@@ -25,18 +25,16 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
             nativeSpecBuilder.append("-P ").append(billingAccount).append(' ');
         }
         int nProcessingSlots = ProcessorHelper.getProcessingSlots(jobResources);
+        StringBuilder resourceBuffer = new StringBuilder();
         if (nProcessingSlots > 1) {
             // append processing environment
             nativeSpecBuilder
-                    .append("-n ").append(nProcessingSlots).append(' ')
-                    .append("-R ")
-                    .append('"')
+                    .append("-n ").append(nProcessingSlots).append(' ');
+            resourceBuffer
                     .append("affinity")
                     .append('[')
                     .append("core(1)")
-                    .append(']')
-                    .append('"')
-                    .append(' ')
+                    .append(']');
             ;
         }
         long softJobDurationInMins = ProcessorHelper.getSoftJobDurationLimitInSeconds(jobResources) / 60;
@@ -50,26 +48,36 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
         if (StringUtils.isNotBlank(jobResources.get("gridQueue"))) {
             nativeSpecBuilder.append("-q ").append(jobResources.get("gridQueue")).append(' ');
         }
+        StringBuilder selectResourceBuffer = new StringBuilder();
         String gridNodeArchitecture = ProcessorHelper.getCPUType(jobResources); // sandy, haswell, broadwell, avx2
         if (StringUtils.isNotBlank(gridNodeArchitecture)) {
-            nativeSpecBuilder.append("-R ")
-                    .append('"')
-                    .append("select")
-                    .append('[')
-                    .append(gridNodeArchitecture)
-                    .append(']')
-                    .append('"')
-                    .append(' ')
-            ;
+            selectResourceBuffer.append(gridNodeArchitecture);
         }
         String gridResourceLimits = ProcessorHelper.getGridJobResourceLimits(jobResources);
         if (StringUtils.isNotBlank(gridResourceLimits)) {
+            if (selectResourceBuffer.length() > 0) {
+                selectResourceBuffer.append(',');
+            }
+            selectResourceBuffer.append(gridResourceLimits);
+        }
+        if (selectResourceBuffer.length() > 0) {
+            if (resourceBuffer.length() > 0) {
+                resourceBuffer.append(' ');
+            }
+            resourceBuffer
+                    .append("select")
+                    .append('[')
+                    .append(selectResourceBuffer)
+                    .append(']');
+            ;
+        }
+        if (resourceBuffer.length() > 0) {
             nativeSpecBuilder.append("-R ")
                     .append('"')
-                    .append(gridResourceLimits)
+                    .append(resourceBuffer)
                     .append('"')
                     .append(' ')
-            ;
+                    ;
         }
         return nativeSpecBuilder.toString();
     }
