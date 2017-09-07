@@ -71,7 +71,6 @@ class ServiceComputationTask<T> implements Runnable {
     private final Stack<ServiceComputation<?>> depStack = new Stack<>();
     private ContinuationSupplier<T> resultSupplier;
     private ComputeResult<T> result;
-    private volatile boolean suspended;
     private volatile boolean canceled;
 
     ServiceComputationTask(ServiceComputation<?> dep) {
@@ -105,29 +104,20 @@ class ServiceComputationTask<T> implements Runnable {
         if (isDone()) {
             return;
         }
-        for (;;) {
-            if (isReady()) {
-                if (resultSupplier != null) {
-                    try {
-                        complete(resultSupplier.get());
-                    } catch (SuspendedException e) {
-                        return;
-                    } catch (Exception e) {
-                        completeExceptionally(e);
-                    }
+        if (isReady()) {
+            if (resultSupplier != null) {
+                try {
+                    complete(resultSupplier.get());
+                } catch (SuspendedException e) {
                     return;
-                } else {
-                    throw new IllegalStateException("No result supplier has been provided");
+                } catch (Exception e) {
+                    completeExceptionally(e);
                 }
-            } else if (isSuspended()) {
                 return;
+            } else {
+                throw new IllegalStateException("No result supplier has been provided");
             }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                return;
-            }
-        }
+        } // else if it's not ready simply return
     }
 
     boolean isReady() {
@@ -171,25 +161,11 @@ class ServiceComputationTask<T> implements Runnable {
         }
         this.result = new ComputeResult<>(result, null);
         done.countDown();
-        this.resume();
     }
 
     void completeExceptionally(Throwable exc) {
         this.result = new ComputeResult<>(null, exc);
         done.countDown();
-        this.resume();
-    }
-
-    boolean isSuspended() {
-        return suspended;
-    }
-
-    void suspend() {
-        suspended = true;
-    }
-
-    void resume() {
-        suspended = false;
     }
 
     boolean cancel() {

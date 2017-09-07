@@ -84,11 +84,6 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
         return task.isCompletedExceptionally();
     }
 
-    @Override
-    public boolean isSuspended() {
-        return task.isSuspended();
-    }
-
     public void complete(T result) {
         task.complete(result);
     }

@@ -17,7 +17,6 @@ public interface ServiceComputation<T> {
     boolean isCanceled();
     boolean isDone();
     boolean isCompletedExceptionally();
-    boolean isSuspended();
     ServiceComputation<T> supply(Supplier<T> fn);
     ServiceComputation<T> exceptionally(Function<Throwable, ? extends T> fn);
     <U> ServiceComputation<U> thenApply(Function<? super T, ? extends U> fn);
