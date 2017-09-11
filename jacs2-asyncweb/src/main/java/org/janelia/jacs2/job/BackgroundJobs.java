@@ -2,7 +2,6 @@ package org.janelia.jacs2.job;
 
 import org.janelia.jacs2.asyncservice.common.JacsJobRunner;
 import org.janelia.jacs2.asyncservice.common.JacsQueueSyncer;
-import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationQueue;
 
 import javax.enterprise.context.ApplicationScoped;
