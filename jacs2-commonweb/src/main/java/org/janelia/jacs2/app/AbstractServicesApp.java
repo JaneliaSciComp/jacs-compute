@@ -37,7 +37,7 @@ public abstract class AbstractServicesApp {
     protected static class AppArgs {
         @Parameter(names = "-b", description = "Binding IP", required = false)
         protected String host = "localhost";
-        @Parameter(names = "-p", description = "Listner port number", required = false)
+        @Parameter(names = "-p", description = "Listener port number", required = false)
         protected int portNumber = 8080;
         @Parameter(names = "-name", description = "Deployment name", required = false)
         protected String deployment = "jacs";
