@@ -178,7 +178,7 @@ public class CMTKAlignmentProcessor extends AbstractExeBasedServiceProcessor<Ali
         if (CollectionUtils.isNotEmpty(args.inputImageFileNames)) {
             return args.inputImageFileNames;
         } else {
-            return FileUtils.lookupFiles(Paths.get(args.inputDir), 1, "glob:*.nrrd")
+            return FileUtils.lookupFiles(Paths.get(args.inputDir), 1, "glob:**/*.nrrd")
                     .map(p -> p.toString())
                     .collect(Collectors.toList());
         }
