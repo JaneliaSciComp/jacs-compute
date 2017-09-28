@@ -28,10 +28,11 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
     @Override
     public ExeJobInfo runCmds(ExternalCodeBlock externalCode,
                               Map<String, String> env,
-                              String workingDirName,
+                              String scriptDirName,
+                              String processDirName,
                               JacsServiceData serviceContext) {
         logger.debug("Begin DRMAA job invocation for {}", serviceContext);
-        String processingScript = createProcessingScript(externalCode, env, workingDirName, serviceContext);
+        String processingScript = createProcessingScript(externalCode, env, scriptDirName, serviceContext);
         jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
         JobTemplate jt = null;
         File outputFile;
@@ -41,8 +42,8 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
             jt.setJobName(serviceContext.getName());
             jt.setRemoteCommand(processingScript);
             jt.setArgs(Collections.emptyList());
-            File workingDirectory = setJobWorkingDirectory(jt, workingDirName);
-            logger.debug("Using working directory {} for {}", workingDirectory, serviceContext);
+            File processDirectory = setJobWorkingDirectory(jt, processDirName);
+            logger.debug("Using working directory {} for {}", processDirectory, serviceContext);
             jt.setJobEnvironment(env);
             if (StringUtils.isNotBlank(serviceContext.getInputPath())) {
                 jt.setInputPath(":" + serviceContext.getInputPath());

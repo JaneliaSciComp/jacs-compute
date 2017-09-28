@@ -31,9 +31,9 @@ public class ExternalLSFPACJobRunner extends AbstractExternalProcessRunner {
     }
 
     @Override
-    public ExeJobInfo runCmds(ExternalCodeBlock externalCode, Map<String, String> env, String workingDirName, JacsServiceData serviceContext) {
+    public ExeJobInfo runCmds(ExternalCodeBlock externalCode, Map<String, String> env, String scriptDirName, String processDirName, JacsServiceData serviceContext) {
         logger.debug("Begin LSF job invocation for {}", serviceContext);
-        String processingScript = createProcessingScript(externalCode, env, workingDirName, serviceContext);
+        String processingScript = createProcessingScript(externalCode, env, scriptDirName, serviceContext);
         jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
         File outputFile;
         File errorFile;
@@ -41,7 +41,7 @@ public class ExternalLSFPACJobRunner extends AbstractExternalProcessRunner {
             outputFile = prepareOutputFile(serviceContext.getOutputPath(), "Output file must be set before running the service " + serviceContext.getName());
             errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
             String nativeSpec = createNativeSpec(serviceContext.getResources());
-            String jobId = lsfPacHelper.submitJob(processingScript, workingDirName, outputFile.getAbsolutePath(), errorFile.getAbsolutePath(), nativeSpec);
+            String jobId = lsfPacHelper.submitJob(processingScript, processDirName, outputFile.getAbsolutePath(), errorFile.getAbsolutePath(), nativeSpec);
             return new LSFPACJobInfo(lsfPacHelper, jobId, processingScript);
         } catch (Exception e) {
             jacsServiceDataPersistence.updateServiceState(

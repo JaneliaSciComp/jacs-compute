@@ -125,6 +125,14 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                 ;
     }
 
+    protected String getScriptDirName(JacsServiceData jacsServiceData) {
+        return getWorkingDirectory(jacsServiceData).toString();
+    }
+
+    protected String getProcessDirName(JacsServiceData jacsServiceData) {
+        return getWorkingDirectory(jacsServiceData).toString();
+    }
+
     protected ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> env = prepareEnvironment(jacsServiceData);
@@ -137,7 +145,8 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
         return processRunner.runCmds(
                 script,
                 env,
-                getWorkingDirectory(jacsServiceData).toString(),
+                getScriptDirName(jacsServiceData),
+                getProcessDirName(jacsServiceData),
                 jacsServiceData);
     }
 

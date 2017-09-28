@@ -3,9 +3,11 @@ package org.janelia.jacs2.asyncservice.alignservices;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -19,7 +21,14 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Named("cmtkAlignment")
 public class CMTKAlignmentProcessor extends AbstractExeBasedServiceProcessor<AlignmentResultFiles> {
@@ -27,14 +36,20 @@ public class CMTKAlignmentProcessor extends AbstractExeBasedServiceProcessor<Ali
     private static final class CMTKAlignmentArgs extends ServiceArgs {
         @Parameter(names = {"-nthreads"}, description = "Number of ITK threads")
         Integer numThreads = 16;
-        @Parameter(names = "-inputDir", description = "The input folder", required = true)
+        @Parameter(names = "-inputDir", description = "The input folder")
         String inputDir;
+        @Parameter(names = "-inputImages", description = "The input NRRD image files")
+        List<String> inputImageFileNames = new ArrayList<>();
+        @Parameter(names = "-outputDir", description = "The output folder")
+        String outputDir;
         @Parameter(names = "-template", description = "The alignment template", required = false)
         String template;
         @Parameter(names = "-a", description = "Run affine", required = false)
         Boolean runAffine = false;
         @Parameter(names = "-w", description = "Run warp", required = false)
         Boolean runWarp = false;
+        @Parameter(names = "-r", description = "Channels to reformat", required = false)
+        String reformattingChannels = "0102030405";
         @Parameter(names = "-X", description = "Exploration parameter", required = false)
         String exploration = "26";
         @Parameter(names = "-C", description = "Coarsest parameter", required = false)
@@ -104,6 +119,23 @@ public class CMTKAlignmentProcessor extends AbstractExeBasedServiceProcessor<Ali
     }
 
     @Override
+    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+        CMTKAlignmentArgs args = getArgs(jacsServiceData);
+        if (StringUtils.isBlank(args.inputDir) && CollectionUtils.isEmpty(args.inputImageFileNames)) {
+            throw new IllegalArgumentException("No input has been specified");
+        }
+        try {
+            if (StringUtils.isNotBlank(args.outputDir)) {
+                Path outputDir = Paths.get(args.outputDir);
+                Files.createDirectories(outputDir);
+            }
+        } catch (IOException e) {
+            throw new ComputationException(jacsServiceData, e);
+        }
+        return super.prepareProcessing(jacsServiceData);
+    }
+
+    @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
         CMTKAlignmentArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
@@ -129,6 +161,7 @@ public class CMTKAlignmentProcessor extends AbstractExeBasedServiceProcessor<Ali
                 .addArgFlag("-b", toolsDir)
                 .addArgFlag("-a", args.runAffine)
                 .addArgFlag("-w", args.runWarp)
+                .addArgFlag("-r", args.reformattingChannels)
                 .addArgFlag("-X", args.exploration)
                 .addArgFlag("-C", args.coarsest)
                 .addArgFlag("-G", args.gridSpacing)
@@ -136,9 +169,19 @@ public class CMTKAlignmentProcessor extends AbstractExeBasedServiceProcessor<Ali
                 .addArgFlag("-A", StringUtils.wrap(args.affineOptions, '\''))
                 .addArgFlag("-W", StringUtils.wrap(args.warpOptions, '\''))
                 .addArgFlag("-T", String.valueOf(args.numThreads))
-                .addArgFlag("-s", getAlignmentTemplate(args))
-                .addArg(args.inputDir)
-                .endArgs("");
+                .addArgFlag("-s", getAlignmentTemplate(args));
+        getImageFileNames(args).forEach(imageFileName -> scriptWriter.addArg(imageFileName));
+        scriptWriter.endArgs("");
+    }
+
+    private List<String> getImageFileNames(CMTKAlignmentArgs args) {
+        if (CollectionUtils.isNotEmpty(args.inputImageFileNames)) {
+            return args.inputImageFileNames;
+        } else {
+            return FileUtils.lookupFiles(Paths.get(args.inputDir), 1, "glob:*.nrrd")
+                    .map(p -> p.toString())
+                    .collect(Collectors.toList());
+        }
     }
 
     private String getExecutable() {
@@ -149,4 +192,9 @@ public class CMTKAlignmentProcessor extends AbstractExeBasedServiceProcessor<Ali
         return StringUtils.defaultIfBlank(args.template, defaultAlignmentTemplateFile);
     }
 
+    @Override
+    protected String getProcessDirName(JacsServiceData jacsServiceData) {
+        CMTKAlignmentArgs args = getArgs(jacsServiceData);
+        return StringUtils.defaultIfBlank(args.outputDir, args.inputDir);
+    }
 }

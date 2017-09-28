@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,15 +26,17 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
     @Override
     public ExeJobInfo runCmds(ExternalCodeBlock externalCode,
                               Map<String, String> env,
-                              String workingDirName,
+                              String scriptDirName,
+                              String processDirName,
                               JacsServiceData serviceContext) {
         logger.debug("Begin local process invocation for {}", serviceContext);
-        String processingScript = createProcessingScript(externalCode, env, workingDirName, serviceContext);
+        String processingScript = createProcessingScript(externalCode, env, scriptDirName, serviceContext);
         jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
         File outputFile;
         File errorFile;
         try {
-            File workingDirectory = new File(workingDirName);
+            File processDirectory = new File(processDirName);
+            Files.createDirectories(processDirectory.toPath());
             outputFile = prepareOutputFile(serviceContext.getOutputPath(), "Output file must be set before running the service " + serviceContext.getName());
             errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
             ProcessBuilder processBuilder = new ProcessBuilder(ImmutableList.<String>builder()
@@ -43,7 +46,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                 processBuilder.environment().putAll(env);
             }
             // set the working directory, the process stdout and stderr
-            processBuilder.directory(workingDirectory)
+            processBuilder.directory(processDirectory)
                 .redirectOutput(outputFile)
                 .redirectError(errorFile);
             // start the local process

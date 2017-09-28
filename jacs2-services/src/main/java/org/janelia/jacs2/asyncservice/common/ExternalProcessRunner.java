@@ -10,13 +10,15 @@ public interface ExternalProcessRunner {
      *  run a list of commands in the same processing context (machine + environment)
      * @param externalCode
      * @param env
-     * @param workingDirName
+     * @param scriptDirName
+     * @param processDirName
      * @param serviceContext
      * @return
      */
     ExeJobInfo runCmds(ExternalCodeBlock externalCode,
                        Map<String, String> env,
-                       String workingDirName,
+                       String scriptDirName,
+                       String processDirName,
                        JacsServiceData serviceContext);
 
     default boolean supports(ProcessingLocation processingLocation) {
