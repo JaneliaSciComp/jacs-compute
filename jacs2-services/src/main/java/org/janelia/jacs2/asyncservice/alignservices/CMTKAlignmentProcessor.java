@@ -44,10 +44,10 @@ public class CMTKAlignmentProcessor extends AbstractExeBasedServiceProcessor<Ali
         String outputDir;
         @Parameter(names = "-template", description = "The alignment template", required = false)
         String template;
-        @Parameter(names = "-a", description = "Run affine", required = false)
-        Boolean runAffine = false;
-        @Parameter(names = "-w", description = "Run warp", required = false)
-        Boolean runWarp = false;
+        @Parameter(names = "-a", description = "Run affine", arity = 1)
+        Boolean runAffine = true;
+        @Parameter(names = "-w", description = "Run warp", arity = 1)
+        Boolean runWarp = true;
         @Parameter(names = "-r", description = "Channels to reformat", required = false)
         String reformattingChannels = "0102030405";
         @Parameter(names = "-X", description = "Exploration parameter", required = false)
