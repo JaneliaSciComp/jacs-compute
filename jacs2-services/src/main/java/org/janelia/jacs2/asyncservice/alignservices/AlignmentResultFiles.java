@@ -83,6 +83,10 @@ public class AlignmentResultFiles {
         this.warpedFiles = warpedFiles;
     }
 
+    public void addWarpedFile(String warpedFile) {
+        this.warpedFiles.add(warpedFile);
+    }
+
     public String getAlignmentVerificationMovie() {
         return alignmentVerificationMovie;
     }
