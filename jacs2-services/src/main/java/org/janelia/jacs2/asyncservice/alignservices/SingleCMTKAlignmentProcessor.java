@@ -65,7 +65,6 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
         this.toolsDir = toolsDir;
         this.defaultAlignmentTemplateFile = defaultAlignmentTemplateFile;
         this.libraryPath = libraryPath;
-
     }
 
     @Override
@@ -76,8 +75,6 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
     @Override
     public ServiceResultHandler<CMTKAlignmentResultFiles> getResultHandler() {
         return new AbstractAnyServiceResultHandler<CMTKAlignmentResultFiles>() {
-            final String resultsPattern = "glob:**/{Align,QiScore,rotations,Affine,ccmi,VerifyMovie}*";
-
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
@@ -97,7 +94,7 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
                         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                             if (FileUtils.getFileExtensionOnly(file).equals(".nrrd")) {
                                 if (!file.getParent().equals(reformattedDir)) {
-                                    result.setReformattedFile(Files.move(file, reformattedDir).toString());
+                                    result.setReformattedFile(Files.move(file, reformattedDir.resolve(file.getFileName())).toString());
                                 } else {
                                     result.setReformattedFile(file.toString());
                                 }
@@ -119,7 +116,7 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
                         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                             if (FileUtils.getFileExtensionOnly(dir).equals(".list")) {
                                 if (!dir.getParent().equals(affineRegistrationDir)) {
-                                    result.setAffineRegistrationResultsDir(Files.move(dir, affineRegistrationDir).toString());
+                                    result.setAffineRegistrationResultsDir(Files.move(dir, affineRegistrationDir.resolve(dir.getFileName())).toString());
                                 } else {
                                     result.setAffineRegistrationResultsDir(dir.toString());
                                 }
@@ -140,7 +137,7 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
                         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                             if (FileUtils.getFileExtensionOnly(dir).equals(".list")) {
                                 if (!dir.getParent().equals(warpRegistrationDir)) {
-                                    result.setWarpRegistrationResultsDir(Files.move(dir, warpRegistrationDir).toString());
+                                    result.setWarpRegistrationResultsDir(Files.move(dir, warpRegistrationDir.resolve(dir.getFileName())).toString());
                                 } else {
                                     result.setWarpRegistrationResultsDir(dir.toString());
                                 }
