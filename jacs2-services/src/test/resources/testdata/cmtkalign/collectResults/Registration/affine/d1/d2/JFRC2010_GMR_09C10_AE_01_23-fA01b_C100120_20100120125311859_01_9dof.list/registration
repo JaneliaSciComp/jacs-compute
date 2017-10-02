@@ -1,0 +1,13 @@
+! TYPEDSTREAM 1.1
+
+registration {
+	reference_study "/nrs/scicompsoft/otsuna/JFRC2010_BrainAligner/JFRC2010_16bit.nrrd"
+	floating_study "/home/goinac/Work/jacs-2/tt/cmtktestimages/images/GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859_01.nrrd"
+	affine_xform {
+		xlate 59.36 32.88 3.8962 
+		rotate -1.498526508e-17 -0.6334929213 4.255037359e-17 
+		scale 1.006989147 1.033232333 1.036606313 
+		shear -5.438659398e-17 -0 2.710686312e-19 
+		center 312.33 152.81 115.7 
+	}
+}
