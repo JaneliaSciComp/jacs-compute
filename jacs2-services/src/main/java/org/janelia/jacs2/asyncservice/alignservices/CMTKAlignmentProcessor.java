@@ -100,7 +100,8 @@ public class CMTKAlignmentProcessor extends AbstractServiceProcessor<List<String
                         new ServiceArg("-R", args.refine),
                         new ServiceArg("-A", args.affineOptions),
                         new ServiceArg("-W", args.warpOptions),
-                        new ServiceArg("-nthreads", args.numThreads))
+                        new ServiceArg("-nthreads", args.numThreads),
+                        new ServiceArg("-verbose", args.verbose))
                 )
                 .collect(Collectors.toList());
         List<ServiceComputation<?>> composableCmtkAlignments = ImmutableList.copyOf(cmtkAlignments);

@@ -1,11 +1,6 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -14,16 +9,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
-import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
-import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
-import org.janelia.jacs2.asyncservice.sampleprocessing.LSMSummary;
-import org.janelia.jacs2.asyncservice.sampleprocessing.MergeTilePairResult;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleAreaResult;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleImageFile;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorTestUtils;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleResult;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
@@ -33,15 +18,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -77,6 +59,7 @@ public class CMTKAlignmentProcessorTest {
 
         when(singleCMTKAlignmentProcessor.getMetadata()).thenCallRealMethod();
         when(singleCMTKAlignmentProcessor.createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
@@ -136,7 +119,8 @@ public class CMTKAlignmentProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-R", "4"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-A", "--accuracy 0.8"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-W", "--accuracy 0.8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-nthreads", "")))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-nthreads", ""))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-verbose", false)))
                     );
                     verify(singleCMTKAlignmentProcessor).createServiceData(
                             any(ServiceExecutionContext.class),
@@ -152,7 +136,8 @@ public class CMTKAlignmentProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-R", "4"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-A", "--accuracy 0.8"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-W", "--accuracy 0.8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-nthreads", "")))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-nthreads", ""))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-verbose", false)))
                     );
                     verify(singleCMTKAlignmentProcessor).createServiceData(
                             any(ServiceExecutionContext.class),
@@ -168,7 +153,8 @@ public class CMTKAlignmentProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-R", "4"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-A", "--accuracy 0.8"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-W", "--accuracy 0.8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-nthreads", "")))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-nthreads", ""))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-verbose", false)))
                     );
                     return r;
                 })

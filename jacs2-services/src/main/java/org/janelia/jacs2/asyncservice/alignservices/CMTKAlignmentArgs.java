@@ -35,6 +35,8 @@ final class CMTKAlignmentArgs extends ServiceArgs {
     String warpOptions = "--accuracy 0.8";
     @Parameter(names = {"-nthreads"}, description = "Number of ITK threads")
     Integer numThreads;
+    @Parameter(names = {"-v", "-verbose"}, description = "Verbose flag")
+    Boolean verbose = false;
 
     int getNumThreads() {
         return numThreads == null ? 0 : numThreads;

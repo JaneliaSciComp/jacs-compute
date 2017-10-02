@@ -210,7 +210,9 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
                 .addArgFlag("-R", args.refine)
                 .addArgFlag("-A", StringUtils.wrap(args.affineOptions, '\''))
                 .addArgFlag("-W", StringUtils.wrap(args.warpOptions, '\''))
-                .addArgFlag("-s", getAlignmentTemplate(args));
+                .addArgFlag("-s", getAlignmentTemplate(args))
+                .addArgFlag("-v", args.verbose)
+        ;
         List<String> imageFileNames = getImageFileNames(args);
         if (args.getNumThreads() > 0) {
             scriptWriter.addArgFlag("-T", String.valueOf(args.getNumThreads()));
