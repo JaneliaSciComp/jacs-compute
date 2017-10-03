@@ -118,7 +118,9 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
     }
 
     protected String getUpdatedEnvValue(String varName, String addedValue) {
-        Preconditions.checkArgument(StringUtils.isNotBlank(addedValue), "Cannot update environment variable " + varName + " with a null or empty value");
+        if (StringUtils.isBlank(addedValue))  {
+            return "";
+        }
         return getEnvVar(varName)
                 .map(currentValue -> addedValue + ":" + currentValue)
                 .orElse(addedValue)
