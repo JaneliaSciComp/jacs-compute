@@ -117,6 +117,10 @@ public class ScriptWriter {
         return this;
     }
 
+    public ScriptWriter endArgs() {
+        return endArgs("");
+    }
+
     public ScriptWriter endArgs(String arg) {
         try {
             w.append(' ').append(arg).append('\n');
