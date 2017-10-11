@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 
+import java.util.List;
 import java.util.Map;
 
 public class ThrottledJobInfo implements ExeJobInfo {
@@ -11,6 +12,7 @@ public class ThrottledJobInfo implements ExeJobInfo {
     }
 
     private final ExternalCodeBlock externalCode;
+    private final List<ExternalCodeBlock> externalConfigs;
     private final Map<String, String> env;
     private final String workingDirName;
     private final JacsServiceData serviceContext;
@@ -22,9 +24,10 @@ public class ThrottledJobInfo implements ExeJobInfo {
     private volatile boolean doNotRun;
     private JobDoneCallback jobDoneCallback;
 
-    public ThrottledJobInfo(ExternalCodeBlock externalCode, Map<String, String> env, String workingDirName, JacsServiceData serviceContext,
+    public ThrottledJobInfo(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env, String workingDirName, JacsServiceData serviceContext,
                             String processName, ExternalProcessRunner actualProcessRunner, int maxRunningProcesses) {
         this.externalCode = externalCode;
+        this.externalConfigs = externalConfigs;
         this.env = env;
         this.workingDirName = workingDirName;
         this.serviceContext = serviceContext;
@@ -87,7 +90,7 @@ public class ThrottledJobInfo implements ExeJobInfo {
 
     boolean runProcess() {
         if (!doNotRun) {
-            ExeJobInfo actualJobInfo = actualProcessRunner.runCmds(getExternalCode(), getEnv(), getWorkingDirName(), getServiceContext());
+            ExeJobInfo actualJobInfo = actualProcessRunner.runCmds(getExternalCode(), getExternalConfigs(), getEnv(), getWorkingDirName(), getServiceContext());
             setActualRunningJobInfo(actualJobInfo);
             return true;
         } else
@@ -96,6 +99,10 @@ public class ThrottledJobInfo implements ExeJobInfo {
 
     ExternalCodeBlock getExternalCode() {
         return externalCode;
+    }
+
+    List<ExternalCodeBlock> getExternalConfigs() {
+        return externalConfigs;
     }
 
     Map<String, String> getEnv() {

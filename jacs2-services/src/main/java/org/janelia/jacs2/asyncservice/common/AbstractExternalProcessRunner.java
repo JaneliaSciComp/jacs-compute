@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -63,6 +64,41 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
             if (scriptWriter != null) scriptWriter.close();
         }
     }
+
+    protected void createConfigFiles(List<ExternalCodeBlock> externalConfig, String configDir, String configFilePattern, JacsServiceData sd) {
+
+        if (externalConfig==null) return;
+
+        try {
+            Path configDirectory = Paths.get(configDir);
+            Files.createDirectories(configDirectory);
+
+            int index = 1;
+            for (ExternalCodeBlock externalCodeBlock : externalConfig) {
+                ScriptWriter scriptWriter = null;
+                try {
+                    Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw----");
+                    Path scriptFilePath = createConfigFileName(sd, configDirectory, configFilePattern, index++);
+                    File scriptFile = Files.createFile(scriptFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
+                    scriptWriter = new ScriptWriter(new BufferedWriter(new FileWriter(scriptFile)));
+                    scriptWriter.add(externalCodeBlock.toString());
+                }
+                finally {
+                    if (scriptWriter != null) scriptWriter.close();
+                }
+            }
+        }
+        catch (Exception e) {
+            logger.error("Error creating the config file for {}", sd, e);
+            jacsServiceDataPersistence.addServiceEvent(
+                    sd,
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.SCRIPT_CREATION_ERROR, String.format("Error creating the running script for %s: %s", sd.getName(), sd.getArgs()))
+            );
+            throw new ComputationException(sd, e);
+        }
+
+    }
+
 
     protected void writeProcessingCode(ExternalCodeBlock externalCode, Map<String, String> env, ScriptWriter scriptWriter) {
         scriptWriter.add(externalCode.toString());
@@ -109,6 +145,10 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         } else {
             return Optional.of(scriptFilePath);
         }
+    }
+
+    private Path createConfigFileName(JacsServiceData sd, Path dir, String namingPattern, int index) {
+        return dir.resolve(namingPattern.replace("#", index+""));
     }
 
     protected void resetOutputLog(File logFile) throws IOException {

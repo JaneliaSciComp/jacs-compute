@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -31,7 +32,7 @@ public class ExternalLSFPACJobRunner extends AbstractExternalProcessRunner {
     }
 
     @Override
-    public ExeJobInfo runCmds(ExternalCodeBlock externalCode, Map<String, String> env, String workingDirName, JacsServiceData serviceContext) {
+    public ExeJobInfo runCmds(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env, String workingDirName, JacsServiceData serviceContext) {
         logger.debug("Begin LSF job invocation for {}", serviceContext);
         String processingScript = createProcessingScript(externalCode, env, workingDirName, serviceContext);
         jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());

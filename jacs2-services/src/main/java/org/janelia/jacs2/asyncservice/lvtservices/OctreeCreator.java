@@ -4,7 +4,6 @@ import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
-import org.janelia.jacs2.asyncservice.imageservices.WarpToolProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
@@ -22,6 +21,8 @@ import javax.inject.Named;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -96,22 +97,39 @@ public class OctreeCreator extends AbstractExeBasedServiceProcessor<List<File>> 
         return externalScriptCode;
     }
 
-    private OctreeCreatorArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new OctreeCreatorArgs());
+    private void createScript(OctreeCreatorArgs args, ScriptWriter scriptWriter) {
+        scriptWriter.read("INPUT");
+        scriptWriter.read("OUTPUT");
+        scriptWriter.read("LEVELS");
+        scriptWriter.read("VOXEL_SIZE");
+        scriptWriter.addWithArgs(getFullExecutableName(executable));
+        scriptWriter.addArg("$INPUT");
+        scriptWriter.addArg("$OUTPUT");
+        scriptWriter.addArg("$LEVELS");
+        scriptWriter.addArg("$VOXEL_SIZE");
+        scriptWriter.endArgs();
     }
 
-    private void createScript(OctreeCreatorArgs args, ScriptWriter scriptWriter) {
-        scriptWriter.addWithArgs(getFullExecutableName(executable));
-        scriptWriter.addArg(args.input);
-        scriptWriter.addArg(args.output);
-        scriptWriter.addArg(args.levels.toString());
-        scriptWriter.addArg(args.voxelSize);
-        scriptWriter.endArgs();
+    @Override
+    protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
+        OctreeCreatorArgs args = getArgs(jacsServiceData);
+        ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
+        ScriptWriter scriptWriter = externalScriptCode.getCodeWriter();
+        scriptWriter.add(args.input);
+        scriptWriter.add(args.output);
+        scriptWriter.add(args.levels.toString());
+        scriptWriter.add(args.voxelSize);
+        scriptWriter.close();
+        return Arrays.asList(externalScriptCode);
     }
 
     @Override
     protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
         return ImmutableMap.of();
+    }
+
+    private OctreeCreatorArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new OctreeCreatorArgs());
     }
 
     private Path getOutputDir(OctreeCreatorArgs args) {

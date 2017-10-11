@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -24,6 +25,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
 
     @Override
     public ExeJobInfo runCmds(ExternalCodeBlock externalCode,
+                              List<ExternalCodeBlock> externalConfigs,
                               Map<String, String> env,
                               String workingDirName,
                               JacsServiceData serviceContext) {

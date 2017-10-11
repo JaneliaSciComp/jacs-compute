@@ -15,10 +15,7 @@ import org.slf4j.Logger;
 import javax.enterprise.inject.Instance;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @MdcContext
 public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicLifeCycleServiceProcessor<R, Void> {
@@ -126,6 +123,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
     }
 
     protected ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
+        List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles(jacsServiceData);
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> env = prepareEnvironment(jacsServiceData);
         int defaultMaxRunningProcesses = applicationConfig.getIntegerPropertyValue("service.maxRunningProcesses", -1);
@@ -136,9 +134,14 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                 new ThrottledExternalProcessRunner(throttledProcessesQueue, jacsServiceData.getName(), getProcessRunner(jacsServiceData), maxRunningProcesses);
         return processRunner.runCmds(
                 script,
+                externalConfigs,
                 env,
                 getWorkingDirectory(jacsServiceData).toString(),
                 jacsServiceData);
+    }
+
+    protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
+        return Collections.emptyList();
     }
 
     private ExternalProcessRunner getProcessRunner(JacsServiceData jacsServiceData) {

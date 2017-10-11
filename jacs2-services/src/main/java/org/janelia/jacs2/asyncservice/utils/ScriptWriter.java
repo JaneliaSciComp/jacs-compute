@@ -166,6 +166,15 @@ public class ScriptWriter {
         return this;
     }
 
+    public ScriptWriter read(String var) {
+        try {
+            w.append(indent).append("read ").append(var).append('\n');
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return this;
+    }
+
     public void close() {
         try {
             w.close();

@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.common;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
 
+import java.util.List;
 import java.util.Map;
 
 public class ThrottledExternalProcessRunner implements ExternalProcessRunner {
@@ -20,8 +21,8 @@ public class ThrottledExternalProcessRunner implements ExternalProcessRunner {
     }
 
     @Override
-    public ExeJobInfo runCmds(ExternalCodeBlock externalCode, Map<String, String> env, String workingDirName, JacsServiceData serviceContext) {
-        return processesQueue.add(new ThrottledJobInfo(externalCode, env, workingDirName, serviceContext, processName, externalProcessRunner, maxRunningProcesses));
+    public ExeJobInfo runCmds(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env, String workingDirName, JacsServiceData serviceContext) {
+        return processesQueue.add(new ThrottledJobInfo(externalCode, externalConfigs, env, workingDirName, serviceContext, processName, externalProcessRunner, maxRunningProcesses));
     }
 
     @Override
