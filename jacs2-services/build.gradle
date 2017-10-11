@@ -14,6 +14,8 @@ project(":jacs2-services") {
                 MONGODB_DRIVER_LIB,
                 REFLECTIONS_LIB
 
+        compile fileTree(dir: 'lib', include: ['*.jar'])
+
         runtime MYSQL_DRIVER_LIB
     }
 }
