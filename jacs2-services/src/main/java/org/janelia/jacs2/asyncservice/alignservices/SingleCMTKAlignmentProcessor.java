@@ -9,6 +9,7 @@ import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
@@ -192,6 +193,12 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
         return ImmutableMap.of(
                 DY_LIBRARY_PATH_VARNAME, getUpdatedEnvValue(DY_LIBRARY_PATH_VARNAME, libraryPath)
         );
+    }
+
+    @Override
+    protected void prepareResources(JacsServiceData jacsServiceData) {
+        CMTKAlignmentArgs args = getArgs(jacsServiceData);
+        ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), args.getNumThreads());
     }
 
     private CMTKAlignmentArgs getArgs(JacsServiceData jacsServiceData) {

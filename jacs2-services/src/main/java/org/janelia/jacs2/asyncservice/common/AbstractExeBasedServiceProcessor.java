@@ -90,6 +90,10 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
 
     protected abstract Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData);
 
+    protected void prepareResources(JacsServiceData jacsServiceData) {
+        // the method updates service resources mainly for setting up the grid resource limits.
+    }
+
     protected Optional<String> getEnvVar(String varName) {
         return Optional.ofNullable(System.getenv(varName));
     }
@@ -138,6 +142,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
     protected ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> env = prepareEnvironment(jacsServiceData);
+        prepareResources(jacsServiceData);
         int defaultMaxRunningProcesses = applicationConfig.getIntegerPropertyValue("service.maxRunningProcesses", -1);
         int maxRunningProcesses = applicationConfig.getIntegerPropertyValue(
                 "service." + jacsServiceData.getName() + ".maxRunningProcesses",
