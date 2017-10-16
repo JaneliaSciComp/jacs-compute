@@ -1,0 +1,11 @@
+! TYPEDSTREAM 1.1
+
+studylist {
+	num_sources 2
+}
+source {
+	studyname "/nrs/scicompsoft/otsuna/JFRC2010_BrainAligner/JFRC2010_16bit.nrrd"
+}
+source {
+	studyname "/home/goinac/Work/jacs-2/tt/cmtktestimages/images/GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859_01.nrrd"
+}

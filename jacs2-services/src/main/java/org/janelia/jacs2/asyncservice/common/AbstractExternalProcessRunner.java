@@ -36,15 +36,15 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         this.logger = logger;
     }
 
-    protected String createProcessingScript(ExternalCodeBlock externalCode, Map<String, String> env, String workingDirName, JacsServiceData sd) {
+    protected String createProcessingScript(ExternalCodeBlock externalCode, Map<String, String> env, String scriptDirName, JacsServiceData sd) {
         ScriptWriter scriptWriter = null;
         try {
             Preconditions.checkArgument(!externalCode.isEmpty());
-            Preconditions.checkArgument(StringUtils.isNotBlank(workingDirName));
-            Path workingDirectory = Paths.get(workingDirName);
-            Files.createDirectories(workingDirectory);
+            Preconditions.checkArgument(StringUtils.isNotBlank(scriptDirName));
+            Path scriptDirectory = Paths.get(scriptDirName);
+            Files.createDirectories(scriptDirectory);
             Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-            Path scriptFilePath = createScriptFileName(sd, workingDirectory);
+            Path scriptFilePath = createScriptFileName(sd, scriptDirectory);
             File scriptFile = Files.createFile(scriptFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
             scriptWriter = new ScriptWriter(new BufferedWriter(new FileWriter(scriptFile)));
             writeProcessingCode(externalCode, env, scriptWriter);

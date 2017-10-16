@@ -21,8 +21,8 @@ public class ThrottledExternalProcessRunner implements ExternalProcessRunner {
     }
 
     @Override
-    public ExeJobInfo runCmds(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env, String workingDirName, JacsServiceData serviceContext) {
-        return processesQueue.add(new ThrottledJobInfo(externalCode, externalConfigs, env, workingDirName, serviceContext, processName, externalProcessRunner, maxRunningProcesses));
+    public ExeJobInfo runCmds(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env, String scriptDirName, String processDirName, JacsServiceData serviceContext) {
+        return processesQueue.add(new ThrottledJobInfo(externalCode, externalConfigs, env, scriptDirName, processDirName, serviceContext, processName, externalProcessRunner, maxRunningProcesses));
     }
 
     @Override

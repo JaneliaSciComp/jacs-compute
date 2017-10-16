@@ -87,6 +87,10 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
 
     protected abstract Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData);
 
+    protected void prepareResources(JacsServiceData jacsServiceData) {
+        // the method updates service resources mainly for setting up the grid resource limits.
+    }
+
     protected Optional<String> getEnvVar(String varName) {
         return Optional.ofNullable(System.getenv(varName));
     }
@@ -115,17 +119,28 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
     }
 
     protected String getUpdatedEnvValue(String varName, String addedValue) {
-        Preconditions.checkArgument(StringUtils.isNotBlank(addedValue), "Cannot update environment variable " + varName + " with a null or empty value");
+        if (StringUtils.isBlank(addedValue))  {
+            return "";
+        }
         return getEnvVar(varName)
                 .map(currentValue -> addedValue + ":" + currentValue)
                 .orElse(addedValue)
                 ;
     }
 
+    protected String getScriptDirName(JacsServiceData jacsServiceData) {
+        return getWorkingDirectory(jacsServiceData).toString();
+    }
+
+    protected String getProcessDirName(JacsServiceData jacsServiceData) {
+        return getWorkingDirectory(jacsServiceData).toString();
+    }
+
     protected ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
         List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles(jacsServiceData);
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> env = prepareEnvironment(jacsServiceData);
+        prepareResources(jacsServiceData);
         int defaultMaxRunningProcesses = applicationConfig.getIntegerPropertyValue("service.maxRunningProcesses", -1);
         int maxRunningProcesses = applicationConfig.getIntegerPropertyValue(
                 "service." + jacsServiceData.getName() + ".maxRunningProcesses",
@@ -136,7 +151,8 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                 script,
                 externalConfigs,
                 env,
-                getWorkingDirectory(jacsServiceData).toString(),
+                getScriptDirName(jacsServiceData),
+                getProcessDirName(jacsServiceData),
                 jacsServiceData);
     }
 

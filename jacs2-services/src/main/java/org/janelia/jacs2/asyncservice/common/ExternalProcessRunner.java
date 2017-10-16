@@ -13,14 +13,16 @@ public interface ExternalProcessRunner {
      * @param externalCode
      * @param externalConfig
      * @param env
-     * @param workingDirName
+     * @param scriptDirName
+     * @param processDirName
      * @param serviceContext
      * @return
      */
     ExeJobInfo runCmds(ExternalCodeBlock externalCode,
                        List<ExternalCodeBlock> externalConfig,
                        Map<String, String> env,
-                       String workingDirName,
+                       String scriptDirName,
+                       String processDirName,
                        JacsServiceData serviceContext);
 
     default boolean supports(ProcessingLocation processingLocation) {

@@ -9,10 +9,22 @@ public class ProcessorHelper {
     private static final String DEFAULT_CPU_TYPE = "haswell";
 
     public static int getProcessingSlots(Map<String, String> jobResources) {
-        String processingSlots = StringUtils.defaultIfBlank(jobResources.get("nSlots"), "0");
-        int nProcessingSlots = Integer.parseInt(processingSlots);
+        int nProcessingSlots = getRequiredSlots(jobResources);
         nProcessingSlots = Math.max(nProcessingSlots, calculateRequiredSlotsBasedOnMem(jobResources));
         return nProcessingSlots > 0 ? nProcessingSlots : 1;
+    }
+
+    public static int getRequiredSlots(Map<String, String> jobResources) {
+        String requiredSlots = StringUtils.defaultIfBlank(jobResources.get("nSlots"), "0");
+        int nSlots = Integer.parseInt(requiredSlots);
+        return nSlots <= 0 ? 0 : nSlots;
+    }
+
+    public static int setRequiredSlots(Map<String, String> jobResources, int slots) {
+        int currentRequiredSlots = getRequiredSlots(jobResources);
+        int requiredSlots = Math.max(currentRequiredSlots, slots);
+        jobResources.put("nbSlots", String.valueOf(requiredSlots));
+        return requiredSlots;
     }
 
     public static String getCPUType(Map<String, String> jobResources) {

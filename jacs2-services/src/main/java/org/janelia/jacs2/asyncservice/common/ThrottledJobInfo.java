@@ -14,7 +14,8 @@ public class ThrottledJobInfo implements ExeJobInfo {
     private final ExternalCodeBlock externalCode;
     private final List<ExternalCodeBlock> externalConfigs;
     private final Map<String, String> env;
-    private final String workingDirName;
+    private final String scriptDirName;
+    private final String processDirName;
     private final JacsServiceData serviceContext;
 
     private final String processName;
@@ -24,12 +25,14 @@ public class ThrottledJobInfo implements ExeJobInfo {
     private volatile boolean doNotRun;
     private JobDoneCallback jobDoneCallback;
 
-    public ThrottledJobInfo(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env, String workingDirName, JacsServiceData serviceContext,
+    public ThrottledJobInfo(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env,
+                            String scriptDirName, String processDirName, JacsServiceData serviceContext,
                             String processName, ExternalProcessRunner actualProcessRunner, int maxRunningProcesses) {
         this.externalCode = externalCode;
         this.externalConfigs = externalConfigs;
         this.env = env;
-        this.workingDirName = workingDirName;
+        this.scriptDirName = scriptDirName;
+        this.processDirName = processDirName;
         this.serviceContext = serviceContext;
         this.processName = processName;
         this.actualProcessRunner = actualProcessRunner;
@@ -90,7 +93,7 @@ public class ThrottledJobInfo implements ExeJobInfo {
 
     boolean runProcess() {
         if (!doNotRun) {
-            ExeJobInfo actualJobInfo = actualProcessRunner.runCmds(getExternalCode(), getExternalConfigs(), getEnv(), getWorkingDirName(), getServiceContext());
+            ExeJobInfo actualJobInfo = actualProcessRunner.runCmds(getExternalCode(), getExternalConfigs(), getEnv(), getScriptDirName(), getProcessDirName(), getServiceContext());
             setActualRunningJobInfo(actualJobInfo);
             return true;
         } else
@@ -109,8 +112,12 @@ public class ThrottledJobInfo implements ExeJobInfo {
         return env;
     }
 
-    String getWorkingDirName() {
-        return workingDirName;
+    String getScriptDirName() {
+        return scriptDirName;
+    }
+
+    String getProcessDirName() {
+        return processDirName;
     }
 
     JacsServiceData getServiceContext() {

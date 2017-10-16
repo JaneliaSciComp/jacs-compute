@@ -95,8 +95,7 @@ public class AbstractExeBasedServiceProcessorTest {
         testServiceData.setProcessingLocation(ProcessingLocation.LOCAL);
         ExeJobInfo jobInfo = mock(ExeJobInfo.class);
         when(jobInfo.isDone()).thenReturn(true);
-        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(String.class), any(JacsServiceData.class))).thenReturn(jobInfo);
-
+        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(String.class), any(String.class), any(JacsServiceData.class))).thenReturn(jobInfo);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         testProcessor.processing(new JacsServiceResult<>(testServiceData))
@@ -120,8 +119,7 @@ public class AbstractExeBasedServiceProcessorTest {
         ExeJobInfo jobInfo = mock(ExeJobInfo.class);
         when(jobInfo.isDone()).thenReturn(true);
         when(jobInfo.hasFailed()).thenReturn(true);
-        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(String.class), any(JacsServiceData.class))).thenReturn(jobInfo);
-
+        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(String.class), any(String.class), any(JacsServiceData.class))).thenReturn(jobInfo);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         testProcessor.processing(new JacsServiceResult<>(testServiceData))
@@ -144,8 +142,7 @@ public class AbstractExeBasedServiceProcessorTest {
         testServiceData.setProcessingLocation(ProcessingLocation.LOCAL);
         ExeJobInfo jobInfo = mock(ExeJobInfo.class);
         when(jobInfo.isDone()).thenReturn(false);
-        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(String.class), any(JacsServiceData.class))).thenReturn(jobInfo);
-
+        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(String.class), any(String.class), any(JacsServiceData.class))).thenReturn(jobInfo);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         testProcessor.processing(new JacsServiceResult<>(testServiceData))

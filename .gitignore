@@ -9,6 +9,7 @@
 .idea
 .svn
 bin
+out
 #*#
 *~
 *.iml
