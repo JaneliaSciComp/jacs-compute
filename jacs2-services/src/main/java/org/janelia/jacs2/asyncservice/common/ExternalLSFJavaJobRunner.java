@@ -54,11 +54,11 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
     }
 
     @Override
-    public ExeJobInfo runCmds(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env, String workingDirName, JacsServiceData serviceContext) {
+    public ExeJobInfo runCmds(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env, String scriptDirName, String processDirName, JacsServiceData serviceContext) {
         logger.debug("Begin bsub job invocation for {}", serviceContext);
         try {
 
-            JobTemplate jt = prepareJobTemplate(externalCode, externalConfigs, env, workingDirName, serviceContext);
+            JobTemplate jt = prepareJobTemplate(externalCode, externalConfigs, env, processDirName, serviceContext);
             String processingScript = jt.getRemoteCommand();
 
             int numJobs = externalConfigs.isEmpty() ? 1 : externalConfigs.size();
