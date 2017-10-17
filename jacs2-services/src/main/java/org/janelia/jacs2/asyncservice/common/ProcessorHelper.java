@@ -23,7 +23,7 @@ public class ProcessorHelper {
     public static int setRequiredSlots(Map<String, String> jobResources, int slots) {
         int currentRequiredSlots = getRequiredSlots(jobResources);
         int requiredSlots = Math.max(currentRequiredSlots, slots);
-        jobResources.put("nbSlots", String.valueOf(requiredSlots));
+        jobResources.put("nSlots", String.valueOf(requiredSlots));
         return requiredSlots;
     }
 
