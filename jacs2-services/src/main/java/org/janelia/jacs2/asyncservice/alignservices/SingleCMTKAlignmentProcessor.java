@@ -95,11 +95,11 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
                         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                             if (FileUtils.getFileExtensionOnly(file).equals(".nrrd")) {
                                 if (!file.getParent().equals(reformattedDir)) {
-                                    result.setReformattedFile(Files.move(file, reformattedDir.resolve(file.getFileName())).toString());
+                                    result.addReformattedFile(Files.move(file, reformattedDir.resolve(file.getFileName())).toString());
                                 } else {
-                                    result.setReformattedFile(file.toString());
+                                    result.addReformattedFile(file.toString());
                                 }
-                                return FileVisitResult.TERMINATE;
+                                return FileVisitResult.CONTINUE;
                             } else {
                                 return FileVisitResult.CONTINUE;
                             }

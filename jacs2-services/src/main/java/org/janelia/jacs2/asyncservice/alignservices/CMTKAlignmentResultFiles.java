@@ -1,8 +1,11 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CMTKAlignmentResultFiles {
     private String resultDir;
-    private String reformattedFile;
+    private List<String> reformattedFiles = new ArrayList<>();
     private String affineRegistrationResultsDir;
     private String warpRegistrationResultsDir;
 
@@ -14,12 +17,19 @@ public class CMTKAlignmentResultFiles {
         this.resultDir = resultDir;
     }
 
-    public String getReformattedFile() {
-        return reformattedFile;
+    public List<String> getReformattedFiles() {
+        return reformattedFiles;
     }
 
-    public void setReformattedFile(String reformattedFile) {
-        this.reformattedFile = reformattedFile;
+    public void setReformattedFiles(List<String> reformattedFiles) {
+        this.reformattedFiles = reformattedFiles;
+    }
+
+    public void addReformattedFile(String reformattedFile) {
+        if (this.reformattedFiles == null) this.reformattedFiles = new ArrayList<>();
+        if (!reformattedFiles.contains(reformattedFile)) {
+            this.reformattedFiles.add(reformattedFile);
+        }
     }
 
     public String getAffineRegistrationResultsDir() {

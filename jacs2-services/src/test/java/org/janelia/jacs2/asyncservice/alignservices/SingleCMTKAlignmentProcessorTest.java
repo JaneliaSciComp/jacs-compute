@@ -35,9 +35,11 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.core.StringEndsWith.endsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -116,13 +118,15 @@ public class SingleCMTKAlignmentProcessorTest {
         ServiceResultHandler<CMTKAlignmentResultFiles> cmtkResultHandler = singleCMTKAlignmentProcessor.getResultHandler();
         CMTKAlignmentResultFiles cmtkResult = cmtkResultHandler.collectResult(new JacsServiceResult<>(testServiceData));
         assertEquals(testDirectory.toString(), cmtkResult.getResultDir());
-        Path reformattedFile = Paths.get(cmtkResult.getReformattedFile());
+        List<Path> reformattedFiles = cmtkResult.getReformattedFiles().stream().map(rf -> Paths.get(rf)).collect(Collectors.toList());
         Path affineRegistrationResultsDir = Paths.get(cmtkResult.getAffineRegistrationResultsDir());
         Path warpRegistrationResultsDir = Paths.get(cmtkResult.getWarpRegistrationResultsDir());
-        assertTrue(reformattedFile.toFile().exists());
         assertTrue(affineRegistrationResultsDir.toFile().exists());
         assertTrue(warpRegistrationResultsDir.toFile().exists());
-        assertThat(testDirectory.relativize(reformattedFile), equalTo(Paths.get("reformatted", reformattedFile.getFileName().toString())));
+        reformattedFiles.forEach(rf -> {
+            assertTrue(rf.toFile().exists());
+            assertThat(testDirectory.relativize(rf), equalTo(Paths.get("reformatted", rf.getFileName().toString())));
+        });
         assertThat(testDirectory.relativize(affineRegistrationResultsDir), equalTo(Paths.get("Registration/affine", affineRegistrationResultsDir.getFileName().toString())));
         assertThat(testDirectory.relativize(warpRegistrationResultsDir), equalTo(Paths.get("Registration/warp", warpRegistrationResultsDir.getFileName().toString())));
     }
