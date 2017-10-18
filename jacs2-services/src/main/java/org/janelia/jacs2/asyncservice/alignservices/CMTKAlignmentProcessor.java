@@ -25,6 +25,9 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -85,25 +88,48 @@ public class CMTKAlignmentProcessor extends AbstractServiceProcessor<List<String
         Preconditions.checkArgument(StringUtils.isNotBlank(args.outputDir), "An output directory is required");
         Path outputDir = Paths.get(args.outputDir);
         List<ServiceComputation<JacsServiceResult<CMTKAlignmentResultFiles>>> cmtkAlignments =
-                groupedImages.entrySet().stream().map((Map.Entry<String, List<Path>> group) -> singleCMTKAlignmentProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
-                    .description("Run CMTK alignment for " + group.getKey())
-                    .build(),
-                        new ServiceArg("-inputImages", group.getValue().stream().map(p -> p.toString()).collect(Collectors.joining(","))),
-                        new ServiceArg("-outputDir", outputDir.resolve(group.getKey()).toString()),
-                        new ServiceArg("-template", args.template),
-                        new ServiceArg("-a", args.runAffine.toString()),
-                        new ServiceArg("-w", args.runWarp.toString()),
-                        new ServiceArg("-r", args.reformattingChannels),
-                        new ServiceArg("-X", args.exploration),
-                        new ServiceArg("-C", args.coarsest),
-                        new ServiceArg("-G", args.gridSpacing),
-                        new ServiceArg("-R", args.refine),
-                        new ServiceArg("-A", args.affineOptions),
-                        new ServiceArg("-W", args.warpOptions),
-                        new ServiceArg("-nthreads", args.numThreads),
-                        new ServiceArg("-verbose", args.verbose))
-                )
-                .collect(Collectors.toList());
+                groupedImages.entrySet().stream()
+                        .map((Map.Entry<String, List<Path>> group) -> {
+                            Path groupInputDir = outputDir.resolve(group.getKey()).resolve("images");
+                            Path groupOutputDir = outputDir.resolve(group.getKey());
+                            if (groupInputDir.equals(groupOutputDir)) {
+                                groupInputDir = outputDir.resolve(group.getKey()).resolve("inputImages");
+                            }
+                            String groupInputDirName = groupInputDir.toString();
+                            try {
+                                Files.createDirectories(groupInputDir);
+                                Files.createDirectories(groupOutputDir);
+                                group.getValue().forEach(inputImage -> {
+                                    String inputImageName = inputImage.toFile().getName();
+                                    Path inputImageLink = Paths.get(groupInputDirName, inputImageName);
+                                    try {
+                                        Files.createSymbolicLink(inputImageLink, inputImage);
+                                    } catch (IOException linkExc) {
+                                        throw new UncheckedIOException(linkExc);
+                                    }
+                                });
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                            return singleCMTKAlignmentProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                                            .description("Run CMTK alignment for " + group.getKey())
+                                            .build(),
+                                    new ServiceArg("-inputDir", groupInputDirName),
+                                    new ServiceArg("-outputDir", groupOutputDir.toString()),
+                                    new ServiceArg("-template", args.template),
+                                    new ServiceArg("-a", args.runAffine.toString()),
+                                    new ServiceArg("-w", args.runWarp.toString()),
+                                    new ServiceArg("-r", args.reformattingChannels),
+                                    new ServiceArg("-X", args.exploration),
+                                    new ServiceArg("-C", args.coarsest),
+                                    new ServiceArg("-G", args.gridSpacing),
+                                    new ServiceArg("-R", args.refine),
+                                    new ServiceArg("-A", args.affineOptions),
+                                    new ServiceArg("-W", args.warpOptions),
+                                    new ServiceArg("-nthreads", args.numThreads),
+                                    new ServiceArg("-verbose", args.verbose));
+                        })
+                        .collect(Collectors.toList());
         List<ServiceComputation<?>> composableCmtkAlignments = ImmutableList.copyOf(cmtkAlignments);
         return computationFactory.newCompletedComputation(null)
                 .thenCombineAll(composableCmtkAlignments, (empty, results) -> (List<JacsServiceResult<CMTKAlignmentResultFiles>>) results)

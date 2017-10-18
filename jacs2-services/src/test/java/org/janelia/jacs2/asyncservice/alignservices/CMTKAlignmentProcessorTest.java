@@ -9,14 +9,19 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -33,9 +38,10 @@ public class CMTKAlignmentProcessorTest {
 
     private SingleCMTKAlignmentProcessor singleCMTKAlignmentProcessor;
     private CMTKAlignmentProcessor cmtkAlignmentProcessor;
+    private Path testDirectory;
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
         Logger logger = mock(Logger.class);
 
         ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
@@ -80,6 +86,13 @@ public class CMTKAlignmentProcessorTest {
                 TEST_WORKING_DIR,
                 singleCMTKAlignmentProcessor,
                 logger);
+
+        testDirectory = Files.createTempDirectory("testcmtk");
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        FileUtils.deletePath(testDirectory);
     }
 
     @Test
@@ -92,7 +105,7 @@ public class CMTKAlignmentProcessorTest {
                 "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625_01.nrrd",
                 "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625_02.nrrd"
         );
-        String outputDir = "output";
+        String outputDir = testDirectory.toString();
 
         ServiceResultHandler<CMTKAlignmentResultFiles> singleCmtkAlignmentResultHandler = mock(ServiceResultHandler.class);
         when(singleCMTKAlignmentProcessor.getResultHandler()).thenReturn(singleCmtkAlignmentResultHandler);
@@ -107,7 +120,7 @@ public class CMTKAlignmentProcessorTest {
                     successful.accept(r);
                     verify(singleCMTKAlignmentProcessor).createServiceData(
                             any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputImages", "GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859_01.nrrd,GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859_02.nrrd"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859/images"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-template", ""))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-a", "true"))),
@@ -124,7 +137,7 @@ public class CMTKAlignmentProcessorTest {
                     );
                     verify(singleCMTKAlignmentProcessor).createServiceData(
                             any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputImages", "GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734_01.nrrd,GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734_02.nrrd"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734/images"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-template", ""))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-a", "true"))),
@@ -141,7 +154,7 @@ public class CMTKAlignmentProcessorTest {
                     );
                     verify(singleCMTKAlignmentProcessor).createServiceData(
                             any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputImages", "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625_01.nrrd,GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625_02.nrrd"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625/images"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-template", ""))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-a", "true"))),
