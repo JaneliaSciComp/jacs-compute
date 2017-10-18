@@ -106,7 +106,7 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
                         }
                     });
                 } catch (IOException e) {
-                    logger.error("Error encountered while trying to gather the reformatted result for {}", getImageFileNames(args), e);
+                    logger.error("Error encountered while trying to gather the reformatted result for {}", getInput(args), e);
                 }
 
                 Path registrationDir = Paths.get(resultsDir, "Registration");
@@ -128,7 +128,7 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
                         }
                     });
                 } catch (IOException e) {
-                    logger.error("Error encountered while trying to gather the affine registration result for {}", getImageFileNames(args), e);
+                    logger.error("Error encountered while trying to gather the affine registration result for {}", getInput(args), e);
                 }
 
                 Path warpRegistrationDir = registrationDir.resolve("warp");
@@ -149,7 +149,7 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
                         }
                     });
                 } catch (IOException e) {
-                    logger.error("Error encountered while trying to gather the warp registration result for {}", getImageFileNames(args), e);
+                    logger.error("Error encountered while trying to gather the warp registration result for {}", getInput(args), e);
                 }
                 return result;
             }
@@ -220,23 +220,18 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
                 .addArgFlag("-s", getAlignmentTemplate(args))
                 .addArgFlag("-v", args.verbose)
         ;
-        List<String> imageFileNames = getImageFileNames(args);
         if (args.getNumThreads() > 0) {
             scriptWriter.addArgFlag("-T", String.valueOf(args.getNumThreads()));
-        } else {
-            scriptWriter.addArgFlag("-T", String.valueOf(imageFileNames.size()));
         }
-        imageFileNames.forEach(imageFileName -> scriptWriter.addArg(imageFileName));
+        scriptWriter.addArg(getInput(args));
         scriptWriter.endArgs("");
     }
 
-    private List<String> getImageFileNames(CMTKAlignmentArgs args) {
+    private String getInput(CMTKAlignmentArgs args) {
         if (CollectionUtils.isNotEmpty(args.inputImageFileNames)) {
-            return args.inputImageFileNames;
+            return args.inputImageFileNames.stream().collect(Collectors.joining(" "));
         } else {
-            return FileUtils.lookupFiles(Paths.get(args.inputDir), 1, "glob:**/*.nrrd")
-                    .map(p -> p.toString())
-                    .collect(Collectors.toList());
+            return args.inputDir;
         }
     }
 
