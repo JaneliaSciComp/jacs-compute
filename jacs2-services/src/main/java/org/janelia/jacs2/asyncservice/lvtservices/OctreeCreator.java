@@ -123,8 +123,14 @@ public class OctreeCreator extends AbstractExeBasedServiceProcessor<List<File>> 
     }
 
     @Override
-    protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
-        return ImmutableMap.of();
+    protected void prepareResources(JacsServiceData jacsServiceData) {
+        ProcessorHelper.setCPUType(jacsServiceData.getResources(),"broadwell");
+        // This should be based on input file size, but we don't currently have enough examples to generalize this.
+        // Examples:
+        // 12G input -> 66G
+        ProcessorHelper.setRequiredMemoryInGB(jacsServiceData.getResources(), 128);
+        ProcessorHelper.setSoftJobDurationLimitInSeconds(jacsServiceData.getResources(), 2*60*60); // 2 hours
+        ProcessorHelper.setHardJobDurationLimitInSeconds(jacsServiceData.getResources(), 4*60*60); // 4 hours
     }
 
     private OctreeCreatorArgs getArgs(JacsServiceData jacsServiceData) {

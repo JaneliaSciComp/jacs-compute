@@ -94,7 +94,7 @@ public class JacsServiceDispatcher {
                     throw new ComputationException(jacsServiceData, exc);
                 })
                 .whenComplete((r, exc) -> {
-                    jacsServiceQueue.completeService(r.getJacsServiceData());
+                    jacsServiceQueue.completeService(jacsServiceData);
                     if (!jacsServiceData.hasParentServiceId()) {
                         // release the slot acquired before the service was started
                         jacsServiceEngine.releaseSlot();
@@ -108,7 +108,7 @@ public class JacsServiceDispatcher {
         logger.info("Processing successful {}", serviceData);
         JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
         if (latestServiceData== null) {
-            logger.warn("NO Service not found for {} - probably it was already archived", serviceData);
+            logger.warn("No Service not found for {} - probably it was already archived", serviceData);
             return;
         }
         if (latestServiceData.hasCompletedUnsuccessfully()) {

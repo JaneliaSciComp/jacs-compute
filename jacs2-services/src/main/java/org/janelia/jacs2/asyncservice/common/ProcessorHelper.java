@@ -32,6 +32,11 @@ public class ProcessorHelper {
         return cpuType != null ? cpuType.toLowerCase() : null;
     }
 
+    public static String setCPUType(Map<String, String> jobResources, String cpuType) {
+        jobResources.put("cpuType", cpuType);
+        return cpuType;
+    }
+
     public static int getRequiredMemoryInGB(Map<String, String> jobResources) {
         String requiredMemory = StringUtils.defaultIfBlank(jobResources.get("memInGB"), "0");
         int requiredMemoryInGB = Integer.parseInt(requiredMemory);
@@ -72,9 +77,19 @@ public class ProcessorHelper {
         return Long.parseLong(jobDuration);
     }
 
+    public static long setSoftJobDurationLimitInSeconds(Map<String, String> jobResources, long limit) {
+        jobResources.put("softGridJobDurationInSeconds", ""+limit);
+        return limit;
+    }
+
     public static long getHardJobDurationLimitInSeconds(Map<String, String> jobResources) {
         String jobDuration = StringUtils.defaultIfBlank(jobResources.get("hardGridJobDurationInSeconds"), "-1");
         return Long.parseLong(jobDuration);
+    }
+
+    public static long setHardJobDurationLimitInSeconds(Map<String, String> jobResources, long limit) {
+        jobResources.put("hardGridJobDurationInSeconds", ""+limit);
+        return limit;
     }
 
     public static String getGridJobResourceLimits(Map<String, String> jobResources) {

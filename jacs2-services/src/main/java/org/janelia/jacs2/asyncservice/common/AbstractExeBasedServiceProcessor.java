@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
@@ -85,10 +86,21 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
 
     protected abstract ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData);
 
-    protected abstract Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData);
+    /**
+     * Override this to add environment variables which should exist when the script is run. The default implementation
+     * returns an empty map.
+     * @param jacsServiceData
+     * @return
+     */
+    protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
+        return ImmutableMap.of();
+    }
 
+    /**
+     * Override this to set up the execution resources in the JacsServiceData, e.g. for the cluster.
+     * @param jacsServiceData
+     */
     protected void prepareResources(JacsServiceData jacsServiceData) {
-        // the method updates service resources mainly for setting up the grid resource limits.
     }
 
     protected Optional<String> getEnvVar(String varName) {
