@@ -76,7 +76,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
             );
 
             future.whenCompleteAsync((infos, e) -> {
-                processJobCompletion(jt, jobId, infos, e);
+                processJobCompletion(jt, jobId, infos, e, serviceContext);
             }, completionMessageExecutor);
 
             return new LsfJavaJobInfo(jobMgr, jobId, processingScript);
@@ -171,7 +171,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         return jt;
     }
 
-    private void processJobCompletion(JobTemplate jt, Long jobId, Collection<JobInfo> infos, Throwable e) {
+    private void processJobCompletion(JobTemplate jt, Long jobId, Collection<JobInfo> infos, Throwable e, JacsServiceData serviceContext) {
 
         logger.info("Process completion for job "+jobId);
 

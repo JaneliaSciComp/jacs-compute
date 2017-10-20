@@ -103,8 +103,7 @@ public class LVTDataImport extends AbstractServiceProcessor<File> {
                 new ServiceArg("-output", ktxDir),
                 new ServiceArg("-levels", levels))
             ).thenApply((JacsServiceResult<List<File>> fileResult) ->
-                this.updateServiceResult(jacsServiceData, new File(octreeDir)));
-
+                new JacsServiceResult<>(jacsServiceData, new File(octreeDir)));
     }
 
     private LVTDataImportArgs getArgs(JacsServiceData jacsServiceData) {

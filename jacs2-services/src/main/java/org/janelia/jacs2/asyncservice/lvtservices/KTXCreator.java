@@ -20,6 +20,7 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
+import java.io.FileFilter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -73,10 +74,36 @@ public class KTXCreator extends AbstractExeBasedServiceProcessor<List<File>> {
     public ServiceResultHandler<List<File>> getResultHandler() {
         return new AbstractFileListServiceResultHandler() {
 
+            private boolean verifyOctree(File dir) {
+
+                boolean checkChanFile = false;
+                for(File file : dir.listFiles((FileFilter)null)) {
+                    if (file.isDirectory()) {
+                        try {
+                            Integer.parseInt(file.getName());
+                            if (!verifyOctree(file)) return false;
+                        }
+                        catch (NumberFormatException e) {
+                            // Ignore dirs which are not numbers
+                        }
+                    }
+                    else {
+                        if (file.getName().startsWith("block") && file.getName().endsWith(".ktx")) {
+                            checkChanFile = true;
+                        }
+                    }
+                }
+                if (!checkChanFile) return false;
+                return true;
+            }
+
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                // don't count the files because this locks if there are no results
-                return areAllDependenciesDone(depResults.getJacsServiceData());
+                File outputDir = new File(getArgs(depResults.getJacsServiceData()).output);
+                logger.info("Checking if result ready at {}", outputDir);
+                if (!outputDir.exists()) return false;
+                if (!verifyOctree(outputDir)) return false;
+                return true;
             }
 
             @Override

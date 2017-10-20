@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.lvtservices;
 
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -19,6 +20,7 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
+import java.io.FileFilter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -69,10 +71,37 @@ public class OctreeCreator extends AbstractExeBasedServiceProcessor<List<File>> 
     public ServiceResultHandler<List<File>> getResultHandler() {
         return new AbstractFileListServiceResultHandler() {
 
+            private boolean verifyOctree(File dir) {
+
+                boolean checkChanFile = false;
+                for(File file : dir.listFiles((FileFilter)null)) {
+                    if (file.isDirectory()) {
+                        try {
+                            int index = Integer.parseInt(file.getName());
+                            if (!verifyOctree(file)) return false;
+                        }
+                        catch (NumberFormatException e) {
+                            // Ignore dirs which are not numbers
+                        }
+                    }
+                    else {
+                        // TODO: should check for one file for each channel in the input
+                        if ("default.0.tif".equals(file.getName())) {
+                            checkChanFile = true;
+                        }
+                    }
+                }
+                if (!checkChanFile) return false;
+                return true;
+            }
+
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                // don't count the files because this locks if there are no results
-                return areAllDependenciesDone(depResults.getJacsServiceData());
+                File outputDir = new File(getArgs(depResults.getJacsServiceData()).output);
+                logger.info("Checking if result ready at {}", outputDir);
+                if (!outputDir.exists()) return false;
+                if (!verifyOctree(outputDir)) return false;
+                return true;
             }
 
             @Override
