@@ -75,11 +75,6 @@ public class GenericCmdProcessor extends AbstractExeBasedServiceProcessor<Void> 
                 .endArgs("");
     }
 
-    @Override
-    protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
-        return ImmutableMap.of();
-    }
-
     private GenericCmdArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new GenericCmdArgs());
     }

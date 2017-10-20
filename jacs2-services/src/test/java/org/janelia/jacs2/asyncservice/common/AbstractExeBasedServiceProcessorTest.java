@@ -56,11 +56,6 @@ public class AbstractExeBasedServiceProcessorTest {
         protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
             return new ExternalCodeBlock();
         }
-
-        @Override
-        protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
-            return Collections.emptyMap();
-        }
     }
 
     private AbstractExeBasedServiceProcessor<Void> testProcessor;
