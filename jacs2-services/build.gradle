@@ -12,9 +12,8 @@ project(":jacs2-services") {
                 JAX_RS_MEDIA_LIB,
                 JUEL_LIB,
                 MONGODB_DRIVER_LIB,
-                REFLECTIONS_LIB
-
-        compile fileTree(dir: 'lib', include: ['*.jar'])
+                REFLECTIONS_LIB,
+		JAVA_LSF_LIB
 
         runtime MYSQL_DRIVER_LIB
     }

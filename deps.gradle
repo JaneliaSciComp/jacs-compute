@@ -56,10 +56,11 @@ dependencies {
         JACKSON_JAXRS_JSON_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${JACKSON_VERSION}"
 
         // expressions
-	    JUEL_LIB = "de.odysseus.juel:juel-impl:2.2.7"
+        JUEL_LIB = "de.odysseus.juel:juel-impl:2.2.7"
 
         // drmaa
         DRMAA1_LIB = "us.levk:drmaa-gridengine:6.2u5"
+        JAVA_LSF_LIB = "org.janelia:java-lsf:0.1.0"
 
         // testing
         JUNIT_VERSION = "4.12"
