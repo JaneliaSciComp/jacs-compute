@@ -3,12 +3,15 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.cluster.*;
+import org.janelia.cluster.JobFuture;
+import org.janelia.cluster.JobManager;
+import org.janelia.cluster.JobTemplate;
 import org.janelia.jacs2.asyncservice.common.cluster.LsfJavaJobInfo;
 import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
 import org.janelia.jacs2.asyncservice.qualifier.LSFJavaJob;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.model.jacsservice.JacsJobInstanceInfo;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
 import org.janelia.jacs2.model.jacsservice.JacsServiceState;
@@ -22,8 +25,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -75,11 +76,14 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
                     JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT, String.format("Submitted job %s {%s} running: %s", serviceContext.getName(), jobId, processingScript))
             );
 
+            LsfJavaJobInfo lsfJavaJobInfo = new LsfJavaJobInfo(jobMgr, jobId, processingScript);
+
             future.whenCompleteAsync((infos, e) -> {
-                processJobCompletion(jt, jobId, infos, e, serviceContext);
+                processJobCompletion(lsfJavaJobInfo, e);
             }, completionMessageExecutor);
 
-            return new LsfJavaJobInfo(jobMgr, jobId, processingScript);
+            return lsfJavaJobInfo;
+
         } catch (Exception e) {
             jacsServiceDataPersistence.updateServiceState(
                     serviceContext,
@@ -171,35 +175,23 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         return jt;
     }
 
-    private void processJobCompletion(JobTemplate jt, Long jobId, Collection<JobInfo> infos, Throwable e, JacsServiceData serviceContext) {
-
-        logger.info("Process completion for job "+jobId);
-
+    private void processJobCompletion(LsfJavaJobInfo lsfJavaJobInfo, Throwable e) {
         if (e!=null) {
-            logger.error("There was an exception with the grid execution", e);
+            logger.error("There was an problem during execution on LSF", e);
         }
         else {
+            for (JacsJobInstanceInfo jobInfo : lsfJavaJobInfo.getJobInstanceInfos()) {
 
-            boolean gridActionSuccessful = true;
-            for (JobInfo jobInfo : infos) {
-
-                if (jobInfo.getStatus()== JobStatus.EXIT || jobInfo.getExitCode()!=0) {
-                    gridActionSuccessful = false;
-                }
-
-                LocalDateTime startTime = jobInfo.getStartTime();
-                LocalDateTime submitTime = jobInfo.getSubmitTime();
-                LocalDateTime finishTime = jobInfo.getFinishTime();
-                long queueTimeSeconds = ChronoUnit.SECONDS.between(submitTime, startTime);
-                long runTimeSeconds = ChronoUnit.SECONDS.between(startTime, finishTime);
+                Long queueTimeSeconds = jobInfo.getQueueSecs();
+                Long runTimeSeconds = jobInfo.getRunSecs();
 
                 String queueTime = queueTimeSeconds+" sec";
-                if (queueTimeSeconds>300) { // More than 5 minutes, just show the minutes
+                if (queueTimeSeconds!=null && queueTimeSeconds>300) { // More than 5 minutes, just show the minutes
                     queueTime = TimeUnit.MINUTES.convert(queueTimeSeconds, TimeUnit.SECONDS) + " min";
                 }
 
                 String runTime = runTimeSeconds+" sec";
-                if (runTimeSeconds>300) {
+                if (runTimeSeconds!=null && runTimeSeconds>300) {
                     runTime = TimeUnit.MINUTES.convert(runTimeSeconds, TimeUnit.SECONDS) + " min";
                 }
 
@@ -213,12 +205,6 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
                 if (jobInfo.getExitCode()!=0) {
                     logger.error("Job {} exited with code {} and reason {}", jobIdStr, jobInfo.getExitCode(), jobInfo.getExitReason());
                 }
-
-            }
-
-            if (!gridActionSuccessful) {
-                String error = "Some jobs exited with non-zero codes: "+jt.getWorkingDir();
-                logger.error("There was an error with the grid execution of "+jobId+": "+error);
             }
         }
     }

@@ -1,7 +1,10 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import org.janelia.jacs2.model.jacsservice.JacsJobInstanceInfo;
 import org.janelia.jacs2.model.jacsservice.JacsServiceData;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -59,7 +62,12 @@ public class ThrottledJobInfo implements ExeJobInfo {
         } else {
             return actualRunningJobInfo.isDone();
         }
+    }
 
+    @Override
+    public Collection<JacsJobInstanceInfo> getJobInstanceInfos() {
+        if (actualRunningJobInfo == null) return Collections.emptyList();
+        return actualRunningJobInfo.getJobInstanceInfos();
     }
 
     @Override

@@ -5,8 +5,12 @@ import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobMetadata;
 import org.janelia.cluster.JobStatus;
 import org.janelia.jacs2.asyncservice.common.ExeJobInfo;
+import org.janelia.jacs2.model.jacsservice.JacsJobInstanceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Job info for a job running using the LSFJavaJob runner.
@@ -61,6 +65,38 @@ public class LsfJavaJobInfo implements ExeJobInfo {
         }
 
         return done;
+    }
+
+    @Override
+    public Collection<JacsJobInstanceInfo> getJobInstanceInfos() {
+        Collection<JacsJobInstanceInfo> infos = new ArrayList<>();
+        JobMetadata jobMetadata = jobMgr.getJobMetadata(jobId);
+        if (jobMetadata != null) {
+            for (JobInfo jobInfo : jobMetadata.getLastInfos()) {
+                JacsJobInstanceInfo jacsJobInstanceInfo = new JacsJobInstanceInfo();
+                jacsJobInstanceInfo.setJobId(jobInfo.getJobId());
+                jacsJobInstanceInfo.setArrayIndex(jobInfo.getArrayIndex());
+                jacsJobInstanceInfo.setName(jobInfo.getName());
+                jacsJobInstanceInfo.setFromHost(jobInfo.getFromHost());
+                jacsJobInstanceInfo.setExecHost(jobInfo.getExecHost());
+                jacsJobInstanceInfo.setStatus(jobInfo.getStatus() == null ? null : jobInfo.getStatus().name());
+                jacsJobInstanceInfo.setQueue(jobInfo.getQueue());
+                jacsJobInstanceInfo.setProject(jobInfo.getProject());
+                jacsJobInstanceInfo.setReqSlot(jobInfo.getReqSlot());
+                jacsJobInstanceInfo.setAllocSlot(jobInfo.getAllocSlot());
+                jacsJobInstanceInfo.setSubmitTime(LsfParseUtils.convertLocalDateTime(jobInfo.getSubmitTime()));
+                jacsJobInstanceInfo.setStartTime(LsfParseUtils.convertLocalDateTime(jobInfo.getStartTime()));
+                jacsJobInstanceInfo.setFinishTime(LsfParseUtils.convertLocalDateTime(jobInfo.getFinishTime()));
+                jacsJobInstanceInfo.setQueueSecs(LsfParseUtils.getDiffSecs(jobInfo.getSubmitTime(), jobInfo.getStartTime()));
+                jacsJobInstanceInfo.setRunSecs(LsfParseUtils.getDiffSecs(jobInfo.getStartTime(), jobInfo.getFinishTime()));
+                jacsJobInstanceInfo.setMaxMem(jobInfo.getMaxMem());
+                jacsJobInstanceInfo.setMaxMemBytes(LsfParseUtils.parseMemToBytes(jobInfo.getMaxMem()));
+                jacsJobInstanceInfo.setExitCode(jobInfo.getExitCode());
+                jacsJobInstanceInfo.setExitReason(jobInfo.getExitReason());
+                infos.add(jacsJobInstanceInfo);
+            }
+        }
+        return infos;
     }
 
     @Override

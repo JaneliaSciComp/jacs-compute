@@ -2,6 +2,10 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.Session;
+import org.janelia.jacs2.model.jacsservice.JacsJobInstanceInfo;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public class DrmaaJobInfo implements ExeJobInfo {
     private final Session drmaaSession;
@@ -57,6 +61,11 @@ public class DrmaaJobInfo implements ExeJobInfo {
         } catch (DrmaaException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @Override
+    public Collection<JacsJobInstanceInfo> getJobInstanceInfos() {
+        return Collections.emptyList();
     }
 
     @Override

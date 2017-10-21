@@ -1,19 +1,17 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.config.ApplicationConfig;
+import org.janelia.jacs2.dao.JacsJobInstanceInfoDao;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
-import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
+import org.janelia.jacs2.model.jacsservice.*;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -28,6 +26,8 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
     private final ThrottledProcessesQueue throttledProcessesQueue;
     private final ApplicationConfig applicationConfig;
     private final int jobIntervalCheck;
+
+    private JacsJobInstanceInfoDao jacsJobInstanceInfoDao;
 
     public AbstractExeBasedServiceProcessor(ServiceComputationFactory computationFactory,
                                             JacsServiceDataPersistence jacsServiceDataPersistence,
@@ -44,6 +44,11 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
         this.jobIntervalCheck = applicationConfig.getIntegerPropertyValue("service.exejob.checkIntervalInMillis", 0);
     }
 
+    @Inject
+    public void init(JacsJobInstanceInfoDao jacsJobInstanceInfoDao) {
+        this.jacsJobInstanceInfoDao = jacsJobInstanceInfoDao;
+    }
+
     @Override
     protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) {
         ExeJobInfo jobInfo = runExternalProcess(depsResult.getJacsServiceData());
@@ -52,8 +57,21 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                 .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceResult<Void>> state) -> new ContinuationCond.Cond<>(state,
                         periodicResultCheck.updateCheckTime() && hasJobFinished(periodicResultCheck.getState().getJacsServiceData(), jobInfo)))
                 .thenApply(pdCond -> {
+
                     JacsServiceResult<Void> pd = pdCond.getState().getState();
-                    List<String> errors = getErrors(pd.getJacsServiceData());
+                    JacsServiceData jacsServiceData = pd.getJacsServiceData();
+
+                    // Persist all final job instance metadata
+                    Collection<JacsJobInstanceInfo> completedJobInfos = jobInfo.getJobInstanceInfos();
+                    if (!completedJobInfos.isEmpty()) {
+                        for (JacsJobInstanceInfo jacsJobInstanceInfo : completedJobInfos) {
+                            jacsJobInstanceInfo.setServiceDataId(jacsServiceData.getId());
+                        }
+                        logger.trace("Saving {} job instance info objects", completedJobInfos.size());
+                        jacsJobInstanceInfoDao.saveAll(completedJobInfos);
+                    }
+
+                    List<String> errors = getErrors(jacsServiceData);
                     String errorMessage = null;
                     if (CollectionUtils.isNotEmpty(errors)) {
                         errorMessage = String.format("Process %s failed; errors found: %s", jobInfo.getScriptName(), String.join(";", errors));
@@ -62,10 +80,10 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                     }
                     if (errorMessage != null) {
                         jacsServiceDataPersistence.updateServiceState(
-                                pd.getJacsServiceData(),
+                                jacsServiceData,
                                 JacsServiceState.ERROR,
                                 Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, errorMessage)));
-                        throw new ComputationException(pd.getJacsServiceData(), errorMessage);
+                        throw new ComputationException(jacsServiceData, errorMessage);
                     }
                     return pd;
                 });

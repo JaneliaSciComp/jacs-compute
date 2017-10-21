@@ -2,7 +2,7 @@ package org.janelia.jacs2.dao;
 
 import org.janelia.jacs2.model.EntityFieldValueHandler;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public interface ReadWriteDao<T, I> extends ReadOnlyDao<T, I> {
     void save(T entity);
-    void saveAll(List<T> entities);
+    void saveAll(Collection<T> entities);
     void update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate);
     void delete(T entity);
     void archive(T entity);

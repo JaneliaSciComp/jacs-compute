@@ -102,7 +102,6 @@ public class KTXCreator extends AbstractExeBasedServiceProcessor<List<File>> {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 File outputDir = new File(getArgs(depResults.getJacsServiceData()).output);
-                logger.info("Checking if result ready at {}", outputDir);
                 if (!outputDir.exists()) return false;
                 if (!verifyOctree(outputDir)) return false;
                 return true;

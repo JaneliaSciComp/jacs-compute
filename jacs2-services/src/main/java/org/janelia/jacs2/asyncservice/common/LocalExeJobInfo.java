@@ -1,5 +1,10 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import org.janelia.jacs2.model.jacsservice.JacsJobInstanceInfo;
+
+import java.util.Collection;
+import java.util.Collections;
+
 public class LocalExeJobInfo implements ExeJobInfo {
     private final Process localProcess;
     private final String scriptName;
@@ -24,6 +29,11 @@ public class LocalExeJobInfo implements ExeJobInfo {
             failed = localProcess.exitValue() != 0;
         }
         return done;
+    }
+
+    @Override
+    public Collection<JacsJobInstanceInfo> getJobInstanceInfos() {
+        return Collections.emptyList();
     }
 
     @Override
