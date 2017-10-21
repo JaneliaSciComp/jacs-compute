@@ -1,8 +1,6 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.mutable.MutableInt;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -25,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
