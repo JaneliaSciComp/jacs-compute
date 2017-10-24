@@ -13,7 +13,7 @@ project(":jacs2-services") {
                 JUEL_LIB,
                 MONGODB_DRIVER_LIB,
                 REFLECTIONS_LIB,
-		JAVA_LSF_LIB
+                JAVA_LSF_LIB
 
         runtime MYSQL_DRIVER_LIB
     }

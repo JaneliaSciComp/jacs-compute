@@ -36,9 +36,9 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-	flatDir {
+        flatDir {
             dirs "${rootDir}/projectrepository"
-	}
+        }
     }
 
     eclipse {

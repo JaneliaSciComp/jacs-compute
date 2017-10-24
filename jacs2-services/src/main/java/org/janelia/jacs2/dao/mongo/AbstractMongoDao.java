@@ -144,7 +144,8 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         }
     }
 
-    public void saveAll(List<T> entities) {
+    @Override
+    public void saveAll(Collection<T> entities) {
         Iterator<Number> idIterator = idGenerator.generateIdList(entities.size()).iterator();
         List<T> toInsert = new ArrayList<>();
         entities.forEach(e -> {

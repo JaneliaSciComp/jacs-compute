@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
@@ -23,7 +22,10 @@ import java.io.File;
 import java.io.FileFilter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -100,7 +102,6 @@ public class KTXCreator extends AbstractExeBasedServiceProcessor<List<File>> {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 File outputDir = new File(getArgs(depResults.getJacsServiceData()).output);
-                logger.info("Checking if result ready at {}", outputDir);
                 if (!outputDir.exists()) return false;
                 if (!verifyOctree(outputDir)) return false;
                 return true;

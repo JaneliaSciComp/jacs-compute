@@ -1,5 +1,10 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import org.janelia.jacs2.model.jacsservice.JacsJobInstanceInfo;
+
+import java.util.Collection;
+import java.util.Collections;
+
 public class LSFPACJobInfo implements ExeJobInfo {
     private final LSFPACHelper lsfPacHelper;
     private final String jobId;
@@ -40,6 +45,11 @@ public class LSFPACJobInfo implements ExeJobInfo {
         }
         done = doneResult;
         return done;
+    }
+
+    @Override
+    public Collection<JacsJobInstanceInfo> getJobInstanceInfos() {
+        return Collections.emptyList();
     }
 
     @Override
