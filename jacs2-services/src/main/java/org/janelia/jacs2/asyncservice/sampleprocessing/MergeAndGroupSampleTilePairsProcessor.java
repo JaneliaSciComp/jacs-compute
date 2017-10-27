@@ -9,7 +9,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.tuple.Pair;
-import org.janelia.model.jacs2.domain.codedValues.MergeAlgorithm;
+import org.janelia.model.domain.enums.algorithms.MergeAlgorithm;
 import org.janelia.model.jacs2.domain.enums.FileType;
 import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
 import org.janelia.model.jacs2.domain.sample.LSMImage;
