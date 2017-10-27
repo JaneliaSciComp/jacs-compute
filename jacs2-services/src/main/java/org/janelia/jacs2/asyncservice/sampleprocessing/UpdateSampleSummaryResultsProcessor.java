@@ -6,8 +6,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.janelia.it.jacs.model.domain.sample.LSMSummaryResult;
-import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.model.jacs2.domain.sample.LSMSummaryResult;
+import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -19,11 +19,11 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceRe
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;

@@ -15,8 +15,8 @@ import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;

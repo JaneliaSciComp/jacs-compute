@@ -4,9 +4,9 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.MapUtils;
 import org.janelia.jacs2.asyncservice.qualifier.LocalJob;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
+import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;

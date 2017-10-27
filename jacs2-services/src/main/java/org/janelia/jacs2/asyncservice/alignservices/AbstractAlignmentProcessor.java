@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
-import com.beust.jcommander.JCommander;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -23,7 +22,7 @@ import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.asyncservice.utils.X11Utils;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;

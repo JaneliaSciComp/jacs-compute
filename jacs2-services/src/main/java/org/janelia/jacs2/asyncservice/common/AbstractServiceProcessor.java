@@ -7,13 +7,13 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHa
 import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.EntityFieldValueHandler;
-import org.janelia.jacs2.model.SetFieldValueHandler;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceDataBuilder;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
-import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
+import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceDataBuilder;
+import org.janelia.model.service.JacsServiceEventTypes;
+import org.janelia.model.service.JacsServiceState;
+import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;

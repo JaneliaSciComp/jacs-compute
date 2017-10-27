@@ -1,7 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;

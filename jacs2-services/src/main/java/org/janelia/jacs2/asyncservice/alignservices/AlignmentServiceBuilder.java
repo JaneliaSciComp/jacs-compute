@@ -1,6 +1,6 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
-import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
 import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 

@@ -1,10 +1,10 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.base.Preconditions;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
-import org.janelia.jacs2.model.jacsservice.ProcessingLocation;
-import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceState;
+import org.janelia.model.service.ProcessingLocation;
+import org.janelia.model.service.RegisteredJacsNotification;
 
 import java.util.ArrayList;
 import java.util.HashMap;

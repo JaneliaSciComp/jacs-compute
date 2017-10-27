@@ -1,6 +1,8 @@
 package org.janelia.jacs2.dao;
 
-import org.janelia.jacs2.model.DomainModelUtils;
+import org.janelia.model.access.dao.Dao;
+import org.janelia.model.jacs2.DomainModelUtils;
+import org.janelia.model.jacs2.dao.DomainObjectDao;
 
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;

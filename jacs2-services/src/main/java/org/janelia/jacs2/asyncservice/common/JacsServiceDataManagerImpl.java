@@ -3,12 +3,12 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.DataInterval;
-import org.janelia.jacs2.model.EntityFieldValueHandler;
-import org.janelia.jacs2.model.SetFieldValueHandler;
-import org.janelia.jacs2.model.page.PageRequest;
-import org.janelia.jacs2.model.page.PageResult;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.model.jacs2.DataInterval;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
+import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.jacs2.page.PageRequest;
+import org.janelia.model.jacs2.page.PageResult;
+import org.janelia.model.service.JacsServiceData;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 
 import javax.inject.Inject;

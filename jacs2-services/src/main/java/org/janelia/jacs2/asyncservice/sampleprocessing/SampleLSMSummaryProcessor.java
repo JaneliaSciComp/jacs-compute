@@ -3,8 +3,8 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
-import org.janelia.it.jacs.model.domain.sample.FileGroup;
-import org.janelia.it.jacs.model.domain.sample.LSMImage;
+import org.janelia.model.jacs2.domain.sample.FileGroup;
+import org.janelia.model.jacs2.domain.sample.LSMImage;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -19,10 +19,10 @@ import org.janelia.jacs2.asyncservice.imageservices.GroupAndMontageFolderImagesP
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.model.EntityFieldValueHandler;
-import org.janelia.jacs2.model.jacsservice.RegisteredJacsNotification;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
+import org.janelia.model.service.RegisteredJacsNotification;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;

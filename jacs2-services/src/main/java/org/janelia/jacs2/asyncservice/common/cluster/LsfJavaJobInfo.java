@@ -5,7 +5,7 @@ import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobMetadata;
 import org.janelia.cluster.JobStatus;
 import org.janelia.jacs2.asyncservice.common.ExeJobInfo;
-import org.janelia.jacs2.model.jacsservice.JacsJobInstanceInfo;
+import org.janelia.model.service.JacsJobInstanceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

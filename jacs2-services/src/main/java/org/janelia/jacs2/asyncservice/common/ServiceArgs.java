@@ -3,7 +3,7 @@ package org.janelia.jacs2.asyncservice.common;
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
+import org.janelia.model.service.ServiceMetaData;
 
 import javax.inject.Named;
 

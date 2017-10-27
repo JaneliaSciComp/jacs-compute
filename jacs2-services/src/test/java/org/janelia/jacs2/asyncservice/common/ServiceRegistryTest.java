@@ -1,7 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
-import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
+import org.janelia.model.service.ServiceMetaData;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.junit.Before;
 import org.junit.Test;

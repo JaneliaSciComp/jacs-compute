@@ -1,7 +1,7 @@
 package org.janelia.jacs2.asyncservice;
 
 import org.janelia.jacs2.asyncservice.common.ServiceProcessor;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.model.service.JacsServiceData;
 
 import java.util.List;
 

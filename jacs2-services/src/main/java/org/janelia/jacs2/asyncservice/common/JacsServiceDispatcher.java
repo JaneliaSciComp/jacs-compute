@@ -2,9 +2,9 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
-import org.janelia.jacs2.dao.JacsNotificationDao;
+import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.jacsservice.*;
+import org.janelia.model.service.*;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;

@@ -2,12 +2,12 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.interfaces.HasRelativeFiles;
-import org.janelia.it.jacs.model.domain.sample.FileGroup;
-import org.janelia.it.jacs.model.domain.sample.Image;
+import org.janelia.model.jacs2.domain.enums.FileType;
+import org.janelia.model.jacs2.domain.interfaces.HasRelativeFiles;
+import org.janelia.model.jacs2.domain.sample.FileGroup;
+import org.janelia.model.jacs2.domain.sample.Image;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
-import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
 
 import java.io.File;
 import java.nio.file.Path;

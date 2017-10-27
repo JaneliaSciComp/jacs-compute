@@ -1,7 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.ServiceMetaData;
 
 /**
  * Service processor parameterized on the result type

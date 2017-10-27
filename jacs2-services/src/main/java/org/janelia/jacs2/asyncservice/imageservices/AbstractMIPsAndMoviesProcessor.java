@@ -17,7 +17,7 @@ import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import java.io.File;

@@ -2,9 +2,9 @@ package org.janelia.jacs2.dataservice.subject;
 
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.jacs2.dao.SubjectDao;
-import org.janelia.jacs2.model.DomainModelUtils;
+import org.janelia.model.jacs2.domain.Subject;
+import org.janelia.model.jacs2.dao.SubjectDao;
+import org.janelia.model.jacs2.DomainModelUtils;
 
 import javax.inject.Inject;
 

@@ -2,7 +2,7 @@ package org.janelia.jacs2.asyncservice.common.resulthandlers;
 
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.model.service.JacsServiceData;
 
 import java.io.File;
 import java.util.List;

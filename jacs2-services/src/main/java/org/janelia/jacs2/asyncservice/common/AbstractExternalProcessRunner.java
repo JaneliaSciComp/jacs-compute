@@ -6,8 +6,8 @@ import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.slf4j.Logger;
 
 import java.io.BufferedWriter;

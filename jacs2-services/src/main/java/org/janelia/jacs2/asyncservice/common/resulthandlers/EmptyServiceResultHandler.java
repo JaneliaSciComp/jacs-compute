@@ -2,7 +2,7 @@ package org.janelia.jacs2.asyncservice.common.resulthandlers;
 
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.model.service.JacsServiceData;
 
 public class EmptyServiceResultHandler<T> implements ServiceResultHandler<T> {
     @Override

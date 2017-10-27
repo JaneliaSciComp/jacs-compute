@@ -1,8 +1,8 @@
 package org.janelia.jacs2.dataservice.dataset;
 
-import org.janelia.it.jacs.model.domain.Subject;
-import org.janelia.it.jacs.model.domain.sample.DataSet;
-import org.janelia.jacs2.dao.DatasetDao;
+import org.janelia.model.jacs2.domain.Subject;
+import org.janelia.model.jacs2.domain.sample.DataSet;
+import org.janelia.model.jacs2.dao.DatasetDao;
 import org.janelia.jacs2.dataservice.subject.SubjectService;
 
 import javax.inject.Inject;

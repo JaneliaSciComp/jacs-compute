@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
-import org.janelia.jacs2.dao.mongo.utils.MongoModule;
+import org.janelia.model.access.dao.mongo.utils.MongoModule;
 
 import javax.enterprise.inject.Vetoed;
 

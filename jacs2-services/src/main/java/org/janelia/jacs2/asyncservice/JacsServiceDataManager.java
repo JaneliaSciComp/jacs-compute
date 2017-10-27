@@ -1,9 +1,9 @@
 package org.janelia.jacs2.asyncservice;
 
-import org.janelia.jacs2.model.DataInterval;
-import org.janelia.jacs2.model.page.PageRequest;
-import org.janelia.jacs2.model.page.PageResult;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.model.jacs2.DataInterval;
+import org.janelia.model.jacs2.page.PageRequest;
+import org.janelia.model.jacs2.page.PageResult;
+import org.janelia.model.service.JacsServiceData;
 
 import java.util.Date;
 

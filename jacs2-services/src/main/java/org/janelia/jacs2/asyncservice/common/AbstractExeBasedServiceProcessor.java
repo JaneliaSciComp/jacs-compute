@@ -5,9 +5,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.jacs2.dao.JacsJobInstanceInfoDao;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.jacsservice.*;
+import org.janelia.model.service.*;
+import org.janelia.model.service.*;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;

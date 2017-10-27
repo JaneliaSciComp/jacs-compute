@@ -2,14 +2,14 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.janelia.it.jacs.model.domain.Reference;
-import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
-import org.janelia.it.jacs.model.domain.sample.LSMImage;
-import org.janelia.it.jacs.model.domain.sample.ObjectiveSample;
-import org.janelia.it.jacs.model.domain.sample.Sample;
-import org.janelia.it.jacs.model.domain.sample.SampleTile;
-import org.janelia.it.jacs.model.domain.sample.TileLsmPair;
+import org.janelia.model.jacs2.domain.Reference;
+import org.janelia.model.jacs2.domain.enums.FileType;
+import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
+import org.janelia.model.jacs2.domain.sample.LSMImage;
+import org.janelia.model.jacs2.domain.sample.ObjectiveSample;
+import org.janelia.model.jacs2.domain.sample.Sample;
+import org.janelia.model.jacs2.domain.sample.SampleTile;
+import org.janelia.model.jacs2.domain.sample.TileLsmPair;
 
 import java.util.List;
 

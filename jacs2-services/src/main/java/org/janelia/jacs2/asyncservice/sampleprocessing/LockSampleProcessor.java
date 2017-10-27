@@ -2,7 +2,7 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
@@ -17,10 +17,10 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.DomainObjectService;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
-import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEvent;
+import org.janelia.model.service.JacsServiceState;
+import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;

@@ -2,7 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.Session;
-import org.janelia.jacs2.model.jacsservice.JacsJobInstanceInfo;
+import org.janelia.model.service.JacsJobInstanceInfo;
 
 import java.util.Collection;
 import java.util.Collections;

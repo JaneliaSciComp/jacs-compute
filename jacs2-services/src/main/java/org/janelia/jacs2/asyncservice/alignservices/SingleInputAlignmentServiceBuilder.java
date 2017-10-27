@@ -3,7 +3,7 @@ package org.janelia.jacs2.asyncservice.alignservices;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;

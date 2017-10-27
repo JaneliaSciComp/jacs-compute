@@ -1,6 +1,6 @@
 package org.janelia.jacs2.asyncservice.common.mdc;
 
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.model.service.JacsServiceData;
 import org.slf4j.MDC;
 
 import javax.interceptor.AroundInvoke;

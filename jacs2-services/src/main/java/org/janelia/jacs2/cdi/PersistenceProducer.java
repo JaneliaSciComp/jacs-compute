@@ -14,7 +14,7 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
-import org.janelia.jacs2.dao.mongo.utils.RegistryHelper;
+import org.janelia.model.access.dao.mongo.utils.RegistryHelper;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;

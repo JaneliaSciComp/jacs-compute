@@ -1,6 +1,6 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
-import org.janelia.it.jacs.model.domain.sample.SampleAlignmentResult;
+import org.janelia.model.jacs2.domain.sample.SampleAlignmentResult;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentResultFiles;
 
 public class AlignmentResult {

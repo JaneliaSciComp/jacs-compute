@@ -1,7 +1,7 @@
 package org.janelia.jacs2.dataservice.persistence;
 
-import org.janelia.jacs2.dao.ReadWriteDao;
-import org.janelia.jacs2.model.EntityFieldValueHandler;
+import org.janelia.model.access.dao.ReadWriteDao;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
 
 import javax.enterprise.inject.Instance;
 import java.util.Collection;

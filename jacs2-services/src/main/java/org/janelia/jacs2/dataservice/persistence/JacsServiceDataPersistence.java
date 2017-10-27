@@ -1,16 +1,16 @@
 package org.janelia.jacs2.dataservice.persistence;
 
 import com.google.common.collect.ImmutableMap;
-import org.janelia.jacs2.dao.JacsServiceDataDao;
-import org.janelia.jacs2.model.DataInterval;
-import org.janelia.jacs2.model.EntityFieldValueHandler;
-import org.janelia.jacs2.model.SetFieldValueHandler;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEvent;
-import org.janelia.jacs2.model.jacsservice.JacsServiceEventTypes;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
-import org.janelia.jacs2.model.page.PageRequest;
-import org.janelia.jacs2.model.page.PageResult;
+import org.janelia.model.access.dao.JacsServiceDataDao;
+import org.janelia.model.jacs2.DataInterval;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
+import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEvent;
+import org.janelia.model.service.JacsServiceEventTypes;
+import org.janelia.model.service.JacsServiceState;
+import org.janelia.model.jacs2.page.PageRequest;
+import org.janelia.model.jacs2.page.PageResult;
 
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;

@@ -1,8 +1,8 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 
 import java.util.Optional;

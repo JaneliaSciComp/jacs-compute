@@ -2,9 +2,9 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.page.PageRequest;
-import org.janelia.jacs2.model.page.PageResult;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.jacs2.page.PageRequest;
+import org.janelia.model.jacs2.page.PageResult;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;

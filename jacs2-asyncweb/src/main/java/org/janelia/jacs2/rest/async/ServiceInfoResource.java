@@ -1,12 +1,12 @@
 package org.janelia.jacs2.rest.async;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.model.DataInterval;
-import org.janelia.jacs2.model.page.PageRequest;
-import org.janelia.jacs2.model.page.PageResult;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
-import org.janelia.jacs2.model.jacsservice.JacsServiceState;
-import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
+import org.janelia.model.jacs2.DataInterval;
+import org.janelia.model.jacs2.page.PageRequest;
+import org.janelia.model.jacs2.page.PageResult;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceState;
+import org.janelia.model.service.ServiceMetaData;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.slf4j.Logger;

@@ -1,12 +1,12 @@
 package org.janelia.jacs2.dataservice;
 
 import com.google.common.collect.ImmutableList;
-import org.janelia.it.jacs.model.domain.DomainObject;
-import org.janelia.it.jacs.model.domain.Reference;
-import org.janelia.it.jacs.model.domain.Subject;
+import org.janelia.model.jacs2.domain.DomainObject;
+import org.janelia.model.jacs2.domain.Reference;
+import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.jacs2.dao.DaoFactory;
-import org.janelia.jacs2.dao.ImageDao;
-import org.janelia.jacs2.dao.SampleDao;
+import org.janelia.model.jacs2.dao.ImageDao;
+import org.janelia.model.jacs2.dao.SampleDao;
 import org.junit.Before;
 import org.junit.Test;
 

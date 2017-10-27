@@ -1,6 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import org.janelia.jacs2.model.jacsservice.ServiceMetaData;
+import org.janelia.model.service.ServiceMetaData;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.slf4j.Logger;
 

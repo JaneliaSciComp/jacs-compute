@@ -2,12 +2,12 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Ordering;
-import org.janelia.it.jacs.model.domain.Reference;
-import org.janelia.it.jacs.model.domain.ReverseReference;
-import org.janelia.it.jacs.model.domain.enums.FileType;
-import org.janelia.it.jacs.model.domain.sample.NeuronFragment;
-import org.janelia.it.jacs.model.domain.sample.NeuronSeparation;
-import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.model.jacs2.domain.Reference;
+import org.janelia.model.jacs2.domain.ReverseReference;
+import org.janelia.model.jacs2.domain.enums.FileType;
+import org.janelia.model.jacs2.domain.sample.NeuronFragment;
+import org.janelia.model.jacs2.domain.sample.NeuronSeparation;
+import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.slf4j.Logger;

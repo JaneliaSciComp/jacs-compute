@@ -5,7 +5,7 @@ import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;

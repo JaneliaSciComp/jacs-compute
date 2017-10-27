@@ -1,14 +1,14 @@
 package org.janelia.jacs2.rest.sync;
 
-import org.janelia.it.jacs.model.domain.sample.AnatomicalArea;
-import org.janelia.it.jacs.model.domain.sample.Sample;
+import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
+import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
-import org.janelia.jacs2.model.DataInterval;
-import org.janelia.jacs2.model.page.ListResult;
-import org.janelia.jacs2.model.page.PageRequest;
-import org.janelia.jacs2.model.page.PageResult;
+import org.janelia.model.jacs2.DataInterval;
+import org.janelia.model.jacs2.page.ListResult;
+import org.janelia.model.jacs2.page.PageRequest;
+import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.model.sage.SlideImage;
+import org.janelia.model.jacs2.sage.SlideImage;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;

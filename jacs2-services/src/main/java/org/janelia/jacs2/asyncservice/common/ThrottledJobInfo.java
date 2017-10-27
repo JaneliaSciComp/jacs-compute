@@ -1,7 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import org.janelia.jacs2.model.jacsservice.JacsJobInstanceInfo;
-import org.janelia.jacs2.model.jacsservice.JacsServiceData;
+import org.janelia.model.service.JacsJobInstanceInfo;
+import org.janelia.model.service.JacsServiceData;
 
 import java.util.Collection;
 import java.util.Collections;

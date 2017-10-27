@@ -1,7 +1,7 @@
 package org.janelia.jacs2.utils;
 
 import com.google.common.collect.ImmutableSet;
-import org.janelia.jacs2.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
