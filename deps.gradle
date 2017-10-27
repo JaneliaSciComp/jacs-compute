@@ -1,8 +1,5 @@
 dependencies {
     project.ext {
-        GUAVA_LIB = "com.google.guava:guava:19.0"
-        REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
-
         // logging
         SLF4J_VERSION = "1.7.21"
         LOGBACK_VERSION = "1.1.7"
@@ -17,7 +14,11 @@ dependencies {
         CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
-        // database drivers
+        // utilities
+        GUAVA_LIB = "com.google.guava:guava:19.0"
+        REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
+
+        // database
         MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:3.4.2"
         MYSQL_DRIVER_LIB = "mysql:mysql-connector-java:5.1.42"
         DBCP_LIB = "org.apache.commons:commons-dbcp2:2.1.1"
@@ -25,10 +26,8 @@ dependencies {
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
         // apache commons
-        COMMONS_LANG_VERSION = "3.5"
-        COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:${COMMONS_LANG_VERSION}"
-        COMMONS_COLLECTIONS_VERSION = "4.1"
-        COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:${COMMONS_COLLECTIONS_VERSION}"
+        COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:3.5"
+        COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:4.1"
 
         // JAX-RS API
         JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.0.1"
