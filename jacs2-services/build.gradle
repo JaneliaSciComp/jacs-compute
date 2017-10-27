@@ -12,8 +12,11 @@ project(":jacs2-services") {
                 JAX_RS_MEDIA_LIB,
                 JUEL_LIB,
                 MONGODB_DRIVER_LIB,
+                JONGO_LIB,
+                HIBERNATE_LIB,
                 REFLECTIONS_LIB,
-                JAVA_LSF_LIB
+                JAVA_LSF_LIB,
+                JACS_MODEL_LIB
 
         runtime MYSQL_DRIVER_LIB
     }

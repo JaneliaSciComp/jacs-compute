@@ -21,6 +21,8 @@ dependencies {
         MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:3.4.2"
         MYSQL_DRIVER_LIB = "mysql:mysql-connector-java:5.1.42"
         DBCP_LIB = "org.apache.commons:commons-dbcp2:2.1.1"
+        JONGO_LIB = "org.jongo:jongo:1.3.0"
+        HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
         // apache commons
         COMMONS_LANG_VERSION = "3.5"
@@ -60,7 +62,10 @@ dependencies {
 
         // drmaa
         DRMAA1_LIB = "us.levk:drmaa-gridengine:6.2u5"
+
+        // janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:0.1.0"
+        JACS_MODEL_LIB = "org.janelia:jacs-model:1.0.0"
 
         // testing
         JUNIT_VERSION = "4.12"
