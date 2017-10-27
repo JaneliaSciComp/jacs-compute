@@ -12,11 +12,13 @@ import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
 import org.janelia.model.access.dao.mongo.utils.RegistryHelper;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -25,12 +27,17 @@ import java.sql.SQLException;
 @ApplicationScoped
 public class PersistenceProducer {
 
+    @Inject
     @PropertyValue(name = "MongoDB.ConnectionURL")
+    private String mongoConnectionURL;
+
     @Inject
-    private String nmongoConnectionURL;
     @PropertyValue(name = "MongoDB.Database")
-    @Inject
     private String mongoDatabase;
+
+    @Inject
+    @PropertyValue(name = "MongoDB.FutureDatabase")
+    private String mongoFutureDatabase;
 
     @ApplicationScoped
     @Produces
@@ -46,14 +53,20 @@ public class PersistenceProducer {
                         .connectionsPerHost(connectionsPerHost)
                         .connectTimeout(connectTimeout)
                         .codecRegistry(codecRegistry);
-        MongoClientURI mongoConnectionString = new MongoClientURI(nmongoConnectionURL, optionsBuilder);
-        MongoClient mongoClient = new MongoClient(mongoConnectionString);
-        return mongoClient;
+        MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
+        return new MongoClient(mongoConnectionString);
     }
 
     @Produces
-    public MongoDatabase createMongoDatabase(MongoClient mongoClient) {
+    @Default
+    public MongoDatabase createDefaultMongoDatabase(MongoClient mongoClient) {
         return mongoClient.getDatabase(mongoDatabase);
+    }
+
+    @Produces
+    @Jacs2Future
+    public MongoDatabase createFutureMongoDatabase(MongoClient mongoClient) {
+        return mongoClient.getDatabase(mongoFutureDatabase);
     }
 
     @Sage

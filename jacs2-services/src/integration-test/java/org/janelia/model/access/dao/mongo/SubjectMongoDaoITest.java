@@ -3,6 +3,7 @@ package org.janelia.model.access.dao.mongo;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.model.jacs2.dao.SubjectDao;
+import org.janelia.model.jacs2.dao.mongo.SubjectMongoDao;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.jacs2.page.PageRequest;

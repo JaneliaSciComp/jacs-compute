@@ -2,6 +2,7 @@ package org.janelia.model.access.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import org.hamcrest.beans.HasPropertyWithValue;
+import org.janelia.model.jacs2.dao.mongo.SampleMongoDao;
 import org.janelia.model.jacs2.domain.sample.PipelineResult;
 import org.janelia.model.jacs2.domain.sample.SamplePipelineRun;
 import org.janelia.model.jacs2.dao.SampleDao;

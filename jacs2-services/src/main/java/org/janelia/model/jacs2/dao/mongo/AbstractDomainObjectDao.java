@@ -1,4 +1,4 @@
-package org.janelia.model.access.dao.mongo;
+package org.janelia.model.jacs2.dao.mongo;
 
 import com.google.common.base.Preconditions;
 import com.mongodb.client.MongoDatabase;
@@ -7,6 +7,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
+import org.janelia.model.access.dao.mongo.AbstractMongoDao;
 import org.janelia.model.jacs2.dao.DomainObjectDao;
 import org.janelia.model.jacs2.domain.DomainObject;
 import org.janelia.model.jacs2.domain.Subject;

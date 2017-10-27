@@ -1,4 +1,4 @@
-package org.janelia.model.access.dao.mongo;
+package org.janelia.model.jacs2.dao.mongo;
 
 import com.mongodb.client.MongoDatabase;
 import org.janelia.model.jacs2.dao.ImageDao;

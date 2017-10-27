@@ -1,10 +1,11 @@
-package org.janelia.model.access.dao.mongo;
+package org.janelia.model.jacs2.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
+import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.domain.sample.LSMImage;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
@@ -23,6 +24,7 @@ import static com.mongodb.client.model.Filters.eq;
 
 public class LSMImageMongoDao extends AbstractImageMongoDao<LSMImage> implements LSMImageDao {
     @Inject
+    @Jacs2Future
     public LSMImageMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
         super(mongoDatabase, idGenerator);
     }
