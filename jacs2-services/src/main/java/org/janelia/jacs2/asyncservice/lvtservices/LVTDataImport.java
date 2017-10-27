@@ -2,11 +2,17 @@ package org.janelia.jacs2.asyncservice.lvtservices;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.domain.DomainConstants;
+import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.tiledMicroscope.TmSample;
+import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -14,6 +20,7 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -34,10 +41,15 @@ public class LVTDataImport extends AbstractServiceProcessor<File> {
         Integer levels = 3;
         @Parameter(names = "-voxelSize", description = "Voxel size (in 'x,y,z' format)", required = true)
         String voxelSize;
+        @Parameter(names = "-sampleName", description = "Name of sample in the Workstation. If null, no sample will be created.", required = false)
+        String sampleName;
     }
 
     private final WrappedServiceProcessor<OctreeCreator, List<File>> octreeCreator;
     private final WrappedServiceProcessor<KTXCreator,List<File>> ktxCreator;
+
+    @Inject
+    private LegacyDomainDao dao;
 
     @Inject
     LVTDataImport(ServiceComputationFactory computationFactory,
@@ -85,6 +97,7 @@ public class LVTDataImport extends AbstractServiceProcessor<File> {
         final String ktxDir = args.output+"/ktx";
         final int levels = args.levels;
         final String voxelSize = args.voxelSize;
+        final String sampleName = args.sampleName;
 
         return octreeCreator.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
@@ -101,9 +114,32 @@ public class LVTDataImport extends AbstractServiceProcessor<File> {
                     .build(),
                 new ServiceArg("-input", octreeDir),
                 new ServiceArg("-output", ktxDir),
-                new ServiceArg("-levels", levels))
-            ).thenApply((JacsServiceResult<List<File>> fileResult) ->
-                new JacsServiceResult<>(jacsServiceData, new File(octreeDir)));
+                new ServiceArg("-levels", levels)))
+            .thenApply((JacsServiceResult<List<File>> fileResult) ->
+                new JacsServiceResult<>(jacsServiceData, new File(octreeDir)))
+            .thenApply((JacsServiceResult<File> result) -> {
+                if (sampleName != null) {
+                    try {
+                        createTmSample(jacsServiceData.getOwner(), result.getResult().getAbsolutePath(), sampleName);
+                    }
+                    catch (Exception e) {
+                        throw new UncheckedExecutionException("Error creating sample", e);
+                    }
+                }
+                return result;
+            });
+    }
+
+    // This is copy and pasted from JACSv1's TiledMicroscopeDAO. When that DAO gets ported over, it should be used instead.
+    public TmSample createTmSample(String subjectKey, String filepath, String sampleName) throws Exception {
+        logger.debug("createTmSample({}, {})",subjectKey,sampleName);
+        TmSample sample = new TmSample();
+        sample.setFilepath(filepath);
+        sample.setName(sampleName);
+        sample = dao.save(subjectKey, sample);
+        TreeNode folder = dao.getOrCreateDefaultFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
+        dao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(sample)));
+        return sample;
     }
 
     private LVTDataImportArgs getArgs(JacsServiceData jacsServiceData) {

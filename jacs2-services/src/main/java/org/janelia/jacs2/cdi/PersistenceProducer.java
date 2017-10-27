@@ -16,6 +16,7 @@ import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
 import org.janelia.model.access.dao.mongo.utils.RegistryHelper;
+import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
@@ -26,6 +27,9 @@ import java.sql.SQLException;
 
 @ApplicationScoped
 public class PersistenceProducer {
+
+    @Inject
+    private Logger log;
 
     @Inject
     @PropertyValue(name = "MongoDB.ConnectionURL")
@@ -54,18 +58,21 @@ public class PersistenceProducer {
                         .connectTimeout(connectTimeout)
                         .codecRegistry(codecRegistry);
         MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
+        log.info("Creating Mongo client: "+mongoConnectionString);
         return new MongoClient(mongoConnectionString);
     }
 
     @Produces
     @Default
     public MongoDatabase createDefaultMongoDatabase(MongoClient mongoClient) {
+        log.trace("Creating default database: "+mongoDatabase);
         return mongoClient.getDatabase(mongoDatabase);
     }
 
     @Produces
     @Jacs2Future
     public MongoDatabase createFutureMongoDatabase(MongoClient mongoClient) {
+        log.info("Creating future database: "+mongoFutureDatabase);
         return mongoClient.getDatabase(mongoFutureDatabase);
     }
 
