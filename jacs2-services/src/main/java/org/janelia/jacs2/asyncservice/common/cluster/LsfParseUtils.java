@@ -78,6 +78,11 @@ public class LsfParseUtils {
             }
         }
 
+        if (bytes == null) {
+            log.warn("Could not parse units in max mem: {}", memLsf);
+            return null;
+        }
+
         return bytes.longValue();
     }
 }

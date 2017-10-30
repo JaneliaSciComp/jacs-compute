@@ -101,7 +101,12 @@ public class ThrottledProcessesQueue {
     private void removeProcessFromRunningQueue(ThrottledJobInfo jobInfo) {
         BlockingQueue<ThrottledJobInfo> runningQueue = getQueue(jobInfo.getProcessName(), runningProcesses);
         boolean removed = runningQueue.remove(jobInfo);
-        logger.debug("Completed {}:{} and removed it ({}) from the runningProcesses: ", jobInfo.getProcessName(), jobInfo.getScriptName(), removed, runningQueue.size());
+        if (removed) {
+            logger.debug("Completed {}:{} and removed it from the runningQueue (size={})", jobInfo.getProcessName(), jobInfo.getScriptName(), runningQueue.size());
+        }
+        else {
+            logger.debug("Completed {}:{} and failed to remote it from the runningQueue (size={})", jobInfo.getProcessName(), jobInfo.getScriptName(), runningQueue.size());
+        }
     }
 
     private void checkWaitingQueue() {

@@ -44,10 +44,9 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
     public ServiceComputation<JacsServiceResult<T>> process(JacsServiceData jacsServiceData) {
         JacsServiceData submittedService = submit(jacsServiceData);
         PeriodicallyCheckableState<JacsServiceData> submittedServiceStateCheck = new PeriodicallyCheckableState<>(submittedService, ProcessorHelper.getSoftJobDurationLimitInSeconds(jacsServiceData.getResources()) / 100);
-        StackTraceElement[] capturedStackTrace = Thread.currentThread().getStackTrace();
         return computationFactory.newCompletedComputation(submittedServiceStateCheck)
                 .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceData> sdState) -> new ContinuationCond.Cond<>(sdState, sdState.updateCheckTime() && isDone(sdState)))
-                .thenApply((ContinuationCond.Cond<PeriodicallyCheckableState<JacsServiceData>> sdStateCond) -> getResult(sdStateCond.getState(), capturedStackTrace))
+                .thenApply((ContinuationCond.Cond<PeriodicallyCheckableState<JacsServiceData>> sdStateCond) -> getResult(sdStateCond.getState()))
                 ;
     }
 
@@ -60,14 +59,12 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
         return refreshServiceData.hasCompleted();
     }
 
-    private JacsServiceResult<T> getResult(PeriodicallyCheckableState<JacsServiceData> jacsServiceDataState, StackTraceElement[] capturedStackTrace) {
+    private JacsServiceResult<T> getResult(PeriodicallyCheckableState<JacsServiceData> jacsServiceDataState) {
         JacsServiceData refreshServiceData = jacsServiceDataPersistence.findById(jacsServiceDataState.getState().getId());
         if (refreshServiceData.hasCompletedSuccessfully()) {
             return new JacsServiceResult<T>(refreshServiceData, wrappedProcessor.getResultHandler().getServiceDataResult(refreshServiceData));
         } else {
-            ComputationException exc = new ComputationException(refreshServiceData, "Service " + refreshServiceData.toString() + " completed unsuccessfully");
-            exc.setStackTrace(capturedStackTrace);
-            throw exc;
+            throw new ComputationException(refreshServiceData, "Service " + refreshServiceData.toString() + " completed unsuccessfully");
         }
     }
 }

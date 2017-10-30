@@ -126,7 +126,7 @@ public class JacsServiceDispatcher {
 
     @MdcContext
     private void fail(JacsServiceData serviceData, Throwable exc) {
-        logger.error("Processing error executing {}: {}", serviceData, exc);
+        logger.error("Processing error executing {}", serviceData, exc);
         JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
         if (latestServiceData== null) {
             logger.warn("NO Service not found for {} - probably it was already archived", serviceData);
