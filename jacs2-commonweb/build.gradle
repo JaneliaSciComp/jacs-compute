@@ -15,7 +15,4 @@ project(":jacs2-commonweb") {
                 UNDERTOW_SERVLET_LIB,
                 SWAGGER_LIB
     }
-
-
-
 }
