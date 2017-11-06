@@ -18,13 +18,8 @@ public class AsyncServicesApp extends AbstractServicesApp {
     }
 
     @Override
-    protected String getJaxConfigName() {
+    protected String getV2ConfigName() {
         return JAXAsyncAppConfig.class.getName();
-    }
-
-    @Override
-    protected String getRestApiMapping() {
-        return "/jacs-api/*";
     }
 
     @Override

@@ -1,4 +1,4 @@
-package org.janelia.jacs2.rest.async;
+package org.janelia.jacs2.rest.async.v2;
 
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.model.service.JacsServiceData;
@@ -19,7 +19,7 @@ import java.util.List;
 
 @ApplicationScoped
 @Produces("application/json")
-@Path("/v2/async-services")
+@Path("/async-services")
 public class AsyncServiceInfoResource {
 
     @Inject private JacsServiceEngine jacsServiceEngine;

@@ -18,13 +18,8 @@ public class SyncServicesApp extends AbstractServicesApp {
     }
 
     @Override
-    protected String getJaxConfigName() {
+    protected String getV2ConfigName() {
         return JAXSyncAppConfig.class.getName();
-    }
-
-    @Override
-    protected String getRestApiMapping() {
-        return "/jacs-api/*";
     }
 
     @Override

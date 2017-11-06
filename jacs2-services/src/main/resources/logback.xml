@@ -23,6 +23,7 @@
     </appender>
 
     <logger name="io.undertow" level="info" />
+    <logger name="io.swagger" level="info" />
     <logger name="org.jboss" level="info" />
     <logger name="org.mongodb.driver" level="warn" />
     <logger name="org.xnio.nio" level="error" />

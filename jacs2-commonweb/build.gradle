@@ -12,6 +12,10 @@ project(":jacs2-commonweb") {
                 JAX_RS_CORE_LIB,
                 JAX_RS_SERVER_LIB,
                 UNDERTOW_CORE_LIB,
-                UNDERTOW_SERVLET_LIB
+                UNDERTOW_SERVLET_LIB,
+                SWAGGER_LIB
     }
+
+
+
 }

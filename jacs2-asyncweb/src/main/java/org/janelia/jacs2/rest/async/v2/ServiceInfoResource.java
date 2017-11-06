@@ -1,5 +1,9 @@
-package org.janelia.jacs2.rest.async;
+package org.janelia.jacs2.rest.async.v2;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.page.PageRequest;
@@ -26,7 +30,8 @@ import java.util.List;
 
 @ApplicationScoped
 @Produces("application/json")
-@Path("/v2/services")
+@Path("/services")
+@Api(value = "JACS Service Info")
 public class ServiceInfoResource {
     private static final int DEFAULT_PAGE_SIZE = 100;
 
@@ -35,6 +40,10 @@ public class ServiceInfoResource {
     @Inject private Logger logger;
 
     @GET
+    @ApiOperation(value = "Get all services", notes = "")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
     public Response getAllServices(@QueryParam("service-name") String serviceName,
                                    @QueryParam("service-id") Long serviceId,
                                    @QueryParam("parent-id") Long parentServiceId,
@@ -78,6 +87,10 @@ public class ServiceInfoResource {
 
     @GET
     @Path("/{service-instance-id}")
+    @ApiOperation(value = "Get service info", notes = "Returns service about a given service")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
     public Response getServiceInfo(@PathParam("service-instance-id") Long instanceId) {
         JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
         if (serviceData == null) {
@@ -94,6 +107,10 @@ public class ServiceInfoResource {
 
     @PUT
     @Path("/{service-instance-id}")
+    @ApiOperation(value = "Update service info", notes = "Updates the info about the given service")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
     public Response updateServiceInfo(@PathParam("service-instance-id") Long instanceId, JacsServiceData si) {
         JacsServiceData serviceData = jacsServiceDataManager.updateService(instanceId, si);
         if (serviceData == null) {
@@ -110,6 +127,10 @@ public class ServiceInfoResource {
 
     @GET
     @Path("/metadata")
+    @ApiOperation(value = "Get metadata about all services", notes = "")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
     public Response getAllServicesMetadata() {
         List<ServiceMetaData> services = serviceRegistry.getAllServicesMetadata();
         return Response
@@ -120,6 +141,10 @@ public class ServiceInfoResource {
 
     @GET
     @Path("/metadata/{service-name}")
+    @ApiOperation(value = "Get metadata about a given service", notes = "")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
     public Response getServiceMetadata(@PathParam("service-name") String serviceName) {
         ServiceMetaData smd = serviceRegistry.getServiceMetadata(serviceName);
         if (smd == null) {

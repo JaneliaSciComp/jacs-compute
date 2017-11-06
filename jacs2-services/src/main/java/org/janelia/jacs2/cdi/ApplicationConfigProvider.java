@@ -2,6 +2,8 @@ package org.janelia.jacs2.cdi;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.config.ApplicationConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,6 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ApplicationConfigProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(ApplicationConfigProvider.class);
 
     private static final String DEFAULT_APPLICATION_CONFIG_RESOURCES = "/jacs.properties";
 
@@ -32,6 +36,7 @@ public class ApplicationConfigProvider {
             return this;
         }
         try (InputStream configStream = this.getClass().getResourceAsStream(resourceName)) {
+            log.info("Reading application config from "+resourceName);
             return fromInputStream(configStream);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -56,6 +61,7 @@ public class ApplicationConfigProvider {
         File file = new File(fileName);
         if (file.exists() && file.isFile()) {
             try (InputStream fileInputStream = new FileInputStream(file)) {
+                log.info("Reading application config from "+file);
                 return fromInputStream(fileInputStream);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);

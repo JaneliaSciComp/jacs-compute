@@ -1,4 +1,4 @@
-package org.janelia.jacs2.rest.sync;
+package org.janelia.jacs2.rest.sync.v2;
 
 import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
 import org.janelia.model.jacs2.domain.sample.Sample;
@@ -24,7 +24,7 @@ import java.util.List;
 
 @ApplicationScoped
 @Produces("application/json")
-@Path("/v2/samples")
+@Path("/samples")
 public class SampleDataResource {
     private static final int DEFAULT_PAGE_SIZE = 100;
 

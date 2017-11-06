@@ -48,6 +48,8 @@ dependencies {
         UNDERTOW_CORE_LIB = "io.undertow:undertow-core:${UNDERTOW_VERSION}"
         UNDERTOW_SERVLET_LIB = "io.undertow:undertow-servlet:${UNDERTOW_VERSION}"
 
+        SWAGGER_LIB = "io.swagger:swagger-jersey2-jaxrs:1.5.16"
+
         // JSON
         JACKSON_VERSION = "2.8.8"
         JACKSON_CORE_LIB = "com.fasterxml.jackson.core:jackson-core:${JACKSON_VERSION}"
