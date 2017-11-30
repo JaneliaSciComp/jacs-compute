@@ -103,9 +103,16 @@ public class CMTKAlignmentProcessor extends AbstractServiceProcessor<List<String
                                     String inputImageName = inputImage.toFile().getName();
                                     Path inputImageLink = Paths.get(groupInputDirName, inputImageName);
                                     try {
+                                        if (Files.exists(inputImageLink) && args.overrideGroupedInputs) {
+                                            Files.delete(inputImageLink);
+                                        }
+                                    } catch (IOException deleteExc) {
+                                        throw new UncheckedIOException(deleteExc);
+                                    }
+                                    try {
                                         Files.createSymbolicLink(inputImageLink, inputImage);
                                     } catch (IOException linkExc) {
-                                        throw new UncheckedIOException(linkExc);
+                                        throw new UncheckedIOException("You can try to use <overrideGroupedInputs> flag or remove previous inputs", linkExc);
                                     }
                                 });
                             } catch (IOException e) {

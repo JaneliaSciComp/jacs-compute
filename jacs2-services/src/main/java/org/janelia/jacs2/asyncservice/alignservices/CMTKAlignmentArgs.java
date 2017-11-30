@@ -37,6 +37,8 @@ final class CMTKAlignmentArgs extends ServiceArgs {
     Integer numThreads;
     @Parameter(names = {"-v", "-verbose"}, description = "Verbose flag")
     Boolean verbose = false;
+    @Parameter(names = {"-overrideGroupedInputs"}, description = "Force overriding grouped input images if they already exists")
+    Boolean overrideGroupedInputs = false;
 
     int getNumThreads() {
         return numThreads == null ? 0 : numThreads;
