@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
@@ -68,12 +69,13 @@ public class Vaa3dCmdProcessor extends AbstractExeBasedServiceProcessor<Void> {
         Vaa3dCmdArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
-        createScript(args, externalScriptWriter);
+        createScript(args, jacsServiceData.getResources(), externalScriptWriter);
         externalScriptWriter.close();
         return externalScriptCode;
     }
 
-    private void createScript(Vaa3dCmdArgs args, ScriptWriter scriptWriter) {
+    private void createScript(Vaa3dCmdArgs args, Map<String, String> resources, ScriptWriter scriptWriter) {
+        scriptWriter.exportVar("NSLOTS", String.valueOf(ProcessorHelper.getProcessingSlots(resources)));
         scriptWriter.addWithArgs(getExecutable())
                 .addArgs("-cmd", args.vaa3dCmd)
                 .addArg(args.vaa3dCmdArgs).endArgs("");

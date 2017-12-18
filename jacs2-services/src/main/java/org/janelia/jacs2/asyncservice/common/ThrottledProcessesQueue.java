@@ -66,7 +66,7 @@ public class ThrottledProcessesQueue {
         if (jobInfo.getMaxRunningProcesses() <= 0 ||
                 CollectionUtils.size(runningProcesses.get(jobInfo.getProcessName())) < jobInfo.getMaxRunningProcesses()) {
             addJobDoneCallback(jobInfo);
-            if (jobInfo.runProcess() && jobInfo.getMaxRunningProcesses() > 0) {
+            if (jobInfo.start() != null && jobInfo.getMaxRunningProcesses() > 0) {
                 BlockingQueue<ThrottledJobInfo> queue = getQueue(jobInfo.getProcessName(), runningProcesses);
                 queue.add(jobInfo);
             }
@@ -93,7 +93,7 @@ public class ThrottledProcessesQueue {
         BlockingQueue<ThrottledJobInfo> waitingQueue = getQueue(jobInfo.getProcessName(), waitingProcesses);
         BlockingQueue<ThrottledJobInfo> runningQueue = getQueue(jobInfo.getProcessName(), runningProcesses);
         waitingQueue.remove(jobInfo);
-        if (jobInfo.runProcess()) {
+        if (jobInfo.start() != null) {
             runningQueue.add(jobInfo);
         }
     }
@@ -117,7 +117,7 @@ public class ThrottledProcessesQueue {
                     logger.debug("Move {} - {} to running queue", jobInfo.getProcessName(), jobInfo.getServiceContext());
                     addJobDoneCallback(jobInfo);
                     moveProcessToRunningQueue(jobInfo);
-                    jobInfo.runProcess();
+                    jobInfo.start();
                 } else {
                     queue.add(jobInfo);
                     break;

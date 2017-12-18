@@ -15,7 +15,7 @@ dependencies {
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
         // utilities
-        GUAVA_LIB = "com.google.guava:guava:19.0"
+        GUAVA_LIB = "com.google.guava:guava:23.0"
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // database

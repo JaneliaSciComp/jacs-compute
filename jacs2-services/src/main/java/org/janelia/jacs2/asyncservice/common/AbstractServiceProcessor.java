@@ -118,6 +118,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
             jacsServiceData.setOutputPath(getServicePath(
                     StringUtils.defaultIfBlank(jacsServiceData.getWorkspace(), defaultWorkingDir),
                     jacsServiceData,
+                    "sge_output",
                     String.format("%s-stdout.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
             serviceUpdates.put("outputPath", new SetFieldValueHandler<>(jacsServiceData.getOutputPath()));
         }
@@ -125,6 +126,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
             jacsServiceData.setErrorPath(getServicePath(
                     StringUtils.defaultIfBlank(jacsServiceData.getWorkspace(), defaultWorkingDir),
                     jacsServiceData,
+                    "sge_error",
                     String.format("%s-stderr.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
             serviceUpdates.put("errorPath", new SetFieldValueHandler<>(jacsServiceData.getErrorPath()));
         }

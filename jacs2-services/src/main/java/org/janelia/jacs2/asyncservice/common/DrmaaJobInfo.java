@@ -1,23 +1,35 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.ggf.drmaa.DrmaaException;
+import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
 import org.janelia.model.service.JacsJobInstanceInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class DrmaaJobInfo implements ExeJobInfo {
-    private final Session drmaaSession;
-    private final String jobId;
-    private final String scriptName;
-    private boolean done;
-    private boolean failed;
 
-    DrmaaJobInfo(Session drmaaSession, String jobId, String scriptName) {
+    private static final Logger LOG = LoggerFactory.getLogger(DrmaaJobInfo.class);
+
+    private final Session drmaaSession;
+    private final String scriptName;
+    private final int numJobs;
+    private JobTemplate jobTemplate;
+    private List<String> runningJobIds = new ArrayList<>();
+    private volatile boolean done;
+    private volatile boolean failed;
+    private volatile boolean terminated;
+
+    DrmaaJobInfo(Session drmaaSession, String scriptName, int numJobs, JobTemplate jobTemplate) {
         this.drmaaSession = drmaaSession;
-        this.jobId = jobId;
         this.scriptName = scriptName;
+        this.numJobs = numJobs;
+        this.jobTemplate = jobTemplate;
         this.done = false;
         this.failed = false;
     }
@@ -27,17 +39,68 @@ public class DrmaaJobInfo implements ExeJobInfo {
         return scriptName;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public boolean isDone() {
+    public String start() {
+        if (!terminated) {
+            try {
+                if (numJobs <= 1) {
+                    runningJobIds.add(drmaaSession.runJob(jobTemplate));
+                } else {
+                    runningJobIds.addAll((List<String>) drmaaSession.runBulkJobs(jobTemplate, 1, numJobs, 1));
+                }
+                LOG.info("Submitted job {}", runningJobIds);
+                return runningJobIds
+                        .stream()
+                        .reduce((j1, j2) -> j1 + "," + j2)
+                        .orElse(null)
+                        ;
+            } catch (Exception e) {
+                done = true;
+                failed = true;
+                LOG.error("Error starting job {}", scriptName, e);
+                throw new IllegalStateException(e);
+            } finally {
+                cleanTemplate();
+            }
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public synchronized boolean isDone() {
         if (done) return done;
+        List<String> completedJobs = new ArrayList<>();
+        for (String jobId : runningJobIds) {
+            if (isDone(jobId)) {
+                completedJobs.add(jobId);
+            }
+        }
+        runningJobIds.removeAll(completedJobs);
+        if (runningJobIds.isEmpty()) {
+            done = true;
+        }
+        return done;
+    }
+
+    private void cleanTemplate() {
+        if (jobTemplate != null) {
+            try {
+                drmaaSession.deleteJobTemplate(jobTemplate);
+            } catch (Exception e) {
+                LOG.error("Error cleaning drmaa job template for {}", scriptName, e);
+            } finally {
+                jobTemplate = null;
+            }
+        }
+    }
+
+    private boolean isDone(String jobId) {
         try {
             int status = drmaaSession.getJobProgramStatus(jobId);
             switch (status) {
-                case Session.UNDETERMINED:
-                    break;
                 case Session.QUEUED_ACTIVE:
-                    done = false;
-                    break;
                 case Session.SYSTEM_ON_HOLD:
                 case Session.USER_ON_HOLD:
                 case Session.USER_SYSTEM_ON_HOLD:
@@ -45,19 +108,17 @@ public class DrmaaJobInfo implements ExeJobInfo {
                 case Session.SYSTEM_SUSPENDED:
                 case Session.USER_SUSPENDED:
                 case Session.USER_SYSTEM_SUSPENDED:
-                    done = false;
-                    break;
+                    return false;
                 case Session.DONE:
-                    done = true;
-                    break;
+                    LOG.info("Job {} completed", jobId);
+                    return true;
+                case Session.UNDETERMINED:
                 case Session.FAILED:
+                default:
                     done = true;
                     failed = true;
-                    break;
-                default:
-                    break;
+                    return true;
             }
-            return done;
         } catch (DrmaaException e) {
             throw new IllegalStateException(e);
         }
@@ -75,9 +136,12 @@ public class DrmaaJobInfo implements ExeJobInfo {
 
     @Override
     public void terminate() {
+        terminated = true;
         if (!done) {
             try {
-                drmaaSession.control(jobId, Session.TERMINATE);
+                for (String jobId : runningJobIds) {
+                    drmaaSession.control(jobId, Session.TERMINATE);
+                }
             } catch (DrmaaException e) {
                 throw new IllegalStateException(e);
             }

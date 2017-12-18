@@ -6,6 +6,7 @@ import java.util.Collection;
 
 public interface ExeJobInfo {
     String getScriptName();
+    String start();
     boolean isDone();
     boolean hasFailed();
     void terminate();

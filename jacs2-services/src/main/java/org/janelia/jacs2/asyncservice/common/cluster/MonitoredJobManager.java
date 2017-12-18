@@ -18,26 +18,26 @@ import javax.inject.Singleton;
 @Singleton
 public class MonitoredJobManager {
 
-    private static final Logger log = LoggerFactory.getLogger(MonitoredJobManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MonitoredJobManager.class);
 
     private JobManager jobMgr;
     private JobMonitor monitor;
 
     public MonitoredJobManager() {
-        log.info("Creating monitored job manager");
+        LOG.info("Creating monitored job manager");
         this.jobMgr = new JobManager(new LsfSyncApi());
         this.monitor = new JobMonitor(jobMgr);
     }
 
     @PostConstruct
     private void init() {
-        log.info("Starting job manager monitoring");
+        LOG.info("Starting job manager monitoring");
         monitor.start();
     }
 
     @PreDestroy
     private void destroy() {
-        log.info("Stopping job manager monitoring");
+        LOG.info("Stopping job manager monitoring");
         monitor.stop();
     }
 

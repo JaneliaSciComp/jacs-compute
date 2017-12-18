@@ -32,7 +32,7 @@ public class ComputationTestUtils {
         when(processesQueue.add(any(ThrottledJobInfo.class)))
                 .then(invocation -> {
                     ThrottledJobInfo jobInfo = invocation.getArgument(0);
-                    jobInfo.runProcess();
+                    jobInfo.start();
                     return jobInfo;
                 });
         return processesQueue;

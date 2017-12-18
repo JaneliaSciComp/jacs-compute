@@ -9,6 +9,7 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -40,6 +41,24 @@ public class ExecutorProducer {
     }
 
     public void shutdownExecutor(@Disposes @Default ExecutorService executorService) throws InterruptedException {
+        logger.info("Shutting down {}", executorService);
+        executorService.shutdown();
+        executorService.awaitTermination(10, TimeUnit.MINUTES);
+    }
+
+    @ApplicationScoped
+    @Produces @Named("GridJobExecutor")
+    public ExecutorService createGridJobExecutorService() {
+        return Executors.newCachedThreadPool((runnable) -> {
+            Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+            // Ensure that we can shut down without these threads getting in the way
+            thread.setName("CompletionMessageThread");
+            thread.setDaemon(true);
+            return thread;
+        });
+    }
+
+    public void shutdownGridJobExecutor(@Disposes @Named("GridJobExecutor") ExecutorService executorService) throws InterruptedException {
         logger.info("Shutting down {}", executorService);
         executorService.shutdown();
         executorService.awaitTermination(10, TimeUnit.MINUTES);

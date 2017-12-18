@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -65,9 +66,10 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         }
     }
 
-    protected void createConfigFiles(List<ExternalCodeBlock> externalConfig, String configDir, String configFilePattern, JacsServiceData sd) {
+    List<File> createConfigFiles(List<ExternalCodeBlock> externalConfig, String configDir, String configFilePattern, JacsServiceData sd) {
+        List<File> configFiles = new ArrayList<>();
 
-        if (externalConfig==null) return;
+        if (externalConfig==null) return configFiles;
 
         try {
             Path configDirectory = Paths.get(configDir);
@@ -82,13 +84,12 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
                     File scriptFile = Files.createFile(scriptFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
                     scriptWriter = new ScriptWriter(new BufferedWriter(new FileWriter(scriptFile)));
                     scriptWriter.add(externalCodeBlock.toString());
-                }
-                finally {
+                    configFiles.add(scriptFile);
+                } finally {
                     if (scriptWriter != null) scriptWriter.close();
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Error creating the config file for {}", sd, e);
             jacsServiceDataPersistence.addServiceEvent(
                     sd,
@@ -96,15 +97,14 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
             );
             throw new ComputationException(sd, e);
         }
-
+        return configFiles;
     }
-
 
     protected void writeProcessingCode(ExternalCodeBlock externalCode, Map<String, String> env, ScriptWriter scriptWriter) {
         scriptWriter.add(externalCode.toString());
     }
 
-    protected File prepareOutputFile(String filepath, String errorCaseMessage) throws IOException {
+    File prepareOutputFile(String filepath, String errorCaseMessage) throws IOException {
         File outputFile;
         if (StringUtils.isNotBlank(filepath)) {
             outputFile = new File(filepath);

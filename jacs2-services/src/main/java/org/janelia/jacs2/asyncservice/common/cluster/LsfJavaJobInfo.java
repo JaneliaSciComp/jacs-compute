@@ -1,9 +1,11 @@
 package org.janelia.jacs2.asyncservice.common.cluster;
 
+import org.janelia.cluster.JobFuture;
 import org.janelia.cluster.JobInfo;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobMetadata;
 import org.janelia.cluster.JobStatus;
+import org.janelia.cluster.JobTemplate;
 import org.janelia.jacs2.asyncservice.common.ExeJobInfo;
 import org.janelia.model.service.JacsJobInstanceInfo;
 import org.slf4j.Logger;
@@ -11,6 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 /**
  * Job info for a job running using the LSFJavaJob runner.
@@ -20,18 +25,23 @@ import java.util.Collection;
  */
 public class LsfJavaJobInfo implements ExeJobInfo {
 
-    private static final Logger log = LoggerFactory.getLogger(LsfJavaJobInfo.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LsfJavaJobInfo.class);
 
     private final JobManager jobMgr;
-    private final Long jobId;
+    private final JobTemplate jobTemplate;
+    private final int numJobs;
     private final String scriptName;
+    private final ExecutorService executorService;
+    private JobFuture jobFuture;
     private boolean done = false;
     private boolean failed = false;
 
-    public LsfJavaJobInfo(JobManager jobMgr, Long jobId, String scriptName) {
+    public LsfJavaJobInfo(JobManager jobMgr, JobTemplate jobTemplate, int numJobs, String scriptName, ExecutorService executorService) {
         this.jobMgr = jobMgr;
-        this.jobId = jobId;
+        this.jobTemplate = jobTemplate;
+        this.numJobs = numJobs;
         this.scriptName = scriptName;
+        this.executorService = executorService;
     }
 
     @Override
@@ -40,10 +50,60 @@ public class LsfJavaJobInfo implements ExeJobInfo {
     }
 
     @Override
-    public boolean isDone() {
-        if (done) return done;
+    public String start() {
+        try {
+            jobFuture = jobMgr.submitJob(jobTemplate, 1, numJobs);
+        } catch (Exception e) {
+            done = true;
+            failed = true;
+            throw new IllegalStateException(e);
+        }
+        jobFuture.whenCompleteAsync((Collection<JobInfo> jobInfoList, Throwable e) -> {
+            if (e != null) {
+                failed = true;
+                LOG.error("There was a problem during execution on LSF", e);
+            } else if (LOG.isInfoEnabled()) {
+                logJobInfo();
+            }
+        }, executorService);
+        return jobFuture.getJobId().toString();
+    }
 
-        JobMetadata jobMetadata = jobMgr.getJobMetadata(jobId);
+    private void logJobInfo() {
+        for (JacsJobInstanceInfo jobInfo : getJobInstanceInfos()) {
+            Long queueTimeSeconds = jobInfo.getQueueSecs();
+            Long runTimeSeconds = jobInfo.getRunSecs();
+
+            String queueTime = queueTimeSeconds+" sec";
+            if (queueTimeSeconds!=null && queueTimeSeconds>300) { // More than 5 minutes, just show the minutes
+                queueTime = TimeUnit.MINUTES.convert(queueTimeSeconds, TimeUnit.SECONDS) + " min";
+            }
+
+            String runTime = runTimeSeconds+" sec";
+            if (runTimeSeconds!=null && runTimeSeconds>300) {
+                runTime = TimeUnit.MINUTES.convert(runTimeSeconds, TimeUnit.SECONDS) + " min";
+            }
+
+            String maxMem = jobInfo.getMaxMem();
+            String jobIdStr = jobInfo.getJobId()+"";
+            if (jobInfo.getArrayIndex()!=null) {
+                jobIdStr += "."+jobInfo.getArrayIndex();
+            }
+
+            LOG.info("Job {} was queued for {}, ran for {}, and used "+maxMem+" of memory.", jobIdStr, queueTime, runTime);
+            if (jobInfo.getExitCode()!=0) {
+                LOG.error("Job {} exited with code {} and reason {}", jobIdStr, jobInfo.getExitCode(), jobInfo.getExitReason());
+            }
+        }
+    }
+
+    @Override
+    public boolean isDone() {
+        if (done) return true;
+        if (jobFuture == null) {
+            return false;
+        }
+        JobMetadata jobMetadata = jobMgr.getJobMetadata(jobFuture.getJobId());
 
         if (jobMetadata!=null) {
             // Check to see if any job in the job array failed
@@ -54,14 +114,12 @@ public class LsfJavaJobInfo implements ExeJobInfo {
                     break;
                 }
             }
-
             this.done = jobMetadata.isDone();
-        }
-        else {
+        } else {
             // If there is no information about a job, assume it is done
             this.done = true;
             this.failed = true;
-            log.error("No job information found for {}. Assuming that it failed.", jobId);
+            LOG.error("No job information found for {}. Assuming that it failed.", jobFuture.getJobId());
         }
 
         return done;
@@ -70,7 +128,10 @@ public class LsfJavaJobInfo implements ExeJobInfo {
     @Override
     public Collection<JacsJobInstanceInfo> getJobInstanceInfos() {
         Collection<JacsJobInstanceInfo> infos = new ArrayList<>();
-        JobMetadata jobMetadata = jobMgr.getJobMetadata(jobId);
+        if (jobFuture == null) {
+            return infos;
+        }
+        JobMetadata jobMetadata = jobMgr.getJobMetadata(jobFuture.getJobId());
         if (jobMetadata != null) {
             for (JobInfo jobInfo : jobMetadata.getLastInfos()) {
                 JacsJobInstanceInfo jacsJobInstanceInfo = new JacsJobInstanceInfo();

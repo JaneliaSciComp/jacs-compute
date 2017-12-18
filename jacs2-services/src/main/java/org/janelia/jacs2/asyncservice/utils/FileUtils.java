@@ -34,6 +34,16 @@ public class FileUtils {
         return !fileExists(filepath);
     }
 
+    public static Path createSubDirs(Path dir, String subDir) {
+        Path subDirPath = dir.resolve(subDir);
+        try {
+            java.nio.file.Files.createDirectories(subDirPath);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Cannot create job subdirectory " + subDirPath, e);
+        }
+        return subDirPath;
+    }
+
     /**
      * Deletes the given directory even if it's non empty.
      *

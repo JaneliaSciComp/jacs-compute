@@ -25,7 +25,7 @@ public class ThrottledJobInfo implements ExeJobInfo {
     private final ExternalProcessRunner actualProcessRunner;
     private final int maxRunningProcesses;
     private ExeJobInfo actualRunningJobInfo;
-    private volatile boolean doNotRun;
+    private volatile boolean terminated;
     private JobDoneCallback jobDoneCallback;
 
     public ThrottledJobInfo(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env,
@@ -48,6 +48,16 @@ public class ThrottledJobInfo implements ExeJobInfo {
     }
 
     @Override
+    public String start() {
+        if (!terminated) {
+            ExeJobInfo actualJobInfo = actualProcessRunner.runCmds(getExternalCode(), getExternalConfigs(), getEnv(), getScriptDirName(), getProcessDirName(), getServiceContext());
+            setActualRunningJobInfo(actualJobInfo);
+            return actualJobInfo.start();
+        } else
+            return null;
+    }
+
+    @Override
     public boolean isDone() {
         boolean done = checkIfDone();
         if (done && jobDoneCallback != null) {
@@ -58,7 +68,7 @@ public class ThrottledJobInfo implements ExeJobInfo {
 
     private boolean checkIfDone() {
         if (actualRunningJobInfo == null) {
-            return doNotRun;
+            return terminated;
         } else {
             return actualRunningJobInfo.isDone();
         }
@@ -81,7 +91,7 @@ public class ThrottledJobInfo implements ExeJobInfo {
 
     private boolean checkIfFailed() {
         if (actualRunningJobInfo == null) {
-            return doNotRun;
+            return terminated;
         } else {
             return actualRunningJobInfo.hasFailed();
         }
@@ -92,20 +102,11 @@ public class ThrottledJobInfo implements ExeJobInfo {
         if (actualRunningJobInfo != null) {
             actualRunningJobInfo.terminate();
         } else {
-            doNotRun = true;
+            terminated = true;
         }
         if (jobDoneCallback != null) {
             jobDoneCallback.done(this);
         }
-    }
-
-    boolean runProcess() {
-        if (!doNotRun) {
-            ExeJobInfo actualJobInfo = actualProcessRunner.runCmds(getExternalCode(), getExternalConfigs(), getEnv(), getScriptDirName(), getProcessDirName(), getServiceContext());
-            setActualRunningJobInfo(actualJobInfo);
-            return true;
-        } else
-            return false;
     }
 
     ExternalCodeBlock getExternalCode() {
