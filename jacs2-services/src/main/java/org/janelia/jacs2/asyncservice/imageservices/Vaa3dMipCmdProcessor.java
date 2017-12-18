@@ -7,8 +7,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -16,7 +14,6 @@ import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.domain.IndexedReference;
 import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -31,11 +28,19 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 @Named("vaa3dMip")
 public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<File>> {
+
+    private static class Vaa3dMipArgs {
+        private final String inputFile;
+        private final boolean flipY;
+        private Vaa3dMipArgs(String inputFile, boolean flipY) {
+            this.inputFile = inputFile;
+            this.flipY = flipY;
+        }
+    }
 
     static class Vaa3MipCmdArgs extends ServiceArgs {
         @Parameter(names = "-inputFiles", description = "Input file list", required = true)
@@ -43,6 +48,10 @@ public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<
 
         @Parameter(names = "-outputFiles", description = "Output file list", required = true)
         List<String> outputFiles;
+
+        @Parameter(names = "-flipY", description = "Flip Y arguments. If even at least one input requires y to be flipped the argument " +
+                "must contain a list of of booleans where only the entries that must be flipped should be true", required = false)
+        List<Boolean> flipYs;
     }
 
     private final String executable;
@@ -95,10 +104,10 @@ public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
         try {
             Vaa3MipCmdArgs args = getArgs(jacsServiceData);
-            List<String> inputFileNames = getInputList(args);
+            List<Vaa3dMipArgs> inputArgsList = getInputArgs(args);
             List<String> outputFileNames = getOutputList(args);
-            if (inputFileNames.size() != outputFileNames.size()) {
-                throw new IllegalArgumentException("Input file list and output file list must have the same size - input files: " + inputFileNames.size()
+            if (inputArgsList.size() != outputFileNames.size()) {
+                throw new IllegalArgumentException("Input file list and output file list must have the same size - input files: " + inputArgsList.size()
                         + " output files - " + outputFileNames.size());
             }
             outputFileNames
@@ -131,24 +140,26 @@ public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<
     private void createScript(Map<String, String> resources, ScriptWriter scriptWriter) {
         scriptWriter.read("INPUT");
         scriptWriter.read("OUTPUT");
+        scriptWriter.read("EXTRA_OPTIONS");
         scriptWriter.exportVar("NSLOTS", String.valueOf(ProcessorHelper.getProcessingSlots(resources)));
         scriptWriter.addWithArgs(getExecutable())
                 .addArgs("-cmd", "image-loader", "-mip")
                 .addArg("-mip")
-                .addArgs("${INPUT}", "${OUTPUT}")
+                .addArgs("${INPUT}", "${OUTPUT}", "${EXTRA_OPTIONS}")
                 .endArgs("");
     }
 
     @Override
     protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
         Vaa3MipCmdArgs args = getArgs(jacsServiceData);
-        List<String> inputFiles = getInputList(args);
+        List<Vaa3dMipArgs> inputArgsList = getInputArgs(args);
         List<String> outputFiles = getOutputList(args);
-        return Streams.zip(inputFiles.stream(), outputFiles.stream(), (inputFile, outputFile) -> {
+        return Streams.zip(inputArgsList.stream(), outputFiles.stream(), (inputArgs, outputFile) -> {
             ExternalCodeBlock configFileBlock = new ExternalCodeBlock();
             ScriptWriter configWriter = configFileBlock.getCodeWriter();
-            configWriter.add(inputFile);
+            configWriter.add(inputArgs.inputFile);
             configWriter.add(outputFile);
+            configWriter.add(inputArgs.flipY ? "-flipy" : "");
             configWriter.close();
             return configFileBlock;
         }).collect(Collectors.toList());
@@ -167,7 +178,7 @@ public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<
         return getFullExecutableName(executable);
     }
 
-    private List<String> getInputList(Vaa3MipCmdArgs args) {
+    private List<Vaa3dMipArgs> getInputArgs(Vaa3MipCmdArgs args) {
         if (CollectionUtils.isEmpty(args.inputFiles)) {
             throw new IllegalArgumentException("Invalid inputFiles argument - it cannot be empty");
         }
@@ -176,9 +187,19 @@ public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<
                     if (StringUtils.isBlank(indexedFileName.getReference())) {
                         throw new IllegalArgumentException("Found empty input file name at " + indexedFileName.getPos());
                     }
+                    if (CollectionUtils.isNotEmpty(args.flipYs) && args.flipYs.size() < indexedFileName.getPos()) {
+                        throw new IllegalArgumentException("FlipY argument must be specified for each input file name or not specified at all. " +
+                                "Found an unspecified flipY argument at " + indexedFileName.getPos());
+                    }
                     return true;
                 })
-                .map(indexedFileName -> indexedFileName.getReference())
+                .map(indexedFileName -> {
+                    if (CollectionUtils.isEmpty(args.flipYs)) {
+                        return new Vaa3dMipArgs(indexedFileName.getReference(), false);
+                    } else {
+                        return new Vaa3dMipArgs(indexedFileName.getReference(), args.flipYs.get(indexedFileName.getPos()));
+                    }
+                })
                 .collect(Collectors.toList())
                 ;
     }
