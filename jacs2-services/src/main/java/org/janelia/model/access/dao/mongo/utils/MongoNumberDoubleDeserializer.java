@@ -7,15 +7,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
 
-public class MongoNumberLongDeserializer extends JsonDeserializer<Long> {
+public class MongoNumberDoubleDeserializer extends JsonDeserializer<Double> {
 
     @Override
-    public Long deserialize(JsonParser jsonParser, DeserializationContext ctxt) throws IOException {
+    public Double deserialize(JsonParser jsonParser, DeserializationContext ctxt) throws IOException {
         JsonNode node = jsonParser.readValueAsTree();
-        if (node.get("$numberLong") != null) {
-            return Long.valueOf(node.get("$numberLong").asText());
-        } else {
-            return Long.valueOf(node.asText());
-        }
+        return Double.valueOf(node.asText());
     }
 }
