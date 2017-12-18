@@ -1,6 +1,7 @@
 package org.janelia.jacs2.cdi;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.janelia.jacs2.cdi.qualifier.GridExecutor;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.slf4j.Logger;
 
@@ -28,7 +29,7 @@ public class ExecutorProducer {
     private Integer threadPoolSize;
 
     @ApplicationScoped
-    @Produces
+    @Produces @Default
     public ExecutorService createExecutorService() {
         if (threadPoolSize == null || threadPoolSize == 0) {
             threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
@@ -47,7 +48,7 @@ public class ExecutorProducer {
     }
 
     @ApplicationScoped
-    @Produces @Named("GridJobExecutor")
+    @Produces @GridExecutor
     public ExecutorService createGridJobExecutorService() {
         return Executors.newCachedThreadPool((runnable) -> {
             Thread thread = Executors.defaultThreadFactory().newThread(runnable);
@@ -58,7 +59,7 @@ public class ExecutorProducer {
         });
     }
 
-    public void shutdownGridJobExecutor(@Disposes @Named("GridJobExecutor") ExecutorService executorService) throws InterruptedException {
+    public void shutdownGridJobExecutor(@Disposes @GridExecutor ExecutorService executorService) throws InterruptedException {
         logger.info("Shutting down {}", executorService);
         executorService.shutdown();
         executorService.awaitTermination(10, TimeUnit.MINUTES);

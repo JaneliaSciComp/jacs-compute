@@ -10,6 +10,7 @@ import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
 import org.janelia.jacs2.asyncservice.qualifier.LSFJavaJob;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
+import org.janelia.jacs2.cdi.qualifier.GridExecutor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
@@ -47,7 +48,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
     @Inject
     public ExternalLSFJavaJobRunner(MonitoredJobManager jobMgr,
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
-                                    @Named("GridJobExecutor") ExecutorService lsfJobExecutor,
+                                    @GridExecutor ExecutorService lsfJobExecutor,
                                     Logger logger) {
         super(jacsServiceDataPersistence, logger);
         this.jobMgr = jobMgr.getJobMgr();
