@@ -15,7 +15,8 @@ project(":jacs2-services") {
                 JONGO_LIB,
                 REFLECTIONS_LIB,
                 JAVA_LSF_LIB,
-                JACS_MODEL_LIB
+                JACS_MODEL_LIB,
+                SPARK_LAUNCHER
 
         compile (HIBERNATE_LIB) {
             exclude group: 'javax.transaction'
