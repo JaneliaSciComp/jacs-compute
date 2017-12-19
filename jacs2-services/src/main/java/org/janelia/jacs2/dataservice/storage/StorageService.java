@@ -17,6 +17,29 @@ import java.util.stream.Collectors;
 
 public class StorageService {
 
+    public static class StorageInfo {
+        private final String storageLocation;
+        private final String entryRootLocation;
+        private final String entryRelativePath;
+
+        public StorageInfo(String storageLocation, String entryRootLocation, String entryRelativePath) {
+            this.storageLocation = storageLocation;
+            this.entryRootLocation = entryRootLocation;
+            this.entryRelativePath = entryRelativePath;
+        }
+
+        public String getStorageLocation() {
+            return storageLocation;
+        }
+
+        public String getEntryRootLocation() {
+            return entryRootLocation;
+        }
+
+        public String getEntryRelativePath() {
+            return entryRelativePath;
+        }
+    }
     private final String storageServiceApiKey;
 
     @Inject
@@ -24,7 +47,7 @@ public class StorageService {
         this.storageServiceApiKey = storageServiceApiKey;
     }
 
-    public List<String> listStorageContent(String storageLocation, String subject) {
+    public List<StorageInfo> listStorageContent(String storageLocation, String subject) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
@@ -39,7 +62,9 @@ public class StorageService {
                 throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
             }
             List<JsonNode> storageCotent = response.readEntity(new GenericType<List<JsonNode>>(){});
-            return storageCotent.stream().map(content -> content.get("nodePath").asText()).collect(Collectors.toList());
+            return storageCotent.stream()
+                    .map(content -> new StorageInfo(storageLocation, content.get("rootLocation").asText(), content.get("nodeRelativePath").asText()))
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {

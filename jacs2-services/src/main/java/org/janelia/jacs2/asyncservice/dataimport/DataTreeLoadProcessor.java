@@ -100,13 +100,19 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<Void> {
 
     private ServiceComputation<JacsServiceResult<List<File>>> generateMips(JacsServiceData jacsServiceData, JacsServiceData... deps) {
         DataTreeLoadArgs args = getArgs(jacsServiceData);
-        List<String> contentToLoad = storageService.listStorageContent(args.storageLocation, jacsServiceData.getOwner());
-        List<String> contentForMips = contentToLoad.stream()
-                .filter(entryName -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entryName)))
+        List<StorageService.StorageInfo> contentToLoad = storageService.listStorageContent(args.storageLocation, jacsServiceData.getOwner());
+        List<StorageService.StorageInfo> contentForMips = contentToLoad.stream()
+                .filter(entry -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getEntryRelativePath())))
+                .collect(Collectors.toList());
+        List<String> inputMips = contentForMips.stream()
+                .map(mipSource -> {
+                    Path mipSourcePath = Paths.get(mipSource.getEntryRootLocation(), mipSource.getEntryRelativePath()); // TODO this needs to be fixed as
+                    return mipSourcePath.toString();
+                })
                 .collect(Collectors.toList());
         List<String> outputMips = contentForMips.stream()
                 .map(mipSource -> {
-                    Path mipSourcePath = Paths.get(mipSource);
+                    Path mipSourcePath = Paths.get(mipSource.getEntryRootLocation(), mipSource.getEntryRelativePath()); // TODO this needs to be fixed as
                     Path mipSourceParent = mipSourcePath.getParent();
                     Path mipsPath = mipSourceParent == null ? Paths.get("mips") : mipSourceParent.resolve("mips");
                     return mipsPath.resolve(FileUtils.getFileNameOnly(mipSourcePath) + "_mipArtifact.png").toString();
@@ -119,7 +125,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<Void> {
                             .description("Generate mips")
                             .waitFor(deps)
                             .build(),
-                    new ServiceArg("-inputFiles", String.join(",", contentForMips)),
+                    new ServiceArg("-inputFiles", String.join(",", inputMips)),
                     new ServiceArg("-outputFiles", String.join(",", outputMips))
             );
         }
