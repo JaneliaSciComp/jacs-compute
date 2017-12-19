@@ -120,6 +120,9 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
 
     @Override
     public JacsServiceData submitSingleService(JacsServiceData serviceArgs) {
+        if (serviceArgs.getState() == null) {
+            serviceArgs.setState(JacsServiceState.CREATED);
+        }
         jacsServiceDataPersistence.saveHierarchy(serviceArgs);
         return serviceArgs;
     }

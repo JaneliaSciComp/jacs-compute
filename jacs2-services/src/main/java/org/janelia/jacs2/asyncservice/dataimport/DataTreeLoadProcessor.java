@@ -52,7 +52,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<Void> {
         Number parentFolderId;
         @Parameter(names = "-storageLocation", description = "Data storage location", required = true)
         String storageLocation;
-        @Parameter(names = "-extensionsToLoad", description = "list of ", required = false)
+        @Parameter(names = "-extensionsToLoad", description = "list of extensions to load", required = false)
         List<String> extensionsToLoad;
         @Parameter(names = "-mipsExtensions", description = "list of ", required = false)
         List<String> mipsExtensions = new ArrayList<>(ImmutableList.of(
