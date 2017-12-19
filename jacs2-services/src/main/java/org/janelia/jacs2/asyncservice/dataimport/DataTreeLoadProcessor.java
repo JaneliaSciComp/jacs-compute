@@ -100,7 +100,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<Void> {
 
     private ServiceComputation<JacsServiceResult<List<File>>> generateMips(JacsServiceData jacsServiceData, JacsServiceData... deps) {
         DataTreeLoadArgs args = getArgs(jacsServiceData);
-        List<String> contentToLoad = storageService.listStorageContent(args.storageLocation);
+        List<String> contentToLoad = storageService.listStorageContent(args.storageLocation, jacsServiceData.getOwner());
         List<String> contentForMips = contentToLoad.stream()
                 .filter(entryName -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entryName)))
                 .collect(Collectors.toList());

@@ -1,8 +1,12 @@
 package org.janelia.jacs2.dataservice.storage;
 
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
 
+import javax.inject.Inject;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
@@ -11,14 +15,24 @@ import java.util.List;
 
 public class StorageService {
 
-    public List<String> listStorageContent(String storageLocation) {
+    private final String storageServiceApiKey;
+
+    @Inject
+    public StorageService(@PropertyValue(name = "StorageService.ApiKey") String storageServiceApiKey) {
+        this.storageServiceApiKey = storageServiceApiKey;
+    }
+
+    public List<String> listStorageContent(String storageLocation, String subject) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
             WebTarget target = httpclient.target(storageLocation).path("list");
 
-            Response response = target.request(MediaType.APPLICATION_JSON)
-                    .get();
+            Invocation.Builder requestBuilder = target.request(MediaType.APPLICATION_JSON)
+                    .header("Authorization", "APIKEY " + storageServiceApiKey)
+                    .header("JacsSubject", StringUtils.defaultIfBlank(subject, ""))
+                    ;
+            Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
             }
