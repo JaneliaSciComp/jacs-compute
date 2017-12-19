@@ -107,7 +107,9 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<Void> {
         List<String> outputMips = contentForMips.stream()
                 .map(mipSource -> {
                     Path mipSourcePath = Paths.get(mipSource);
-                    return mipSourcePath.getParent().resolve("mips").resolve(FileUtils.getFileNameOnly(mipSourcePath) + "_mipArtifact.png").toString();
+                    Path mipSourceParent = mipSourcePath.getParent();
+                    Path mipsPath = mipSourceParent == null ? Paths.get("mips") : mipSourceParent.resolve("mips");
+                    return mipsPath.resolve(FileUtils.getFileNameOnly(mipSourcePath) + "_mipArtifact.png").toString();
                 })
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(contentForMips)) {
