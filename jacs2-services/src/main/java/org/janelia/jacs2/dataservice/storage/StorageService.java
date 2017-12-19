@@ -54,7 +54,7 @@ public class StorageService {
             httpclient = HttpUtils.createHttpClient();
             WebTarget target = httpclient.target(storageLocation).path("entry-content").path(entryName);
 
-            Invocation.Builder requestBuilder = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
+            Invocation.Builder requestBuilder = target.request()
                     .header("Authorization", "APIKEY " + storageServiceApiKey)
                     .header("JacsSubject", StringUtils.defaultIfBlank(subject, ""))
                     ;
