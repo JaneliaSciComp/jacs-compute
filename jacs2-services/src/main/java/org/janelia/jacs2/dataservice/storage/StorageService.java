@@ -1,5 +1,6 @@
 package org.janelia.jacs2.dataservice.storage;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
@@ -12,6 +13,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class StorageService {
 
@@ -36,7 +38,8 @@ public class StorageService {
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
             }
-            return response.readEntity(new GenericType<List<String>>(){});
+            List<JsonNode> storageCotent = response.readEntity(new GenericType<List<JsonNode>>(){});
+            return storageCotent.stream().map(content -> content.get("nodePath").asText()).collect(Collectors.toList());
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
