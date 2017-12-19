@@ -10,7 +10,7 @@ project(":jacs2-services") {
                 JACKSON_DATATYPE_JODA_LIB,
                 JAX_RS_CLIENT_LIB,
                 JAX_RS_MEDIA_LIB,
-                JERSEY_MEDIA_JSON_LIB
+                JERSEY_MEDIA_JSON_LIB,
                 JUEL_LIB,
                 MONGODB_DRIVER_LIB,
                 JONGO_LIB,
