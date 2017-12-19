@@ -49,7 +49,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<Void> {
         @Parameter(names = "-folderName", description = "Folder name", required = true)
         String folderName;
         @Parameter(names = "-parentFolderId", description = "Parent folder ID", required = false)
-        Number parentFolderId;
+        Long parentFolderId;
         @Parameter(names = "-storageLocation", description = "Data storage location", required = true)
         String storageLocation;
         @Parameter(names = "-extensionsToLoad", description = "list of extensions to load", required = false)
