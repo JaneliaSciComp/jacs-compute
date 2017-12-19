@@ -12,6 +12,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,30 @@ public class StorageService {
     @Inject
     public StorageService(@PropertyValue(name = "StorageService.ApiKey") String storageServiceApiKey) {
         this.storageServiceApiKey = storageServiceApiKey;
+    }
+
+    public InputStream getContentStream(String storageLocation, String entryName, String subject) {
+        Client httpclient = null;
+        try {
+            httpclient = HttpUtils.createHttpClient();
+            WebTarget target = httpclient.target(storageLocation).path("entry-content").path(entryName);
+
+            Invocation.Builder requestBuilder = target.request(MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Authorization", "APIKEY " + storageServiceApiKey)
+                    .header("JacsSubject", StringUtils.defaultIfBlank(subject, ""))
+                    ;
+            Response response = requestBuilder.get();
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
+            }
+            return response.readEntity(InputStream.class);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpclient != null) {
+                httpclient.close();
+            }
+        }
     }
 
     public List<StorageInfo> listStorageContent(String storageLocation, String subject) {

@@ -35,6 +35,9 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -104,31 +107,48 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<Void> {
         List<StorageService.StorageInfo> contentForMips = contentToLoad.stream()
                 .filter(entry -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getEntryRelativePath())))
                 .collect(Collectors.toList());
-        List<String> inputMips = contentForMips.stream()
+
+        if (CollectionUtils.isEmpty(contentForMips)) {
+            return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, ImmutableList.of()));
+        }
+
+        List<StorageService.StorageInfo> inputMips = contentForMips.stream()
                 .map(mipSource -> {
-                    Path mipSourcePath = Paths.get(mipSource.getEntryRootLocation(), mipSource.getEntryRelativePath()); // TODO this needs to be fixed as
-                    return mipSourcePath.toString();
+                    try {
+                        Path mipSourceRootPath = Paths.get(mipSource.getEntryRootLocation());
+                        Path mipSourcePath = Paths.get(mipSource.getEntryRootLocation(), mipSource.getEntryRelativePath());
+                        if (Files.notExists(mipSourcePath)) {
+                            mipSourceRootPath = getWorkingDirectory(jacsServiceData).resolve("temp/mipsSource");
+                            mipSourcePath = mipSourceRootPath.resolve(mipSource.getEntryRelativePath());
+                            Files.createDirectories(mipSourcePath.getParent());
+                            Files.copy(storageService.getContentStream(args.storageLocation, mipSource.getEntryRelativePath(), jacsServiceData.getOwner()), mipSourcePath);
+                        }
+                        return new StorageService.StorageInfo(mipSource.getStorageLocation(), mipSourceRootPath.toString(), mipSource.getEntryRelativePath());
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
                 })
                 .collect(Collectors.toList());
-        List<String> outputMips = contentForMips.stream()
+        List<String> outputMips = inputMips.stream()
                 .map(mipSource -> {
-                    Path mipSourcePath = Paths.get(mipSource.getEntryRootLocation(), mipSource.getEntryRelativePath()); // TODO this needs to be fixed as
+                    Path mipSourcePath = Paths.get(mipSource.getEntryRootLocation(), mipSource.getEntryRelativePath());
                     Path mipSourceParent = mipSourcePath.getParent();
                     Path mipsPath = mipSourceParent == null ? Paths.get("mips") : mipSourceParent.resolve("mips");
                     return mipsPath.resolve(FileUtils.getFileNameOnly(mipSourcePath) + "_mipArtifact.png").toString();
                 })
                 .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(contentForMips)) {
-            return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, ImmutableList.of()));
-        } else {
-            return vaa3dMipCmdProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
-                            .description("Generate mips")
-                            .waitFor(deps)
-                            .build(),
-                    new ServiceArg("-inputFiles", String.join(",", inputMips)),
-                    new ServiceArg("-outputFiles", String.join(",", outputMips))
-            );
-        }
+        return vaa3dMipCmdProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Generate mips")
+                        .waitFor(deps)
+                        .build(),
+                new ServiceArg("-inputFiles",
+                        inputMips.stream()
+                                .map(mipSource -> Paths.get(mipSource.getEntryRootLocation(), mipSource.getEntryRelativePath()).toString())
+                                .reduce((p1, p2) -> p1 + "," + p2)
+                                .orElse("")
+                ),
+                new ServiceArg("-outputFiles", String.join(",", outputMips))
+        );
     }
 
 }
