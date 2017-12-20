@@ -81,7 +81,12 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
                 try {
                     Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw----");
                     Path scriptFilePath = createConfigFileName(sd, configDirectory, configFilePattern, index++);
-                    File scriptFile = Files.createFile(scriptFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
+                    File scriptFile;
+                    if (Files.notExists(scriptFilePath)) {
+                        scriptFile = Files.createFile(scriptFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
+                    } else {
+                        scriptFile = scriptFilePath.toFile();
+                    }
                     scriptWriter = new ScriptWriter(new BufferedWriter(new FileWriter(scriptFile)));
                     scriptWriter.add(externalCodeBlock.toString());
                     configFiles.add(scriptFile);
