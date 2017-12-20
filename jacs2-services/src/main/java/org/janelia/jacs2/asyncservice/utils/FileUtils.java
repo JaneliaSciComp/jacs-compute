@@ -76,6 +76,10 @@ public class FileUtils {
         });
     }
 
+    public static String getFileName(String fn) {
+        return StringUtils.isBlank(fn) ? "" : Paths.get(fn).getFileName().toString();
+    }
+
     public static String getFileNameOnly(Path fp) {
         return getFileNameOnly(fp.toString());
     }
@@ -96,11 +100,7 @@ public class FileUtils {
         if (StringUtils.isBlank(ext)) {
             return "";
         } else {
-            if (StringUtils.startsWith(ext, ".")) {
-                return ext;
-            } else {
-                return "." + ext;
-            }
+            return StringUtils.prependIfMissing(ext, ".");
         }
     }
 
@@ -122,7 +122,7 @@ public class FileUtils {
                 FileUtils.getFileNameOnly(fileName),
                 StringUtils.defaultIfBlank(suffix, ""),
                 createExtension(fileExt));
-        return dir.resolve(actualFileName);
+        return dir != null ? dir.resolve(actualFileName) : Paths.get(actualFileName);
     }
 
     public static Path getDataPath(String dataRootDir, Number dataInstanceId) {

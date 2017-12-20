@@ -7,12 +7,14 @@ import org.janelia.jacs2.utils.HttpUtils;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,6 +65,30 @@ public class StorageService {
                 throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
             }
             return response.readEntity(InputStream.class);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpclient != null) {
+                httpclient.close();
+            }
+        }
+    }
+
+    public String putFileStream(String storageLocation, String entryName, String subject, InputStream dataStream) {
+        Client httpclient = null;
+        try {
+            httpclient = HttpUtils.createHttpClient();
+            WebTarget target = httpclient.target(storageLocation).path("file").path(entryName);
+
+            Invocation.Builder requestBuilder = target.request()
+                    .header("Authorization", "APIKEY " + storageServiceApiKey)
+                    .header("JacsSubject", StringUtils.defaultIfBlank(subject, ""))
+                    ;
+            Response response = requestBuilder.post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
+            }
+            return response.getHeaderString("Location");
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
