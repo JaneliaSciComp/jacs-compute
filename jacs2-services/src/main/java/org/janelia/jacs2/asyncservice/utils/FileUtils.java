@@ -105,7 +105,7 @@ public class FileUtils {
     }
 
     public static Path getFilePath(Path dir, String fileName) {
-        return dir.resolve(new File(fileName).getName());
+        return dir != null ? dir.resolve(getFileName(fileName)) : Paths.get(getFileName(fileName));
     }
 
     public static Path replaceFileExt(Path filePath, String fileExt) {
