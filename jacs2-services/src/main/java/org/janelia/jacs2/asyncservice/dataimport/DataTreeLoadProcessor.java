@@ -38,6 +38,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -135,13 +136,12 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
         List<MipsCreationInfo> mipsInfoList = contentForMips.stream()
                 .map(mipSource -> {
                     try {
-                        Path mipSourceRootPath = Paths.get(mipSource.getEntryRootLocation());
                         Path mipSourcePath = Paths.get(mipSource.getEntryRootLocation(), mipSource.getEntryRelativePath());
                         if (Files.notExists(mipSourcePath)) {
-                            mipSourceRootPath = getWorkingDirectory(jacsServiceData).resolve("temp");
+                            Path mipSourceRootPath = getWorkingDirectory(jacsServiceData).resolve("temp");
                             mipSourcePath = mipSourceRootPath.resolve(FileUtils.getFileName(mipSource.getEntryRelativePath()));
                             Files.createDirectories(mipSourcePath.getParent());
-                            Files.copy(storageService.getContentStream(args.storageLocation, mipSource.getEntryRelativePath(), jacsServiceData.getOwner()), mipSourcePath);
+                            Files.copy(storageService.getContentStream(args.storageLocation, mipSource.getEntryRelativePath(), jacsServiceData.getOwner()), mipSourcePath, StandardCopyOption.REPLACE_EXISTING);
                         }
                         Path mipsDirPath = mipSourcePath.getParent();
                         String mipsName = FileUtils.getFileNameOnly(mipSourcePath) + "_mipArtifact.png";
