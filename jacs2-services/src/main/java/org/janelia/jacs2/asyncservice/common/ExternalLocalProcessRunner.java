@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @LocalJob
 public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
@@ -113,8 +114,9 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                                              File processError,
                                              Map<String, String> env,
                                              JacsServiceData serviceContext) {
-        List<ExeJobInfo> jobList = new ArrayList<>();
-        processInputs.forEach(processInput -> runSingleProcess(processingScript, processDirectory, processInput, processOutput, processError, env, serviceContext));
+        List<ExeJobInfo> jobList = processInputs.stream()
+                .map(processInput -> runSingleProcess(processingScript, processDirectory, processInput, processOutput, processError, env, serviceContext))
+                .collect(Collectors.toList());
         return new BatchJobInfo(jobList, processingScript);
     }
 }
