@@ -253,7 +253,9 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             })
                             ;
                 })
-                .thenSuspendUntil(this.suspendCondition(jacsServiceData))
+                // TODO: Fix this in the future. For some reason, this cannot easily be unwrapped to use thenSuspendUntil.
+                // The type checking is a mess because of the Void return type on cleanSampleImageFilesProcessor, so I'm leaving this as is for now.
+                .thenSuspendUntilCond(this.suspendCondition(jacsServiceData))
                 .thenCompose((ContinuationCond.Cond<JacsServiceResult<List<SampleProcessorResult>>> lsprCond) -> {
                     if (CollectionUtils.isNotEmpty(args.resultFileTypesToBeCompressed) && StringUtils.isNotBlank(args.compressedFileType)) {
                         return computationFactory.newCompletedComputation(lsprCond.getState())

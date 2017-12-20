@@ -72,13 +72,13 @@ public class JacsServiceDispatcher {
             serviceComputationFactory.<JacsServiceData>newComputation()
                     .supply(() -> jacsServiceData)
                     .thenSuspendUntil(new SuspendServiceContinuationCond<>(
-                            Function.<JacsServiceData>identity(),
+                            Function.identity(),
                             (JacsServiceData sd, JacsServiceData tmpSd) -> tmpSd,
                             jacsServiceDataPersistence,
                             logger).negate())
-                    .thenApply((ContinuationCond.Cond<JacsServiceData> sdCond) -> {
+                    .thenApply((JacsServiceData sd) -> {
                         sendNotification(jacsServiceData, JacsServiceLifecycleStage.START_PROCESSING);
-                        return sdCond.getState();
+                        return sd;
                     })
                     .thenCompose(sd -> serviceProcessor.process(sd))
                     .thenApply(r -> {

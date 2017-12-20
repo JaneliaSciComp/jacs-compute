@@ -249,8 +249,8 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
         // the LSM metadata is required for generating the merge tile commands so I am waiting until update completes
         return computationFactory.newCompletedComputation(sampleLsmsMetadataService)
                 .thenSuspendUntil(this.suspendCondition(jacsServiceData))
-                .thenApply(lsmMDCond -> {
-                    if (lsmMDCond.getState().hasCompletedUnsuccessfully()) {
+                .thenApply(lsmMD -> {
+                    if (lsmMD.hasCompletedUnsuccessfully()) {
                         logger.error("Abandon the rest of the merge process because it could not generate/update sample LSMs metadata");
                         throw new ComputationException(jacsServiceData, "LSM metadata is required for tile merge");
                     }

@@ -33,9 +33,9 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<R, S> extends Abstr
                         (JacsServiceResult<S> pd, JacsServiceData sd) -> new JacsServiceResult<>(sd, pd.getResult()),
                         jacsServiceDataPersistence,
                         logger).negate())
-                .thenCompose(pdCond -> this.processing(pdCond.getState()))
+                .thenCompose(pd -> this.processing(pd))
                 .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, this.isResultReady(pd)))
-                .thenApply(pdCond -> this.updateServiceResult(pdCond.getState()))
+                .thenApply(pd -> this.updateServiceResult(pd))
                 .thenApply(this::postProcessing)
                 ;
     }

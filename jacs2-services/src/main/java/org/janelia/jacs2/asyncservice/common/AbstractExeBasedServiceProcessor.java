@@ -8,7 +8,6 @@ import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.*;
-import org.janelia.model.service.*;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
@@ -59,7 +58,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                         periodicResultCheck.updateCheckTime() && hasJobFinished(periodicResultCheck.getState().getJacsServiceData(), jobInfo)))
                 .thenApply(pdCond -> {
 
-                    JacsServiceResult<Void> pd = pdCond.getState().getState();
+                    JacsServiceResult<Void> pd = pdCond.getState();
                     JacsServiceData jacsServiceData = pd.getJacsServiceData();
 
                     // Persist all final job instance metadata

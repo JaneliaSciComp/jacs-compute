@@ -178,14 +178,14 @@ public class ColorDepthSearch extends AbstractServiceProcessor<List<File>> {
         return computationFactory.newCompletedComputation(sparkCluster)
 
                 // Wait until the cluster has started
-                .thenSuspendUntil2((SparkCluster cluster) -> continueWhenTrue(cluster.isReady(), cluster),
+                .thenSuspendUntil((SparkCluster cluster) -> continueWhenTrue(cluster.isReady(), cluster),
                         clusterIntervalCheckInMillis, clusterStartTimeoutInMillis)
 
                 // Now run the search
                 .thenApply((SparkCluster cluster) -> runApp(jacsServiceData, cluster))
 
                 // Wait until the search has completed
-                .thenSuspendUntil2((SparkApp app) -> continueWhenTrue(app.isDone(), app),
+                .thenSuspendUntil((SparkApp app) -> continueWhenTrue(app.isDone(), app),
                         searchIntervalCheckInMillis, searchTimeoutInMillis)
 
                 // This is the "finally" block. We must always kill the cluster no matter what happens above.
