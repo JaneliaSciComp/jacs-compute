@@ -78,12 +78,12 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     }
 
     @JsonProperty("serviceId")
-    public Number getServiceId() {
-        return id;
+    public String getServiceId() {
+        return hasId() ? id.toString() : null;
     }
 
     @JsonIgnore
-    public void setServiceId(Number serviceId) {
+    public void setServiceId(String serviceId) {
         // do nothing
     }
 
