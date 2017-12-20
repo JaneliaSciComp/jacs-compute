@@ -63,11 +63,51 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
     }
 
     static class MipsCreationInfo {
-        StorageService.StorageInfo remoteMipsInput;
-        Path localMipsInput;
-        Path localMipsOutput;
-        StorageService.StorageInfo remoteMipsOutput;
-        String remoteMipsOutputUrl;
+        private StorageService.StorageInfo remoteMipsInput;
+        private Path localMipsInput;
+        private Path localMipsOutput;
+        private StorageService.StorageInfo remoteMipsOutput;
+        private String remoteMipsOutputUrl;
+
+        public StorageService.StorageInfo getRemoteMipsInput() {
+            return remoteMipsInput;
+        }
+
+        public void setRemoteMipsInput(StorageService.StorageInfo remoteMipsInput) {
+            this.remoteMipsInput = remoteMipsInput;
+        }
+
+        public Path getLocalMipsInput() {
+            return localMipsInput;
+        }
+
+        public void setLocalMipsInput(Path localMipsInput) {
+            this.localMipsInput = localMipsInput;
+        }
+
+        public Path getLocalMipsOutput() {
+            return localMipsOutput;
+        }
+
+        public void setLocalMipsOutput(Path localMipsOutput) {
+            this.localMipsOutput = localMipsOutput;
+        }
+
+        public StorageService.StorageInfo getRemoteMipsOutput() {
+            return remoteMipsOutput;
+        }
+
+        public void setRemoteMipsOutput(StorageService.StorageInfo remoteMipsOutput) {
+            this.remoteMipsOutput = remoteMipsOutput;
+        }
+
+        public String getRemoteMipsOutputUrl() {
+            return remoteMipsOutputUrl;
+        }
+
+        public void setRemoteMipsOutputUrl(String remoteMipsOutputUrl) {
+            this.remoteMipsOutputUrl = remoteMipsOutputUrl;
+        }
     }
 
     private final StorageService storageService;
