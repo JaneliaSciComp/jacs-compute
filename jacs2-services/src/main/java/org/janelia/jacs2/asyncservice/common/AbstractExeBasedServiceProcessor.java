@@ -184,9 +184,8 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
         int maxRunningProcesses = applicationConfig.getIntegerPropertyValue(
                 "service." + jacsServiceData.getName() + ".maxRunningProcesses",
                 defaultMaxRunningProcesses);
-//        ExternalProcessRunner processRunner =
-//                new ThrottledExternalProcessRunner(throttledProcessesQueue, jacsServiceData.getName(), getProcessRunner(jacsServiceData), maxRunningProcesses);
-        ExternalProcessRunner processRunner = getProcessRunner(jacsServiceData);
+        ExternalProcessRunner processRunner =
+                new ThrottledExternalProcessRunner(throttledProcessesQueue, jacsServiceData.getName(), getProcessRunner(jacsServiceData), maxRunningProcesses);
         return processRunner.runCmds(
                 script,
                 externalConfigs,
