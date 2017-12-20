@@ -65,6 +65,8 @@ public class StorageService {
                 throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
             }
             return response.readEntity(InputStream.class);
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
@@ -82,13 +84,14 @@ public class StorageService {
 
             Invocation.Builder requestBuilder = target.request()
                     .header("Authorization", "APIKEY " + storageServiceApiKey)
-                    .header("JacsSubject", StringUtils.defaultIfBlank(subject, ""))
-                    ;
+                    .header("JacsSubject", StringUtils.defaultIfBlank(subject, ""));
             Response response = requestBuilder.post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+            if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
                 throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
             }
             return response.getHeaderString("Location");
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
@@ -116,6 +119,8 @@ public class StorageService {
             return storageCotent.stream()
                     .map(content -> new StorageInfo(storageLocation, content.get("rootLocation").asText(), content.get("nodeRelativePath").asText()))
                     .collect(Collectors.toList());
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
