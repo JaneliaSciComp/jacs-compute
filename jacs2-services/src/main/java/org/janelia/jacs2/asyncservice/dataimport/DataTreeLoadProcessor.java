@@ -63,11 +63,11 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
     }
 
     static class MipsCreationInfo {
-        private StorageService.StorageInfo remoteMipsInput;
-        private Path localMipsInput;
-        private Path localMipsOutput;
-        private StorageService.StorageInfo remoteMipsOutput;
-        private String remoteMipsOutputUrl;
+        StorageService.StorageInfo remoteMipsInput;
+        Path localMipsInput;
+        Path localMipsOutput;
+        StorageService.StorageInfo remoteMipsOutput;
+        String remoteMipsOutputUrl;
     }
 
     private final StorageService storageService;
