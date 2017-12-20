@@ -9,6 +9,7 @@ import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.janelia.model.service.JacsServiceEventTypes;
@@ -45,6 +46,10 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.defaultWorkingDir = defaultWorkingDir;
         this.logger = logger;
+    }
+
+    protected <T> ContinuationCond.Cond<T> continueWhenTrue(boolean value, T result) {
+        return new ContinuationCond.Cond(result, value);
     }
 
     @Override
@@ -160,9 +165,10 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     protected Path getServicePath(String baseDir, JacsServiceData jacsServiceData, String... more) {
-        ImmutableList.Builder<String> pathElemsBuilder = ImmutableList.<String>builder();
+        ImmutableList.Builder<String> pathElemsBuilder = ImmutableList.builder();
         if (StringUtils.isNotBlank(jacsServiceData.getOwner())) {
-            pathElemsBuilder.add(jacsServiceData.getOwner());
+            String name = SubjectUtils.getSubjectName(jacsServiceData.getOwner());
+            pathElemsBuilder.add(name);
         }
         pathElemsBuilder.add(jacsServiceData.getName());
         if (jacsServiceData.hasId()) {

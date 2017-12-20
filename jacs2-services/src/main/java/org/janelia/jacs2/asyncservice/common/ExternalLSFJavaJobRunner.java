@@ -221,11 +221,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         if (nProcessingSlots > 1) {
             // append processing environment
             spec.add("-n "+nProcessingSlots);
-            resourceBuffer
-                    .append("affinity")
-                    .append('[')
-                    .append("core(1)")
-                    .append(']');
+            resourceBuffer.append("affinity[core(1)]");
         }
 
         long softJobDurationInMins = Math.round(new Double(ProcessorHelper.getSoftJobDurationLimitInSeconds(jobResources)) / 60);
@@ -260,8 +256,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
                 resourceBuffer.append(' ');
             }
             resourceBuffer
-                    .append("select")
-                    .append('[')
+                    .append("select[")
                     .append(selectResourceBuffer)
                     .append(']');
             ;
