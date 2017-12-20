@@ -1,13 +1,13 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 import com.beust.jcommander.Parameter;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.janelia.jacs2.asyncservice.common.*;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.spark.SparkApp;
 import org.janelia.jacs2.asyncservice.common.spark.SparkCluster;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
+import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
@@ -20,24 +20,39 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * Service for searching color depth mask projections.
+ * Service for searching color depth mask projections at scale by using a Spark service. Multiple directories can be
+ * searched. You can perform multiple searches on the same images already in memory by specifying multiple mask files
+ * as input.
+ *
+ * The results are a set of tab-delimited files, one per input mask. The first line of each output file is the
+ * filepath of the mask that was used to generated the results. The rest of the lines list matching images in this
+ * format;
+ * <score>\t<filepath>
+ *
+ * Depends on a compiled jar from the colordepthsearch project.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Named("colorDepthSearch")
-public class ColorDepthSearch extends AbstractServiceProcessor<ColorDepthSearchResults> {
+public class ColorDepthSearch extends AbstractServiceProcessor<List<File>> {
 
-    private static final long CLUSTER_START_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
-    private static final long SEARCH_TIMEOUT_MS = 1000 * 60 * 20; // 20 minutes
+    public static final String RESULTS_FILENAME_SUFFIX = "_results.txt";
+
+    private final long clusterStartTimeoutInMillis;
+    private final long searchTimeoutInMillis;
+    private final long clusterIntervalCheckInMillis;
+    private final long searchIntervalCheckInMillis;
+    private final int numNodes;
+    private final String jarPath;
+    private final int parallelism;
 
     static class ColorDepthSearchArgs extends ServiceArgs {
-        @Parameter(names = "-inputDir", description = "Input directory containing mask files", required = true)
-        String inputDir;
+        @Parameter(names = "-inputFiles", description = "Comma-delimited list of mask files", required = true)
+        String inputFiles;
         @Parameter(names = "-searchDirs", description = "Comma-delimited list of directories containing the color depth projects to search", required = true)
         String searchDirs;
     }
@@ -47,10 +62,23 @@ public class ColorDepthSearch extends AbstractServiceProcessor<ColorDepthSearchR
     @Inject
     ColorDepthSearch(ServiceComputationFactory computationFactory,
                      JacsServiceDataPersistence jacsServiceDataPersistence,
-                     @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-//                     @PropertyValue(name = "ColorDepthSearch.Jar.Path") String executable,
-                     Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
+                     @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                     @IntPropertyValue(name = "service.colorDepthSearch.clusterStartTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
+                     @IntPropertyValue(name = "service.colorDepthSearch.searchTimeoutInSeconds", defaultValue = 1200) int searchTimeoutInSeconds,
+                     @IntPropertyValue(name = "service.colorDepthSearch.clusterIntervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
+                     @IntPropertyValue(name = "service.colorDepthSearch.searchIntervalCheckInMillis", defaultValue = 5000) int searchIntervalCheckInMillis,
+                     @IntPropertyValue(name = "service.colorDepthSearch.numNodes", defaultValue = 6) Integer numNodes,
+                     @IntPropertyValue(name = "service.colorDepthSearch.parallelism", defaultValue = 300) Integer parallelism,
+                     @StrPropertyValue(name = "service.colorDepthSearch.jarPath") String jarPath,
+                     Logger log) {
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, log);
+        this.clusterStartTimeoutInMillis = clusterStartTimeoutInSeconds * 1000;
+        this.searchTimeoutInMillis = searchTimeoutInSeconds * 1000;
+        this.clusterIntervalCheckInMillis = clusterIntervalCheckInMillis;
+        this.searchIntervalCheckInMillis = searchIntervalCheckInMillis;
+        this.numNodes = numNodes;
+        this.parallelism = parallelism;
+        this.jarPath = jarPath;
     }
 
     @Override
@@ -59,50 +87,73 @@ public class ColorDepthSearch extends AbstractServiceProcessor<ColorDepthSearchR
     }
 
     @Override
-    public ServiceResultHandler<ColorDepthSearchResults> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<ColorDepthSearchResults>() {
+    public ServiceResultHandler<List<File>> getResultHandler() {
+        return new AbstractFileListServiceResultHandler() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return true;
             }
-
             @Override
-            public ColorDepthSearchResults collectResult(JacsServiceResult<?> depResults) {
+            public List<File> collectResult(JacsServiceResult<?> depResults) {
                 throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public ColorDepthSearchResults getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<SampleProcessorResult>>() {});
             }
         };
     }
 
-    private DatedObject<SparkCluster> startCluster(JacsServiceData sd) {
+    private SparkCluster startCluster(JacsServiceData sd) {
         // TODO: Should cache this somehow so it doesn't need to get recomputed each time
         Path workingDir = getWorkingDirectory(sd);
         try {
             SparkCluster cluster = clusterSource.get();
-            cluster.startCluster(workingDir, 6);
+            cluster.startCluster(workingDir, numNodes);
             logger.info("Waiting until Spark cluster is ready...");
-            return new DatedObject(cluster);
+            return cluster;
         }
         catch (Exception e) {
             throw new ComputationException(sd, e);
         }
     }
 
-    private DatedObject<SparkApp> runApp(JacsServiceData jacsServiceData, SparkCluster cluster) {
+    private SparkApp runApp(JacsServiceData jacsServiceData, SparkCluster cluster) {
+        ColorDepthSearchArgs args = getArgs(jacsServiceData);
+        logger.info("Using args="+args);
+
         Path workingDir = getWorkingDirectory(jacsServiceData);
-        File resultsFile = workingDir.resolve("results.txt").toFile();
+
+        List<String> inputFiles = new ArrayList<>();
+        List<String> outputFiles = new ArrayList<>();
+        Set<Path> outputPaths = new HashSet<>();
+
+        for(String inputFile : args.inputFiles.split(",")) {
+            inputFiles.add(inputFile);
+            String name = FileUtils.getFileNameOnly(inputFile);
+
+            int i = 1;
+            Path outputPath;
+            do {
+                String discriminator = i == 1 ? "" : "_"+i;
+                outputPath = workingDir.resolve(name + discriminator + RESULTS_FILENAME_SUFFIX);
+                i++;
+            } while (outputPaths.contains(outputPath));
+
+            outputPaths.add(outputPath);
+            outputFiles.add(outputPath.toFile().getAbsolutePath());
+        }
+
+        List<String> appArgs = new ArrayList<>();
+        appArgs.add("-p");
+        appArgs.add(""+parallelism);
+        appArgs.add("-m");
+        appArgs.addAll(inputFiles);
+        appArgs.add("-i");
+        appArgs.add(args.searchDirs);
+        appArgs.add("-o");
+        appArgs.addAll(outputFiles);
+        String[] appArgsArr = appArgs.toArray(new String[appArgs.size()]);
+
         try {
             logger.info("Starting Spark application");
-            return new DatedObject(cluster.runApp(null,
-                    "/home/rokickik/dev/colormipsearch/target/colormipsearch-1.0-jar-with-dependencies.jar",
-                    "-m", "/home/rokickik/mask.tif",
-                    "-i", "/home/rokickik/BrainMIPs/ALL_GAL4_MIPs_Whole_Br_2017_0516",
-                    "-p", "300",
-                    "-o", resultsFile.getAbsolutePath()));
+            return cluster.runApp(null, jarPath, appArgsArr);
         }
         catch (Exception e) {
             throw new ComputationException(jacsServiceData, e);
@@ -110,10 +161,7 @@ public class ColorDepthSearch extends AbstractServiceProcessor<ColorDepthSearchR
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<ColorDepthSearchResults>> process(JacsServiceData jacsServiceData) {
-
-        ColorDepthSearchArgs args = getArgs(jacsServiceData);
-        logger.info("Processing args="+args);
+    public ServiceComputation<JacsServiceResult<List<File>>> process(JacsServiceData jacsServiceData) {
 
         // Create the working directory
         // TODO: this should be managed by a FileNode interface, which has not yet been ported from JACSv1
@@ -125,52 +173,62 @@ public class ColorDepthSearch extends AbstractServiceProcessor<ColorDepthSearchR
             throw new ComputationException(jacsServiceData, e);
         }
 
-        PeriodicallyCheckableState<JacsServiceData> periodicClusterCheck = new PeriodicallyCheckableState<>(jacsServiceData, 2000);
-        PeriodicallyCheckableState<JacsServiceData> periodicAppCheck = new PeriodicallyCheckableState<>(jacsServiceData, 5000);
+        SparkCluster sparkCluster = startCluster(jacsServiceData);
 
-        DatedObject<SparkCluster> cluster = startCluster(jacsServiceData);
+        return computationFactory.newCompletedComputation(sparkCluster)
 
-        return computationFactory.newCompletedComputation(cluster)
+                // Wait until the cluster has started
+                .thenSuspendUntil2((SparkCluster cluster) -> continueWhenTrue(cluster.isReady(), cluster),
+                        clusterIntervalCheckInMillis, clusterStartTimeoutInMillis)
 
-                .thenSuspendUntil((DatedObject<SparkCluster> datedCluster) -> new TimedCond<>(datedCluster,
-                        periodicClusterCheck.updateCheckTime() && datedCluster.getObj().isReady(), CLUSTER_START_TIMEOUT_MS))
+                // Now run the search
+                .thenApply((SparkCluster cluster) -> runApp(jacsServiceData, cluster))
 
-                .thenApply((ContinuationCond.Cond<DatedObject<SparkCluster>> cond) -> runApp(jacsServiceData, cond.getState().getObj()))
+                // Wait until the search has completed
+                .thenSuspendUntil2((SparkApp app) -> continueWhenTrue(app.isDone(), app),
+                        searchIntervalCheckInMillis, searchTimeoutInMillis)
 
-                .thenSuspendUntil((DatedObject<SparkApp> datedApp) -> new TimedCond<>(datedApp,
-                        periodicAppCheck.updateCheckTime() && datedApp.getObj().isDone(), SEARCH_TIMEOUT_MS))
-
-                .whenComplete((cond, exc) -> {
-                    // This is the "finally" block. We must always kill the cluster no matter what happens above.
-                    cluster.getObj().stopCluster();
+                // This is the "finally" block. We must always kill the cluster no matter what happens above.
+                // We don't attempt to extract the cluster from cond, because that may be null if there's an exception.
+                // Instead, we use the instance from the surrounding closure, which is guaranteed to work.
+                .whenComplete((app, exc) -> {
+                    sparkCluster.stopCluster();
                 })
 
-                .thenApply((cond) -> {
-                    ColorDepthSearchResults results = new ColorDepthSearchResults();
+                // Deal with the results
+                .thenApply((app) -> {
 
-                    File resultsFile = workingDir.resolve("results.txt").toFile();
-                    try (Scanner scanner = new Scanner(resultsFile)) {
-                        while (scanner.hasNext()) {
-                            String line = scanner.nextLine();
-                            String[] s = line.split("\t");
-                            float score = Float.parseFloat(s[0].trim());
-                            String filepath = s[1].trim();
-                            results.getResultList().add(new ColorDepthSearchResults.ColorDepthSearchResult(score, filepath));
+                    List<File> resultsFiles = FileUtils.lookupFiles(
+                                workingDir, 1, "glob:**/*"+RESULTS_FILENAME_SUFFIX)
+                            .map(Path::toFile)
+                            .collect(Collectors.toList());
+
+                    for(File resultsFile : resultsFiles) {
+
+                        String maskFile;
+                        ColorDepthSearchResults results = new ColorDepthSearchResults();
+                        try (Scanner scanner = new Scanner(resultsFile)) {
+                            maskFile = scanner.nextLine();
+                            while (scanner.hasNext()) {
+                                String line = scanner.nextLine();
+                                String[] s = line.split("\t");
+                                float score = Float.parseFloat(s[0].trim());
+                                String filepath = s[1].trim();
+                                results.getResultList().add(new ColorDepthSearchResults.ColorDepthSearchResult(score, filepath));
+                            }
+                        } catch (IOException e) {
+                            throw new ComputationException(jacsServiceData, e);
                         }
 
-                    }
-                    catch (IOException e) {
-                        throw new ComputationException(jacsServiceData, e);
-                    }
-
-                    logger.info("SEARCH COMPLETE:");
-                    int c = 0;
-                    for(ColorDepthSearchResults.ColorDepthSearchResult result : results.getResultList()) {
-                        logger.info(result.getScore()+": "+result.getFilename());
-                        if (c++>4) break;
+                        logger.info("First five results for mask {}:", maskFile);
+                        int c = 0;
+                        for (ColorDepthSearchResults.ColorDepthSearchResult result : results.getResultList()) {
+                            logger.info(result.getScore() + ": " + result.getFilename());
+                            if (c++ > 4) break;
+                        }
                     }
 
-                    return updateServiceResult(jacsServiceData, results);
+                    return updateServiceResult(jacsServiceData, resultsFiles);
                 });
     }
 

@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -234,6 +235,14 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
     }
 
     public ServiceComputation<ContinuationCond.Cond<T>> thenSuspendUntil(ContinuationCond<T> fn) {
+        return thenSuspendUntil(fn, null, null);
+    }
+
+    public ServiceComputation<ContinuationCond.Cond<T>> thenSuspendUntil(ContinuationCond<T> fn, Long intervalCheckInMillis, Long timeoutInMillis) {
+
+        long startTime = System.currentTimeMillis();
+        PeriodicallyCheckableState<JacsServiceData> periodicCheck = intervalCheckInMillis==null?null:new PeriodicallyCheckableState<>(null, intervalCheckInMillis);
+
         FutureBasedServiceComputation<ContinuationCond.Cond<T>> next = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(this));
         next.submit(() -> {
             try {
@@ -241,15 +250,85 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
                 if (this.isCompletedExceptionally()) {
                     next.complete(new ContinuationCond.Cond<>(this.get(), false));
                 }
+
+                // Check for timeout
+                if (timeoutInMillis!=null && (System.currentTimeMillis() - startTime > timeoutInMillis)) {
+                    throw new CondTimeoutException(timeoutInMillis);
+                }
+
+                // Check to see if we're allowed to test the value yet
+                if (periodicCheck!=null && !periodicCheck.updateCheckTime()) {
+                    throw new SuspendedException();
+                }
+
+                // Check the conditional value
                 ContinuationCond.Cond<T> condResult = fn.checkCond(r);
                 if (condResult.isNotCondValue()) {
                     throw new SuspendedException();
-                } else {
+                }
+                else {
                     next.complete(condResult);
                 }
-            } catch (SuspendedException e) {
+
+            }
+            catch (SuspendedException e) {
                 throw e;
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
+                next.completeExceptionally(e);
+            }
+            return next.get();
+        });
+        return next;
+    }
+
+    /**
+     * TODO: Refactor client code to use this method instead of thenSuspendUntil.
+     * This is the refactored version of thenSuspendUntil, which automatically unwraps the cond, which is the only thing
+     * you can do with a cond anyway. We should convert the rest of the code to use this, and then remove the old one and
+     * rename this one to thenSuspendUntil.
+     */
+    public ServiceComputation<T> thenSuspendUntil2(ContinuationCond<T> fn) {
+        return thenSuspendUntil2(fn, null, null);
+    }
+
+    public ServiceComputation<T> thenSuspendUntil2(ContinuationCond<T> fn, Long intervalCheckInMillis, Long timeoutInMillis) {
+
+        long startTime = System.currentTimeMillis();
+        PeriodicallyCheckableState<JacsServiceData> periodicCheck = intervalCheckInMillis==null?null:new PeriodicallyCheckableState<>(null, intervalCheckInMillis);
+
+        FutureBasedServiceComputation<T> next = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(this));
+        next.submit(() -> {
+            try {
+                T r = waitForResult(this);
+                if (this.isCompletedExceptionally()) {
+                    next.complete(this.get());
+                }
+
+                // Check for timeout
+                if (timeoutInMillis!=null && (System.currentTimeMillis() - startTime > timeoutInMillis)) {
+                    throw new CondTimeoutException(timeoutInMillis);
+                }
+
+                // Check to see if we're allowed to test the value yet
+                if (periodicCheck!=null && !periodicCheck.updateCheckTime()) {
+                    throw new SuspendedException();
+                }
+
+                // Check the conditional value
+                ContinuationCond.Cond<T> condResult = fn.checkCond(r);
+                if (condResult.isNotCondValue()) {
+                    throw new SuspendedException();
+                }
+                else {
+                    next.complete(condResult.getState());
+                }
+
+            }
+            catch (SuspendedException e) {
+                throw e;
+            }
+            catch (Exception e) {
                 next.completeExceptionally(e);
             }
             return next.get();

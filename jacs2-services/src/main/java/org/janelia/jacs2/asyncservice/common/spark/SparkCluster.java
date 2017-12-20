@@ -5,7 +5,8 @@ import org.apache.spark.launcher.SparkLauncher;
 import org.janelia.cluster.*;
 import org.janelia.cluster.lsf.LsfJobInfo;
 import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
-import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
+import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -18,7 +19,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * Manages a single Spark cluster with N nodes. Takes care of starting and stopping the master/worker nodes,
@@ -28,6 +28,8 @@ import java.util.function.Consumer;
  */
 public class SparkCluster {
 
+    private static final String DRIVER_LOG_FILENAME = "driver.out";
+
     private static final ExecutorService completionMessageExecutor = Executors.newCachedThreadPool((runnable) -> {
         Thread thread = Executors.defaultThreadFactory().newThread(runnable);
         // Ensure that we can shut down without these threads getting in the way
@@ -36,30 +38,46 @@ public class SparkCluster {
         return thread;
     });
 
-    private static final int NODE_SLOTS = 16;
-    private static final String SPARK_VERSION = "2";
-    private static final String SPARK_HOME = "/misc/local/spark-2";
-
-    private static final String SPARK_DRIVER_MEMORY = "1g";
-    private static final String SPARK_EXECUTOR_MEMORY = "75g";
-    private static final String SPARK_EXECUTOR_CORES = "15";
-
-
-    private static final long hardJobDurationInMins = 30;
-    private static final String HADOOP_HOME = "/misc/local/hadoop-2.6.4";
-
+    // Configuration
     private final Logger log;
-    private final JacsServiceDataPersistence jacsServiceDataPersistence;
     private final JobManager jobMgr;
+    private int nodeSlots;
+    private String sparkVersion;
+    private String sparkHomeDir;
+    private String sparkDriverMemory;
+    private String sparkExecutorMemory;
+    private int sparkExecutorCores;
+    private int sparkClusterHardDurationMins;
+    private String log4jFilepath;
+    private String hadoopHomeDir;
 
+    // State
     private File workingDirectory;
     private Long jobId;
     private String master;
 
     @Inject
-    public SparkCluster(MonitoredJobManager jobMgr, JacsServiceDataPersistence jacsServiceDataPersistence, Logger log) {
+    public SparkCluster(MonitoredJobManager jobMgr,
+                        @IntPropertyValue(name = "service.spark.nodeSlots", defaultValue = 16) int nodeSlots,
+                        @StrPropertyValue(name = "service.spark.sparkVersion", defaultValue = "2") String sparkVersion,
+                        @StrPropertyValue(name = "service.spark.sparkHomeDir", defaultValue = "/misc/local/spark-2") String sparkHomeDir,
+                        @StrPropertyValue(name = "service.spark.driver.memory", defaultValue = "1g") String sparkDriverMemory,
+                        @StrPropertyValue(name = "service.spark.executor.memory", defaultValue = "75g") String sparkExecutorMemory,
+                        @IntPropertyValue(name = "service.spark.executor.cores", defaultValue = 15) int sparkExecutorCores,
+                        @IntPropertyValue(name = "service.spark.cluster.hard.duration.mins", defaultValue = 30) int sparkClusterHardDurationMins,
+                        @StrPropertyValue(name = "service.spark.log4jconfig.filepath", defaultValue = "") String log4jFilepath,
+                        @StrPropertyValue(name = "hadoop.homeDir") String hadoopHomeDir,
+                        Logger log) {
         this.jobMgr = jobMgr.getJobMgr();
-        this.jacsServiceDataPersistence = jacsServiceDataPersistence;
+        this.nodeSlots = nodeSlots;
+        this.sparkVersion = sparkVersion;
+        this.sparkHomeDir = sparkHomeDir;
+        this.sparkDriverMemory = sparkDriverMemory;
+        this.sparkExecutorMemory = sparkExecutorMemory;
+        this.sparkExecutorCores = sparkExecutorCores;
+        this.sparkClusterHardDurationMins = sparkClusterHardDurationMins;
+        this.log4jFilepath = log4jFilepath;
+        this.hadoopHomeDir = hadoopHomeDir;
         this.log = log;
     }
 
@@ -72,9 +90,9 @@ public class SparkCluster {
     public synchronized void startCluster(Path workingDirName, int numNodes) throws Exception {
 
         this.workingDirectory = workingDirName.toFile();
-        int numSlots = NODE_SLOTS + NODE_SLOTS * numNodes; // master + workers
+        int numSlots = nodeSlots + nodeSlots * numNodes; // master + workers
 
-        log.info("Starting Spark cluster with {} nodes", NODE_SLOTS);
+        log.info("Starting Spark cluster with {} nodes", nodeSlots);
         log.info("Working directory: {}", workingDirectory);
 
         JobTemplate jt = new JobTemplate();
@@ -84,7 +102,7 @@ public class SparkCluster {
         jt.setRemoteCommand("commandstring");
         jt.setNativeSpecification(createNativeSpec(numSlots));
 
-        final JobFuture future = jobMgr.submitJob(jt, 1, 1);
+        final JobFuture future = jobMgr.submitJob(jt);
         this.jobId = future.getJobId();
 
         future.whenCompleteAsync((infos, e) -> {
@@ -99,7 +117,7 @@ public class SparkCluster {
             log.error("Spark cluster ended with error",exception);
         }
         if (jobId!=null) {
-            log.error("Spark cluster was not stopped cleanly");
+            log.warn("Spark cluster {} has died", jobId);
             reset();
         }
     }
@@ -107,9 +125,9 @@ public class SparkCluster {
     private List<String> createNativeSpec(int slots) {
         String jobName = "sparkbatch";
         List<String> spec = new ArrayList<>();
-        spec.add("-a sparkbatch("+SPARK_VERSION+")");
+        spec.add("-a sparkbatch("+ sparkVersion +")");
         spec.add("-n "+slots);
-        spec.add("-W  "+hardJobDurationInMins);
+        spec.add("-W  "+ sparkClusterHardDurationMins);
         return spec;
     }
 
@@ -140,6 +158,7 @@ public class SparkCluster {
                             host = host.split("\\*")[1];
                         }
                         this.master = "spark://"+host+":7077";
+                        log.info("Spark cluster {} is running on the following hosts: {}", jobId, execHosts);
                         log.info("Spark cluster {} is now ready with master on {}", jobId, master);
                         break; // We only care about the master
                     }
@@ -150,6 +169,15 @@ public class SparkCluster {
         return master != null;
     }
 
+    /**
+     * Run the app given by the specified jar file on the currently running cluster. If the cluster is not ready an
+     * IllegalStateException will be thrown. Command line arguments can be passed through via appArgs arguments.
+     * @param callback called when the application has ended
+     * @param jarPath absolute path to a far jar file containing the  with dependencies
+     * @param appArgs
+     * @return
+     * @throws Exception
+     */
     public SparkApp runApp(BiConsumer<File, ? super Throwable> callback, String jarPath, String... appArgs) throws Exception {
 
         if (!isReady()) {
@@ -157,7 +185,7 @@ public class SparkCluster {
         }
 
         log.info("Running Spark app on cluster {}", master);
-        File outFile = new File(workingDirectory, "driver.out");
+        File outFile = new File(workingDirectory, DRIVER_LOG_FILENAME);
         log.info("Driver output file: {}", outFile);
 
         SparkAppHandle.Listener listener = new SparkAppHandle.Listener() {
@@ -182,24 +210,23 @@ public class SparkCluster {
             }
         };
 
-        File log4jProperties = new File("/home/rokickik/dev/colormipsearch/log4j.properties");
+        File log4jProperties = new File(log4jFilepath);
 
         SparkAppHandle handle = new SparkLauncher()
                 .redirectError()
                 .redirectOutput(outFile)
                 .setAppResource(jarPath)
                 .setMaster(master)
-                .setSparkHome(SPARK_HOME)
-//                .addFile(log4jProperties.getAbsolutePath())
+                .setSparkHome(sparkHomeDir)
                 .setConf("spark.ui.showConsoleProgress", "false") // The console progress bar screws up the STDOUT stream
-                .setConf(SparkLauncher.DRIVER_MEMORY, SPARK_DRIVER_MEMORY)
-                .setConf(SparkLauncher.EXECUTOR_MEMORY, SPARK_EXECUTOR_MEMORY)
-                .setConf(SparkLauncher.EXECUTOR_CORES, SPARK_EXECUTOR_CORES)
-                .setConf(SparkLauncher.EXECUTOR_EXTRA_JAVA_OPTIONS, "-Dlog4j.configuration=log4j.properties")
+                .setConf(SparkLauncher.DRIVER_MEMORY, sparkDriverMemory)
+                .setConf(SparkLauncher.EXECUTOR_MEMORY, sparkExecutorMemory)
+                .setConf(SparkLauncher.EXECUTOR_CORES, ""+sparkExecutorCores)
+                .setConf(SparkLauncher.EXECUTOR_EXTRA_JAVA_OPTIONS, "-Dlog4j.configuration=file://"+log4jProperties.getAbsolutePath())
                 .addSparkArg("--driver-java-options",
-                        " -Dlog4j.configuration="+log4jProperties.getAbsolutePath()+
-                        "-Dhadoop.home.dir="+HADOOP_HOME+
-                        " -Djava.library.path="+HADOOP_HOME+"/lib/native"
+                        "-Dlog4j.configuration=file://"+log4jProperties.getAbsolutePath()+
+                        " -Dhadoop.home.dir="+ hadoopHomeDir +
+                        " -Djava.library.path="+ hadoopHomeDir +"/lib/native"
                         )
                 .addAppArgs(appArgs)
                 .startApplication(listener);
@@ -209,7 +236,6 @@ public class SparkCluster {
         // as it's available.
 
         return new SparkApp(this, handle);
-
     }
 
     /**
@@ -231,5 +257,4 @@ public class SparkCluster {
         }
         reset();
     }
-
 }

@@ -48,6 +48,10 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         this.logger = logger;
     }
 
+    protected <T> ContinuationCond.Cond<T> continueWhenTrue(boolean value, T result) {
+        return new ContinuationCond.Cond(result, value);
+    }
+
     @Override
     public JacsServiceData createServiceData(ServiceExecutionContext executionContext, ServiceArg... args) {
         ServiceMetaData smd = getMetadata();
