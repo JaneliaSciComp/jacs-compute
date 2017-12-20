@@ -92,7 +92,9 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<Void> {
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenCompose(sd -> generateMips(sd))
-                .thenApply(sr -> updateServiceResult(sr.getJacsServiceData(), null)) // !!!! FIXME
+                .thenApply(sr -> {
+                    return updateServiceResult(sr.getJacsServiceData(), null);
+                }) // !!!! FIXME
                 ;
         // !!!! FIXME
     }
