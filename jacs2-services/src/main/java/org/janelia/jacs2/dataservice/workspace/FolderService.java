@@ -30,7 +30,7 @@ public class FolderService {
                 TreeNode folder =  new TreeNode();
                 folder.setName(folderName);
                 TreeNode newFolder = folderDao.save(subjectKey, folder);
-                folderDao.addChildren(subjectKey, parentFolder, ImmutableList.of(Reference.createFor(parentFolder)));
+                folderDao.addChildren(subjectKey, parentFolder, ImmutableList.of(Reference.createFor(newFolder)));
                 return newFolder;
             }
         } catch (Exception e) {

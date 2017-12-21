@@ -246,7 +246,10 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                     .peek(mipsInfo -> {
                         mipsInfo.setFolderId(dataFolder.getId());
                         folderService.addImageFile(dataFolder, mipsInfo.remoteContent.getEntryPath(), jacsServiceData.getOwner());
-                        File mipsFile = mips.get(mipsInfo.localContentMipsPath.toFile());
+                        File mipsFile = null;
+                        if (mipsInfo.localContentMipsPath != null) {
+                            mipsFile = mips.get(mipsInfo.localContentMipsPath.toFile());
+                        }
                         if (mipsFile != null) {
                             FileInputStream mipsStream = null;
                             try {
