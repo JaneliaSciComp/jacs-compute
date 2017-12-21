@@ -93,8 +93,7 @@ public class JacsServiceDispatcher {
                         serviceFinally(jacsServiceData);
                     })
             ;
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             fail(jacsServiceData, e);
             serviceFinally(jacsServiceData);
         }
@@ -112,7 +111,7 @@ public class JacsServiceDispatcher {
     private void success(JacsServiceData serviceData) {
         logger.info("Processing successful {}", serviceData);
         JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
-        if (latestServiceData== null) {
+        if (latestServiceData == null) {
             logger.warn("No Service not found for {} - probably it was already archived", serviceData);
             return;
         }
@@ -138,7 +137,7 @@ public class JacsServiceDispatcher {
     private void fail(JacsServiceData serviceData, Throwable exc) {
         logger.error("Processing error executing {}", serviceData, exc);
         JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
-        if (latestServiceData== null) {
+        if (latestServiceData == null) {
             logger.warn("NO Service not found for {} - probably it was already archived", serviceData);
             return;
         }
@@ -155,7 +154,7 @@ public class JacsServiceDispatcher {
                     Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage()))));
         }
         sendNotification(latestServiceData, JacsServiceLifecycleStage.FAILED_PROCESSING);
-   }
+    }
 
     private void sendNotification(JacsServiceData sd, JacsServiceLifecycleStage lifecycleStage) {
         if (sd.getProcessingNotification() != null && sd.getProcessingNotification().getRegisteredLifecycleStages().contains(lifecycleStage)) {
