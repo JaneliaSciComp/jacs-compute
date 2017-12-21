@@ -24,6 +24,8 @@ import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.jacs2.dataservice.workspace.FolderService;
+import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -110,6 +112,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
         }
     }
 
+    private final FolderService folderService;
     private final StorageService storageService;
     private final WrappedServiceProcessor<Vaa3dMipCmdProcessor, List<File>> vaa3dMipCmdProcessor;
 
@@ -117,12 +120,14 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
     DataTreeLoadProcessor(ServiceComputationFactory computationFactory,
                           JacsServiceDataPersistence jacsServiceDataPersistence,
                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                          FolderService folderService,
                           StorageService storageService,
                           Vaa3dMipCmdProcessor vaa3dMipCmdProcessor,
                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.vaa3dMipCmdProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, vaa3dMipCmdProcessor);
+        this.folderService = folderService;
         this.storageService = storageService;
+        this.vaa3dMipCmdProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, vaa3dMipCmdProcessor);
     }
 
     @Override
@@ -194,6 +199,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                         mipsCreationInfo.remoteMipsOutput = new StorageService.StorageInfo(
                                 mipSource.getStorageLocation(),
                                 mipSource.getEntryRootLocation(),
+                                mipSource.getEntryRootPrefix(),
                                 FileUtils.getFilePath(Paths.get(mipSource.getEntryRelativePath()).getParent(), mipsName).toString());
                         return mipsCreationInfo;
                     } catch (IOException e) {
@@ -218,15 +224,18 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                                 .orElse("")
                 )
         ).thenApply((JacsServiceResult<List<File>> mipsResult) -> {
+            TreeNode dataFolder = folderService.createFolder(args.parentFolderId, args.folderName, jacsServiceData.getOwner());
             Map<File, File> mips = Maps.uniqueIndex(mipsResult.getResult(), f -> f);
             mipsInfoList
                     .forEach(mipsInfo -> {
+                        folderService.addImageFile(dataFolder, mipsInfo.remoteMipsInput.getEntryPath(), jacsServiceData.getOwner());
                         File mipsFile = mips.get(mipsInfo.localMipsOutput.toFile());
                         if (mipsFile != null) {
                             FileInputStream mipsStream = null;
                             try {
                                 mipsStream = new FileInputStream(mipsFile);
-                                mipsInfo.remoteMipsOutputUrl = storageService.putFileStream(mipsInfo.remoteMipsOutput.getStorageLocation(), mipsInfo.remoteMipsOutput.getEntryRelativePath(), jacsServiceData.getOwner(), mipsStream);
+                                StorageService.StorageInfo fileStorageEntry = storageService.putFileStream(mipsInfo.remoteMipsOutput.getStorageLocation(), mipsInfo.remoteMipsOutput.getEntryRelativePath(), jacsServiceData.getOwner(), mipsStream);
+                                mipsInfo.remoteMipsOutputUrl = fileStorageEntry.getStorageLocation();
                             } catch (Exception e) {
                                 throw new ComputationException(jacsServiceData, e);
                             } finally {

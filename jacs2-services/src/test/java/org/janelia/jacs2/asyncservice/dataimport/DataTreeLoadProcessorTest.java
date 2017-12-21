@@ -10,6 +10,7 @@ import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.jacs2.dataservice.workspace.FolderService;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.Before;
@@ -40,6 +41,7 @@ public class DataTreeLoadProcessorTest {
 
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private ServiceComputationFactory computationFactory;
+    private FolderService folderService;
     private StorageService storageService;
     private Vaa3dMipCmdProcessor vaa3dMipCmdProcessor;
     private Logger logger;
@@ -49,6 +51,7 @@ public class DataTreeLoadProcessorTest {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         logger = mock(Logger.class);
         computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        folderService = mock(FolderService.class);
         storageService = mock(StorageService.class);
         vaa3dMipCmdProcessor = mock(Vaa3dMipCmdProcessor.class);
     }
@@ -57,6 +60,7 @@ public class DataTreeLoadProcessorTest {
         return new DataTreeLoadProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 DEFAULT_WORKING_DIR,
+                folderService,
                 storageService,
                 vaa3dMipCmdProcessor,
                 logger);

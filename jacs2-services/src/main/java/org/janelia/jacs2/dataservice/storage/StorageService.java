@@ -16,6 +16,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,12 +26,14 @@ public class StorageService {
 
     public static class StorageInfo {
         private final String storageLocation;
+        private final String entryRootPrefix;
         private final String entryRootLocation;
         private final String entryRelativePath;
 
-        public StorageInfo(String storageLocation, String entryRootLocation, String entryRelativePath) {
+        public StorageInfo(String storageLocation, String entryRootLocation, String entryRootPrefix, String entryRelativePath) {
             this.storageLocation = storageLocation;
             this.entryRootLocation = entryRootLocation;
+            this.entryRootPrefix = entryRootPrefix;
             this.entryRelativePath = entryRelativePath;
         }
 
@@ -42,8 +45,16 @@ public class StorageService {
             return entryRootLocation;
         }
 
+        public String getEntryRootPrefix() {
+            return entryRootPrefix;
+        }
+
         public String getEntryRelativePath() {
             return entryRelativePath;
+        }
+
+        public String getEntryPath() {
+            return Paths.get(entryRootPrefix, entryRelativePath).toString();
         }
     }
     private final String storageServiceApiKey;
@@ -79,7 +90,7 @@ public class StorageService {
         }
     }
 
-    public String putFileStream(String storageLocation, String entryName, String subject, InputStream dataStream) {
+    public StorageInfo putFileStream(String storageLocation, String entryName, String subject, InputStream dataStream) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
@@ -89,13 +100,17 @@ public class StorageService {
                     .header("Authorization", "APIKEY " + storageServiceApiKey)
                     .header("JacsSubject", StringUtils.defaultIfBlank(subject, ""));
             Response response = requestBuilder.post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            String entryLocationUrl;
             if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
-                return response.getHeaderString("Location");
+                entryLocationUrl = response.getHeaderString("Location");
             } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
                 LOG.warn("Entry {} already exists at {}", entryName, storageLocation);
-                return response.getHeaderString("Location");
+                entryLocationUrl = response.getHeaderString("Location");
+            } else {
+                throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
             }
-            throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
+            JsonNode storageNode = response.readEntity(new GenericType<JsonNode>(){});
+            return extractStorageNodeFromJson(entryLocationUrl, storageNode);
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
@@ -123,7 +138,7 @@ public class StorageService {
             }
             List<JsonNode> storageCotent = response.readEntity(new GenericType<List<JsonNode>>(){});
             return storageCotent.stream()
-                    .map(content -> new StorageInfo(storageLocation, content.get("rootLocation").asText(), content.get("nodeRelativePath").asText()))
+                    .map(content -> extractStorageNodeFromJson(storageLocation, content))
                     .collect(Collectors.toList());
         } catch (IllegalStateException e) {
             throw e;
@@ -134,5 +149,12 @@ public class StorageService {
                 httpclient.close();
             }
         }
+    }
+
+    private StorageInfo extractStorageNodeFromJson(String storageUrl, JsonNode jsonNode) {
+        JsonNode rootLocation = jsonNode.get("rootLocation");
+        JsonNode rootPrefix = jsonNode.get("rootPrefix");
+        JsonNode nodeRelativePath = jsonNode.get("nodeRelativePath");
+        return new StorageInfo(storageUrl,rootLocation.asText(), rootPrefix.asText(), nodeRelativePath.asText());
     }
 }
