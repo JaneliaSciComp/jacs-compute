@@ -59,6 +59,9 @@ dependencies {
         JACKSON_DATATYPE_JODA_LIB = "com.fasterxml.jackson.datatype:jackson-datatype-joda:${JACKSON_VERSION}"
         JACKSON_JAXRS_JSON_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${JACKSON_VERSION}"
 
+        // Spark
+        SPARK_LAUNCHER = "org.apache.spark:spark-launcher_2.11:2.1.0"
+
         // expressions
         JUEL_LIB = "de.odysseus.juel:juel-impl:2.2.7"
 

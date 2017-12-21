@@ -10,6 +10,7 @@ public class MongoModule extends SimpleModule {
         addSerializer(Date.class, new ISODateSerializer());
         addDeserializer(Date.class, new ISODateDeserializer());
         addDeserializer(Long.class, new MongoNumberLongDeserializer());
+        addDeserializer(Double.class, new MongoNumberDoubleDeserializer());
         addDeserializer(Number.class, new MongoNumberBigIntegerDeserializer());
     }
 }
