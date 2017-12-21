@@ -48,30 +48,16 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
 
     private List<JacsServiceData> testData = new ArrayList<>();
     private JacsServiceDataDao testDao;
-    private JacsServiceDataDao archiveDao;
 
     @Before
     public void setUp() {
         testDao = new JacsServiceDataMongoDao(testMongoDatabase, idGenerator);
-        archiveDao = new JacsServiceDataMongoDao(testMongoDatabase, idGenerator) {
-            @Override
-            protected Class<JacsServiceData> getEntityType() {
-                return JacsServiceData.class;
-            }
-
-            @Override
-            public void delete(JacsServiceData entity) {
-                super.delete(entity);
-                archiveMongoCollection.deleteOne(eq("_id", entity.getId()));
-            }
-        };
     }
 
     @After
     public void tearDown() {
         // delete the data that was created for testing
         deleteAll(testDao, testData);
-        deleteAll(archiveDao, testData);
     }
 
     @Test
@@ -397,28 +383,6 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         assertThat(retrievedQueuedServices.getResultList(), hasSize(0));
     }
 
-    @Test
-    public void archiveServiceHierarchy() {
-        JacsServiceData si1 = createTestService("s1", ProcessingLocation.LOCAL);
-        JacsServiceData si1_1 = createTestService("s1.1", ProcessingLocation.LOCAL);
-        JacsServiceData si1_2 = createTestService("s1.2", ProcessingLocation.LOCAL);
-        JacsServiceData si1_3 = createTestService("s1.3", ProcessingLocation.LOCAL);
-        JacsServiceData si1_2_1 = createTestService("s1.2.1", ProcessingLocation.LOCAL);
-        si1.addServiceDependency(si1_1);
-        si1.addServiceDependency(si1_2);
-        si1_1.addServiceDependency(si1_2);
-        si1_1.addServiceDependency(si1_3);
-        si1_2.addServiceDependency(si1_2_1);
-        testDao.saveServiceHierarchy(si1);
-        List<JacsServiceData> s1Hierarchy = si1.serviceHierarchyStream().collect(Collectors.toList());
-        testDao.archiveServiceHierarchy(si1);
-
-        s1Hierarchy.forEach(sd -> {
-            JacsServiceData retrievedServiceData = testDao.findById(sd.getId());
-            assertNull(retrievedServiceData);
-        });
-    }
-
     private List<JacsServiceData> persistServicesForSearchTest(Calendar calDate) {
         List<JacsServiceData> testServices = new ArrayList<>();
         List<JacsServiceData> u1Services = ImmutableList.of(
@@ -460,6 +424,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         return si;
     }
 
+    @Override
     protected List<JacsServiceData> createMultipleTestItems(int nItems) {
         List<JacsServiceData> testItems = new ArrayList<>();
         for (int i = 0; i < nItems; i++) {

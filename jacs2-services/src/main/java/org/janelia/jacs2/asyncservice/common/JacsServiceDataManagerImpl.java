@@ -27,7 +27,7 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
 
     @Override
     public JacsServiceData retrieveServiceById(Number instanceId) {
-        return jacsServiceDataPersistence.findServiceHierarchy(instanceId);
+        return jacsServiceDataPersistence.findActiveOrArchivedServiceHierarchy(instanceId);
     }
 
     @Override

@@ -2,7 +2,6 @@ package org.janelia.model.access.dao.mongo;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -11,22 +10,20 @@ import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.dao.AbstractDao;
+import org.janelia.model.access.dao.ReadWriteDao;
+import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.jacs2.AppendFieldValueHandler;
+import org.janelia.model.jacs2.DomainModelUtils;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
-import org.janelia.model.access.dao.ReadWriteDao;
-import org.janelia.model.jacs2.AppendFieldValueHandler;
-import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.jacs2.page.SortCriteria;
 import org.janelia.model.jacs2.page.SortDirection;
-import org.janelia.model.jacs2.DomainModelUtils;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,26 +49,19 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoDao.class);
 
     protected final TimebasedIdentifierGenerator idGenerator;
-    protected final MongoCollection<T> mongoCollection;
-    protected final MongoCollection<T> archiveMongoCollection;
+    final MongoCollection<T> mongoCollection;
 
-    protected AbstractMongoDao(MongoDatabase mongoDatabase,
-                               TimebasedIdentifierGenerator idGenerator) {
-        Pair<String, String> entityCollectionNames = getDomainObjectCollectionNames();
-        mongoCollection = mongoDatabase.getCollection(entityCollectionNames.getLeft(), getEntityType());
-        if (StringUtils.isNotEmpty(entityCollectionNames.getRight())) {
-            archiveMongoCollection = mongoDatabase.getCollection(entityCollectionNames.getRight(), getEntityType());
-        } else {
-            archiveMongoCollection = null;
-        }
+    protected AbstractMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
+        Class<T> entityClass = getEntityType();
+        String entityCollectionName = getDomainObjectCollectionName(entityClass);
+        mongoCollection = mongoDatabase.getCollection(entityCollectionName, entityClass);
         this.idGenerator = idGenerator;
     }
 
-    private Pair<String, String> getDomainObjectCollectionNames() {
-        Class<T> entityClass = getEntityType();
+    private String getDomainObjectCollectionName(Class<T> entityClass) {
         MongoMapping mongoMapping = DomainModelUtils.getMapping(entityClass);
         Preconditions.checkArgument(mongoMapping != null, "Entity class " + entityClass.getName() + " is not annotated with MongoMapping");
-        return ImmutablePair.of(mongoMapping.collectionName(), mongoMapping.archiveCollectionName());
+        return mongoMapping.collectionName();
     }
 
     @Override
@@ -120,20 +110,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     }
 
     protected <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
-        List<R> entityDocs = new ArrayList<>();
-        FindIterable<R> results = mongoCollection.find(resultType);
-        if (queryFilter != null) {
-            results = results.filter(queryFilter);
-        }
-        if (offset > 0) {
-            results = results.skip((int) offset);
-        }
-        if (length > 0) {
-            results = results.limit(length);
-        }
-        return results
-                .sort(sortCriteria)
-                .into(entityDocs);
+        return MongoDaoHelper.find(queryFilter, sortCriteria, offset, length, mongoCollection, resultType);
     }
 
     @Override
@@ -190,16 +167,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
 
     @Override
     public void delete(T entity) {
-        mongoCollection.deleteOne(eq("_id", entity.getId()));
-    }
-
-    @Override
-    public void archive(T entity) {
-        if (archiveMongoCollection == null) {
-            throw new UnsupportedOperationException("Archive is not supported for " + getEntityType());
-        }
-        archiveMongoCollection.insertOne(entity);
-        delete(entity);
+        MongoDaoHelper.delete(mongoCollection, entity.getId());
     }
 
     private Bson getFieldUpdate(String fieldName, EntityFieldValueHandler<?> valueHandler) {

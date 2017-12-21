@@ -62,10 +62,10 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
             return null;
         }
         Number rootServiceId = jacsServiceData.getRootServiceId();
-        Map<Number, JacsServiceData> fullServiceHierachy = new LinkedHashMap<>();
         if (rootServiceId == null) {
             rootServiceId = serviceId;
         }
+        Map<Number, JacsServiceData> fullServiceHierachy = new LinkedHashMap<>();
         find(Filters.or(eq("rootServiceId", rootServiceId), eq("_id", rootServiceId)), createBsonSortCriteria(ImmutableList.of(new SortCriteria("_id"))), 0, -1, JacsServiceData.class)
                 .forEach(sd -> {
                     fullServiceHierachy.put(sd.getId(), sd);
@@ -208,12 +208,6 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
         entity.setModificationDate(new Date());
         fieldsWithUpdatedDate.put("modificationDate", new SetFieldValueHandler<>(entity.getModificationDate()));
         super.update(entity, fieldsWithUpdatedDate);
-    }
-
-    @Override
-    public void archiveServiceHierarchy(JacsServiceData serviceData) {
-        List<JacsServiceData> serviceHierarchy = serviceData.serviceHierarchyStream().collect(Collectors.toList());
-        serviceHierarchy.forEach(this::archive);
     }
 
     @Override
