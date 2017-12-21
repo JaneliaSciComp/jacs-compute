@@ -67,35 +67,45 @@ public class JacsServiceDispatcher {
     @MdcContext
     private void dispatchService(JacsServiceData jacsServiceData) {
         logger.info("Dispatch service {}", jacsServiceData);
-        ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
-        serviceComputationFactory.<JacsServiceData>newComputation()
-                .supply(() -> jacsServiceData)
-                .thenSuspendUntil(new SuspendServiceContinuationCond<>(
-                        Function.<JacsServiceData>identity(),
-                        (JacsServiceData sd, JacsServiceData tmpSd) -> tmpSd,
-                        jacsServiceDataPersistence,
-                        logger).negate())
-                .thenApply((ContinuationCond.Cond<JacsServiceData> sdCond) -> {
-                    sendNotification(jacsServiceData, JacsServiceLifecycleStage.START_PROCESSING);
-                    return sdCond.getState();
-                })
-                .thenCompose(sd -> serviceProcessor.process(sd))
-                .thenApply(r -> {
-                    success(r.getJacsServiceData());
-                    return r;
-                })
-                .exceptionally(exc -> {
-                    fail(jacsServiceData, exc);
-                    throw new ComputationException(jacsServiceData, exc);
-                })
-                .whenComplete((r, exc) -> {
-                    jacsServiceQueue.completeService(jacsServiceData);
-                    if (!jacsServiceData.hasParentServiceId()) {
-                        // release the slot acquired before the service was started
-                        jacsServiceEngine.releaseSlot();
-                    }
-                })
-        ;
+        try {
+            ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
+            serviceComputationFactory.<JacsServiceData>newComputation()
+                    .supply(() -> jacsServiceData)
+                    .thenSuspendUntil(new SuspendServiceContinuationCond<>(
+                            Function.<JacsServiceData>identity(),
+                            (JacsServiceData sd, JacsServiceData tmpSd) -> tmpSd,
+                            jacsServiceDataPersistence,
+                            logger).negate())
+                    .thenApply((ContinuationCond.Cond<JacsServiceData> sdCond) -> {
+                        sendNotification(jacsServiceData, JacsServiceLifecycleStage.START_PROCESSING);
+                        return sdCond.getState();
+                    })
+                    .thenCompose(sd -> serviceProcessor.process(sd))
+                    .thenApply(r -> {
+                        success(r.getJacsServiceData());
+                        return r;
+                    })
+                    .exceptionally(exc -> {
+                        fail(jacsServiceData, exc);
+                        throw new ComputationException(jacsServiceData, exc);
+                    })
+                    .whenComplete((r, exc) -> {
+                        serviceFinally(jacsServiceData);
+                    })
+            ;
+        }
+        catch (Throwable e) {
+            fail(jacsServiceData, e);
+            serviceFinally(jacsServiceData);
+        }
+    }
+
+    private void serviceFinally(JacsServiceData jacsServiceData) {
+        jacsServiceQueue.completeService(jacsServiceData);
+        if (!jacsServiceData.hasParentServiceId()) {
+            // release the slot acquired before the service was started
+            jacsServiceEngine.releaseSlot();
+        }
     }
 
     @MdcContext
