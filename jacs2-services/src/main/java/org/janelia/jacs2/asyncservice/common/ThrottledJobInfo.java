@@ -18,7 +18,7 @@ public class ThrottledJobInfo implements ExeJobInfo {
     private volatile boolean terminated;
     private JobDoneCallback jobDoneCallback;
 
-    public ThrottledJobInfo(ExeJobInfo throttledJobInfo, JacsServiceData jobServiceContext, ThrottledExeJobsQueue jobsQueue, int maxRunningProcesses) {
+    ThrottledJobInfo(ExeJobInfo throttledJobInfo, JacsServiceData jobServiceContext, ThrottledExeJobsQueue jobsQueue, int maxRunningProcesses) {
         this.throttledJobInfo = throttledJobInfo;
         this.jobServiceContext = jobServiceContext;
         this.jobsQueue = jobsQueue;
