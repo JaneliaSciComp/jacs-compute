@@ -46,7 +46,7 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
         PeriodicallyCheckableState<JacsServiceData> submittedServiceStateCheck = new PeriodicallyCheckableState<>(submittedService, ProcessorHelper.getSoftJobDurationLimitInSeconds(jacsServiceData.getResources()) / 100);
         return computationFactory.newCompletedComputation(submittedServiceStateCheck)
                 .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceData> sdState) -> new ContinuationCond.Cond<>(sdState, sdState.updateCheckTime() && isDone(sdState)))
-                .thenApply((ContinuationCond.Cond<PeriodicallyCheckableState<JacsServiceData>> sdStateCond) -> getResult(sdStateCond.getState()))
+                .thenApply((PeriodicallyCheckableState<JacsServiceData> sdState) -> getResult(sdState))
                 ;
     }
 

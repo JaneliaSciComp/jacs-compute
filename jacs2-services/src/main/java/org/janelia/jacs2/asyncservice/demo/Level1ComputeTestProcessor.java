@@ -70,25 +70,25 @@ public class Level1ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     return jsd;
                 })
                 .thenSuspendUntil(this.suspendCondition(jacsServiceData))
-                .thenApply(jsdCond -> {
+                .thenApply(jsd -> {
                     logger.info("Beginning loop to create FloatTests and save to queue");
                     for (int i = 0; i < args.floatServiceCount; i++) {
                         String testName = args.testName + ".FloatTest" + i;
-                        JacsServiceData j = floatComputeTestProcessor.createServiceData(new ServiceExecutionContext.Builder(jsdCond.getState()).build());
+                        JacsServiceData j = floatComputeTestProcessor.createServiceData(new ServiceExecutionContext.Builder(jsd).build());
                         j.addArg("-testName");
                         j.addArg(testName);
                         logger.info("adding floatComputeTest " + testName);
                         jacsServiceDataPersistence.saveHierarchy(j);
                     }
-                    return jsdCond.getState();
+                    return jsd;
                 })
                 .thenSuspendUntil(this.suspendCondition(jacsServiceData))
-                .thenApply(jsdCond -> {
+                .thenApply(jsd -> {
                     logger.info("All tests complete for service " + serviceName);
                     long endTime = new Date().getTime();
                     resultComputationTime = endTime - startTime;
                     logger.info(serviceName + " end processing, processing time= " + resultComputationTime);
-                    return new JacsServiceResult<>(jsdCond.getState(), endTime);
+                    return new JacsServiceResult<>(jsd, endTime);
                 })
                 ;
     }

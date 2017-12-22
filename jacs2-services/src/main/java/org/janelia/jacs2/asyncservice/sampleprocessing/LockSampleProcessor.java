@@ -104,8 +104,7 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
                     lockHolder.setData(lockKey);
                     return new ContinuationCond.Cond<> (sd, true);
                 })
-                .thenApply(sdCond -> {
-                    JacsServiceData sd = sdCond.getState();
+                .thenApply(sd -> {
                     String lockKey = lockHolder.getData();
                     this.getResultHandler().updateServiceDataResult(sd, lockKey);
                     jacsServiceDataPersistence.updateServiceResult(sd);
