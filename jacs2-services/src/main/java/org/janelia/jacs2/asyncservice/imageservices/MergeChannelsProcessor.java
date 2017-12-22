@@ -152,7 +152,7 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Fil
          */
         return super.processing(depsResult)
                 .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, tmpMergeFile.toFile().exists()))
-                .thenApply(pdCond -> {
+                .thenApply(pd -> {
                     try {
                         Path source;
                         if (mergeDir.toAbsolutePath().toString().equals(outputFile.toAbsolutePath().toString())) {
@@ -164,7 +164,7 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Fil
                             source = tmpMergeFile;
                         }
                         Files.move(source, outputFile, StandardCopyOption.REPLACE_EXISTING);
-                        return pdCond.getState();
+                        return pd;
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }

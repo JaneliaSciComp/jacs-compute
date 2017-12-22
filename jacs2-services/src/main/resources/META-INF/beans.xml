@@ -7,7 +7,6 @@
               <class>org.janelia.jacs2.asyncservice.common.mdc.MdcContextInterceptor</class>
        </interceptors>
        <weld:scan>
-              <weld:exclude name="org.janelia.jacs2.model.**"/>
-              <weld:exclude name="org.janelia.it.jacs.model.**"/>
+              <weld:exclude name="org.janelia.model.jacs2.domain.**"/>
        </weld:scan>
 </beans>

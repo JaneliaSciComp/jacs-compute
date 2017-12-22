@@ -127,7 +127,7 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
         return computationFactory.newCompletedComputation(null)
                 .thenCombineAll(updateResultComputations, (nullResult, prs) -> new JacsServiceResult<>(jacsServiceData, (List<PipelineResult>) prs))
                 .thenSuspendUntil(this.suspendCondition(jacsServiceData))
-                .thenApply(prsCond -> updateServiceResult(jacsServiceData, prsCond.getState().getResult())) // update the result
+                .thenApply(prs -> updateServiceResult(jacsServiceData, prs.getResult())) // update the result
                 ;
     }
 

@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -137,10 +136,10 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
                     .thenCombineAll(stitchComputations, (mr, groupedAreas) -> (List<SampleAreaResult>) groupedAreas);
         })
         .thenSuspendUntil(this.suspendCondition(jacsServiceData))
-        .thenApply((ContinuationCond.Cond<List<SampleAreaResult>> stitchedAreaResultsCond) -> {
+        .thenApply((List<SampleAreaResult> stitchedAreaResults) -> {
             SampleResult sampleResult = new SampleResult();
             sampleResult.setSampleId(args.sampleId);
-            sampleResult.setSampleAreaResults(stitchedAreaResultsCond.getState());
+            sampleResult.setSampleAreaResults(stitchedAreaResults);
             return this.updateServiceResult(jacsServiceData, sampleResult);
         })
         ;

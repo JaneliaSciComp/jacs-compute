@@ -60,7 +60,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                         periodicResultCheck.updateCheckTime() && hasJobFinished(periodicResultCheck.getState().getJacsServiceData(), jobInfo)))
                 .thenApply(pdCond -> {
 
-                    JacsServiceResult<Void> pd = pdCond.getState().getState();
+                    JacsServiceResult<Void> pd = pdCond.getState();
                     JacsServiceData jacsServiceData = pd.getJacsServiceData();
 
                     // Persist all final job instance metadata

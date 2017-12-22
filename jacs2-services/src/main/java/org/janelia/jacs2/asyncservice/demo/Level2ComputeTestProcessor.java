@@ -64,11 +64,11 @@ public class Level2ComputeTestProcessor extends AbstractBasicLifeCycleServicePro
                     return jsd;
                 })
                 .thenSuspendUntil(this.suspendCondition(jacsServiceData))
-                .thenApply(jsdCond -> {
+                .thenApply(jsd -> {
                     long endTime = new Date().getTime();
                     resultComputationTime = endTime - startTime;
                     logger.info(serviceName + " end processing, time=" + resultComputationTime);
-                    return new JacsServiceResult<>(jsdCond.getState(), endTime);
+                    return new JacsServiceResult<>(jsd, endTime);
                 })
                 ;
     }

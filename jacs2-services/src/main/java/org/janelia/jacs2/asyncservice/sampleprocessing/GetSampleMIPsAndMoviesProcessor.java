@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -147,7 +146,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractServiceProcessor<Li
                     .newCompletedComputation(sampleImageFiles)
                     .thenCombineAll(basicMIPsComputations, (List<SampleImageFile> sifs, List<?> lsmsWithMIPs) -> (List<SampleImageMIPsFile>) lsmsWithMIPs);
         }).thenSuspendUntil(this.suspendCondition(jacsServiceData)
-        ).thenApply((ContinuationCond.Cond<List<SampleImageMIPsFile>> lsmsWithMIPsCond) -> this.updateServiceResult(jacsServiceData, lsmsWithMIPsCond.getState()))
+        ).thenApply((List<SampleImageMIPsFile> lsmsWithMIPs) -> this.updateServiceResult(jacsServiceData, lsmsWithMIPs))
         ;
     }
 
