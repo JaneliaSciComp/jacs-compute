@@ -1,6 +1,7 @@
 package org.janelia.model.access.dao.mongo;
 
 import com.google.common.collect.Streams;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.model.access.dao.JacsServiceDataArchiveDao;
 import org.janelia.model.access.dao.JacsServiceDataDao;
 import org.janelia.model.service.JacsServiceData;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -65,8 +67,11 @@ public class JacsServiceDataArchiveMongoDaoITest extends AbstractMongoDaoITest<J
         assertNotNull(archivedService);
         List<JacsServiceData> archivedServiceHierarchy = archivedService.serviceHierarchyStream().collect(Collectors.toList());
         Streams.zip(s1Hierarchy.stream(), archivedServiceHierarchy.stream(), (sd, archivedSD) -> {
-            return sd != archivedSD && sd.getId().equals(archivedSD.getId());
-        }).forEach(br -> assertTrue(br));
+            return ImmutablePair.of(sd, archivedSD);
+        }).forEach(activeArchivedPair -> {
+            assertNotSame(activeArchivedPair.getLeft(), activeArchivedPair.getRight());
+            assertEquals(activeArchivedPair.getLeft().getId(), activeArchivedPair.getRight().getId());
+        });
     }
 
     @Override
