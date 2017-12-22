@@ -307,6 +307,8 @@ public interface LegacyDomainDao {
 
     TreeNode getParentTreeNodes(String subjectKey, Reference ref);
 
+    boolean isAdmin(String subjectKey);
+
     /**
      * Create the given object, with the given id. Dangerous to use if you don't know what you're doing! Use save() instead.
      * @param subjectKey

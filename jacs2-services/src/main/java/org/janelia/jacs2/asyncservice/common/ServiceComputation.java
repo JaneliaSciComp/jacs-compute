@@ -25,8 +25,10 @@ public interface ServiceComputation<T> {
     <U, V> ServiceComputation<V> thenCombine(ServiceComputation<U> otherComputation, BiFunction<? super T, ? super U, ? extends V> fn);
     <U> ServiceComputation<U> thenCombineAll(List<ServiceComputation<?>> otherComputations, BiFunction<? super T, List<?>, ? extends U> fn);
     <U> ServiceComputation<U> thenComposeAll(List<ServiceComputation<?>> otherComputations, BiFunction<? super T, List<?>, ? extends ServiceComputation<U>> fn);
-    ServiceComputation<ContinuationCond.Cond<T>> thenSuspendUntil(ContinuationCond<T> fn);
-    ServiceComputation<ContinuationCond.Cond<T>> thenSuspendUntil(ContinuationCond<T> fn, Long intervalCheckInMillis, Long timeoutInMillis);
+    ServiceComputation<T> thenSuspendUntil(ContinuationCond<T> fn);
+    ServiceComputation<T> thenSuspendUntil(ContinuationCond<T> fn, Long intervalCheckInMillis, Long timeoutInMillis);
 
-    ServiceComputation<T> thenSuspendUntil2(ContinuationCond<T> fn, Long intervalCheckInMillis, Long timeoutInMillis);
+    @Deprecated
+    ServiceComputation<ContinuationCond.Cond<T>> thenSuspendUntilCond(ContinuationCond<T> fn);
+
 }

@@ -2,7 +2,6 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -117,7 +116,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractServiceProcessor<Lis
                     .newCompletedComputation(sampleImageFiles)
                     .thenCombineAll(lsmMetadataComputations, (List<SampleImageFile> sifs, List<?> lsmsWithMetadataResults) -> (List<SampleImageFile>) lsmsWithMetadataResults);
         }).thenSuspendUntil(this.suspendCondition(jacsServiceData)
-        ).thenApply((ContinuationCond.Cond<List<SampleImageFile>> lsmsWithMetadataCond) -> this.updateServiceResult(jacsServiceData, lsmsWithMetadataCond.getState()));
+        ).thenApply((List<SampleImageFile> lsmsWithMetadata) -> this.updateServiceResult(jacsServiceData, lsmsWithMetadata));
     }
 
     private SampleServiceArgs getArgs(JacsServiceData jacsServiceData) {

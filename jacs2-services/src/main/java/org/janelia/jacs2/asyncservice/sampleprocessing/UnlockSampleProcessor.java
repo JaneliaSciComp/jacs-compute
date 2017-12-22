@@ -83,7 +83,7 @@ public class UnlockSampleProcessor extends AbstractServiceProcessor<Void> {
                     }
                     return new ContinuationCond.Cond<> (sd, true);
                 })
-                .thenApply(sdCond -> new JacsServiceResult<>(sdCond.getState()));
+                .thenApply(sd -> new JacsServiceResult<>(sd));
     }
 
     private UnlockSampleArgs getArgs(JacsServiceData jacsServiceData) {

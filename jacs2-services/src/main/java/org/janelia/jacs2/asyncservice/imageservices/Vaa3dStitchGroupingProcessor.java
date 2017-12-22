@@ -101,7 +101,7 @@ public class Vaa3dStitchGroupingProcessor extends AbstractBasicLifeCycleServiceP
         Path groupsFile = getGroupsFile(getArgs(depResults.getJacsServiceData()));
         return vaa3dPluginProcessor.process(vaa3dPluginService)
                 .thenSuspendUntil(vr -> new ContinuationCond.Cond<>(vr, groupsFile.toFile().exists()))
-                .thenApply(vrCond -> depResults);
+                .thenApply(vr-> depResults);
     }
 
     private JacsServiceData createVaa3dPluginService(Vaa3dStitchGroupingArgs args, JacsServiceData jacsServiceData) {

@@ -440,6 +440,11 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
+    public boolean isAdmin(String subjectKey) {
+        return dao.isAdmin(subjectKey);
+    }
+
+    @Override
     public <T extends DomainObject> T createWithPrepopulatedId(String subjectKey, T domainObject) throws Exception {
         return dao.createWithPrepopulatedId(subjectKey, domainObject);
     }
