@@ -1,21 +1,21 @@
 package org.janelia.jacs2.asyncservice.common;
 
-public class PeriodicallyCheckableState<S> {
+class PeriodicallyCheckableState<S> {
     private final S state;
     private long checkTime;
     private final long intervalCheckInMillis;
 
-    public PeriodicallyCheckableState(S state, long intervalCheckInMillis) {
+    PeriodicallyCheckableState(S state, long intervalCheckInMillis) {
         this.state = state;
         this.checkTime = -1;
         this.intervalCheckInMillis = intervalCheckInMillis;
     }
 
-    public S getState() {
+    S getState() {
         return state;
     }
 
-    public boolean updateCheckTime() {
+    boolean updateCheckTime() {
         if (intervalCheckInMillis > 0) {
             long currentTime = System.currentTimeMillis();
             if (checkTime < currentTime) {

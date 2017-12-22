@@ -122,7 +122,7 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
         next.submit(() -> {
             applyStage(next, () -> waitForResult(this), fn);
             return next.get();
-         });
+        });
         return next;
     }
 
@@ -234,41 +234,6 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
         return next;
     }
 
-    /**
-     * @Deprecated We should use the much simpler and feature-rich thenSuspendUntil instead of this
-     * @param fn
-     * @return
-     */
-    public ServiceComputation<ContinuationCond.Cond<T>> thenSuspendUntilCond(ContinuationCond<T> fn) {
-        FutureBasedServiceComputation<ContinuationCond.Cond<T>> next = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(this));
-        next.submit(() -> {
-            try {
-                T r = waitForResult(this);
-                if (this.isCompletedExceptionally()) {
-                    next.complete(new ContinuationCond.Cond<>(this.get(), false));
-                }
-
-                // Check the conditional value
-                ContinuationCond.Cond<T> condResult = fn.checkCond(r);
-                if (condResult.isNotCondValue()) {
-                    throw new SuspendedException();
-                }
-                else {
-                    next.complete(condResult);
-                }
-
-            }
-            catch (SuspendedException e) {
-                throw e;
-            }
-            catch (Exception e) {
-                next.completeExceptionally(e);
-            }
-            return next.get();
-        });
-        return next;
-    }
-
     public ServiceComputation<T> thenSuspendUntil(ContinuationCond<T> fn) {
         return thenSuspendUntil(fn, null, null);
     }
@@ -276,7 +241,7 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
     public ServiceComputation<T> thenSuspendUntil(ContinuationCond<T> fn, Long intervalCheckInMillis, Long timeoutInMillis) {
 
         long startTime = System.currentTimeMillis();
-        PeriodicallyCheckableState<JacsServiceData> periodicCheck = intervalCheckInMillis==null?null:new PeriodicallyCheckableState<>(null, intervalCheckInMillis);
+        PeriodicallyCheckableState<JacsServiceData> periodicCheck = intervalCheckInMillis == null ? null : new PeriodicallyCheckableState<>(null, intervalCheckInMillis);
 
         FutureBasedServiceComputation<T> next = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(this));
         next.submit(() -> {
@@ -287,12 +252,12 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
                 }
 
                 // Check for timeout
-                if (timeoutInMillis!=null && (System.currentTimeMillis() - startTime > timeoutInMillis)) {
+                if (timeoutInMillis != null && (System.currentTimeMillis() - startTime > timeoutInMillis)) {
                     throw new CondTimeoutException(timeoutInMillis);
                 }
 
                 // Check to see if we're allowed to test the value yet
-                if (periodicCheck!=null && !periodicCheck.updateCheckTime()) {
+                if (periodicCheck != null && !periodicCheck.updateCheckTime()) {
                     throw new SuspendedException();
                 }
 
@@ -300,16 +265,12 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
                 ContinuationCond.Cond<T> condResult = fn.checkCond(r);
                 if (condResult.isNotCondValue()) {
                     throw new SuspendedException();
-                }
-                else {
+                } else {
                     next.complete(condResult.getState());
                 }
-
-            }
-            catch (SuspendedException e) {
+            } catch (SuspendedException e) {
                 throw e;
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 next.completeExceptionally(e);
             }
             return next.get();
