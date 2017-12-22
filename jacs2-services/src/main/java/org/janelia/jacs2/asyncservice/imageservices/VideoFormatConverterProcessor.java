@@ -10,13 +10,14 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
+import org.janelia.jacs2.asyncservice.common.ThrottledExeJobsQueue;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -65,10 +66,10 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
                                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                   @PropertyValue(name = "FFMPEG.Bin.Path") String executable,
                                   @PropertyValue(name = "VAA3D.Library.Path") String libraryPath,
-                                  ThrottledProcessesQueue throttledProcessesQueue,
+                                  JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                                   @ApplicationProperties ApplicationConfig applicationConfig,
                                   Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, throttledProcessesQueue, applicationConfig, logger);
+        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
         this.executable = executable;
         this.libraryPath = libraryPath;
     }

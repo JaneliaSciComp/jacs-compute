@@ -4,6 +4,7 @@ import org.janelia.model.service.JacsJobInstanceInfo;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class BatchJobInfo implements ExeJobInfo {
@@ -24,7 +25,8 @@ public class BatchJobInfo implements ExeJobInfo {
     public String start() {
         return jobBatch
                 .stream()
-                .map(j -> j.start())
+                .map(ExeJobInfo::start)
+                .filter(Objects::nonNull)
                 .reduce((j1, j2) -> j1 + "," + j2)
                 .orElse(null)
                 ;

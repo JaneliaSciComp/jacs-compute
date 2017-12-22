@@ -5,6 +5,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.janelia.jacs2.asyncservice.qualifier.LocalJob;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
@@ -16,7 +17,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,9 +25,14 @@ import java.util.stream.Collectors;
 @LocalJob
 public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
 
+    private final ThrottledExeJobsQueue jobsQueue;
+    private final ApplicationConfig applicationConfig;
+
     @Inject
-    public ExternalLocalProcessRunner(JacsServiceDataPersistence jacsServiceDataPersistence, Logger logger) {
+    public ExternalLocalProcessRunner(JacsServiceDataPersistence jacsServiceDataPersistence, ThrottledExeJobsQueue jobsQueue, ApplicationConfig applicationConfig, Logger logger) {
         super(jacsServiceDataPersistence, logger);
+        this.jobsQueue = jobsQueue;
+        this.applicationConfig = applicationConfig;
     }
 
     @Override
@@ -52,11 +57,16 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
             File outputFile = prepareOutputFile(serviceContext.getOutputPath(), "Output file must be set before running the service " + serviceContext.getName());
             File errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
 
+            int defaultMaxRunningProcesses = applicationConfig.getIntegerPropertyValue("service.maxRunningProcesses", -1);
+            int maxRunningProcesses = applicationConfig.getIntegerPropertyValue(
+                    "service." + serviceContext.getName() + ".maxRunningProcesses",
+                    defaultMaxRunningProcesses);
+
             ExeJobInfo jobInfo;
             if (CollectionUtils.size(externalConfigs) <= 1) {
-                jobInfo = runSingleProcess(processingScript, processDirectory, configFiles.stream().findFirst().orElse(null), outputFile, errorFile, env, serviceContext);
+                jobInfo = runSingleProcess(processingScript, processDirectory, configFiles.stream().findFirst().orElse(null), outputFile, errorFile, env, maxRunningProcesses, serviceContext);
             } else {
-                jobInfo = runMultipleProcessess(processingScript, processDirectory, configFiles, outputFile, errorFile, env, serviceContext);
+                jobInfo = runMultipleProcessess(processingScript, processDirectory, configFiles, outputFile, errorFile, env, maxRunningProcesses, serviceContext);
             }
             String jobId = jobInfo.start();
             // start the job
@@ -82,6 +92,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                                         File processOutput,
                                         File processError,
                                         Map<String, String> env,
+                                        int maxRunningProcesses,
                                         JacsServiceData serviceContext) {
         ProcessBuilder processBuilder = new ProcessBuilder(ImmutableList.<String>builder()
                 .add(processingScript)
@@ -104,7 +115,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                 .redirectError(ProcessBuilder.Redirect.appendTo(processError));
 
         logger.info("Start {} in {}{} for {} using env {}", processingScript, processDirectory, withConfigOption, serviceContext, processBuilder.environment());
-        return new LocalExeJobInfo(processBuilder, processingScript);
+        return new ThrottledJobInfo(new LocalExeJobInfo(processBuilder, processingScript), serviceContext, jobsQueue, maxRunningProcesses);
     }
 
     private ExeJobInfo runMultipleProcessess(String processingScript,
@@ -113,9 +124,10 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                                              File processOutput,
                                              File processError,
                                              Map<String, String> env,
+                                             int maxRunningProcesses,
                                              JacsServiceData serviceContext) {
         List<ExeJobInfo> jobList = processInputs.stream()
-                .map(processInput -> runSingleProcess(processingScript, processDirectory, processInput, processOutput, processError, env, serviceContext))
+                .map(processInput -> runSingleProcess(processingScript, processDirectory, processInput, processOutput, processError, env, maxRunningProcesses, serviceContext))
                 .collect(Collectors.toList());
         return new BatchJobInfo(jobList, processingScript);
     }

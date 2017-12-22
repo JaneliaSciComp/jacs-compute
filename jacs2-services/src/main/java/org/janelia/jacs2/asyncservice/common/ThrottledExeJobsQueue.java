@@ -18,31 +18,31 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
-public class ThrottledProcessesQueue {
+public class ThrottledExeJobsQueue {
 
     private final int initialDelayInMillis;
     private final int periodInMillis;
     private Logger logger;
     private ScheduledExecutorService scheduler;
-    private Map<String, BlockingQueue<ThrottledJobInfo>> waitingProcesses;
-    private Map<String, BlockingQueue<ThrottledJobInfo>> runningProcesses;
+    private Map<String, BlockingQueue<ThrottledJobInfo>> waitingJobs;
+    private Map<String, BlockingQueue<ThrottledJobInfo>> runningJobs;
 
-    ThrottledProcessesQueue() {
+    ThrottledExeJobsQueue() {
         // CDI required ctor
         this.initialDelayInMillis = 30000;
         this.periodInMillis = 500;
     }
 
     @Inject
-    public ThrottledProcessesQueue(Logger logger) {
+    public ThrottledExeJobsQueue(Logger logger) {
         this();
         this.logger = logger;
     }
 
     @PostConstruct
     public void initialize() {
-        waitingProcesses = new ConcurrentHashMap<>();;
-        runningProcesses= new ConcurrentHashMap<>();;
+        waitingJobs = new ConcurrentHashMap<>();;
+        runningJobs = new ConcurrentHashMap<>();;
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("JACS-THROTTLE-%d")
                 .setDaemon(true)
@@ -62,19 +62,21 @@ public class ThrottledProcessesQueue {
      * @param jobInfo being added
      * @return
      */
-    synchronized ThrottledJobInfo add(ThrottledJobInfo jobInfo) {
+    synchronized String add(ThrottledJobInfo jobInfo) {
         if (jobInfo.getMaxRunningProcesses() <= 0 ||
-                CollectionUtils.size(runningProcesses.get(jobInfo.getProcessName())) < jobInfo.getMaxRunningProcesses()) {
+                CollectionUtils.size(runningJobs.get(jobInfo.getJobType())) < jobInfo.getMaxRunningProcesses()) {
             addJobDoneCallback(jobInfo);
-            if (jobInfo.start() != null && jobInfo.getMaxRunningProcesses() > 0) {
-                BlockingQueue<ThrottledJobInfo> queue = getQueue(jobInfo.getProcessName(), runningProcesses);
+            String jobId = jobInfo.beginProcessing();
+            if (jobInfo.getMaxRunningProcesses() > 0) {
+                BlockingQueue<ThrottledJobInfo> queue = getQueue(jobInfo.getJobType(), runningJobs);
                 queue.add(jobInfo);
             }
+            return jobId;
         } else {
-            BlockingQueue<ThrottledJobInfo> queue = getQueue(jobInfo.getProcessName(), waitingProcesses);
+            BlockingQueue<ThrottledJobInfo> queue = getQueue(jobInfo.getJobType(), waitingJobs);
             queue.add(jobInfo);
+            return null;
         }
-        return jobInfo;
     }
 
     private BlockingQueue<ThrottledJobInfo> getQueue(String name, Map<String, BlockingQueue<ThrottledJobInfo>> whichProcesses) {
@@ -89,35 +91,35 @@ public class ThrottledProcessesQueue {
     }
 
     private void moveProcessToRunningQueue(ThrottledJobInfo jobInfo) {
-        logger.debug("Prepare for actually running queue {} - {}", jobInfo.getProcessName(), jobInfo.getServiceContext());
-        BlockingQueue<ThrottledJobInfo> waitingQueue = getQueue(jobInfo.getProcessName(), waitingProcesses);
-        BlockingQueue<ThrottledJobInfo> runningQueue = getQueue(jobInfo.getProcessName(), runningProcesses);
+        logger.debug("Prepare for actually running queue {} - {}", jobInfo.getJobType(), jobInfo.getJobServiceContext());
+        BlockingQueue<ThrottledJobInfo> waitingQueue = getQueue(jobInfo.getJobType(), waitingJobs);
+        BlockingQueue<ThrottledJobInfo> runningQueue = getQueue(jobInfo.getJobType(), runningJobs);
         waitingQueue.remove(jobInfo);
-        if (jobInfo.start() != null) {
+        if (jobInfo.beginProcessing() != null) {
             runningQueue.add(jobInfo);
         }
     }
 
     private void removeProcessFromRunningQueue(ThrottledJobInfo jobInfo) {
-        BlockingQueue<ThrottledJobInfo> runningQueue = getQueue(jobInfo.getProcessName(), runningProcesses);
+        BlockingQueue<ThrottledJobInfo> runningQueue = getQueue(jobInfo.getJobType(), runningJobs);
         boolean removed = runningQueue.remove(jobInfo);
         if (removed) {
-            logger.debug("Completed {}:{} and removed it from the runningQueue (size={})", jobInfo.getProcessName(), jobInfo.getScriptName(), runningQueue.size());
+            logger.debug("Completed {}:{} and removed it from the runningQueue (size={})", jobInfo.getJobType(), jobInfo.getScriptName(), runningQueue.size());
         }
         else {
-            logger.debug("Completed {}:{} and failed to remote it from the runningQueue (size={})", jobInfo.getProcessName(), jobInfo.getScriptName(), runningQueue.size());
+            logger.debug("Completed {}:{} and failed to remote it from the runningQueue (size={})", jobInfo.getJobType(), jobInfo.getScriptName(), runningQueue.size());
         }
     }
 
     private void checkWaitingQueue() {
-        for (Map.Entry<String, BlockingQueue<ThrottledJobInfo>> queueEntry : waitingProcesses.entrySet()) {
+        for (Map.Entry<String, BlockingQueue<ThrottledJobInfo>> queueEntry : waitingJobs.entrySet()) {
             BlockingQueue<ThrottledJobInfo> queue = queueEntry.getValue();
             for (ThrottledJobInfo jobInfo = queue.poll(); jobInfo != null; jobInfo = queue.poll()) {
-                if (CollectionUtils.size(runningProcesses.get(jobInfo.getProcessName())) < jobInfo.getMaxRunningProcesses()) {
-                    logger.debug("Move {} - {} to running queue", jobInfo.getProcessName(), jobInfo.getServiceContext());
+                if (CollectionUtils.size(runningJobs.get(jobInfo.getJobType())) < jobInfo.getMaxRunningProcesses()) {
+                    logger.debug("Move {} - {} to running queue", jobInfo.getJobType(), jobInfo.getJobServiceContext());
                     addJobDoneCallback(jobInfo);
                     moveProcessToRunningQueue(jobInfo);
-                    jobInfo.start();
+                    jobInfo.beginProcessing();
                 } else {
                     queue.add(jobInfo);
                     break;

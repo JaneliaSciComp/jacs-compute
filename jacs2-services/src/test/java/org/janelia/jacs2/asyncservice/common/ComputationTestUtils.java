@@ -27,8 +27,8 @@ public class ComputationTestUtils {
         return new ServiceComputationFactory(serviceComputationQueue, logger);
     }
 
-    public static ThrottledProcessesQueue createTestThrottledProcessesQueue() {
-        ThrottledProcessesQueue processesQueue = mock(ThrottledProcessesQueue.class);
+    public static ThrottledExeJobsQueue createTestThrottledProcessesQueue() {
+        ThrottledExeJobsQueue processesQueue = mock(ThrottledExeJobsQueue.class);
         when(processesQueue.add(any(ThrottledJobInfo.class)))
                 .then(invocation -> {
                     ThrottledJobInfo jobInfo = invocation.getArgument(0);

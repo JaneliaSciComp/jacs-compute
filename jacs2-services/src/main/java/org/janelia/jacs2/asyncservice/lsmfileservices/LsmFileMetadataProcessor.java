@@ -4,21 +4,21 @@ import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
+import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.model.service.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.asyncservice.common.ComputationException;
-import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
-import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
+import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -59,10 +59,10 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<F
                              @PropertyValue(name = "Perl.Path") String perlExecutable,
                              @PropertyValue(name = "Sage.Perllib") String perlModule,
                              @PropertyValue(name = "LSMJSONDump.CMD") String scriptName,
-                             ThrottledProcessesQueue throttledProcessesQueue,
+                             JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                              @ApplicationProperties ApplicationConfig applicationConfig,
                              Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, throttledProcessesQueue, applicationConfig, logger);
+        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
         this.perlExecutable = perlExecutable;
         this.perlModule = perlModule;
         this.scriptName = scriptName;

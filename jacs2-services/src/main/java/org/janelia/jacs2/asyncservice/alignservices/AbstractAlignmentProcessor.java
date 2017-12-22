@@ -15,13 +15,14 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
+import org.janelia.jacs2.asyncservice.common.ThrottledExeJobsQueue;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.asyncservice.utils.X11Utils;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
@@ -52,10 +53,10 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
                                String alignmentConfigDir,
                                String alignmentTemplatesDir,
                                String libraryPath,
-                               ThrottledProcessesQueue throttledProcessesQueue,
+                               JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                                ApplicationConfig applicationConfig,
                                Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, throttledProcessesQueue, applicationConfig, logger);
+        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
         this.alignmentRunner = alignmentRunner;
         this.libraryPath = libraryPath;
         this.toolsDir = toolsDir;

@@ -10,6 +10,8 @@ import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
+import org.janelia.model.service.JacsJobInstanceInfo;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.After;
@@ -31,10 +33,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 public class SingleCMTKAlignmentProcessorTest {
     private static final Long TEST_SERVICE_ID = 1L;
@@ -55,6 +54,7 @@ public class SingleCMTKAlignmentProcessorTest {
         ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
 
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        JacsJobInstanceInfoDao jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);
 
         ApplicationConfig applicationConfig = new ApplicationConfigProvider().fromMap(
                 ImmutableMap.of())
@@ -68,7 +68,7 @@ public class SingleCMTKAlignmentProcessorTest {
                 CMTK_TOOLS_DIR,
                 CMTK_DEFAULT_TEMPLATE,
                 CMTK_LIBRARY_NAME,
-                ComputationTestUtils.createTestThrottledProcessesQueue(),
+                jacsJobInstanceInfoDao,
                 applicationConfig,
                 logger);
 
