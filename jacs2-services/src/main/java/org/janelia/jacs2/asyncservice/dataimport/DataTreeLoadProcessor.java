@@ -25,6 +25,7 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
 import org.janelia.model.domain.workspace.TreeNode;
+import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -54,9 +55,11 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
         Long parentFolderId;
         @Parameter(names = "-storageLocation", description = "Data storage location", required = true)
         String storageLocation;
-        @Parameter(names = "-extensionsToLoad", description = "list of extensions to load", required = false)
-        List<String> extensionsToLoad;
-        @Parameter(names = "-mipsExtensions", description = "list of ", required = false)
+        @Parameter(names = "-losslessImgExtensions", description = "list of extensions for which to generate mips", required = false)
+        List<String> losslessImgExtensions = new ArrayList<>(ImmutableList.of(
+                ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw"
+        ));
+        @Parameter(names = "-mipsExtensions", description = "list of extensions for which to generate mips", required = false)
         List<String> mipsExtensions = new ArrayList<>(ImmutableList.of(
                 ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd"
         ));
@@ -245,7 +248,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
             List<DataLoadResult> dataLoadResults = Streams.concat(contentWithMips.stream(), contentWithoutMips.stream())
                     .peek(mipsInfo -> {
                         mipsInfo.setFolderId(dataFolder.getId());
-                        folderService.addImageFile(dataFolder, mipsInfo.remoteContent.getEntryPath(), jacsServiceData.getOwner());
+                        folderService.addImageFile(dataFolder, mipsInfo.remoteContent.getEntryPath(), getFileTypeByExtension(mipsInfo.remoteContent.getEntryPath(), args.losslessImgExtensions), jacsServiceData.getOwner());
                         File mipsFile = null;
                         if (mipsInfo.localContentMipsPath != null) {
                             mipsFile = mips.get(mipsInfo.localContentMipsPath.toFile());
@@ -256,7 +259,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                                 mipsStream = new FileInputStream(mipsFile);
                                 StorageService.StorageInfo mipsStorageEntry = storageService.putFileStream(mipsInfo.remoteContentMips.getStorageLocation(), mipsInfo.remoteContentMips.getEntryRelativePath(), jacsServiceData.getOwner(), mipsStream);
                                 mipsInfo.remoteContentMipsUrl = mipsStorageEntry.getStorageLocation();
-                                folderService.addImageFile(dataFolder, mipsStorageEntry.getEntryPath(), jacsServiceData.getOwner());
+                                folderService.addImageFile(dataFolder, mipsStorageEntry.getEntryPath(), FileType.SignalMip, jacsServiceData.getOwner());
                             } catch (Exception e) {
                                 throw new ComputationException(jacsServiceData, e);
                             } finally {
@@ -274,4 +277,11 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
         });
     }
 
+    private FileType getFileTypeByExtension(String fileArtifact, List<String> losslessImageExtensions) {
+        if (losslessImageExtensions.contains(FileUtils.getFileExtensionOnly(fileArtifact))) {
+            return FileType.LosslessStack;
+        } else {
+            return FileType.Unclassified2d;
+        }
+    }
 }
