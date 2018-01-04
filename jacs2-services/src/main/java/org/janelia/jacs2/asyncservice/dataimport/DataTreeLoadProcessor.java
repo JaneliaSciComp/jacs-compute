@@ -185,10 +185,16 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                 .filter(entry -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getEntryRelativePath())))
                 .map(content -> {
                     try {
-                        Path mipSourcePath = Paths.get(content.getEntryRootLocation(), content.getEntryRelativePath());
-                        if (Files.notExists(mipSourcePath)) {
+                        Path localStoredMipSource = Paths.get(content.getEntryRootLocation(), content.getEntryRelativePath());
+                        Path mipSourcePath;
+                        if (Files.exists(localStoredMipSource)) {
+                            mipSourcePath = localStoredMipSource;
+                        } else {
                             Path mipSourceRootPath = getWorkingDirectory(jacsServiceData).resolve("temp");
                             mipSourcePath = mipSourceRootPath.resolve(FileUtils.getFileName(content.getEntryRelativePath()));
+                        }
+                        if (Files.notExists(mipSourcePath) || Files.size(mipSourcePath) == 0) {
+                            // no local copy found
                             Files.createDirectories(mipSourcePath.getParent());
                             Files.copy(storageService.getStorageContent(args.storageLocation, content.getEntryRelativePath(), jacsServiceData.getOwner()), mipSourcePath, StandardCopyOption.REPLACE_EXISTING);
                         }
