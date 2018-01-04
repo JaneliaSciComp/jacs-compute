@@ -70,11 +70,11 @@ public class StorageService {
         this.storageServiceApiKey = storageServiceApiKey;
     }
 
-    public InputStream getContentStream(String storageLocation, String entryName, String subject) {
+    public InputStream getStorageContent(String storageLocation, String entryName, String subject) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageLocation).path("entry-content").path(entryName);
+            WebTarget target = httpclient.target(storageLocation).path("entry_content").path(entryName);
 
             Invocation.Builder requestBuilder = target.request()
                     .header("Authorization", "APIKEY " + storageServiceApiKey)
@@ -96,7 +96,7 @@ public class StorageService {
         }
     }
 
-    public StorageInfo putFileStream(String storageLocation, String entryName, String subject, InputStream dataStream) {
+    public StorageInfo putStorageContent(String storageLocation, String entryName, String subject, InputStream dataStream) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();

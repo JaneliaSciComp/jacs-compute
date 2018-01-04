@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
-import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -191,7 +190,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                             Path mipSourceRootPath = getWorkingDirectory(jacsServiceData).resolve("temp");
                             mipSourcePath = mipSourceRootPath.resolve(FileUtils.getFileName(content.getEntryRelativePath()));
                             Files.createDirectories(mipSourcePath.getParent());
-                            Files.copy(storageService.getContentStream(args.storageLocation, content.getEntryRelativePath(), jacsServiceData.getOwner()), mipSourcePath, StandardCopyOption.REPLACE_EXISTING);
+                            Files.copy(storageService.getStorageContent(args.storageLocation, content.getEntryRelativePath(), jacsServiceData.getOwner()), mipSourcePath, StandardCopyOption.REPLACE_EXISTING);
                         }
                         Path mipsDirPath = mipSourcePath.getParent();
                         String mipsName = FileUtils.getFileNameOnly(mipSourcePath) + "_mipArtifact.png";
@@ -260,7 +259,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                             FileInputStream mipsStream = null;
                             try {
                                 mipsStream = new FileInputStream(mipsFile);
-                                StorageService.StorageInfo mipsStorageEntry = storageService.putFileStream(mipsInfo.remoteContentMips.getStorageLocation(), mipsInfo.remoteContentMips.getEntryRelativePath(), jacsServiceData.getOwner(), mipsStream);
+                                StorageService.StorageInfo mipsStorageEntry = storageService.putStorageContent(mipsInfo.remoteContentMips.getStorageLocation(), mipsInfo.remoteContentMips.getEntryRelativePath(), jacsServiceData.getOwner(), mipsStream);
                                 mipsInfo.remoteContentMipsUrl = mipsStorageEntry.getStorageLocation();
                                 folderService.addImageFile(dataFolder, mipsStorageEntry.getEntryPath(), FileType.SignalMip, jacsServiceData.getOwner());
                             } catch (Exception e) {
