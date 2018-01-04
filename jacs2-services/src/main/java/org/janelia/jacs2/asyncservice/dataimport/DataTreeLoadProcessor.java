@@ -182,6 +182,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
         List<StorageService.StorageInfo> contentToLoad = storageService.listStorageContent(args.storageLocation, jacsServiceData.getOwner());
 
         List<DataLoadResult> contentWithMips = contentToLoad.stream()
+                .filter(entry -> !entry.isCollectionFlag())
                 .filter(entry -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getEntryRelativePath())))
                 .map(content -> {
                     try {
@@ -204,7 +205,8 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                                 content.getStorageLocation(),
                                 content.getEntryRootLocation(),
                                 content.getEntryRootPrefix(),
-                                FileUtils.getFilePath(Paths.get(content.getEntryRelativePath()).getParent(), mipsName).toString());
+                                FileUtils.getFilePath(Paths.get(content.getEntryRelativePath()).getParent(), mipsName).toString(),
+                                false);
                         return dataLoadResult;
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
@@ -212,6 +214,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                 })
                 .collect(Collectors.toList());
         List<DataLoadResult> contentWithoutMips = contentToLoad.stream()
+                .filter(entry -> !entry.isCollectionFlag())
                 .filter(entry -> !args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getEntryRelativePath())))
                 .map(content -> {
                     DataLoadResult dataLoadResult = new DataLoadResult();

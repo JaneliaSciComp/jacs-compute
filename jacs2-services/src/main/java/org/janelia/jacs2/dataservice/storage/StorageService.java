@@ -29,12 +29,14 @@ public class StorageService {
         private final String entryRootPrefix;
         private final String entryRootLocation;
         private final String entryRelativePath;
+        private final boolean collectionFlag;
 
-        public StorageInfo(String storageLocation, String entryRootLocation, String entryRootPrefix, String entryRelativePath) {
+        public StorageInfo(String storageLocation, String entryRootLocation, String entryRootPrefix, String entryRelativePath, boolean collectionFlag) {
             this.storageLocation = storageLocation;
             this.entryRootLocation = entryRootLocation;
             this.entryRootPrefix = entryRootPrefix;
             this.entryRelativePath = entryRelativePath;
+            this.collectionFlag = collectionFlag;
         }
 
         public String getStorageLocation() {
@@ -55,6 +57,10 @@ public class StorageService {
 
         public String getEntryPath() {
             return Paths.get(entryRootPrefix, entryRelativePath).toString();
+        }
+
+        public boolean isCollectionFlag() {
+            return collectionFlag;
         }
     }
     private final String storageServiceApiKey;
@@ -155,6 +161,7 @@ public class StorageService {
         JsonNode rootLocation = jsonNode.get("rootLocation");
         JsonNode rootPrefix = jsonNode.get("rootPrefix");
         JsonNode nodeRelativePath = jsonNode.get("nodeRelativePath");
-        return new StorageInfo(storageUrl,rootLocation.asText(), rootPrefix.asText(), nodeRelativePath.asText());
+        JsonNode collectionFlag = jsonNode.get("collectionFlag");
+        return new StorageInfo(storageUrl,rootLocation.asText(), rootPrefix.asText(), nodeRelativePath.asText(), collectionFlag.asBoolean());
     }
 }
