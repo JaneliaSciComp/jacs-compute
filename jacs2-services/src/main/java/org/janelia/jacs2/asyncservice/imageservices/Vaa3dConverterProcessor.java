@@ -30,9 +30,9 @@ import java.util.StringJoiner;
 public class Vaa3dConverterProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     static class Vaa3dConverterArgs extends ServiceArgs {
-        @Parameter(names = "-input", description = "Input file", required = true)
+        @Parameter(names = "-inputFile", description = "Input file", required = true)
         String inputFileName;
-        @Parameter(names = "-output", description = "Output file", required = true)
+        @Parameter(names = "-outputFile", description = "Output file", required = true)
         String outputFileName;
     }
 

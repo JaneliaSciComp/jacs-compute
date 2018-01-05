@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.imageservices.Vaa3dConverterProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dMipCmdProcessor;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.config.ApplicationConfig;
@@ -44,6 +45,7 @@ public class DataTreeLoadProcessorTest {
     private FolderService folderService;
     private StorageService storageService;
     private Vaa3dMipCmdProcessor vaa3dMipCmdProcessor;
+    private Vaa3dConverterProcessor vaa3dConverterProcessor;
     private Logger logger;
 
     @Before
@@ -54,6 +56,7 @@ public class DataTreeLoadProcessorTest {
         folderService = mock(FolderService.class);
         storageService = mock(StorageService.class);
         vaa3dMipCmdProcessor = mock(Vaa3dMipCmdProcessor.class);
+        vaa3dConverterProcessor = mock(Vaa3dConverterProcessor.class);
     }
 
     private DataTreeLoadProcessor createDataTreeLoadProcessor() {
@@ -63,6 +66,7 @@ public class DataTreeLoadProcessorTest {
                 folderService,
                 storageService,
                 vaa3dMipCmdProcessor,
+                vaa3dConverterProcessor,
                 logger);
     }
 

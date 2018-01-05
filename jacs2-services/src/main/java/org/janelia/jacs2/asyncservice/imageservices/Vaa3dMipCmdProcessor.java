@@ -144,7 +144,7 @@ public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<
         scriptWriter.read("EXTRA_OPTIONS");
         scriptWriter.exportVar("NSLOTS", String.valueOf(ProcessorHelper.getProcessingSlots(resources)));
         scriptWriter.addWithArgs(getExecutable())
-                .addArgs("-cmd", "image-loader", "-mip")
+                .addArgs("-cmd", "image-loader")
                 .addArg("-mip")
                 .addArgs("${INPUT}", "${OUTPUT}", "${EXTRA_OPTIONS}")
                 .endArgs("");

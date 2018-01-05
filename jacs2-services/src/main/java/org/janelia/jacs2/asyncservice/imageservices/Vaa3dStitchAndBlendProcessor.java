@@ -196,8 +196,8 @@ public class Vaa3dStitchAndBlendProcessor extends AbstractBasicLifeCycleServiceP
                         .waitFor(deps)
                         .description(description)
                         .build(),
-                new ServiceArg("-input", source.toString()),
-                new ServiceArg("-output", target.toString())
+                new ServiceArg("-inputFile", source.toString()),
+                new ServiceArg("-outputFile", target.toString())
         );
         return submitDependencyIfNotFound(convertServiceData);
     }
