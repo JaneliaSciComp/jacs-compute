@@ -34,10 +34,8 @@ import java.util.stream.Collectors;
 public class DavidTestCreator extends AbstractExeBasedServiceProcessor<List<File>> {
 
     static class DavidTestCreatorArgs extends ServiceArgs {
-        @Parameter(names = "-output", description = "Output directory", required = true)
-        String output;
-        @Parameter(names = "-num", description = "Number to print", required = false)
-        Integer num;
+        @Parameter(names = "-jsonDirectory", description = "Directory with JSON files", required = true)
+        String jsonDirectory;
     }
 
     private final String executable;
@@ -118,11 +116,9 @@ public class DavidTestCreator extends AbstractExeBasedServiceProcessor<List<File
     }
 
     private void createScript(DavidTestCreatorArgs args, ScriptWriter scriptWriter) {
-        scriptWriter.read("OUTPUT");
-        scriptWriter.read("NUM");
+        scriptWriter.read("JSONDIRECTORY");
         scriptWriter.addWithArgs(getFullExecutableName(executable));
-        scriptWriter.addArg("$OUTPUT");
-        scriptWriter.addArg("$NUM");
+        scriptWriter.addArg("$JSONDIRECTORY");
         scriptWriter.endArgs();
     }
 
@@ -131,8 +127,7 @@ public class DavidTestCreator extends AbstractExeBasedServiceProcessor<List<File
         DavidTestCreatorArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter scriptWriter = externalScriptCode.getCodeWriter();
-        scriptWriter.add(args.output);
-        scriptWriter.add(args.num.toString());
+        scriptWriter.add(args.jsonDirectory);
         scriptWriter.close();
         return Arrays.asList(externalScriptCode);
     }
@@ -152,7 +147,7 @@ public class DavidTestCreator extends AbstractExeBasedServiceProcessor<List<File
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new DavidTestCreatorArgs());
     }
 
-    private Path getOutputDir(DavidTestCreatorArgs args) {
-        return Paths.get(args.output).toAbsolutePath();
-    }
+   /* private Path getOutputDir(DavidTestCreatorArgs args) {
+        return Paths.get(args.jsonDirectory).toAbsolutePath();
+    }*/
 }

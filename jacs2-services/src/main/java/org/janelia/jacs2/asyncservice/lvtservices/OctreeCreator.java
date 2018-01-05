@@ -1,4 +1,4 @@
-package org.janelia.jacs2.asyncservice.lvtservices;
+package org.janelia.jacs2.asyncservice.lightsheetservices;
 
 import com.beust.jcommander.Parameter;
 import org.janelia.jacs2.asyncservice.common.*;
