@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -18,7 +19,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.ImageMagickConverterProcessor;
-import org.janelia.jacs2.asyncservice.imageservices.Vaa3dConverterProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dMipCmdProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTreeLoadProcessor.DataLoadResult>> {
 
     private static final String TIFF_EXTENSION = ".tif";
+    public static final String PNG_EXTENSION = ".png";
 
     static class DataTreeLoadArgs extends ServiceArgs {
         @Parameter(names = "-folderName", description = "Folder name", required = true)
@@ -190,7 +191,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
         List<DataLoadResult> contentWithMips = contentToLoad.stream()
                 .filter(entry -> !entry.isCollectionFlag())
                 .filter(entry -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getEntryRelativePath())))
-                .map(content -> {
+                .map((StorageService.StorageInfo content) -> {
                     try {
                         Path localStoredMipSource = Paths.get(content.getEntryRootLocation(), content.getEntryRelativePath());
                         Path mipSourcePath;
@@ -235,23 +236,19 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                 })
                 .collect(Collectors.toList());
 
-        ServiceComputation<JacsServiceResult<List<File>>> mipsComputation;
+        ServiceComputation<JacsServiceResult<List<DataLoadResult>>> mipsComputation;
         if (contentWithMips.isEmpty()) {
             mipsComputation = computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, ImmutableList.of()));
         } else {
             mipsComputation = createMipsComputation(jacsServiceData, contentWithMips);
         }
-        return mipsComputation.thenApply((JacsServiceResult<List<File>> mipsResult) -> {
+        return mipsComputation.thenApply((JacsServiceResult<List<DataLoadResult>> mipsResult) -> {
             TreeNode dataFolder = folderService.createFolder(args.parentFolderId, args.folderName, jacsServiceData.getOwner());
-            Map<File, File> mips = Maps.uniqueIndex(mipsResult.getResult(), f -> f);
-            List<DataLoadResult> dataLoadResults = Streams.concat(contentWithMips.stream(), contentWithoutMips.stream())
+            List<DataLoadResult> dataLoadResults = Streams.concat(mipsResult.getResult().stream(), contentWithoutMips.stream())
                     .peek(mipsInfo -> {
                         mipsInfo.setFolderId(dataFolder.getId());
                         folderService.addImageFile(dataFolder, mipsInfo.remoteContent.getEntryPath(), getFileTypeByExtension(mipsInfo.remoteContent.getEntryPath(), args.losslessImgExtensions), jacsServiceData.getOwner());
-                        File mipsFile = null;
-                        if (mipsInfo.localContentMipsPath != null) {
-                            mipsFile = mips.get(mipsInfo.localContentMipsPath.toFile());
-                        }
+                        File mipsFile = mipsInfo.localContentMipsPath != null ? mipsInfo.localContentMipsPath.toFile() : null;
                         if (mipsFile != null) {
                             FileInputStream mipsStream = null;
                             try {
@@ -277,7 +274,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
     }
 
     @SuppressWarnings("unchecked")
-    private ServiceComputation<JacsServiceResult<List<File>>> createMipsComputation(JacsServiceData jacsServiceData, List<DataLoadResult> mipsInputs) {
+    private ServiceComputation<JacsServiceResult<List<DataLoadResult>>> createMipsComputation(JacsServiceData jacsServiceData, List<DataLoadResult> mipsInputs) {
         return vaa3dMipCmdProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Generate mips")
                         .build(),
@@ -305,13 +302,13 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                             ),
                             new ServiceArg("-outputFiles",
                                     tifMipsResults.getResult().stream()
-                                            .map((File tifMipResultFile) -> FileUtils.replaceFileExt(tifMipResultFile.toPath(), ".png").toString())
+                                            .map((File tifMipResultFile) -> FileUtils.replaceFileExt(tifMipResultFile.toPath(), PNG_EXTENSION).toString())
                                             .reduce((p1, p2) -> p1 + "," + p2)
                                             .orElse("")
                             )))
                 .thenApply(pngMipsResults -> {
-                    pngMipsResults.getResult().stream()
-                            .forEach((File pngMipResultFile) -> {
+                    Map<Path, Path> tif2pngConversions = pngMipsResults.getResult().stream()
+                            .map((File pngMipResultFile) -> {
                                 Path converterInput = FileUtils.replaceFileExt(pngMipResultFile.toPath(), TIFF_EXTENSION);
                                 try {
                                     logger.debug("Delete TIFF file {} after it was converted to PNG: {}", converterInput, pngMipResultFile);
@@ -319,8 +316,27 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                                 } catch (IOException e) {
                                     logger.warn("Error deleting {}", converterInput, e);
                                 }
-                            });
-                    return pngMipsResults;
+                                return ImmutablePair.of(converterInput, pngMipResultFile.toPath());
+                            })
+                            .collect(Collectors.toMap(tif2png -> tif2png.getLeft(), tif2png -> tif2png.getRight()));
+                    ;
+                    List<DataLoadResult> mipsResults = mipsInputs.stream()
+                            .map(mipsInput -> {
+                                DataLoadResult mipsResult = new DataLoadResult();
+                                mipsResult.remoteContent = mipsInput.remoteContent;
+                                mipsResult.localContentPath = mipsInput.localContentPath;
+                                mipsResult.localContentMipsPath = tif2pngConversions.get(mipsInput.localContentMipsPath);
+                                mipsResult.remoteContentMips = new StorageService.StorageInfo(
+                                        mipsInput.remoteContentMips.getStorageLocation(),
+                                        mipsInput.remoteContentMips.getEntryRootLocation(),
+                                        mipsInput.remoteContentMips.getEntryRootPrefix(),
+                                        FileUtils.replaceFileExt(Paths.get(mipsInput.remoteContentMips.getEntryRelativePath()), PNG_EXTENSION).toString(),
+                                        false);
+                                return mipsResult;
+
+                            })
+                            .collect(Collectors.toList());
+                    return new JacsServiceResult<>(pngMipsResults.getJacsServiceData(), mipsResults);
                 });
     }
 
