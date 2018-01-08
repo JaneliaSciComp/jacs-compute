@@ -88,7 +88,7 @@ public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<
                         .map(ofn -> new File(ofn))
                         .map(of -> of.exists())
                         .reduce((f1, f2) -> f1 && f2)
-                        .orElse(false);
+                        .orElse(true); // if the list is empty then it's done
             }
 
             @Override

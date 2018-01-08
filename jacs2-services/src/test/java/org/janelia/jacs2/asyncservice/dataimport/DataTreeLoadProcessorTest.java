@@ -1,14 +1,9 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.imageservices.Vaa3dConverterProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.ImageMagickConverterProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dMipCmdProcessor;
-import org.janelia.jacs2.cdi.ApplicationConfigProvider;
-import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
@@ -17,19 +12,10 @@ import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.List;
-
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
@@ -45,7 +31,7 @@ public class DataTreeLoadProcessorTest {
     private FolderService folderService;
     private StorageService storageService;
     private Vaa3dMipCmdProcessor vaa3dMipCmdProcessor;
-    private Vaa3dConverterProcessor vaa3dConverterProcessor;
+    private ImageMagickConverterProcessor imageMagickConverterProcessor;
     private Logger logger;
 
     @Before
@@ -56,7 +42,7 @@ public class DataTreeLoadProcessorTest {
         folderService = mock(FolderService.class);
         storageService = mock(StorageService.class);
         vaa3dMipCmdProcessor = mock(Vaa3dMipCmdProcessor.class);
-        vaa3dConverterProcessor = mock(Vaa3dConverterProcessor.class);
+        imageMagickConverterProcessor = mock(ImageMagickConverterProcessor.class);
     }
 
     private DataTreeLoadProcessor createDataTreeLoadProcessor() {
@@ -66,7 +52,7 @@ public class DataTreeLoadProcessorTest {
                 folderService,
                 storageService,
                 vaa3dMipCmdProcessor,
-                vaa3dConverterProcessor,
+                imageMagickConverterProcessor,
                 logger);
     }
 

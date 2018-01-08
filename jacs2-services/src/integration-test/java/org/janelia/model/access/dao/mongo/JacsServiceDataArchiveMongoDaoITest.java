@@ -1,5 +1,6 @@
 package org.janelia.model.access.dao.mongo;
 
+import com.google.common.collect.Ordering;
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.model.access.dao.JacsServiceDataArchiveDao;
@@ -11,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,7 +68,16 @@ public class JacsServiceDataArchiveMongoDaoITest extends AbstractMongoDaoITest<J
         JacsServiceData archivedService = testArchivedServiceDao.findArchivedServiceHierarchy(si1.getId());
         assertNotNull(archivedService);
         List<JacsServiceData> archivedServiceHierarchy = archivedService.serviceHierarchyStream().collect(Collectors.toList());
-        Streams.zip(s1Hierarchy.stream(), archivedServiceHierarchy.stream(), (sd, archivedSD) -> {
+        Comparator<JacsServiceData> sdComp = (sd1, sd2) -> {
+            if (sd1.getId().equals(sd2.getId())) {
+                return 0;
+            } else if (sd1.getId().longValue() - sd2.getId().longValue() < 0L) {
+                return  -1;
+            } else {
+                return 1;
+            }
+        };
+        Streams.zip(s1Hierarchy.stream().sorted(sdComp), archivedServiceHierarchy.stream().sorted(sdComp), (sd, archivedSD) -> {
             return ImmutablePair.of(sd, archivedSD);
         }).forEach(activeArchivedPair -> {
             assertNotSame(activeArchivedPair.getLeft(), activeArchivedPair.getRight());

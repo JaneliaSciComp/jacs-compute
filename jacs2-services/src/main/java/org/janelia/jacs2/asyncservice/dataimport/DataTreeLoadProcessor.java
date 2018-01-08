@@ -17,6 +17,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.imageservices.ImageMagickConverterProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dConverterProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dMipCmdProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -47,6 +48,8 @@ import java.util.stream.Collectors;
 
 @Named("dataTreeLoad")
 public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTreeLoadProcessor.DataLoadResult>> {
+
+    private static final String TIFF_EXTENSION = ".tif";
 
     static class DataTreeLoadArgs extends ServiceArgs {
         @Parameter(names = "-folderName", description = "Folder name", required = true)
@@ -125,7 +128,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
     private final FolderService folderService;
     private final StorageService storageService;
     private final WrappedServiceProcessor<Vaa3dMipCmdProcessor, List<File>> vaa3dMipCmdProcessor;
-    private final WrappedServiceProcessor<Vaa3dConverterProcessor, File> vaa3dConverterProcessor;
+    private final WrappedServiceProcessor<ImageMagickConverterProcessor, List<File>> imageMagickConverterProcessor;
 
     @Inject
     DataTreeLoadProcessor(ServiceComputationFactory computationFactory,
@@ -134,13 +137,13 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                           FolderService folderService,
                           StorageService storageService,
                           Vaa3dMipCmdProcessor vaa3dMipCmdProcessor,
-                          Vaa3dConverterProcessor vaa3dConverterProcessor,
+                          ImageMagickConverterProcessor imageMagickConverterProcessor,
                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.folderService = folderService;
         this.storageService = storageService;
         this.vaa3dMipCmdProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, vaa3dMipCmdProcessor);
-        this.vaa3dConverterProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, vaa3dConverterProcessor);
+        this.imageMagickConverterProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, imageMagickConverterProcessor);
     }
 
     @Override
@@ -203,18 +206,18 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                             Files.copy(storageService.getStorageContent(args.storageLocation, content.getEntryRelativePath(), jacsServiceData.getOwner()), mipSourcePath, StandardCopyOption.REPLACE_EXISTING);
                         }
                         Path mipsDirPath = mipSourcePath.getParent();
-                        String mipsName = FileUtils.getFileNameOnly(mipSourcePath) + "_mipArtifact.png";
-                        Path mipsPath = mipsDirPath == null ? Paths.get(mipsName) : mipsDirPath.resolve(mipsName);
+                        String tifMipsName = FileUtils.getFileNameOnly(mipSourcePath) + "_mipArtifact" + TIFF_EXTENSION;
+                        Path tifMipsPath = mipsDirPath == null ? Paths.get(tifMipsName) : mipsDirPath.resolve(tifMipsName);
 
                         DataLoadResult dataLoadResult = new DataLoadResult();
                         dataLoadResult.remoteContent = content;
                         dataLoadResult.localContentPath = mipSourcePath;
-                        dataLoadResult.localContentMipsPath = mipsPath;
+                        dataLoadResult.localContentMipsPath = tifMipsPath;
                         dataLoadResult.remoteContentMips = new StorageService.StorageInfo(
                                 content.getStorageLocation(),
                                 content.getEntryRootLocation(),
                                 content.getEntryRootPrefix(),
-                                FileUtils.getFilePath(Paths.get(content.getEntryRelativePath()).getParent(), mipsName).toString(),
+                                FileUtils.getFilePath(Paths.get(content.getEntryRelativePath()).getParent(), tifMipsName).toString(),
                                 false);
                         return dataLoadResult;
                     } catch (IOException e) {
@@ -275,55 +278,49 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
 
     @SuppressWarnings("unchecked")
     private ServiceComputation<JacsServiceResult<List<File>>> createMipsComputation(JacsServiceData jacsServiceData, List<DataLoadResult> mipsInputs) {
-        List<ServiceComputation<?>> v3dRawConvertComputations = mipsInputs.stream()
-                .map(entry -> {
-                    String inputFileExt = FileUtils.getFileExtensionOnly(entry.localContentPath);
-                    if (".v3draw".equals(inputFileExt)) {
-                        return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, entry));
-                    } else {
-                        String inputFileName = entry.localContentPath.toString();
-                        String outputFileName = FileUtils.replaceFileExt(entry.localContentPath, ".v3draw").toString();
-                        return vaa3dConverterProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
-                                        .description("Convert to v3draw")
-                                        .build(),
-                                new ServiceArg("-inputFile", inputFileName),
-                                new ServiceArg("-outputFile", outputFileName))
-                                .thenCompose(sr -> {
-                                    DataLoadResult newEntry = new DataLoadResult();
-                                    newEntry.remoteContent = entry.remoteContent;
-                                    newEntry.localContentPath = sr.getResult().toPath();
-                                    newEntry.localContentMipsPath = entry.localContentMipsPath;
-                                    newEntry.remoteContentMips = entry.remoteContentMips;
-                                    return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, newEntry));
-                                });
-                    }
-                })
-                .collect(Collectors.toList());
-        // combine all vaa3d conversions and wait for their results
-        ServiceComputation<List<JacsServiceResult<DataLoadResult>>> mipsInputComputation =
-                computationFactory.newCompletedComputation(mipsInputs)
-                        .thenCombineAll(v3dRawConvertComputations, (originalMipsInputs, results) -> results.stream()
-                                    .map(r -> (JacsServiceResult<DataLoadResult>) r)
-                                    .collect(Collectors.toList()));
-        // then use the generated v3draw files as mips inputs
-        return mipsInputComputation.thenCompose((List<JacsServiceResult<DataLoadResult>> vaa3dConvertResults) -> vaa3dMipCmdProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+        return vaa3dMipCmdProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Generate mips")
-                        .waitFor(vaa3dConvertResults.stream().map(JacsServiceResult::getJacsServiceData).collect(Collectors.toList()))
                         .build(),
                 new ServiceArg("-inputFiles",
-                        vaa3dConvertResults.stream()
-                                .map(JacsServiceResult::getResult)
+                        mipsInputs.stream()
                                 .map((DataLoadResult mipSource) -> mipSource.localContentPath.toString())
                                 .reduce((p1, p2) -> p1 + "," + p2)
                                 .orElse("")
                 ),
                 new ServiceArg("-outputFiles",
-                        vaa3dConvertResults.stream()
-                                .map(JacsServiceResult::getResult)
+                        mipsInputs.stream()
                                 .map((DataLoadResult mipSource) -> mipSource.localContentMipsPath.toString())
                                 .reduce((p1, p2) -> p1 + "," + p2)
                                 .orElse("")
-                )));
+                ))
+                .thenCompose(tifMipsResults -> imageMagickConverterProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                                    .description("Convert mips to png")
+                                    .build(),
+                            new ServiceArg("-inputFiles",
+                                    tifMipsResults.getResult().stream()
+                                            .map((File tifMipResultFile) -> tifMipResultFile.getAbsolutePath())
+                                            .reduce((p1, p2) -> p1 + "," + p2)
+                                            .orElse("")
+                            ),
+                            new ServiceArg("-outputFiles",
+                                    tifMipsResults.getResult().stream()
+                                            .map((File tifMipResultFile) -> FileUtils.replaceFileExt(tifMipResultFile.toPath(), ".png").toString())
+                                            .reduce((p1, p2) -> p1 + "," + p2)
+                                            .orElse("")
+                            )))
+                .thenApply(pngMipsResults -> {
+                    pngMipsResults.getResult().stream()
+                            .forEach((File pngMipResultFile) -> {
+                                Path converterInput = FileUtils.replaceFileExt(pngMipResultFile.toPath(), TIFF_EXTENSION);
+                                try {
+                                    logger.debug("Delete TIFF file {} after it was converted to PNG: {}", converterInput, pngMipResultFile);
+                                    FileUtils.deletePath(converterInput);
+                                } catch (IOException e) {
+                                    logger.warn("Error deleting {}", converterInput, e);
+                                }
+                            });
+                    return pngMipsResults;
+                });
     }
 
     private FileType getFileTypeByExtension(String fileArtifact, List<String> losslessImageExtensions) {
