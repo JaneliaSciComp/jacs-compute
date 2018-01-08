@@ -17,7 +17,7 @@ public class CoreDumpServiceErrorChecker extends DefaultServiceErrorChecker {
                 logger.error(l);
                 return true;
             } else if (l.matches("(?i:.*(error|exception).*)")) {
-                // ignore any exception for Fiji - just log it
+                // ignore any exception - just log it
                 logger.warn(l);
                 return false;
             } else {

@@ -9,11 +9,13 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -103,6 +105,34 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
                 return getConverterArgs(args)
                         .map(converterArgs -> converterArgs.getRight().toFile())
                         .collect(Collectors.toList());
+            }
+        };
+    }
+
+    @Override
+    public ServiceErrorChecker getErrorChecker() {
+        return new DefaultServiceErrorChecker(logger) {
+            @Override
+            protected boolean hasErrors(String l) {
+                if (StringUtils.isNotBlank(l)) {
+                    if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
+                        // core dump is still an error
+                        logger.error(l);
+                        return true;
+                    } else if (l.matches("(?i:.*(error/annotate\\.c).*)")) {
+                        // I have seen this probably because of a missing font so I will ignore them for now.
+                        logger.warn(l);
+                        return false;
+                    } else if (l.matches("(?i:.*(error|exception).*)")) {
+                        // but will consider any other error or exception
+                        logger.error(l);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
             }
         };
     }
