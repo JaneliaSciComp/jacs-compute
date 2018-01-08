@@ -295,6 +295,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                 ))
                 .thenCompose(tifMipsResults -> imageMagickConverterProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                                     .description("Convert mips to png")
+                                    .waitFor(tifMipsResults.getJacsServiceData())
                                     .build(),
                             new ServiceArg("-inputFiles",
                                     tifMipsResults.getResult().stream()
