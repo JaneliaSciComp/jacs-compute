@@ -51,6 +51,9 @@ public class FileUtils {
      * @throws IOException
      */
     public static void deletePath(Path dir) throws IOException {
+        if (dir == null) {
+            return; // do nothing
+        }
         Files.walkFileTree(dir, new FileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {

@@ -3,7 +3,6 @@ package org.janelia.jacs2.asyncservice.dataimport;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
@@ -25,8 +24,8 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
-import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.enums.FileType;
+import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -55,18 +54,20 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
     static class DataTreeLoadArgs extends ServiceArgs {
         @Parameter(names = "-folderName", description = "Folder name", required = true)
         String folderName;
-        @Parameter(names = "-parentFolderId", description = "Parent folder ID", required = false)
+        @Parameter(names = "-parentFolderId", description = "Parent folder ID")
         Long parentFolderId;
         @Parameter(names = "-storageLocation", description = "Data storage location", required = true)
         String storageLocation;
-        @Parameter(names = "-losslessImgExtensions", description = "list of extensions for which to generate mips", required = false)
+        @Parameter(names = "-losslessImgExtensions", description = "list of extensions for which to generate mips")
         List<String> losslessImgExtensions = new ArrayList<>(ImmutableList.of(
                 ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw"
         ));
-        @Parameter(names = "-mipsExtensions", description = "list of extensions for which to generate mips", required = false)
+        @Parameter(names = "-mipsExtensions", description = "list of extensions for which to generate mips")
         List<String> mipsExtensions = new ArrayList<>(ImmutableList.of(
                 ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd"
         ));
+        @Parameter(names = "-cleanLocalFilesWhenDone", description = "Clean up local files when all data loading is done")
+        boolean cleanLocalFilesWhenDone = false;
     }
 
     static class DataLoadResult {
@@ -175,7 +176,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
     @Override
     public ServiceComputation<JacsServiceResult<List<DataLoadResult>>> process(JacsServiceData jacsServiceData) {
         return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenCompose(sd -> generateMips(sd))
+                .thenCompose(this::generateMips)
                 .thenApply(sr -> updateServiceResult(sr.getJacsServiceData(), sr.getResult()))
                 ;
     }
@@ -267,6 +268,18 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                                 }
                              }
                         }
+                        if (args.cleanLocalFilesWhenDone) {
+                            try {
+                                FileUtils.deletePath(mipsInfo.localContentPath);
+                            } catch (IOException e) {
+                                logger.warn("Error deleting {}", mipsInfo.localContentPath, e);
+                            }
+                            try {
+                                FileUtils.deletePath(mipsInfo.localContentMipsPath);
+                            } catch (IOException e) {
+                                logger.warn("Error deleting {}", mipsInfo.localContentMipsPath, e);
+                            }
+                        }
                     })
                     .collect(Collectors.toList());
             return new JacsServiceResult<>(jacsServiceData, dataLoadResults);
@@ -323,6 +336,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                     List<DataLoadResult> mipsResults = mipsInputs.stream()
                             .map(mipsInput -> {
                                 DataLoadResult mipsResult = new DataLoadResult();
+                                mipsResult.setFolderId(mipsInput.getFolderId());
                                 mipsResult.remoteContent = mipsInput.remoteContent;
                                 mipsResult.localContentPath = mipsInput.localContentPath;
                                 mipsResult.localContentMipsPath = tif2pngConversions.get(mipsInput.localContentMipsPath);
@@ -341,8 +355,11 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
     }
 
     private FileType getFileTypeByExtension(String fileArtifact, List<String> losslessImageExtensions) {
-        if (losslessImageExtensions.contains(FileUtils.getFileExtensionOnly(fileArtifact))) {
+        String fileArtifactExt = FileUtils.getFileExtensionOnly(fileArtifact);
+        if (losslessImageExtensions.contains(fileArtifactExt)) {
             return FileType.LosslessStack;
+        } else if (PNG_EXTENSION.equals(fileArtifactExt)) {
+            return FileType.SignalMip;
         } else {
             return FileType.Unclassified2d;
         }
