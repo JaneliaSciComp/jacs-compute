@@ -1,4 +1,4 @@
-package org.janelia.jacs2.asyncservice.lvtservices;
+package org.janelia.jacs2.asyncservice.lightsheetservices;
 
 import com.beust.jcommander.Parameter;
 import org.janelia.jacs2.asyncservice.common.*;
@@ -139,6 +139,7 @@ public class DavidTestCreator extends AbstractExeBasedServiceProcessor<List<File
         // Examples:
         // 12G input -> 66G
         ProcessorHelper.setRequiredMemoryInGB(jacsServiceData.getResources(), 128);
+        ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), 64);
         ProcessorHelper.setSoftJobDurationLimitInSeconds(jacsServiceData.getResources(), 2*60*60); // 2 hours
         ProcessorHelper.setHardJobDurationLimitInSeconds(jacsServiceData.getResources(), 4*60*60); // 4 hours
     }

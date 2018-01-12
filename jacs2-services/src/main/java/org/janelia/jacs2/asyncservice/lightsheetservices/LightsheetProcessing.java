@@ -17,6 +17,7 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
@@ -25,8 +26,6 @@ import java.util.List;
 
 /**
  * This is copied from LVTDataImport.java in lvtservices
- * The LVT (Large Volume Tools) Data Import first converts the input data into an Octree using OctreeCreator
- * and then runs KTXCreator to create the KTX tiles for Horta.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -34,23 +33,31 @@ import java.util.List;
 public class LightsheetProcessing extends AbstractServiceProcessor<File> {
 
     static class LightsheetProcessingArgs extends ServiceArgs {
-        @Parameter(names = "-input", description = "Input directory containing JSON files", required = true)
-        String input;
+        @Parameter(names = "-jsonDirectory", description = "Input directory containing JSON files", required = true)
+        String jsonDirectory;
+        @Parameter(names = "-allSelectedStepNames", description = "Temp", required = true)
+        String allSelectedStepNames;
+        @Parameter(names = "-allSelectedTimePoints", description = "Temp", required = true)
+        String allSelectedTimePoints;
     }
 
-    private final WrappedServiceProcessor<DavidTestCreator,List<File>> davidTestCreator;
+    //private final WrappedServiceProcessor<DavidTestCreator,List<File>> davidTestCreator;
+    private final WrappedServiceProcessor<LightsheetPipeline,List<File>> lightsheetPipeline;
 
     @Inject
     private LegacyDomainDao dao;
 
     @Inject
     LightsheetProcessing(ServiceComputationFactory computationFactory,
-                            JacsServiceDataPersistence jacsServiceDataPersistence,
-                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                            DavidTestCreator davidTestCreator,
-                            Logger logger) {
+                         JacsServiceDataPersistence jacsServiceDataPersistence,
+                         @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                         DavidTestCreator davidTestCreator,
+                         LightsheetPipeline lightsheetPipeline,
+                         Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.davidTestCreator = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, davidTestCreator);
+     //   this.davidTestCreator = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, davidTestCreator);
+        this.lightsheetPipeline = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, lightsheetPipeline);
+
     }
 
     @Override
@@ -82,16 +89,119 @@ public class LightsheetProcessing extends AbstractServiceProcessor<File> {
     public ServiceComputation<JacsServiceResult<File>> process(JacsServiceData jacsServiceData) {
         LightsheetProcessingArgs args = getArgs(jacsServiceData);
 
-        final String inputJsonDir = args.input;
+        final String inputJsonDir = args.jsonDirectory;
+        final String[] allSelectedStepNamesArray = args.allSelectedStepNames.split(", ");
+        final String[] allSelectedTimePointsArray = args.allSelectedTimePoints.split(", ");
+        final Integer timePointsPerJob = 1; //FIXED AT 4
+        //LightsheetPipeline lightsheetPipelineCurrentStep = lightsheetPipelineSource.get();
+        ServiceComputation<JacsServiceResult<List<File>>> stage = lightsheetPipeline.process(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Run lightsheetPipeline")
+                        .build(),
+                new ServiceArg("-stepName", allSelectedStepNamesArray[0]),
+                new ServiceArg("-jsonFile", inputJsonDir + "0_" + allSelectedStepNamesArray[0] + ".json"),
+                new ServiceArg("-numTimePoints", allSelectedTimePointsArray[0]),
+                new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()))
+                .thenCompose(firstStageResult -> {
+                 //   firstStageResult.getResult
+                    return lightsheetPipeline.process(
+                            new ServiceExecutionContext.Builder(jacsServiceData)
+                                  //  .deps(firstStageResult.getJacsServiceData()) for dependency based on previous step
+                                    .description("Run lightsheetPipeline")
+                                    .build(),
+                            new ServiceArg("-stepName", allSelectedStepNamesArray[1]),
+                            new ServiceArg("-jsonFile", inputJsonDir + "0_" + allSelectedStepNamesArray[1] + ".json"),
+                            new ServiceArg("-numTimePoints", allSelectedTimePointsArray[1]),
+                            new ServiceArg("-timePointsPerJob", timePointsPerJob.toString())
+                    );
 
-        return davidTestCreator.process(
+                })
+                ;
+
+       /* for (int i=1; i<=allSelectedStepNamesArray.length; i++){
+            final int final_i=i;
+        //    final LightsheetPipeline lightsheetPipelineCurrentStepInLoop = lightsheetPipelineSource.get();
+            stage=stage.thenCompose( (JacsServiceResult<List<File>> fileResult) ->
+                    lightsheetPipelineSource.get().process(
+                            new ServiceExecutionContext.Builder(jacsServiceData)
+                                    .description("Run lightsheetPipeline1")
+                                    .build(),
+                            new ServiceArg("-stepName", allSelectedStepNamesArray[final_i]),
+                            new ServiceArg("-jsonFile", inputJsonDir + String.valueOf(final_i) + "_" + allSelectedStepNamesArray[final_i] + ".json"),
+                            new ServiceArg("-numTimePoints", allSelectedTimePointsArray[final_i]),
+                            new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()))
+            );
+        }*/
+        return stage.thenApply((JacsServiceResult<List<File>> fileResult) ->
+                new JacsServiceResult<>(jacsServiceData, new File("/home/ackermand/test/junk.txt")))
+                .thenApply((JacsServiceResult<File> result) -> {
+                    return result;
+                });
+
+
+        /*LightsheetProcessingArgs args = getArgs(jacsServiceData);
+
+        final String inputJsonDir = args.jsonDirectory;
+        final String[] allSelectedStepNamesArray = args.allSelectedStepNames.split(", ");
+        final String[] allSelectedTimePointsArray = args.allSelectedTimePoints.split(", ");
+        final Integer timePointsPerJob = 1; //FIXED AT 4
+        ServiceComputation<JacsServiceResult<List<File>>> stage=
+                lightsheetPipeline.process(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Run lightsheetPipeline")
+                        .build(),
+                new ServiceArg("-stepName", allSelectedStepNamesArray[0]),
+                new ServiceArg("-jsonFile", inputJsonDir + "0_" + allSelectedStepNamesArray[0] + ".json"),
+                new ServiceArg("-numTimePoints", allSelectedTimePointsArray[0]),
+                new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()));
+
+        for (int i=1; i<=allSelectedStepNamesArray.length; i++){
+            final int final_i=i;
+            stage=stage.thenCompose( (JacsServiceResult<List<File>> fileResult) ->
+                            lightsheetPipeline.process(
+                                    new ServiceExecutionContext.Builder(jacsServiceData)
+                                            .description("Run lightsheetPipeline")
+                                            .build(),
+                                    new ServiceArg("-stepName", allSelectedStepNamesArray[final_i]),
+                                    new ServiceArg("-jsonFile", inputJsonDir + String.valueOf(final_i) + "_" + allSelectedStepNamesArray[final_i] + ".json"),
+                                    new ServiceArg("-numTimePoints", allSelectedTimePointsArray[final_i]),
+                                    new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()))
+                    );
+        }
+        return stage.thenApply((JacsServiceResult<List<File>> fileResult) ->
+                new JacsServiceResult<>(jacsServiceData, new File("/home/ackermand/test/junk.txt")))
+                .thenApply((JacsServiceResult<File> result) -> {
+                    return result;
+                });*/
+
+        /*return lightsheetPipeline.process(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Run lightsheetPipeline")
+                        .build(),
+                new ServiceArg("-stepName", allSelectedStepNamesArray[0]),
+                new ServiceArg("-jsonFile", inputJsonDir + "1_" + allSelectedStepNamesArray[0] + ".json"),
+                new ServiceArg("-numTimePoints", allSelectedTimePointsArray[0]),
+                new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()))
+                .thenApply((JacsServiceResult<List<File>> fileResult) ->
+                        new JacsServiceResult<>(jacsServiceData, new File("/home/ackermand/test/junk.txt")))
+                .thenApply((JacsServiceResult<File> result) -> {
+                    return result;
+                });
+        */
+
+      /*  return davidTestCreator.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                     .description("Run davidTestCreator")
                     .build(),
-                new ServiceArg("-input", inputJsonDir));
+                new ServiceArg("-jsonDirectory", inputJsonDir))
+                .thenApply((JacsServiceResult<List<File>> fileResult) ->
+                        new JacsServiceResult<>(jacsServiceData, new File("/home/ackermand/test/junk.txt")))
+                .thenApply((JacsServiceResult<File> result) -> {
+                    return result;
+                });*/
     }
 
-    // This is copy and pasted from JACSv1's TiledMicroscopeDAO. When that DAO gets ported over, it should be used instead.
+   /* // This is copy and pasted from JACSv1's TiledMicroscopeDAO. When that DAO gets ported over, it should be used instead.
     public TmSample createTmSample(String subjectKey, String filepath, String sampleName) throws Exception {
         logger.debug("createTmSample({}, {})",subjectKey,sampleName);
         TmSample sample = new TmSample();
@@ -101,7 +211,7 @@ public class LightsheetProcessing extends AbstractServiceProcessor<File> {
         TreeNode folder = dao.getOrCreateDefaultFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
         dao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(sample)));
         return sample;
-    }
+    }*/
 
     private LightsheetProcessingArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LightsheetProcessingArgs());
