@@ -4,11 +4,11 @@ import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -31,10 +31,10 @@ public class NeuronSeparationProcessor extends AbstractNeuronSeparationProcessor
                               @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                               @PropertyValue(name = "NeuronSeparator.Script.Path") String executable,
                               @PropertyValue(name = "NeuronSeparator.Library.Path") String libraryPath,
-                              ThrottledProcessesQueue throttledProcessesQueue,
+                              JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                               @ApplicationProperties ApplicationConfig applicationConfig,
                               Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, executable, libraryPath, throttledProcessesQueue, applicationConfig, logger);
+        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, executable, libraryPath, jacsJobInstanceInfoDao, applicationConfig, logger);
     }
 
     @Override

@@ -25,10 +25,10 @@ class ServiceComputationTask<T> implements Runnable {
 
     private static class Stack<E> {
         private static class Node <E> {
-            public final E item;
-            public Node<E> next;
+            private final E item;
+            private Node<E> next;
 
-            public Node(E item) {
+            private Node(E item) {
                 this.item = item;
             }
         }

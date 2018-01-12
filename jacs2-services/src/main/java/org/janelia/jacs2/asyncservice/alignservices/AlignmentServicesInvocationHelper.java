@@ -120,8 +120,8 @@ class AlignmentServicesInvocationHelper {
                         .waitFor(deps)
                         .description(description)
                         .build(),
-                new ServiceArg("-input", input.toString()),
-                new ServiceArg("-output", output.toString())
+                new ServiceArg("-inputFile", input.toString()),
+                new ServiceArg("-outputFile", output.toString())
         );
         return submitNewServiceDependency(jacsServiceData, convertServiceData);
     }

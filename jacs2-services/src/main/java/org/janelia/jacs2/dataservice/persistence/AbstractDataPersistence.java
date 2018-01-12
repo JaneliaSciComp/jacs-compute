@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
-    protected Instance<D> daoSource;
+    Instance<D> daoSource;
 
     AbstractDataPersistence(Instance<D> daoSource) {
         this.daoSource = daoSource;

@@ -4,151 +4,90 @@ import org.janelia.model.service.JacsJobInstanceInfo;
 import org.janelia.model.service.JacsServiceData;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 public class ThrottledJobInfo implements ExeJobInfo {
 
-    public static interface JobDoneCallback {
+    public interface JobDoneCallback {
         void done(ThrottledJobInfo jobInfo);
     }
 
-    private final ExternalCodeBlock externalCode;
-    private final List<ExternalCodeBlock> externalConfigs;
-    private final Map<String, String> env;
-    private final String scriptDirName;
-    private final String processDirName;
-    private final JacsServiceData serviceContext;
-
-    private final String processName;
-    private final ExternalProcessRunner actualProcessRunner;
+    private final ExeJobInfo throttledJobInfo;
+    private final JacsServiceData jobServiceContext;
+    private final ThrottledExeJobsQueue jobsQueue;
     private final int maxRunningProcesses;
-    private ExeJobInfo actualRunningJobInfo;
-    private volatile boolean doNotRun;
+    private volatile boolean terminated;
     private JobDoneCallback jobDoneCallback;
 
-    public ThrottledJobInfo(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env,
-                            String scriptDirName, String processDirName, JacsServiceData serviceContext,
-                            String processName, ExternalProcessRunner actualProcessRunner, int maxRunningProcesses) {
-        this.externalCode = externalCode;
-        this.externalConfigs = externalConfigs;
-        this.env = env;
-        this.scriptDirName = scriptDirName;
-        this.processDirName = processDirName;
-        this.serviceContext = serviceContext;
-        this.processName = processName;
-        this.actualProcessRunner = actualProcessRunner;
+    ThrottledJobInfo(ExeJobInfo throttledJobInfo, JacsServiceData jobServiceContext, ThrottledExeJobsQueue jobsQueue, int maxRunningProcesses) {
+        this.throttledJobInfo = throttledJobInfo;
+        this.jobServiceContext = jobServiceContext;
+        this.jobsQueue = jobsQueue;
         this.maxRunningProcesses = maxRunningProcesses;
     }
 
     @Override
     public String getScriptName() {
-        return actualRunningJobInfo != null ? actualRunningJobInfo.getScriptName() : null;
+        return throttledJobInfo.getScriptName();
+    }
+
+    @Override
+    public String start() {
+        if (!terminated) {
+            return jobsQueue.add(this); // simply enqueue the job
+        } else
+            return null;
     }
 
     @Override
     public boolean isDone() {
-        boolean done = checkIfDone();
+        boolean done = terminated || throttledJobInfo.isDone();
         if (done && jobDoneCallback != null) {
             jobDoneCallback.done(this);
         }
         return done;
     }
 
-    private boolean checkIfDone() {
-        if (actualRunningJobInfo == null) {
-            return doNotRun;
-        } else {
-            return actualRunningJobInfo.isDone();
-        }
-    }
-
     @Override
     public Collection<JacsJobInstanceInfo> getJobInstanceInfos() {
-        if (actualRunningJobInfo == null) return Collections.emptyList();
-        return actualRunningJobInfo.getJobInstanceInfos();
+        return throttledJobInfo.getJobInstanceInfos();
     }
 
     @Override
     public boolean hasFailed() {
-        boolean failed = checkIfFailed();
+        boolean failed = terminated || throttledJobInfo.hasFailed();
         if (failed && jobDoneCallback != null) {
             jobDoneCallback.done(this);
         }
         return failed;
     }
 
-    private boolean checkIfFailed() {
-        if (actualRunningJobInfo == null) {
-            return doNotRun;
-        } else {
-            return actualRunningJobInfo.hasFailed();
-        }
-    }
-
     @Override
     public void terminate() {
-        if (actualRunningJobInfo != null) {
-            actualRunningJobInfo.terminate();
-        } else {
-            doNotRun = true;
-        }
+        terminated = true;
+        throttledJobInfo.terminate();
         if (jobDoneCallback != null) {
             jobDoneCallback.done(this);
         }
     }
 
-    boolean runProcess() {
-        if (!doNotRun) {
-            ExeJobInfo actualJobInfo = actualProcessRunner.runCmds(getExternalCode(), getExternalConfigs(), getEnv(), getScriptDirName(), getProcessDirName(), getServiceContext());
-            setActualRunningJobInfo(actualJobInfo);
-            return true;
-        } else
-            return false;
+    JacsServiceData getJobServiceContext() {
+        return jobServiceContext;
     }
 
-    ExternalCodeBlock getExternalCode() {
-        return externalCode;
-    }
-
-    List<ExternalCodeBlock> getExternalConfigs() {
-        return externalConfigs;
-    }
-
-    Map<String, String> getEnv() {
-        return env;
-    }
-
-    String getScriptDirName() {
-        return scriptDirName;
-    }
-
-    String getProcessDirName() {
-        return processDirName;
-    }
-
-    JacsServiceData getServiceContext() {
-        return serviceContext;
-    }
-
-    String getProcessName() {
-        return processName;
+    String getJobType() {
+        return jobServiceContext.getName();
     }
 
     int getMaxRunningProcesses() {
         return maxRunningProcesses;
     }
 
-    ExeJobInfo getActualRunningJobInfo() {
-        return actualRunningJobInfo;
-    }
-
-    void setActualRunningJobInfo(ExeJobInfo actualRunningJobInfo) {
-        this.actualRunningJobInfo = actualRunningJobInfo;
-    }
-
     void setJobDoneCallback(JobDoneCallback jobDoneCallback) {
         this.jobDoneCallback = jobDoneCallback;
     }
+
+    String beginProcessing() {
+        return throttledJobInfo.start();
+    }
+
 }

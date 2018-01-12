@@ -20,28 +20,27 @@ import javax.inject.Singleton;
 @Singleton
 public class MonitoredJobManager {
 
-    private static final Logger log = LoggerFactory.getLogger(MonitoredJobManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MonitoredJobManager.class);
 
     private JobManager jobMgr;
     private JobMonitor monitor;
 
     @Inject
-    public MonitoredJobManager(
-            @PropertyValue(name = "service.cluster.checkIntervalInSeconds") int checkIntervalInSeconds) {
-        log.info("Creating monitored job manager");
+    public MonitoredJobManager(@PropertyValue(name = "service.cluster.checkIntervalInSeconds") int checkIntervalInSeconds) {
+        LOG.info("Creating monitored job manager");
         this.jobMgr = new JobManager(new LsfSyncApi());
         this.monitor = new JobMonitor(jobMgr, checkIntervalInSeconds);
     }
 
     @PostConstruct
     private void init() {
-        log.info("Starting job manager monitoring");
+        LOG.info("Starting job manager monitoring");
         monitor.start();
     }
 
     @PreDestroy
     private void destroy() {
-        log.info("Stopping job manager monitoring");
+        LOG.info("Stopping job manager monitoring");
         monitor.stop();
     }
 

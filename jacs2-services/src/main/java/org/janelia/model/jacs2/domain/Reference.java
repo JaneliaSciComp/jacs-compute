@@ -30,6 +30,10 @@ public class Reference {
         return new Reference(className, id);
     }
 
+    public static Reference createFor(Class<?> targetClass, Number targetId) {
+        return new Reference(targetClass.getSimpleName(), targetId);
+    }
+
     public static Reference createFor(DomainObject domainObject) {
         Preconditions.checkArgument(domainObject != null);
         return new Reference(domainObject.getClass().getSimpleName(), domainObject.getId());

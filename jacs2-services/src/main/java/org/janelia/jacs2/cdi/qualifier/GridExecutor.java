@@ -1,4 +1,4 @@
-package org.janelia.jacs2.asyncservice.qualifier;
+package org.janelia.jacs2.cdi.qualifier;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.ElementType;
@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD, ElementType.TYPE})
-public @interface LSFPACJob {
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
+public @interface GridExecutor {
 }

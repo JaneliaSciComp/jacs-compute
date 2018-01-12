@@ -9,25 +9,18 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.MultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.media.multipart.MultiPartMediaTypes;
+import org.janelia.jacs2.utils.HttpUtils;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.slf4j.Logger;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.List;
 
 public class LSFPACHelper {
@@ -84,7 +77,7 @@ public class LSFPACHelper {
         String apiEndpoint = "/platform/webservice/logon/";
         Client httpclient = null;
         try {
-            httpclient = createHttpClient();
+            httpclient = HttpUtils.createHttpClient();
             WebTarget target = createTarget(httpclient, apiEndpoint);
 
             Response response = target.request(MediaType.APPLICATION_JSON)
@@ -124,7 +117,7 @@ public class LSFPACHelper {
         String apiEndpoint = "/platform/ws/logout";
         Client httpclient = null;
         try {
-            httpclient = createHttpClient();
+            httpclient = HttpUtils.createHttpClient();
             WebTarget target = createTarget(httpclient, apiEndpoint);
 
             Response response = setRequestHeaders(target.request(MediaType.APPLICATION_JSON), authToken)
@@ -160,7 +153,7 @@ public class LSFPACHelper {
         String authToken = login();
         Client httpclient = null;
         try {
-            httpclient = createHttpClient();
+            httpclient = HttpUtils.createHttpClient();
             WebTarget target = createTarget(httpclient, apiEndpoint)
                     .queryParam("id", jobId)
                     .queryParam("user", lsfUser)
@@ -202,7 +195,7 @@ public class LSFPACHelper {
         String authToken = login();
         Client httpclient = null;
         try {
-            httpclient = createHttpClient();
+            httpclient = HttpUtils.createHttpClient();
             StringBuilder extraParamsBuilder = new StringBuilder();
             if (StringUtils.isNotBlank(nativeSpec)) {
                 extraParamsBuilder.append(nativeSpec)
@@ -276,7 +269,7 @@ public class LSFPACHelper {
         String authToken = login();
         Client httpclient = null;
         try {
-            httpclient = createHttpClient();
+            httpclient = HttpUtils.createHttpClient();
 
             Form submitForm = new Form()
                     .param("ids", jobId)
@@ -306,35 +299,6 @@ public class LSFPACHelper {
             }
             logout(authToken);
         }
-    }
-
-    private Client createHttpClient() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance("TLSv1");
-        TrustManager[] trustManagers = {
-                new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
-                        // Everyone is trusted
-                    }
-
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
-                        // Everyone is trusted
-                    }
-
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                }
-        };
-        sslContext.init(null, trustManagers, new SecureRandom());
-
-        return ClientBuilder.newBuilder()
-                .sslContext(sslContext)
-                .hostnameVerifier((s, sslSession) -> true)
-                .register(MultiPartFeature.class)
-                .build();
     }
 
     private WebTarget createTarget(Client httpClient, String path) {

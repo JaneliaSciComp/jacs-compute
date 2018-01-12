@@ -5,8 +5,9 @@ import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.model.service.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
+import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ProcessingLocation;
 import org.janelia.model.service.ServiceMetaData;
 import org.junit.Before;
@@ -14,7 +15,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -36,10 +36,10 @@ public class AbstractExeBasedServiceProcessorTest {
                                      JacsServiceDataPersistence jacsServiceDataPersistence,
                                      Instance<ExternalProcessRunner> serviceRunners,
                                      String defaultWorkingDir,
-                                     ThrottledProcessesQueue throttledProcessesQueue,
+                                     JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                                      ApplicationConfig applicationConfig,
                                      Logger logger) {
-            super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, throttledProcessesQueue, applicationConfig, logger);
+            super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
         }
 
         @Override
@@ -66,6 +66,7 @@ public class AbstractExeBasedServiceProcessorTest {
         Logger logger = mock(Logger.class);
         ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        JacsJobInstanceInfoDao jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);
         Instance<ExternalProcessRunner> serviceRunners = mock(Instance.class);
         processRunner = mock(ExternalProcessRunner.class);
         when(processRunner.supports(ProcessingLocation.LOCAL)).thenReturn(true);
@@ -78,7 +79,7 @@ public class AbstractExeBasedServiceProcessorTest {
                             jacsServiceDataPersistence,
                             serviceRunners,
                             TEST_WORKING_DIR,
-                            ComputationTestUtils.createTestThrottledProcessesQueue(),
+                            jacsJobInstanceInfoDao,
                             applicationConfig,
                             logger);
     }

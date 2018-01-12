@@ -253,17 +253,15 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                             })
                             ;
                 })
-                // TODO: Fix this in the future. For some reason, this cannot easily be unwrapped to use thenSuspendUntil.
-                // The type checking is a mess because of the Void return type on cleanSampleImageFilesProcessor, so I'm leaving this as is for now.
-                .thenSuspendUntilCond(this.suspendCondition(jacsServiceData))
-                .thenCompose((ContinuationCond.Cond<JacsServiceResult<List<SampleProcessorResult>>> lsprCond) -> {
+                .thenSuspendUntil(this.suspendCondition(jacsServiceData))
+                .thenCompose((JacsServiceResult<List<SampleProcessorResult>> lsprState) -> {
                     if (CollectionUtils.isNotEmpty(args.resultFileTypesToBeCompressed) && StringUtils.isNotBlank(args.compressedFileType)) {
-                        return computationFactory.newCompletedComputation(lsprCond.getState())
+                        return computationFactory.newCompletedComputation(lsprState)
                                 .thenCombineAll(ImmutableList.of(
                                         sampleResultsCompressionProcessor.process(
                                                 new ServiceExecutionContext.Builder(jacsServiceData)
                                                         .description("Compress results")
-                                                        .waitFor(lsprCond.getState().getJacsServiceData())
+                                                        .waitFor(lsprState.getJacsServiceData())
                                                         .build(),
                                                 new ServiceArg("-sampleId", args.sampleId),
                                                 new ServiceArg("-objective", args.sampleObjective),
@@ -274,7 +272,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                         cleanSampleImageFilesProcessor.process(
                                                 new ServiceExecutionContext.Builder(jacsServiceData)
                                                         .description("Remove working LSMs")
-                                                        .waitFor(lsprCond.getState().getJacsServiceData())
+                                                        .waitFor(lsprState.getJacsServiceData())
                                                         .build(),
                                                 new ServiceArg("-sampleId", args.sampleId),
                                                 new ServiceArg("-objective", args.sampleObjective),
@@ -289,7 +287,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                         return cleanSampleImageFilesProcessor.process(
                                 new ServiceExecutionContext.Builder(jacsServiceData)
                                         .description("Remove working LSMs")
-                                        .waitFor(lsprCond.getState().getJacsServiceData())
+                                        .waitFor(lsprState.getJacsServiceData())
                                         .build(),
                                 new ServiceArg("-sampleId", args.sampleId),
                                 new ServiceArg("-objective", args.sampleObjective),
@@ -298,7 +296,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                 new ServiceArg("-sampleLsmsSubDir", sampleLsmsSubDir.toString()),
                                 new ServiceArg("-sampleSummarySubDir", sampleSummarySubDir.toString()),
                                 new ServiceArg("-sampleSitchingSubDir", sampleStitchingSubDir.toString())
-                        ).thenApply(r -> lsprCond.getState());
+                        ).thenApply(r -> lsprState);
                     }
                 })
                 .thenApply((JacsServiceResult<List<SampleProcessorResult>> lspr) -> this.updateServiceResult(jacsServiceData, lspr.getResult()))  // update the Flylight result

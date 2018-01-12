@@ -5,16 +5,24 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.service.*;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
+import org.janelia.model.service.JacsJobInstanceInfo;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
+import org.janelia.model.service.JacsServiceState;
+import org.janelia.model.service.ProcessingLocation;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @MdcContext
 public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicLifeCycleServiceProcessor<R, Void> {
@@ -23,30 +31,24 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
 
     private final String executablesBaseDir;
     private final Instance<ExternalProcessRunner> serviceRunners;
-    private final ThrottledProcessesQueue throttledProcessesQueue;
+    private final JacsJobInstanceInfoDao jacsJobInstanceInfoDao;
     private final ApplicationConfig applicationConfig;
     private final int jobIntervalCheck;
 
-    private JacsJobInstanceInfoDao jacsJobInstanceInfoDao;
 
     public AbstractExeBasedServiceProcessor(ServiceComputationFactory computationFactory,
                                             JacsServiceDataPersistence jacsServiceDataPersistence,
                                             Instance<ExternalProcessRunner> serviceRunners,
                                             String defaultWorkingDir,
-                                            ThrottledProcessesQueue throttledProcessesQueue,
+                                            JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                                             ApplicationConfig applicationConfig,
                                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.serviceRunners = serviceRunners;
         this.executablesBaseDir = applicationConfig.getStringPropertyValue("Executables.ModuleBase");
-        this.throttledProcessesQueue = throttledProcessesQueue;
+        this.jacsJobInstanceInfoDao = jacsJobInstanceInfoDao;
         this.applicationConfig = applicationConfig;
         this.jobIntervalCheck = applicationConfig.getIntegerPropertyValue("service.exejob.checkIntervalInMillis", 0);
-    }
-
-    @Inject
-    public void init(JacsJobInstanceInfoDao jacsJobInstanceInfoDao) {
-        this.jacsJobInstanceInfoDao = jacsJobInstanceInfoDao;
     }
 
     @Override
@@ -171,12 +173,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> env = prepareEnvironment(jacsServiceData);
         prepareResources(jacsServiceData);
-        int defaultMaxRunningProcesses = applicationConfig.getIntegerPropertyValue("service.maxRunningProcesses", -1);
-        int maxRunningProcesses = applicationConfig.getIntegerPropertyValue(
-                "service." + jacsServiceData.getName() + ".maxRunningProcesses",
-                defaultMaxRunningProcesses);
-        ExternalProcessRunner processRunner =
-                new ThrottledExternalProcessRunner(throttledProcessesQueue, jacsServiceData.getName(), getProcessRunner(jacsServiceData), maxRunningProcesses);
+        ExternalProcessRunner processRunner = getProcessRunner(jacsServiceData);
         return processRunner.runCmds(
                 script,
                 externalConfigs,

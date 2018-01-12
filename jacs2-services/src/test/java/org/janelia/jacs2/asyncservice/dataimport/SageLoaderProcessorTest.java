@@ -8,6 +8,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.Before;
@@ -36,6 +37,7 @@ import static org.mockito.Mockito.mock;
 public class SageLoaderProcessorTest {
 
     private JacsServiceDataPersistence jacsServiceDataPersistence;
+    private JacsJobInstanceInfoDao jacsJobInstanceInfoDao;
     private ServiceComputationFactory computationFactory;
     private Logger logger;
     private String perlExecutable = "perl";
@@ -47,6 +49,7 @@ public class SageLoaderProcessorTest {
     @Before
     public void setUp() {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);
         logger = mock(Logger.class);
         computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
     }
@@ -64,7 +67,7 @@ public class SageLoaderProcessorTest {
                 perlExecutable,
                 libraryPath,
                 scriptName,
-                ComputationTestUtils.createTestThrottledProcessesQueue(),
+                jacsJobInstanceInfoDao,
                 applicationConfig,
                 logger);
 

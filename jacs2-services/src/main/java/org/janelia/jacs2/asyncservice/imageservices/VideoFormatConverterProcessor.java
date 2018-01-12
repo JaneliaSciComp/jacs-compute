@@ -10,13 +10,13 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -37,7 +37,7 @@ import java.util.Map;
 @Named("mpegConverter")
 public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProcessor<File> {
 
-    static class ConverterArgs extends ServiceArgs {
+    static class VideoConverterArgs extends ServiceArgs {
         private static final String DEFAULT_OUTPUT_EXT = ".mp4";
 
         @Parameter(names = "-input", description = "Input file name", required = true)
@@ -65,17 +65,17 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
                                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                   @PropertyValue(name = "FFMPEG.Bin.Path") String executable,
                                   @PropertyValue(name = "VAA3D.Library.Path") String libraryPath,
-                                  ThrottledProcessesQueue throttledProcessesQueue,
+                                  JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                                   @ApplicationProperties ApplicationConfig applicationConfig,
                                   Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, throttledProcessesQueue, applicationConfig, logger);
+        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
         this.executable = executable;
         this.libraryPath = libraryPath;
     }
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(VideoFormatConverterProcessor.class, new ConverterArgs());
+        return ServiceArgs.getMetadata(VideoFormatConverterProcessor.class, new VideoConverterArgs());
     }
 
     @Override
@@ -84,14 +84,14 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                ConverterArgs args = getArgs(depResults.getJacsServiceData());
+                VideoConverterArgs args = getArgs(depResults.getJacsServiceData());
                 File outputFile = getOutputFile(args);
                 return outputFile.exists();
             }
 
             @Override
             public File collectResult(JacsServiceResult<?> depResults) {
-                ConverterArgs args = getArgs(depResults.getJacsServiceData());
+                VideoConverterArgs args = getArgs(depResults.getJacsServiceData());
                 return getOutputFile(args);
             }
         };
@@ -105,7 +105,7 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
     @Override
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
         try {
-            ConverterArgs args = getArgs(jacsServiceData);
+            VideoConverterArgs args = getArgs(jacsServiceData);
             if (StringUtils.isBlank(args.input)) {
                 throw new ComputationException(jacsServiceData, "Input must be specified");
             } else if (Files.notExists(Paths.get(args.input))) {
@@ -123,7 +123,7 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
 
     @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
-        ConverterArgs args = getArgs(jacsServiceData);
+        VideoConverterArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
         externalScriptWriter.addWithArgs(getExecutable())
@@ -155,11 +155,11 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
         return ImmutableMap.of(DY_LIBRARY_PATH_VARNAME, getUpdatedEnvValue(DY_LIBRARY_PATH_VARNAME, libraryPath));
     }
 
-    private ConverterArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ConverterArgs());
+    private VideoConverterArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new VideoConverterArgs());
     }
 
-    private File getOutputFile(ConverterArgs args) {
+    private File getOutputFile(VideoConverterArgs args) {
         return new File(args.getOutputName());
     }
 

@@ -16,5 +16,4 @@ public interface ReadWriteDao<T, I> extends ReadOnlyDao<T, I> {
     void saveAll(Collection<T> entities);
     void update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate);
     void delete(T entity);
-    void archive(T entity);
 }

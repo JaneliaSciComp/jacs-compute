@@ -194,7 +194,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
                                 if (args.montageMipMaps) {
                                     // for each sample image file invoke basic mipmaps and montage service
                                     JacsServiceData montageService = groupAndMontageFolderImagesProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
-                                                    .description("Montage PNG images")
+                                                    .description("Montage PNG_EXTENSION images")
                                                     .waitFor(mipMapsService)
                                                     .build(),
                                             new ServiceArg("-input", sif.getMipsResultsDir()),

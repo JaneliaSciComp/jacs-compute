@@ -5,16 +5,18 @@ import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.ThrottledProcessesQueue;
+import org.janelia.jacs2.asyncservice.common.ThrottledExeJobsQueue;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -45,10 +47,10 @@ public class Vaa3dCmdProcessor extends AbstractExeBasedServiceProcessor<Void> {
                       @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                       @PropertyValue(name = "VAA3D.Bin.Path") String executable,
                       @PropertyValue(name = "VAA3D.Library.Path") String libraryPath,
-                      ThrottledProcessesQueue throttledProcessesQueue,
+                      JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                       @ApplicationProperties ApplicationConfig applicationConfig,
                       Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, throttledProcessesQueue, applicationConfig, logger);
+        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
         this.executable = executable;
         this.libraryPath = libraryPath;
     }
@@ -68,12 +70,13 @@ public class Vaa3dCmdProcessor extends AbstractExeBasedServiceProcessor<Void> {
         Vaa3dCmdArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
-        createScript(args, externalScriptWriter);
+        createScript(args, jacsServiceData.getResources(), externalScriptWriter);
         externalScriptWriter.close();
         return externalScriptCode;
     }
 
-    private void createScript(Vaa3dCmdArgs args, ScriptWriter scriptWriter) {
+    private void createScript(Vaa3dCmdArgs args, Map<String, String> resources, ScriptWriter scriptWriter) {
+        scriptWriter.exportVar("NSLOTS", String.valueOf(ProcessorHelper.getProcessingSlots(resources)));
         scriptWriter.addWithArgs(getExecutable())
                 .addArgs("-cmd", args.vaa3dCmd)
                 .addArg(args.vaa3dCmdArgs).endArgs("");

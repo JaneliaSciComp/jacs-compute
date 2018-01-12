@@ -34,6 +34,16 @@ public class FileUtils {
         return !fileExists(filepath);
     }
 
+    public static Path createSubDirs(Path dir, String subDir) {
+        Path subDirPath = dir.resolve(subDir);
+        try {
+            java.nio.file.Files.createDirectories(subDirPath);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Cannot create job subdirectory " + subDirPath, e);
+        }
+        return subDirPath;
+    }
+
     /**
      * Deletes the given directory even if it's non empty.
      *
@@ -41,6 +51,9 @@ public class FileUtils {
      * @throws IOException
      */
     public static void deletePath(Path dir) throws IOException {
+        if (dir == null) {
+            return; // do nothing
+        }
         Files.walkFileTree(dir, new FileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -66,6 +79,10 @@ public class FileUtils {
         });
     }
 
+    public static String getFileName(String fn) {
+        return StringUtils.isBlank(fn) ? "" : Paths.get(fn).getFileName().toString();
+    }
+
     public static String getFileNameOnly(Path fp) {
         return getFileNameOnly(fp.toString());
     }
@@ -86,16 +103,12 @@ public class FileUtils {
         if (StringUtils.isBlank(ext)) {
             return "";
         } else {
-            if (StringUtils.startsWith(ext, ".")) {
-                return ext;
-            } else {
-                return "." + ext;
-            }
+            return StringUtils.prependIfMissing(ext, ".");
         }
     }
 
     public static Path getFilePath(Path dir, String fileName) {
-        return dir.resolve(new File(fileName).getName());
+        return dir != null ? dir.resolve(getFileName(fileName)) : Paths.get(getFileName(fileName));
     }
 
     public static Path replaceFileExt(Path filePath, String fileExt) {
@@ -112,7 +125,7 @@ public class FileUtils {
                 FileUtils.getFileNameOnly(fileName),
                 StringUtils.defaultIfBlank(suffix, ""),
                 createExtension(fileExt));
-        return dir.resolve(actualFileName);
+        return dir != null ? dir.resolve(actualFileName) : Paths.get(actualFileName);
     }
 
     public static Path getDataPath(String dataRootDir, Number dataInstanceId) {

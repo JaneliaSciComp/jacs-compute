@@ -5,12 +5,13 @@ import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.config.ApplicationConfig;
+import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
-import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -39,6 +40,7 @@ public class FileCopyProcessorTest {
     public final ExpectedException expectedException = ExpectedException.none();
 
     private JacsServiceDataPersistence jacsServiceDataPersistence;
+    private JacsJobInstanceInfoDao jacsJobInstanceInfoDao;
     private String libraryPath = "testLibrary";
     private String scriptName = "testScript";
     private String defaultWorkingDir = "testWorking";
@@ -50,6 +52,7 @@ public class FileCopyProcessorTest {
     @Before
     public void setUp() throws IOException {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);
         Logger logger = mock(Logger.class);
         ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
 
@@ -63,7 +66,7 @@ public class FileCopyProcessorTest {
                 defaultWorkingDir,
                 libraryPath,
                 scriptName,
-                ComputationTestUtils.createTestThrottledProcessesQueue(),
+                jacsJobInstanceInfoDao,
                 applicationConfig,
                 logger);
         testDirectory = Files.createTempDirectory("testFileCopy").toFile();

@@ -9,7 +9,6 @@ public enum ProcessingLocation {
     SGE_DRMAA(SGEDrmaaJob.class),
     LSF_JAVA(LSFJavaJob.class),
     LSF_DRMAA(LSFDrmaaJob.class),
-    LSF_PAC(LSFPACJob.class)
     ;
 
     private final Class<? extends Annotation> processingAnnotationClass;
