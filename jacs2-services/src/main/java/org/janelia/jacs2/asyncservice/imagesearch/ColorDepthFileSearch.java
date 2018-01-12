@@ -37,8 +37,8 @@ import java.util.stream.Collectors;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@Named("colorDepthSearch")
-public class ColorDepthSearch extends AbstractServiceProcessor<List<File>> {
+@Named("colorDepthFileSearch")
+public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
 
     public static final String RESULTS_FILENAME_SUFFIX = "_results.txt";
 
@@ -51,26 +51,34 @@ public class ColorDepthSearch extends AbstractServiceProcessor<List<File>> {
     private final int parallelism;
 
     static class ColorDepthSearchArgs extends ServiceArgs {
-        @Parameter(names = "-inputFiles", description = "Comma-delimited list of mask files", required = true)
+        @Parameter(names = {"-inputFiles"}, description = "Comma-delimited list of mask files", required = true)
         String inputFiles;
-        @Parameter(names = "-searchDirs", description = "Comma-delimited list of directories containing the color depth projects to search", required = true)
+        @Parameter(names = {"-searchDirs"}, description = "Comma-delimited list of directories containing the color depth projects to search", required = true)
         String searchDirs;
+        @Parameter(names = {"-dataThreshold"}, description = "Data threshold")
+        private Integer dataThreshold;
+        @Parameter(names = {"-maskThresholds"}, description = "Mask thresholds", variableArity = true)
+        private List<Integer> maskThresholds;
+        @Parameter(names = {"-pixColorFluctuation"}, description = "Pix Color Fluctuation, 1.18 per slice")
+        private Double pixColorFluctuation;
+        @Parameter(names = {"-pctPositivePixels"}, description = "% of Positive PX Threshold (0-100%)")
+        private Double pctPositivePixels;
     }
 
     @Inject Instance<SparkCluster> clusterSource;
 
     @Inject
-    ColorDepthSearch(ServiceComputationFactory computationFactory,
-                     JacsServiceDataPersistence jacsServiceDataPersistence,
-                     @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                     @IntPropertyValue(name = "service.colorDepthSearch.clusterStartTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
-                     @IntPropertyValue(name = "service.colorDepthSearch.searchTimeoutInSeconds", defaultValue = 1200) int searchTimeoutInSeconds,
-                     @IntPropertyValue(name = "service.colorDepthSearch.clusterIntervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
-                     @IntPropertyValue(name = "service.colorDepthSearch.searchIntervalCheckInMillis", defaultValue = 5000) int searchIntervalCheckInMillis,
-                     @IntPropertyValue(name = "service.colorDepthSearch.numNodes", defaultValue = 6) Integer numNodes,
-                     @IntPropertyValue(name = "service.colorDepthSearch.parallelism", defaultValue = 300) Integer parallelism,
-                     @StrPropertyValue(name = "service.colorDepthSearch.jarPath") String jarPath,
-                     Logger log) {
+    ColorDepthFileSearch(ServiceComputationFactory computationFactory,
+                         JacsServiceDataPersistence jacsServiceDataPersistence,
+                         @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                         @IntPropertyValue(name = "service.colorDepthSearch.clusterStartTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
+                         @IntPropertyValue(name = "service.colorDepthSearch.searchTimeoutInSeconds", defaultValue = 1200) int searchTimeoutInSeconds,
+                         @IntPropertyValue(name = "service.colorDepthSearch.clusterIntervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
+                         @IntPropertyValue(name = "service.colorDepthSearch.searchIntervalCheckInMillis", defaultValue = 5000) int searchIntervalCheckInMillis,
+                         @IntPropertyValue(name = "service.colorDepthSearch.numNodes", defaultValue = 6) Integer numNodes,
+                         @IntPropertyValue(name = "service.colorDepthSearch.parallelism", defaultValue = 300) Integer parallelism,
+                         @StrPropertyValue(name = "service.colorDepthSearch.jarPath") String jarPath,
+                         Logger log) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, log);
         this.clusterStartTimeoutInMillis = clusterStartTimeoutInSeconds * 1000;
         this.searchTimeoutInMillis = searchTimeoutInSeconds * 1000;
@@ -83,7 +91,7 @@ public class ColorDepthSearch extends AbstractServiceProcessor<List<File>> {
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(ColorDepthSearch.class, new ColorDepthSearchArgs());
+        return ServiceArgs.getMetadata(ColorDepthFileSearch.class, new ColorDepthSearchArgs());
     }
 
     @Override
@@ -141,14 +149,33 @@ public class ColorDepthSearch extends AbstractServiceProcessor<List<File>> {
         }
 
         List<String> appArgs = new ArrayList<>();
+
         appArgs.add("-p");
         appArgs.add(""+parallelism);
+
         appArgs.add("-m");
         appArgs.addAll(inputFiles);
+
         appArgs.add("-i");
         appArgs.add(args.searchDirs);
+
+        appArgs.add("--dataThreshold");
+        appArgs.add(args.dataThreshold.toString());
+
+        appArgs.add("--maskThresholds");
+        for(Integer maskThreshold : args.maskThresholds) {
+            appArgs.add(maskThreshold.toString());
+        }
+
+        appArgs.add("--pixColorFluctuation");
+        appArgs.add(args.pixColorFluctuation.toString());
+
+        appArgs.add("--pctPositivePixels");
+        appArgs.add(args.pctPositivePixels.toString());
+
         appArgs.add("-o");
         appArgs.addAll(outputFiles);
+
         String[] appArgsArr = appArgs.toArray(new String[appArgs.size()]);
 
         try {
@@ -202,31 +229,6 @@ public class ColorDepthSearch extends AbstractServiceProcessor<List<File>> {
                                 workingDir, 1, "glob:**/*"+RESULTS_FILENAME_SUFFIX)
                             .map(Path::toFile)
                             .collect(Collectors.toList());
-
-                    for(File resultsFile : resultsFiles) {
-
-                        String maskFile;
-                        ColorDepthSearchResults results = new ColorDepthSearchResults();
-                        try (Scanner scanner = new Scanner(resultsFile)) {
-                            maskFile = scanner.nextLine();
-                            while (scanner.hasNext()) {
-                                String line = scanner.nextLine();
-                                String[] s = line.split("\t");
-                                float score = Float.parseFloat(s[0].trim());
-                                String filepath = s[1].trim();
-                                results.getResultList().add(new ColorDepthSearchResults.ColorDepthSearchResult(score, filepath));
-                            }
-                        } catch (IOException e) {
-                            throw new ComputationException(jacsServiceData, e);
-                        }
-
-                        logger.info("First five results for mask {}:", maskFile);
-                        int c = 0;
-                        for (ColorDepthSearchResults.ColorDepthSearchResult result : results.getResultList()) {
-                            logger.info(result.getScore() + ": " + result.getFilename());
-                            if (c++ > 4) break;
-                        }
-                    }
 
                     return updateServiceResult(jacsServiceData, resultsFiles);
                 });
