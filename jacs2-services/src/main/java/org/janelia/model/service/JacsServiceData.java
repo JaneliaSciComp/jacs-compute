@@ -476,9 +476,10 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public Optional<JacsServiceData> findSimilarDependency(JacsServiceData dependency) {
         return dependencies.stream()
-                        .filter(s -> s.getName().equals(dependency.getName()))
-                        .filter(s -> s.getArgs().equals(dependency.getArgs()))
-                        .findFirst();
+                .filter(s -> s.getName().equals(dependency.getName()))
+                .filter(s -> s.getArgs().equals(dependency.getArgs()))
+                .filter(s -> s.getDependenciesIds().equals(dependency.getDependenciesIds()))
+                .findFirst();
     }
 
     /**
