@@ -39,20 +39,18 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
     public ExeJobInfo runCmds(ExternalCodeBlock externalCode,
                               List<ExternalCodeBlock> externalConfigs,
                               Map<String, String> env,
-                              String scriptDirName,
-                              String processDirName,
+                              JacsServiceFolder scriptServiceFolder,
+                              Path processDir,
                               JacsServiceData serviceContext) {
         logger.debug("Begin local process invocation for {}", serviceContext);
         jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
-        String processingScript = scriptDirName + "/<unknown>";
+        String processingScript = scriptServiceFolder.getServiceFolder("<unknown>").toString();
         try {
-            Path scriptsDir = FileUtils.createSubDirs(Paths.get(scriptDirName), "sge_config");
-            processingScript = createProcessingScript(externalCode, env, scriptsDir.toString(), serviceContext);
-            File processDirectory = new File(processDirName);
-            Files.createDirectories(processDirectory.toPath());
+            processingScript = createProcessingScript(externalCode, env, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
+            File processDirectory = processDir.toFile();
+            Files.createDirectories(processDir);
 
-            String configFilePattern = serviceContext.getName() + "Configuration.#";
-            List<File> configFiles = createConfigFiles(externalConfigs, scriptsDir.toString(), configFilePattern, serviceContext);
+            List<File> configFiles = createConfigFiles(externalConfigs, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
 
             File outputFile = prepareOutputFile(serviceContext.getOutputPath(), "Output file must be set before running the service " + serviceContext.getName());
             File errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());

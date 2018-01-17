@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -170,16 +171,21 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
         );
     }
 
-    protected Path getTemporaryOutput(MIPsAndMoviesArgs args, JacsServiceData jacsServiceData) {
-        return getServicePath(scratchLocation, jacsServiceData, FileUtils.getFileNameOnly(args.imageFile));
+    private Path getTemporaryOutput(MIPsAndMoviesArgs args, JacsServiceData jacsServiceData) {
+        JacsServiceFolder scratchFolder = getScratchFolder(jacsServiceData);
+        return scratchFolder.getServiceFolder(FileUtils.getFileNameOnly(args.imageFile));
+    }
+
+    private JacsServiceFolder getScratchFolder(JacsServiceData jacsServiceData) {
+        return new JacsServiceFolder(null, Paths.get(scratchLocation), jacsServiceData);
     }
 
     protected abstract String getMIPsAndMoviesArgs(MIPsAndMoviesArgs args, Path outputDir);
 
     private JacsServiceResult<MIPsAndMoviesResult> removeTempDir(JacsServiceResult<MIPsAndMoviesResult> sr) {
         try {
-            Path temporaryOutputDir = getServicePath(scratchLocation, sr.getJacsServiceData());
-            FileUtils.deletePath(temporaryOutputDir);
+            JacsServiceFolder scratchFolder = getScratchFolder(sr.getJacsServiceData());
+            FileUtils.deletePath(scratchFolder.getServiceFolder());
             return sr;
         } catch (Exception e) {
             throw new ComputationException(sr.getJacsServiceData(), e);

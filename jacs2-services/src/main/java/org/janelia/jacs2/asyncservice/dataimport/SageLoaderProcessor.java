@@ -213,7 +213,7 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void> 
 
     private Path getWorkingSageFileList(JacsServiceData jacsServiceData, SageLoaderArgs args) {
         try {
-            Path workingDirectory = getWorkingDirectory(jacsServiceData);
+            Path workingDirectory = getWorkingDirectory(jacsServiceData).getServiceFolder();
             Files.createDirectories(workingDirectory);
             Path sageWorkingFile = FileUtils.getFilePath(workingDirectory, "SageFileList_" + jacsServiceData.getId() + ".txt");
             if (!Files.exists(sageWorkingFile)) {

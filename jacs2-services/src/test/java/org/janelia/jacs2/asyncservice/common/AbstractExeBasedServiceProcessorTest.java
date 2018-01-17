@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -29,6 +30,7 @@ public class AbstractExeBasedServiceProcessorTest {
 
     private static final String TEST_WORKING_DIR = "testDir";
     private static final String TEST_EXE_DIR = "testToolsDir";
+    private static final Long TEST_SERVICE_ID = 1L;
 
     private static class TestExternalProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
@@ -87,11 +89,12 @@ public class AbstractExeBasedServiceProcessorTest {
     @Test
     public void processing() {
         JacsServiceData testServiceData = new JacsServiceData();
+        testServiceData.setId(TEST_SERVICE_ID);
         testServiceData.setName("test");
         testServiceData.setProcessingLocation(ProcessingLocation.LOCAL);
         ExeJobInfo jobInfo = mock(ExeJobInfo.class);
         when(jobInfo.isDone()).thenReturn(true);
-        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(String.class), any(String.class), any(JacsServiceData.class))).thenReturn(jobInfo);
+        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class))).thenReturn(jobInfo);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         testProcessor.processing(new JacsServiceResult<>(testServiceData))
@@ -109,13 +112,14 @@ public class AbstractExeBasedServiceProcessorTest {
     @Test
     public void processingError() {
         JacsServiceData testServiceData = new JacsServiceData();
+        testServiceData.setId(TEST_SERVICE_ID);
         testServiceData.setName("test");
         testServiceData.setServiceTimeout(10L);
         testServiceData.setProcessingLocation(ProcessingLocation.LOCAL);
         ExeJobInfo jobInfo = mock(ExeJobInfo.class);
         when(jobInfo.isDone()).thenReturn(true);
         when(jobInfo.hasFailed()).thenReturn(true);
-        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(String.class), any(String.class), any(JacsServiceData.class))).thenReturn(jobInfo);
+        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class))).thenReturn(jobInfo);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         testProcessor.processing(new JacsServiceResult<>(testServiceData))
@@ -133,12 +137,14 @@ public class AbstractExeBasedServiceProcessorTest {
     @Test
     public void processingTimeout() {
         JacsServiceData testServiceData = new JacsServiceData();
+        testServiceData.setId(TEST_SERVICE_ID);
         testServiceData.setName("test");
         testServiceData.setServiceTimeout(10L);
         testServiceData.setProcessingLocation(ProcessingLocation.LOCAL);
         ExeJobInfo jobInfo = mock(ExeJobInfo.class);
         when(jobInfo.isDone()).thenReturn(false);
-        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(String.class), any(String.class), any(JacsServiceData.class))).thenReturn(jobInfo);
+        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class)))
+                .thenReturn(jobInfo);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         testProcessor.processing(new JacsServiceResult<>(testServiceData))

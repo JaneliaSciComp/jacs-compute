@@ -7,8 +7,6 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHa
 import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.jacs2.EntityFieldValueHandler;
-import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
@@ -19,11 +17,7 @@ import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -68,11 +62,10 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         } else {
             jacsServiceDataBuilder.setProcessingLocation(executionContext.getParentServiceData().getProcessingLocation());
         }
-        if (executionContext.getWorkingDirectory() != null) {
-            jacsServiceDataBuilder.setWorkspace(executionContext.getWorkingDirectory());
-        } else {
-            Path parentWorkingDir = getWorkingDirectory(executionContext.getParentServiceData());
-            jacsServiceDataBuilder.setWorkspace(Objects.toString(parentWorkingDir, null));
+        if (StringUtils.isNotBlank(executionContext.getWorkspace())) {
+            jacsServiceDataBuilder.setWorkspace(executionContext.getWorkspace());
+        } else if (StringUtils.isNotBlank(executionContext.getParentWorkspace())) {
+            jacsServiceDataBuilder.setWorkspace(executionContext.getParentWorkspace());
         }
         jacsServiceDataBuilder.addArg(Stream.of(args).flatMap(arg -> Stream.of(arg.toStringArray())).toArray(String[]::new));
         if (executionContext.getServiceState() != null) {
@@ -107,36 +100,14 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         return this.getErrorChecker().collectErrors(jacsServiceData);
     }
 
-    protected Path getWorkingDirectory(JacsServiceData jacsServiceData) {
+    protected JacsServiceFolder getWorkingDirectory(JacsServiceData jacsServiceData) {
         if (StringUtils.isNotBlank(jacsServiceData.getWorkspace())) {
-            return Paths.get(jacsServiceData.getWorkspace());
+            return new JacsServiceFolder(null, Paths.get(jacsServiceData.getWorkspace()), jacsServiceData);
         } else if (StringUtils.isNotBlank(defaultWorkingDir)) {
-            return getServicePath(defaultWorkingDir, jacsServiceData);
+            return new JacsServiceFolder(getServicePath(defaultWorkingDir, jacsServiceData), null, jacsServiceData);
         } else {
-            return getServicePath(System.getProperty("java.io.tmpdir"), jacsServiceData);
+            return new JacsServiceFolder(getServicePath(System.getProperty("java.io.tmpdir"), jacsServiceData), null, jacsServiceData);
         }
-    }
-
-    protected Map<String, EntityFieldValueHandler<?>> setOutputAndErrorPaths(JacsServiceData jacsServiceData) {
-        Map<String, EntityFieldValueHandler<?>> serviceUpdates = new LinkedHashMap<>();
-        if (StringUtils.isBlank(jacsServiceData.getOutputPath())) {
-            jacsServiceData.setOutputPath(getServicePath(
-                    StringUtils.defaultIfBlank(jacsServiceData.getWorkspace(), defaultWorkingDir),
-                    jacsServiceData,
-                    "sge_output",
-                    String.format("%s-stdout.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
-            serviceUpdates.put("outputPath", new SetFieldValueHandler<>(jacsServiceData.getOutputPath()));
-        }
-        if (StringUtils.isBlank(jacsServiceData.getErrorPath())) {
-            jacsServiceData.setErrorPath(getServicePath(
-                    StringUtils.defaultIfBlank(jacsServiceData.getWorkspace(), defaultWorkingDir),
-                    jacsServiceData,
-                    "sge_error",
-                    String.format("%s-stderr.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
-            serviceUpdates.put("errorPath", new SetFieldValueHandler<>(jacsServiceData.getErrorPath()));
-        }
-        jacsServiceDataPersistence.update(jacsServiceData, serviceUpdates);
-        return serviceUpdates;
     }
 
     protected String[] getJacsServiceArgsArray(JacsServiceData jacsServiceData) {
@@ -166,7 +137,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         return jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
     }
 
-    protected Path getServicePath(String baseDir, JacsServiceData jacsServiceData, String... more) {
+    private Path getServicePath(String baseDir, JacsServiceData jacsServiceData) {
         ImmutableList.Builder<String> pathElemsBuilder = ImmutableList.builder();
         if (StringUtils.isNotBlank(jacsServiceData.getOwner())) {
             String name = SubjectUtils.getSubjectName(jacsServiceData.getOwner());
@@ -176,7 +147,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         if (jacsServiceData.hasId()) {
             pathElemsBuilder.addAll(FileUtils.getTreePathComponentsForId(jacsServiceData.getId()));
         }
-        pathElemsBuilder.addAll(Arrays.asList(more));
+//        pathElemsBuilder.addAll(Arrays.asList(more));
         return Paths.get(baseDir, pathElemsBuilder.build().toArray(new String[0])).toAbsolutePath();
     }
 

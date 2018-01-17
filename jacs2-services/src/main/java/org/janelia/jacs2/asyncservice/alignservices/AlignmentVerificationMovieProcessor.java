@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -100,7 +101,8 @@ public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleS
     protected JacsServiceResult<Void> submitServiceDependencies(JacsServiceData jacsServiceData) {
         AlignmentVerificationMoviewArgs args = getArgs(jacsServiceData);
 
-        Path workingSubjectFile = FileUtils.getFilePath(getWorkingDirectory(jacsServiceData), args.subjectFile); // => SUB
+        JacsServiceFolder serviceFolder = getWorkingDirectory(jacsServiceData);
+        Path workingSubjectFile = serviceFolder.getServiceFolder(FileUtils.getFileName(args.subjectFile)); // => SUB
 
         JacsServiceData createWorkingSubjectFile = invocationHelper.linkData(getSubjectFile(args), workingSubjectFile,
                 "Create link for working subject file",
@@ -118,12 +120,12 @@ public class AlignmentVerificationMovieProcessor extends AbstractBasicLifeCycleS
 
         Path targetFile = getTargetFile(args);
         Path refChannelFile = invocationHelper.getChannelFilePath(
-                getWorkingDirectory(jacsServiceData),
+                serviceFolder.getServiceFolder(),
                 args.referenceChannel - 1,
                 args.subjectFile,
                 ".v3draw");
         Path temporaryMergedFile = FileUtils.getFilePath(
-                getWorkingDirectory(jacsServiceData),
+                serviceFolder.getServiceFolder(),
                 null,
                 args.outputFile,
                 "temporaryMergedOut",

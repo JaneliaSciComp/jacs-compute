@@ -36,6 +36,8 @@ import static org.mockito.Mockito.mock;
 
 public class FileCopyProcessorTest {
 
+    private static final Long TEST_SERVICE_ID = 1L;
+
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();
 
@@ -85,6 +87,7 @@ public class FileCopyProcessorTest {
                 .addArg("-src", "/home/testSource")
                 .addArg("-dst", testDestFile.getAbsolutePath())
                 .build();
+        testServiceData.setId(TEST_SERVICE_ID);
         fileCopyProcessor.prepareProcessing(testServiceData);
         assertTrue(testDestFile.getParentFile().exists());
     }

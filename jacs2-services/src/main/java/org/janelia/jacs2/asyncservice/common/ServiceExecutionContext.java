@@ -69,8 +69,8 @@ public class ServiceExecutionContext {
             return this;
         }
 
-        public Builder setWorkingDirectory(String workingDirectory) {
-            serviceExecutionContext.workingDirectory = workingDirectory;
+        public Builder setWorkspace(String workspace) {
+            serviceExecutionContext.workspace = workspace;
             return this;
         }
 
@@ -117,7 +117,7 @@ public class ServiceExecutionContext {
     private String serviceName;
     private String outputPath;
     private String errorPath;
-    private String workingDirectory;
+    private String workspace;
     private JacsServiceState serviceState;
     private String description;
     private final List<JacsServiceData> waitFor = new ArrayList<>();
@@ -162,8 +162,12 @@ public class ServiceExecutionContext {
         return errorPath;
     }
 
-    String getWorkingDirectory() {
-        return workingDirectory;
+    String getWorkspace() {
+        return workspace;
+    }
+
+    String getParentWorkspace() {
+        return parentServiceData != null ? parentServiceData.getWorkspace() : null;
     }
 
     String getDescription() {

@@ -16,7 +16,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
@@ -37,70 +36,96 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         this.logger = logger;
     }
 
-    protected String createProcessingScript(ExternalCodeBlock externalCode, Map<String, String> env, String scriptDirName, JacsServiceData sd) {
+    File prepareProcessingDir(Path processDir) {
+        File processCwd;
+        if (processDir == null) {
+            processCwd = com.google.common.io.Files.createTempDir();
+        } else {
+            processCwd = processDir.toFile();
+        }
+        if (!processCwd.exists()) {
+            if (!processCwd.mkdirs()) {
+                throw new IllegalStateException("Cannot create working directory " + processDir);
+            }
+        }
+        return processCwd;
+    }
+
+    String createProcessingScript(ExternalCodeBlock externalCode, Map<String, String> env, JacsServiceFolder scriptServiceFolder, String subDir) {
         ScriptWriter scriptWriter = null;
         try {
             Preconditions.checkArgument(!externalCode.isEmpty());
-            Preconditions.checkArgument(StringUtils.isNotBlank(scriptDirName));
-            Path scriptDirectory = Paths.get(scriptDirName);
-            Files.createDirectories(scriptDirectory);
+            Preconditions.checkArgument(scriptServiceFolder != null);
+            Path scriptDirectory = scriptServiceFolder.getServiceFolder(subDir);
+            Path scriptFilePath = createScriptFileName(scriptDirectory,
+                    scriptServiceFolder.getServiceScriptName("#"),
+                    "#")
+                    .map(p -> p)
+                    .orElseThrow(() -> new ComputationException(scriptServiceFolder.getServiceData(),
+                            "Could not create unique script name for " + scriptServiceFolder.getServiceData()));
+
             Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-            Path scriptFilePath = createScriptFileName(sd, scriptDirectory);
+            Files.createDirectories(scriptDirectory);
+
             File scriptFile = Files.createFile(scriptFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
             scriptWriter = new ScriptWriter(new BufferedWriter(new FileWriter(scriptFile)));
             writeProcessingCode(externalCode, env, scriptWriter);
             jacsServiceDataPersistence.addServiceEvent(
-                    sd,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CREATED_RUNNING_SCRIPT, String.format("Created the running script for %s: %s", sd.getName(), sd.getArgs()))
+                    scriptServiceFolder.getServiceData(),
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CREATED_RUNNING_SCRIPT,
+                            String.format("Created the running script for %s: %s",
+                                    scriptServiceFolder.getServiceData().getName(), scriptServiceFolder.getServiceData().getArgs()))
             );
             return scriptFile.getAbsolutePath();
         } catch (Exception e) {
-            logger.error("Error creating the processing script with {} for {}", externalCode, sd, e);
+            logger.error("Error creating the processing script with {} for {}", externalCode, scriptServiceFolder.getServiceData(), e);
             jacsServiceDataPersistence.addServiceEvent(
-                    sd,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.SCRIPT_CREATION_ERROR, String.format("Error creating the running script for %s: %s", sd.getName(), sd.getArgs()))
+                    scriptServiceFolder.getServiceData(),
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.SCRIPT_CREATION_ERROR,
+                            String.format("Error creating the running script for %s: %s",
+                                    scriptServiceFolder.getServiceData().getName(), scriptServiceFolder.getServiceData().getArgs()))
             );
-            throw new ComputationException(sd, e);
+            throw new ComputationException(scriptServiceFolder.getServiceData(), e);
         } finally {
             if (scriptWriter != null) scriptWriter.close();
         }
     }
 
-    List<File> createConfigFiles(List<ExternalCodeBlock> externalConfig, String configDir, String configFilePattern, JacsServiceData sd) {
+    List<File> createConfigFiles(List<ExternalCodeBlock> externalConfig, JacsServiceFolder scriptServiceFolder, String subDir) {
         List<File> configFiles = new ArrayList<>();
 
         if (externalConfig==null) return configFiles;
 
         try {
-            Path configDirectory = Paths.get(configDir);
-            Files.createDirectories(configDirectory);
-
+            Files.createDirectories(scriptServiceFolder.getServiceFolder(subDir));
             int index = 1;
             for (ExternalCodeBlock externalCodeBlock : externalConfig) {
-                ScriptWriter scriptWriter = null;
+                ScriptWriter configWriter = null;
                 try {
                     Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw----");
-                    Path scriptFilePath = createConfigFileName(sd, configDirectory, configFilePattern, index++);
-                    File scriptFile;
-                    if (Files.notExists(scriptFilePath)) {
-                        scriptFile = Files.createFile(scriptFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
+                    Path configFilePath = scriptServiceFolder.getServiceFolder(subDir, scriptServiceFolder.getServiceConfigPattern().replace("#", index + ""));
+                    File configFile;
+                    if (Files.notExists(configFilePath)) {
+                        configFile = Files.createFile(configFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
                     } else {
-                        scriptFile = scriptFilePath.toFile();
+                        configFile = configFilePath.toFile();
                     }
-                    scriptWriter = new ScriptWriter(new BufferedWriter(new FileWriter(scriptFile)));
-                    scriptWriter.add(externalCodeBlock.toString());
-                    configFiles.add(scriptFile);
+                    configWriter = new ScriptWriter(new BufferedWriter(new FileWriter(configFile)));
+                    configWriter.add(externalCodeBlock.toString());
+                    configFiles.add(configFile);
                 } finally {
-                    if (scriptWriter != null) scriptWriter.close();
+                    if (configWriter != null) configWriter.close();
                 }
             }
         } catch (Exception e) {
-            logger.error("Error creating the config file for {}", sd, e);
+            logger.error("Error creating the config file for {}", scriptServiceFolder.getServiceData(), e);
             jacsServiceDataPersistence.addServiceEvent(
-                    sd,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.SCRIPT_CREATION_ERROR, String.format("Error creating the running script for %s: %s", sd.getName(), sd.getArgs()))
+                    scriptServiceFolder.getServiceData(),
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.SCRIPT_CREATION_ERROR,
+                            String.format("Error creating the running script for %s: %s",
+                                    scriptServiceFolder.getServiceData().getName(), scriptServiceFolder.getServiceData().getArgs()))
             );
-            throw new ComputationException(sd, e);
+            throw new ComputationException(scriptServiceFolder.getServiceData(), e);
         }
         return configFiles;
     }
@@ -121,42 +146,19 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         return outputFile;
     }
 
-    private Path createScriptFileName(JacsServiceData sd, Path dir) {
-        String nameSuffix;
-        if (sd.hasId()) {
-            nameSuffix = sd.getId().toString();
-            Optional<Path> scriptPath = checkScriptFile(dir, sd.getName(), nameSuffix);
-            if (scriptPath.isPresent()) return scriptPath.get();
-        } else if (sd.hasParentServiceId()) {
-            nameSuffix = sd.getParentServiceId().toString();
-        } else {
-            nameSuffix = String.valueOf(System.currentTimeMillis());
-        }
-        for (int i = 1; i <= MAX_SUBSCRIPT_INDEX; i++) {
-            Optional<Path> scriptFilePath = checkScriptFile(dir, sd.getName(), nameSuffix + "_" + i);
-            if (scriptFilePath.isPresent()) return scriptFilePath.get();
-        }
-        throw new ComputationException(sd, "Could not create unique script name for " + sd.getName());
+    private Optional<Path> createScriptFileName(Path scriptDir, String scriptName, String nameSuffix) {
+        int i = 0;
+        do {
+            Path scriptFullName = scriptDir.resolve(scriptName.replace(nameSuffix, i == 0 ? "" : "_" + i));
+            if (Files.notExists(scriptFullName)) {
+                return Optional.of(scriptFullName);
+            }
+            i++;
+        } while (i <= MAX_SUBSCRIPT_INDEX);
+        return Optional.empty();
     }
 
-    /**
-     * Create a candidate for the script name and check if it exists and set it only if such file is not found.
-     */
-    private Optional<Path> checkScriptFile(Path dir, String name, String suffix) {
-        String nameCandidate = name + "_" + suffix + ".sh";
-        Path scriptFilePath = dir.resolve(nameCandidate);
-        if (Files.exists(scriptFilePath)) {
-            return Optional.empty();
-        } else {
-            return Optional.of(scriptFilePath);
-        }
-    }
-
-    private Path createConfigFileName(JacsServiceData sd, Path dir, String namingPattern, int index) {
-        return dir.resolve(namingPattern.replace("#", index+""));
-    }
-
-    protected void resetOutputLog(File logFile) throws IOException {
+    private void resetOutputLog(File logFile) throws IOException {
         Path logFilePath = logFile.toPath();
         if (Files.notExists(logFilePath)) return;
         String logFileExt = FileUtils.getFileExtensionOnly(logFilePath);
