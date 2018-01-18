@@ -95,7 +95,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
             Path workingDirectory = Paths.get(workingDirName);
             java.nio.file.Files.createDirectories(workingDirectory);
             Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-            String scriptName = sd.getName() + "Cmd.sh";
+            String scriptName = sd.getName() + "-" + sd.getId() + "Cmd.sh";
             Path scriptFilePath = workingDirectory.resolve(scriptName);
             File scriptFile = java.nio.file.Files.createFile(scriptFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
             scriptWriter = new ScriptWriter(new BufferedWriter(new FileWriter(scriptFile)));
@@ -174,11 +174,11 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         }
         int nProcessingSlots = ProcessorHelper.getProcessingSlots(jobResources);
         StringBuilder resourceBuffer = new StringBuilder();
-        if (nProcessingSlots > 1) {
+        //if (nProcessingSlots > 1) {
             // append processing environment
             spec.add("-n "+nProcessingSlots);
             resourceBuffer.append("affinity[core(1)]");
-        }
+        //}
 
         long softJobDurationInMins = Math.round((double) ProcessorHelper.getSoftJobDurationLimitInSeconds(jobResources) / 60);
         if (softJobDurationInMins > 0) {

@@ -46,10 +46,10 @@ public class LightsheetPipeline extends AbstractExeBasedServiceProcessor<List<Fi
         String stepName;
         @Parameter(names = "-jsonFile", description = "Output directory for octree", required = true)
         String jsonFile;
-        @Parameter(names = "-numTimePoints", description = "Number of tree levels", required = true)
-        String numTimePoints;
-        @Parameter(names = "-timePointsPerJob", description = "Number of tree levels", required = true)
-        String timePointsPerJob;
+        @Parameter(names = "-numTimePoints", description = "Number of tree levels", required = false)
+        String numTimePoints = "N/A";
+        @Parameter(names = "-timePointsPerJob", description = "Number of tree levels", required = false)
+        String timePointsPerJob = "N/A";
        // @Parameter(names = "-jsonDirectory", description = "Directory with JSON files", required = true)
        // String jsonDirectory;
     }
@@ -134,25 +134,42 @@ public class LightsheetPipeline extends AbstractExeBasedServiceProcessor<List<Fi
         //scriptWriter.read("JSONDIRECTORY");
         scriptWriter.read("STEPNAME");
         scriptWriter.read("JSONFILE");
-        scriptWriter.read("TIMEPOINTSPERJOB");
-        scriptWriter.read("JOBNUMBER");
+        if ( args.stepName.contains("cluster")) //Then should run on one node
+        {
+            scriptWriter.read("TIMEPOINTSPERJOB");
+            scriptWriter.read("JOBNUMBER");
+        }
         scriptWriter.addWithArgs(getFullExecutableName(executable));
         scriptWriter.addArg("$STEPNAME");
         scriptWriter.addArg("$JSONFILE");
-        scriptWriter.addArg("$TIMEPOINTSPERJOB");
-        scriptWriter.addArg("$JOBNUMBER");
+        if ( args.stepName.contains("cluster") ) //Then should run on one node
+        {
+            scriptWriter.addArg("$TIMEPOINTSPERJOB");
+            scriptWriter.addArg("$JOBNUMBER");
+        }
         scriptWriter.endArgs();
     }
 
     @Override
     protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
         LightsheetPipelineArgs args = getArgs(jacsServiceData);
-        List<ExternalCodeBlock> blocks = new ArrayList<>();
-        Integer numJobs = (int) Math.ceil(Double.parseDouble(args.numTimePoints) / Integer.valueOf(args.timePointsPerJob));
-        for(int jobNumber=1; jobNumber<=numJobs; jobNumber++) {
-            parallelizeLightsheetStep(blocks, args, jobNumber);
+        if ( args.stepName.contains("local") ) //Then should run on one node
+        {
+            ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
+            ScriptWriter scriptWriter = externalScriptCode.getCodeWriter();
+            scriptWriter.add(args.stepName);
+            scriptWriter.add(args.jsonFile);
+            scriptWriter.close();
+            return Arrays.asList(externalScriptCode);
         }
-        return blocks;
+        else {
+            List<ExternalCodeBlock> blocks = new ArrayList<>();
+            Integer numJobs = (int) Math.ceil(Double.parseDouble(args.numTimePoints) / Integer.valueOf(args.timePointsPerJob));
+            for (int jobNumber = 1; jobNumber <= numJobs; jobNumber++) {
+                parallelizeLightsheetStep(blocks, args, jobNumber);
+            }
+            return blocks;
+        }
     }
 
     /**
@@ -175,7 +192,13 @@ public class LightsheetPipeline extends AbstractExeBasedServiceProcessor<List<Fi
     @Override
     protected void prepareResources(JacsServiceData jacsServiceData) {
         // This doesn't need much memory, because it only processes a single tile at a time.
-        ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(),2);
+        LightsheetPipelineArgs args = getArgs(jacsServiceData);
+        if ( args.stepName.contains("local") ) {
+            ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), 16);
+        }
+        else{
+            ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), 1);
+        }
         ProcessorHelper.setSoftJobDurationLimitInSeconds(jacsServiceData.getResources(), 5*60); // 5 minutes
         ProcessorHelper.setHardJobDurationLimitInSeconds(jacsServiceData.getResources(), 12*60*60); // 1 hour
     }

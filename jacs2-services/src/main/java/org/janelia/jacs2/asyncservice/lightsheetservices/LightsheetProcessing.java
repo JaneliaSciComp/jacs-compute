@@ -93,7 +93,8 @@ public class LightsheetProcessing extends AbstractServiceProcessor<File> {
         final String[] allSelectedStepNamesArray = args.allSelectedStepNames.split(", ");
         final String[] allSelectedTimePointsArray = args.allSelectedTimePoints.split(", ");
         final Integer timePointsPerJob = 1; //FIXED AT 4
-        //LightsheetPipeline lightsheetPipelineCurrentStep = lightsheetPipelineSource.get();
+        //LightsheetPipeline lightsheetPipelineCurrentStep = lightsheetPipelineSource.get()
+
         ServiceComputation<JacsServiceResult<List<File>>> stage = lightsheetPipeline.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Run lightsheetPipeline")
@@ -101,22 +102,24 @@ public class LightsheetProcessing extends AbstractServiceProcessor<File> {
                 new ServiceArg("-stepName", allSelectedStepNamesArray[0]),
                 new ServiceArg("-jsonFile", inputJsonDir + "0_" + allSelectedStepNamesArray[0] + ".json"),
                 new ServiceArg("-numTimePoints", allSelectedTimePointsArray[0]),
-                new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()))
-                .thenCompose(firstStageResult -> {
-                 //   firstStageResult.getResult
-                    return lightsheetPipeline.process(
-                            new ServiceExecutionContext.Builder(jacsServiceData)
-                                  //  .deps(firstStageResult.getJacsServiceData()) for dependency based on previous step
-                                    .description("Run lightsheetPipeline")
-                                    .build(),
-                            new ServiceArg("-stepName", allSelectedStepNamesArray[1]),
-                            new ServiceArg("-jsonFile", inputJsonDir + "0_" + allSelectedStepNamesArray[1] + ".json"),
-                            new ServiceArg("-numTimePoints", allSelectedTimePointsArray[1]),
-                            new ServiceArg("-timePointsPerJob", timePointsPerJob.toString())
-                    );
+                new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()));
+        for (int i=1; i<allSelectedStepNamesArray.length; i++) {
+            final int final_i=i;
+                stage = stage.thenCompose(firstStageResult -> {
+                //   firstStageResult.getResult
+                return lightsheetPipeline.process(
+                        new ServiceExecutionContext.Builder(jacsServiceData)
+                                .waitFor(firstStageResult.getJacsServiceData()) // for dependency based on previous step
+                                .description("Run lightsheetPipeline" + String.valueOf(final_i))
+                                .build(),
+                        new ServiceArg("-stepName", allSelectedStepNamesArray[final_i]),
+                        new ServiceArg("-jsonFile", inputJsonDir + String.valueOf(final_i) + "_" + allSelectedStepNamesArray[final_i] + ".json"),
+                        new ServiceArg("-numTimePoints", allSelectedTimePointsArray[final_i]),
+                        new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()));
 
-                })
-                ;
+            })
+            ;
+        }
 
        /* for (int i=1; i<=allSelectedStepNamesArray.length; i++){
             final int final_i=i;
