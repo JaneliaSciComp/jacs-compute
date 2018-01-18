@@ -100,9 +100,9 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         createConfigFiles(externalConfigs, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
 
         jt.setRemoteCommand(processingScript);
-        jt.setInputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR, scriptServiceFolder.getServiceConfigPattern()).toString());
-        jt.setErrorPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern()).toString());
-        jt.setOutputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern()).toString());
+        jt.setInputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR, scriptServiceFolder.getServiceConfigPattern(".#")).toString());
+        jt.setErrorPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern(".#")).toString());
+        jt.setOutputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern(".#")).toString());
         // Apply a RegEx to replace any non-alphanumeric character with "_".
         String owner = serviceContext.getOwner();
         if (StringUtils.isBlank(owner)) {

@@ -103,7 +103,7 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
                 ScriptWriter configWriter = null;
                 try {
                     Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw----");
-                    Path configFilePath = scriptServiceFolder.getServiceFolder(subDir, scriptServiceFolder.getServiceConfigPattern().replace("#", configIndex + ""));
+                    Path configFilePath = scriptServiceFolder.getServiceFolder(subDir, scriptServiceFolder.getServiceConfigPattern(".#").replace("#", configIndex + ""));
                     File configFile;
                     if (Files.notExists(configFilePath)) {
                         configFile = Files.createFile(configFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();

@@ -35,16 +35,16 @@ public class JacsServiceFolder {
         return serviceData.getName() + "Cmd" + StringUtils.defaultIfBlank(suffix, "") + ".sh";
     }
 
-    public String getServiceConfigPattern() {
-        return serviceData.getName() + "Configuration.#";
+    public String getServiceConfigPattern(String suffix) {
+        return serviceData.getName() + "Configuration" + StringUtils.defaultIfBlank(suffix, "");
     }
 
-    public String getServiceOutputPattern() {
-        return serviceData.getName() + "Output.#";
+    public String getServiceOutputPattern(String suffix) {
+        return serviceData.getName() + "Output"  + StringUtils.defaultIfBlank(suffix, "");
     }
 
-    public String getServiceErrorPattern() {
-        return serviceData.getName() + "Error.#";
+    public String getServiceErrorPattern(String suffix) {
+        return serviceData.getName() + "Error" + StringUtils.defaultIfBlank(suffix, "");
     }
 
     public String getServiceSuffix() {
