@@ -5,6 +5,8 @@ import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.PipelineStatus;
+import org.janelia.model.domain.gui.colordepth.ColorDepthMask;
+import org.janelia.model.domain.gui.colordepth.ColorDepthResult;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
@@ -392,6 +394,10 @@ public interface LegacyDomainDao {
      * @throws Exception
      */
     void updateDataSetDiskspaceUsage(String dataSetIdentifier) throws Exception;
+
+    void addColorDepthSearchMask(String subjectKey, Long searchId, ColorDepthMask mask);
+
+    void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result);
 
     <T extends DomainObject> List<T> fullTextSearch(String subjectKey, Class<T> domainClass, String text);
 }

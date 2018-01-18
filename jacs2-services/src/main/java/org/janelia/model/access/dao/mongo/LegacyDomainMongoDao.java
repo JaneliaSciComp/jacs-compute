@@ -9,6 +9,8 @@ import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.PipelineStatus;
+import org.janelia.model.domain.gui.colordepth.ColorDepthMask;
+import org.janelia.model.domain.gui.colordepth.ColorDepthResult;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
@@ -592,6 +594,16 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public void updateDataSetDiskspaceUsage(String dataSetIdentifier) throws Exception {
         dao.updateDataSetDiskspaceUsage(dataSetIdentifier);
+    }
+
+    @Override
+    public void addColorDepthSearchMask(String subjectKey, Long searchId, ColorDepthMask mask) {
+        dao.addColorDepthSearchMask(subjectKey, searchId, mask);
+    }
+
+    @Override
+    public void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result) {
+        dao.addColorDepthSearchResult(subjectKey, searchId, result);
     }
 
     @Override
