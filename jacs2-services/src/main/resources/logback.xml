@@ -28,7 +28,7 @@
     <logger name="org.mongodb.driver" level="warn" />
     <logger name="org.xnio.nio" level="error" />
     <logger name="org.janelia.jacs2.asyncservice.common" level="debug" />
-    <logger name="org.janelia.cluster" level="debug" />
+    <logger name="org.janelia.cluster" level="info" />
 
     <root level="debug">
         <appender-ref ref="CONSOLE" />
