@@ -98,12 +98,12 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
 
         try {
             Files.createDirectories(scriptServiceFolder.getServiceFolder(subDir));
-            int index = 1;
+            int configIndex = 1;
             for (ExternalCodeBlock externalCodeBlock : externalConfig) {
                 ScriptWriter configWriter = null;
                 try {
                     Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw----");
-                    Path configFilePath = scriptServiceFolder.getServiceFolder(subDir, scriptServiceFolder.getServiceConfigPattern().replace("#", index + ""));
+                    Path configFilePath = scriptServiceFolder.getServiceFolder(subDir, scriptServiceFolder.getServiceConfigPattern().replace("#", configIndex + ""));
                     File configFile;
                     if (Files.notExists(configFilePath)) {
                         configFile = Files.createFile(configFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
@@ -113,6 +113,7 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
                     configWriter = new ScriptWriter(new BufferedWriter(new FileWriter(configFile)));
                     configWriter.add(externalCodeBlock.toString());
                     configFiles.add(configFile);
+                    configIndex++;
                 } finally {
                     if (configWriter != null) configWriter.close();
                 }
