@@ -151,7 +151,7 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         List<String> appArgs = new ArrayList<>();
 
         appArgs.add("-p");
-        appArgs.add(""+parallelism);
+        appArgs.add("" + parallelism);
 
         appArgs.add("-m");
         appArgs.addAll(inputFiles);
@@ -159,19 +159,27 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         appArgs.add("-i");
         appArgs.add(args.searchDirs);
 
-        appArgs.add("--dataThreshold");
-        appArgs.add(args.dataThreshold.toString());
-
-        appArgs.add("--maskThresholds");
-        for(Integer maskThreshold : args.maskThresholds) {
-            appArgs.add(maskThreshold.toString());
+        if (args.maskThresholds != null && !args.maskThresholds.isEmpty()) {
+            appArgs.add("--maskThresholds");
+            for (Integer maskThreshold : args.maskThresholds) {
+                appArgs.add(maskThreshold.toString());
+            }
         }
 
-        appArgs.add("--pixColorFluctuation");
-        appArgs.add(args.pixColorFluctuation.toString());
+        if (args.dataThreshold != null) {
+            appArgs.add("--dataThreshold");
+            appArgs.add(args.dataThreshold.toString());
+        }
 
-        appArgs.add("--pctPositivePixels");
-        appArgs.add(args.pctPositivePixels.toString());
+        if (args.pixColorFluctuation != null) {
+            appArgs.add("--pixColorFluctuation");
+            appArgs.add(args.pixColorFluctuation.toString());
+        }
+
+        if (args.pctPositivePixels != null) {
+            appArgs.add("--pctPositivePixels");
+            appArgs.add(args.pctPositivePixels.toString());
+        }
 
         appArgs.add("-o");
         appArgs.addAll(outputFiles);

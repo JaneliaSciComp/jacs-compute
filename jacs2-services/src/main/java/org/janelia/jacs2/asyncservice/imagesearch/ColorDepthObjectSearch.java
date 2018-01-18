@@ -92,10 +92,24 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
     public ServiceComputation<JacsServiceResult<Boolean>> process(JacsServiceData jacsServiceData) {
         IntegratedColorDepthSearchArgs args = getArgs(jacsServiceData);
 
+        logger.info("Executing ColorDepthSearch#{}", args.searchId);
+
         ColorDepthSearch search = dao.getDomainObject(jacsServiceData.getOwner(),
                 ColorDepthSearch.class, args.searchId);
 
+        if (search==null) {
+            throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" not found");
+        }
+
+        if (search.getDataSets().isEmpty()) {
+            throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" has no data sets defined");
+        }
+
         List<ColorDepthMask> masks = dao.getDomainObjectsAs(search.getMasks(), ColorDepthMask.class);
+
+        if (masks.isEmpty()) {
+            throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" has no masks defined");
+        }
 
         Map<String, ColorDepthMask> maskMap =
                 masks.stream().collect(Collectors.toMap(ColorDepthMask::getFilepath,
@@ -117,10 +131,19 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         List<ServiceArg> serviceArgList = new ArrayList<>();
         serviceArgList.add(new ServiceArg("-inputFiles", inputFiles));
         serviceArgList.add(new ServiceArg("-searchDirs", searchDirs));
-        serviceArgList.add(new ServiceArg("-dataThreshold", search.getDataThreshold()));
         serviceArgList.add(new ServiceArg("-maskThresholds", maskThresholds));
-        serviceArgList.add(new ServiceArg("-pixColorFluctuation", search.getPixColorFluctuation()));
-        serviceArgList.add(new ServiceArg("-pctPositivePixels", search.getPctPositivePixels()));
+
+        if (search.getDataThreshold() != null) {
+            serviceArgList.add(new ServiceArg("-dataThreshold", search.getDataThreshold()));
+        }
+
+        if (search.getPixColorFluctuation() != null) {
+            serviceArgList.add(new ServiceArg("-pixColorFluctuation", search.getPixColorFluctuation()));
+        }
+
+        if (search.getPctPositivePixels() != null) {
+            serviceArgList.add(new ServiceArg("-pctPositivePixels", search.getPctPositivePixels()));
+        }
 
         return colorDepthFileSearch.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
@@ -129,10 +152,16 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                 serviceArgList.toArray(new ServiceArg[serviceArgList.size()]))
             .thenApply((JacsServiceResult<List<File>> result) -> {
 
+                if (result.getResult().isEmpty()) {
+                    throw new ComputationException(jacsServiceData, "Color depth search encountered an error");
+                }
+
                 try {
                     ColorDepthResult colorDepthResult = new ColorDepthResult();
 
                     for(File resultsFile : result.getResult()) {
+
+                        logger.info("Processing result file: {}", resultsFile);
 
                         String maskFile;
                         try (Scanner scanner = new Scanner(resultsFile)) {
@@ -165,13 +194,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                         }
                     }
 
-                    dao.save(jacsServiceData.getOwner(), colorDepthResult);
-
-                    // TODO: need to lock the search object to make changes, or use $push
-                    ColorDepthSearch search2 = dao.getDomainObject(jacsServiceData.getOwner(),
-                            ColorDepthSearch.class, args.searchId);
-                    search.getResults().add(Reference.createFor(colorDepthResult));
-                    dao.save(jacsServiceData.getOwner(), search2);
+                    colorDepthResult = dao.save(jacsServiceData.getOwner(), colorDepthResult);
+                    dao.addColorDepthSearchResult(jacsServiceData.getOwner(), search.getId(), colorDepthResult);
                 }
                 catch (Exception e) {
                     throw new ComputationException(jacsServiceData, e);
