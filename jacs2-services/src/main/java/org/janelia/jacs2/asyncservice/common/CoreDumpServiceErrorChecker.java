@@ -11,18 +11,14 @@ public class CoreDumpServiceErrorChecker extends DefaultServiceErrorChecker {
 
     @Override
     protected boolean hasErrors(String l) {
-        if (StringUtils.isNotBlank(l)) {
-            if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
-                // core dump is still an error
-                logger.error(l);
-                return true;
-            } else if (l.matches("(?i:.*(error|exception).*)")) {
-                // ignore any exception - just log it
-                logger.warn(l);
-                return false;
-            } else {
-                return false;
-            }
+        if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
+            // core dump is still an error
+            logger.error(l);
+            return true;
+        } else if (l.matches("(?i:.*(error|exception).*)")) {
+            // ignore any exception - just log it
+            logger.warn(l);
+            return false;
         } else {
             return false;
         }

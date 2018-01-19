@@ -138,6 +138,10 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
     }
 
     protected boolean hasErrors(String l) {
-        return StringUtils.isNotBlank(l) && l.matches("(?i:.*(error|exception|Segmentation fault|core dumped).*)");
+        if (l.matches("(?i:.*( for stderr ).*)")) {
+            return false;
+        } else {
+            return l.matches("(?i:.*(error|exception|Segmentation fault|core dumped).*)");
+        }
     }
 }

@@ -117,7 +117,7 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Fil
                 if (result) {
                     return true;
                 }
-                if (StringUtils.isNotBlank(l) && l.matches("(?i:.*(fail to call the plugin).*)")) {
+                if (l.matches("(?i:.*(fail to call the plugin).*)")) {
                     logger.error(l);
                     return true;
                 } else {

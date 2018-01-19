@@ -110,18 +110,14 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Lis
         return new DefaultServiceErrorChecker(logger) {
             @Override
             protected boolean hasErrors(String l) {
-                if (StringUtils.isNotBlank(l)) {
-                    if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
-                        // core dump is still an error
-                        logger.error(l);
-                        return true;
-                    } else if (l.matches("(?i:.*(fail to call the plugin).*)")) {
-                        // vaa3d plugin call failed
-                        logger.error(l);
-                        return true;
-                    } else {
-                        return false;
-                    }
+                if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
+                    // core dump is still an error
+                    logger.error(l);
+                    return true;
+                } else if (l.matches("(?i:.*(fail to call the plugin).*)")) {
+                    // vaa3d plugin call failed
+                    logger.error(l);
+                    return true;
                 } else {
                     return false;
                 }
