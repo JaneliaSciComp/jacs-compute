@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,13 +89,16 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
                                            Map<String, String> env,
                                            JacsServiceFolder scriptServiceFolder,
                                            Path processDir,
-                                           JacsServiceData serviceContext) {
+                                           JacsServiceData serviceContext) throws IOException {
 
         File jobProcessingDirectory = prepareProcessingDir(processDir);
         logger.debug("Using working directory {} for {}", jobProcessingDirectory, serviceContext);
 
         String processingScript = createProcessingScript(externalCode, env, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
         createConfigFiles(externalConfigs, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
+
+        prepareOutputDir(serviceContext.getOutputPath(), "Output directory must be set before running the service " + serviceContext.getName());
+        prepareOutputDir(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
 
         JobTemplate jt = new JobTemplate();
         jt.setJobName(serviceContext.getName());
