@@ -69,7 +69,7 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
     }
 
     private void processDir(Path processOutputDir, Consumer<String> processOutputConsumer) {
-        FileUtils.lookupFiles(processOutputDir, 1, "*")
+        FileUtils.lookupFiles(processOutputDir, 1, "glob:*")
                 .forEach(outputFile -> {
                     InputStream outputFileStream = null;
                     try {
