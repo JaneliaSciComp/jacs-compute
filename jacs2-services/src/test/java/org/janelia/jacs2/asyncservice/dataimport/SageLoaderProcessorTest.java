@@ -96,12 +96,12 @@ public class SageLoaderProcessorTest {
         File serviceErrFile = Mockito.mock(File.class);
 
         Mockito.when(Files.notExists(Paths.get(serviceOutPath))).thenReturn(false);
-        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:*"))
+        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceOutFilePath));
         Mockito.when(serviceOutFilePath.toFile()).thenReturn(serviceOutFile);
 
         Mockito.when(Files.notExists(Paths.get(serviceErrPath))).thenReturn(false);
-        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceErrPath), 1, "glob:*"))
+        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceErrPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceErrFilePath));
         Mockito.when(serviceErrFilePath.toFile()).thenReturn(serviceErrFile);
 
@@ -157,12 +157,12 @@ public class SageLoaderProcessorTest {
         File serviceErrFile = Mockito.mock(File.class);
 
         Mockito.when(Files.notExists(Paths.get(serviceOutPath))).thenReturn(false);
-        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:*"))
+        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceOutFilePath));
         Mockito.when(serviceOutFilePath.toFile()).thenReturn(serviceOutFile);
 
         Mockito.when(Files.notExists(Paths.get(serviceErrPath))).thenReturn(false);
-        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceErrPath), 1, "glob:*"))
+        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceErrPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceErrFilePath));
         Mockito.when(serviceErrFilePath.toFile()).thenReturn(serviceErrFile);
 
@@ -217,12 +217,12 @@ public class SageLoaderProcessorTest {
         File serviceErrFile = Mockito.mock(File.class);
 
         Mockito.when(Files.notExists(Paths.get(serviceOutPath))).thenReturn(false);
-        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:*"))
+        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceOutFilePath));
         Mockito.when(serviceOutFilePath.toFile()).thenReturn(serviceOutFile);
 
         Mockito.when(Files.notExists(Paths.get(serviceErrPath))).thenReturn(false);
-        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceErrPath), 1, "glob:*"))
+        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceErrPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceErrFilePath));
         Mockito.when(serviceErrFilePath.toFile()).thenReturn(serviceErrFile);
 
@@ -278,12 +278,12 @@ public class SageLoaderProcessorTest {
         File serviceErrFile = Mockito.mock(File.class);
 
         Mockito.when(Files.notExists(Paths.get(serviceOutPath))).thenReturn(false);
-        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:*"))
+        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceOutFilePath));
         Mockito.when(serviceOutFilePath.toFile()).thenReturn(serviceOutFile);
 
         Mockito.when(Files.notExists(Paths.get(serviceErrPath))).thenReturn(false);
-        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceErrPath), 1, "glob:*"))
+        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceErrPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceErrFilePath));
         Mockito.when(serviceErrFilePath.toFile()).thenReturn(serviceErrFile);
 
@@ -339,12 +339,12 @@ public class SageLoaderProcessorTest {
         File serviceErrFile = Mockito.mock(File.class);
 
         Mockito.when(Files.notExists(Paths.get(serviceOutPath))).thenReturn(false);
-        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:*"))
+        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceOutFilePath));
         Mockito.when(serviceOutFilePath.toFile()).thenReturn(serviceOutFile);
 
         Mockito.when(Files.notExists(Paths.get(serviceErrPath))).thenReturn(false);
-        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceErrPath), 1, "glob:*"))
+        Mockito.when(FileUtils.lookupFiles(Paths.get(serviceErrPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceErrFilePath));
         Mockito.when(serviceErrFilePath.toFile()).thenReturn(serviceErrFile);
 
