@@ -11,5 +11,5 @@ public interface AuthManager {
 
     Subject getCurrentSubject();
 
-    Subject getCurrentSubjectKey();
+    String getCurrentSubjectKey();
 }
