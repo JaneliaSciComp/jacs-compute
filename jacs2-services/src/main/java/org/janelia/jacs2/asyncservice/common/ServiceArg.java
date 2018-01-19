@@ -3,6 +3,9 @@ package org.janelia.jacs2.asyncservice.common;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class ServiceArg {
     private final String flag;
     private final int arity;
@@ -44,6 +47,13 @@ public class ServiceArg {
         this.values = new String[values.length + 1];
         this.values[0] = value1;
         System.arraycopy(values, 0, this.values, 1, values.length);
+    }
+
+    public ServiceArg(String flag, List<String> values) {
+        this.flag = flag;
+        this.arity = values.size();
+        String[] valueArr = new String[values.size()];
+        this.values = values.toArray(valueArr);
     }
 
     public ServiceArg(String flag, boolean value) {

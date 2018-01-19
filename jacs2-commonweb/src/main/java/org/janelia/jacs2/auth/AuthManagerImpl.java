@@ -2,7 +2,6 @@ package org.janelia.jacs2.auth;
 
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.security.Subject;
-import org.janelia.model.security.User;
 import org.janelia.model.security.util.SubjectUtils;
 import org.slf4j.Logger;
 
@@ -50,7 +49,6 @@ public class AuthManagerImpl implements AuthManager {
     private HttpServletRequest request;
 
     public AuthManagerImpl() {
-
     }
 
     /**
@@ -67,36 +65,37 @@ public class AuthManagerImpl implements AuthManager {
             throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         }
 
-        User authUser = dao.getUserByNameOrKey(username);
+        Subject authUser = dao.getSubjectByNameOrKey(username);
         if (authUser == null) {
-            log.debug("Invalid authorize user specified in header {}", HEADER_USERNAME);
+            log.debug("Invalid authorized user specified in header {}", HEADER_USERNAME);
             throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         }
 
         request.setAttribute(ATTRIBUTE_AUTH_USER, authUser);
 
-        String subjectKey = request.getHeader(HEADER_RUNASUSER);
-        Subject subject = null;
+        String runAsUser = request.getHeader(HEADER_RUNASUSER);
+        Subject subject;
 
-        if (subjectKey!=null) {
+        if (runAsUser!=null) {
             // Attempt to "run as" another user or group
 
             if (!SubjectUtils.isAdmin(authUser)) {
-                log.debug("User {} is not authorized to act as subject {}", username, subjectKey);
+                log.debug("User {} is not authorized to act as subject {}", username, runAsUser);
                 throw new WebApplicationException(Response.Status.FORBIDDEN);
             }
 
-            subject = dao.getSubjectByNameOrKey(subjectKey);
+            subject = dao.getSubjectByNameOrKey(runAsUser);
             if (subject == null) {
-                log.debug("Invalid run-as user specified in header {}: {}", HEADER_RUNASUSER, subjectKey);
+                log.debug("Invalid run-as user specified in header {}: {}", HEADER_RUNASUSER, runAsUser);
                 throw new WebApplicationException(Response.Status.FORBIDDEN);
             }
 
         }
         else {
-            subjectKey = username;
             subject = authUser;
         }
+
+        String subjectKey = subject.getKey();
 
         if (requiredGroups != null && requiredGroups.length>0) {
             for(String requiredGroup : requiredGroups) {
@@ -108,10 +107,10 @@ public class AuthManagerImpl implements AuthManager {
         }
 
         request.setAttribute(ATTRIBUTE_SUBJECT, subject);
-        request.setAttribute(ATTRIBUTE_SUBJECT_KEY, subject.getKey());
+        request.setAttribute(ATTRIBUTE_SUBJECT_KEY, subjectKey);
 
         if (log.isTraceEnabled()) {
-            log.trace("Using subjectKey={}", getCurrentSubjectKey());
+            log.trace("Using subjectKey={}", subjectKey);
         }
 
         return subjectKey;
@@ -129,7 +128,7 @@ public class AuthManagerImpl implements AuthManager {
      * Returns the subject key for the current request.
      * Returns null if authorize() has not been called for this request yet.
      */
-    public Subject getCurrentSubjectKey() {
-        return (Subject)request.getAttribute(ATTRIBUTE_SUBJECT);
+    public String getCurrentSubjectKey() {
+        return (String)request.getAttribute(ATTRIBUTE_SUBJECT_KEY);
     }
 }
