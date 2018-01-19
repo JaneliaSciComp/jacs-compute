@@ -114,12 +114,14 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                 masks.stream().collect(Collectors.toMap(ColorDepthMask::getFilepath,
                         Function.identity()));
 
-        String inputFiles = String.join(",", masks.stream()
+        String inputFiles = masks.stream()
                 .map(ColorDepthMask::getFilepath)
-                .collect(Collectors.toList()));
+                .reduce((p1, p2) -> p1 + "," + p2)
+                .orElse("");
 
         List<String> maskThresholds = masks.stream()
-                .map(ColorDepthMask::getMaskThreshold).map(i -> i.toString())
+                .map(ColorDepthMask::getMaskThreshold)
+                .map(i -> i.toString())
                 .collect(Collectors.toList());
 
         Path alignPath = Paths.get(rootPath).resolve(search.getAlignmentSpace());
