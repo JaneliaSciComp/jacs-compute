@@ -43,11 +43,10 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
         JobTemplate jt = null;
         try {
             processingScript = createProcessingScript(externalCode, env, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
-
             List<File> configFiles = createConfigFiles(externalConfigs, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
 
-            File outputFile = prepareOutputFile(serviceContext.getOutputPath(), "Output file must be set before running the service " + serviceContext.getName());
-            File errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
+            prepareOutputDir(serviceContext.getOutputPath(), "Output directory must be set before running the service " + serviceContext.getName());
+            prepareOutputDir(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
 
             jt = drmaaSession.createJobTemplate();
             jt.setJobName(serviceContext.getName());
@@ -58,15 +57,12 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
             logger.debug("Using working directory {} for {}", processDirectory, serviceContext);
             jt.setJobEnvironment(env);
             if (CollectionUtils.size(externalConfigs) < 1) {
-                if (StringUtils.isNotBlank(serviceContext.getInputPath())) {
-                    jt.setInputPath(":" + serviceContext.getInputPath());
-                }
-                jt.setOutputPath(":" + outputFile.getAbsolutePath());
-                jt.setErrorPath(":" + errorFile.getAbsolutePath());
+                jt.setOutputPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern(".%J")));
+                jt.setErrorPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern(".%J")));
             } else {
                 jt.setInputPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR, scriptServiceFolder.getServiceConfigPattern(".%I")));
-                jt.setOutputPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern(".%I")));
-                jt.setErrorPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern(".%I")));
+                jt.setOutputPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern(".%J.%I")));
+                jt.setErrorPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern(".%J.%I")));
             }
             String nativeSpec = createNativeSpec(serviceContext.getResources());
             if (StringUtils.isNotBlank(nativeSpec)) {

@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -16,6 +17,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
@@ -91,15 +93,15 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         }
     }
 
-    List<File> createConfigFiles(List<ExternalCodeBlock> externalConfig, JacsServiceFolder scriptServiceFolder, String subDir) {
+    List<File> createConfigFiles(List<ExternalCodeBlock> externalConfigs, JacsServiceFolder scriptServiceFolder, String subDir) {
         List<File> configFiles = new ArrayList<>();
 
-        if (externalConfig==null) return configFiles;
+        if (CollectionUtils.isEmpty(externalConfigs)) return configFiles;
 
         try {
             Files.createDirectories(scriptServiceFolder.getServiceFolder(subDir));
             int configIndex = 1;
-            for (ExternalCodeBlock externalCodeBlock : externalConfig) {
+            for (ExternalCodeBlock externalConfigBlock : externalConfigs) {
                 ScriptWriter configWriter = null;
                 try {
                     Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-rw----");
@@ -111,7 +113,7 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
                         configFile = configFilePath.toFile();
                     }
                     configWriter = new ScriptWriter(new BufferedWriter(new FileWriter(configFile)));
-                    configWriter.add(externalCodeBlock.toString());
+                    configWriter.add(externalConfigBlock.toString());
                     configFiles.add(configFile);
                     configIndex++;
                 } finally {
@@ -135,16 +137,13 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         scriptWriter.add(externalCode.toString());
     }
 
-    File prepareOutputFile(String filepath, String errorCaseMessage) throws IOException {
-        File outputFile;
-        if (StringUtils.isNotBlank(filepath)) {
-            outputFile = new File(filepath);
-            com.google.common.io.Files.createParentDirs(outputFile);
+    void prepareOutputDir(String dirName, String errorCaseMessage) throws IOException {
+        if (StringUtils.isNotBlank(dirName)) {
+            Path dirPath = Paths.get(dirName);
+            Files.createDirectories(dirPath);
         } else {
             throw new IllegalArgumentException(errorCaseMessage);
         }
-        resetOutputLog(outputFile);
-        return outputFile;
     }
 
     private Optional<Path> createScriptFileName(Path scriptDir, String scriptName, String nameSuffix) {
@@ -157,20 +156,5 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
             i++;
         } while (i <= MAX_SUBSCRIPT_INDEX);
         return Optional.empty();
-    }
-
-    private void resetOutputLog(File logFile) throws IOException {
-        Path logFilePath = logFile.toPath();
-        if (Files.notExists(logFilePath)) return;
-        String logFileExt = FileUtils.getFileExtensionOnly(logFilePath);
-        for (int i = 1; i <= MAX_SUBSCRIPT_INDEX; i++) {
-            String newLogFileExt = logFileExt + "." + i;
-            Path newLogFile = FileUtils.replaceFileExt(logFilePath, newLogFileExt);
-            if (Files.notExists(newLogFile)) {
-                Files.move(logFilePath, newLogFile);
-                return;
-            }
-        }
-        throw new IllegalStateException("There are too many backups so no backup could be created for " + logFile);
     }
 }

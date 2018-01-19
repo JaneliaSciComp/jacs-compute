@@ -43,11 +43,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Named("sageLoader")
 public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void> {
+
+    private static final Pattern IMAGES_FOUND = Pattern.compile("Images found:(?:\\W)*([\\d]*)");
+    private static final Pattern IMAGES_INSERTED = Pattern.compile("Images inserted:(?:\\W)*([\\d]*)");
+    private static final String PERLLIB_VARNAME = "PERL5LIB";
 
     static class SageLoaderArgs extends ServiceArgs {
         @Parameter(names = "-sageUser", description = "Sage loader user", required = false)
@@ -68,76 +73,65 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void> 
 
     class SageLoaderErrorChecker extends DefaultServiceErrorChecker {
 
-        public SageLoaderErrorChecker(Logger logger) {
+        SageLoaderErrorChecker(Logger logger) {
             super(logger);
         }
 
         @Override
-        protected void collectErrorsFromStdOut(JacsServiceData jacsServiceData, List<String> errors) {
+        protected Supplier<String> getMissingOutputPathErrSupplier(JacsServiceData jacsServiceData) {
+            return () -> "Processor output path not found: " + jacsServiceData;
+        }
+
+        @Override
+        protected Supplier<String> getMissingErrorPathErrSupplier(JacsServiceData jacsServiceData) {
+            return () -> "Processor error path not found: " + jacsServiceData;
+        }
+
+        protected Consumer<String> getStdOutConsumer(JacsServiceData jacsServiceData, List<String> errors) {
             SageLoaderArgs args = getArgs(jacsServiceData);
             int nExpectedImages = CollectionUtils.size(args.sampleFiles);
-            InputStream outputStream = null;
-            try {
-                if (StringUtils.isNotBlank(jacsServiceData.getOutputPath()) && new File(jacsServiceData.getOutputPath()).exists()) {
-                    outputStream = new FileInputStream(jacsServiceData.getOutputPath());
-                    streamHandler(outputStream, new Consumer<String>() {
-                        private int imagesFound = 0;
-                        private int imagesInserted = 0;
+            return new Consumer<String>() {
+                private int imagesFound = 0;
+                private int imagesInserted = 0;
 
-                        @Override
-                        public void accept(String s) {
-                            if (StringUtils.isNotBlank(s)) {
-                                logger.debug(s);
-                                Matcher imagesFoundLineMatcher = IMAGES_FOUND.matcher(s);
-                                if (imagesFoundLineMatcher.matches()) {
-                                    if (imagesFoundLineMatcher.groupCount() == 1) {
-                                        imagesFound = Integer.parseInt(imagesFoundLineMatcher.group(1));
-                                    }
-                                    if (imagesFound != nExpectedImages && !devMode) {
-                                        // this can happen for at least two reason - one is that the images are really missing
-                                        // and the second one if the images are found in the sage database it's possible that
-                                        // the grammar errored out because some of the tools hard-coded in the grammar are not
-                                        // where they are expected, e.g. they are expected in /usr/local/pipeline but in fact are
-                                        // in /misc/local/pipeline
-                                        errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound + " (check that grammar pipeline tools are in the right location)");
-                                    }
-                                } else if (devMode && imagesFound != nExpectedImages) {
-                                    // In dev mode, we can accept images that were inserted by the SAGE loader
-                                    Matcher imagesInsertedLineMatcher = IMAGES_INSERTED.matcher(s);
-                                    if (imagesInsertedLineMatcher.matches()) {
-                                        if (imagesInsertedLineMatcher.groupCount() == 1) {
-                                            imagesInserted = Integer.parseInt(imagesInsertedLineMatcher.group(1));
-                                        }
-                                        if (imagesFound + imagesInserted != nExpectedImages) {
-                                            String zeroFoundMessage = imagesFound + imagesInserted == 0
-                                                    ? " (if 0 check that grammar pipeline tools are in the right location)"
-                                                    : "";
-                                            errors.add("Not all images found - expected " + nExpectedImages + " but found " + imagesFound  + " and inserted " + imagesInserted + zeroFoundMessage);
-                                        }
-                                    }
+                @Override
+                public void accept(String s) {
+                    if (StringUtils.isNotBlank(s)) {
+                        logger.debug(s);
+                        Matcher imagesFoundLineMatcher = IMAGES_FOUND.matcher(s);
+                        if (imagesFoundLineMatcher.matches()) {
+                            if (imagesFoundLineMatcher.groupCount() == 1) {
+                                imagesFound = Integer.parseInt(imagesFoundLineMatcher.group(1));
+                            }
+                            if (imagesFound != nExpectedImages && !devMode) {
+                                // this can happen for at least two reason - one is that the images are really missing
+                                // and the second one if the images are found in the sage database it's possible that
+                                // the grammar errored out because some of the tools hard-coded in the grammar are not
+                                // where they are expected, e.g. they are expected in /usr/local/pipeline but in fact are
+                                // in /misc/local/pipeline
+                                errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound + " (check that grammar pipeline tools are in the right location)");
+                            }
+                        } else if (devMode && imagesFound != nExpectedImages) {
+                            // In dev mode, we can accept images that were inserted by the SAGE loader
+                            Matcher imagesInsertedLineMatcher = IMAGES_INSERTED.matcher(s);
+                            if (imagesInsertedLineMatcher.matches()) {
+                                if (imagesInsertedLineMatcher.groupCount() == 1) {
+                                    imagesInserted = Integer.parseInt(imagesInsertedLineMatcher.group(1));
+                                }
+                                if (imagesFound + imagesInserted != nExpectedImages) {
+                                    String zeroFoundMessage = imagesFound + imagesInserted == 0
+                                            ? " (if 0 check that grammar pipeline tools are in the right location)"
+                                            : "";
+                                    errors.add("Not all images found - expected " + nExpectedImages + " but found " + imagesFound  + " and inserted " + imagesInserted + zeroFoundMessage);
                                 }
                             }
                         }
-                    });
-                }
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            } finally {
-                if (outputStream != null) {
-                    try {
-                        outputStream.close();
-                    } catch (IOException e) {
-                        logger.warn("Output stream close error", e);
                     }
+
                 }
-            }
+            };
         }
-
     }
-
-    private static final Pattern IMAGES_FOUND = Pattern.compile("Images found:(?:\\W)*([\\d]*)");
-    private static final Pattern IMAGES_INSERTED = Pattern.compile("Images inserted:(?:\\W)*([\\d]*)");
-    private static final String PERLLIB_VARNAME = "PERL5LIB";
 
     private final String perlExecutable;
     private final String perlModule;

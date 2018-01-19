@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobTemplate;
@@ -88,21 +89,28 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
                                            JacsServiceFolder scriptServiceFolder,
                                            Path processDir,
                                            JacsServiceData serviceContext) {
-        JobTemplate jt = new JobTemplate();
-        jt.setJobName(serviceContext.getName());
-        jt.setArgs(Collections.emptyList());
 
         File jobProcessingDirectory = prepareProcessingDir(processDir);
         logger.debug("Using working directory {} for {}", jobProcessingDirectory, serviceContext);
 
-        jt.setWorkingDir(jobProcessingDirectory.getAbsolutePath());
         String processingScript = createProcessingScript(externalCode, env, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
         createConfigFiles(externalConfigs, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
 
+        JobTemplate jt = new JobTemplate();
+        jt.setJobName(serviceContext.getName());
+        jt.setArgs(Collections.emptyList());
+        jt.setWorkingDir(jobProcessingDirectory.getAbsolutePath());
         jt.setRemoteCommand(processingScript);
-        jt.setInputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR, scriptServiceFolder.getServiceConfigPattern(".#")).toString());
-        jt.setErrorPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern(".#")).toString());
-        jt.setOutputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern(".#")).toString());
+
+        if (CollectionUtils.size(externalConfigs) < 1) {
+            jt.setOutputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern("")).toString());
+            jt.setErrorPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern("")).toString());
+        } else {
+            jt.setInputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR, scriptServiceFolder.getServiceConfigPattern(".#")).toString());
+            jt.setErrorPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern(".#")).toString());
+            jt.setOutputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern(".#")).toString());
+        }
+
         // Apply a RegEx to replace any non-alphanumeric character with "_".
         String owner = serviceContext.getOwner();
         if (StringUtils.isBlank(owner)) {
@@ -113,10 +121,6 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         // Check if the SGE grid requires account info
         // TODO: need to port over ComputeAccounting.getInstance().getComputeAccount
         //setAccount(jt);
-
-        if (StringUtils.isNotBlank(serviceContext.getInputPath())) {
-            jt.setInputPath(":" + serviceContext.getInputPath());
-        }
 
         List<String> nativeSpec = createNativeSpec(serviceContext.getResources());
         if (nativeSpec!=null) {

@@ -89,8 +89,6 @@ public class Vaa3dStitchProcessor extends AbstractBasicLifeCycleServiceProcessor
     private JacsServiceData createVaa3dPluginService(Vaa3dStitchArgs args, JacsServiceData jacsServiceData) {
         return vaa3dPluginProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .setServiceName(jacsServiceData.getName())
-                        .setErrorPath(jacsServiceData.getErrorPath())
-                        .setOutputPath(jacsServiceData.getOutputPath())
                         .state(JacsServiceState.RUNNING).build(),
                 new ServiceArg("-plugin", "imageStitch.so"),
                 new ServiceArg("-pluginFunc", "v3dstitch"),

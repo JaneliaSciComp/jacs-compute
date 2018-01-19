@@ -59,16 +59,6 @@ public class ServiceExecutionContext {
             return this;
         }
 
-        public Builder setOutputPath(String outputPath) {
-            serviceExecutionContext.outputPath = outputPath;
-            return this;
-        }
-
-        public Builder setErrorPath(String errorPath) {
-            serviceExecutionContext.errorPath = errorPath;
-            return this;
-        }
-
         public Builder setWorkspace(String workspace) {
             serviceExecutionContext.workspace = workspace;
             return this;
@@ -115,8 +105,6 @@ public class ServiceExecutionContext {
     private final JacsServiceData parentServiceData;
     private ProcessingLocation processingLocation;
     private String serviceName;
-    private String outputPath;
-    private String errorPath;
     private String workspace;
     private JacsServiceState serviceState;
     private String description;
@@ -152,14 +140,6 @@ public class ServiceExecutionContext {
 
     String getServiceName() {
         return serviceName;
-    }
-
-    String getOutputPath() {
-        return outputPath;
-    }
-
-    String getErrorPath() {
-        return errorPath;
     }
 
     String getWorkspace() {

@@ -65,16 +65,12 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
         Map<String, EntityFieldValueHandler<?>> serviceUpdates = new LinkedHashMap<>();
         JacsServiceFolder jacsServiceFolder = getWorkingDirectory(jacsServiceData);
         if (StringUtils.isBlank(jacsServiceData.getOutputPath())) {
-            jacsServiceData.setOutputPath(jacsServiceFolder.getServiceFolder(
-                    JacsServiceFolder.SERVICE_OUTPUT_DIR,
-                    String.format("%s%s-stdout.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
+            jacsServiceData.setOutputPath(jacsServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString());
             serviceUpdates.put("outputPath", new SetFieldValueHandler<>(jacsServiceData.getOutputPath()));
         }
         if (StringUtils.isBlank(jacsServiceData.getErrorPath())) {
-            jacsServiceData.setOutputPath(jacsServiceFolder.getServiceFolder(
-                    JacsServiceFolder.SERVICE_ERROR_DIR,
-                    String.format("%s%s-stderr.txt", jacsServiceData.getName(), jacsServiceData.hasId() ? "-" + jacsServiceData.getId() : "")).toString());
-            serviceUpdates.put("errorPath", new SetFieldValueHandler<>(jacsServiceData.getOutputPath()));
+            jacsServiceData.setErrorPath(jacsServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString());
+            serviceUpdates.put("errorPath", new SetFieldValueHandler<>(jacsServiceData.getErrorPath()));
         }
         jacsServiceDataPersistence.update(jacsServiceData, serviceUpdates);
     }

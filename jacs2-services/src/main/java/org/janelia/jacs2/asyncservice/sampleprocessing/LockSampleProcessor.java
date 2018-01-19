@@ -5,12 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
-import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.DataHolder;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -78,11 +76,6 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
                 return (String) jacsServiceData.getSerializableResult();
             }
         };
-    }
-
-    @Override
-    public ServiceErrorChecker getErrorChecker() {
-        return new DefaultServiceErrorChecker(logger);
     }
 
     @Override

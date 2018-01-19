@@ -43,7 +43,6 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private Integer priority = 0;
     private String owner;
     private String queueId;
-    private String inputPath;
     private String outputPath;
     private String errorPath;
     private List<String> args = new ArrayList<>();
@@ -154,14 +153,6 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public void setOwner(String owner) {
         this.owner = owner;
-    }
-
-    public String getInputPath() {
-        return inputPath;
-    }
-
-    public void setInputPath(String inputPath) {
-        this.inputPath = inputPath;
     }
 
     public String getOutputPath() {

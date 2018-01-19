@@ -107,8 +107,6 @@ public class Vaa3dStitchGroupingProcessor extends AbstractBasicLifeCycleServiceP
     private JacsServiceData createVaa3dPluginService(Vaa3dStitchGroupingArgs args, JacsServiceData jacsServiceData) {
         return vaa3dPluginProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .setServiceName(jacsServiceData.getName())
-                        .setErrorPath(jacsServiceData.getErrorPath())
-                        .setOutputPath(jacsServiceData.getOutputPath())
                         .state(JacsServiceState.RUNNING).build(),
                 new ServiceArg("-plugin", "imageStitch.so"),
                 new ServiceArg("-pluginFunc", "istitch-grouping"),

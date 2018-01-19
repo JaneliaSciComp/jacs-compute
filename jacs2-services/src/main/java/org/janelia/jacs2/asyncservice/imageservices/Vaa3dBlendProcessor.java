@@ -87,8 +87,6 @@ public class Vaa3dBlendProcessor extends AbstractBasicLifeCycleServiceProcessor<
     private JacsServiceData createVaa3dPluginService(Vaa3dBlendArgs args, JacsServiceData jacsServiceData) {
         return vaa3dPluginProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .setServiceName(jacsServiceData.getName())
-                        .setErrorPath(jacsServiceData.getErrorPath())
-                        .setOutputPath(jacsServiceData.getOutputPath())
                         .state(JacsServiceState.RUNNING).build(),
                 new ServiceArg("-plugin", "ifusion.so"),
                 new ServiceArg("-pluginFunc", "iblender"),
