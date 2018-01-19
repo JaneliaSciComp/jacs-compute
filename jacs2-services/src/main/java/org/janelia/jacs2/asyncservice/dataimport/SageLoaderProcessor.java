@@ -96,38 +96,35 @@ public class SageLoaderProcessor extends AbstractExeBasedServiceProcessor<Void> 
 
                 @Override
                 public void accept(String s) {
-                    if (StringUtils.isNotBlank(s)) {
-                        logger.debug(s);
-                        Matcher imagesFoundLineMatcher = IMAGES_FOUND.matcher(s);
-                        if (imagesFoundLineMatcher.matches()) {
-                            if (imagesFoundLineMatcher.groupCount() == 1) {
-                                imagesFound = Integer.parseInt(imagesFoundLineMatcher.group(1));
+                    logger.debug(s);
+                    Matcher imagesFoundLineMatcher = IMAGES_FOUND.matcher(s);
+                    if (imagesFoundLineMatcher.matches()) {
+                        if (imagesFoundLineMatcher.groupCount() == 1) {
+                            imagesFound = Integer.parseInt(imagesFoundLineMatcher.group(1));
+                        }
+                        if (imagesFound != nExpectedImages && !devMode) {
+                            // this can happen for at least two reason - one is that the images are really missing
+                            // and the second one if the images are found in the sage database it's possible that
+                            // the grammar errored out because some of the tools hard-coded in the grammar are not
+                            // where they are expected, e.g. they are expected in /usr/local/pipeline but in fact are
+                            // in /misc/local/pipeline
+                            errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound + " (check that grammar pipeline tools are in the right location)");
+                        }
+                    } else if (devMode && imagesFound != nExpectedImages) {
+                        // In dev mode, we can accept images that were inserted by the SAGE loader
+                        Matcher imagesInsertedLineMatcher = IMAGES_INSERTED.matcher(s);
+                        if (imagesInsertedLineMatcher.matches()) {
+                            if (imagesInsertedLineMatcher.groupCount() == 1) {
+                                imagesInserted = Integer.parseInt(imagesInsertedLineMatcher.group(1));
                             }
-                            if (imagesFound != nExpectedImages && !devMode) {
-                                // this can happen for at least two reason - one is that the images are really missing
-                                // and the second one if the images are found in the sage database it's possible that
-                                // the grammar errored out because some of the tools hard-coded in the grammar are not
-                                // where they are expected, e.g. they are expected in /usr/local/pipeline but in fact are
-                                // in /misc/local/pipeline
-                                errors.add("Not all images found - expected " + nExpectedImages + " but only found " + imagesFound + " (check that grammar pipeline tools are in the right location)");
-                            }
-                        } else if (devMode && imagesFound != nExpectedImages) {
-                            // In dev mode, we can accept images that were inserted by the SAGE loader
-                            Matcher imagesInsertedLineMatcher = IMAGES_INSERTED.matcher(s);
-                            if (imagesInsertedLineMatcher.matches()) {
-                                if (imagesInsertedLineMatcher.groupCount() == 1) {
-                                    imagesInserted = Integer.parseInt(imagesInsertedLineMatcher.group(1));
-                                }
-                                if (imagesFound + imagesInserted != nExpectedImages) {
-                                    String zeroFoundMessage = imagesFound + imagesInserted == 0
-                                            ? " (if 0 check that grammar pipeline tools are in the right location)"
-                                            : "";
-                                    errors.add("Not all images found - expected " + nExpectedImages + " but found " + imagesFound  + " and inserted " + imagesInserted + zeroFoundMessage);
-                                }
+                            if (imagesFound + imagesInserted != nExpectedImages) {
+                                String zeroFoundMessage = imagesFound + imagesInserted == 0
+                                        ? " (if 0 check that grammar pipeline tools are in the right location)"
+                                        : "";
+                                errors.add("Not all images found - expected " + nExpectedImages + " but found " + imagesFound  + " and inserted " + imagesInserted + zeroFoundMessage);
                             }
                         }
                     }
-
                 }
             };
         }
