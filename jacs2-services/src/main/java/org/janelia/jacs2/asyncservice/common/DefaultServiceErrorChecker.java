@@ -70,6 +70,7 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
 
     private void processDir(Path processOutputDir, Consumer<String> processOutputConsumer) {
         FileUtils.lookupFiles(processOutputDir, 1, "glob:**/*")
+                .filter(Files::isRegularFile)
                 .forEach(outputFile -> {
                     logger.info("Checking '{}' for errors", outputFile);
                     InputStream outputFileStream = null;

@@ -112,7 +112,7 @@ public class OctreeCreator extends AbstractExeBasedServiceProcessor<List<File>> 
             public List<File> collectResult(JacsServiceResult<?> depResults) {
                 OctreeCreatorArgs args = getArgs(depResults.getJacsServiceData());
                 Path outputDir = getOutputDir(args);
-                return FileUtils.lookupFiles(outputDir, 1, "glob:transform.txt")
+                return FileUtils.lookupFiles(outputDir, 1, "glob:**/transform.txt")
                         .map(Path::toFile)
                         .collect(Collectors.toList());
             }

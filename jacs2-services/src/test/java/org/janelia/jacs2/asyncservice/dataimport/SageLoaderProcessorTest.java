@@ -15,6 +15,7 @@ import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -95,6 +96,8 @@ public class SageLoaderProcessorTest {
         File serviceOutFile = Mockito.mock(File.class);
         File serviceErrFile = Mockito.mock(File.class);
 
+        Mockito.when(Files.isRegularFile(ArgumentMatchers.any(Path.class))).thenReturn(true);
+
         Mockito.when(Files.notExists(Paths.get(serviceOutPath))).thenReturn(false);
         Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceOutFilePath));
@@ -156,6 +159,8 @@ public class SageLoaderProcessorTest {
         File serviceOutFile = Mockito.mock(File.class);
         File serviceErrFile = Mockito.mock(File.class);
 
+        Mockito.when(Files.isRegularFile(ArgumentMatchers.any(Path.class))).thenReturn(true);
+
         Mockito.when(Files.notExists(Paths.get(serviceOutPath))).thenReturn(false);
         Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceOutFilePath));
@@ -215,6 +220,8 @@ public class SageLoaderProcessorTest {
         Path serviceErrFilePath = Mockito.mock(Path.class);
         File serviceOutFile = Mockito.mock(File.class);
         File serviceErrFile = Mockito.mock(File.class);
+
+        Mockito.when(Files.isRegularFile(ArgumentMatchers.any(Path.class))).thenReturn(true);
 
         Mockito.when(Files.notExists(Paths.get(serviceOutPath))).thenReturn(false);
         Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:**/*"))
@@ -277,6 +284,8 @@ public class SageLoaderProcessorTest {
         File serviceOutFile = Mockito.mock(File.class);
         File serviceErrFile = Mockito.mock(File.class);
 
+        Mockito.when(Files.isRegularFile(ArgumentMatchers.any(Path.class))).thenReturn(true);
+
         Mockito.when(Files.notExists(Paths.get(serviceOutPath))).thenReturn(false);
         Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceOutFilePath));
@@ -338,6 +347,8 @@ public class SageLoaderProcessorTest {
         File serviceOutFile = Mockito.mock(File.class);
         File serviceErrFile = Mockito.mock(File.class);
 
+        Mockito.when(Files.isRegularFile(ArgumentMatchers.any(Path.class))).thenReturn(true);
+
         Mockito.when(Files.notExists(Paths.get(serviceOutPath))).thenReturn(false);
         Mockito.when(FileUtils.lookupFiles(Paths.get(serviceOutPath), 1, "glob:**/*"))
                 .thenReturn(Stream.of(serviceOutFilePath));
@@ -394,6 +405,8 @@ public class SageLoaderProcessorTest {
         JacsServiceData testService = createTestServiceData(serviceId, testImages, serviceOutPath, serviceErrPath);
 
         PowerMockito.mockStatic(Files.class);
+
+        Mockito.when(Files.isRegularFile(ArgumentMatchers.any(Path.class))).thenReturn(true);
 
         Mockito.when(Files.notExists(Paths.get(serviceOutPath))).thenReturn(true);
         Mockito.when(Files.notExists(Paths.get(serviceErrPath))).thenReturn(true);
