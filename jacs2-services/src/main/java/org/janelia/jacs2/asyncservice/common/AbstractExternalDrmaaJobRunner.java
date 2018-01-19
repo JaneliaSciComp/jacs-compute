@@ -57,12 +57,12 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
             logger.debug("Using working directory {} for {}", processDirectory, serviceContext);
             jt.setJobEnvironment(env);
             if (CollectionUtils.size(externalConfigs) < 1) {
-                jt.setOutputPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern(".%J")));
-                jt.setErrorPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern(".%J")));
+                jt.setOutputPath(":" + Paths.get(serviceContext.getOutputPath(), scriptServiceFolder.getServiceOutputPattern(".%J")));
+                jt.setErrorPath(":" + Paths.get(serviceContext.getErrorPath(), scriptServiceFolder.getServiceErrorPattern(".%J")));
             } else {
                 jt.setInputPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR, scriptServiceFolder.getServiceConfigPattern(".%I")));
-                jt.setOutputPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern(".%J.%I")));
-                jt.setErrorPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern(".%J.%I")));
+                jt.setOutputPath(":" + Paths.get(serviceContext.getOutputPath(), scriptServiceFolder.getServiceOutputPattern(".%J.%I")));
+                jt.setErrorPath(":" + Paths.get(serviceContext.getErrorPath(), scriptServiceFolder.getServiceErrorPattern(".%J.%I")));
             }
             String nativeSpec = createNativeSpec(serviceContext.getResources());
             if (StringUtils.isNotBlank(nativeSpec)) {

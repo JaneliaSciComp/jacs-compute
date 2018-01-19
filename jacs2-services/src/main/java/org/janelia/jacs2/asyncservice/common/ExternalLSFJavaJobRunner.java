@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -107,12 +108,12 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         jt.setRemoteCommand(processingScript);
 
         if (CollectionUtils.size(externalConfigs) < 1) {
-            jt.setOutputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern("")).toString());
-            jt.setErrorPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern("")).toString());
+            jt.setOutputPath(Paths.get(serviceContext.getOutputPath(), scriptServiceFolder.getServiceOutputPattern("")).toString());
+            jt.setErrorPath(Paths.get(serviceContext.getErrorPath(), scriptServiceFolder.getServiceErrorPattern("")).toString());
         } else {
             jt.setInputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR, scriptServiceFolder.getServiceConfigPattern(".#")).toString());
-            jt.setErrorPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR, scriptServiceFolder.getServiceErrorPattern(".#")).toString());
-            jt.setOutputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR, scriptServiceFolder.getServiceOutputPattern(".#")).toString());
+            jt.setOutputPath(Paths.get(serviceContext.getOutputPath(), scriptServiceFolder.getServiceOutputPattern(".#")).toString());
+            jt.setErrorPath(Paths.get(serviceContext.getErrorPath(), scriptServiceFolder.getServiceErrorPattern(".#")).toString());
         }
 
         // Apply a RegEx to replace any non-alphanumeric character with "_".
