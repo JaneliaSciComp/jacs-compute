@@ -110,7 +110,7 @@ public class LightsheetProcessing extends AbstractServiceProcessor<File> {
                 return lightsheetPipeline.process(
                         new ServiceExecutionContext.Builder(jacsServiceData)
                                 .waitFor(firstStageResult.getJacsServiceData()) // for dependency based on previous step
-                                .description("Run lightsheetPipeline" + String.valueOf(final_i))
+                                .description(allSelectedStepNamesArray[final_i])
                                 .build(),
                         new ServiceArg("-stepName", allSelectedStepNamesArray[final_i]),
                         new ServiceArg("-jsonFile", inputJsonDir + String.valueOf(final_i) + "_" + allSelectedStepNamesArray[final_i] + ".json"),

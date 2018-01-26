@@ -192,12 +192,16 @@ public class LightsheetPipeline extends AbstractExeBasedServiceProcessor<List<Fi
     @Override
     protected void prepareResources(JacsServiceData jacsServiceData) {
         // This doesn't need much memory, because it only processes a single tile at a time.
+        ProcessorHelper.setCPUType(jacsServiceData.getResources(),"broadwell");
         LightsheetPipelineArgs args = getArgs(jacsServiceData);
         if ( args.stepName.contains("local") ) {
             ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), 16);
         }
+        else if (args.stepName.contains("CS") ) {
+            ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), 8);
+        }
         else{
-            ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), 1);
+            ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), 2);
         }
         ProcessorHelper.setSoftJobDurationLimitInSeconds(jacsServiceData.getResources(), 5*60); // 5 minutes
         ProcessorHelper.setHardJobDurationLimitInSeconds(jacsServiceData.getResources(), 12*60*60); // 1 hour
