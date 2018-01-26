@@ -101,11 +101,6 @@ public class IntegerComputeTestProcessor extends AbstractServiceProcessor<Long> 
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public ServiceErrorChecker getErrorChecker() {
-        throw new UnsupportedOperationException();
-    }
-
     private IntegerComputeTestArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new IntegerComputeTestArgs());
     }

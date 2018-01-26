@@ -114,22 +114,18 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
         return new DefaultServiceErrorChecker(logger) {
             @Override
             protected boolean hasErrors(String l) {
-                if (StringUtils.isNotBlank(l)) {
-                    if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
-                        // core dump is still an error
-                        logger.error(l);
-                        return true;
-                    } else if (l.matches("(?i:.*(error/annotate\\.c).*)")) {
-                        // I have seen this probably because of a missing font so I will ignore them for now.
-                        logger.warn(l);
-                        return false;
-                    } else if (l.matches("(?i:.*(error|exception).*)")) {
-                        // but will consider any other error or exception
-                        logger.error(l);
-                        return true;
-                    } else {
-                        return false;
-                    }
+                if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
+                    // core dump is still an error
+                    logger.error(l);
+                    return true;
+                } else if (l.matches("(?i:.*(error/annotate\\.c).*)")) {
+                    // I have seen this probably because of a missing font so I will ignore them for now.
+                    logger.warn(l);
+                    return false;
+                } else if (l.matches("(?i:.*(error|exception).*)")) {
+                    // but will consider any other error or exception
+                    logger.error(l);
+                    return true;
                 } else {
                     return false;
                 }

@@ -128,8 +128,6 @@ public class Vaa3dPluginProcessor extends AbstractBasicLifeCycleServiceProcessor
         }
         return vaa3dProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .setServiceName(jacsServiceData.getName())
-                        .setErrorPath(jacsServiceData.getErrorPath())
-                        .setOutputPath(jacsServiceData.getOutputPath())
                         .state(JacsServiceState.RUNNING)
                         .build(),
                 new ServiceArg("-vaa3dArgs", vaa3Args.toString())

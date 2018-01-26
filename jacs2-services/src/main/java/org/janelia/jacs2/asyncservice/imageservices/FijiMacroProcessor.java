@@ -8,6 +8,7 @@ import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.CoreDumpServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
@@ -122,13 +123,18 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
             if (StringUtils.isNotBlank(args.finalOutput)) {
                 Files.createDirectories(Paths.get(args.finalOutput));
             }
-            Path workingDir = getWorkingDirectory(jacsServiceData);
+            JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
             if (!headless) {
-                X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
+                X11Utils.setDisplayPort(serviceWorkingFolder.getServiceFolder().toString(), scriptWriter);
             }
             // Create temp dir so that large temporary avis are not created on the network drive
-            String scratchFolder = StringUtils.defaultIfBlank(args.temporaryOutput, workingDir.toString());
-            Path scratchDir = Paths.get(scratchFolder, jacsServiceData.getName(), jacsServiceData.getName() + "_" + jacsServiceData.getId());
+            JacsServiceFolder scratchServiceFolder;
+            if (StringUtils.isBlank(args.temporaryOutput)) {
+                scratchServiceFolder = serviceWorkingFolder;
+            } else {
+                scratchServiceFolder = new JacsServiceFolder(null, Paths.get(args.temporaryOutput), jacsServiceData);
+            }
+            Path scratchDir = scratchServiceFolder.getServiceFolder();
             Files.createDirectories(scratchDir);
             ScriptUtils.createTempDir("cleanTemp", scratchDir.toString(), scriptWriter);
             // define the exit handlers

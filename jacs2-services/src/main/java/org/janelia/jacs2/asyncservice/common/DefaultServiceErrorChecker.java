@@ -1,18 +1,23 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class DefaultServiceErrorChecker implements ServiceErrorChecker {
 
@@ -24,70 +29,99 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
 
     public List<String> collectErrors(JacsServiceData jacsServiceData) {
         List<String> errors = new ArrayList<>();
-        collectErrorsFromStdOut(jacsServiceData, errors);
-        collectErrorsFromStdErr(jacsServiceData, errors);
+        getProcessOutputPath(jacsServiceData.getOutputPath())
+                .map(outputPath -> {
+                    processDir(outputPath, getStdOutConsumer(jacsServiceData, errors));
+                    return errors;
+                })
+                .orElseGet(() -> {
+                    String err = getMissingOutputPathErrSupplier(jacsServiceData).get();
+                    if (StringUtils.isNotBlank(err)) {
+                        errors.add(err);
+                    }
+                    return errors;
+                });
+        getProcessOutputPath(jacsServiceData.getErrorPath())
+                .map(outputPath -> {
+                    processDir(outputPath, getStdErrConsumer(errors));
+                    return errors;
+                })
+                .orElseGet(() -> {
+                    String err = getMissingErrorPathErrSupplier(jacsServiceData).get();
+                    if (StringUtils.isNotBlank(err)) {
+                        errors.add(err);
+                    }
+                    return errors;
+                });
         return errors;
     }
 
-    protected void collectErrorsFromStdOut(JacsServiceData jacsServiceData, List<String> errors) {
-        InputStream outputStream = null;
-        try {
-            if (StringUtils.isNotBlank(jacsServiceData.getOutputPath()) && new File(jacsServiceData.getOutputPath()).exists()) {
-                outputStream = new FileInputStream(jacsServiceData.getOutputPath());
-                streamHandler(outputStream, s -> {
-                    if (checkStdOutErrors(s)) {
-                        logger.error(s);
-                        errors.add(s);
-                    }
-                    if (StringUtils.isNotBlank(s)) logger.debug(s);
-                });
-            }
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    logger.warn("Output stream close error", e);
-                }
-            }
+
+    private Optional<Path> getProcessOutputPath(String processOutputDir) {
+        if (StringUtils.isBlank(processOutputDir)) {
+            return Optional.empty();
         }
-    }
-
-    protected void collectErrorsFromStdErr(JacsServiceData jacsServiceData, List<String> errors) {
-        InputStream errorStream = null;
-        try {
-            if (StringUtils.isNotBlank(jacsServiceData.getErrorPath()) && new File(jacsServiceData.getErrorPath()).exists()) {
-                errorStream = new FileInputStream(jacsServiceData.getErrorPath());
-                streamHandler(errorStream, s -> {
-                    if (checkStdErrErrors(s)) {
-                        errors.add(s);
-                    }
-                    if (StringUtils.isNotBlank(s))
-                        logger.info(s); // log at info level because I noticed a lot of the external tools write to stderr.
-                });
-            }
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            if (errorStream != null) {
-                try {
-                    errorStream.close();
-                } catch (IOException e) {
-                    logger.warn("Error stream close error", e);
-                }
-            }
+        Path processOutputPath = Paths.get(processOutputDir);
+        if (Files.notExists(processOutputPath)) {
+            return Optional.empty();
         }
-
+        return Optional.of(processOutputPath);
     }
 
-    protected boolean checkStdOutErrors(String s) {
-        return hasErrors(s);
+    private void processDir(Path processOutputDir, Consumer<String> processOutputConsumer) {
+        FileUtils.lookupFiles(processOutputDir, 1, "glob:**/*")
+                .filter(Files::isRegularFile)
+                .forEach(outputFile -> {
+                    logger.info("Checking '{}' for errors", outputFile);
+                    InputStream outputFileStream = null;
+                    try {
+                        outputFileStream = new FileInputStream(outputFile.toFile());
+                        streamHandler(outputFileStream, processOutputConsumer);
+                    } catch (Exception e) {
+                        throw new IllegalStateException(e);
+                    } finally {
+                        if (outputFileStream != null) {
+                            try {
+                                outputFileStream.close();
+                            } catch (IOException e) {
+                                logger.warn("Output stream {} close error", outputFile, e);
+                            }
+                        }
+
+                    }
+                });
     }
 
-    private boolean checkStdErrErrors(String s) {
-        return hasErrors(s);
+    protected Supplier<String> getMissingOutputPathErrSupplier(JacsServiceData jacsServiceData) {
+        return () -> null;
+    }
+
+    protected Supplier<String> getMissingErrorPathErrSupplier(JacsServiceData jacsServiceData) {
+        return () -> null;
+    }
+
+    protected Consumer<String> getStdOutConsumer(JacsServiceData jacsServiceData, List<String> errors) {
+        return (String s) -> {
+            logger.debug(s);
+            if (ignoreErrorMessage(s)) {
+                // ignore this line even if the regex may say it's an error
+            } else if (hasErrors(s)) {
+                logger.error(s);
+                errors.add(s);
+            }
+        };
+    }
+
+    private Consumer<String> getStdErrConsumer(List<String> errors) {
+        return (String s) -> {
+            logger.info(s); // log at info level because I noticed a lot of the external tools write to stderr.
+            if (ignoreErrorMessage(s)) {
+                // ignore this line even if the regex may say it's an error
+            } else if (hasErrors(s)) {
+                logger.error(s);
+                errors.add(s);
+            }
+        };
     }
 
     protected void streamHandler(InputStream outStream, Consumer<String> lineConsumer) {
@@ -96,6 +130,9 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
             try {
                 String l = outputReader.readLine();
                 if (l == null) break;
+                if (StringUtils.isEmpty(l)) {
+                    continue;
+                }
                 lineConsumer.accept(l);
             } catch (IOException e) {
                 logger.warn("Error stream close error", e);
@@ -104,7 +141,11 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
         }
     }
 
+    protected boolean ignoreErrorMessage(String l) {
+        return l.matches("(?i:.*( for stderr ).*)");
+    }
+
     protected boolean hasErrors(String l) {
-        return StringUtils.isNotBlank(l) && l.matches("(?i:.*(error|exception|Segmentation fault|core dumped).*)");
+        return l.matches("(?i:.*(error|exception|Segmentation fault|core dumped).*)");
     }
 }

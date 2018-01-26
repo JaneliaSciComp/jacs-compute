@@ -46,19 +46,18 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
     private final WrappedServiceProcessor<ColorDepthFileSearch, List<File>> colorDepthFileSearch;
     private final String rootPath;
-
-    @Inject
-    private LegacyDomainDao dao;
+    private final LegacyDomainDao dao;
 
     @Inject
     ColorDepthObjectSearch(ServiceComputationFactory computationFactory,
                            JacsServiceDataPersistence jacsServiceDataPersistence,
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                           LegacyDomainDao dao,
                            @StrPropertyValue(name = "service.colorDepthSearch.filepath") String rootPath,
                            ColorDepthFileSearch colorDepthFileSearch,
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-
+        this.dao = dao;
         this.colorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, colorDepthFileSearch);
         this.rootPath = rootPath;
     }
@@ -115,18 +114,21 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                 masks.stream().collect(Collectors.toMap(ColorDepthMask::getFilepath,
                         Function.identity()));
 
-        String inputFiles = String.join(",", masks.stream()
+        String inputFiles = masks.stream()
                 .map(ColorDepthMask::getFilepath)
-                .collect(Collectors.toList()));
+                .reduce((p1, p2) -> p1 + "," + p2)
+                .orElse("");
 
         List<String> maskThresholds = masks.stream()
-                .map(ColorDepthMask::getMaskThreshold).map(i -> i.toString())
+                .map(ColorDepthMask::getMaskThreshold)
+                .map(i -> i.toString())
                 .collect(Collectors.toList());
 
         Path alignPath = Paths.get(rootPath).resolve(search.getAlignmentSpace());
-        String searchDirs = String.join(",", search.getDataSets().stream()
+        String searchDirs = search.getDataSets().stream()
                 .map(dataSet -> alignPath.resolve(dataSet).toString())
-                .collect(Collectors.toList()));
+                .reduce((p1, p2) -> p1 + "," + p2)
+                .orElse("");
 
         List<ServiceArg> serviceArgList = new ArrayList<>();
         serviceArgList.add(new ServiceArg("-inputFiles", inputFiles));
@@ -159,7 +161,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                 try {
                     ColorDepthResult colorDepthResult = new ColorDepthResult();
 
-                    for(File resultsFile : result.getResult()) {
+                    for (File resultsFile : result.getResult()) {
 
                         logger.info("Processing result file: {}", resultsFile);
 
@@ -196,8 +198,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
                     colorDepthResult = dao.save(jacsServiceData.getOwner(), colorDepthResult);
                     dao.addColorDepthSearchResult(jacsServiceData.getOwner(), search.getId(), colorDepthResult);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     throw new ComputationException(jacsServiceData, e);
                 }
 

@@ -98,8 +98,6 @@ public class NiftiConverterProcessor extends AbstractBasicLifeCycleServiceProces
     private JacsServiceData createVaa3dPluginService(Vaa3dNiftiConverterArgs args, JacsServiceData jacsServiceData) {
         return vaa3dPluginProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .setServiceName(jacsServiceData.getName())
-                        .setErrorPath(jacsServiceData.getErrorPath())
-                        .setOutputPath(jacsServiceData.getOutputPath())
                         .state(JacsServiceState.RUNNING).build(),
                 new ServiceArg("-plugin", "ireg"),
                 new ServiceArg("-pluginFunc", "NiftiImageConverter"),

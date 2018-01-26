@@ -45,7 +45,6 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<R, S> extends Abstr
         if (jacsServiceDataHierarchy == null) {
             jacsServiceDataHierarchy = jacsServiceData;
         }
-        setOutputAndErrorPaths(jacsServiceDataHierarchy);
         return jacsServiceDataHierarchy;
     }
 

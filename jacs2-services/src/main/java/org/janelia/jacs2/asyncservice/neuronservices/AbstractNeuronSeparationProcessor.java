@@ -143,7 +143,7 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
 
     private void addStartX11ServerCmd(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) {
         try {
-            Path workingDir = getWorkingDirectory(jacsServiceData);
+            Path workingDir = getWorkingDirectory(jacsServiceData).getServiceFolder();
             X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
         } catch (IOException e) {
             throw new UncheckedIOException(e);

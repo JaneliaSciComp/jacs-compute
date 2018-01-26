@@ -119,7 +119,7 @@ public class KTXCreator extends AbstractExeBasedServiceProcessor<List<File>> {
             public List<File> collectResult(JacsServiceResult<?> depResults) {
                 KTXCreatorArgs args = getArgs(depResults.getJacsServiceData());
                 Path outputDir = getOutputDir(args);
-                return FileUtils.lookupFiles(outputDir, 100, "glob:*.ktx")
+                return FileUtils.lookupFiles(outputDir, 100, "glob:**/*.ktx")
                         .map(Path::toFile)
                         .collect(Collectors.toList());
             }

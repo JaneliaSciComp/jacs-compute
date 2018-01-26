@@ -77,7 +77,7 @@ public class Vaa3dProcessor extends AbstractExeBasedServiceProcessor<Void> {
                 if (result) {
                     return true;
                 }
-                if (StringUtils.isNotBlank(l) && l.matches("(?i:.*(fail to call the plugin).*)")) {
+                if (l.matches("(?i:.*(fail to call the plugin).*)")) {
                     logger.error(l);
                     return true;
                 } else {
@@ -99,7 +99,7 @@ public class Vaa3dProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
     private void createScript(JacsServiceData jacsServiceData, Vaa3dArgs args, ScriptWriter scriptWriter) {
         try {
-            Path workingDir = getWorkingDirectory(jacsServiceData);
+            Path workingDir = getWorkingDirectory(jacsServiceData).getServiceFolder();
             X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
             scriptWriter.addWithArgs(getExecutable()).addArg(args.vaa3dArgs).endArgs("");
         } catch (IOException e) {

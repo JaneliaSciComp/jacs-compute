@@ -34,39 +34,36 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
     public ExeJobInfo runCmds(ExternalCodeBlock externalCode,
                               List<ExternalCodeBlock> externalConfigs,
                               Map<String, String> env,
-                              String scriptDirName,
-                              String processDirName,
+                              JacsServiceFolder scriptServiceFolder,
+                              Path processDir,
                               JacsServiceData serviceContext) {
         logger.debug("Begin DRMAA job invocation for {}", serviceContext);
         jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
-        String processingScript = scriptDirName + "/<unknown>";
+        String processingScript = scriptServiceFolder.getServiceFolder("<unknown>").toString();
         JobTemplate jt = null;
         try {
-            Path scriptsDir = FileUtils.createSubDirs(Paths.get(scriptDirName), "sge_config");
-            processingScript = createProcessingScript(externalCode, env, scriptsDir.toString(), serviceContext);
+            processingScript = createProcessingScript(externalCode, env, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
+            List<File> configFiles = createConfigFiles(externalConfigs, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
 
-            String configFilePattern = serviceContext.getName() + "Configuration.#";
-            List<File> configFiles = createConfigFiles(externalConfigs, scriptsDir.toString(), configFilePattern, serviceContext);
-
-            File outputFile = prepareOutputFile(serviceContext.getOutputPath(), "Output file must be set before running the service " + serviceContext.getName());
-            File errorFile = prepareOutputFile(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
+            prepareOutputDir(serviceContext.getOutputPath(), "Output directory must be set before running the service " + serviceContext.getName());
+            prepareOutputDir(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
 
             jt = drmaaSession.createJobTemplate();
             jt.setJobName(serviceContext.getName());
             jt.setRemoteCommand(processingScript);
             jt.setArgs(Collections.emptyList());
-            File processDirectory = setJobWorkingDirectory(jt, processDirName);
+            File processDirectory = prepareProcessingDir(processDir);
+            jt.setWorkingDirectory(processDirectory.getAbsolutePath());
             logger.debug("Using working directory {} for {}", processDirectory, serviceContext);
             jt.setJobEnvironment(env);
             if (CollectionUtils.size(externalConfigs) < 1) {
-                if (StringUtils.isNotBlank(serviceContext.getInputPath())) {
-                    jt.setInputPath(":" + serviceContext.getInputPath());
-                }
+                jt.setOutputPath(":" + Paths.get(serviceContext.getOutputPath(), scriptServiceFolder.getServiceOutputPattern(".%J")));
+                jt.setErrorPath(":" + Paths.get(serviceContext.getErrorPath(), scriptServiceFolder.getServiceErrorPattern(".%J")));
             } else {
-                jt.setInputPath(":" + scriptsDir.resolve(configFilePattern));
+                jt.setInputPath(":" + scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR, scriptServiceFolder.getServiceConfigPattern(".%I")));
+                jt.setOutputPath(":" + Paths.get(serviceContext.getOutputPath(), scriptServiceFolder.getServiceOutputPattern(".%J.%I")));
+                jt.setErrorPath(":" + Paths.get(serviceContext.getErrorPath(), scriptServiceFolder.getServiceErrorPattern(".%J.%I")));
             }
-            jt.setOutputPath(":" + outputFile.getAbsolutePath());
-            jt.setErrorPath(":" + errorFile.getAbsolutePath());
             String nativeSpec = createNativeSpec(serviceContext.getResources());
             if (StringUtils.isNotBlank(nativeSpec)) {
                 jt.setNativeSpecification(nativeSpec);
@@ -101,27 +98,6 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
             logger.error("Error creating a DRMAA job {} for {}", processingScript, serviceContext, e);
             throw new ComputationException(serviceContext, e);
         }
-    }
-
-    private File setJobWorkingDirectory(JobTemplate jt, String workingDirName) {
-        File workingDirectory;
-        if (StringUtils.isNotBlank(workingDirName)) {
-            workingDirectory = new File(workingDirName);
-        } else {
-            workingDirectory = Files.createTempDir();
-        }
-        if (!workingDirectory.exists()) {
-            workingDirectory.mkdirs();
-        }
-        if (!workingDirectory.exists()) {
-            throw new IllegalStateException("Cannot create working directory " + workingDirectory.getAbsolutePath());
-        }
-        try {
-            jt.setWorkingDirectory(workingDirectory.getAbsolutePath());
-        } catch (DrmaaException e) {
-            throw new IllegalStateException(e);
-        }
-        return workingDirectory;
     }
 
     protected abstract String createNativeSpec(Map<String, String> jobResources);

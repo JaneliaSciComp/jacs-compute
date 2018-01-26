@@ -16,14 +16,12 @@ import org.janelia.model.jacs2.domain.sample.LSMImage;
 import org.janelia.model.jacs2.domain.sample.TileLsmPair;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
-import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
-import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
@@ -222,11 +220,6 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<SampleAreaResult>>() {});
             }
         };
-    }
-
-    @Override
-    public ServiceErrorChecker getErrorChecker() {
-        return new DefaultServiceErrorChecker(logger);
     }
 
     @Override

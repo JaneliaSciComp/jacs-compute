@@ -59,6 +59,7 @@ import static org.mockito.Mockito.when;
 })
 public class DataTreeLoadProcessorTest {
     private static final String DEFAULT_WORKING_DIR = "testWorking";
+    private static final String TEST_LOCAL_WORKSPACE = "testlocal";
     private static final Long TEST_DATA_NODE_ID = 10L;
     private static final Number TEST_SERVICE_ID = 1L;
 
@@ -196,8 +197,8 @@ public class DataTreeLoadProcessorTest {
         Mockito.when(Files.notExists(any(Path.class))).thenReturn(false);
         Mockito.when(Files.size(any(Path.class))).thenReturn(100L);
 
-        Path f1TifPath = Paths.get("testlocal/temp/f1_mipArtifact.tif");
-        Path f2TifPath = Paths.get("testlocal/temp/f2_mipArtifact.tif");
+        Path f1TifPath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f1_mipArtifact.tif");
+        Path f2TifPath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f2_mipArtifact.tif");
         File f1TifMipArtifact = mock(File.class);
         File f2TifMipArtifact = mock(File.class);
         Mockito.when(f1TifMipArtifact.getAbsolutePath()).thenReturn(f1TifPath.toString());
@@ -209,8 +210,8 @@ public class DataTreeLoadProcessorTest {
         when(vaa3dMipCmdProcessor.getResultHandler()).thenReturn(vaa3dMipCmdResultsResultHandler);
         when(vaa3dMipCmdResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(f1TifMipArtifact, f2TifMipArtifact));
 
-        Path f1PngPath = Paths.get("testlocal/temp/f1_mipArtifact.png");
-        Path f2PngPath = Paths.get("testlocal/temp/f2_mipArtifact.png");
+        Path f1PngPath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f1_mipArtifact.png");
+        Path f2PngPath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f2_mipArtifact.png");
         File f1PngMipArtifact = mock(File.class);
         File f2PngMipArtifact = mock(File.class);
         FileInputStream f1PngMipStream = mock(FileInputStream.class);
@@ -241,12 +242,12 @@ public class DataTreeLoadProcessorTest {
                             eq(testOwner));
 
                     Mockito.verify(vaa3dMipCmdProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", "testlocal/temp/f1.lsm,testlocal/temp/f2.v3draw"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputFiles", "testlocal/temp/f1_mipArtifact.tif,testlocal/temp/f2_mipArtifact.tif")))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", "testlocal/1/temp/f1.lsm,testlocal/1/temp/f2.v3draw"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputFiles", "testlocal/1/temp/f1_mipArtifact.tif,testlocal/1/temp/f2_mipArtifact.tif")))
                     );
                     Mockito.verify(imageMagickConverterProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", "testlocal/temp/f1_mipArtifact.tif,testlocal/temp/f2_mipArtifact.tif"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputFiles", "testlocal/temp/f1_mipArtifact.png,testlocal/temp/f2_mipArtifact.png")))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", "testlocal/1/temp/f1_mipArtifact.tif,testlocal/1/temp/f2_mipArtifact.tif"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputFiles", "testlocal/1/temp/f1_mipArtifact.png,testlocal/1/temp/f2_mipArtifact.png")))
                     );
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             eq(testStoragePrefix + "/f1_mipArtifact.png"),

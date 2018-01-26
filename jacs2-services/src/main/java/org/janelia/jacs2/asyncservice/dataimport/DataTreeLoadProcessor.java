@@ -7,6 +7,7 @@ import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -188,7 +189,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
     private ServiceComputation<JacsServiceResult<List<DataLoadResult>>> generateMips(JacsServiceData jacsServiceData) {
         DataTreeLoadArgs args = getArgs(jacsServiceData);
         List<StorageService.StorageInfo> contentToLoad = storageService.listStorageContent(args.storageLocation, jacsServiceData.getOwner());
-
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         List<DataLoadResult> contentWithMips = contentToLoad.stream()
                 .filter(entry -> !entry.isCollectionFlag())
                 .filter(entry -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getEntryRelativePath())))
@@ -199,7 +200,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                         if (Files.exists(localStoredMipSource)) {
                             mipSourcePath = localStoredMipSource;
                         } else {
-                            Path mipSourceRootPath = getWorkingDirectory(jacsServiceData).resolve("temp");
+                            Path mipSourceRootPath = serviceWorkingFolder.getServiceFolder("temp");
                             mipSourcePath = mipSourceRootPath.resolve(FileUtils.getFileName(content.getEntryRelativePath()));
                         }
                         if (Files.notExists(mipSourcePath) || Files.size(mipSourcePath) == 0) {

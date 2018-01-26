@@ -10,6 +10,7 @@ import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -109,18 +110,14 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Lis
         return new DefaultServiceErrorChecker(logger) {
             @Override
             protected boolean hasErrors(String l) {
-                if (StringUtils.isNotBlank(l)) {
-                    if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
-                        // core dump is still an error
-                        logger.error(l);
-                        return true;
-                    } else if (l.matches("(?i:.*(fail to call the plugin).*)")) {
-                        // vaa3d plugin call failed
-                        logger.error(l);
-                        return true;
-                    } else {
-                        return false;
-                    }
+                if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
+                    // core dump is still an error
+                    logger.error(l);
+                    return true;
+                } else if (l.matches("(?i:.*(fail to call the plugin).*)")) {
+                    // vaa3d plugin call failed
+                    logger.error(l);
+                    return true;
                 } else {
                     return false;
                 }
@@ -149,8 +146,8 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Lis
 
     private void createScript(JacsServiceData jacsServiceData, MIPGenerationArgs args, ScriptWriter scriptWriter) {
         try {
-            Path workingDir = getWorkingDirectory(jacsServiceData);
-            X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
+            JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+            X11Utils.setDisplayPort(serviceWorkingFolder.getServiceFolder().toString(), scriptWriter);
             scriptWriter.addWithArgs(getExecutable())
                     .addArg(getOutputDir(args).toString())
                     .addArg(args.imgFormat)

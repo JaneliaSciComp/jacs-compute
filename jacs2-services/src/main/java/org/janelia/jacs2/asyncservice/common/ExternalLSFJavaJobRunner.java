@@ -1,14 +1,12 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobTemplate;
 import org.janelia.jacs2.asyncservice.common.cluster.LsfJavaJobInfo;
 import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
 import org.janelia.jacs2.asyncservice.qualifier.LSFJavaJob;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.GridExecutor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -18,20 +16,15 @@ import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -56,10 +49,16 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
     }
 
     @Override
-    public ExeJobInfo runCmds(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env, String scriptDirName, String processDirName, JacsServiceData serviceContext) {
+    public ExeJobInfo runCmds(ExternalCodeBlock externalCode,
+                              List<ExternalCodeBlock> externalConfigs,
+                              Map<String, String> env,
+                              JacsServiceFolder scriptServiceFolder,
+                              Path processDir,
+                              JacsServiceData serviceContext) {
         logger.debug("Begin bsub job invocation for {}", serviceContext);
+        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
         try {
-            JobTemplate jt = prepareJobTemplate(externalCode, externalConfigs, env, processDirName, serviceContext);
+            JobTemplate jt = prepareJobTemplate(externalCode, externalConfigs, env, scriptServiceFolder, processDir, serviceContext);
             String processingScript = jt.getRemoteCommand();
 
             int numJobs = externalConfigs.isEmpty() ? 1 : externalConfigs.size();
@@ -86,65 +85,40 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         }
     }
 
-    @Override
-    protected String createProcessingScript(ExternalCodeBlock externalCode, Map<String, String> env, String workingDirName, JacsServiceData sd) {
-        ScriptWriter scriptWriter = null;
-        try {
-            Preconditions.checkArgument(!externalCode.isEmpty());
-            Preconditions.checkArgument(StringUtils.isNotBlank(workingDirName));
-            Path workingDirectory = Paths.get(workingDirName);
-            java.nio.file.Files.createDirectories(workingDirectory);
-            Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwx---");
-            String scriptName = sd.getName() + "-" + sd.getId() + "Cmd.sh";
-            Path scriptFilePath = workingDirectory.resolve(scriptName);
-            File scriptFile = java.nio.file.Files.createFile(scriptFilePath, PosixFilePermissions.asFileAttribute(perms)).toFile();
-            scriptWriter = new ScriptWriter(new BufferedWriter(new FileWriter(scriptFile)));
-            writeProcessingCode(externalCode, env, scriptWriter);
-            jacsServiceDataPersistence.addServiceEvent(
-                    sd,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CREATED_RUNNING_SCRIPT, String.format("Created the running script for %s: %s", sd.getName(), sd.getArgs()))
-            );
-            return scriptFile.getAbsolutePath();
-        } catch (Exception e) {
-            logger.error("Error creating the processing script with {} for {}", externalCode, sd, e);
-            jacsServiceDataPersistence.addServiceEvent(
-                    sd,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.SCRIPT_CREATION_ERROR, String.format("Error creating the running script for %s: %s", sd.getName(), sd.getArgs()))
-            );
-            throw new ComputationException(sd, e);
-        } finally {
-            if (scriptWriter != null) scriptWriter.close();
-        }
-    }
+    private JobTemplate prepareJobTemplate(ExternalCodeBlock externalCode,
+                                           List<ExternalCodeBlock> externalConfigs,
+                                           Map<String, String> env,
+                                           JacsServiceFolder scriptServiceFolder,
+                                           Path processDir,
+                                           JacsServiceData serviceContext) throws IOException {
 
-    private JobTemplate prepareJobTemplate(ExternalCodeBlock externalCode, List<ExternalCodeBlock> externalConfigs, Map<String, String> env, String workingDirName, JacsServiceData serviceContext) throws Exception {
+        File jobProcessingDirectory = prepareProcessingDir(processDir);
+        logger.debug("Using working directory {} for {}", jobProcessingDirectory, serviceContext);
 
-        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
+        String processingScript = createProcessingScript(externalCode, env, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
+        createConfigFiles(externalConfigs, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
+
+        prepareOutputDir(serviceContext.getOutputPath(), "Output directory must be set before running the service " + serviceContext.getName());
+        prepareOutputDir(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
 
         JobTemplate jt = new JobTemplate();
         jt.setJobName(serviceContext.getName());
         jt.setArgs(Collections.emptyList());
-
-        File workingDirectory = getJobWorkingDirectory(workingDirName);
-        logger.debug("Using working directory {} for {}", workingDirectory, serviceContext);
-
-        jt.setWorkingDir(workingDirectory.getAbsolutePath());
-        String configDir = createSubDirectory(jt, "sge_config");
-        String errorDir = createSubDirectory(jt, "sge_error");
-        String outputDir = createSubDirectory(jt, "sge_output");
-        String configFilePattern = serviceContext.getName() + "Configuration.#";
-
-        String processingScript = createProcessingScript(externalCode, env, configDir, serviceContext);
-        createConfigFiles(externalConfigs, configDir, configFilePattern, serviceContext);
-
+        jt.setWorkingDir(jobProcessingDirectory.getAbsolutePath());
         jt.setRemoteCommand(processingScript);
-        jt.setInputPath(configDir + File.separator + configFilePattern);
-        jt.setErrorPath(errorDir + File.separator + serviceContext.getName() + "Error.#");
-        jt.setOutputPath(outputDir + File.separator + serviceContext.getName() + "Output.#");
-        // Apply a RegEx to replace any non-alphanumeric character with "_".
 
+        if (CollectionUtils.size(externalConfigs) < 1) {
+            jt.setOutputPath(Paths.get(serviceContext.getOutputPath(), scriptServiceFolder.getServiceOutputPattern("")).toString());
+            jt.setErrorPath(Paths.get(serviceContext.getErrorPath(), scriptServiceFolder.getServiceErrorPattern("")).toString());
+        } else {
+            jt.setInputPath(scriptServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR, scriptServiceFolder.getServiceConfigPattern(".#")).toString());
+            jt.setOutputPath(Paths.get(serviceContext.getOutputPath(), scriptServiceFolder.getServiceOutputPattern(".#")).toString());
+            jt.setErrorPath(Paths.get(serviceContext.getErrorPath(), scriptServiceFolder.getServiceErrorPattern(".#")).toString());
+        }
+
+        // Apply a RegEx to replace any non-alphanumeric character with "_".
         String owner = serviceContext.getOwner();
-        if (owner==null) {
+        if (StringUtils.isBlank(owner)) {
             owner = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());
         }
 
@@ -152,10 +126,6 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         // Check if the SGE grid requires account info
         // TODO: need to port over ComputeAccounting.getInstance().getComputeAccount
         //setAccount(jt);
-
-        if (StringUtils.isNotBlank(serviceContext.getInputPath())) {
-            jt.setInputPath(":" + serviceContext.getInputPath());
-        }
 
         List<String> nativeSpec = createNativeSpec(serviceContext.getResources());
         if (nativeSpec!=null) {
@@ -174,11 +144,11 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         }
         int nProcessingSlots = ProcessorHelper.getProcessingSlots(jobResources);
         StringBuilder resourceBuffer = new StringBuilder();
-        //if (nProcessingSlots > 1) {
+        if (nProcessingSlots > 1) {
             // append processing environment
             spec.add("-n "+nProcessingSlots);
             resourceBuffer.append("affinity[core(1)]");
-        //}
+        }
 
         long softJobDurationInMins = Math.round((double) ProcessorHelper.getSoftJobDurationLimitInSeconds(jobResources) / 60);
         if (softJobDurationInMins > 0) {
@@ -230,25 +200,5 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
             scriptWriter.setVar(key, env.get(key));
         }
         scriptWriter.add(externalCode.toString());
-    }
-
-    private File getJobWorkingDirectory(String workingDirName) {
-        File workingDirectory;
-        if (StringUtils.isNotBlank(workingDirName)) {
-            workingDirectory = new File(workingDirName);
-        } else {
-            workingDirectory = Files.createTempDir();
-        }
-        if (!workingDirectory.exists()) {
-            workingDirectory.mkdirs();
-        }
-        if (!workingDirectory.exists()) {
-            throw new IllegalStateException("Cannot create working directory " + workingDirectory.getAbsolutePath());
-        }
-        return workingDirectory;
-    }
-
-    private String createSubDirectory(JobTemplate jt, String subDir) {
-        return FileUtils.createSubDirs(Paths.get(jt.getWorkingDir()), subDir).toString();
     }
 }

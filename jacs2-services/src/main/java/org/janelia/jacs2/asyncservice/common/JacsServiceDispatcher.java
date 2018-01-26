@@ -69,8 +69,8 @@ public class JacsServiceDispatcher {
         logger.info("Dispatch service {}", jacsServiceData);
         try {
             ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
-            serviceComputationFactory.<JacsServiceData>newComputation()
-                    .supply(() -> jacsServiceData)
+            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.DISPATCHED, Optional.empty());
+            serviceComputationFactory.newCompletedComputation(jacsServiceData)
                     .thenSuspendUntil(new SuspendServiceContinuationCond<>(
                             Function.identity(),
                             (JacsServiceData sd, JacsServiceData tmpSd) -> tmpSd,

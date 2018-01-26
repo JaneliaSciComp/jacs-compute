@@ -15,7 +15,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.ThrottledExeJobsQueue;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
@@ -109,18 +108,14 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
         return new DefaultServiceErrorChecker(logger) {
             @Override
             protected boolean hasErrors(String l) {
-                if (StringUtils.isNotBlank(l)) {
-                    if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
-                        // core dump is still an error
-                        logger.error(l);
-                        return true;
-                    } else if (l.matches("(?i:.*(fail to call the plugin).*)")) {
-                        // vaa3d plugin call failed
-                        logger.error(l);
-                        return true;
-                    } else {
-                        return false;
-                    }
+                if (l.matches("(?i:.*(Segmentation fault|core dumped).*)")) {
+                    // core dump is still an error
+                    logger.error(l);
+                    return true;
+                } else if (l.matches("(?i:.*(fail to call the plugin).*)")) {
+                    // vaa3d plugin call failed
+                    logger.error(l);
+                    return true;
                 } else {
                     return false;
                 }
@@ -157,7 +152,7 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
 
     private void addStartX11ServerCmd(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) {
         try {
-            Path workingDir = getWorkingDirectory(jacsServiceData);
+            Path workingDir = getWorkingDirectory(jacsServiceData).getServiceFolder();
             X11Utils.setDisplayPort(workingDir.toString(), scriptWriter);
         } catch (IOException e) {
             throw new UncheckedIOException(e);

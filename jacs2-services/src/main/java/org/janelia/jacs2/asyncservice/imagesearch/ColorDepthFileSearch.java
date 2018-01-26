@@ -40,8 +40,9 @@ import java.util.stream.Collectors;
 @Named("colorDepthFileSearch")
 public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
 
-    public static final String RESULTS_FILENAME_SUFFIX = "_results.txt";
+    private static final String RESULTS_FILENAME_SUFFIX = "_results.txt";
 
+    private final Instance<SparkCluster> clusterSource;
     private final long clusterStartTimeoutInMillis;
     private final long searchTimeoutInMillis;
     private final long clusterIntervalCheckInMillis;
@@ -65,12 +66,11 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         private Double pctPositivePixels;
     }
 
-    @Inject Instance<SparkCluster> clusterSource;
-
     @Inject
     ColorDepthFileSearch(ServiceComputationFactory computationFactory,
                          JacsServiceDataPersistence jacsServiceDataPersistence,
                          @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                         Instance<SparkCluster> clusterSource,
                          @IntPropertyValue(name = "service.colorDepthSearch.clusterStartTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
                          @IntPropertyValue(name = "service.colorDepthSearch.searchTimeoutInSeconds", defaultValue = 1200) int searchTimeoutInSeconds,
                          @IntPropertyValue(name = "service.colorDepthSearch.clusterIntervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
@@ -80,6 +80,7 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
                          @StrPropertyValue(name = "service.colorDepthSearch.jarPath") String jarPath,
                          Logger log) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, log);
+        this.clusterSource = clusterSource;
         this.clusterStartTimeoutInMillis = clusterStartTimeoutInSeconds * 1000;
         this.searchTimeoutInMillis = searchTimeoutInSeconds * 1000;
         this.clusterIntervalCheckInMillis = clusterIntervalCheckInMillis;
@@ -110,10 +111,10 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
 
     private SparkCluster startCluster(JacsServiceData sd) {
         // TODO: Should cache this somehow so it doesn't need to get recomputed each time
-        Path workingDir = getWorkingDirectory(sd);
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(sd);
         try {
             SparkCluster cluster = clusterSource.get();
-            cluster.startCluster(workingDir, numNodes);
+            cluster.startCluster(serviceWorkingFolder.getServiceFolder(), numNodes);
             logger.info("Waiting until Spark cluster is ready...");
             return cluster;
         }
@@ -126,7 +127,7 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         ColorDepthSearchArgs args = getArgs(jacsServiceData);
         logger.info("Using args="+args);
 
-        Path workingDir = getWorkingDirectory(jacsServiceData);
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
 
         List<String> inputFiles = new ArrayList<>();
         List<String> outputFiles = new ArrayList<>();
@@ -139,8 +140,8 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
             int i = 1;
             Path outputPath;
             do {
-                String discriminator = i == 1 ? "" : "_"+i;
-                outputPath = workingDir.resolve(name + discriminator + RESULTS_FILENAME_SUFFIX);
+                String discriminator = i == 1 ? "" : "_" + i;
+                outputPath = serviceWorkingFolder.getServiceFolder(name + discriminator + RESULTS_FILENAME_SUFFIX);
                 i++;
             } while (outputPaths.contains(outputPath));
 
@@ -197,14 +198,12 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
 
     @Override
     public ServiceComputation<JacsServiceResult<List<File>>> process(JacsServiceData jacsServiceData) {
-
         // Create the working directory
         // TODO: this should be managed by a FileNode interface, which has not yet been ported from JACSv1
-        Path workingDir = getWorkingDirectory(jacsServiceData);
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         try {
-            Files.createDirectories(workingDir);
-        }
-        catch (IOException e) {
+            Files.createDirectories(serviceWorkingFolder.getServiceFolder());
+        } catch (IOException e) {
             throw new ComputationException(jacsServiceData, e);
         }
 
@@ -234,21 +233,12 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
                 .thenApply((app) -> {
 
                     List<File> resultsFiles = FileUtils.lookupFiles(
-                                workingDir, 1, "glob:**/*"+RESULTS_FILENAME_SUFFIX)
+                                serviceWorkingFolder.getServiceFolder(), 1, "glob:**/*"+RESULTS_FILENAME_SUFFIX)
                             .map(Path::toFile)
                             .collect(Collectors.toList());
 
                     return updateServiceResult(jacsServiceData, resultsFiles);
                 });
-    }
-
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
-        JacsServiceData jacsServiceDataHierarchy = jacsServiceDataPersistence.findServiceHierarchy(jacsServiceData.getId());
-        if (jacsServiceDataHierarchy == null) {
-            jacsServiceDataHierarchy = jacsServiceData;
-        }
-        setOutputAndErrorPaths(jacsServiceDataHierarchy);
-        return jacsServiceDataHierarchy;
     }
 
     private ColorDepthSearchArgs getArgs(JacsServiceData jacsServiceData) {

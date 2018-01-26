@@ -7,6 +7,8 @@ import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
+import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.service.JacsJobInstanceInfo;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
@@ -20,6 +22,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -49,6 +52,27 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
         this.jacsJobInstanceInfoDao = jacsJobInstanceInfoDao;
         this.applicationConfig = applicationConfig;
         this.jobIntervalCheck = applicationConfig.getIntegerPropertyValue("service.exejob.checkIntervalInMillis", 0);
+    }
+
+    @Override
+    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+        JacsServiceData jacsServiceDataHierarchy = super.prepareProcessing(jacsServiceData);
+        updateOutputAndErrorPaths(jacsServiceDataHierarchy);
+        return jacsServiceDataHierarchy;
+    }
+
+    private void updateOutputAndErrorPaths(JacsServiceData jacsServiceData) {
+        Map<String, EntityFieldValueHandler<?>> serviceUpdates = new LinkedHashMap<>();
+        JacsServiceFolder jacsServiceFolder = getWorkingDirectory(jacsServiceData);
+        if (StringUtils.isBlank(jacsServiceData.getOutputPath())) {
+            jacsServiceData.setOutputPath(jacsServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString());
+            serviceUpdates.put("outputPath", new SetFieldValueHandler<>(jacsServiceData.getOutputPath()));
+        }
+        if (StringUtils.isBlank(jacsServiceData.getErrorPath())) {
+            jacsServiceData.setErrorPath(jacsServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString());
+            serviceUpdates.put("errorPath", new SetFieldValueHandler<>(jacsServiceData.getErrorPath()));
+        }
+        jacsServiceDataPersistence.update(jacsServiceData, serviceUpdates);
     }
 
     @Override
@@ -123,7 +147,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
     protected void prepareResources(JacsServiceData jacsServiceData) {
     }
 
-    protected Optional<String> getEnvVar(String varName) {
+    private Optional<String> getEnvVar(String varName) {
         return Optional.ofNullable(System.getenv(varName));
     }
 
@@ -160,15 +184,15 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                 ;
     }
 
-    protected String getScriptDirName(JacsServiceData jacsServiceData) {
-        return getWorkingDirectory(jacsServiceData).toString();
+    private JacsServiceFolder getScriptDirName(JacsServiceData jacsServiceData) {
+        return getWorkingDirectory(jacsServiceData);
     }
 
-    protected String getProcessDirName(JacsServiceData jacsServiceData) {
-        return getWorkingDirectory(jacsServiceData).toString();
+    protected Path getProcessDir(JacsServiceData jacsServiceData) {
+        return getWorkingDirectory(jacsServiceData).getServiceFolder();
     }
 
-    protected ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
+    private ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
         List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles(jacsServiceData);
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> env = prepareEnvironment(jacsServiceData);
@@ -179,7 +203,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                 externalConfigs,
                 env,
                 getScriptDirName(jacsServiceData),
-                getProcessDirName(jacsServiceData),
+                getProcessDir(jacsServiceData),
                 jacsServiceData);
     }
 

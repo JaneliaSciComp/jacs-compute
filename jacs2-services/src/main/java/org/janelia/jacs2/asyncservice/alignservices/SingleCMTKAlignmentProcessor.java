@@ -243,9 +243,9 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
     }
 
     @Override
-    protected String getProcessDirName(JacsServiceData jacsServiceData) {
+    protected Path getProcessDir(JacsServiceData jacsServiceData) {
         CMTKAlignmentArgs args = getArgs(jacsServiceData);
-        return getProcessDirName(args);
+        return Paths.get(getProcessDirName(args));
     }
 
     private String getProcessDirName(CMTKAlignmentArgs args) {
