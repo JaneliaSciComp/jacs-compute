@@ -64,6 +64,10 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         private Double pixColorFluctuation;
         @Parameter(names = {"-pctPositivePixels"}, description = "% of Positive PX Threshold (0-100%)")
         private Double pctPositivePixels;
+        @Parameter(names = {"-numNodes"}, description = "Number of worker nodes")
+        private Integer numNodes;
+        @Parameter(names = {"-parallelism"}, description = "Parallelism")
+        private Integer parallelism;
     }
 
     @Inject
@@ -109,17 +113,22 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         };
     }
 
-    private SparkCluster startCluster(JacsServiceData sd) {
+    private SparkCluster startCluster(JacsServiceData jacsServiceData) {
+        ColorDepthSearchArgs args = getArgs(jacsServiceData);
         // TODO: Should cache this somehow so it doesn't need to get recomputed each time
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(sd);
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         try {
             SparkCluster cluster = clusterSource.get();
+            int numNodes = this.numNodes;
+            if (args.numNodes != null) {
+                numNodes = args.numNodes;
+            }
             cluster.startCluster(serviceWorkingFolder.getServiceFolder(), numNodes);
             logger.info("Waiting until Spark cluster is ready...");
             return cluster;
         }
         catch (Exception e) {
-            throw new ComputationException(sd, e);
+            throw new ComputationException(jacsServiceData, e);
         }
     }
 
@@ -151,6 +160,10 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
 
         List<String> appArgs = new ArrayList<>();
 
+        int parallelism = this.parallelism;
+        if (args.parallelism != null) {
+            parallelism = args.parallelism;
+        }
         appArgs.add("-p");
         appArgs.add("" + parallelism);
 
