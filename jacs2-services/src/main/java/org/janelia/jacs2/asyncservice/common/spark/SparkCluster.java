@@ -51,6 +51,7 @@ public class SparkCluster {
     private String sparkDriverMemory;
     private String sparkExecutorMemory;
     private int sparkExecutorCores;
+    private int defaultParallelism;
     private int sparkClusterHardDurationMins;
     private String log4jFilepath;
     private String hadoopHomeDir;
@@ -96,7 +97,10 @@ public class SparkCluster {
         this.workingDirectory = workingDirName.toFile();
         int numSlots = nodeSlots + nodeSlots * numNodes; // master + workers
 
-        log.info("Starting Spark cluster with {} nodes", nodeSlots);
+        // Default to two tasks per slot (this seems empirically optimal)
+        this.defaultParallelism = 2 * nodeSlots * numNodes;
+
+        log.info("Starting Spark cluster with {} nodes ({} slots}", numNodes, numSlots);
         log.info("Working directory: {}", workingDirectory);
 
         JobTemplate jt = new JobTemplate();
@@ -239,7 +243,8 @@ public class SparkCluster {
      * @return
      * @throws Exception
      */
-    public SparkApp runApp(BiConsumer<File, ? super Throwable> callback, String jarPath, String... appArgs) throws Exception {
+    public SparkApp runApp(BiConsumer<File, ? super Throwable> callback, String jarPath,
+                           String... appArgs) throws Exception {
 
         if (!isReady()) {
             throw new IllegalStateException("Cluster is not ready");
@@ -286,6 +291,10 @@ public class SparkCluster {
                 .setConf(SparkLauncher.DRIVER_MEMORY, sparkDriverMemory)
                 .setConf(SparkLauncher.EXECUTOR_MEMORY, sparkExecutorMemory)
                 .setConf(SparkLauncher.EXECUTOR_CORES, ""+sparkExecutorCores)
+                // The default (4MB) open cost consolidates files into tiny partitions regardless of number of cores.
+                // By forcing this parameter to zero, we can specify the exact parallelism we want.
+                .setConf("spark.files.openCostInBytes", "0")
+                .setConf("spark.default.parallelism", ""+defaultParallelism)
                 .setConf(SparkLauncher.EXECUTOR_EXTRA_JAVA_OPTIONS, "-Dlog4j.configuration=file://"+log4jProperties.getAbsolutePath())
                 .addSparkArg("--driver-java-options",
                         "-Dlog4j.configuration=file://"+log4jProperties.getAbsolutePath()+
@@ -320,5 +329,33 @@ public class SparkCluster {
             log.error("Error stopping Spark cluster", e);
         }
         reset();
+    }
+
+    public int getNodeSlots() {
+        return nodeSlots;
+    }
+
+    public int getSparkExecutorCores() {
+        return sparkExecutorCores;
+    }
+
+    public int getDefaultParallelism() {
+        return defaultParallelism;
+    }
+
+    public Long getJobId() {
+        return jobId;
+    }
+
+    public void setNodeSlots(int nodeSlots) {
+        this.nodeSlots = nodeSlots;
+    }
+
+    public void setSparkExecutorCores(int sparkExecutorCores) {
+        this.sparkExecutorCores = sparkExecutorCores;
+    }
+
+    public void setDefaultParallelism(int defaultParallelism) {
+        this.defaultParallelism = defaultParallelism;
     }
 }
