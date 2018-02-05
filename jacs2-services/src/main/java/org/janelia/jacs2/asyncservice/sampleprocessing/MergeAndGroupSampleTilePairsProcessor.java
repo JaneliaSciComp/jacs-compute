@@ -259,7 +259,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
     private List<MergedAndGroupedAreaTiles> mergeAndGroupAllTilePairs(JacsServiceData jacsServiceData, JacsServiceData sampleLsmsMetadataService) {
         ConvertTileToImageArgs args = getArgs(jacsServiceData);
         List<AnatomicalArea> anatomicalAreas =
-                sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective, args.sampleArea);
+                sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwnerKey(), args.sampleId, args.sampleObjective, args.sampleArea);
         BiFunction<AnatomicalArea, TileLsmPair, MergeChannelsData> channelMappingFunc;
         MergeAlgorithm mergeAlgorithm = getMergeAlgorithm(args.mergeAlgorithm);
         String multiscanBlendVersion = (mergeAlgorithm == MergeAlgorithm.DISTORTION_CORRECTION_MERGE || mergeAlgorithm == MergeAlgorithm.FLYLIGHT_ORDERED) ? "2" : null;

@@ -4,13 +4,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.dao.AbstractDao;
 import org.janelia.model.access.dao.ReadWriteDao;
@@ -22,16 +18,12 @@ import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
-import org.janelia.model.jacs2.page.SortCriteria;
-import org.janelia.model.jacs2.page.SortDirection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,51 +58,32 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
 
     @Override
     public T findById(Number id) {
-        List<T> entityDocs = find(eq("_id", id), null, 0, 2, getEntityType());
-        return CollectionUtils.isEmpty(entityDocs) ? null : entityDocs.get(0);
+        return MongoDaoHelper.findById(id, mongoCollection, getEntityType());
     }
 
     @Override
     public List<T> findByIds(Collection<Number> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyList();
-        } else {
-            return find(Filters.in("_id", ids), null, 0, 0, getEntityType());
-        }
+        return MongoDaoHelper.findByIds(ids, mongoCollection, getEntityType());
     }
 
     @Override
     public PageResult<T> findAll(PageRequest pageRequest) {
-        List<T> results = find(null,
-                createBsonSortCriteria(pageRequest.getSortCriteria()),
+        List<T> results = find(
+                null,
+                MongoDaoHelper.createBsonSortCriteria(pageRequest.getSortCriteria()),
                 pageRequest.getOffset(),
                 pageRequest.getPageSize(),
                 getEntityType());
         return new PageResult<>(pageRequest, results);
     }
 
-    protected Bson createBsonSortCriteria(List<SortCriteria> sortCriteria) {
-        Bson bsonSortCriteria = null;
-        if (CollectionUtils.isNotEmpty(sortCriteria)) {
-            Map<String, Object> sortCriteriaAsMap = sortCriteria.stream()
-                .filter(sc -> StringUtils.isNotBlank(sc.getField()))
-                .collect(Collectors.toMap(
-                        SortCriteria::getField,
-                        sc -> sc.getDirection() == SortDirection.DESC ? -1 : 1,
-                        (sc1, sc2) -> sc2,
-                        LinkedHashMap::new));
-            bsonSortCriteria = new Document(sortCriteriaAsMap);
-        }
-        return bsonSortCriteria;
+    protected <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
+        return MongoDaoHelper.find(queryFilter, sortCriteria, offset, length, mongoCollection, resultType);
     }
 
     @Override
     public long countAll() {
         return mongoCollection.count();
-    }
-
-    protected <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
-        return MongoDaoHelper.find(queryFilter, sortCriteria, offset, length, mongoCollection, resultType);
     }
 
     @Override
@@ -170,6 +143,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         MongoDaoHelper.delete(mongoCollection, entity.getId());
     }
 
+    @SuppressWarnings("unchecked")
     private Bson getFieldUpdate(String fieldName, EntityFieldValueHandler<?> valueHandler) {
         if (valueHandler == null || valueHandler.getFieldValue() == null) {
             return Updates.unset(fieldName);

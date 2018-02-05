@@ -146,7 +146,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                 CollectionUtils.isEmpty(args.getValues(args.lsmNames))) {
             throw new IllegalArgumentException("No filtering parameter has been specified for the LSM import from Sage.");
         }
-        List<SlideImage> slideImages = retrieveSageImages(jacsServiceData.getOwner(), args);
+        List<SlideImage> slideImages = retrieveSageImages(jacsServiceData.getOwnerKey(), args);
         checkRetrievedSageImages(slideImages, args);
 
         Map<ImageLine, List<SlideImage>> labImages =
@@ -166,11 +166,11 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                                             Collectors.mapping(Function.identity(), Collectors.toList())
                                     )
                             );
-                    String owner = jacsServiceData.getOwner();
-                    DataSet ds = datasetService.getDatasetByNameOrIdentifier(owner, imageLine.getDataset());
+                    String ownerKey = jacsServiceData.getOwnerKey();
+                    DataSet ds = datasetService.getDatasetByNameOrIdentifier(ownerKey, imageLine.getDataset());
                     if (ds == null) {
-                        logger.error("No dataset record found for {} : {}", owner, lineEntries.getKey());
-                        throw new IllegalArgumentException("Invalid dataset identifier " + owner + ":" + imageLine.getDataset());
+                        logger.error("No dataset record found for {} : {}", ownerKey, lineEntries.getKey());
+                        throw new IllegalArgumentException("Invalid dataset identifier " + ownerKey + ":" + imageLine.getDataset());
                     }
                     return sageLoaderProcessor.process(
                             new ServiceExecutionContext.Builder(jacsServiceData)
@@ -190,7 +190,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                                         lsm.setReaders(ds.getReaders());
                                         return lsm;
                                     })
-                                    .map(lsm -> importLsm(owner, lsm))
+                                    .map(lsm -> importLsm(ownerKey, lsm))
                                     .map(lsm -> lsm.getSlideCode())
                                     .collect(Collectors.toSet())
                     ).thenApply(slideCodes -> {
@@ -202,7 +202,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                             lsmRef.setSlideCode(slideCode);
                             PageRequest pageRequest = new PageRequest();
                             pageRequest.setSortCriteria(ImmutableList.of(new SortCriteria("tmogDate", SortDirection.ASC)));
-                            PageResult<LSMImage> matchingLsms = sampleDataService.searchLsms(owner, lsmRef, pageRequest);
+                            PageResult<LSMImage> matchingLsms = sampleDataService.searchLsms(ownerKey, lsmRef, pageRequest);
                             allLsmsPerSlideCode.put(slideCode, matchingLsms.getResultList());
                         });
                         return allLsmsPerSlideCode;
@@ -250,8 +250,8 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         }
     }
 
-    private LSMImage importLsm(String owner, LSMImage lsmImage) {
-        PageResult<LSMImage> matchingLsms = sampleDataService.searchLsms(owner, lsmImage, new PageRequest());
+    private LSMImage importLsm(String ownerKey, LSMImage lsmImage) {
+        PageResult<LSMImage> matchingLsms = sampleDataService.searchLsms(ownerKey, lsmImage, new PageRequest());
         if (matchingLsms.isEmpty()) {
             sampleDataService.createLSM(lsmImage);
             return lsmImage;

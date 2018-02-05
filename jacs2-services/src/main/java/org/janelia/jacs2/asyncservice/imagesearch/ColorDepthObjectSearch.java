@@ -93,7 +93,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
         logger.info("Executing ColorDepthSearch#{}", args.searchId);
 
-        ColorDepthSearch search = dao.getDomainObject(jacsServiceData.getOwner(),
+        ColorDepthSearch search = dao.getDomainObject(jacsServiceData.getOwnerKey(),
                 ColorDepthSearch.class, args.searchId);
 
         if (search==null) {
@@ -196,8 +196,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                         }
                     }
 
-                    colorDepthResult = dao.save(jacsServiceData.getOwner(), colorDepthResult);
-                    dao.addColorDepthSearchResult(jacsServiceData.getOwner(), search.getId(), colorDepthResult);
+                    colorDepthResult = dao.save(jacsServiceData.getOwnerKey(), colorDepthResult);
+                    dao.addColorDepthSearchResult(jacsServiceData.getOwnerKey(), search.getId(), colorDepthResult);
                 } catch (Exception e) {
                     throw new ComputationException(jacsServiceData, e);
                 }

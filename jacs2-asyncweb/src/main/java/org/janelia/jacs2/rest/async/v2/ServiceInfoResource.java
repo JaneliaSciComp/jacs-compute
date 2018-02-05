@@ -7,8 +7,8 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
-import org.janelia.jacs2.auth.AuthManager;
-import org.janelia.jacs2.auth.AuthManagerImpl;
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.model.domain.enums.SubjectRole;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
@@ -19,11 +19,20 @@ import org.slf4j.Logger;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 @RequestScoped
 @Produces("application/json")
@@ -35,38 +44,68 @@ public class ServiceInfoResource {
     @Inject private Logger logger;
     @Inject private JacsServiceDataManager jacsServiceDataManager;
     @Inject private ServiceRegistry serviceRegistry;
-    @Inject private AuthManager authManager;
 
+    @RequireAuthentication
     @GET
-    @ApiOperation(value = "Get all services", notes = "")
+    @Path("/queued")
+    @ApiOperation(value = "Search queued services", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
-    public Response getAllServices(@QueryParam("service-name") String serviceName,
-                                   @QueryParam("service-id") Long serviceId,
-                                   @QueryParam("parent-id") Long parentServiceId,
-                                   @QueryParam("root-id") Long rootServiceId,
-                                   @QueryParam("service-state") String serviceState,
-                                   @QueryParam("service-from") Date from,
-                                   @QueryParam("service-to") Date to,
-                                   @QueryParam("page") Integer pageNumber,
-                                   @QueryParam("length") Integer pageLength) {
-        String subjectKey = authManager.authorize();
-        JacsServiceData pattern = new JacsServiceData();
-        pattern.setId(serviceId);
-        pattern.setParentServiceId(parentServiceId);
-        pattern.setRootServiceId(rootServiceId);
-        pattern.setName(serviceName);
-        pattern.setOwner(subjectKey);
-        try {
-            if (StringUtils.isNotBlank(serviceState)) {
-                pattern.setState(JacsServiceState.valueOf(serviceState));
-            } else {
-                pattern.setState(null);
-            }
-        } catch (Exception e) {
-            logger.error("Invalid state filter {}", serviceState, e);
-        }
+    public Response searchQueuedServices(@QueryParam("service-name") String serviceName,
+                                         @QueryParam("service-id") Long serviceId,
+                                         @QueryParam("parent-id") Long parentServiceId,
+                                         @QueryParam("root-id") Long rootServiceId,
+                                         @QueryParam("service-owner") String serviceOwnerKey,
+                                         @QueryParam("service-state") String serviceState,
+                                         @QueryParam("service-tags") List<String> serviceTags,
+                                         @QueryParam("service-from") Date from,
+                                         @QueryParam("service-to") Date to,
+                                         @QueryParam("page") Integer pageNumber,
+                                         @QueryParam("length") Integer pageLength,
+                                         @Context SecurityContext securityContext) {
+        return searchServices(serviceName,
+                serviceId,
+                parentServiceId,
+                rootServiceId,
+                serviceOwnerKey,
+                serviceState,
+                serviceTags,
+                securityContext,
+                (pattern) -> jacsServiceDataManager.searchQueuedServices(pattern, new DataInterval<> (from, to), createPageRequest(pageNumber, pageLength)));
+    }
+
+    @RequireAuthentication
+    @GET
+    @Path("/archived")
+    @ApiOperation(value = "Search queued services", notes = "")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
+    public Response searchArchivedServices(@QueryParam("service-name") String serviceName,
+                                           @QueryParam("service-id") Long serviceId,
+                                           @QueryParam("parent-id") Long parentServiceId,
+                                           @QueryParam("root-id") Long rootServiceId,
+                                           @QueryParam("service-owner") String serviceOwnerKey,
+                                           @QueryParam("service-state") String serviceState,
+                                           @QueryParam("service-tags") List<String> serviceTags,
+                                           @QueryParam("service-from") Date from,
+                                           @QueryParam("service-to") Date to,
+                                           @QueryParam("page") Integer pageNumber,
+                                           @QueryParam("length") Integer pageLength,
+                                           @Context SecurityContext securityContext) {
+        return searchServices(serviceName,
+                serviceId,
+                parentServiceId,
+                rootServiceId,
+                serviceOwnerKey,
+                serviceState,
+                serviceTags,
+                securityContext,
+                (pattern) -> jacsServiceDataManager.searchArchivedServices(pattern, new DataInterval<> (from, to), createPageRequest(pageNumber, pageLength)));
+    }
+
+    private PageRequest createPageRequest(Integer pageNumber, Integer pageLength) {
         PageRequest pageRequest = new PageRequest();
         if (pageNumber != null) {
             pageRequest.setPageNumber(pageNumber);
@@ -76,31 +115,69 @@ public class ServiceInfoResource {
         } else {
             pageRequest.setPageSize(DEFAULT_PAGE_SIZE);
         }
-        PageResult<JacsServiceData> results = jacsServiceDataManager.searchServices(pattern, new DataInterval<>(from, to), pageRequest);
+        return pageRequest;
+    }
+
+    private Response searchServices(String serviceName,
+                                    Long serviceId,
+                                    Long parentServiceId,
+                                    Long rootServiceId,
+                                    String serviceOwnerKey,
+                                    String serviceState,
+                                    List<String> serviceTags,
+                                    SecurityContext securityContext,
+                                    Function<JacsServiceData, PageResult<JacsServiceData>> searcher) {
+        JacsServiceData pattern = new JacsServiceData();
+        pattern.setId(serviceId);
+        pattern.setParentServiceId(parentServiceId);
+        pattern.setRootServiceId(rootServiceId);
+        pattern.setName(serviceName);
+        if (securityContext.isUserInRole(SubjectRole.Admin.getRole())) {
+            // if user is an admin than the owner can be the one passed in the query
+            pattern.setOwnerKey(serviceOwnerKey);
+        } else {
+            // otherwise only query current user's services
+            pattern.setOwnerKey(securityContext.getUserPrincipal().getName());
+        }
+        pattern.setTags(serviceTags);
+        try {
+            if (StringUtils.isNotBlank(serviceState)) {
+                pattern.setState(JacsServiceState.valueOf(serviceState));
+            } else {
+                pattern.setState(null);
+            }
+        } catch (Exception e) {
+            logger.error("Invalid state filter {}", serviceState, e);
+        }
+        PageResult<JacsServiceData> results = searcher.apply(pattern);
         return Response
                 .status(Response.Status.OK)
                 .entity(results)
                 .build();
     }
 
+    @RequireAuthentication
     @GET
     @Path("/{service-instance-id}")
     @ApiOperation(value = "Get service info", notes = "Returns service about a given service")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
-    public Response getServiceInfo(@PathParam("service-instance-id") Long instanceId) {
-        String subjectKey = authManager.authorize();
-        // TODO: enforce authorized user
+    public Response getServiceInfo(@PathParam("service-instance-id") Long instanceId,
+                                   @Context SecurityContext securityContext) {
         JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
         if (serviceData == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
-        } else {
+        } else if (securityContext.isUserInRole(SubjectRole.Admin.getRole()) || serviceData.canBeAccessedBy(securityContext.getUserPrincipal().getName())) {
             return Response
                     .status(Response.Status.OK)
                     .entity(serviceData)
+                    .build();
+        } else {
+            return Response
+                    .status(Response.Status.UNAUTHORIZED)
                     .build();
         }
     }
@@ -111,18 +188,26 @@ public class ServiceInfoResource {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
-    public Response updateServiceInfo(@PathParam("service-instance-id") Long instanceId, JacsServiceData si) {
-        String subjectKey = authManager.authorize();
-        // TODO: enforce authorized user
-        JacsServiceData serviceData = jacsServiceDataManager.updateService(instanceId, si);
+    public Response updateServiceInfo(@PathParam("service-instance-id") Long instanceId,
+                                      JacsServiceData si,
+                                      @Context SecurityContext securityContext) {
+        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(instanceId);
         if (serviceData == null) {
+            logger.warn("No service found for {}", instanceId);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
-        } else {
+        }
+        if (serviceData.canBeModifiedBy(securityContext.getUserPrincipal().getName())) {
+            serviceData = jacsServiceDataManager.updateService(instanceId, si);
             return Response
                     .status(Response.Status.OK)
                     .entity(serviceData)
+                    .build();
+        } else {
+            logger.warn("Service {} cannot be modified by {}", serviceData, securityContext.getUserPrincipal().getName());
+            return Response
+                    .status(Response.Status.FORBIDDEN)
                     .build();
         }
     }
@@ -134,8 +219,6 @@ public class ServiceInfoResource {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
     public Response getAllServicesMetadata() {
-        String subjectKey = authManager.authorize();
-        // TODO: enforce authorized user
         List<ServiceMetaData> services = serviceRegistry.getAllServicesMetadata();
         return Response
                 .status(Response.Status.OK)
@@ -148,10 +231,9 @@ public class ServiceInfoResource {
     @ApiOperation(value = "Get metadata about a given service", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "If the service name is invalid"),
             @ApiResponse(code = 500, message = "Error occurred") })
     public Response getServiceMetadata(@PathParam("service-name") String serviceName) {
-        String subjectKey = authManager.authorize();
-        // TODO: enforce authorized user
         ServiceMetaData smd = serviceRegistry.getServiceMetadata(serviceName);
         if (smd == null) {
             return Response

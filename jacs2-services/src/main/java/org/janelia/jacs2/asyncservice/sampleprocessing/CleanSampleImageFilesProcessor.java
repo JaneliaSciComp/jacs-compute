@@ -57,7 +57,7 @@ public class CleanSampleImageFilesProcessor extends AbstractServiceProcessor<Voi
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         SampleServiceArgs args = getArgs(jacsServiceData);
         List<AnatomicalArea> anatomicalAreas =
-                sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective, args.sampleArea);
+                sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwnerKey(), args.sampleId, args.sampleObjective, args.sampleArea);
         anatomicalAreas.stream()
                 .flatMap(ar -> ar.getTileLsmPairs()
                         .stream()

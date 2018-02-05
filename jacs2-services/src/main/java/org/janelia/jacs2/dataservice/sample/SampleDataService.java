@@ -204,8 +204,8 @@ public class SampleDataService {
         return lsmPair;
     }
 
-    public PageResult<LSMImage> searchLsms(String subjectName, LSMImage pattern, PageRequest pageRequest) {
-        Subject subject = subjectService.getSubjectByNameOrKey(subjectName);
+    public PageResult<LSMImage> searchLsms(String subjectKey, LSMImage pattern, PageRequest pageRequest) {
+        Subject subject = subjectService.getSubjectByNameOrKey(subjectKey);
         return lsmImageDao.findMatchingLSMs(subject, pattern, pageRequest);
     }
 

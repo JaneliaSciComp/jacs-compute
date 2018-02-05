@@ -8,10 +8,11 @@ dependencies {
         LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
 
         // dependency injection
-        JAVAX_ENTERPRISE_VERSION = "1.2"
-        WELD_VERSION = "2.4.6.Final"
+        JAVAX_ENTERPRISE_VERSION = "2.0"
+        WELD_VERSION = "3.0.2.Final"
         CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
-        CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
+	    CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
+        CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-core:${WELD_VERSION}"
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
         // utilities
@@ -26,7 +27,7 @@ dependencies {
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
         // apache commons
-        COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:3.5"
+        COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:3.7"
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:4.1"
 
         // JAX-RS API

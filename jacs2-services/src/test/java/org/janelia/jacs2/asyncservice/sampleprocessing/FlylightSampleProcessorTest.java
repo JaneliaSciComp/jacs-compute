@@ -23,6 +23,7 @@ import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.janelia.model.service.JacsServiceState;
@@ -310,7 +311,7 @@ public class FlylightSampleProcessorTest {
                     .thenApply(r -> {
                         successful.accept(r);
 
-                        String expectedSampleRootDir = testSampleDir + "/" + testServiceData.getOwner();
+                        String expectedSampleRootDir = testSampleDir + "/" + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
 
                         verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
@@ -491,7 +492,7 @@ public class FlylightSampleProcessorTest {
                 .thenApply(r -> {
                     successful.accept(r);
 
-                    String expectedSampleRootDir = testSampleDir + "/" + testServiceData.getOwner();
+                    String expectedSampleRootDir = testSampleDir + "/" + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
 
                     verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
@@ -711,7 +712,7 @@ public class FlylightSampleProcessorTest {
         flylightProcessing
                 .thenApply(r -> {
                     successful.accept(r);
-                    String expectedSampleRootDir = testSampleDir + "/" + testServiceData.getOwner();
+                    String expectedSampleRootDir = testSampleDir + "/" + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
 
                     verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
@@ -851,7 +852,7 @@ public class FlylightSampleProcessorTest {
                                                   String alignmentAlgorithm,
                                                   String alignmentResult) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
-                .setOwner("testOwner")
+                .setOwnerKey("testOwner")
                 .addArg("-sampleId", String.valueOf(sampleId));
         if (StringUtils.isNotBlank(area)) {
             testServiceDataBuilder.addArg("-area", area);

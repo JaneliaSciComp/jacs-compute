@@ -11,8 +11,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.ImageMagickConverterProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dMipCmdProcessor;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorTestUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
@@ -24,11 +22,7 @@ import org.janelia.model.service.JacsServiceState;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.mockito.verification.VerificationMode;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -36,7 +30,6 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -270,7 +263,7 @@ public class DataTreeLoadProcessorTest {
 
     private JacsServiceData createTestServiceData(Number serviceId, String owner, String folderName, String storageLocation) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
-                .setOwner(owner)
+                .setOwnerKey(owner)
                 .addArg("-parentFolderId", String.valueOf(TEST_DATA_NODE_ID-1))
                 .addArg("-losslessImgExtensions", ".v3draw,.lsm")
                 .addArg("-storageLocation", storageLocation)

@@ -9,12 +9,13 @@ public class JacsServiceDataBuilder {
     public JacsServiceDataBuilder(JacsServiceData serviceContext) {
         this.serviceData = new JacsServiceData();
         if (serviceContext != null) {
-            serviceData.setOwner(serviceContext.getOwner());
+            serviceData.setOwnerKey(serviceContext.getOwnerKey());
             serviceData.updateParentService(serviceContext);
             if (serviceContext.getProcessingLocation() != null) {
                 serviceData.setProcessingLocation(serviceContext.getProcessingLocation());
             }
             serviceData.setWorkspace(serviceContext.getWorkspace());
+            serviceData.setTags(serviceContext.getTags()); // propagate the tags
         }
     }
 
@@ -35,8 +36,8 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
-    public JacsServiceDataBuilder setOwner(String owner) {
-        serviceData.setOwner(owner);
+    public JacsServiceDataBuilder setOwnerKey(String ownerKey) {
+        serviceData.setOwnerKey(ownerKey);
         return this;
     }
 

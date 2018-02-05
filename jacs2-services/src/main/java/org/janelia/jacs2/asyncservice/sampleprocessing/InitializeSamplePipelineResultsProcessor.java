@@ -90,7 +90,7 @@ public class InitializeSamplePipelineResultsProcessor extends AbstractBasicLifeC
         InitSampleResultsArgs args = getArgs(jacsServiceData);
         return computationFactory.newCompletedComputation(depResults)
                 .thenApply(pd -> {
-                    List<ObjectiveSample> sampleObjectives = sampleDataService.getObjectivesBySampleIdAndObjective(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective);
+                    List<ObjectiveSample> sampleObjectives = sampleDataService.getObjectivesBySampleIdAndObjective(jacsServiceData.getOwnerKey(), args.sampleId, args.sampleObjective);
                     sampleObjectives.forEach((ObjectiveSample objectiveSample) -> {
                         SamplePipelineRun pipelineRun = new SamplePipelineRun();
                         if (args.sampleResultsId != null) {

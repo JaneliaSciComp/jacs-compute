@@ -70,12 +70,21 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    public PageResult<JacsServiceData> findMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest) {
+    public PageResult<JacsServiceData> findMatchingQueuedServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
             return jacsServiceDataDao.findMatchingServices(pattern, creationInterval, pageRequest);
         } finally {
             daoSource.destroy(jacsServiceDataDao);
+        }
+    }
+
+    public PageResult<JacsServiceData> findMatchingArchivedServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest) {
+        JacsServiceDataArchiveDao jacsServiceDataArchiveDao = jacsServiceArchiverDaoSource.get();
+        try {
+            return jacsServiceDataArchiveDao.findMatchingServices(pattern, creationInterval, pageRequest);
+        } finally {
+            jacsServiceArchiverDaoSource.destroy(jacsServiceDataArchiveDao);
         }
     }
 

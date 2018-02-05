@@ -149,7 +149,7 @@ public class SampleLSMSummaryProcessorTest {
 
     private JacsServiceData createTestServiceData(Long serviceId, Long sampleId, String resultsId, String area, String objective, String channelDyeSpec) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
-                .setOwner(TEST_OWNER)
+                .setOwnerKey(TEST_OWNER)
                 .addArg("-sampleId", String.valueOf(sampleId))
                 .addArg("-area", area)
                 .addArg("-objective", objective)

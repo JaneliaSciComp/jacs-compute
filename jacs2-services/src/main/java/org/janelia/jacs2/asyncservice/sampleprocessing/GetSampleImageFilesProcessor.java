@@ -102,7 +102,7 @@ public class GetSampleImageFilesProcessor extends AbstractBasicLifeCycleServiceP
     protected JacsServiceResult<List<GetSampleImageIntermediateData>> submitServiceDependencies(JacsServiceData jacsServiceData) {
         SampleServiceArgs args = getArgs(jacsServiceData);
         List<AnatomicalArea> anatomicalAreas =
-                sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwner(), args.sampleId, args.sampleObjective, args.sampleArea);
+                sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwnerKey(), args.sampleId, args.sampleObjective, args.sampleArea);
         // invoke child file copy services for all LSM files
         List<GetSampleImageIntermediateData> getSampleServiceData = anatomicalAreas.stream()
                 .flatMap(ar -> ar.getTileLsmPairs()

@@ -188,7 +188,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
 
     private ServiceComputation<JacsServiceResult<List<DataLoadResult>>> generateMips(JacsServiceData jacsServiceData) {
         DataTreeLoadArgs args = getArgs(jacsServiceData);
-        List<StorageService.StorageInfo> contentToLoad = storageService.listStorageContent(args.storageLocation, jacsServiceData.getOwner());
+        List<StorageService.StorageInfo> contentToLoad = storageService.listStorageContent(args.storageLocation, jacsServiceData.getOwnerKey());
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         List<DataLoadResult> contentWithMips = contentToLoad.stream()
                 .filter(entry -> !entry.isCollectionFlag())
@@ -206,7 +206,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                         if (Files.notExists(mipSourcePath) || Files.size(mipSourcePath) == 0) {
                             // no local copy found
                             Files.createDirectories(mipSourcePath.getParent());
-                            Files.copy(storageService.getStorageContent(args.storageLocation, content.getEntryRelativePath(), jacsServiceData.getOwner()), mipSourcePath, StandardCopyOption.REPLACE_EXISTING);
+                            Files.copy(storageService.getStorageContent(args.storageLocation, content.getEntryRelativePath(), jacsServiceData.getOwnerKey()), mipSourcePath, StandardCopyOption.REPLACE_EXISTING);
                         }
                         Path mipsDirPath = mipSourcePath.getParent();
                         String tifMipsName = FileUtils.getFileNameOnly(mipSourcePath) + "_mipArtifact" + TIFF_EXTENSION;
@@ -245,19 +245,19 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
             mipsComputation = createMipsComputation(jacsServiceData, contentWithMips);
         }
         return mipsComputation.thenApply((JacsServiceResult<List<DataLoadResult>> mipsResult) -> {
-            TreeNode dataFolder = folderService.createFolder(args.parentFolderId, args.folderName, jacsServiceData.getOwner());
+            TreeNode dataFolder = folderService.createFolder(args.parentFolderId, args.folderName, jacsServiceData.getOwnerKey());
             List<DataLoadResult> dataLoadResults = Streams.concat(mipsResult.getResult().stream(), contentWithoutMips.stream())
                     .peek(mipsInfo -> {
                         mipsInfo.setFolderId(dataFolder.getId());
-                        folderService.addImageFile(dataFolder, mipsInfo.remoteContent.getEntryPath(), getFileTypeByExtension(mipsInfo.remoteContent.getEntryPath(), args.losslessImgExtensions), jacsServiceData.getOwner());
+                        folderService.addImageFile(dataFolder, mipsInfo.remoteContent.getEntryPath(), getFileTypeByExtension(mipsInfo.remoteContent.getEntryPath(), args.losslessImgExtensions), jacsServiceData.getOwnerKey());
                         File mipsFile = mipsInfo.localContentMipsPath != null ? mipsInfo.localContentMipsPath.toFile() : null;
                         if (mipsFile != null) {
                             FileInputStream mipsStream = null;
                             try {
                                 mipsStream = new FileInputStream(mipsFile);
-                                StorageService.StorageInfo mipsStorageEntry = storageService.putStorageContent(mipsInfo.remoteContentMips.getStorageLocation(), mipsInfo.remoteContentMips.getEntryRelativePath(), jacsServiceData.getOwner(), mipsStream);
+                                StorageService.StorageInfo mipsStorageEntry = storageService.putStorageContent(mipsInfo.remoteContentMips.getStorageLocation(), mipsInfo.remoteContentMips.getEntryRelativePath(), jacsServiceData.getOwnerKey(), mipsStream);
                                 mipsInfo.remoteContentMipsUrl = mipsStorageEntry.getStorageLocation();
-                                folderService.addImageFile(dataFolder, mipsStorageEntry.getEntryPath(), FileType.SignalMip, jacsServiceData.getOwner());
+                                folderService.addImageFile(dataFolder, mipsStorageEntry.getEntryPath(), FileType.SignalMip, jacsServiceData.getOwnerKey());
                             } catch (Exception e) {
                                 throw new ComputationException(jacsServiceData, e);
                             } finally {

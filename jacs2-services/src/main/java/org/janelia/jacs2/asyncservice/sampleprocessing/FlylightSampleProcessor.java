@@ -625,7 +625,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
         List<NeuronSeparationFiles> sampleNeuronSeparationFiles =  neuronSeparationsResults.stream().map(JacsServiceResult::getResult).collect(Collectors.toList());
 
-        Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), sampleId);
+        Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwnerKey(), sampleId);
         List<ServiceComputation<JacsServiceResult<NeuronSeparationFiles>>> alignmentFollowedByNeuronWarpingComputations = new ArrayList<>();
 
         IndexedReference.<String, Integer>indexListContent(alignmentAlgorithms, (pos, alignmentAlgorithm) -> new IndexedReference<>(alignmentAlgorithm, pos))
@@ -740,8 +740,8 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
     private Path getSampleDataRootDir(JacsServiceData jacsServiceData, FlylightSampleArgs args) {
         Path baseSampleDataRootDir = Paths.get(args.sampleDataRootDir);
-        if (StringUtils.isNotBlank(jacsServiceData.getOwner()) && !baseSampleDataRootDir.endsWith(jacsServiceData.getOwner())) {
-            return baseSampleDataRootDir.resolve(jacsServiceData.getOwner());
+        if (StringUtils.isNotBlank(jacsServiceData.getOwnerKey()) && !baseSampleDataRootDir.endsWith(jacsServiceData.getOwnerKey())) {
+            return baseSampleDataRootDir.resolve(jacsServiceData.getOwnerKey());
         } else {
             return baseSampleDataRootDir;
         }
@@ -763,7 +763,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
     private Path getPreviousSampleProcessingBasedNeuronsResultFile(JacsServiceData jacsServiceData, Number sampleId, String objective, String area, Number runId) {
         // check previus neuron separation results and return corresponding result file
-        Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), sampleId);
+        Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwnerKey(), sampleId);
         return sample.lookupObjective(objective)
                 .flatMap(objectiveSample -> objectiveSample.findPipelineRunById(runId))
                 .map(IndexedReference::getReference)
@@ -781,7 +781,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
 
     private Path getPreviousAlignmentBasedNeuronsResultFile(JacsServiceData jacsServiceData, Number sampleId, String objective, String area, Number runId, Number alignmentResultId) {
         // check previus neuron separation results and return corresponding result file
-        Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwner(), sampleId);
+        Sample sample = sampleDataService.getSampleById(jacsServiceData.getOwnerKey(), sampleId);
         return sample.lookupObjective(objective)
                 .flatMap(objectiveSample -> objectiveSample.findPipelineRunById(runId))
                 .map(IndexedReference::getReference)

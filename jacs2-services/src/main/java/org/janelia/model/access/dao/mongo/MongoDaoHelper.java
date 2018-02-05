@@ -45,14 +45,20 @@ import static com.mongodb.client.model.Filters.eq;
  */
 public class MongoDaoHelper {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MongoDaoHelper.class);
-
-    static <T, R> R findById(Number id, MongoCollection<T> mongoCollection, Class<R> documentType) {
+    public static <T, R> R findById(Number id, MongoCollection<T> mongoCollection, Class<R> documentType) {
         List<R> entityDocs = find(eq("_id", id), null, 0, 2, mongoCollection, documentType);
         return CollectionUtils.isEmpty(entityDocs) ? null : entityDocs.get(0);
     }
 
-    static Bson createBsonSortCriteria(List<SortCriteria> sortCriteria) {
+    public static <T, R> List<R> findByIds(Collection<Number> ids, MongoCollection<T> mongoCollection, Class<R> documentType) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.<R>emptyList();
+        } else {
+            return find(Filters.in("_id", ids), null, 0, 0, mongoCollection, documentType);
+        }
+    }
+
+    public static Bson createBsonSortCriteria(List<SortCriteria> sortCriteria) {
         Bson bsonSortCriteria = null;
         if (CollectionUtils.isNotEmpty(sortCriteria)) {
             Map<String, Object> sortCriteriaAsMap = sortCriteria.stream()
@@ -67,7 +73,7 @@ public class MongoDaoHelper {
         return bsonSortCriteria;
     }
 
-    static <T, R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
+    public static <T, R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, MongoCollection<T> mongoCollection, Class<R> resultType) {
         List<R> entityDocs = new ArrayList<>();
         FindIterable<R> results = mongoCollection.find(resultType);
         if (queryFilter != null) {
@@ -84,7 +90,7 @@ public class MongoDaoHelper {
                 .into(entityDocs);
     }
 
-    static <T, I> void delete(MongoCollection<T> mongoCollection, I entityId) {
+    public static <T, I> void delete(MongoCollection<T> mongoCollection, I entityId) {
         mongoCollection.deleteOne(eq("_id", entityId));
     }
 

@@ -9,6 +9,7 @@ import java.util.Date;
 
 public interface JacsServiceDataManager {
     JacsServiceData retrieveServiceById(Number instanceId);
-    PageResult<JacsServiceData> searchServices(JacsServiceData ref, DataInterval<Date> creationInterval, PageRequest pageRequest);
+    PageResult<JacsServiceData> searchQueuedServices(JacsServiceData ref, DataInterval<Date> creationInterval, PageRequest pageRequest);
+    PageResult<JacsServiceData> searchArchivedServices(JacsServiceData ref, DataInterval<Date> creationInterval, PageRequest pageRequest);
     JacsServiceData updateService(Number instanceId, JacsServiceData serviceData);
 }

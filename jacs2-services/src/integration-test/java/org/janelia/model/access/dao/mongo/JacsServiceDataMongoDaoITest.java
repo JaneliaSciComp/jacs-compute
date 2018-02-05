@@ -365,16 +365,16 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("id", Matchers.isIn(testServices.stream().map(e->e.getId()).toArray()))));
 
         JacsServiceData u1ServicesRequest = new JacsServiceData();
-        u1ServicesRequest.setOwner("user:u1");
+        u1ServicesRequest.setOwnerKey("user:u1");
         u1ServicesRequest.setState(JacsServiceState.QUEUED);
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(null, null), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("owner", equalTo("user:u1"))));
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("ownerKey", equalTo("user:u1"))));
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(startDate, endDate), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("owner", equalTo("user:u1"))));
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("ownerKey", equalTo("user:u1"))));
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(null, startDate), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), hasSize(0));
@@ -396,16 +396,16 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestService("s2.2", ProcessingLocation.SGE_DRMAA),
                 createTestService("s2.3", ProcessingLocation.SGE_DRMAA)
         );
-        u1Services.stream().forEach(s -> {
-            s.setOwner("user:u1");
+        u1Services.forEach(s -> {
+            s.setOwnerKey("user:u1");
             s.setState(JacsServiceState.QUEUED);
             s.setCreationDate(calDate.getTime());
             calDate.add(Calendar.DATE, 1);
             persistServiceWithEvents(s, ImmutableMap.of());
             testServices.add(s);
         });
-        u2Services.stream().forEach(s -> {
-            s.setOwner("group:u2");
+        u2Services.forEach(s -> {
+            s.setOwnerKey("group:u2");
             s.setState(JacsServiceState.RUNNING);
             s.setCreationDate(calDate.getTime());
             calDate.add(Calendar.DATE, 1);

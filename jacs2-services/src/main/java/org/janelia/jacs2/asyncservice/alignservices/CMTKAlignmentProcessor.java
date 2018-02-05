@@ -63,6 +63,7 @@ public class CMTKAlignmentProcessor extends AbstractServiceProcessor<List<String
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public List<String> collectResult(JacsServiceResult<?> depResults) {
                 JacsServiceResult<List<String>> intermediateResult = (JacsServiceResult<List<String>>)depResults;
@@ -76,6 +77,7 @@ public class CMTKAlignmentProcessor extends AbstractServiceProcessor<List<String
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<List<String>>> process(JacsServiceData jacsServiceData) {
         CMTKAlignmentArgs args = getArgs(jacsServiceData);
@@ -139,7 +141,7 @@ public class CMTKAlignmentProcessor extends AbstractServiceProcessor<List<String
                         .collect(Collectors.toList());
         List<ServiceComputation<?>> composableCmtkAlignments = ImmutableList.copyOf(cmtkAlignments);
         return computationFactory.newCompletedComputation(null)
-                .thenCombineAll(composableCmtkAlignments, (empty, results) -> (List<JacsServiceResult<CMTKAlignmentResultFiles>>) results)
+                .thenCombineAll(composableCmtkAlignments, (Object ignored, List<?> results) -> (List<JacsServiceResult<CMTKAlignmentResultFiles>>) results)
                 .thenApply(cmkAlignmentResults -> {
                     List<String> cmtkAlignmentResultDirs = cmkAlignmentResults.stream().map(r -> r.getResult().getResultDir()).collect(Collectors.toList());
                     return updateServiceResult(jacsServiceData, cmtkAlignmentResultDirs);
