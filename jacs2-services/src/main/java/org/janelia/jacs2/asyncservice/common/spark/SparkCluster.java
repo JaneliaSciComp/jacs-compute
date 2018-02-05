@@ -100,7 +100,7 @@ public class SparkCluster {
         // Default to two tasks per slot (this seems empirically optimal)
         this.defaultParallelism = 2 * nodeSlots * numNodes;
 
-        log.info("Starting Spark cluster with {} nodes ({} slots}", numNodes, numSlots);
+        log.info("Starting Spark cluster with {} nodes ({} total slots)", numNodes, numSlots);
         log.info("Working directory: {}", workingDirectory);
 
         JobTemplate jt = new JobTemplate();
@@ -280,6 +280,10 @@ public class SparkCluster {
         };
 
         File log4jProperties = new File(log4jFilepath);
+
+        log.info("sparkExecutorMemory={}", sparkExecutorMemory);
+        log.info("sparkExecutorCores={}", sparkExecutorCores);
+        log.info("defaultParallelism={}", defaultParallelism);
 
         SparkAppHandle handle = new SparkLauncher()
                 .redirectError()
