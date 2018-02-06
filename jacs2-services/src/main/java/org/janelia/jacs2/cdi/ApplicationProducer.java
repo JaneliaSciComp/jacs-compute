@@ -64,7 +64,7 @@ public class ApplicationProducer {
     @Produces
     public ApplicationConfig applicationConfig() throws IOException {
         return new ApplicationConfigProvider()
-                .fromDefaultResource()
+                .fromDefaultResources()
                 .fromEnvVar("JACS2_CONFIG")
                 .fromMap(ApplicationConfigProvider.applicationArgs())
                 .build();

@@ -47,7 +47,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private String errorPath;
     private List<String> args = new ArrayList<>();
     private List<String> actualArgs;
-    private Map<String, Object> dictionaryArgs = new HashMap<>();
+    private Map<String, Object> dictionaryArgs = new LinkedHashMap<>();
     private Map<String, String> env = new LinkedHashMap<>();
     private Map<String, String> resources = new LinkedHashMap<>(); // this could/should be used for grid jobs resources
     private List<String> tags = new ArrayList<>();
@@ -215,7 +215,10 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     }
 
     public void setDictionaryArgs(Map<String, Object> dictionaryArgs) {
-        this.dictionaryArgs = dictionaryArgs;
+        this.dictionaryArgs.clear();
+        if (dictionaryArgs != null) {
+            this.dictionaryArgs.putAll(dictionaryArgs);
+        }
     }
 
     public String getWorkspace() {

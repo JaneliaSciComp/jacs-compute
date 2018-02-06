@@ -49,7 +49,8 @@ public abstract class AbstractServicesApp {
 
     protected void start(String[] args) throws ServletException {
         final AppArgs appArgs = new AppArgs();
-        JCommander cmdline = new JCommander(appArgs, args);
+        JCommander cmdline = new JCommander(appArgs);
+        cmdline.parse(args);
         if (appArgs.displayUsage) {
             cmdline.usage();
         } else {

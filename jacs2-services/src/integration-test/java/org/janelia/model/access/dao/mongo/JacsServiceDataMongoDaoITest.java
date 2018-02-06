@@ -12,18 +12,17 @@ import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.model.access.dao.JacsServiceDataDao;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.SetFieldValueHandler;
-import org.janelia.model.service.JacsServiceLifecycleStage;
-import org.janelia.model.service.RegisteredJacsNotification;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
-import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEvent;
+import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ProcessingLocation;
+import org.janelia.model.service.RegisteredJacsNotification;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -32,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.eq;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.allOf;
@@ -81,6 +79,47 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestServiceEvent("e2", "v2"));
         JacsServiceData retrievedSi = testDao.findById(si.getId());
         assertThat(retrievedSi.getName(), equalTo(si.getName()));
+    }
+
+    @Test
+    public void persistServiceWithTagsAndDictionaryArgs() {
+        JacsServiceData serviceData = createTestService("testService", ProcessingLocation.LOCAL);
+        serviceData.setTags(ImmutableList.of("t6", "t5", "t4", "t3", "t2", "t1"));
+        serviceData.setDictionaryArgs(ImmutableMap.<String, Object>of(
+                "a1", ImmutableMap.<String, String>of("a1.1","v1.1", "a1.2", "v1.2"),
+                "a2", "v2",
+                "a3", ImmutableMap.<String, Object>of("a3.1", "v3.1", "a3.2", "v3.2")
+        ));
+        testDao.save(serviceData);
+        List<JacsServiceData> otherServices = ImmutableList.of(
+                createTestService("other", ProcessingLocation.LOCAL),
+                createTestService("other", ProcessingLocation.LOCAL),
+                createTestService("other", ProcessingLocation.LOCAL),
+                createTestService("other", ProcessingLocation.LOCAL)
+        );
+        otherServices.forEach(s -> {
+            s.setState(JacsServiceState.QUEUED);
+            testDao.save(s);
+        });
+        // now search by tags
+        JacsServiceData pattern = new JacsServiceData();
+        pattern.setState(null);
+        PageResult<JacsServiceData> searchResult = testDao.findMatchingServices(pattern, new DataInterval<>(null, null), new PageRequest());
+        assertThat(searchResult.getResultList(), hasSize(otherServices.size() + 1));
+
+        pattern.setTags(ImmutableList.of("t1", "t3", "t2"));
+        searchResult = testDao.findMatchingServices(pattern, new DataInterval<>(null, null), new PageRequest());
+        assertThat(searchResult.getResultList(), hasSize(1));
+        assertThat(searchResult.getResultList().get(0).getTags(), contains("t6", "t5", "t4", "t3", "t2", "t1"));
+        assertThat(searchResult.getResultList().get(0).getDictionaryArgs(), Matchers.allOf(
+                Matchers.<String, Object>hasEntry("a2", "v2"),
+                Matchers.<String, Object>hasEntry("a1", ImmutableMap.<String, String>of("a1.1","v1.1", "a1.2", "v1.2")),
+                Matchers.<String, Object>hasEntry("a3", ImmutableMap.<String, Object>of("a3.1", "v3.1", "a3.2", "v3.2"))
+        ));
+
+        pattern.setTags(ImmutableList.of("t1", "t3", "t7"));
+        searchResult = testDao.findMatchingServices(pattern, new DataInterval<>(null, null), new PageRequest());
+        assertThat(searchResult.getResultList(), emptyCollectionOf(JacsServiceData.class));
     }
 
     @Test
@@ -196,9 +235,9 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestService("s1.4", ProcessingLocation.LOCAL)
         );
         List<JacsServiceData> servicesInRunningState = ImmutableList.of(
-                createTestService("s2.4", ProcessingLocation.SGE_DRMAA),
-                createTestService("s2.5", ProcessingLocation.SGE_DRMAA),
-                createTestService("s2.6", ProcessingLocation.SGE_DRMAA)
+                createTestService("s2.4", ProcessingLocation.LSF_DRMAA),
+                createTestService("s2.5", ProcessingLocation.LSF_DRMAA),
+                createTestService("s2.6", ProcessingLocation.LSF_DRMAA)
         );
         List<JacsServiceData> servicesInCanceledState = ImmutableList.of(
                 createTestService("s7", null),
