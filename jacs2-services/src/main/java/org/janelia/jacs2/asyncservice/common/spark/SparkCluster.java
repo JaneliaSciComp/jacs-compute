@@ -1,12 +1,15 @@
 package org.janelia.jacs2.asyncservice.common.spark;
 
+import com.google.common.base.Stopwatch;
 import org.apache.spark.launcher.SparkAppHandle;
 import org.apache.spark.launcher.SparkLauncher;
 import org.janelia.cluster.*;
 import org.janelia.cluster.lsf.LsfJobInfo;
+import org.janelia.jacs2.asyncservice.common.cluster.LsfParseUtils;
 import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
+import org.janelia.model.service.JacsJobInstanceInfo;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -18,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 /**
@@ -47,6 +51,7 @@ public class SparkCluster {
     private String sparkDriverMemory;
     private String sparkExecutorMemory;
     private int sparkExecutorCores;
+    private int defaultParallelism;
     private int sparkClusterHardDurationMins;
     private String log4jFilepath;
     private String hadoopHomeDir;
@@ -92,7 +97,10 @@ public class SparkCluster {
         this.workingDirectory = workingDirName.toFile();
         int numSlots = nodeSlots + nodeSlots * numNodes; // master + workers
 
-        log.info("Starting Spark cluster with {} nodes", nodeSlots);
+        // Default to two tasks per slot (this seems empirically optimal)
+        this.defaultParallelism = 2 * nodeSlots * numNodes;
+
+        log.info("Starting Spark cluster with {} nodes ({} total slots)", numNodes, numSlots);
         log.info("Working directory: {}", workingDirectory);
 
         JobTemplate jt = new JobTemplate();
@@ -106,10 +114,67 @@ public class SparkCluster {
         this.jobId = future.getJobId();
 
         future.whenCompleteAsync((infos, e) -> {
+            logJobInfo(infos);
             processJobCompletion(e);
         }, completionMessageExecutor);
 
         log.info("Starting Spark cluster {}", jobId);
+    }
+
+    public Collection<JacsJobInstanceInfo> getJobInstanceInfos(Collection<JobInfo> infos) {
+        Collection<JacsJobInstanceInfo> jacsInfos = new ArrayList<>();
+        for (JobInfo jobInfo : infos) {
+            JacsJobInstanceInfo jacsJobInstanceInfo = new JacsJobInstanceInfo();
+            jacsJobInstanceInfo.setJobId(jobInfo.getJobId());
+            jacsJobInstanceInfo.setArrayIndex(jobInfo.getArrayIndex());
+            jacsJobInstanceInfo.setName(jobInfo.getName());
+            jacsJobInstanceInfo.setFromHost(jobInfo.getFromHost());
+            jacsJobInstanceInfo.setExecHost(jobInfo.getExecHost());
+            jacsJobInstanceInfo.setStatus(jobInfo.getStatus() == null ? null : jobInfo.getStatus().name());
+            jacsJobInstanceInfo.setQueue(jobInfo.getQueue());
+            jacsJobInstanceInfo.setProject(jobInfo.getProject());
+            jacsJobInstanceInfo.setReqSlot(jobInfo.getReqSlot());
+            jacsJobInstanceInfo.setAllocSlot(jobInfo.getAllocSlot());
+            jacsJobInstanceInfo.setSubmitTime(LsfParseUtils.convertLocalDateTime(jobInfo.getSubmitTime()));
+            jacsJobInstanceInfo.setStartTime(LsfParseUtils.convertLocalDateTime(jobInfo.getStartTime()));
+            jacsJobInstanceInfo.setFinishTime(LsfParseUtils.convertLocalDateTime(jobInfo.getFinishTime()));
+            jacsJobInstanceInfo.setQueueSecs(LsfParseUtils.getDiffSecs(jobInfo.getSubmitTime(), jobInfo.getStartTime()));
+            jacsJobInstanceInfo.setRunSecs(LsfParseUtils.getDiffSecs(jobInfo.getStartTime(), jobInfo.getFinishTime()));
+            jacsJobInstanceInfo.setMaxMem(jobInfo.getMaxMem());
+            jacsJobInstanceInfo.setMaxMemBytes(LsfParseUtils.parseMemToBytes(jobInfo.getMaxMem()));
+            jacsJobInstanceInfo.setExitCode(jobInfo.getExitCode());
+            jacsJobInstanceInfo.setExitReason(jobInfo.getExitReason());
+            jacsInfos.add(jacsJobInstanceInfo);
+        }
+        return jacsInfos;
+    }
+
+    private void logJobInfo(Collection<JobInfo> infos) {
+        for (JacsJobInstanceInfo jobInfo : getJobInstanceInfos(infos)) {
+            Long queueTimeSeconds = jobInfo.getQueueSecs();
+            Long runTimeSeconds = jobInfo.getRunSecs();
+
+            String queueTime = queueTimeSeconds+" sec";
+            if (queueTimeSeconds!=null && queueTimeSeconds>300) { // More than 5 minutes, just show the minutes
+                queueTime = TimeUnit.MINUTES.convert(queueTimeSeconds, TimeUnit.SECONDS) + " min";
+            }
+
+            String runTime = runTimeSeconds+" sec";
+            if (runTimeSeconds!=null && runTimeSeconds>300) {
+                runTime = TimeUnit.MINUTES.convert(runTimeSeconds, TimeUnit.SECONDS) + " min";
+            }
+
+            String maxMem = jobInfo.getMaxMem();
+            String jobIdStr = jobInfo.getJobId()+"";
+            if (jobInfo.getArrayIndex()!=null) {
+                jobIdStr += "."+jobInfo.getArrayIndex();
+            }
+
+            log.info("Job {} was queued for {}, ran for {}, and used "+maxMem+" of memory.", jobIdStr, queueTime, runTime);
+            if (jobInfo.getExitCode()!=143) { // We expect the cluster to be closed by us (TERM_OWNER)
+                log.error("Job {} exited with code {} and reason {}", jobIdStr, jobInfo.getExitCode(), jobInfo.getExitReason());
+            }
+        }
     }
 
     private synchronized void processJobCompletion(Throwable exception) {
@@ -178,11 +243,14 @@ public class SparkCluster {
      * @return
      * @throws Exception
      */
-    public SparkApp runApp(BiConsumer<File, ? super Throwable> callback, String jarPath, String... appArgs) throws Exception {
+    public SparkApp runApp(BiConsumer<File, ? super Throwable> callback, String jarPath,
+                           String... appArgs) throws Exception {
 
         if (!isReady()) {
             throw new IllegalStateException("Cluster is not ready");
         }
+
+        Stopwatch s = Stopwatch.createStarted();
 
         log.info("Running Spark app on cluster {}", master);
         File outFile = new File(workingDirectory, DRIVER_LOG_FILENAME);
@@ -194,7 +262,8 @@ public class SparkCluster {
                 SparkAppHandle.State state = sparkAppHandle.getState();
                 log.info("Spark application state changed: "+state);
                 if (state.isFinal()) {
-                    log.info("Spark application completed");
+                    long seconds = s.stop().elapsed().getSeconds();
+                    log.info("Spark application ran for {} seconds.", seconds);
                     if (state==SparkAppHandle.State.FINISHED) {
                         if (callback!=null) callback.accept(workingDirectory, null);
                     }
@@ -212,6 +281,10 @@ public class SparkCluster {
 
         File log4jProperties = new File(log4jFilepath);
 
+        log.info("sparkExecutorMemory={}", sparkExecutorMemory);
+        log.info("sparkExecutorCores={}", sparkExecutorCores);
+        log.info("defaultParallelism={}", defaultParallelism);
+
         SparkAppHandle handle = new SparkLauncher()
                 .redirectError()
                 .redirectOutput(outFile)
@@ -222,6 +295,10 @@ public class SparkCluster {
                 .setConf(SparkLauncher.DRIVER_MEMORY, sparkDriverMemory)
                 .setConf(SparkLauncher.EXECUTOR_MEMORY, sparkExecutorMemory)
                 .setConf(SparkLauncher.EXECUTOR_CORES, ""+sparkExecutorCores)
+                // The default (4MB) open cost consolidates files into tiny partitions regardless of number of cores.
+                // By forcing this parameter to zero, we can specify the exact parallelism we want.
+                .setConf("spark.files.openCostInBytes", "0")
+                .setConf("spark.default.parallelism", ""+defaultParallelism)
                 .setConf(SparkLauncher.EXECUTOR_EXTRA_JAVA_OPTIONS, "-Dlog4j.configuration=file://"+log4jProperties.getAbsolutePath())
                 .addSparkArg("--driver-java-options",
                         "-Dlog4j.configuration=file://"+log4jProperties.getAbsolutePath()+
@@ -256,5 +333,33 @@ public class SparkCluster {
             log.error("Error stopping Spark cluster", e);
         }
         reset();
+    }
+
+    public int getNodeSlots() {
+        return nodeSlots;
+    }
+
+    public int getSparkExecutorCores() {
+        return sparkExecutorCores;
+    }
+
+    public int getDefaultParallelism() {
+        return defaultParallelism;
+    }
+
+    public Long getJobId() {
+        return jobId;
+    }
+
+    public void setNodeSlots(int nodeSlots) {
+        this.nodeSlots = nodeSlots;
+    }
+
+    public void setSparkExecutorCores(int sparkExecutorCores) {
+        this.sparkExecutorCores = sparkExecutorCores;
+    }
+
+    public void setDefaultParallelism(int defaultParallelism) {
+        this.defaultParallelism = defaultParallelism;
     }
 }
