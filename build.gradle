@@ -24,9 +24,9 @@ subprojects {
 
         configurations {
             provided
-            compile.extendsFrom provided
-            integrationTestCompile.extendsFrom testCompile
-            integrationTestRuntime.extendsFrom testRuntime
+            compile.extendsFrom(provided)
+            integrationTestCompile.extendsFrom(testCompile)
+            integrationTestRuntime.extendsFrom(testRuntime)
         }
     
     
@@ -35,10 +35,10 @@ subprojects {
                 java {
                     compileClasspath += main.output + test.output
                     runtimeClasspath += main.output + test.output
-                    srcDir file('src/integration-test/java')
+                    srcDir file('src/integrationTest/java')
                 }
                 resources {
-                    srcDir file('src/integration-test/resources')
+                    srcDir file('src/integrationTest/resources')
                 }
             }
         }
@@ -74,8 +74,10 @@ subprojects {
             module {
                 downloadSources = true
                 downloadJavadoc = true
-                testSourceDirs += [file('src/integration-test/java'), file('src/integration-test/resources')]
-                scopes.TEST.plus += [configurations.integrationTestRuntime, configurations.integrationTestCompile]
+                scopes.TEST.plus += [
+		    configurations.integrationTestCompile,
+		    configurations.integrationTestRuntime
+		]
             }
         }
 

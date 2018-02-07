@@ -16,9 +16,9 @@ public abstract class AbstractITest {
                 .fromDefaultResources()
                 .fromMap(ImmutableMap.of(
                         "MongoDB.ConnectionURL", "mongodb://localhost:27017",
-                        "MongoDB.Database", "{user.home}_jacss_test"
+                        "MongoDB.Database", "{user.home}_jacs_test"
                 ))
-                .fromFile("src/integration-test/resources/jacs_test.properties")
+                .fromFile("src/integrationTest/resources/jacs_test.properties")
                 .fromEnvVar("JACS2_CONFIG_TEST")
                 .build();
     }
