@@ -6,7 +6,7 @@ allprojects {
 }
 
 project.ext {
-        eclipseBuildDir = 'eclipseBuild'
+    eclipseBuildDir = 'eclipseBuild'
 }
 
 subprojects {
@@ -75,9 +75,9 @@ subprojects {
                 downloadSources = true
                 downloadJavadoc = true
                 scopes.TEST.plus += [
-		    configurations.integrationTestCompile,
-		    configurations.integrationTestRuntime
-		]
+                    configurations.integrationTestCompile,
+                    configurations.integrationTestRuntime
+                ]
             }
         }
 

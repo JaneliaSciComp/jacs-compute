@@ -2,11 +2,11 @@ package org.janelia.model.access.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.jacs2.dao.DatasetDao;
 import org.janelia.model.jacs2.dao.mongo.DatasetMongoDao;
 import org.janelia.model.jacs2.domain.Subject;
-import org.janelia.model.jacs2.dao.DatasetDao;
 import org.janelia.model.jacs2.domain.sample.DataSet;
-import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.jacs2.page.SortCriteria;
@@ -20,10 +20,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.util.Objects.isNull;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -91,10 +91,10 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
         DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(), ImmutableList.of());
         testDao.save(testDataset);
         DataSet retrievedDatasets = testDao.findById(testDataset.getId());
-        assertThat(retrievedDatasets, not(isNull(DataSet.class)));
+        assertThat(retrievedDatasets, notNullValue(DataSet.class));
         assertThat(retrievedDatasets, not(same(testDataset)));
         assertThat(retrievedDatasets.getId(), allOf(
-                not(isNull(Long.class)),
+                notNullValue(Number.class),
                 equalTo(testDataset.getId())
         ));
     }
