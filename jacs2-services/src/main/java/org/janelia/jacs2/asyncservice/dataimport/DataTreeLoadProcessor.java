@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTreeLoadProcessor.DataLoadResult>> {
 
     private static final String TIFF_EXTENSION = ".tif";
-    public static final String PNG_EXTENSION = ".png";
+    private static final String PNG_EXTENSION = ".png";
 
     static class DataTreeLoadArgs extends ServiceArgs {
         @Parameter(names = "-folderName", description = "Folder name", required = true)
