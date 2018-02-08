@@ -15,9 +15,14 @@ project(":jacs2-services") {
                 MONGODB_DRIVER_LIB,
                 JONGO_LIB,
                 REFLECTIONS_LIB,
-                JAVA_LSF_LIB,
-                JACS_MODEL_LIB,
+                JAVA_LSF_LIB,       
                 SPARK_LAUNCHER
+
+        compile (JACS_MODEL_LIB) {
+            exclude group: 'com.fasterxml.jackson.core'
+            exclude group: 'com.fasterxml.jackson.datatype'
+            exclude group: 'com.fasterxml.jackson.jaxrs'
+        }
 
         compile (HIBERNATE_LIB) {
             exclude group: 'javax.transaction'
