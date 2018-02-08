@@ -13,6 +13,7 @@ import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
+import org.janelia.jacs2.filter.AuthFilter;
 import org.janelia.jacs2.filter.CORSResponseFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
