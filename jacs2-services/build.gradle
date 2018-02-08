@@ -13,7 +13,6 @@ project(":jacs2-services") {
                 JAX_RS_JERSEY_MEDIA_JSON_LIB,
                 JUEL_LIB,
                 MONGODB_DRIVER_LIB,
-                JONGO_LIB,
                 REFLECTIONS_LIB,
                 JAVA_LSF_LIB,       
                 SPARK_LAUNCHER
