@@ -19,14 +19,10 @@ project(":jacs2-services") {
 
         compile (JONGO_LIB) {
             exclude group: 'com.fasterxml.jackson.core'
-            exclude group: 'com.fasterxml.jackson.datatype'
-            exclude group: 'com.fasterxml.jackson.jaxrs'
         }
 
         compile (JACS_MODEL_LIB) {
             exclude group: 'com.fasterxml.jackson.core'
-            exclude group: 'com.fasterxml.jackson.datatype'
-            exclude group: 'com.fasterxml.jackson.jaxrs'
         }
 
         compile (HIBERNATE_LIB) {
