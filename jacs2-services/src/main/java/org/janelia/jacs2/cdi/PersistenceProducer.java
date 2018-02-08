@@ -58,21 +58,21 @@ public class PersistenceProducer {
                         .connectTimeout(connectTimeout)
                         .codecRegistry(codecRegistry);
         MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
-        log.info("Creating Mongo client: "+mongoConnectionString);
+        log.info("Creating Mongo client {} using database {}", mongoConnectionString, mongoDatabase);
         return new MongoClient(mongoConnectionString);
     }
 
     @Produces
     @Default
     public MongoDatabase createDefaultMongoDatabase(MongoClient mongoClient) {
-        log.trace("Creating default database: "+mongoDatabase);
+        log.trace("Creating default database: {}", mongoDatabase);
         return mongoClient.getDatabase(mongoDatabase);
     }
 
     @Produces
     @Jacs2Future
     public MongoDatabase createFutureMongoDatabase(MongoClient mongoClient) {
-        log.info("Creating future database: "+mongoFutureDatabase);
+        log.info("Creating future database: {}", mongoFutureDatabase);
         return mongoClient.getDatabase(mongoFutureDatabase);
     }
 
