@@ -84,7 +84,7 @@ public class AuthFilter implements ContainerRequestFilter {
             if (!SubjectUtils.isAdmin(authenticatedUser)) {
                 logger.warn("User {} is not authorized to act as subject {}", authUserName, runAsUserName);
                 requestContext.abortWith(
-                        Response.status(Response.Status.UNAUTHORIZED)
+                        Response.status(Response.Status.FORBIDDEN)
                                 .entity(new ErrorResponse("Unauthorized access"))
                                 .build()
                 );
@@ -94,7 +94,7 @@ public class AuthFilter implements ContainerRequestFilter {
             if (authorizedSubject == null) {
                 logger.warn("Invalid run-as user specified in header {}: {}", HEADER_RUNASUSER, runAsUserName);
                 requestContext.abortWith(
-                        Response.status(Response.Status.UNAUTHORIZED)
+                        Response.status(Response.Status.FORBIDDEN)
                                 .entity(new ErrorResponse("Unauthorized access"))
                                 .build()
                 );
