@@ -18,6 +18,12 @@ project(":jacs2-services") {
                 JAVA_LSF_LIB,       
                 SPARK_LAUNCHER
 
+        compile (JONGO_LIB) {
+            exclude group: 'com.fasterxml.jackson.core'
+            exclude group: 'com.fasterxml.jackson.datatype'
+            exclude group: 'com.fasterxml.jackson.jaxrs'
+        }
+
         compile (JACS_MODEL_LIB) {
             exclude group: 'com.fasterxml.jackson.core'
             exclude group: 'com.fasterxml.jackson.datatype'
