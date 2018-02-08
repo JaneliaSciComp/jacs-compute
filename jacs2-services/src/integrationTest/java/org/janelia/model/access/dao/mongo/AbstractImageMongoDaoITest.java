@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableList;
 import org.hamcrest.Matchers;
 import org.janelia.model.jacs2.dao.ImageDao;
 import org.janelia.model.jacs2.dao.mongo.AbstractImageMongoDao;
-import org.janelia.model.jacs2.domain.sample.LSMImage;
 import org.janelia.model.jacs2.domain.sample.Image;
+import org.janelia.model.jacs2.domain.sample.LSMImage;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.jacs2.page.SortCriteria;
@@ -20,7 +20,6 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
-import static org.hamcrest.collection.IsIn.isIn;
 import static org.junit.Assert.assertThat;
 
 public class AbstractImageMongoDaoITest extends AbstractDomainObjectDaoITest<Image> {
@@ -58,7 +57,7 @@ public class AbstractImageMongoDaoITest extends AbstractDomainObjectDaoITest<Ima
         assertThat(res.getResultList(), everyItem(
                 allOf(
                         Matchers.<Image>instanceOf(Image.class),
-                        isIn(testImages)
+                        Matchers.in(testImages)
                 )));
     }
 

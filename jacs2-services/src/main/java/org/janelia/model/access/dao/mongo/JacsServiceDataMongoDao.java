@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.IndexModel;
+import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,6 +50,17 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     @Inject
     public JacsServiceDataMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
         super(mongoDatabase, idGenerator);
+        mongoCollection.createIndexes(
+                ImmutableList.of(
+                        new IndexModel(Indexes.ascending("name")),
+                        new IndexModel(Indexes.ascending("ownerKey")),
+                        new IndexModel(Indexes.ascending("parentServiceId")),
+                        new IndexModel(Indexes.ascending("rootServiceId")),
+                        new IndexModel(Indexes.ascending("queueId")),
+                        new IndexModel(Indexes.ascending("state")),
+                        new IndexModel(Indexes.ascending("creationDate"))
+                )
+        );
     }
 
     @Override
@@ -199,6 +212,14 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     public void updateServiceResult(JacsServiceData serviceData) {
         Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
         updatedFields.put("serializableResult", new SetFieldValueHandler<>(serviceData.getSerializableResult()));
+        update(serviceData, updatedFields);
+    }
+
+    @Override
+    public void archiveService(JacsServiceData serviceData) {
+        serviceData.setState(JacsServiceState.ARCHIVED);
+        Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
+        updatedFields.put("state", new SetFieldValueHandler<>(serviceData.getState()));
         update(serviceData, updatedFields);
     }
 }

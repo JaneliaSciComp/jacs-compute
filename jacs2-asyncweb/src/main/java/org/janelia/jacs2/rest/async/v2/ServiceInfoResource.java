@@ -47,12 +47,11 @@ public class ServiceInfoResource {
 
     @RequireAuthentication
     @GET
-    @Path("/queued")
     @ApiOperation(value = "Search queued services", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
-    public Response searchQueuedServices(@QueryParam("service-name") String serviceName,
+    public Response searchServices(@QueryParam("service-name") String serviceName,
                                          @QueryParam("service-id") Long serviceId,
                                          @QueryParam("parent-id") Long parentServiceId,
                                          @QueryParam("root-id") Long rootServiceId,
@@ -72,37 +71,7 @@ public class ServiceInfoResource {
                 serviceState,
                 serviceTags,
                 securityContext,
-                (pattern) -> jacsServiceDataManager.searchQueuedServices(pattern, new DataInterval<> (from, to), createPageRequest(pageNumber, pageLength)));
-    }
-
-    @RequireAuthentication
-    @GET
-    @Path("/archived")
-    @ApiOperation(value = "Search queued services", notes = "")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
-    public Response searchArchivedServices(@QueryParam("service-name") String serviceName,
-                                           @QueryParam("service-id") Long serviceId,
-                                           @QueryParam("parent-id") Long parentServiceId,
-                                           @QueryParam("root-id") Long rootServiceId,
-                                           @QueryParam("service-owner") String serviceOwnerKey,
-                                           @QueryParam("service-state") String serviceState,
-                                           @QueryParam("service-tags") List<String> serviceTags,
-                                           @QueryParam("service-from") Date from,
-                                           @QueryParam("service-to") Date to,
-                                           @QueryParam("page") Integer pageNumber,
-                                           @QueryParam("length") Integer pageLength,
-                                           @Context SecurityContext securityContext) {
-        return searchServices(serviceName,
-                serviceId,
-                parentServiceId,
-                rootServiceId,
-                serviceOwnerKey,
-                serviceState,
-                serviceTags,
-                securityContext,
-                (pattern) -> jacsServiceDataManager.searchArchivedServices(pattern, new DataInterval<> (from, to), createPageRequest(pageNumber, pageLength)));
+                (pattern) -> jacsServiceDataManager.searchServices(pattern, new DataInterval<> (from, to), createPageRequest(pageNumber, pageLength)));
     }
 
     private PageRequest createPageRequest(Integer pageNumber, Integer pageLength) {

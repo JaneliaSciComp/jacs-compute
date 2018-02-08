@@ -4,12 +4,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Matchers;
 import org.hamcrest.beans.HasPropertyWithValue;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
+import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.jacs2.dao.LSMImageDao;
 import org.janelia.model.jacs2.dao.mongo.LSMImageMongoDao;
 import org.janelia.model.jacs2.domain.Reference;
 import org.janelia.model.jacs2.domain.sample.LSMImage;
-import org.janelia.model.jacs2.dao.LSMImageDao;
-import org.janelia.model.jacs2.EntityFieldValueHandler;
-import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.jacs2.page.SortCriteria;
@@ -28,7 +28,6 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.collection.IsIn.isIn;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -68,7 +67,7 @@ public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage
                     assertThat(res.getResultList(), everyItem(
                             allOf(
                                     Matchers.<LSMImage>instanceOf(LSMImage.class),
-                                    isIn(testImages),
+                                    Matchers.in(testImages),
                                     new HasPropertyWithValue<>("sageId", equalTo(i))
                             )));
                 });
@@ -96,7 +95,7 @@ public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage
                     assertThat(res.getResultList(), everyItem(
                             allOf(
                                     Matchers.<LSMImage>instanceOf(LSMImage.class),
-                                    isIn(testImages),
+                                    Matchers.in(testImages),
                                     new HasPropertyWithValue<>("slideCode", equalTo(sc))
                             )));
                 });

@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@MongoMapping(collectionName="jacsService", archiveCollectionName = "jacsServiceHistory", label="JacsService")
+@MongoMapping(collectionName="jacsService", label="JacsService")
 public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public static JacsServiceEvent createServiceEvent(JacsServiceEventTypes name, String value) {

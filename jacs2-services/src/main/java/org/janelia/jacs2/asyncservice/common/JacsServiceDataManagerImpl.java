@@ -27,17 +27,12 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
 
     @Override
     public JacsServiceData retrieveServiceById(Number instanceId) {
-        return jacsServiceDataPersistence.findActiveOrArchivedServiceHierarchy(instanceId);
+        return jacsServiceDataPersistence.findServiceHierarchy(instanceId);
     }
 
     @Override
-    public PageResult<JacsServiceData> searchQueuedServices(JacsServiceData ref, DataInterval<Date> creationInterval, PageRequest pageRequest) {
-        return jacsServiceDataPersistence.findMatchingQueuedServices(ref, creationInterval, pageRequest);
-    }
-
-    @Override
-    public PageResult<JacsServiceData> searchArchivedServices(JacsServiceData ref, DataInterval<Date> creationInterval, PageRequest pageRequest) {
-        return jacsServiceDataPersistence.findMatchingArchivedServices(ref, creationInterval, pageRequest);
+    public PageResult<JacsServiceData> searchServices(JacsServiceData ref, DataInterval<Date> creationInterval, PageRequest pageRequest) {
+        return jacsServiceDataPersistence.findMatchingServices(ref, creationInterval, pageRequest);
     }
 
     @Override

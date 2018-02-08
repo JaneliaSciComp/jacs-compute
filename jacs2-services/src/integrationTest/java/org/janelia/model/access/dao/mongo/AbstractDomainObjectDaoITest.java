@@ -1,6 +1,7 @@
 package org.janelia.model.access.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
+import org.hamcrest.Matchers;
 import org.janelia.model.jacs2.dao.DomainObjectDao;
 import org.janelia.model.jacs2.domain.DomainObject;
 import org.janelia.model.jacs2.domain.Subject;
@@ -18,7 +19,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.hamcrest.collection.IsIn.isIn;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -54,7 +54,7 @@ public abstract class AbstractDomainObjectDaoITest<T extends DomainObject> exten
         List<Number> testItemIds = testItems.stream().map(d -> d.getId()).collect(Collectors.toCollection(ArrayList<Number>::new));
         List<T> res = dao.findByIds(null, testItemIds);
         assertThat(res, hasSize(testItems.size()));
-        assertThat(res, everyItem(hasProperty("id", isIn(testItemIds))));
+        assertThat(res, everyItem(hasProperty("id", Matchers.in(testItemIds))));
     }
 
     protected void findByIdsWithSubject(DomainObjectDao<T> dao) {
@@ -84,7 +84,7 @@ public abstract class AbstractDomainObjectDaoITest<T extends DomainObject> exten
         });
         List<Number> testItemIds = testItems.stream().map(d -> d.getId()).collect(Collectors.toCollection(ArrayList<Number>::new));
         List<T> res = dao.findByIds(otherSubject, testItemIds);
-        assertThat(res, everyItem(hasProperty("id", isIn(accessibleItems.stream().map(s -> s.getId()).collect(Collectors.toList())))));
+        assertThat(res, everyItem(hasProperty("id", Matchers.in(accessibleItems.stream().map(s -> s.getId()).collect(Collectors.toList())))));
         assertTrue(res.size() == accessibleItems.size());
     }
 

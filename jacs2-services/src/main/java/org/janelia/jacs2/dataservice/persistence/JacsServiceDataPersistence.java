@@ -1,9 +1,7 @@
 package org.janelia.jacs2.dataservice.persistence;
 
 import com.google.common.collect.ImmutableMap;
-import org.janelia.model.access.dao.JacsServiceDataArchiveDao;
 import org.janelia.model.access.dao.JacsServiceDataDao;
-import org.janelia.model.access.dao.mongo.ArchiveMongoDao;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
@@ -29,12 +27,9 @@ import java.util.stream.Stream;
 
 public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServiceDataDao, JacsServiceData, Number> {
 
-    private final Instance<JacsServiceDataArchiveDao> jacsServiceArchiverDaoSource;
-
     @Inject
-    public JacsServiceDataPersistence(Instance<JacsServiceDataDao> serviceDataDaoSource, Instance<JacsServiceDataArchiveDao> jacsServiceArchiverDaoSource) {
+    public JacsServiceDataPersistence(Instance<JacsServiceDataDao> serviceDataDaoSource) {
         super(serviceDataDaoSource);
-        this.jacsServiceArchiverDaoSource = jacsServiceArchiverDaoSource;
     }
 
     public JacsServiceData createServiceIfNotFound(JacsServiceData jacsServiceData) {
@@ -70,21 +65,12 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    public PageResult<JacsServiceData> findMatchingQueuedServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest) {
+    public PageResult<JacsServiceData> findMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
             return jacsServiceDataDao.findMatchingServices(pattern, creationInterval, pageRequest);
         } finally {
             daoSource.destroy(jacsServiceDataDao);
-        }
-    }
-
-    public PageResult<JacsServiceData> findMatchingArchivedServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest) {
-        JacsServiceDataArchiveDao jacsServiceDataArchiveDao = jacsServiceArchiverDaoSource.get();
-        try {
-            return jacsServiceDataArchiveDao.findMatchingServices(pattern, creationInterval, pageRequest);
-        } finally {
-            jacsServiceArchiverDaoSource.destroy(jacsServiceDataArchiveDao);
         }
     }
 
@@ -126,24 +112,6 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    private JacsServiceData findArchivedServiceHierarchy(Number serviceId) {
-        JacsServiceDataArchiveDao jacsServiceArchiverDao = jacsServiceArchiverDaoSource.get();
-        try {
-            return jacsServiceArchiverDao.findArchivedServiceHierarchy(serviceId);
-        } finally {
-            jacsServiceArchiverDaoSource.destroy(jacsServiceArchiverDao);
-        }
-    }
-
-    public JacsServiceData findActiveOrArchivedServiceHierarchy(Number serviceId) {
-        JacsServiceData jacsServiceData = findServiceHierarchy(serviceId);
-        if (jacsServiceData != null) {
-            return jacsServiceData;
-        } else {
-            return findArchivedServiceHierarchy(serviceId);
-        }
-    }
-
     public void saveHierarchy(JacsServiceData jacsServiceData) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
@@ -155,13 +123,11 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
 
     public void archiveHierarchy(JacsServiceData jacsServiceData) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
-        JacsServiceDataArchiveDao jacsServiceArchiverDao = jacsServiceArchiverDaoSource.get();
         try {
             List<JacsServiceData> serviceHierarchy = jacsServiceData.serviceHierarchyStream().collect(Collectors.toList());
-            serviceHierarchy.forEach(jacsServiceArchiverDao::archive);
+            serviceHierarchy.forEach(jacsServiceDataDao::archiveService);
         } finally {
             daoSource.destroy(jacsServiceDataDao);
-            jacsServiceArchiverDaoSource.destroy(jacsServiceArchiverDao);
         }
     }
 

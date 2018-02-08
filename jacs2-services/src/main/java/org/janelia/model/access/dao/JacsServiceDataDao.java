@@ -25,4 +25,5 @@ public interface JacsServiceDataDao extends ReadWriteDao<JacsServiceData, Number
     void saveServiceHierarchy(JacsServiceData serviceData);
     void addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent);
     void updateServiceResult(JacsServiceData serviceData);
+    void archiveService(JacsServiceData serviceData);
 }
