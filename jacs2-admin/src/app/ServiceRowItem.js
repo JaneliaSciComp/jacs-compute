@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import TableRow from 'grommet/components/TableRow';
+import DeployIcon from 'grommet/components/icons/base/Deploy';
+import DatabaseIcon from 'grommet/components/icons/base/Database';
 
 const ServiceRowItem = ({ service }) => (
     <TableRow>
@@ -8,7 +10,10 @@ const ServiceRowItem = ({ service }) => (
         {service.serviceName}
       </td>
       <td>
-        {service.usage}
+         <DeployIcon/> 
+      </td>
+      <td> 
+         <DatabaseIcon/>
       </td>
     </TableRow>
 )

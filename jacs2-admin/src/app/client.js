@@ -30,6 +30,8 @@ import Section from 'grommet/components/Section';
 
 import { fetchServices } from './actions'
 import ServiceTable from './ServiceTable';
+import ServiceHistory from './ServiceHistory';
+import ServiceDetail from './ServiceDetail';
 import 'grommet/scss/vanilla/index';
 
 var Main = React.createClass({
@@ -39,13 +41,9 @@ var Main = React.createClass({
                 <Split flex={"right"}>
                     <Sidebar colorIndex="neutral-1">
                         <Menu fill={true} primary={true}>
-                            <Anchor key="Services Queue" path="/services" label="Services Queue" />
-                            <Anchor key="Services Performance" path="/services" label="Services Performance" />
-                            <Anchor key="Services Detail" path="/services" label="Services Detail" />
-                            <Anchor key="Pipes Queue" path="/pipes" label="Pipes Queue" />
-                            <Anchor key="Pipes Detail" path="/pipes" label="Pipes Detail" />
-                            <Anchor key="Service Registry" path="/pipes" label="Service Registry" />
-                            <Anchor key="Service API Detail" path="/services" label="Service API Detail" />
+                            <Anchor key="Services Registry" path="/registry" label="Services Registry" />
+                            <Anchor key="Execute Service" path="/run" label="Execute Service(s)" />
+                            <Anchor key="Current Services" path="/history" label="Current Services" />
                         </Menu>
                     </Sidebar>
                     <Section>
@@ -64,8 +62,9 @@ ReactDOM.render(
     <Router history={history}>
         <Route path="/" component={Main}>
             <IndexRoute component={ServiceTable}/>
-            <Route path="services" component={ServiceTable}/>
-            <Route path="pipes" component={ServiceTable} />
+            <Route path="registry" component={ServiceTable}/>
+            <Route path="run" component={ServiceDetail} />
+            <Route path="history" component={ServiceHistory} />
         </Route>
     </Router>
 </Provider>,
