@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.utils;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,7 +24,7 @@ public class ExprEvalHelper {
         ObjectMapper objectMapper = ObjectMapperFactory.instance()
                 .newMongoCompatibleObjectMapper()
                 .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY)
-                .configure(SerializationFeature.WRITE_NULL_MAP_VALUES, true);
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL);
         ExpressionFactory factory = new ExpressionFactoryImpl();
         for (Object result : forwardedResults) {
             SimpleContext context = new SimpleContext();

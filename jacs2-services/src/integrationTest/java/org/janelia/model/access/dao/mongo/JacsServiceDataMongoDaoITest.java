@@ -3,8 +3,10 @@ package org.janelia.model.access.dao.mongo;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Streams;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.bson.conversions.Bson;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
@@ -12,27 +14,26 @@ import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.model.access.dao.JacsServiceDataDao;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.SetFieldValueHandler;
-import org.janelia.model.service.JacsServiceLifecycleStage;
-import org.janelia.model.service.RegisteredJacsNotification;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
-import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEvent;
+import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ProcessingLocation;
+import org.janelia.model.service.RegisteredJacsNotification;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.eq;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.allOf;
@@ -41,6 +42,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
@@ -81,6 +85,47 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestServiceEvent("e2", "v2"));
         JacsServiceData retrievedSi = testDao.findById(si.getId());
         assertThat(retrievedSi.getName(), equalTo(si.getName()));
+    }
+
+    @Test
+    public void persistServiceWithTagsAndDictionaryArgs() {
+        JacsServiceData serviceData = createTestService("testService", ProcessingLocation.LOCAL);
+        serviceData.setTags(ImmutableList.of("t6", "t5", "t4", "t3", "t2", "t1"));
+        serviceData.setDictionaryArgs(ImmutableMap.<String, Object>of(
+                "a1", ImmutableMap.<String, String>of("a1.1","v1.1", "a1.2", "v1.2"),
+                "a2", "v2",
+                "a3", ImmutableMap.<String, Object>of("a3.1", "v3.1", "a3.2", "v3.2")
+        ));
+        testDao.save(serviceData);
+        List<JacsServiceData> otherServices = ImmutableList.of(
+                createTestService("other", ProcessingLocation.LOCAL),
+                createTestService("other", ProcessingLocation.LOCAL),
+                createTestService("other", ProcessingLocation.LOCAL),
+                createTestService("other", ProcessingLocation.LOCAL)
+        );
+        otherServices.forEach(s -> {
+            s.setState(JacsServiceState.QUEUED);
+            testDao.save(s);
+        });
+        // now search by tags
+        JacsServiceData pattern = new JacsServiceData();
+        pattern.setState(null);
+        PageResult<JacsServiceData> searchResult = testDao.findMatchingServices(pattern, new DataInterval<>(null, null), new PageRequest());
+        assertThat(searchResult.getResultList(), hasSize(otherServices.size() + 1));
+
+        pattern.setTags(ImmutableList.of("t1", "t3", "t2"));
+        searchResult = testDao.findMatchingServices(pattern, new DataInterval<>(null, null), new PageRequest());
+        assertThat(searchResult.getResultList(), hasSize(1));
+        assertThat(searchResult.getResultList().get(0).getTags(), contains("t6", "t5", "t4", "t3", "t2", "t1"));
+        assertThat(searchResult.getResultList().get(0).getDictionaryArgs(), Matchers.allOf(
+                Matchers.<String, Object>hasEntry("a2", "v2"),
+                Matchers.<String, Object>hasEntry("a1", ImmutableMap.<String, String>of("a1.1","v1.1", "a1.2", "v1.2")),
+                Matchers.<String, Object>hasEntry("a3", ImmutableMap.<String, Object>of("a3.1", "v3.1", "a3.2", "v3.2"))
+        ));
+
+        pattern.setTags(ImmutableList.of("t1", "t3", "t7"));
+        searchResult = testDao.findMatchingServices(pattern, new DataInterval<>(null, null), new PageRequest());
+        assertThat(searchResult.getResultList(), emptyCollectionOf(JacsServiceData.class));
     }
 
     @Test
@@ -196,9 +241,9 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestService("s1.4", ProcessingLocation.LOCAL)
         );
         List<JacsServiceData> servicesInRunningState = ImmutableList.of(
-                createTestService("s2.4", ProcessingLocation.SGE_DRMAA),
-                createTestService("s2.5", ProcessingLocation.SGE_DRMAA),
-                createTestService("s2.6", ProcessingLocation.SGE_DRMAA)
+                createTestService("s2.4", ProcessingLocation.LSF_DRMAA),
+                createTestService("s2.5", ProcessingLocation.LSF_DRMAA),
+                createTestService("s2.6", ProcessingLocation.LSF_DRMAA)
         );
         List<JacsServiceData> servicesInCanceledState = ImmutableList.of(
                 createTestService("s7", null),
@@ -362,25 +407,69 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         PageResult<JacsServiceData> retrievedQueuedServices;
 
         retrievedQueuedServices = testDao.findMatchingServices(emptyRequest, new DataInterval<>(null, null), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("id", Matchers.isIn(testServices.stream().map(e->e.getId()).toArray()))));
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("id", Matchers.in(testServices.stream().map(e->e.getId()).toArray()))));
 
         JacsServiceData u1ServicesRequest = new JacsServiceData();
-        u1ServicesRequest.setOwner("user:u1");
+        u1ServicesRequest.setOwnerKey("user:u1");
         u1ServicesRequest.setState(JacsServiceState.QUEUED);
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(null, null), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("owner", equalTo("user:u1"))));
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("ownerKey", equalTo("user:u1"))));
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(startDate, endDate), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("owner", equalTo("user:u1"))));
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("ownerKey", equalTo("user:u1"))));
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(null, startDate), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), hasSize(0));
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(endDate, null), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), hasSize(0));
+    }
+
+    @Test
+    public void archiveServiceHierarchy() {
+        JacsServiceData si1 = createTestService("s1", ProcessingLocation.LOCAL);
+        JacsServiceData si1_1 = createTestService("s1.1", ProcessingLocation.LOCAL);
+        JacsServiceData si1_2 = createTestService("s1.2", ProcessingLocation.LOCAL);
+        JacsServiceData si1_3 = createTestService("s1.3", ProcessingLocation.LOCAL);
+        JacsServiceData si1_2_1 = createTestService("s1.2.1", ProcessingLocation.LOCAL);
+        si1.addServiceDependency(si1_1);
+        si1.addServiceDependency(si1_2);
+        si1_1.addServiceDependency(si1_2);
+        si1_1.addServiceDependency(si1_3);
+        si1_2.addServiceDependency(si1_2_1);
+        testDao.saveServiceHierarchy(si1);
+        List<JacsServiceData> s1Hierarchy = si1.serviceHierarchyStream().collect(Collectors.toList());
+
+        s1Hierarchy.forEach(sd -> testDao.archiveService(sd));
+
+        s1Hierarchy.forEach(sd -> {
+            JacsServiceData archivedServiceData = testDao.findById(sd.getId());
+            assertNotNull(archivedServiceData);
+            assertEquals(JacsServiceState.ARCHIVED, archivedServiceData.getState());
+        });
+
+        JacsServiceData archivedService = testDao.findServiceHierarchy(si1.getId());
+        assertNotNull(archivedService);
+        List<JacsServiceData> archivedServiceHierarchy = archivedService.serviceHierarchyStream().collect(Collectors.toList());
+        Comparator<JacsServiceData> sdComp = (sd1, sd2) -> {
+            if (sd1.getId().equals(sd2.getId())) {
+                return 0;
+            } else if (sd1.getId().longValue() - sd2.getId().longValue() < 0L) {
+                return  -1;
+            } else {
+                return 1;
+            }
+        };
+        Streams.zip(s1Hierarchy.stream().sorted(sdComp), archivedServiceHierarchy.stream().sorted(sdComp), (sd, archivedSD) -> {
+            return ImmutablePair.of(sd, archivedSD);
+        }).forEach(activeArchivedPair -> {
+            assertNotSame(activeArchivedPair.getLeft(), activeArchivedPair.getRight());
+            assertEquals(activeArchivedPair.getLeft().getId(), activeArchivedPair.getRight().getId());
+            assertEquals(JacsServiceState.ARCHIVED, activeArchivedPair.getRight().getState());
+        });
     }
 
     private List<JacsServiceData> persistServicesForSearchTest(Calendar calDate) {
@@ -396,16 +485,16 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestService("s2.2", ProcessingLocation.SGE_DRMAA),
                 createTestService("s2.3", ProcessingLocation.SGE_DRMAA)
         );
-        u1Services.stream().forEach(s -> {
-            s.setOwner("user:u1");
+        u1Services.forEach(s -> {
+            s.setOwnerKey("user:u1");
             s.setState(JacsServiceState.QUEUED);
             s.setCreationDate(calDate.getTime());
             calDate.add(Calendar.DATE, 1);
             persistServiceWithEvents(s, ImmutableMap.of());
             testServices.add(s);
         });
-        u2Services.stream().forEach(s -> {
-            s.setOwner("group:u2");
+        u2Services.forEach(s -> {
+            s.setOwnerKey("group:u2");
             s.setState(JacsServiceState.RUNNING);
             s.setCreationDate(calDate.getTime());
             calDate.add(Calendar.DATE, 1);

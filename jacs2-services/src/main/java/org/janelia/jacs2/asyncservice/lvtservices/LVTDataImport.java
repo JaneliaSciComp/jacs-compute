@@ -120,9 +120,8 @@ public class LVTDataImport extends AbstractServiceProcessor<File> {
             .thenApply((JacsServiceResult<File> result) -> {
                 if (sampleName != null) {
                     try {
-                        createTmSample(jacsServiceData.getOwner(), result.getResult().getAbsolutePath(), sampleName);
-                    }
-                    catch (Exception e) {
+                        createTmSample(jacsServiceData.getOwnerKey(), result.getResult().getAbsolutePath(), sampleName);
+                    } catch (Exception e) {
                         throw new UncheckedExecutionException("Error creating sample", e);
                     }
                 }

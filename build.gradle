@@ -1,76 +1,101 @@
 allprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
+    apply plugin: 'eclipse'
     group = 'org.janelia.jacs2'
     version = '2.0.0'
 }
 
 project.ext {
-        eclipseBuildDir = 'eclipseBuild'
+    eclipseBuildDir = 'eclipseBuild'
 }
 
 subprojects {
-    apply plugin: 'eclipse'
     apply from: "${rootDir}/deps.gradle"
 
-    sourceSets {
-        integrationTest {
-            java {
-                compileClasspath += main.output + test.output
-                runtimeClasspath += main.output + test.output
-                srcDir file('src/integration-test/java')
-            }
-            resources {
-                srcDir file('src/integration-test/resources')
+    afterEvaluate {
+        repositories {
+            mavenLocal()
+            mavenCentral()
+            flatDir {
+                dirs "${rootDir}/projectrepository"
             }
         }
-    }
 
-    configurations {
-        provided
-        compile.extendsFrom provided
-        integrationTestCompile.extendsFrom testCompile
-        integrationTestRuntime.extendsFrom testRuntime
-    }
-
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        flatDir {
-            dirs "${rootDir}/projectrepository"
+        configurations {
+            provided
+            compile.extendsFrom(provided)
+            integrationTestCompile.extendsFrom(testCompile)
+            integrationTestRuntime.extendsFrom(testRuntime)
         }
-    }
-
-    eclipse {
-        classpath {
-            defaultOutputDir = file(eclipseBuildDir)
-            downloadSources = true
-            downloadJavadoc = true
+    
+    
+        sourceSets {
+            integrationTest {
+                java {
+                    compileClasspath += main.output + test.output
+                    runtimeClasspath += main.output + test.output
+                    srcDir file('src/integrationTest/java')
+                }
+                resources {
+                    srcDir file('src/integrationTest/resources')
+                }
+            }
         }
-        project {
-            name = "$project.name"
-        }
-    }
 
-    idea {
-        module {
-            testSourceDirs += [file('src/integration-test/java'), file('src/integration-test/resources')]
-            scopes.TEST.plus += [configurations.integrationTestRuntime, configurations.integrationTestCompile]
+        compileJava {
+            doFirst {
+                options.compilerArgs = [
+                    '-Xlint:deprecation'
+                ]
+            }
         }
-    }
 
+        compileTestJava {
+            doFirst {
+                options.compilerArgs = [
+                    '-Xlint:deprecation'
+                ]
+            }
+        }
+
+        eclipse {
+            classpath {
+                defaultOutputDir = file(eclipseBuildDir)
+                downloadSources = true
+                downloadJavadoc = true
+            }
+            project {
+                name = "$project.name"
+            }
+        }
+    
+        idea {
+            module {
+                downloadSources = true
+                downloadJavadoc = true
+                scopes.TEST.plus += [
+                    configurations.integrationTestCompile,
+                    configurations.integrationTestRuntime
+                ]
+            }
+        }
+
+        task integrationTest(type: Test) {
+            testClassesDirs += sourceSets.integrationTest.output.classesDirs
+            classpath = sourceSets.integrationTest.runtimeClasspath
+        }
+    
+        check.dependsOn integrationTest
+        integrationTest.mustRunAfter test
+
+    }
+    
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
-    task integrationTest(type: Test) {
-        testClassesDirs += sourceSets.integrationTest.output.classesDirs
-        classpath = sourceSets.integrationTest.runtimeClasspath
-    }
-
-    check.dependsOn integrationTest
-    integrationTest.mustRunAfter test
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = "4.0"
+task updateWrapper(type: Wrapper) {
+    gradleVersion = "4.5"
 }

@@ -7,6 +7,7 @@ import com.mongodb.client.model.Updates;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
+import org.janelia.model.access.dao.mongo.MongoDaoHelper;
 import org.janelia.model.jacs2.domain.IndexedReference;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.domain.sample.PipelineResult;
@@ -85,7 +86,12 @@ public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements S
 
         Bson bsonFilter = null;
         if (!filters.isEmpty()) bsonFilter = and(filters);
-        List<Sample> results = find(bsonFilter, createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), Sample.class);
+        List<Sample> results = find(
+                bsonFilter,
+                MongoDaoHelper.createBsonSortCriteria(pageRequest.getSortCriteria()),
+                pageRequest.getOffset(),
+                pageRequest.getPageSize(),
+                Sample.class);
         return new PageResult<>(pageRequest, results);
     }
 

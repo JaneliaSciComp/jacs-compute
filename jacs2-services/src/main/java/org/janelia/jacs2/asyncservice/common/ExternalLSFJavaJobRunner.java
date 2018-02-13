@@ -117,12 +117,12 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         }
 
         // Apply a RegEx to replace any non-alphanumeric character with "_".
-        String owner = serviceContext.getOwner();
-        if (StringUtils.isBlank(owner)) {
-            owner = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());
+        String ownerKey = serviceContext.getOwnerKey();
+        if (StringUtils.isBlank(ownerKey)) {
+            ownerKey = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());
         }
 
-        jt.setJobName(owner.replaceAll("\\W", "_") + "_" + serviceContext.getName());
+        jt.setJobName(ownerKey.replaceAll("\\W", "_") + "_" + serviceContext.getName());
         // Check if the SGE grid requires account info
         // TODO: need to port over ComputeAccounting.getInstance().getComputeAccount
         //setAccount(jt);

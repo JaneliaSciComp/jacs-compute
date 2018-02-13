@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.Document;
+import org.bson.RawBsonDocument;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
@@ -13,6 +14,7 @@ import org.janelia.jacs2.cdi.ObjectMapperFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Map;
 
 public class JacksonCodecProvider implements CodecProvider {
 
@@ -25,12 +27,12 @@ public class JacksonCodecProvider implements CodecProvider {
     @Override
     public <T> Codec<T> get(Class<T> clazz, CodecRegistry registry) {
         if (checkCodecApplicability(clazz)) {
-            final Codec<Document> rawBsonDocumentCodec = registry.get(Document.class);
+            final Codec<RawBsonDocument> rawBsonDocumentCodec = registry.get(RawBsonDocument.class);
             return new Codec<T>() {
                 @Override
                 public T decode(BsonReader reader, DecoderContext decoderContext) {
                     try {
-                        Document document = rawBsonDocumentCodec.decode(reader, decoderContext);
+                        RawBsonDocument document = rawBsonDocumentCodec.decode(reader, decoderContext);
                         return objectMapper.readValue(document.toJson(), clazz);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
@@ -41,7 +43,7 @@ public class JacksonCodecProvider implements CodecProvider {
                 public void encode(BsonWriter writer, T value, EncoderContext encoderContext) {
                     try {
                         String json = objectMapper.writeValueAsString(value);
-                        rawBsonDocumentCodec.encode(writer, Document.parse(json), encoderContext);
+                        rawBsonDocumentCodec.encode(writer, RawBsonDocument.parse(json), encoderContext);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }

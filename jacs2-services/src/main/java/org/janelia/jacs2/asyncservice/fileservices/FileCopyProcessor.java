@@ -142,7 +142,7 @@ public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<File> {
 
     @Override
     protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
-        ImmutableMap.Builder builder = ImmutableMap.builder();
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
         builder.put(DY_LIBRARY_PATH_VARNAME, getUpdatedEnvValue(DY_LIBRARY_PATH_VARNAME, libraryPath));
         if (jacsServiceData.getProcessingLocation() != ProcessingLocation.SGE_DRMAA) {
             builder.put("NSLOTS", String.valueOf(ProcessorHelper.getProcessingSlots(jacsServiceData.getResources())));

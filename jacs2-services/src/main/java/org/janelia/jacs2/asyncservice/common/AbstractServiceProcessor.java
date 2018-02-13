@@ -43,7 +43,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     protected <T> ContinuationCond.Cond<T> continueWhenTrue(boolean value, T result) {
-        return new ContinuationCond.Cond(result, value);
+        return new ContinuationCond.Cond<>(result, value);
     }
 
     @Override
@@ -82,7 +82,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
 
     @Override
     public ServiceResultHandler<R> getResultHandler() {
-        return new EmptyServiceResultHandler<R>();
+        return new EmptyServiceResultHandler<>();
     }
 
     @Override
@@ -92,6 +92,15 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
 
     protected List<String> getErrors(JacsServiceData jacsServiceData) {
         return this.getErrorChecker().collectErrors(jacsServiceData);
+    }
+
+    /**
+     * Helper method that can be used in service processor implementations that expect dictionary arguments.
+     * @param jacsServiceData
+     * @return
+     */
+    protected String getServiceDictionaryArgsAsJson(JacsServiceData jacsServiceData) {
+        return ServiceDataUtils.serializeObjectAsJson(jacsServiceData.getDictionaryArgs());
     }
 
     protected JacsServiceFolder getWorkingDirectory(JacsServiceData jacsServiceData) {
@@ -133,15 +142,14 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
 
     private Path getServicePath(String baseDir, JacsServiceData jacsServiceData) {
         ImmutableList.Builder<String> pathElemsBuilder = ImmutableList.builder();
-        if (StringUtils.isNotBlank(jacsServiceData.getOwner())) {
-            String name = SubjectUtils.getSubjectName(jacsServiceData.getOwner());
+        if (StringUtils.isNotBlank(jacsServiceData.getOwnerKey())) {
+            String name = SubjectUtils.getSubjectName(jacsServiceData.getOwnerKey());
             pathElemsBuilder.add(name);
         }
         pathElemsBuilder.add(jacsServiceData.getName());
         if (jacsServiceData.hasId()) {
             pathElemsBuilder.addAll(FileUtils.getTreePathComponentsForId(jacsServiceData.getId()));
         }
-//        pathElemsBuilder.addAll(Arrays.asList(more));
         return Paths.get(baseDir, pathElemsBuilder.build().toArray(new String[0])).toAbsolutePath();
     }
 
@@ -176,7 +184,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         return new JacsServiceResult<>(jacsServiceData, result);
     }
 
-    protected void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
+    void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
         long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
         if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
             jacsServiceDataPersistence.updateServiceState(

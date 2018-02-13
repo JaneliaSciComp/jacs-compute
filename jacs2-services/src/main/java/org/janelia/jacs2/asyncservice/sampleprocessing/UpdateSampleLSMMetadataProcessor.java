@@ -127,7 +127,7 @@ public class UpdateSampleLSMMetadataProcessor extends AbstractBasicLifeCycleServ
                 JacsServiceData getSampleLsmsMetadataService = jacsServiceDataPersistence.findById(pd.getResult().getChildServiceId());
                 List<SampleImageFile> sampleImageFiles = getSampleLsmsMetadataProcessor.getResultHandler().getServiceDataResult(getSampleLsmsMetadataService);
                 sampleImageFiles.forEach(sif -> {
-                    LSMImage lsmImage = sampleDataService.getLSMsByIds(pd.getJacsServiceData().getOwner(), ImmutableList.of(sif.getId())).stream().findFirst().orElse(null);
+                    LSMImage lsmImage = sampleDataService.getLSMsByIds(pd.getJacsServiceData().getOwnerKey(), ImmutableList.of(sif.getId())).stream().findFirst().orElse(null);
                     if (lsmImage == null) {
                         throw new IllegalStateException("No LSM found for " + sif.getSampleId() + ":" + sif.getId());
                     }

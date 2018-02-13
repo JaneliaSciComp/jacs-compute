@@ -1,12 +1,11 @@
 <beans xmlns="http://xmlns.jcp.org/xml/ns/javaee"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/beans_1_1.xsd"
-       bean-discovery-mode="all"
-       xmlns:weld="http://jboss.org/schema/weld/beans">
+       bean-discovery-mode="all">
        <interceptors>
               <class>org.janelia.jacs2.asyncservice.common.mdc.MdcContextInterceptor</class>
        </interceptors>
-       <weld:scan>
-              <weld:exclude name="org.janelia.model.jacs2.domain.**"/>
-       </weld:scan>
+       <scan>
+              <exclude name="org.janelia.model.jacs2.domain.**"/>
+       </scan>
 </beans>

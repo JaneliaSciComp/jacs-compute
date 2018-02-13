@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@MongoMapping(collectionName="jacsService", archiveCollectionName = "jacsServiceHistory", label="JacsService")
+@MongoMapping(collectionName="jacsService", label="JacsService")
 public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public static JacsServiceEvent createServiceEvent(JacsServiceEventTypes name, String value) {
@@ -41,14 +41,16 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private ProcessingLocation processingLocation;
     private JacsServiceState state = JacsServiceState.CREATED;
     private Integer priority = 0;
-    private String owner;
+    private String ownerKey;
     private String queueId;
     private String outputPath;
     private String errorPath;
     private List<String> args = new ArrayList<>();
     private List<String> actualArgs;
+    private Map<String, Object> dictionaryArgs = new LinkedHashMap<>();
     private Map<String, String> env = new LinkedHashMap<>();
     private Map<String, String> resources = new LinkedHashMap<>(); // this could/should be used for grid jobs resources
+    private List<String> tags = new ArrayList<>();
     private Object serializableResult;
     private String workspace;
     private Number parentServiceId;
@@ -147,12 +149,20 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.queueId = queueId;
     }
 
-    public String getOwner() {
-        return owner;
+    public String getOwnerKey() {
+        return ownerKey;
     }
 
-    public void setOwner(String owner) {
-        this.owner = owner;
+    public void setOwnerKey(String ownerKey) {
+        this.ownerKey = ownerKey;
+    }
+
+    public boolean canBeAccessedBy(String userKey) {
+        return StringUtils.isBlank(this.ownerKey) || this.ownerKey.equals(userKey);
+    }
+
+    public boolean canBeModifiedBy(String userKey) {
+        return (StringUtils.isBlank(this.ownerKey) || this.ownerKey.equals(userKey)) && !this.state.equals(JacsServiceState.ARCHIVED);
     }
 
     public String getOutputPath() {
@@ -198,6 +208,17 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public void setActualArgs(List<String> actualArgs) {
         this.actualArgs = actualArgs;
+    }
+
+    public Map<String, Object> getDictionaryArgs() {
+        return dictionaryArgs;
+    }
+
+    public void setDictionaryArgs(Map<String, Object> dictionaryArgs) {
+        this.dictionaryArgs.clear();
+        if (dictionaryArgs != null) {
+            this.dictionaryArgs.putAll(dictionaryArgs);
+        }
     }
 
     public String getWorkspace() {
@@ -290,6 +311,14 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public void clearResources() {
         this.resources.clear();
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 
     public RegisteredJacsNotification getProcessingNotification() {

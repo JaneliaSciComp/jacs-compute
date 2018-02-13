@@ -1,7 +1,6 @@
 package org.janelia.jacs2.rest;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.core.Response;
@@ -19,7 +18,7 @@ public class InvalidJsonRequestHandler implements ExceptionMapper<InvalidFormatE
         }
         return Response
                 .status(Response.Status.BAD_REQUEST)
-                .entity(ImmutableMap.of("errormessage", errorMessage))
+                .entity(new ErrorResponse(errorMessage))
                 .build();
     }
 

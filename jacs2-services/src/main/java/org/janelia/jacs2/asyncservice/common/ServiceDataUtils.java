@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections4.CollectionUtils;
@@ -54,9 +55,22 @@ public class ServiceDataUtils {
     }
 
     public  static <T> T serializableObjectToAny(Object o, TypeReference typeRef) {
-        if (o == null)
+        if (o == null) {
             return null;
-        else
+        } else {
             return MAPPER.convertValue(o, typeRef);
+        }
+    }
+
+    public static String serializeObjectAsJson(Object o) {
+        if (o == null) {
+            return null;
+        } else {
+            try {
+                return MAPPER.writeValueAsString(o);
+            } catch (JsonProcessingException e) {
+                throw new IllegalStateException(e);
+            }
+        }
     }
 }

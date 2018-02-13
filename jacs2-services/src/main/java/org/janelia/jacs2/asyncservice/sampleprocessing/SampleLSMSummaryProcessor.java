@@ -218,7 +218,7 @@ public class SampleLSMSummaryProcessor extends AbstractBasicLifeCycleServiceProc
     protected JacsServiceResult<List<LSMSummary>> updateServiceResult(JacsServiceResult<SampleLSMSummaryIntermediateResult> depsResult) {
         JacsServiceResult<List<LSMSummary>> result = super.updateServiceResult(depsResult);
         result.getResult().forEach(lsmSummary -> {
-            Optional<LSMImage> lsmImage = sampleDataService.getLSMsByIds(result.getJacsServiceData().getOwner(), ImmutableList.of(lsmSummary.getSampleImageFile().getId())).stream().findFirst();
+            Optional<LSMImage> lsmImage = sampleDataService.getLSMsByIds(result.getJacsServiceData().getOwnerKey(), ImmutableList.of(lsmSummary.getSampleImageFile().getId())).stream().findFirst();
             if (!lsmImage.isPresent()) {
                 throw new IllegalStateException("No LSM image found for " + lsmSummary.getSampleImageFile().getId());
             }

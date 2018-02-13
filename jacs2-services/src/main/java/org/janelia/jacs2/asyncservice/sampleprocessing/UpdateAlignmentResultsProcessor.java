@@ -162,7 +162,7 @@ public class UpdateAlignmentResultsProcessor extends AbstractBasicLifeCycleServi
                     if (nChannels != -1 && refChannel != -1) {
                         sampleAlignmentResult.setChannelSpec(LSMProcessingTools.createChanSpec(nChannels, refChannel));
                     }
-                    Sample sample = sampleDataService.getSampleById(alignmentService.getOwner(), args.sampleId);
+                    Sample sample = sampleDataService.getSampleById(alignmentService.getOwnerKey(), args.sampleId);
                     sampleDataService.addSampleObjectivePipelineRunResult(sample, args.sampleObjective, args.runId, null, sampleAlignmentResult);
 
                     AlignmentResult alignmentResult = new AlignmentResult();

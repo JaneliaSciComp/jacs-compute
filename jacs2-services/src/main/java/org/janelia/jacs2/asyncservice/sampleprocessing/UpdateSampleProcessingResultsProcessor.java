@@ -107,7 +107,7 @@ public class UpdateSampleProcessingResultsProcessor extends AbstractBasicLifeCyc
                 .thenApply(pd -> {
                     JacsServiceData sampleProcessingService = jacsServiceDataPersistence.findById(args.sampleProcessingId);
                     SampleResult sampleResult = sampleStitchProcessor.getResultHandler().getServiceDataResult(sampleProcessingService);
-                    Sample sample = sampleDataService.getSampleById(sampleProcessingService.getOwner(), sampleResult.getSampleId());
+                    Sample sample = sampleDataService.getSampleById(sampleProcessingService.getOwnerKey(), sampleResult.getSampleId());
 
                     // for all objectives collect the results and create the corresponding samplepipeline results
                     sampleResult.getSampleAreaResults().stream()

@@ -105,7 +105,7 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
         SampleResultsCompressionArgs args = getArgs(jacsServiceData);
         List<ObjectiveSample> objectivesSample =
                 sampleDataService.getObjectivesBySampleIdAndObjective(
-                        jacsServiceData.getOwner(),
+                        jacsServiceData.getOwnerKey(),
                         args.sampleId,
                         args.sampleObjective);
         List<ServiceComputation<?>> updateResultComputations = new ArrayList<>();

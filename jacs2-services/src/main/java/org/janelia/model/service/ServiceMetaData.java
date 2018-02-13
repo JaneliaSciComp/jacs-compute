@@ -1,10 +1,13 @@
 package org.janelia.model.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ServiceMetaData {
 
     private String serviceName;
-    private String usage;
     private String description;
+    private List<ServiceArgDescriptor> serviceArgDescriptors = new ArrayList<>();
 
     public String getServiceName() {
         return serviceName;
@@ -22,11 +25,15 @@ public class ServiceMetaData {
         this.description = description;
     }
 
-    public String getUsage() {
-        return usage;
+    public List<ServiceArgDescriptor> getServiceArgDescriptors() {
+        return serviceArgDescriptors;
     }
 
-    public void setUsage(String usage) {
-        this.usage = usage;
+    public void setServiceArgDescriptors(List<ServiceArgDescriptor> serviceArgDescriptors) {
+        this.serviceArgDescriptors = serviceArgDescriptors;
+    }
+
+    public void addServiceArgDescriptor(ServiceArgDescriptor serviceArgDescriptor) {
+        serviceArgDescriptors.add(serviceArgDescriptor);
     }
 }

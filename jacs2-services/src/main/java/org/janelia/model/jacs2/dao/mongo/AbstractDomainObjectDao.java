@@ -5,9 +5,11 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.dao.mongo.AbstractMongoDao;
+import org.janelia.model.access.dao.mongo.MongoDaoHelper;
 import org.janelia.model.jacs2.dao.DomainObjectDao;
 import org.janelia.model.jacs2.domain.DomainObject;
 import org.janelia.model.jacs2.domain.Subject;
@@ -18,6 +20,7 @@ import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.jacs2.DomainModelUtils;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,7 +42,7 @@ public abstract class AbstractDomainObjectDao<T extends DomainObject> extends Ab
     @Override
     public PageResult<T> findByOwnerKey(Subject subject, String ownerKey, PageRequest pageRequest) {
         List<T> results = find(eq("ownerKey", ownerKey),
-                createBsonSortCriteria(pageRequest.getSortCriteria()),
+                MongoDaoHelper.createBsonSortCriteria(pageRequest.getSortCriteria()),
                 pageRequest.getOffset(),
                 pageRequest.getPageSize(),
                 getEntityType());
@@ -48,8 +51,11 @@ public abstract class AbstractDomainObjectDao<T extends DomainObject> extends Ab
 
     @Override
     public <U extends T> List<U> findSubtypesByIds(Subject subject, List<Number> ids, Class<U> entityType) {
-        if (DomainModelUtils.isAdminOrUndefined(subject)) {
-            return find(Filters.in("_id", ids),
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        } else if (DomainModelUtils.isAdminOrUndefined(subject)) {
+            return find(
+                    Filters.in("_id", ids),
                     null,
                     0,
                     -1,
