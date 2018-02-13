@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import com.beust.jcommander.JCommander;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
@@ -17,7 +18,9 @@ import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -114,30 +117,52 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     protected String[] getJacsServiceArgsArray(JacsServiceData jacsServiceData) {
+        String[] serviceArgsArray;
+        // lazily instantiate actual service invocation arguments
         if (jacsServiceData.getActualArgs() == null) {
-            // the forwarded arguments are of the form: |>${fieldname} where fieldname is a field name from the result.
-            Predicate<String> isForwardedArg = arg -> arg != null && arg.startsWith("|>");
-            boolean forwardedArgumentsFound = jacsServiceData.getArgs().stream().anyMatch(isForwardedArg);
-            List<String> actualServiceArgs;
-            if (!forwardedArgumentsFound) {
-                actualServiceArgs = ImmutableList.copyOf(jacsServiceData.getArgs());
-            } else {
-                List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(jacsServiceData);
-                List<Object> serviceDependenciesResults = serviceDependencies.stream()
-                        .filter(sd -> sd.getSerializableResult() != null)
-                        .map(sd -> sd.getSerializableResult())
-                        .collect(Collectors.toList());
-                actualServiceArgs = jacsServiceData.getArgs().stream().map(arg -> {
-                    if (isForwardedArg.test(arg)) {
-                        return ExprEvalHelper.eval(arg.substring(2), serviceDependenciesResults);
-                    } else {
-                        return arg;
-                    }
-                }).collect(Collectors.toList());
-            }
+            List<String> actualServiceArgs = evalJacsServiceArgs(jacsServiceData);
             jacsServiceData.setActualArgs(actualServiceArgs);
+            serviceArgsArray = jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
+            // update service arguments arguments - this involves creating a dictionary that contains both
+            // the parsed actual arguments and the dictionary arguments
+            ServiceMetaData serviceMetaData = getMetadata();
+            JCommander cmdLineParser = new JCommander(serviceMetaData.getServiceArgs());
+            cmdLineParser.setAcceptUnknownOptions(true); // relax the check here and allow any argument options
+            cmdLineParser.parse(serviceArgsArray); // parse the actual service args
+            Map<String, Object> serviceArgs = new LinkedHashMap<>();
+            serviceMetaData.getServiceArgDescriptors().forEach(sd -> {
+                serviceArgs.put(sd.getArgName(), sd.getArg().get(serviceMetaData.getServiceArgs()));
+            });
+            serviceArgs.putAll(jacsServiceData.getDictionaryArgs()); // populate the dictionary args
+            jacsServiceData.setServiceArgs(serviceArgs);
+        } else {
+            serviceArgsArray = jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
         }
-        return jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
+        return serviceArgsArray;
+    }
+
+    private List<String> evalJacsServiceArgs(JacsServiceData jacsServiceData) {
+        // the forwarded arguments are of the form: |>${fieldname} where fieldname is a field name from the result.
+        Predicate<String> isForwardedArg = arg -> arg != null && arg.startsWith("|>");
+        boolean forwardedArgumentsFound = jacsServiceData.getArgs().stream().anyMatch(isForwardedArg);
+        List<String> actualServiceArgs;
+        if (!forwardedArgumentsFound) {
+            actualServiceArgs = ImmutableList.copyOf(jacsServiceData.getArgs());
+        } else {
+            List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(jacsServiceData);
+            List<Object> serviceDependenciesResults = serviceDependencies.stream()
+                    .filter(sd -> sd.getSerializableResult() != null)
+                    .map(sd -> sd.getSerializableResult())
+                    .collect(Collectors.toList());
+            actualServiceArgs = jacsServiceData.getArgs().stream().map(arg -> {
+                if (isForwardedArg.test(arg)) {
+                    return ExprEvalHelper.eval(arg.substring(2), serviceDependenciesResults);
+                } else {
+                    return arg;
+                }
+            }).collect(Collectors.toList());
+        }
+        return actualServiceArgs;
     }
 
     private Path getServicePath(String baseDir, JacsServiceData jacsServiceData) {

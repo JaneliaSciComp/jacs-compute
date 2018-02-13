@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
@@ -9,7 +10,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+import javax.inject.Named;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.collection.IsArrayContainingInOrder.arrayContaining;
@@ -51,16 +54,25 @@ public class AbstractServiceProcessorTest {
 
     private static class TestProcessor extends AbstractServiceProcessor<Void> {
 
-        public TestProcessor(ServiceComputationFactory computationFactory,
-                             JacsServiceDataPersistence jacsServiceDataPersistence,
-                             String defaultWorkingDir,
-                             Logger logger) {
+        private static class TestProcessorArgs extends ServiceArgs {
+            @Parameter(names = "t")
+            String name;
+
+            TestProcessorArgs(String serviceDescription) {
+                super(serviceDescription);
+            }
+        }
+
+        TestProcessor(ServiceComputationFactory computationFactory,
+                      JacsServiceDataPersistence jacsServiceDataPersistence,
+                      String defaultWorkingDir,
+                      Logger logger) {
             super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         }
 
         @Override
         public ServiceMetaData getMetadata() {
-            return null;  // not important
+            return ServiceArgs.createMetadata("test", new TestProcessorArgs("Test service"));
         }
 
         @Override
@@ -96,6 +108,11 @@ public class AbstractServiceProcessorTest {
                 this.args = args;
                 this.expectedResult = expectedResult;
             }
+
+            List<String> getArgList() {
+                return Arrays.asList(args);
+            }
+
         }
         List<TestData> testData = ImmutableList.of(
                 new TestData(
@@ -182,7 +199,7 @@ public class AbstractServiceProcessorTest {
             testServiceData.setArgs(ImmutableList.copyOf(td.args));
             testServiceDataPredecessor.setSerializableResult(td.result);
             String[] serviceArgs = testProcessor.getJacsServiceArgsArray(testServiceData);
-            assertThat(serviceArgs, arrayContaining(td.expectedResult));
+            assertThat(td.getArgList().toString(), serviceArgs, arrayContaining(td.expectedResult));
         }
     }
 

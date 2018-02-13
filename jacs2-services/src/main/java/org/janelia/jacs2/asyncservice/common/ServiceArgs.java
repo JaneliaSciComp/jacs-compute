@@ -22,12 +22,14 @@ public class ServiceArgs {
     private static <A extends ServiceArgs> void populateArgumentDescriptors(A args, ServiceMetaData smd) {
         JCommander jc = new JCommander(args);
         List<ParameterDescription> parameterDescriptiontList = jc.getParameters();
+        smd.setServiceArgs(args);
         smd.setDescription(args.getServiceDescription());
         smd.setServiceArgDescriptors(parameterDescriptiontList.stream()
                 .filter(pd -> !pd.isHelp())
                 .map(pd -> {
                     Parameter parameterAnnotation = pd.getParameterAnnotation();
                     return new ServiceArgDescriptor(
+                            pd.getParameterized(),
                             parameterAnnotation.names(),
                             pd.getDefault(),
                             parameterAnnotation.arity(),
@@ -43,6 +45,10 @@ public class ServiceArgs {
         Named namedAnnotation = processorClass.getAnnotation(Named.class);
         Preconditions.checkArgument(namedAnnotation != null);
         String serviceName = namedAnnotation.value();
+        return createMetadata(serviceName, args);
+    }
+
+    static <A extends ServiceArgs> ServiceMetaData createMetadata(String serviceName, A args) {
         ServiceMetaData smd = new ServiceMetaData();
         smd.setServiceName(serviceName);
         populateArgumentDescriptors(args, smd);
