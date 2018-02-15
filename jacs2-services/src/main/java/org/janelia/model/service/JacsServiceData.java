@@ -41,6 +41,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private ProcessingLocation processingLocation;
     private JacsServiceState state = JacsServiceState.CREATED;
     private Integer priority = 0;
+    private String authKey;
     private String ownerKey;
     private String queueId;
     private String outputPath;
@@ -148,6 +149,14 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public void setQueueId(String queueId) {
         this.queueId = queueId;
+    }
+
+    public String getAuthKey() {
+        return authKey;
+    }
+
+    public void setAuthKey(String authKey) {
+        this.authKey = authKey;
     }
 
     public String getOwnerKey() {

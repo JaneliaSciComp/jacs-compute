@@ -44,7 +44,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
     private static final int MAX_NODES = 16;
 
     static class IntegratedColorDepthSearchArgs extends ServiceArgs {
-        @Parameter(names = "-searchId", description = "GUID of the ColorDepthFileSearch object to use", required = true)
+        @Parameter(names = "-searchId", description = "GUID of the ColorDepthSearch object to use", required = true)
         Long searchId;
     }
 
