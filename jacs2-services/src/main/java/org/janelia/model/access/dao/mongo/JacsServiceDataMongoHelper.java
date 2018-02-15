@@ -8,6 +8,7 @@ import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.service.JacsServiceData;
 
 import java.util.Date;
+import java.util.List;
 
 import com.mongodb.client.model.Filters;
 
@@ -47,6 +48,24 @@ class JacsServiceDataMongoHelper {
         }
         if (creationInterval.hasTo()) {
             filtersBuilder.add(Filters.lt("creationDate", creationInterval.getTo()));
+        }
+        if (pattern.getServiceArgs() != null) {
+            pattern.getServiceArgs().forEach((name, value) -> {
+                if (value instanceof Iterable) {
+                    Iterable iterableValue = (Iterable) value;
+                    filtersBuilder.add(Filters.in("serviceArgs." + name, iterableValue));
+                } else if (value instanceof DataInterval) {
+                    DataInterval intervalValue = (DataInterval) value;
+                    if (intervalValue.hasFrom()) {
+                        filtersBuilder.add(Filters.gte("serviceArgs." + name, intervalValue.getFrom()));
+                    }
+                    if (intervalValue.hasTo()) {
+                        filtersBuilder.add(Filters.lt("serviceArgs." + name, intervalValue.getTo()));
+                    }
+                } else {
+                    filtersBuilder.add(Filters.eq("serviceArgs." + name, value));
+                }
+            });
         }
         ImmutableList<Bson> filters = filtersBuilder.build();
         if (!filters.isEmpty()) {

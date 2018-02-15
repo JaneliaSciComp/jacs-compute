@@ -55,8 +55,14 @@ public class AbstractServiceProcessorTest {
     private static class TestProcessor extends AbstractServiceProcessor<Void> {
 
         private static class TestProcessorArgs extends ServiceArgs {
-            @Parameter(names = "t")
-            String name;
+            @Parameter(names = "arg1")
+            String arg1;
+            @Parameter(names = "arg2")
+            String arg2;
+            @Parameter(names = "arg3")
+            String arg3;
+            @Parameter(names = "arg4", variableArity = true)
+            List<String> arg4;
 
             TestProcessorArgs(String serviceDescription) {
                 super(serviceDescription);
@@ -158,18 +164,18 @@ public class AbstractServiceProcessorTest {
                 ),
                 new TestData(
                         "s1",
-                        new String[] {"|>${result}"},
-                        new String[] {"s1"}
+                        new String[] {"arg1", "|>${result}"},
+                        new String[] {"arg1", "s1"}
                 ),
                 new TestData(
                         new BigInteger("123456789123456789123456789"),
-                        new String[] {"|>${result}"},
-                        new String[] {"123456789123456789123456789"}
+                        new String[] {"arg1", "|>${result}"},
+                        new String[] {"arg1", "123456789123456789123456789"}
                 ),
                 new TestData(
                         123456789123456789L,
-                        new String[] {"|>${result}"},
-                        new String[] {"123456789123456789"}
+                        new String[] {"arg1", "|>${result}"},
+                        new String[] {"arg1", "123456789123456789"}
                 ),
                 new TestData(
                         new Object[]{
@@ -179,8 +185,8 @@ public class AbstractServiceProcessorTest {
                                 new T2("1 t2F1 value", "1 t2F2 value", 500L, new String[]{"1 t2vof_1", "1 t2vof_2"}),
                                 600L
                         },
-                        new String[]{"|>${result[0]}", "|>${result[1]}", "|>this is ${result[3].t2F1}", "|>${result[3].t2ArrayField[1]}", "|>${result[4]}"},
-                        new String[]{"s1", "s2", "this is 1 t2F1 value", "1 t2vof_2", "600"}
+                        new String[]{"arg1", "|>${result[0]}", "arg2", "|>${result[1]}", "arg3", "|>this is ${result[3].t2F1}", "arg4", "|>${result[3].t2ArrayField[1]}", "|>${result[4]}"},
+                        new String[]{"arg1", "s1", "arg2", "s2", "arg3", "this is 1 t2F1 value", "arg4", "1 t2vof_2", "600"}
                 )
         );
         Long predecessorId = 1L;

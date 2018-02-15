@@ -4,6 +4,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
@@ -28,6 +29,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
@@ -62,6 +64,7 @@ public class ServiceInfoResource {
                                    @QueryParam("service-to") Date to,
                                    @QueryParam("page") Integer pageNumber,
                                    @QueryParam("length") Integer pageLength,
+                                   @Context UriInfo uriInfo,
                                    @Context SecurityContext securityContext) {
         return searchServices(serviceName,
                 serviceId,
@@ -70,6 +73,7 @@ public class ServiceInfoResource {
                 serviceOwnerKey,
                 serviceState,
                 serviceTags,
+                uriInfo,
                 securityContext,
                 (pattern) -> jacsServiceDataManager.searchServices(pattern, new DataInterval<> (from, to), createPageRequest(pageNumber, pageLength)));
     }
@@ -94,6 +98,7 @@ public class ServiceInfoResource {
                                     String serviceOwnerKey,
                                     String serviceState,
                                     List<String> serviceTags,
+                                    UriInfo uriInfo,
                                     SecurityContext securityContext,
                                     Function<JacsServiceData, PageResult<JacsServiceData>> searcher) {
         JacsServiceData pattern = new JacsServiceData();
@@ -118,6 +123,17 @@ public class ServiceInfoResource {
         } catch (Exception e) {
             logger.error("Invalid state filter {}", serviceState, e);
         }
+        uriInfo.getQueryParameters().entrySet().stream()
+                .filter(paramEntry -> paramEntry.getKey().startsWith("serviceArg.") && StringUtils.isNotBlank(paramEntry.getKey().substring("serviceArg.".length())))
+                .forEach(paramEntry -> {
+                    String serviceArgName =  paramEntry.getKey().substring("serviceArg.".length()).trim();
+                    int nParamValues = CollectionUtils.size(paramEntry.getValue());
+                    if (nParamValues == 1) {
+                        pattern.addServiceArg(serviceArgName, paramEntry.getValue().get(0));
+                    } else if (nParamValues > 1) {
+                        pattern.addServiceArg(serviceArgName, paramEntry.getValue());
+                    }
+                });
         PageResult<JacsServiceData> results = searcher.apply(pattern);
         return Response
                 .status(Response.Status.OK)

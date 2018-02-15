@@ -127,14 +127,11 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
             // the parsed actual arguments and the dictionary arguments
             ServiceMetaData serviceMetaData = getMetadata();
             JCommander cmdLineParser = new JCommander(serviceMetaData.getServiceArgs());
-            cmdLineParser.setAcceptUnknownOptions(true); // relax the check here and allow any argument options
             cmdLineParser.parse(serviceArgsArray); // parse the actual service args
-            Map<String, Object> serviceArgs = new LinkedHashMap<>();
             serviceMetaData.getServiceArgDescriptors().forEach(sd -> {
-                serviceArgs.put(sd.getArgName(), sd.getArg().get(serviceMetaData.getServiceArgs()));
+                jacsServiceData.addServiceArg(sd.getArgName(), sd.getArg().get(serviceMetaData.getServiceArgs()));
             });
-            serviceArgs.putAll(jacsServiceData.getDictionaryArgs()); // populate the dictionary args
-            jacsServiceData.setServiceArgs(serviceArgs);
+            jacsServiceData.addServiceArgs(jacsServiceData.getDictionaryArgs()); // add the dictionary args
         } else {
             serviceArgsArray = jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
         }

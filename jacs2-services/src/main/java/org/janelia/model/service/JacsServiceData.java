@@ -230,6 +230,20 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.serviceArgs = serviceArgs;
     }
 
+    public void addServiceArg(String name, Object value) {
+        if (this.serviceArgs == null) {
+            this.serviceArgs = new LinkedHashMap<>();
+        }
+        this.serviceArgs.put(name, value);
+    }
+
+    public void addServiceArgs(Map<String, Object> serviceArgs) {
+        if (this.serviceArgs == null) {
+            this.serviceArgs = new LinkedHashMap<>();
+        }
+        this.serviceArgs.putAll(serviceArgs);
+    }
+
     public String getWorkspace() {
         return workspace;
     }
