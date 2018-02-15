@@ -506,7 +506,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     }
 
     public boolean hasCompletedSuccessfully() {
-        return state == JacsServiceState.SUCCESSFUL;
+        return state == JacsServiceState.SUCCESSFUL || state == JacsServiceState.ARCHIVED;
     }
 
     public boolean hasBeenSuspended() {
