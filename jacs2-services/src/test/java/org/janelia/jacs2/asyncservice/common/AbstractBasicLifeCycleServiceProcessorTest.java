@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ServiceMetaData;
 import org.junit.Before;
@@ -106,7 +107,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
             JacsServiceState state = invocation.getArgument(1);
             sd.setState(state);
             return null;
-        }).when(jacsServiceDataPersistence).updateServiceState(any(JacsServiceData.class), any(JacsServiceState.class), any(Optional.class));
+        }).when(jacsServiceDataPersistence).updateServiceState(any(JacsServiceData.class), any(JacsServiceState.class), any(JacsServiceEvent.class));
 
         testSuccessfullProcessor = new TestSuccessfulProcessorBasicLifeCycle(
                 serviceComputationFactory,

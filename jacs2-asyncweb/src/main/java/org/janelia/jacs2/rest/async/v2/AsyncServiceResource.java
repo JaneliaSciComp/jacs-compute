@@ -6,10 +6,9 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
-import org.janelia.jacs2.auth.JacsSecurityContext;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.domain.enums.SubjectRole;
-import org.janelia.model.security.Subject;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
@@ -22,7 +21,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
@@ -45,10 +43,9 @@ public class AsyncServiceResource {
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
-    public Response createAsyncServices(List<JacsServiceData> services, @Context ContainerRequestContext requestContext) {
-        JacsSecurityContext jacsSecurityContext = (JacsSecurityContext)requestContext.getSecurityContext();
-        String authenticatedSubject = jacsSecurityContext.getAuthenticatedSubject().getKey();
-        String authorizedSubject = jacsSecurityContext.getAuthorizedSubject().getKey();
+    public Response createAsyncServices(List<JacsServiceData> services, @Context SecurityContext securityContext) {
+        String authenticatedSubject = JacsSecurityContextHelper.getAuthenticatedSubjectKey(securityContext);
+        String authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubjectKey(securityContext);
         services.forEach((service) -> {
             service.setAuthKey(authenticatedSubject);
             service.setOwnerKey(authorizedSubject);
@@ -68,10 +65,9 @@ public class AsyncServiceResource {
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
-    public Response createAsyncService(@PathParam("service-name") String serviceName, JacsServiceData si, @Context ContainerRequestContext requestContext) {
-        JacsSecurityContext jacsSecurityContext = (JacsSecurityContext)requestContext.getSecurityContext();
-        String authenticatedSubject = jacsSecurityContext.getAuthenticatedSubject().getKey();
-        String authorizedSubject = jacsSecurityContext.getAuthorizedSubject().getKey();
+    public Response createAsyncService(@PathParam("service-name") String serviceName, JacsServiceData si, @Context SecurityContext securityContext) {
+        String authenticatedSubject = JacsSecurityContextHelper.getAuthenticatedSubjectKey(securityContext);
+        String authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubjectKey(securityContext);
         si.setAuthKey(authenticatedSubject);
         si.setOwnerKey(authorizedSubject);
         si.setName(serviceName);

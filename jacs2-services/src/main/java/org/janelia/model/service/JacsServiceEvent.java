@@ -8,6 +8,9 @@ import java.io.Serializable;
 import java.util.Date;
 
 public class JacsServiceEvent implements Serializable {
+
+    public static final JacsServiceEvent NO_EVENT = null;
+
     private String name;
     private String value;
     private Date eventTime = new Date();

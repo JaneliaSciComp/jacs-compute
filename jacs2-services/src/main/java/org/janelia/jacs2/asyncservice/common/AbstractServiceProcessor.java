@@ -18,9 +18,7 @@ import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -180,7 +178,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     protected <S> ContinuationCond<S> suspendCondition(JacsServiceData jacsServiceData) {
-        return new SuspendServiceContinuationCond<>(
+        return new WaitingForDependenciesContinuationCond<>(
                 new ServiceDependenciesCompletedContinuationCond(dependenciesGetterFunc(), jacsServiceDataPersistence, logger),
                 (S state) -> jacsServiceData,
                 (S state, JacsServiceData tmpSd) -> state,
@@ -212,7 +210,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
             jacsServiceDataPersistence.updateServiceState(
                     jacsServiceData,
                     JacsServiceState.TIMEOUT,
-                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart))));
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart)));
             logger.warn("Service {} timed out after {}ms", jacsServiceData, timeSinceStart);
             throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " timed out");
         }

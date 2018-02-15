@@ -108,7 +108,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                         jacsServiceDataPersistence.updateServiceState(
                                 jacsServiceData,
                                 JacsServiceState.ERROR,
-                                Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, errorMessage)));
+                                JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, errorMessage));
                         throw new ComputationException(jacsServiceData, errorMessage);
                     }
                     return pd;

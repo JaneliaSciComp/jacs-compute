@@ -82,7 +82,7 @@ public class JacsServiceDispatcherTest {
             JacsServiceState state = invocation.getArgument(1);
             sd.setState(state);
             return null;
-        }).when(jacsServiceDataPersistence).updateServiceState(any(JacsServiceData.class), any(JacsServiceState.class), any(Optional.class));
+        }).when(jacsServiceDataPersistence).updateServiceState(any(JacsServiceData.class), any(JacsServiceState.class), any(JacsServiceEvent.class));
 
     }
 
@@ -166,22 +166,21 @@ public class JacsServiceDispatcherTest {
                 .updateServiceState(
                         testServiceData,
                         JacsServiceState.QUEUED,
-                        Optional.empty());
+                        JacsServiceEvent.NO_EVENT);
         verify(jacsServiceDataPersistence)
                 .updateServiceState(
                         testServiceData,
                         JacsServiceState.RUNNING,
-                        Optional.empty());
+                        JacsServiceEvent.NO_EVENT);
         verify(jacsServiceDataPersistence)
                 .updateServiceState(
                         same(testServiceData),
                         eq(JacsServiceState.SUCCESSFUL),
-                        argThat(new ArgumentMatcher<Optional<JacsServiceEvent>>() {
+                        argThat(new ArgumentMatcher<JacsServiceEvent>() {
                             @Override
-                            public boolean matches(Optional<JacsServiceEvent> argument) {
-                                return argument.isPresent()
-                                        && argument.get().getName().equals(JacsServiceEventTypes.COMPLETED.name())
-                                        && argument.get().getValue().equals("Completed successfully");
+                            public boolean matches(JacsServiceEvent argument) {
+                                return argument.getName().equals(JacsServiceEventTypes.COMPLETED.name())
+                                        && argument.getValue().equals("Completed successfully");
                             }
                         })
                 );
@@ -243,22 +242,21 @@ public class JacsServiceDispatcherTest {
                 .updateServiceState(
                         testServiceData,
                         JacsServiceState.QUEUED,
-                        Optional.empty());
+                        JacsServiceEvent.NO_EVENT);
         verify(jacsServiceDataPersistence)
                 .updateServiceState(
                         testServiceData,
                         JacsServiceState.RUNNING,
-                        Optional.empty());
+                        JacsServiceEvent.NO_EVENT);
         verify(jacsServiceDataPersistence)
                 .updateServiceState(
                         same(testServiceData),
                         eq(JacsServiceState.ERROR),
-                        argThat(new ArgumentMatcher<Optional<JacsServiceEvent>>() {
+                        argThat(new ArgumentMatcher<JacsServiceEvent>() {
                             @Override
-                            public boolean matches(Optional<JacsServiceEvent> argument) {
-                                return argument.isPresent()
-                                        && argument.get().getName().equals(JacsServiceEventTypes.FAILED.name())
-                                        && argument.get().getValue().equals("Failed: test exception");
+                            public boolean matches(JacsServiceEvent argument) {
+                                return argument.getName().equals(JacsServiceEventTypes.FAILED.name())
+                                        && argument.getValue().equals("Failed: test exception");
                             }
                         })
                 );

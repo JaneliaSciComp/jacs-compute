@@ -15,13 +15,12 @@ import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.SecurityContext;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -46,9 +45,6 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
     private final LegacyDomainDao dao;
     private final ComputeAccounting accouting;
 
-    @Context
-    SecurityContext securityContext;
-
     @Inject
     public ExternalLSFJavaJobRunner(MonitoredJobManager jobMgr,
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
@@ -71,7 +67,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
                               Path processDir,
                               JacsServiceData serviceContext) {
         logger.debug("Begin bsub job invocation for {}", serviceContext);
-        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
+        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, JacsServiceEvent.NO_EVENT);
         try {
             JobTemplate jt = prepareJobTemplate(externalCode, externalConfigs, env, scriptServiceFolder, processDir, serviceContext);
             String processingScript = jt.getRemoteCommand();
@@ -93,7 +89,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
             jacsServiceDataPersistence.updateServiceState(
                     serviceContext,
                     JacsServiceState.ERROR,
-                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_JOB_ERROR, String.format("Error creating DRMAA job %s - %s", serviceContext.getName(), e.getMessage())))
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_JOB_ERROR, String.format("Error creating DRMAA job %s - %s", serviceContext.getName(), e.getMessage()))
             );
             logger.error("Error creating a cluster job for {}", serviceContext, e);
             throw new ComputationException(serviceContext, e);

@@ -14,7 +14,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
- * SuspendServiceContinuationCond implements a Continuation that may suspend a service if its dependencies are not complete.
+ * ServiceDependenciesCompletedContinuationCond implements a Continuation that may suspend a service if its dependencies are not complete.
  */
 public class ServiceDependenciesCompletedContinuationCond implements ContinuationCond<JacsServiceData> {
 
@@ -68,9 +68,9 @@ public class ServiceDependenciesCompletedContinuationCond implements Continuatio
             jacsServiceDataPersistence.updateServiceState(
                     jacsServiceData,
                     JacsServiceState.CANCELED,
-                    Optional.of(JacsServiceData.createServiceEvent(
+                    JacsServiceData.createServiceEvent(
                             JacsServiceEventTypes.CANCELED,
-                            String.format("Canceled because one or more service dependencies finished unsuccessfully: %s", failedDependencies))));
+                            String.format("Canceled because one or more service dependencies finished unsuccessfully: %s", failedDependencies)));
             logger.warn("Service {} canceled because of {}", jacsServiceData, failedDependencies);
             throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getEntityRefId() + " canceled");
         }
@@ -82,7 +82,7 @@ public class ServiceDependenciesCompletedContinuationCond implements Continuatio
             jacsServiceDataPersistence.updateServiceState(
                     jacsServiceData,
                     JacsServiceState.TIMEOUT,
-                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart))));
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart)));
             logger.warn("Service {} timed out after {}ms", jacsServiceData, timeSinceStart);
             throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " timed out");
         }

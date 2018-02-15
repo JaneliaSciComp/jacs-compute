@@ -10,6 +10,7 @@ public class JacsServiceDataBuilder {
         this.serviceData = new JacsServiceData();
         if (serviceContext != null) {
             serviceData.setOwnerKey(serviceContext.getOwnerKey());
+            serviceData.setAuthKey(serviceContext.getAuthKey());
             serviceData.updateParentService(serviceContext);
             if (serviceContext.getProcessingLocation() != null) {
                 serviceData.setProcessingLocation(serviceContext.getProcessingLocation());
@@ -38,6 +39,11 @@ public class JacsServiceDataBuilder {
 
     public JacsServiceDataBuilder setOwnerKey(String ownerKey) {
         serviceData.setOwnerKey(ownerKey);
+        return this;
+    }
+
+    public JacsServiceDataBuilder setAuthKey(String ownerKey) {
+        serviceData.setAuthKey(ownerKey);
         return this;
     }
 

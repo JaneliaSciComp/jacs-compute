@@ -127,12 +127,12 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    public void updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, Optional<JacsServiceEvent> serviceEvent) {
+    public void updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, JacsServiceEvent serviceEvent) {
         List<Consumer<JacsServiceDataDao>> actions = new ArrayList<>();
         actions.add(dao -> dao.update(jacsServiceData, jacsServiceData.updateState(newServiceState)));
-        serviceEvent.ifPresent(anotherEvent -> {
-            actions.add(dao -> dao.update(jacsServiceData, jacsServiceData.addNewEvent(anotherEvent)));
-        });
+        if (serviceEvent != JacsServiceEvent.NO_EVENT) {
+            actions.add(dao -> dao.update(jacsServiceData, jacsServiceData.addNewEvent(serviceEvent)));
+        }
         if (jacsServiceData.hasId() && !actions.isEmpty()) {
             JacsServiceDataDao jacsServiceDataDao = daoSource.get();
             try {

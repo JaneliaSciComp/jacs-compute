@@ -511,11 +511,11 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     }
 
     public boolean hasCompletedSuccessfully() {
-        return state == JacsServiceState.SUCCESSFUL || state == JacsServiceState.ARCHIVED;
+        return state == JacsServiceState.SUCCESSFUL;
     }
 
-    public boolean hasBeenSuspended() {
-        return state == JacsServiceState.SUSPENDED;
+    public boolean hasNotBeenWaitingForDependencies() {
+        return state != JacsServiceState.WAITING_FOR_DEPENDENCIES;
     }
 
     public Long getServiceTimeout() {

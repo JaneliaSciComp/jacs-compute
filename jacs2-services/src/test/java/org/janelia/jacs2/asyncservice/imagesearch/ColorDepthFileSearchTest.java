@@ -1,48 +1,28 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
-import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
-import org.janelia.jacs2.asyncservice.common.ServiceArg;
-import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.spark.SparkApp;
 import org.janelia.jacs2.asyncservice.common.spark.SparkCluster;
-import org.janelia.jacs2.asyncservice.dataimport.DataTreeLoadProcessor;
-import org.janelia.jacs2.asyncservice.fileservices.FileCopyProcessor;
-import org.janelia.jacs2.cdi.ApplicationConfigProvider;
-import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
-import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
-import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
-import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 
 public class ColorDepthFileSearchTest {
@@ -119,6 +99,7 @@ public class ColorDepthFileSearchTest {
     private JacsServiceData createTestServiceData(Number serviceId, String owner) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey(owner)
+                .setAuthKey(owner)
                 .addArg("-inputFiles", "f1,f2,f3")
                 .addArg("-searchDirs", "s1,s2")
                 .addArg("-maskThresholds", "100")
