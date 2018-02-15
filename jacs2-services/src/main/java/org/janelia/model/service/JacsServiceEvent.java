@@ -52,7 +52,6 @@ public class JacsServiceEvent implements Serializable {
         return new EqualsBuilder()
                 .append(name, that.name)
                 .append(value, that.value)
-                .append(eventTime, that.eventTime)
                 .isEquals();
     }
 

@@ -137,8 +137,8 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 ),
                 createTestServiceEvent("e1", "v1"),
                 createTestServiceEvent("e2", "v2"));
-        testDao.addServiceEvent(si, createTestServiceEvent("e3", "v3"));
-        testDao.addServiceEvent(si, createTestServiceEvent("e4", "v4"));
+        testDao.update(si, si.addNewEvent(createTestServiceEvent("e3", "v3")));
+        testDao.update(si, si.addNewEvent(createTestServiceEvent("e4", "v4")));
         testDao.update(si, ImmutableMap.of("state", new SetFieldValueHandler<>(JacsServiceState.RUNNING)));
         JacsServiceData retrievedSi = testDao.findById(si.getId());
         assertThat(retrievedSi.getName(), equalTo(si.getName()));
@@ -429,7 +429,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
     }
 
     @Test
-    public void archiveServiceHierarchy() {
+    public void updateServiceHierarchy() {
         JacsServiceData si1 = createTestService("s1", ProcessingLocation.LOCAL);
         JacsServiceData si1_1 = createTestService("s1.1", ProcessingLocation.LOCAL);
         JacsServiceData si1_2 = createTestService("s1.2", ProcessingLocation.LOCAL);
@@ -443,12 +443,18 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         testDao.saveServiceHierarchy(si1);
         List<JacsServiceData> s1Hierarchy = si1.serviceHierarchyStream().collect(Collectors.toList());
 
-        s1Hierarchy.forEach(sd -> testDao.archiveService(sd));
+        // update the state of all services from the invocation tree
+        s1Hierarchy.forEach(sd -> {
+            sd.setState(JacsServiceState.SUCCESSFUL);
+        });
+
+        // persist the entire tree
+        testDao.saveServiceHierarchy(si1);
 
         s1Hierarchy.forEach(sd -> {
             JacsServiceData archivedServiceData = testDao.findById(sd.getId());
             assertNotNull(archivedServiceData);
-            assertEquals(JacsServiceState.ARCHIVED, archivedServiceData.getState());
+            assertEquals(JacsServiceState.SUCCESSFUL, archivedServiceData.getState());
         });
 
         JacsServiceData archivedService = testDao.findServiceHierarchy(si1.getId());
@@ -468,7 +474,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         }).forEach(activeArchivedPair -> {
             assertNotSame(activeArchivedPair.getLeft(), activeArchivedPair.getRight());
             assertEquals(activeArchivedPair.getLeft().getId(), activeArchivedPair.getRight().getId());
-            assertEquals(JacsServiceState.ARCHIVED, activeArchivedPair.getRight().getState());
+            assertEquals(JacsServiceState.SUCCESSFUL, activeArchivedPair.getRight().getState());
         });
     }
 

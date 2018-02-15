@@ -129,7 +129,7 @@ public class JacsServiceDispatcher {
         }
         sendNotification(latestServiceData, JacsServiceLifecycleStage.SUCCESSFUL_PROCESSING);
         if (!latestServiceData.hasParentServiceId()) {
-            archiveServiceData(latestServiceData.getId());
+            finalizeRootService(latestServiceData);
         }
     }
 
@@ -138,11 +138,11 @@ public class JacsServiceDispatcher {
         logger.error("Processing error executing {}", serviceData, exc);
         JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
         if (latestServiceData == null) {
-            logger.warn("NO Service not found for {} - probably it was already archived", serviceData);
+            logger.warn("NO Service not found for {}", serviceData);
             return;
         }
         if (latestServiceData.hasCompletedSuccessfully()) {
-            logger.warn("Service {} has failed after has already been markes as successfully completed", latestServiceData);
+            logger.warn("Service {} has failed after has already been marked as successfull", latestServiceData);
         }
         if (latestServiceData.hasCompletedUnsuccessfully()) {
             // nothing to do
@@ -172,9 +172,8 @@ public class JacsServiceDispatcher {
         jacsNotificationDao.save(jacsNotification);
     }
 
-    private void archiveServiceData(Number serviceId) {
-        JacsServiceData jacsServiceDataHierarchy = jacsServiceDataPersistence.findServiceHierarchy(serviceId);
-        jacsServiceDataPersistence.archiveHierarchy(jacsServiceDataHierarchy);
+    private void finalizeRootService(JacsServiceData sd) {
+        logger.info("Finished {}", sd);
     }
 
 }

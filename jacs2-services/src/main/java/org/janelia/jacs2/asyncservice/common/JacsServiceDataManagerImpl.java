@@ -43,8 +43,7 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
         }
         Map<String, EntityFieldValueHandler<?>> updates = new LinkedHashMap<>();
         if (serviceData.getState() != null) {
-            existingService.setState(serviceData.getState());
-            updates.put("state", new SetFieldValueHandler<>(serviceData.getState()));
+            updates.putAll(existingService.updateState(serviceData.getState()));
         }
         if (serviceData.getServiceTimeout() != null) {
             existingService.setServiceTimeout(serviceData.getServiceTimeout());

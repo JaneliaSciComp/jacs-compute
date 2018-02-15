@@ -3,8 +3,10 @@ package org.janelia.model.service;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
 import org.janelia.model.jacs2.BaseEntity;
@@ -163,7 +165,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     }
 
     public boolean canBeModifiedBy(String userKey) {
-        return (StringUtils.isBlank(this.ownerKey) || this.ownerKey.equals(userKey)) && !this.state.equals(JacsServiceState.ARCHIVED);
+        return (StringUtils.isBlank(this.ownerKey) || this.ownerKey.equals(userKey));
     }
 
     public String getOutputPath() {
@@ -385,11 +387,14 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.serializableResult = serializableResult;
     }
 
-    public void addNewEvent(JacsServiceEvent se) {
+    public Map<String, EntityFieldValueHandler<?>> addNewEvent(JacsServiceEvent se) {
+        Map<String, EntityFieldValueHandler<?>> dataUpdates = new HashMap<>();
+        dataUpdates.put("events", new AppendFieldValueHandler<>(se));
         if (this.events == null) {
             this.events = new ArrayList<>();
         }
         this.events.add(se);
+        return dataUpdates;
     }
 
     public Set<JacsServiceData> getDependencies() {
@@ -544,4 +549,16 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         });
     }
 
+    public Map<String, EntityFieldValueHandler<?>> updateState(JacsServiceState state) {
+        Map<String, EntityFieldValueHandler<?>> dataUpdates = new LinkedHashMap<>();
+
+        Preconditions.checkArgument(state != null);
+        if (state != this.state) {
+            JacsServiceEvent updateStateEvent = JacsServiceData.createServiceEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from " + this.state + " -> " + state);
+            dataUpdates.putAll(addNewEvent(updateStateEvent));
+            this.state = state;
+            dataUpdates.put("state", new SetFieldValueHandler<>(state));
+        }
+        return dataUpdates;
+    }
 }

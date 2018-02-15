@@ -168,13 +168,14 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     public void saveServiceHierarchy(JacsServiceData serviceData) {
         List<JacsServiceData> toBeInserted = new ArrayList<>();
         Map<JacsServiceData, Map<String, EntityFieldValueHandler<?>>> toBeUpdated = new LinkedHashMap<>();
-        List<JacsServiceData> serviceHierarchy = serviceData.serviceHierarchyStream().map(s -> {
+        List<JacsServiceData> serviceHierarchy = serviceData.serviceHierarchyStream().map((JacsServiceData s) -> {
             if (s.getId() == null) {
                 s.setId(idGenerator.generateId());
                 toBeInserted.add(s);
                 s.updateParentService(s.getParentService());
             } else {
                 Map<String, EntityFieldValueHandler<?>> updates = s.updateParentService(s.getParentService());
+                updates.put("state", new SetFieldValueHandler<>(s.getState()));
                 if (toBeUpdated.get(s) == null) {
                     toBeUpdated.put(s, updates);
                 } else {
@@ -189,7 +190,7 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
                 toBeUpdated.get(sd).put("dependenciesIds", new SetFieldValueHandler<>(sd.getDependenciesIds()));
             }
         });
-        mongoCollection.insertMany(toBeInserted);
+        if (CollectionUtils.isNotEmpty(toBeInserted)) mongoCollection.insertMany(toBeInserted);
         toBeUpdated.entrySet().forEach(updatedEntry -> update(updatedEntry.getKey(), updatedEntry.getValue()));
     }
 
@@ -202,24 +203,10 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     }
 
     @Override
-    public void addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
-        Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
-        updatedFields.put("events", new AppendFieldValueHandler<>(serviceEvent));
-        update(jacsServiceData, updatedFields);
-    }
-
-    @Override
     public void updateServiceResult(JacsServiceData serviceData) {
         Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
         updatedFields.put("serializableResult", new SetFieldValueHandler<>(serviceData.getSerializableResult()));
         update(serviceData, updatedFields);
     }
 
-    @Override
-    public void archiveService(JacsServiceData serviceData) {
-        serviceData.setState(JacsServiceState.ARCHIVED);
-        Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
-        updatedFields.put("state", new SetFieldValueHandler<>(serviceData.getState()));
-        update(serviceData, updatedFields);
-    }
 }
