@@ -33,7 +33,6 @@ import javax.ws.rs.core.UriInfo;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @RequestScoped

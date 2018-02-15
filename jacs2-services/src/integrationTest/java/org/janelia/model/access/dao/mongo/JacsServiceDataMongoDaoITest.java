@@ -9,6 +9,7 @@ import com.mongodb.client.model.Updates;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.bson.conversions.Bson;
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.model.access.dao.JacsServiceDataDao;
@@ -17,6 +18,7 @@ import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceDataBuilder;
 import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.JacsServiceState;
@@ -28,6 +30,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -429,6 +432,61 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
     }
 
     @Test
+    public void searchServicesByServiceArgs() {
+        List<JacsServiceData> slist = ImmutableList.of(
+                createTestService("s1", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.1", "arg2", "v2.1")),
+                createTestService("s2", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.2", "arg2", "v2.2")),
+                createTestService("s3", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.1", "arg2", "v2.2")),
+                createTestService("s4", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.1", "arg2", "v2.3")),
+                createTestService("s5", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.3", "arg3", 5)),
+                createTestService("s6", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.3", "arg3", 6)),
+                createTestService("s7", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.3", "arg3", 7))
+        );
+        slist.forEach(testDao::save);
+
+        Map<JacsServiceData, Matcher<Iterable<?>>> testData = ImmutableMap.<JacsServiceData, Matcher<Iterable<?>>>of(
+                new JacsServiceDataBuilder(null)
+                        .addServiceArg("arg1", "v1.1")
+                        .addServiceArg("arg2", ImmutableList.of("v2.1", "v2.2"))
+                        .build(),
+                contains(new HasPropertyWithValue<>("name", CoreMatchers.equalTo("s1")),
+                        new HasPropertyWithValue<>("name", CoreMatchers.equalTo("s3"))
+                ),
+                new JacsServiceDataBuilder(null)
+                        .addServiceArg("arg1", "v1.2")
+                        .addServiceArg("arg2", "v2.1")
+                        .build(),
+                equalTo(Collections.emptyList()),
+                new JacsServiceDataBuilder(null)
+                        .addServiceArg("arg1", "v1.1")
+                        .addServiceArg("arg2", ImmutableList.of("v2.3"))
+                        .build(),
+                contains(new HasPropertyWithValue<>("name", CoreMatchers.equalTo("s4"))),
+                new JacsServiceDataBuilder(null)
+                        .addServiceArg("arg1", "v1.3")
+                        .addServiceArg("arg3", new DataInterval<>(15, 17))
+                        .build(),
+                equalTo(Collections.emptyList()),
+                new JacsServiceDataBuilder(null)
+                        .addServiceArg("arg1", "v1.3")
+                        .addServiceArg("arg3", new DataInterval<>(5, 7))
+                        .build(),
+                contains(new HasPropertyWithValue<>("name", CoreMatchers.equalTo("s5")),
+                        new HasPropertyWithValue<>("name", CoreMatchers.equalTo("s6")),
+                        new HasPropertyWithValue<>("name", CoreMatchers.equalTo("s7"))
+                )
+        );
+
+        testData.forEach((sd, matcher) -> {
+            PageRequest pageRequest = new PageRequest();
+            PageResult<JacsServiceData> retrievedServices = testDao.findMatchingServices(sd, new DataInterval<>(null, null), pageRequest);
+            assertThat(retrievedServices.getResultList(), matcher);
+        });
+
+
+    }
+
+    @Test
     public void updateServiceHierarchy() {
         JacsServiceData si1 = createTestService("s1", ProcessingLocation.LOCAL);
         JacsServiceData si1_1 = createTestService("s1.1", ProcessingLocation.LOCAL);
@@ -529,11 +587,18 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
     }
 
     private JacsServiceData createTestService(String serviceName, ProcessingLocation processingLocation) {
+        return createTestService(serviceName, processingLocation, ImmutableMap.of("a1", "I1", "a2", "I2"));
+    }
+
+    private JacsServiceData createTestService(String serviceName, ProcessingLocation processingLocation, Map<String, Object> serviceArgs) {
         JacsServiceData si = new JacsServiceData();
         si.setName(serviceName);
         si.setProcessingLocation(processingLocation);
-        si.addArg("I1");
-        si.addArg("I2");
+        serviceArgs.forEach((n, v) -> {
+            si.addArg(n);
+            si.addArg(v.toString());
+            si.addServiceArg(n, v);
+        });
         testData.add(si);
         return si;
     }

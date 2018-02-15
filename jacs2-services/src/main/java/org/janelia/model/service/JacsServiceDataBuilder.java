@@ -32,6 +32,11 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
+    public JacsServiceDataBuilder addServiceArg(String name, Object value) {
+        serviceData.addServiceArg(name, value);
+        return this;
+    }
+
     public JacsServiceDataBuilder setName(String name) {
         serviceData.setName(name);
         return this;

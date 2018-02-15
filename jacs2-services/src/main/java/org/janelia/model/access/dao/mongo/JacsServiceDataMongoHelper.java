@@ -1,6 +1,7 @@
 package org.janelia.model.access.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
+import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
@@ -8,9 +9,6 @@ import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.service.JacsServiceData;
 
 import java.util.Date;
-import java.util.List;
-
-import com.mongodb.client.model.Filters;
 
 class JacsServiceDataMongoHelper {
 
@@ -60,7 +58,7 @@ class JacsServiceDataMongoHelper {
                         filtersBuilder.add(Filters.gte("serviceArgs." + name, intervalValue.getFrom()));
                     }
                     if (intervalValue.hasTo()) {
-                        filtersBuilder.add(Filters.lt("serviceArgs." + name, intervalValue.getTo()));
+                        filtersBuilder.add(Filters.lte("serviceArgs." + name, intervalValue.getTo()));
                     }
                 } else {
                     filtersBuilder.add(Filters.eq("serviceArgs." + name, value));
