@@ -15,6 +15,9 @@ public class JacsServiceDataBuilder {
             if (serviceContext.getProcessingLocation() != null) {
                 serviceData.setProcessingLocation(serviceContext.getProcessingLocation());
             }
+            // propagate the queue ID from the parent service so that the entire service tree
+            // is processed on the same host
+            serviceData.setQueueId(serviceContext.getQueueId());
             serviceData.setWorkspace(serviceContext.getWorkspace());
             serviceData.setTags(serviceContext.getTags()); // propagate the tags
         }

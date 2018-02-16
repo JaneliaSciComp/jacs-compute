@@ -5,6 +5,7 @@ public enum JacsServiceEventTypes {
     COMPLETED,
     SUSPEND,
     TIMEOUT,
+    QUEUED,
     CREATE_CHILD_SERVICE,
     CLUSTER_SUBMIT,
     CLUSTER_JOB_ERROR,

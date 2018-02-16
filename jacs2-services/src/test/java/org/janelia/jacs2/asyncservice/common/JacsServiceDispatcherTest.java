@@ -166,7 +166,7 @@ public class JacsServiceDispatcherTest {
                 .updateServiceState(
                         testServiceData,
                         JacsServiceState.QUEUED,
-                        JacsServiceEvent.NO_EVENT);
+                        JacsServiceData.createServiceEvent(JacsServiceEventTypes.QUEUED, "Waiting to be processed on 'queue'"));
         verify(jacsServiceDataPersistence)
                 .updateServiceState(
                         testServiceData,
@@ -242,7 +242,7 @@ public class JacsServiceDispatcherTest {
                 .updateServiceState(
                         testServiceData,
                         JacsServiceState.QUEUED,
-                        JacsServiceEvent.NO_EVENT);
+                        JacsServiceData.createServiceEvent(JacsServiceEventTypes.QUEUED, "Waiting to be processed on 'queue'"));
         verify(jacsServiceDataPersistence)
                 .updateServiceState(
                         testServiceData,
