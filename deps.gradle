@@ -44,6 +44,8 @@ dependencies {
         JAX_RS_JERSEY_CONTAINERS_LIB = "org.glassfish.jersey.containers:jersey-container-servlet-core:${JERSEY_VERSION}"
         JAX_RS_JERSEY_CDI_SERVLET_LIB = "org.glassfish.jersey.ext.cdi:jersey-cdi1x-servlet:${JERSEY_VERSION}"
         JAX_RS_JERSEY_INJECT_LIB = "org.glassfish.jersey.inject:jersey-hk2:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-util:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_TEST_PROVIDER_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
 
         // command line args
         CMDLINE_ARG_LIB = "com.beust:jcommander:1.72"
