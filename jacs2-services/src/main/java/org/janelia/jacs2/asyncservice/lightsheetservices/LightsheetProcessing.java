@@ -2,32 +2,24 @@ package org.janelia.jacs2.asyncservice.lightsheetservices;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.domain.DomainConstants;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.tiledMicroscope.TmSample;
-import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 /**
- * This is copied from LVTDataImport.java in lvtservices
+ * Complete lightsheet processing service which invokes multiple LightsheetProcessing steps.
  *
- * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ * @author David Ackerman
  */
 @Named("lightsheetProcessing")
 public class LightsheetProcessing extends AbstractServiceProcessor<File> {
@@ -43,9 +35,6 @@ public class LightsheetProcessing extends AbstractServiceProcessor<File> {
 
     //private final WrappedServiceProcessor<DavidTestCreator,List<File>> davidTestCreator;
     private final WrappedServiceProcessor<LightsheetPipeline,List<File>> lightsheetPipeline;
-
-    @Inject
-    private LegacyDomainDao dao;
 
     @Inject
     LightsheetProcessing(ServiceComputationFactory computationFactory,
