@@ -51,11 +51,9 @@ public class LightsheetProcessing extends AbstractServiceProcessor<File> {
     LightsheetProcessing(ServiceComputationFactory computationFactory,
                          JacsServiceDataPersistence jacsServiceDataPersistence,
                          @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                         DavidTestCreator davidTestCreator,
                          LightsheetPipeline lightsheetPipeline,
                          Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-     //   this.davidTestCreator = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, davidTestCreator);
         this.lightsheetPipeline = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, lightsheetPipeline);
 
     }
