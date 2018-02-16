@@ -10,6 +10,7 @@ import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -223,7 +224,12 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
                         clusterIntervalCheckInMillis, clusterStartTimeoutInMillis)
 
                 // Now run the search
-                .thenApply((SparkCluster cluster) -> runApp(jacsServiceData, cluster))
+                .thenApply((SparkCluster cluster) -> {
+                    jacsServiceDataPersistence.addServiceEvent(
+                            jacsServiceData,
+                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT, String.format("Running app using spark job %s", cluster.getJobId())));
+                    return runApp(jacsServiceData, cluster);
+                })
 
                 // Wait until the search has completed
                 .thenSuspendUntil((SparkApp app) -> continueWhenTrue(app.isDone(), app),
