@@ -97,7 +97,7 @@ public class LightsheetProcessing extends AbstractServiceProcessor<File> {
 
         ServiceComputation<JacsServiceResult<List<File>>> stage = lightsheetPipeline.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
-                        .description("Run lightsheetPipeline")
+                        .description(allSelectedStepNamesArray[0])
                         .build(),
                 new ServiceArg("-stepName", allSelectedStepNamesArray[0]),
                 new ServiceArg("-jsonFile", inputJsonDir + "0_" + allSelectedStepNamesArray[0] + ".json"),

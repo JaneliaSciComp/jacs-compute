@@ -195,7 +195,7 @@ public class LightsheetPipeline extends AbstractExeBasedServiceProcessor<List<Fi
         ProcessorHelper.setCPUType(jacsServiceData.getResources(),"broadwell");
         LightsheetPipelineArgs args = getArgs(jacsServiceData);
         if ( args.stepName.contains("local") ) {
-            ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), 16);
+            ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), 32);
         }
         else if (args.stepName.contains("CS") ) {
             ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), 8);
