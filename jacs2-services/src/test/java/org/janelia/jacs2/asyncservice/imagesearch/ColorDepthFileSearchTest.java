@@ -74,7 +74,11 @@ public class ColorDepthFileSearchTest {
         JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
         Mockito.when(cluster.runApp(null, null,
                 "-m", "f1", "f2", "f3", "-i", "s1,s2",
-                "--maskThresholds", "100", "100", "100", "-o",
+                "--maskThresholds", "100", "100", "100",
+                "--dataThreshold", "100",
+                "--pixColorFluctuation", "2.0",
+                "--pctPositivePixels", "10.0",
+                "-o",
                 serviceWorkingFolder.getServiceFolder("f1_results.txt").toFile().getAbsolutePath(),
                 serviceWorkingFolder.getServiceFolder("f2_results.txt").toFile().getAbsolutePath(),
                 serviceWorkingFolder.getServiceFolder("f3_results.txt").toFile().getAbsolutePath())).thenReturn(sparkApp);
@@ -102,8 +106,11 @@ public class ColorDepthFileSearchTest {
                 .setAuthKey(owner)
                 .addArg("-inputFiles", "f1,f2,f3")
                 .addArg("-searchDirs", "s1,s2")
-                .addArg("-maskThresholds", "100,100,100")
+                .addArg("-maskThresholds", "100").addArg("100").addArg("100")
                 .addArg("-numNodes", "9")
+                .addArg("-dataThreshold", "100")
+                .addArg("-pixColorFluctuation", "2.0")
+                .addArg("-pctPositivePixels", "10.0")
                 ;
         JacsServiceData testServiceData = testServiceDataBuilder
                 .setWorkspace("testlocal")

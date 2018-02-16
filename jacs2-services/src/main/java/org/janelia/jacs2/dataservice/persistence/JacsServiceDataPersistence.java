@@ -9,6 +9,8 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
@@ -24,6 +26,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServiceDataDao, JacsServiceData, Number> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(JacsServiceDataPersistence.class);
 
     @Inject
     public JacsServiceDataPersistence(Instance<JacsServiceDataDao> serviceDataDaoSource) {
@@ -128,6 +132,7 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
     }
 
     public void updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, JacsServiceEvent serviceEvent) {
+        LOG.info("Update service state for {} to {} with event {}", jacsServiceData, newServiceState, serviceEvent);
         List<Consumer<JacsServiceDataDao>> actions = new ArrayList<>();
         actions.add(dao -> dao.update(jacsServiceData, jacsServiceData.updateState(newServiceState)));
         if (serviceEvent != JacsServiceEvent.NO_EVENT) {

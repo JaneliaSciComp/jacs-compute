@@ -120,19 +120,8 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         if (jacsServiceData.getActualArgs() == null) {
             List<String> actualServiceArgs = evalJacsServiceArgs(jacsServiceData);
             jacsServiceData.setActualArgs(actualServiceArgs);
-            serviceArgsArray = jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
-            // update service arguments arguments - this involves creating a dictionary that contains both
-            // the parsed actual arguments and the dictionary arguments
-            ServiceMetaData serviceMetaData = getMetadata();
-            JCommander cmdLineParser = new JCommander(serviceMetaData.getServiceArgs());
-            cmdLineParser.parse(serviceArgsArray); // parse the actual service args
-            serviceMetaData.getServiceArgDescriptors().forEach(sd -> {
-                jacsServiceData.addServiceArg(sd.getArgName(), sd.getArg().get(serviceMetaData.getServiceArgs()));
-            });
-            jacsServiceData.addServiceArgs(jacsServiceData.getDictionaryArgs()); // add the dictionary args
-        } else {
-            serviceArgsArray = jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
         }
+        serviceArgsArray = jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
         return serviceArgsArray;
     }
 
