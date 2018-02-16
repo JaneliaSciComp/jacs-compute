@@ -3,8 +3,10 @@ package org.janelia.model.service;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
 import org.janelia.model.jacs2.BaseEntity;
@@ -23,7 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@MongoMapping(collectionName="jacsService", archiveCollectionName = "jacsServiceHistory", label="JacsService")
+@MongoMapping(collectionName="jacsService", label="JacsService")
 public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public static JacsServiceEvent createServiceEvent(JacsServiceEventTypes name, String value) {
@@ -41,14 +43,18 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private ProcessingLocation processingLocation;
     private JacsServiceState state = JacsServiceState.CREATED;
     private Integer priority = 0;
-    private String owner;
+    private String authKey;
+    private String ownerKey;
     private String queueId;
     private String outputPath;
     private String errorPath;
     private List<String> args = new ArrayList<>();
     private List<String> actualArgs;
+    private Map<String, Object> dictionaryArgs = new LinkedHashMap<>();
+    private Map<String, Object> serviceArgs;
     private Map<String, String> env = new LinkedHashMap<>();
     private Map<String, String> resources = new LinkedHashMap<>(); // this could/should be used for grid jobs resources
+    private List<String> tags = new ArrayList<>();
     private Object serializableResult;
     private String workspace;
     private Number parentServiceId;
@@ -147,12 +153,28 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.queueId = queueId;
     }
 
-    public String getOwner() {
-        return owner;
+    public String getAuthKey() {
+        return authKey;
     }
 
-    public void setOwner(String owner) {
-        this.owner = owner;
+    public void setAuthKey(String authKey) {
+        this.authKey = authKey;
+    }
+
+    public String getOwnerKey() {
+        return ownerKey;
+    }
+
+    public void setOwnerKey(String ownerKey) {
+        this.ownerKey = ownerKey;
+    }
+
+    public boolean canBeAccessedBy(String userKey) {
+        return StringUtils.isBlank(this.ownerKey) || this.ownerKey.equals(userKey);
+    }
+
+    public boolean canBeModifiedBy(String userKey) {
+        return (StringUtils.isBlank(this.ownerKey) || this.ownerKey.equals(userKey));
     }
 
     public String getOutputPath() {
@@ -198,6 +220,39 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public void setActualArgs(List<String> actualArgs) {
         this.actualArgs = actualArgs;
+    }
+
+    public Map<String, Object> getDictionaryArgs() {
+        return dictionaryArgs;
+    }
+
+    public void setDictionaryArgs(Map<String, Object> dictionaryArgs) {
+        this.dictionaryArgs.clear();
+        if (dictionaryArgs != null) {
+            this.dictionaryArgs.putAll(dictionaryArgs);
+        }
+    }
+
+    public Map<String, Object> getServiceArgs() {
+        return serviceArgs;
+    }
+
+    public void setServiceArgs(Map<String, Object> serviceArgs) {
+        this.serviceArgs = serviceArgs;
+    }
+
+    public void addServiceArg(String name, Object value) {
+        if (this.serviceArgs == null) {
+            this.serviceArgs = new LinkedHashMap<>();
+        }
+        this.serviceArgs.put(name, value);
+    }
+
+    public void addServiceArgs(Map<String, Object> serviceArgs) {
+        if (this.serviceArgs == null) {
+            this.serviceArgs = new LinkedHashMap<>();
+        }
+        this.serviceArgs.putAll(serviceArgs);
     }
 
     public String getWorkspace() {
@@ -292,6 +347,14 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.resources.clear();
     }
 
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
     public RegisteredJacsNotification getProcessingNotification() {
         return processingNotification;
     }
@@ -333,11 +396,14 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.serializableResult = serializableResult;
     }
 
-    public void addNewEvent(JacsServiceEvent se) {
+    public Map<String, EntityFieldValueHandler<?>> addNewEvent(JacsServiceEvent se) {
+        Map<String, EntityFieldValueHandler<?>> dataUpdates = new HashMap<>();
+        dataUpdates.put("events", new AppendFieldValueHandler<>(se));
         if (this.events == null) {
             this.events = new ArrayList<>();
         }
         this.events.add(se);
+        return dataUpdates;
     }
 
     public Set<JacsServiceData> getDependencies() {
@@ -448,8 +514,8 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         return state == JacsServiceState.SUCCESSFUL;
     }
 
-    public boolean hasBeenSuspended() {
-        return state == JacsServiceState.SUSPENDED;
+    public boolean hasNotBeenWaitingForDependencies() {
+        return state != JacsServiceState.WAITING_FOR_DEPENDENCIES;
     }
 
     public Long getServiceTimeout() {
@@ -490,5 +556,18 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
             JacsServiceData sd = sdpEntry.getKey();
             sd.setPriority(sdpEntry.getValue());
         });
+    }
+
+    public Map<String, EntityFieldValueHandler<?>> updateState(JacsServiceState state) {
+        Map<String, EntityFieldValueHandler<?>> dataUpdates = new LinkedHashMap<>();
+
+        Preconditions.checkArgument(state != null);
+        if (state != this.state) {
+            JacsServiceEvent updateStateEvent = JacsServiceData.createServiceEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from " + this.state + " -> " + state);
+            dataUpdates.putAll(addNewEvent(updateStateEvent));
+            this.state = state;
+            dataUpdates.put("state", new SetFieldValueHandler<>(state));
+        }
+        return dataUpdates;
     }
 }

@@ -421,7 +421,7 @@ public class SageLoaderProcessorTest {
 
     private JacsServiceData createTestServiceData(Number serviceId, List<String> sampleFiles, String serviceOutputPath, String serviceErrorPath) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
-                .setOwner("testOwner")
+                .setOwnerKey("testOwner")
                 .addArg("-configFile", "config.txt")
                 .addArg("-grammarFile", "grammar.txt")
                 .addArg("-sampleFiles", String.join(",", sampleFiles))

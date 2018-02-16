@@ -17,7 +17,7 @@ export function receiveServices(url, json) {
 }
 
 export function fetchServices(url) {
-  var endpoint = 'http://' + url + '/jacs/jacs-api/v2/services/metadata';
+  var endpoint = url + '/api/rest-v2/services/metadata';
   return dispatch => {
     dispatch(reloadServices(url))
     return fetch(endpoint)

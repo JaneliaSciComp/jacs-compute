@@ -1,28 +1,26 @@
 package org.janelia.model.jacs2;
 
-import java.util.Optional;
-
 public class DataInterval<T> {
-    private final Optional<T> from, to;
+    private final T from, to;
 
     public DataInterval(T from, T to) {
-        this.from = Optional.ofNullable(from);
-        this.to = Optional.ofNullable(to);
+        this.from = from;
+        this.to = to;
     }
 
     public boolean hasFrom() {
-        return from.isPresent();
+        return from != null;
     }
 
     public boolean hasTo() {
-        return to.isPresent();
+        return to != null;
     }
 
     public T getFrom() {
-        return from.get();
+        return from;
     }
 
     public T getTo() {
-        return to.get();
+        return to;
     }
 }

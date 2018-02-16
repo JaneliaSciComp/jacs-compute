@@ -88,9 +88,9 @@ public class LockSampleProcessor extends AbstractServiceProcessor<String> {
                 .thenSuspendUntil(sd -> {
                     String lockKey = domainObjectService.tryLock(sample);
                     if (StringUtils.isBlank(lockKey)) {
-                        if (!jacsServiceData.hasBeenSuspended()) {
+                        if (jacsServiceData.hasNotBeenWaitingForDependencies()) {
                             // if the service has not completed yet and it's not already suspended - update the state to suspended
-                            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.SUSPENDED, Optional.<JacsServiceEvent>empty());
+                            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.WAITING_FOR_DEPENDENCIES, JacsServiceEvent.NO_EVENT);
                         }
                         return new ContinuationCond.Cond<>(sd, false);
                     }

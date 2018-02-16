@@ -8,14 +8,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.model.jacs2.domain.Reference;
-import org.janelia.model.jacs2.domain.sample.DataSet;
-import org.janelia.model.jacs2.domain.sample.LSMImage;
-import org.janelia.model.jacs2.domain.sample.ObjectiveSample;
-import org.janelia.model.jacs2.domain.sample.Sample;
-import org.janelia.model.jacs2.domain.sample.SampleProcessingStatus;
-import org.janelia.model.jacs2.domain.sample.SampleTile;
-import org.janelia.model.jacs2.domain.sample.SampleTileKey;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -38,8 +30,14 @@ import org.janelia.model.jacs2.DomainModelUtils;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SampleUtils;
 import org.janelia.model.jacs2.SetFieldValueHandler;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.ServiceMetaData;
+import org.janelia.model.jacs2.domain.Reference;
+import org.janelia.model.jacs2.domain.sample.DataSet;
+import org.janelia.model.jacs2.domain.sample.LSMImage;
+import org.janelia.model.jacs2.domain.sample.ObjectiveSample;
+import org.janelia.model.jacs2.domain.sample.Sample;
+import org.janelia.model.jacs2.domain.sample.SampleProcessingStatus;
+import org.janelia.model.jacs2.domain.sample.SampleTile;
+import org.janelia.model.jacs2.domain.sample.SampleTileKey;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.jacs2.page.SortCriteria;
@@ -47,6 +45,8 @@ import org.janelia.model.jacs2.page.SortDirection;
 import org.janelia.model.jacs2.sage.ImageLine;
 import org.janelia.model.jacs2.sage.SlideImage;
 import org.janelia.model.jacs2.sage.SlideImageGroup;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -146,7 +146,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                 CollectionUtils.isEmpty(args.getValues(args.lsmNames))) {
             throw new IllegalArgumentException("No filtering parameter has been specified for the LSM import from Sage.");
         }
-        List<SlideImage> slideImages = retrieveSageImages(jacsServiceData.getOwner(), args);
+        List<SlideImage> slideImages = retrieveSageImages(jacsServiceData.getOwnerKey(), args);
         checkRetrievedSageImages(slideImages, args);
 
         Map<ImageLine, List<SlideImage>> labImages =
@@ -166,11 +166,11 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                                             Collectors.mapping(Function.identity(), Collectors.toList())
                                     )
                             );
-                    String owner = jacsServiceData.getOwner();
-                    DataSet ds = datasetService.getDatasetByNameOrIdentifier(owner, imageLine.getDataset());
+                    String ownerKey = jacsServiceData.getOwnerKey();
+                    DataSet ds = datasetService.getDatasetByNameOrIdentifier(ownerKey, imageLine.getDataset());
                     if (ds == null) {
-                        logger.error("No dataset record found for {} : {}", owner, lineEntries.getKey());
-                        throw new IllegalArgumentException("Invalid dataset identifier " + owner + ":" + imageLine.getDataset());
+                        logger.error("No dataset record found for {} : {}", ownerKey, lineEntries.getKey());
+                        throw new IllegalArgumentException("Invalid dataset identifier " + ownerKey + ":" + imageLine.getDataset());
                     }
                     return sageLoaderProcessor.process(
                             new ServiceExecutionContext.Builder(jacsServiceData)
@@ -190,7 +190,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                                         lsm.setReaders(ds.getReaders());
                                         return lsm;
                                     })
-                                    .map(lsm -> importLsm(owner, lsm))
+                                    .map(lsm -> importLsm(ownerKey, lsm))
                                     .map(lsm -> lsm.getSlideCode())
                                     .collect(Collectors.toSet())
                     ).thenApply(slideCodes -> {
@@ -202,7 +202,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                             lsmRef.setSlideCode(slideCode);
                             PageRequest pageRequest = new PageRequest();
                             pageRequest.setSortCriteria(ImmutableList.of(new SortCriteria("tmogDate", SortDirection.ASC)));
-                            PageResult<LSMImage> matchingLsms = sampleDataService.searchLsms(owner, lsmRef, pageRequest);
+                            PageResult<LSMImage> matchingLsms = sampleDataService.searchLsms(ownerKey, lsmRef, pageRequest);
                             allLsmsPerSlideCode.put(slideCode, matchingLsms.getResultList());
                         });
                         return allLsmsPerSlideCode;
@@ -250,8 +250,8 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         }
     }
 
-    private LSMImage importLsm(String owner, LSMImage lsmImage) {
-        PageResult<LSMImage> matchingLsms = sampleDataService.searchLsms(owner, lsmImage, new PageRequest());
+    private LSMImage importLsm(String ownerKey, LSMImage lsmImage) {
+        PageResult<LSMImage> matchingLsms = sampleDataService.searchLsms(ownerKey, lsmImage, new PageRequest());
         if (matchingLsms.isEmpty()) {
             sampleDataService.createLSM(lsmImage);
             return lsmImage;

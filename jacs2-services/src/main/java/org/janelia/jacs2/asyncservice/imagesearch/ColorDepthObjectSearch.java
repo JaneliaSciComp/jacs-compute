@@ -14,6 +14,7 @@ import org.janelia.model.domain.gui.colordepth.ColorDepthMask;
 import org.janelia.model.domain.gui.colordepth.ColorDepthMatch;
 import org.janelia.model.domain.gui.colordepth.ColorDepthResult;
 import org.janelia.model.domain.gui.colordepth.ColorDepthSearch;
+import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -39,8 +40,11 @@ import java.util.stream.Collectors;
 @Named("colorDepthObjectSearch")
 public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
+    private static final int MIN_NODES = 2;
+    private static final int MAX_NODES = 16;
+
     static class IntegratedColorDepthSearchArgs extends ServiceArgs {
-        @Parameter(names = "-searchId", description = "GUID of the ColorDepthFileSearch object to use", required = true)
+        @Parameter(names = "-searchId", description = "GUID of the ColorDepthSearch object to use", required = true)
         Long searchId;
     }
 
@@ -93,7 +97,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
         logger.info("Executing ColorDepthSearch#{}", args.searchId);
 
-        ColorDepthSearch search = dao.getDomainObject(jacsServiceData.getOwner(),
+        ColorDepthSearch search = dao.getDomainObject(jacsServiceData.getOwnerKey(),
                 ColorDepthSearch.class, args.searchId);
 
         if (search==null) {
@@ -124,6 +128,30 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                 .map(i -> i.toString())
                 .collect(Collectors.toList());
 
+        int totalFileCount = 0;
+        for (String dataSetIterator : search.getDataSets()) {
+            Integer count = null;
+            DataSet dataSet = dao.getDataSetByIdentifier(null, dataSetIterator);
+            if (dataSet != null) {
+                count = dataSet.getColorDepthCounts().get(search.getAlignmentSpace());
+            }
+            if (count != null) {
+                totalFileCount += count;
+            }
+            else {
+                logger.info("No file count available for data set {}, guessing 1000.", dataSetIterator);
+                totalFileCount += 1000;
+            }
+        }
+        logger.info("Searching {} directories with {} total images", search.getDataSets().size(), totalFileCount);
+
+        // Approximate increasing nodes, with logarithmic drop-off so that we don't take the whole cluster.
+        // At worse, this will take 16 nodes, no matter the number of files needing to be searched.
+        int desiredNodes = (int)Math.ceil(Math.log10((double)totalFileCount)*2);
+        int numNodes = Math.max(Math.min(desiredNodes, MAX_NODES), MIN_NODES);
+        int filesPerNode = (int)Math.round((double)totalFileCount/(double)numNodes);
+        logger.info("Using {} worker nodes, with {} files per node", numNodes, filesPerNode);
+
         Path alignPath = Paths.get(rootPath).resolve(search.getAlignmentSpace());
         String searchDirs = search.getDataSets().stream()
                 .map(dataSet -> alignPath.resolve(dataSet).toString())
@@ -134,6 +162,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         serviceArgList.add(new ServiceArg("-inputFiles", inputFiles));
         serviceArgList.add(new ServiceArg("-searchDirs", searchDirs));
         serviceArgList.add(new ServiceArg("-maskThresholds", maskThresholds));
+        serviceArgList.add(new ServiceArg("-numNodes", numNodes));
 
         if (search.getDataThreshold() != null) {
             serviceArgList.add(new ServiceArg("-dataThreshold", search.getDataThreshold()));
@@ -160,6 +189,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
                 try {
                     ColorDepthResult colorDepthResult = new ColorDepthResult();
+                    colorDepthResult.setParameters(search.getParameters());
 
                     for (File resultsFile : result.getResult()) {
 
@@ -196,8 +226,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                         }
                     }
 
-                    colorDepthResult = dao.save(jacsServiceData.getOwner(), colorDepthResult);
-                    dao.addColorDepthSearchResult(jacsServiceData.getOwner(), search.getId(), colorDepthResult);
+                    colorDepthResult = dao.save(jacsServiceData.getOwnerKey(), colorDepthResult);
+                    dao.addColorDepthSearchResult(jacsServiceData.getOwnerKey(), search.getId(), colorDepthResult);
                 } catch (Exception e) {
                     throw new ComputationException(jacsServiceData, e);
                 }

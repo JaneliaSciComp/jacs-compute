@@ -10,6 +10,7 @@ import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -49,7 +50,6 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
     private final long searchIntervalCheckInMillis;
     private final int numNodes;
     private final String jarPath;
-    private final int parallelism;
 
     static class ColorDepthSearchArgs extends ServiceArgs {
         @Parameter(names = {"-inputFiles"}, description = "Comma-delimited list of mask files", required = true)
@@ -64,6 +64,10 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         private Double pixColorFluctuation;
         @Parameter(names = {"-pctPositivePixels"}, description = "% of Positive PX Threshold (0-100%)")
         private Double pctPositivePixels;
+        @Parameter(names = {"-numNodes"}, description = "Number of worker nodes")
+        private Integer numNodes;
+        @Parameter(names = {"-parallelism"}, description = "Parallelism")
+        private Integer parallelism;
     }
 
     @Inject
@@ -76,7 +80,6 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
                          @IntPropertyValue(name = "service.colorDepthSearch.clusterIntervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
                          @IntPropertyValue(name = "service.colorDepthSearch.searchIntervalCheckInMillis", defaultValue = 5000) int searchIntervalCheckInMillis,
                          @IntPropertyValue(name = "service.colorDepthSearch.numNodes", defaultValue = 6) Integer numNodes,
-                         @IntPropertyValue(name = "service.colorDepthSearch.parallelism", defaultValue = 300) Integer parallelism,
                          @StrPropertyValue(name = "service.colorDepthSearch.jarPath") String jarPath,
                          Logger log) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, log);
@@ -86,7 +89,6 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         this.clusterIntervalCheckInMillis = clusterIntervalCheckInMillis;
         this.searchIntervalCheckInMillis = searchIntervalCheckInMillis;
         this.numNodes = numNodes;
-        this.parallelism = parallelism;
         this.jarPath = jarPath;
     }
 
@@ -109,17 +111,26 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         };
     }
 
-    private SparkCluster startCluster(JacsServiceData sd) {
+    private SparkCluster startCluster(JacsServiceData jacsServiceData) {
+        ColorDepthSearchArgs args = getArgs(jacsServiceData);
         // TODO: Should cache this somehow so it doesn't need to get recomputed each time
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(sd);
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         try {
             SparkCluster cluster = clusterSource.get();
+            int numNodes = this.numNodes;
+            if (args.numNodes != null) {
+                numNodes = args.numNodes;
+            }
             cluster.startCluster(serviceWorkingFolder.getServiceFolder(), numNodes);
+            // Allow user to override parallelism
+            if (args.parallelism != null) {
+                cluster.setDefaultParallelism(args.parallelism);
+            }
             logger.info("Waiting until Spark cluster is ready...");
             return cluster;
         }
         catch (Exception e) {
-            throw new ComputationException(sd, e);
+            throw new ComputationException(jacsServiceData, e);
         }
     }
 
@@ -150,9 +161,6 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         }
 
         List<String> appArgs = new ArrayList<>();
-
-        appArgs.add("-p");
-        appArgs.add("" + parallelism);
 
         appArgs.add("-m");
         appArgs.addAll(inputFiles);
@@ -216,7 +224,12 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
                         clusterIntervalCheckInMillis, clusterStartTimeoutInMillis)
 
                 // Now run the search
-                .thenApply((SparkCluster cluster) -> runApp(jacsServiceData, cluster))
+                .thenApply((SparkCluster cluster) -> {
+                    jacsServiceDataPersistence.addServiceEvent(
+                            jacsServiceData,
+                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT, String.format("Running app using spark job %s", cluster.getJobId())));
+                    return runApp(jacsServiceData, cluster);
+                })
 
                 // Wait until the search has completed
                 .thenSuspendUntil((SparkApp app) -> continueWhenTrue(app.isDone(), app),

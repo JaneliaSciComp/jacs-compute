@@ -10,6 +10,7 @@ import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.domain.IndexedReference;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
@@ -45,7 +46,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                               Path processDir,
                               JacsServiceData serviceContext) {
         logger.debug("Begin local process invocation for {}", serviceContext);
-        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
+        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, JacsServiceEvent.NO_EVENT);
         String processingScript = scriptServiceFolder.getServiceFolder("<unknown>").toString();
         try {
             processingScript = createProcessingScript(externalCode, env, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);
@@ -93,7 +94,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
             jacsServiceDataPersistence.updateServiceState(
                     serviceContext,
                     JacsServiceState.ERROR,
-                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.START_PROCESS_ERROR, String.format("Error starting %s - %s", processingScript, e.getMessage())))
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.START_PROCESS_ERROR, String.format("Error starting %s - %s", processingScript, e.getMessage()))
             );
             throw new ComputationException(serviceContext, e);
         }

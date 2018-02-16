@@ -2,6 +2,7 @@ package org.janelia.model.jacs2;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public abstract class AbstractEntityFieldValueHandler<T> implements EntityFieldValueHandler<T> {
     private final T fieldValue;
@@ -33,5 +34,12 @@ public abstract class AbstractEntityFieldValueHandler<T> implements EntityFieldV
         return new HashCodeBuilder(17, 37)
                 .append(fieldValue)
                 .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("fieldValue", fieldValue)
+                .toString();
     }
 }

@@ -9,6 +9,7 @@ import org.ggf.drmaa.Session;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
                               Path processDir,
                               JacsServiceData serviceContext) {
         logger.debug("Begin DRMAA job invocation for {}", serviceContext);
-        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
+        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, JacsServiceEvent.NO_EVENT);
         String processingScript = scriptServiceFolder.getServiceFolder("<unknown>").toString();
         JobTemplate jt = null;
         try {
@@ -93,7 +94,7 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
             jacsServiceDataPersistence.updateServiceState(
                     serviceContext,
                     JacsServiceState.ERROR,
-                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_JOB_ERROR, String.format("Error creating DRMAA job %s - %s", serviceContext.getName(), e.getMessage())))
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_JOB_ERROR, String.format("Error creating DRMAA job %s - %s", serviceContext.getName(), e.getMessage()))
             );
             logger.error("Error creating a DRMAA job {} for {}", processingScript, serviceContext, e);
             throw new ComputationException(serviceContext, e);

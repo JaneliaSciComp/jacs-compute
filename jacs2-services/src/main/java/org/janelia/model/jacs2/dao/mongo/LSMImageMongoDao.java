@@ -6,6 +6,7 @@ import com.mongodb.client.model.Filters;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
+import org.janelia.model.access.dao.mongo.MongoDaoHelper;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.domain.sample.LSMImage;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
@@ -70,7 +71,12 @@ public class LSMImageMongoDao extends AbstractImageMongoDao<LSMImage> implements
 
         Bson bsonFilter = null;
         if (!filters.isEmpty()) bsonFilter = and(filters);
-        List<LSMImage> results = find(bsonFilter, createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), LSMImage.class);
+        List<LSMImage> results = find(
+                bsonFilter,
+                MongoDaoHelper.createBsonSortCriteria(pageRequest.getSortCriteria()),
+                pageRequest.getOffset(),
+                pageRequest.getPageSize(),
+                LSMImage.class);
         return new PageResult<>(pageRequest, results);
     }
 }

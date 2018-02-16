@@ -4,13 +4,18 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobTemplate;
+import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.common.cluster.LsfJavaJobInfo;
 import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
 import org.janelia.jacs2.asyncservice.qualifier.LSFJavaJob;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.GridExecutor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.security.Subject;
+import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
@@ -37,15 +42,21 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
 
     private final JobManager jobMgr;
     private final ExecutorService lsfJobExecutor;
+    private final LegacyDomainDao dao;
+    private final ComputeAccounting accouting;
 
     @Inject
     public ExternalLSFJavaJobRunner(MonitoredJobManager jobMgr,
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
                                     @GridExecutor ExecutorService lsfJobExecutor,
+                                    LegacyDomainDao dao,
+                                    ComputeAccounting accouting,
                                     Logger logger) {
         super(jacsServiceDataPersistence, logger);
         this.jobMgr = jobMgr.getJobMgr();
         this.lsfJobExecutor = lsfJobExecutor;
+        this.dao = dao;
+        this.accouting = accouting;
     }
 
     @Override
@@ -56,7 +67,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
                               Path processDir,
                               JacsServiceData serviceContext) {
         logger.debug("Begin bsub job invocation for {}", serviceContext);
-        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, Optional.empty());
+        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, JacsServiceEvent.NO_EVENT);
         try {
             JobTemplate jt = prepareJobTemplate(externalCode, externalConfigs, env, scriptServiceFolder, processDir, serviceContext);
             String processingScript = jt.getRemoteCommand();
@@ -78,7 +89,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
             jacsServiceDataPersistence.updateServiceState(
                     serviceContext,
                     JacsServiceState.ERROR,
-                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_JOB_ERROR, String.format("Error creating DRMAA job %s - %s", serviceContext.getName(), e.getMessage())))
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_JOB_ERROR, String.format("Error creating DRMAA job %s - %s", serviceContext.getName(), e.getMessage()))
             );
             logger.error("Error creating a cluster job for {}", serviceContext, e);
             throw new ComputationException(serviceContext, e);
@@ -116,32 +127,39 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
             jt.setErrorPath(Paths.get(serviceContext.getErrorPath(), scriptServiceFolder.getServiceErrorPattern(".#")).toString());
         }
 
-        // Apply a RegEx to replace any non-alphanumeric character with "_".
-        String owner = serviceContext.getOwner();
-        if (StringUtils.isBlank(owner)) {
-            owner = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());
-        }
+        // Figure out who is going to get the bill
+        String billingAccount = getBillingAccount(serviceContext);
 
-        jt.setJobName(owner.replaceAll("\\W", "_") + "_" + serviceContext.getName());
-        // Check if the SGE grid requires account info
-        // TODO: need to port over ComputeAccounting.getInstance().getComputeAccount
-        //setAccount(jt);
+        // Apply a RegEx to replace any non-alphanumeric character with "_".
+        jt.setJobName(billingAccount.replaceAll("\\W", "_") + "_" + serviceContext.getName());
 
         List<String> nativeSpec = createNativeSpec(serviceContext.getResources());
-        if (nativeSpec!=null) {
-            jt.setNativeSpecification(nativeSpec);
-        }
+        nativeSpec.add("-P "+billingAccount);
+        jt.setNativeSpecification(nativeSpec);
 
         return jt;
     }
 
+    private String getBillingAccount(JacsServiceData serviceContext) {
+        String billingAccount = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());
+        if (!StringUtils.isBlank(billingAccount)) {
+            // User provided a billing account
+            Subject authenticatedUser = dao.getSubjectByKey(serviceContext.getAuthKey());
+            if (!SubjectUtils.isAdmin(authenticatedUser)) {
+                throw new ComputationException(serviceContext, "Admin access is required to override compute account");
+            }
+            logger.info("Using provided billing account {}", billingAccount);
+        }
+        else {
+            // Calculate billing account from job owner
+            billingAccount = accouting.getComputeAccount(serviceContext.getOwnerKey());
+            logger.info("Using billing account {} for user {}", billingAccount, serviceContext.getOwnerKey());
+        }
+        return billingAccount;
+    }
+
     private List<String> createNativeSpec(Map<String, String> jobResources) {
         List<String> spec = new ArrayList<>();
-        // append accountID for billing
-        String billingAccount = ProcessorHelper.getGridBillingAccount(jobResources);
-        if (StringUtils.isNotBlank(billingAccount)) {
-            spec.add("-P "+billingAccount);
-        }
         int nProcessingSlots = ProcessorHelper.getProcessingSlots(jobResources);
         StringBuilder resourceBuffer = new StringBuilder();
         if (nProcessingSlots > 1) {

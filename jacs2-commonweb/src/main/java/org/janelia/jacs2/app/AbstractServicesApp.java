@@ -13,6 +13,7 @@ import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
+import org.janelia.jacs2.filter.AuthFilter;
 import org.janelia.jacs2.filter.CORSResponseFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,8 @@ public abstract class AbstractServicesApp {
 
     protected void start(String[] args) throws ServletException {
         final AppArgs appArgs = new AppArgs();
-        JCommander cmdline = new JCommander(appArgs, args);
+        JCommander cmdline = new JCommander(appArgs);
+        cmdline.parse(args);
         if (appArgs.displayUsage) {
             cmdline.usage();
         } else {

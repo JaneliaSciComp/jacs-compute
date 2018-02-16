@@ -7,6 +7,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
@@ -148,7 +149,10 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
                 logger.debug("Enqueued service {} into {}", jacsServiceData, this);
                 waitingServicesSet.add(jacsServiceData.getId());
                 if (jacsServiceData.getState() == JacsServiceState.CREATED) {
-                    jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.QUEUED, Optional.<JacsServiceEvent>empty());
+                    jacsServiceDataPersistence.updateServiceState(
+                            jacsServiceData,
+                            JacsServiceState.QUEUED,
+                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.QUEUED, String.format("Waiting to be processed on '%s'", queueId)));
                 }
             }
             return added;

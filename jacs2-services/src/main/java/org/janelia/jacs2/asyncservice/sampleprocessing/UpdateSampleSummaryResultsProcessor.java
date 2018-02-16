@@ -103,7 +103,7 @@ public class UpdateSampleSummaryResultsProcessor extends AbstractBasicLifeCycleS
                     List<LSMSummary> lsmSummaryResults = sampleLSMSummaryProcessor.getResultHandler().getServiceDataResult(sampleSummaryService);
                     Multimap<Pair<Number, String>, LSMSummary> lsmSummaryResultsPerObjective = Multimaps.index(lsmSummaryResults, lsms -> ImmutablePair.of(lsms.getSampleImageFile().getSampleId(), lsms.getSampleImageFile().getObjective()));
                     lsmSummaryResultsPerObjective.asMap().forEach((Pair<Number, String> sampleObjective, Collection<LSMSummary> objectiveLsmSummaries) -> {
-                        Sample sample = sampleDataService.getSampleById(pd.getJacsServiceData().getOwner(), sampleObjective.getLeft());
+                        Sample sample = sampleDataService.getSampleById(pd.getJacsServiceData().getOwnerKey(), sampleObjective.getLeft());
 
                         LSMSummaryResult  sampleSummaryResult = new LSMSummaryResult();
                         sampleSummaryResult.setName("LSM Summary Results");

@@ -9,12 +9,17 @@ public class JacsServiceDataBuilder {
     public JacsServiceDataBuilder(JacsServiceData serviceContext) {
         this.serviceData = new JacsServiceData();
         if (serviceContext != null) {
-            serviceData.setOwner(serviceContext.getOwner());
+            serviceData.setOwnerKey(serviceContext.getOwnerKey());
+            serviceData.setAuthKey(serviceContext.getAuthKey());
             serviceData.updateParentService(serviceContext);
             if (serviceContext.getProcessingLocation() != null) {
                 serviceData.setProcessingLocation(serviceContext.getProcessingLocation());
             }
+            // propagate the queue ID from the parent service so that the entire service tree
+            // is processed on the same host
+            serviceData.setQueueId(serviceContext.getQueueId());
             serviceData.setWorkspace(serviceContext.getWorkspace());
+            serviceData.setTags(serviceContext.getTags()); // propagate the tags
         }
     }
 
@@ -30,13 +35,23 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
+    public JacsServiceDataBuilder addServiceArg(String name, Object value) {
+        serviceData.addServiceArg(name, value);
+        return this;
+    }
+
     public JacsServiceDataBuilder setName(String name) {
         serviceData.setName(name);
         return this;
     }
 
-    public JacsServiceDataBuilder setOwner(String owner) {
-        serviceData.setOwner(owner);
+    public JacsServiceDataBuilder setOwnerKey(String ownerKey) {
+        serviceData.setOwnerKey(ownerKey);
+        return this;
+    }
+
+    public JacsServiceDataBuilder setAuthKey(String ownerKey) {
+        serviceData.setAuthKey(ownerKey);
         return this;
     }
 

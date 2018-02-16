@@ -1,10 +1,18 @@
 package org.janelia.model.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class ServiceMetaData {
 
     private String serviceName;
-    private String usage;
     private String description;
+    private List<ServiceArgDescriptor> serviceArgDescriptors = new ArrayList<>();
+    @JsonIgnore
+    private ServiceArgs serviceArgs;
 
     public String getServiceName() {
         return serviceName;
@@ -22,11 +30,23 @@ public class ServiceMetaData {
         this.description = description;
     }
 
-    public String getUsage() {
-        return usage;
+    public List<ServiceArgDescriptor> getServiceArgDescriptors() {
+        return serviceArgDescriptors;
     }
 
-    public void setUsage(String usage) {
-        this.usage = usage;
+    public void setServiceArgDescriptors(List<ServiceArgDescriptor> serviceArgDescriptors) {
+        this.serviceArgDescriptors = serviceArgDescriptors;
+    }
+
+    public void addServiceArgDescriptor(ServiceArgDescriptor serviceArgDescriptor) {
+        serviceArgDescriptors.add(serviceArgDescriptor);
+    }
+
+    public ServiceArgs getServiceArgs() {
+        return serviceArgs;
+    }
+
+    public void setServiceArgs(ServiceArgs serviceArgs) {
+        this.serviceArgs = serviceArgs;
     }
 }

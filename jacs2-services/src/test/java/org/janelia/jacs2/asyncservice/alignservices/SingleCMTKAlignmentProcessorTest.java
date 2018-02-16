@@ -11,7 +11,6 @@ import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
-import org.janelia.model.service.JacsJobInstanceInfo;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.After;
@@ -119,7 +118,7 @@ public class SingleCMTKAlignmentProcessorTest {
 
     private JacsServiceData createTestServiceData(Long serviceId, List<String> inputImages) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
-                .setOwner("testOwner")
+                .setOwnerKey("testOwner")
                 .addArg("-inputImages", String.join(",", inputImages))
                 .addArg("-outputDir", testDirectory.toString())
                 .setWorkspace(TEST_WORKING_DIR);

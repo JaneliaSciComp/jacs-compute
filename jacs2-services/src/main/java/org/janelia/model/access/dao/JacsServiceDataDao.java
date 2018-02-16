@@ -23,6 +23,5 @@ public interface JacsServiceDataDao extends ReadWriteDao<JacsServiceData, Number
     PageResult<JacsServiceData> findServicesByState(Set<JacsServiceState> requestStates, PageRequest pageRequest);
     PageResult<JacsServiceData> claimServiceByQueueAndState(String queueId, Set<JacsServiceState> requestStates, PageRequest pageRequest);
     void saveServiceHierarchy(JacsServiceData serviceData);
-    void addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent);
     void updateServiceResult(JacsServiceData serviceData);
 }

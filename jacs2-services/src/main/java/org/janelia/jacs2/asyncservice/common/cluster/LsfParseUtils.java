@@ -54,7 +54,7 @@ public class LsfParseUtils {
         if (memLsf == null) return null;
         Double bytes = null;
 
-        Pattern p = Pattern.compile("(\\d+) (\\w+)");
+        Pattern p = Pattern.compile("([\\d\\.]+) (\\w+)");
         Matcher m = p.matcher(memLsf);
         if (m.matches()) {
             double amount = Double.parseDouble(m.group(1));
@@ -79,7 +79,7 @@ public class LsfParseUtils {
         }
 
         if (bytes == null) {
-            log.warn("Could not parse units in max mem: {}", memLsf);
+            log.warn("Could not parse max mem: {}", memLsf);
             return null;
         }
 

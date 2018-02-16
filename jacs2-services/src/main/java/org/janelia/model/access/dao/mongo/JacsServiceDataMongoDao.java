@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.IndexModel;
+import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,11 +50,22 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     @Inject
     public JacsServiceDataMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
         super(mongoDatabase, idGenerator);
+        mongoCollection.createIndexes(
+                ImmutableList.of(
+                        new IndexModel(Indexes.ascending("name")),
+                        new IndexModel(Indexes.ascending("ownerKey")),
+                        new IndexModel(Indexes.ascending("parentServiceId")),
+                        new IndexModel(Indexes.ascending("rootServiceId")),
+                        new IndexModel(Indexes.ascending("queueId")),
+                        new IndexModel(Indexes.ascending("state")),
+                        new IndexModel(Indexes.ascending("creationDate"))
+                )
+        );
     }
 
     @Override
     public List<JacsServiceData> findChildServices(Number serviceId) {
-        return find(eq("parentServiceId", serviceId), null, 0, -1, JacsServiceData.class);
+        return MongoDaoHelper.find(eq("parentServiceId", serviceId), null, 0, -1, mongoCollection, JacsServiceData.class);
     }
 
     @Override
@@ -66,7 +79,13 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
             rootServiceId = serviceId;
         }
         Map<Number, JacsServiceData> fullServiceHierachy = new LinkedHashMap<>();
-        find(Filters.or(eq("rootServiceId", rootServiceId), eq("_id", rootServiceId)), createBsonSortCriteria(ImmutableList.of(new SortCriteria("_id"))), 0, -1, JacsServiceData.class)
+        MongoDaoHelper.find(
+                Filters.or(eq("rootServiceId", rootServiceId), eq("_id", rootServiceId)),
+                MongoDaoHelper.createBsonSortCriteria(ImmutableList.of(new SortCriteria("_id"))),
+                0,
+                -1,
+                mongoCollection,
+                JacsServiceData.class)
                 .forEach(sd -> {
                     fullServiceHierachy.put(sd.getId(), sd);
                 });
@@ -88,42 +107,8 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
 
     @Override
     public PageResult<JacsServiceData> findMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest) {
-        ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
-        if (pattern.getId() != null) {
-            filtersBuilder.add(eq("_id", pattern.getId()));
-        }
-        if (pattern.getParentServiceId() != null) {
-            filtersBuilder.add(eq("parentServiceId", pattern.getParentServiceId()));
-        }
-        if (pattern.getRootServiceId() != null) {
-            filtersBuilder.add(eq("rootServiceId", pattern.getRootServiceId()));
-        }
-        if (StringUtils.isNotBlank(pattern.getName())) {
-            filtersBuilder.add(eq("name", pattern.getName()));
-        }
-        if (StringUtils.isNotBlank(pattern.getOwner())) {
-            filtersBuilder.add(eq("owner", pattern.getOwner()));
-        }
-        if (StringUtils.isNotBlank(pattern.getVersion())) {
-            filtersBuilder.add(eq("version", pattern.getVersion()));
-        }
-        if (pattern.getState() != null) {
-            filtersBuilder.add(eq("state", pattern.getState()));
-        }
-        if (StringUtils.isNotBlank(pattern.getQueueId())) {
-            filtersBuilder.add(eq("queueId", pattern.getQueueId()));
-        }
-        if (creationInterval.hasFrom()) {
-            filtersBuilder.add(gte("creationDate", creationInterval.getFrom()));
-        }
-        if (creationInterval.hasTo()) {
-            filtersBuilder.add(lt("creationDate", creationInterval.getTo()));
-        }
-        ImmutableList<Bson> filters = filtersBuilder.build();
-
-        Bson bsonFilter = null;
-        if (!filters.isEmpty()) bsonFilter = and(filters);
-        List<JacsServiceData> results = find(bsonFilter, createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), JacsServiceData.class);
+        Bson bsonFilter = JacsServiceDataMongoHelper.createBsonMatchingFilter(pattern, creationInterval);
+        List<JacsServiceData> results = MongoDaoHelper.find(bsonFilter, MongoDaoHelper.createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), mongoCollection, JacsServiceData.class);
         return new PageResult<>(pageRequest, results);
     }
 
@@ -141,7 +126,7 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
         }
         filtersBuilder.add(in("state", requestStates));
         Bson bsonFilter = and(filtersBuilder.build());
-        List<JacsServiceData> candidateResults = find(bsonFilter, createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), JacsServiceData.class);
+        List<JacsServiceData> candidateResults = find(bsonFilter, MongoDaoHelper.createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), JacsServiceData.class);
         if (candidateResults.isEmpty()) {
             return new PageResult<>(pageRequest, candidateResults);
         }
@@ -169,7 +154,13 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     @Override
     public PageResult<JacsServiceData> findServicesByState(Set<JacsServiceState> requestStates, PageRequest pageRequest) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(requestStates));
-        List<JacsServiceData> results = find(in("state", requestStates), createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), JacsServiceData.class);
+        List<JacsServiceData> results = MongoDaoHelper.find(
+                in("state", requestStates),
+                MongoDaoHelper.createBsonSortCriteria(pageRequest.getSortCriteria()),
+                pageRequest.getOffset(),
+                pageRequest.getPageSize(),
+                mongoCollection,
+                JacsServiceData.class);
         return new PageResult<>(pageRequest, results);
     }
 
@@ -177,13 +168,14 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     public void saveServiceHierarchy(JacsServiceData serviceData) {
         List<JacsServiceData> toBeInserted = new ArrayList<>();
         Map<JacsServiceData, Map<String, EntityFieldValueHandler<?>>> toBeUpdated = new LinkedHashMap<>();
-        List<JacsServiceData> serviceHierarchy = serviceData.serviceHierarchyStream().map(s -> {
+        List<JacsServiceData> serviceHierarchy = serviceData.serviceHierarchyStream().map((JacsServiceData s) -> {
             if (s.getId() == null) {
                 s.setId(idGenerator.generateId());
                 toBeInserted.add(s);
                 s.updateParentService(s.getParentService());
             } else {
                 Map<String, EntityFieldValueHandler<?>> updates = s.updateParentService(s.getParentService());
+                updates.put("state", new SetFieldValueHandler<>(s.getState()));
                 if (toBeUpdated.get(s) == null) {
                     toBeUpdated.put(s, updates);
                 } else {
@@ -198,7 +190,7 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
                 toBeUpdated.get(sd).put("dependenciesIds", new SetFieldValueHandler<>(sd.getDependenciesIds()));
             }
         });
-        mongoCollection.insertMany(toBeInserted);
+        if (CollectionUtils.isNotEmpty(toBeInserted)) mongoCollection.insertMany(toBeInserted);
         toBeUpdated.entrySet().forEach(updatedEntry -> update(updatedEntry.getKey(), updatedEntry.getValue()));
     }
 
@@ -211,16 +203,10 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     }
 
     @Override
-    public void addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
-        Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
-        updatedFields.put("events", new AppendFieldValueHandler<>(serviceEvent));
-        update(jacsServiceData, updatedFields);
-    }
-
-    @Override
     public void updateServiceResult(JacsServiceData serviceData) {
         Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
         updatedFields.put("serializableResult", new SetFieldValueHandler<>(serviceData.getSerializableResult()));
         update(serviceData, updatedFields);
     }
+
 }

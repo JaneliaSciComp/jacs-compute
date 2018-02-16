@@ -1,17 +1,18 @@
 dependencies {
     project.ext {
         // logging
-        SLF4J_VERSION = "1.7.21"
-        LOGBACK_VERSION = "1.1.7"
+        SLF4J_VERSION = "1.7.25"
+        LOGBACK_VERSION = "1.2.3"
         SLF4J_LIB = "org.slf4j:slf4j-api:${SLF4J_VERSION}"
         LOGBACK_CORE_LIB = "ch.qos.logback:logback-core:${LOGBACK_VERSION}"
         LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
 
         // dependency injection
-        JAVAX_ENTERPRISE_VERSION = "1.2"
-        WELD_VERSION = "2.4.6.Final"
+        JAVAX_ENTERPRISE_VERSION = "2.0"
+        WELD_VERSION = "3.0.2.Final"
         CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
         CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
+        CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-core:${WELD_VERSION}"
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
         // utilities
@@ -19,33 +20,39 @@ dependencies {
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // database
-        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:3.4.2"
+        MONGODB_VERSION = "3.6.1"
+        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:${MONGODB_VERSION}"
         MYSQL_DRIVER_LIB = "mysql:mysql-connector-java:5.1.42"
         DBCP_LIB = "org.apache.commons:commons-dbcp2:2.1.1"
         JONGO_LIB = "org.jongo:jongo:1.3.0"
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
         // apache commons
-        COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:3.5"
-        COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:4.1"
+        COMMONS_LANG_VERSION = "3.7"
+        COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:${COMMONS_LANG_VERSION}"
+        COMMONS_COLLECTIONS_VERSION = "4.1"
+        COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:${COMMONS_COLLECTIONS_VERSION}"
 
         // JAX-RS API
-        JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.0.1"
-        JERSEY_VERSION = "2.25.1"
-        JAX_RS_CORE_LIB = "org.glassfish.jersey.core:jersey-common:${JERSEY_VERSION}"
-        JAX_RS_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
-        JAX_RS_SERVER_LIB = "org.glassfish.jersey.core:jersey-server:${JERSEY_VERSION}"
-        JAX_RS_MEDIA_LIB = "org.glassfish.jersey.media:jersey-media-multipart:${JERSEY_VERSION}"
-        JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
-        JAX_RS_CONTAINERS_LIB = "org.glassfish.jersey.containers:jersey-container-servlet-core:${JERSEY_VERSION}"
-        JAX_RS_CDI_EXT_LIB = "org.glassfish.jersey.ext.cdi:jersey-cdi1x-servlet:${JERSEY_VERSION}"
+        JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.1"
+        JERSEY_VERSION = "2.26"
+        JAX_RS_JERSEY_CORE_LIB = "org.glassfish.jersey.core:jersey-common:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_SERVER_LIB = "org.glassfish.jersey.core:jersey-server:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_MEDIA_LIB = "org.glassfish.jersey.media:jersey-media-multipart:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_CONTAINERS_LIB = "org.glassfish.jersey.containers:jersey-container-servlet-core:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_CDI_SERVLET_LIB = "org.glassfish.jersey.ext.cdi:jersey-cdi1x-servlet:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_INJECT_LIB = "org.glassfish.jersey.inject:jersey-hk2:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-util:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_TEST_PROVIDER_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
 
         // command line args
-        CMDLINE_ARG_LIB = "com.beust:jcommander:1.58"
+        CMDLINE_ARG_LIB = "com.beust:jcommander:1.72"
 
         // servlet engine
         JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:3.1.0"
-        UNDERTOW_VERSION = "1.4.15.Final"
+        UNDERTOW_VERSION = "1.4.22.Final"
         UNDERTOW_CORE_LIB = "io.undertow:undertow-core:${UNDERTOW_VERSION}"
         UNDERTOW_SERVLET_LIB = "io.undertow:undertow-servlet:${UNDERTOW_VERSION}"
 
@@ -74,6 +81,17 @@ dependencies {
 
         // testing
         JUNIT_VERSION = "4.12"
+        HAMCREST_VERSION = "2.0.0.0"
+        MOCKITO_VERSION = "2.8.9"
+        POWERMOCKITO_VERSION = "1.7.3"
+        ASSERTJ_VERSION = "3.6.1"
+
+        JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
+        HAMCREST_LIB = "org.hamcrest:java-hamcrest:${HAMCREST_VERSION}"
+        MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
+        ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
+        POWERMOCK_JUNIT4_LIB = "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}"
+        POWERMOCK_MOCKITO_API_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
     }
 
     // Included in ALL projects
@@ -84,11 +102,11 @@ dependencies {
             COMMONS_COLLECTIONS_LIB,
             GUAVA_LIB
 
-    testCompile "junit:junit:${JUNIT_VERSION}",
-                "org.hamcrest:hamcrest-all:1.3",
-                "org.mockito:mockito-core:2.3.7",
-                "org.powermock:powermock-module-junit4:1.7.0",
-                "org.powermock:powermock-api-mockito2:1.7.0",
-                "org.assertj:assertj-core:3.6.1"
+    testCompile ASSERTJ_LIB,
+                HAMCREST_LIB,
+                JUNIT_LIB,
+                MOCKITO_LIB,
+                POWERMOCK_JUNIT4_LIB,
+                POWERMOCK_MOCKITO_API_LIB
 
 }

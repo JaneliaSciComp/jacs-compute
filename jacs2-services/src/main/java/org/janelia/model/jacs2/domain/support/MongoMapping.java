@@ -14,6 +14,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 public @interface MongoMapping {
     String collectionName();
-    String archiveCollectionName() default "";
     String label();
 }

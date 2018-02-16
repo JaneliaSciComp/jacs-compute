@@ -3,8 +3,10 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +44,11 @@ public class JacsServiceDataManagerImplTest {
         when(jacsServiceDataPersistence.findServiceHierarchy(TEST_ID)).thenReturn(existingData);
         JacsServiceData updatedData = jacsServiceDataManager.updateService(TEST_ID, newData);
         assertThat(updatedData.getState(), equalTo(newData.getState()));
-        verify(jacsServiceDataPersistence).update(existingData, ImmutableMap.of("state", new SetFieldValueHandler<>(JacsServiceState.RUNNING)));
+        verify(jacsServiceDataPersistence).update(existingData,
+                ImmutableMap.of(
+                        "events", new AppendFieldValueHandler<>(JacsServiceData.createServiceEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from CREATED -> RUNNING")),
+                        "state", new SetFieldValueHandler<>(JacsServiceState.RUNNING)
+                ));
     }
 
     @Test
@@ -52,7 +58,11 @@ public class JacsServiceDataManagerImplTest {
         when(jacsServiceDataPersistence.findServiceHierarchy(TEST_ID)).thenReturn(existingData);
         JacsServiceData updatedData = jacsServiceDataManager.updateService(TEST_ID, newData);
         assertThat(updatedData.getState(), equalTo(newData.getState()));
-        verify(jacsServiceDataPersistence).update(existingData, ImmutableMap.of("state", new SetFieldValueHandler<>(JacsServiceState.RUNNING)));
+        verify(jacsServiceDataPersistence).update(existingData,
+                ImmutableMap.of(
+                        "events", new AppendFieldValueHandler<>(JacsServiceData.createServiceEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from CREATED -> RUNNING")),
+                        "state", new SetFieldValueHandler<>(JacsServiceState.RUNNING)
+                ));
     }
 
     private JacsServiceData createServiceData(String name, JacsServiceState state, Integer priority) {

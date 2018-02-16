@@ -1,18 +1,16 @@
 package org.janelia.jacs2.dataservice.persistence;
 
-import com.google.common.collect.ImmutableMap;
-import org.janelia.model.access.dao.JacsServiceDataArchiveDao;
 import org.janelia.model.access.dao.JacsServiceDataDao;
-import org.janelia.model.access.dao.mongo.ArchiveMongoDao;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
-import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.jacs2.page.PageRequest;
+import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
-import org.janelia.model.jacs2.page.PageRequest;
-import org.janelia.model.jacs2.page.PageResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
@@ -29,12 +27,11 @@ import java.util.stream.Stream;
 
 public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServiceDataDao, JacsServiceData, Number> {
 
-    private final Instance<JacsServiceDataArchiveDao> jacsServiceArchiverDaoSource;
+    private static final Logger LOG = LoggerFactory.getLogger(JacsServiceDataPersistence.class);
 
     @Inject
-    public JacsServiceDataPersistence(Instance<JacsServiceDataDao> serviceDataDaoSource, Instance<JacsServiceDataArchiveDao> jacsServiceArchiverDaoSource) {
+    public JacsServiceDataPersistence(Instance<JacsServiceDataDao> serviceDataDaoSource) {
         super(serviceDataDaoSource);
-        this.jacsServiceArchiverDaoSource = jacsServiceArchiverDaoSource;
     }
 
     public JacsServiceData createServiceIfNotFound(JacsServiceData jacsServiceData) {
@@ -50,9 +47,11 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
                     return existingInstance.get();
                 } else {
                     jacsServiceDataDao.saveServiceHierarchy(jacsServiceData);
-                    jacsServiceDataDao.addServiceEvent(
+                    addServiceEvent(
+                            jacsServiceDataDao,
                             jacsServiceData,
-                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CREATE_CHILD_SERVICE, String.format("Created child service %s", jacsServiceData)));
+                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CREATE_CHILD_SERVICE, String.format("Created child service %s", jacsServiceData))
+                    );
                     return jacsServiceData;
                 }
             }
@@ -117,24 +116,6 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    private JacsServiceData findArchivedServiceHierarchy(Number serviceId) {
-        JacsServiceDataArchiveDao jacsServiceArchiverDao = jacsServiceArchiverDaoSource.get();
-        try {
-            return jacsServiceArchiverDao.findArchivedServiceHierarchy(serviceId);
-        } finally {
-            jacsServiceArchiverDaoSource.destroy(jacsServiceArchiverDao);
-        }
-    }
-
-    public JacsServiceData findActiveOrArchivedServiceHierarchy(Number serviceId) {
-        JacsServiceData jacsServiceData = findServiceHierarchy(serviceId);
-        if (jacsServiceData != null) {
-            return jacsServiceData;
-        } else {
-            return findArchivedServiceHierarchy(serviceId);
-        }
-    }
-
     public void saveHierarchy(JacsServiceData jacsServiceData) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
@@ -144,39 +125,19 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    public void archiveHierarchy(JacsServiceData jacsServiceData) {
-        JacsServiceDataDao jacsServiceDataDao = daoSource.get();
-        JacsServiceDataArchiveDao jacsServiceArchiverDao = jacsServiceArchiverDaoSource.get();
-        try {
-            List<JacsServiceData> serviceHierarchy = jacsServiceData.serviceHierarchyStream().collect(Collectors.toList());
-            serviceHierarchy.forEach(jacsServiceArchiverDao::archive);
-        } finally {
-            daoSource.destroy(jacsServiceDataDao);
-            jacsServiceArchiverDaoSource.destroy(jacsServiceArchiverDao);
-        }
-    }
-
     public void update(JacsServiceData jacsServiceData, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         if (jacsServiceData.hasId()) {
             super.update(jacsServiceData, fieldsToUpdate);
         }
     }
 
-    public void updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, Optional<JacsServiceEvent> serviceEvent) {
-        JacsServiceState oldServiceState = jacsServiceData.getState();
+    public void updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, JacsServiceEvent serviceEvent) {
+        LOG.info("Update service state for {} to {} with event {}", jacsServiceData, newServiceState, serviceEvent);
         List<Consumer<JacsServiceDataDao>> actions = new ArrayList<>();
-        if (newServiceState != oldServiceState) {
-            jacsServiceData.setState(newServiceState);
-            JacsServiceEvent updateStateEvent = JacsServiceData.createServiceEvent(JacsServiceEventTypes.UPDATE_STATE, "Update state from " + oldServiceState + " -> " + newServiceState);
-            jacsServiceData.addNewEvent(updateStateEvent);
-
-            actions.add(dao -> dao.addServiceEvent(jacsServiceData, updateStateEvent));
-            actions.add(dao -> dao.update(jacsServiceData, ImmutableMap.of("state", new SetFieldValueHandler<>(newServiceState))));
+        actions.add(dao -> dao.update(jacsServiceData, jacsServiceData.updateState(newServiceState)));
+        if (serviceEvent != JacsServiceEvent.NO_EVENT) {
+            actions.add(dao -> dao.update(jacsServiceData, jacsServiceData.addNewEvent(serviceEvent)));
         }
-        serviceEvent.ifPresent(anotherEvent -> {
-            jacsServiceData.addNewEvent(anotherEvent);
-            actions.add(dao -> dao.addServiceEvent(jacsServiceData, anotherEvent));
-        });
         if (jacsServiceData.hasId() && !actions.isEmpty()) {
             JacsServiceDataDao jacsServiceDataDao = daoSource.get();
             try {
@@ -188,14 +149,18 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
     }
 
     public void addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
-        jacsServiceData.addNewEvent(serviceEvent);
+        JacsServiceDataDao jacsServiceDataDao = daoSource.get();
+        try {
+            addServiceEvent(jacsServiceDataDao, jacsServiceData, serviceEvent);
+        } finally {
+            daoSource.destroy(jacsServiceDataDao);
+        }
+    }
+
+    private void addServiceEvent(JacsServiceDataDao jacsServiceDataDao, JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
+        Map<String, EntityFieldValueHandler<?>> jacsServiceDataUpdates = jacsServiceData.addNewEvent(serviceEvent);
         if (jacsServiceData.hasId()) {
-            JacsServiceDataDao jacsServiceDataDao = daoSource.get();
-            try {
-                jacsServiceDataDao.addServiceEvent(jacsServiceData, serviceEvent);
-            } finally {
-                daoSource.destroy(jacsServiceDataDao);
-            }
+            jacsServiceDataDao.update(jacsServiceData, jacsServiceDataUpdates);
         }
     }
 

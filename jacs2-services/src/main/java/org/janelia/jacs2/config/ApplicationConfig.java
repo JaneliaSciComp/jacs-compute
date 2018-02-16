@@ -1,7 +1,5 @@
 package org.janelia.jacs2.config;
 
-import java.util.Properties;
-
 public class ApplicationConfig extends XProperties {
     public String getStringPropertyValue(String name) {
         return getProperty(name);

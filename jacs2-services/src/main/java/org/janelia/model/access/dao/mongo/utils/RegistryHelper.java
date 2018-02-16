@@ -3,8 +3,8 @@ package org.janelia.model.access.dao.mongo.utils;
 import com.mongodb.MongoClient;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.janelia.model.jacs2.domain.enums.FileType;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
+import org.janelia.model.jacs2.domain.enums.FileType;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ProcessingLocation;
 

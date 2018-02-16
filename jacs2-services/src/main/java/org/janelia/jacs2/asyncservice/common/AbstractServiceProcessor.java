@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import com.beust.jcommander.JCommander;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
@@ -43,7 +44,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     protected <T> ContinuationCond.Cond<T> continueWhenTrue(boolean value, T result) {
-        return new ContinuationCond.Cond(result, value);
+        return new ContinuationCond.Cond<>(result, value);
     }
 
     @Override
@@ -82,7 +83,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
 
     @Override
     public ServiceResultHandler<R> getResultHandler() {
-        return new EmptyServiceResultHandler<R>();
+        return new EmptyServiceResultHandler<>();
     }
 
     @Override
@@ -92,6 +93,15 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
 
     protected List<String> getErrors(JacsServiceData jacsServiceData) {
         return this.getErrorChecker().collectErrors(jacsServiceData);
+    }
+
+    /**
+     * Helper method that can be used in service processor implementations that expect dictionary arguments.
+     * @param jacsServiceData
+     * @return
+     */
+    protected String getServiceDictionaryArgsAsJson(JacsServiceData jacsServiceData) {
+        return ServiceDataUtils.serializeObjectAsJson(jacsServiceData.getDictionaryArgs());
     }
 
     protected JacsServiceFolder getWorkingDirectory(JacsServiceData jacsServiceData) {
@@ -105,43 +115,50 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     protected String[] getJacsServiceArgsArray(JacsServiceData jacsServiceData) {
+        String[] serviceArgsArray;
+        // lazily instantiate actual service invocation arguments
         if (jacsServiceData.getActualArgs() == null) {
-            // the forwarded arguments are of the form: |>${fieldname} where fieldname is a field name from the result.
-            Predicate<String> isForwardedArg = arg -> arg != null && arg.startsWith("|>");
-            boolean forwardedArgumentsFound = jacsServiceData.getArgs().stream().anyMatch(isForwardedArg);
-            List<String> actualServiceArgs;
-            if (!forwardedArgumentsFound) {
-                actualServiceArgs = ImmutableList.copyOf(jacsServiceData.getArgs());
-            } else {
-                List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(jacsServiceData);
-                List<Object> serviceDependenciesResults = serviceDependencies.stream()
-                        .filter(sd -> sd.getSerializableResult() != null)
-                        .map(sd -> sd.getSerializableResult())
-                        .collect(Collectors.toList());
-                actualServiceArgs = jacsServiceData.getArgs().stream().map(arg -> {
-                    if (isForwardedArg.test(arg)) {
-                        return ExprEvalHelper.eval(arg.substring(2), serviceDependenciesResults);
-                    } else {
-                        return arg;
-                    }
-                }).collect(Collectors.toList());
-            }
+            List<String> actualServiceArgs = evalJacsServiceArgs(jacsServiceData);
             jacsServiceData.setActualArgs(actualServiceArgs);
         }
-        return jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
+        serviceArgsArray = jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
+        return serviceArgsArray;
+    }
+
+    private List<String> evalJacsServiceArgs(JacsServiceData jacsServiceData) {
+        // the forwarded arguments are of the form: |>${fieldname} where fieldname is a field name from the result.
+        Predicate<String> isForwardedArg = arg -> arg != null && arg.startsWith("|>");
+        boolean forwardedArgumentsFound = jacsServiceData.getArgs().stream().anyMatch(isForwardedArg);
+        List<String> actualServiceArgs;
+        if (!forwardedArgumentsFound) {
+            actualServiceArgs = ImmutableList.copyOf(jacsServiceData.getArgs());
+        } else {
+            List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(jacsServiceData);
+            List<Object> serviceDependenciesResults = serviceDependencies.stream()
+                    .filter(sd -> sd.getSerializableResult() != null)
+                    .map(sd -> sd.getSerializableResult())
+                    .collect(Collectors.toList());
+            actualServiceArgs = jacsServiceData.getArgs().stream().map(arg -> {
+                if (isForwardedArg.test(arg)) {
+                    return ExprEvalHelper.eval(arg.substring(2), serviceDependenciesResults);
+                } else {
+                    return arg;
+                }
+            }).collect(Collectors.toList());
+        }
+        return actualServiceArgs;
     }
 
     private Path getServicePath(String baseDir, JacsServiceData jacsServiceData) {
         ImmutableList.Builder<String> pathElemsBuilder = ImmutableList.builder();
-        if (StringUtils.isNotBlank(jacsServiceData.getOwner())) {
-            String name = SubjectUtils.getSubjectName(jacsServiceData.getOwner());
+        if (StringUtils.isNotBlank(jacsServiceData.getOwnerKey())) {
+            String name = SubjectUtils.getSubjectName(jacsServiceData.getOwnerKey());
             pathElemsBuilder.add(name);
         }
         pathElemsBuilder.add(jacsServiceData.getName());
         if (jacsServiceData.hasId()) {
             pathElemsBuilder.addAll(FileUtils.getTreePathComponentsForId(jacsServiceData.getId()));
         }
-//        pathElemsBuilder.addAll(Arrays.asList(more));
         return Paths.get(baseDir, pathElemsBuilder.build().toArray(new String[0])).toAbsolutePath();
     }
 
@@ -150,7 +167,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     protected <S> ContinuationCond<S> suspendCondition(JacsServiceData jacsServiceData) {
-        return new SuspendServiceContinuationCond<>(
+        return new WaitingForDependenciesContinuationCond<>(
                 new ServiceDependenciesCompletedContinuationCond(dependenciesGetterFunc(), jacsServiceDataPersistence, logger),
                 (S state) -> jacsServiceData,
                 (S state, JacsServiceData tmpSd) -> state,
@@ -176,13 +193,13 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         return new JacsServiceResult<>(jacsServiceData, result);
     }
 
-    protected void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
+    void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
         long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
         if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
             jacsServiceDataPersistence.updateServiceState(
                     jacsServiceData,
                     JacsServiceState.TIMEOUT,
-                    Optional.of(JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart))));
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart)));
             logger.warn("Service {} timed out after {}ms", jacsServiceData, timeSinceStart);
             throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " timed out");
         }

@@ -180,7 +180,7 @@ public class CMTKAlignmentProcessorTest {
 
     private JacsServiceData createTestServiceData(Long serviceId, List<String> inputImages, String outputDir) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
-                .setOwner("testOwner")
+                .setOwnerKey("testOwner")
                 .addArg("-inputImages", String.join(",", inputImages))
                 .addArg("-outputDir", outputDir)
                 .setWorkspace(TEST_WORKING_DIR);

@@ -5,6 +5,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.access.dao.mongo.AbstractMongoDao;
+import org.janelia.model.access.dao.mongo.MongoDaoHelper;
 import org.janelia.model.jacs2.dao.SubjectDao;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
