@@ -12,7 +12,7 @@ public class ServiceMetaData {
     private String description;
     private List<ServiceArgDescriptor> serviceArgDescriptors = new ArrayList<>();
     @JsonIgnore
-    private ServiceArgs serviceArgs;
+    private ServiceArgs serviceArgsObject;
 
     public String getServiceName() {
         return serviceName;
@@ -42,11 +42,11 @@ public class ServiceMetaData {
         serviceArgDescriptors.add(serviceArgDescriptor);
     }
 
-    public ServiceArgs getServiceArgs() {
-        return serviceArgs;
+    public ServiceArgs getServiceArgsObject() {
+        return serviceArgsObject;
     }
 
-    public void setServiceArgs(ServiceArgs serviceArgs) {
-        this.serviceArgs = serviceArgs;
+    public void setServiceArgsObject(ServiceArgs serviceArgsObject) {
+        this.serviceArgsObject = serviceArgsObject;
     }
 }

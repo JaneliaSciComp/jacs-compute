@@ -1,8 +1,10 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.model.access.dao.JacsNotificationDao;
+import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.service.JacsNotification;
 import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceEventTypes;
@@ -14,10 +16,12 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
+import org.janelia.model.service.ServiceMetaData;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
@@ -173,6 +177,8 @@ public class JacsServiceDispatcherTest {
                         JacsServiceState.RUNNING,
                         JacsServiceEvent.NO_EVENT);
         verify(jacsServiceDataPersistence)
+                .update(testServiceData, ImmutableMap.of("actualArgs", new SetFieldValueHandler<>(ImmutableList.of())));
+        verify(jacsServiceDataPersistence)
                 .updateServiceState(
                         same(testServiceData),
                         eq(JacsServiceState.SUCCESSFUL),
@@ -215,6 +221,11 @@ public class JacsServiceDispatcherTest {
         when(jacsServiceDataPersistence.findServiceDependencies(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
         when(serviceRegistry.lookupService(testServiceData.getName())).thenReturn(testProcessor);
 
+        when(testProcessor.getMetadata()).then((Answer<ServiceMetaData>) invocation -> {
+            ServiceMetaData smd = new ServiceMetaData();
+            smd.setServiceArgsObject(new ServiceArgs());
+            return smd;
+        });
         if (exc == null) {
             when(testProcessor.process(any(JacsServiceData.class))).thenAnswer(invocation -> serviceComputationFactory.newCompletedComputation(new JacsServiceResult<>(testServiceData)));
         } else {

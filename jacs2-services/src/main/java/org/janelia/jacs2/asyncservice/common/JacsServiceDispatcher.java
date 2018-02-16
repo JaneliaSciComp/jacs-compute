@@ -77,7 +77,9 @@ public class JacsServiceDispatcher {
                             jacsServiceDataPersistence,
                             logger).negate())
                     .thenApply((JacsServiceData sd) -> {
-                        sendNotification(jacsServiceData, JacsServiceLifecycleStage.START_PROCESSING);
+                        sendNotification(sd, JacsServiceLifecycleStage.START_PROCESSING);
+                        ServiceArgsHandler serviceArgsHandler = new ServiceArgsHandler(jacsServiceDataPersistence);
+                        jacsServiceDataPersistence.update(sd, serviceArgsHandler.updateServiceArgs(serviceProcessor.getMetadata(), sd));
                         return sd;
                     })
                     .thenCompose(sd -> serviceProcessor.process(sd))

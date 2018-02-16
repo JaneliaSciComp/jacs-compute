@@ -28,9 +28,9 @@ import java.util.stream.Stream;
 @MongoMapping(collectionName="jacsService", label="JacsService")
 public class JacsServiceData implements BaseEntity, HasIdentifier {
 
-    public static JacsServiceEvent createServiceEvent(JacsServiceEventTypes name, String value) {
+    public static JacsServiceEvent createServiceEvent(JacsServiceEventTypes eventType, String value) {
         JacsServiceEvent se = new JacsServiceEvent();
-        se.setName(name.name());
+        se.setName(eventType.name());
         se.setValue(value);
         return se;
     }
@@ -222,6 +222,13 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.actualArgs = actualArgs;
     }
 
+    public Map<String, EntityFieldValueHandler<?>> updateActualArgs(List<String> actualArgs) {
+        Map<String, EntityFieldValueHandler<?>> dataUpdates = new HashMap<>();
+        this.actualArgs = actualArgs;
+        dataUpdates.put("actualArgs", new SetFieldValueHandler<>(actualArgs));
+        return dataUpdates;
+    }
+
     public Map<String, Object> getDictionaryArgs() {
         return dictionaryArgs;
     }
@@ -241,18 +248,24 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.serviceArgs = serviceArgs;
     }
 
-    public void addServiceArg(String name, Object value) {
+    public Map<String, EntityFieldValueHandler<?>> addServiceArg(String arg, Object val) {
+        Map<String, EntityFieldValueHandler<?>> dataUpdates = new HashMap<>();
         if (this.serviceArgs == null) {
             this.serviceArgs = new LinkedHashMap<>();
         }
-        this.serviceArgs.put(name, value);
+        this.serviceArgs.put(arg, val);
+        dataUpdates.put("serviceArgs." + arg, new SetFieldValueHandler<>(val));
+        return dataUpdates;
     }
 
-    public void addServiceArgs(Map<String, Object> serviceArgs) {
+    public Map<String, EntityFieldValueHandler<?>> addServiceArgs(Map<String, Object> serviceArgs) {
+        Map<String, EntityFieldValueHandler<?>> dataUpdates = new HashMap<>();
         if (this.serviceArgs == null) {
             this.serviceArgs = new LinkedHashMap<>();
         }
         this.serviceArgs.putAll(serviceArgs);
+        serviceArgs.forEach((arg, val) -> dataUpdates.put("serviceArgs." + arg, new SetFieldValueHandler<>(val)));
+        return dataUpdates;
     }
 
     public String getWorkspace() {
@@ -323,8 +336,8 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.env = env;
     }
 
-    public void addToEnv(String name, String value) {
-        this.env.put(name, value);
+    public void addToEnv(String varName, String value) {
+        this.env.put(varName, value);
     }
 
     public void clearEnv() {
@@ -339,8 +352,8 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.resources = resources;
     }
 
-    public void addToResources(String name, String value) {
-        this.resources.put(name, value);
+    public void addToResources(String resourceName, String resourceVal) {
+        this.resources.put(resourceName, resourceVal);
     }
 
     public void clearResources() {

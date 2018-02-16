@@ -22,7 +22,7 @@ public class ServiceArgs {
     private static <A extends ServiceArgs> void populateArgumentDescriptors(A args, ServiceMetaData smd) {
         JCommander jc = new JCommander(args);
         List<ParameterDescription> parameterDescriptiontList = jc.getParameters();
-        smd.setServiceArgs(args);
+        smd.setServiceArgsObject(args);
         smd.setDescription(args.getServiceDescription());
         smd.setServiceArgDescriptors(parameterDescriptiontList.stream()
                 .filter(pd -> !pd.isHelp())

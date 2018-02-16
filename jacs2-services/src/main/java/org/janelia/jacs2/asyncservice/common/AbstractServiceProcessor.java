@@ -115,38 +115,10 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     protected String[] getJacsServiceArgsArray(JacsServiceData jacsServiceData) {
-        String[] serviceArgsArray;
-        // lazily instantiate actual service invocation arguments
         if (jacsServiceData.getActualArgs() == null) {
-            List<String> actualServiceArgs = evalJacsServiceArgs(jacsServiceData);
-            jacsServiceData.setActualArgs(actualServiceArgs);
+            new ServiceArgsHandler(jacsServiceDataPersistence).updateServiceArgs(getMetadata(), jacsServiceData);
         }
-        serviceArgsArray = jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
-        return serviceArgsArray;
-    }
-
-    private List<String> evalJacsServiceArgs(JacsServiceData jacsServiceData) {
-        // the forwarded arguments are of the form: |>${fieldname} where fieldname is a field name from the result.
-        Predicate<String> isForwardedArg = arg -> arg != null && arg.startsWith("|>");
-        boolean forwardedArgumentsFound = jacsServiceData.getArgs().stream().anyMatch(isForwardedArg);
-        List<String> actualServiceArgs;
-        if (!forwardedArgumentsFound) {
-            actualServiceArgs = ImmutableList.copyOf(jacsServiceData.getArgs());
-        } else {
-            List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(jacsServiceData);
-            List<Object> serviceDependenciesResults = serviceDependencies.stream()
-                    .filter(sd -> sd.getSerializableResult() != null)
-                    .map(sd -> sd.getSerializableResult())
-                    .collect(Collectors.toList());
-            actualServiceArgs = jacsServiceData.getArgs().stream().map(arg -> {
-                if (isForwardedArg.test(arg)) {
-                    return ExprEvalHelper.eval(arg.substring(2), serviceDependenciesResults);
-                } else {
-                    return arg;
-                }
-            }).collect(Collectors.toList());
-        }
-        return actualServiceArgs;
+        return jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
     }
 
     private Path getServicePath(String baseDir, JacsServiceData jacsServiceData) {
