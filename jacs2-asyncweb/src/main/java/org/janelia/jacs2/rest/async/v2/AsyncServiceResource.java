@@ -21,6 +21,8 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
@@ -43,9 +45,9 @@ public class AsyncServiceResource {
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
-    public Response createAsyncServices(List<JacsServiceData> services, @Context SecurityContext securityContext) {
-        String authenticatedSubject = JacsSecurityContextHelper.getAuthenticatedSubjectKey(securityContext);
-        String authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubjectKey(securityContext);
+    public Response createAsyncServices(List<JacsServiceData> services, @Context ContainerRequestContext containerRequestContext) {
+        String authenticatedSubject = JacsSecurityContextHelper.getAuthenticatedSubjectKey(containerRequestContext);
+        String authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         services.forEach((service) -> {
             service.setAuthKey(authenticatedSubject);
             service.setOwnerKey(authorizedSubject);
@@ -65,9 +67,9 @@ public class AsyncServiceResource {
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
-    public Response createAsyncService(@PathParam("service-name") String serviceName, JacsServiceData si, @Context SecurityContext securityContext) {
-        String authenticatedSubject = JacsSecurityContextHelper.getAuthenticatedSubjectKey(securityContext);
-        String authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubjectKey(securityContext);
+    public Response createAsyncService(@PathParam("service-name") String serviceName, JacsServiceData si, @Context ContainerRequestContext containerRequestContext) {
+        String authenticatedSubject = JacsSecurityContextHelper.getAuthenticatedSubjectKey(containerRequestContext);
+        String authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         si.setAuthKey(authenticatedSubject);
         si.setOwnerKey(authorizedSubject);
         si.setName(serviceName);
