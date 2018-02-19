@@ -2,14 +2,13 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
-import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.service.*;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.Optional;
 import java.util.function.Function;
 
 @ApplicationScoped
@@ -50,7 +49,9 @@ public class JacsServiceDispatcher {
                 // nothing to do
                 return;
             }
+
             logger.debug("Dequeued service {}", queuedService);
+
             if (!queuedService.hasParentServiceId()) {
                 // if this is a root service, i.e. no other currently running service depends on it
                 // then try to acquire a slot otherwise let this pass through
@@ -66,7 +67,9 @@ public class JacsServiceDispatcher {
 
     @MdcContext
     private void dispatchService(JacsServiceData jacsServiceData) {
-        logger.info("Dispatch service {}", jacsServiceData);
+
+        logger.debug("Dispatch service {}", jacsServiceData);
+
         try {
             ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
             jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.DISPATCHED, JacsServiceEvent.NO_EVENT);
@@ -109,7 +112,14 @@ public class JacsServiceDispatcher {
 
     @MdcContext
     private void success(JacsServiceData serviceData) {
-        logger.info("Processing successful {}", serviceData);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Processing successful {}", serviceData);
+        }
+        else {
+            logger.info("Processing successful {}", serviceData.getShortName());
+        }
+
         JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
         if (latestServiceData == null) {
             logger.warn("No Service not found for {} - probably it was already archived", serviceData);
@@ -135,14 +145,21 @@ public class JacsServiceDispatcher {
 
     @MdcContext
     private void fail(JacsServiceData serviceData, Throwable exc) {
-        logger.error("Processing error executing {}", serviceData, exc);
+
+        if (logger.isDebugEnabled()) {
+            logger.error("Processing error executing {}", serviceData, exc);
+        }
+        else {
+            logger.error("Processing error executing {}", serviceData.getShortName(), exc);
+        }
+
         JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
         if (latestServiceData == null) {
-            logger.warn("NO Service not found for {}", serviceData);
+            logger.warn("No Service not found for {}", serviceData.getId());
             return;
         }
         if (latestServiceData.hasCompletedSuccessfully()) {
-            logger.warn("Service {} has failed after has already been marked as successfull", latestServiceData);
+            logger.warn("Service {} has failed after has already been marked as successful", latestServiceData);
         }
         if (latestServiceData.hasCompletedUnsuccessfully()) {
             // nothing to do
