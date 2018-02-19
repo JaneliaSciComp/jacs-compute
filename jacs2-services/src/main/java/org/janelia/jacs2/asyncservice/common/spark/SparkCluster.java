@@ -100,9 +100,9 @@ public class SparkCluster {
         int numSlots = nodeSlots + nodeSlots * numNodes; // master + workers
 
         // Default to two tasks per slot (this seems empirically optimal)
-        this.defaultParallelism = 2 * nodeSlots * numNodes;
+        this.defaultParallelism = 3 * nodeSlots * numNodes;
 
-        log.info("Starting Spark cluster with {} nodes ({} total slots)", numNodes, numSlots);
+        log.info("Starting Spark cluster with {} worker nodes ({} total slots)", numNodes, numSlots);
         log.info("Working directory: {}", workingDirectory);
 
         JobTemplate jt = new JobTemplate();
