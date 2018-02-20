@@ -7,6 +7,7 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.ServiceArgDescriptor;
 import org.janelia.model.service.ServiceMetaData;
 
 import java.util.HashMap;
@@ -33,8 +34,10 @@ class ServiceArgsHandler {
             // the parsed actual arguments and the dictionary arguments
             JCommander cmdLineParser = new JCommander(serviceMetaData.getServiceArgsObject());
             cmdLineParser.parse(actualServiceArgs.toArray(new String[actualServiceArgs.size()])); // parse the actual service args
-            serviceMetaData.getServiceArgDescriptors().forEach(sd -> {
-                serviceDataUpdates.putAll(serviceData.addServiceArg(sd.getArgName(), sd.getArg().get(serviceMetaData.getServiceArgsObject())));
+            serviceMetaData.getServiceArgDescriptors().forEach((ServiceArgDescriptor sd) -> {
+                String argName = sd.getArgName();
+                Object argValue = sd.getArg().get(serviceMetaData.getServiceArgsObject());
+                serviceDataUpdates.putAll(serviceData.addServiceArg(argName, argValue != null ? argValue.toString() : null));
             });
             serviceDataUpdates.putAll(serviceData.addServiceArgs(serviceData.getDictionaryArgs())); // add the dictionary args
         }
