@@ -4,11 +4,13 @@ import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.service.*;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -79,7 +81,9 @@ public class JacsServiceDispatcher {
                     .thenApply((JacsServiceData sd) -> {
                         sendNotification(sd, JacsServiceLifecycleStage.START_PROCESSING);
                         ServiceArgsHandler serviceArgsHandler = new ServiceArgsHandler(jacsServiceDataPersistence);
-                        jacsServiceDataPersistence.update(sd, serviceArgsHandler.updateServiceArgs(serviceProcessor.getMetadata(), sd));
+                        Map<String, EntityFieldValueHandler<?>> sdUpdates = serviceArgsHandler.updateServiceArgs(serviceProcessor.getMetadata(), sd);
+                        logger.debug("Update service args for {} to {}", sd, sdUpdates);
+                        jacsServiceDataPersistence.update(sd, sdUpdates);
                         return sd;
                     })
                     .thenCompose(sd -> serviceProcessor.process(sd))

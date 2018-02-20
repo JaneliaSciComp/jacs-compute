@@ -11,6 +11,6 @@ public class MongoModule extends SimpleModule {
         addDeserializer(Date.class, new ISODateDeserializer());
         addDeserializer(Long.class, new MongoNumberLongDeserializer());
         addDeserializer(Double.class, new MongoNumberDoubleDeserializer());
-        addDeserializer(Number.class, new MongoNumberBigIntegerDeserializer());
+        addDeserializer(Number.class, new MongoNumberDeserializer());
     }
 }
