@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.beust.jcommander.JCommander;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Streams;
 import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class ServiceArgsHandler {
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
@@ -36,12 +38,47 @@ class ServiceArgsHandler {
             cmdLineParser.parse(actualServiceArgs.toArray(new String[actualServiceArgs.size()])); // parse the actual service args
             serviceMetaData.getServiceArgDescriptors().forEach((ServiceArgDescriptor sd) -> {
                 String argName = sd.getArgName();
-                Object argValue = sd.getArg().get(serviceMetaData.getServiceArgsObject());
-                serviceDataUpdates.putAll(serviceData.addServiceArg(argName, argValue != null ? argValue.toString() : null));
+                Object argValue = prepareArgValue(sd.getArg().get(serviceMetaData.getServiceArgsObject()));
+                serviceDataUpdates.putAll(serviceData.addServiceArg(argName, argValue));
             });
             serviceDataUpdates.putAll(serviceData.addServiceArgs(serviceData.getDictionaryArgs())); // add the dictionary args
         }
         return serviceDataUpdates;
+    }
+
+    private Object prepareArgValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        List<String> stringValues = argValueAsStream(value).flatMap(v -> argValueAsStream(v)).map(v -> v.toString()).collect(Collectors.toList());
+        if (stringValues.size() < 1) {
+            return null;
+        } else if (stringValues.size() == 1) {
+            return stringValues.get(0);
+        } else {
+            return stringValues;
+        }
+    }
+
+    private Stream<Object> argValueAsStream(Object argValue) {
+        if (argValue.getClass().isArray()) {
+            return arrayValueAsStream((Object[]) argValue);
+        } else if (argValue instanceof Iterable) {
+            return iterableValueAsStream((Iterable) argValue);
+        } else {
+            return simpleValueAsStream(argValue);
+        }
+    }
+    private Stream<Object> arrayValueAsStream(Object[] arrayValue) {
+        return Stream.of(arrayValue);
+    }
+
+    private Stream<Object> iterableValueAsStream(Iterable<Object> iterableValue) {
+        return Streams.stream(iterableValue);
+    }
+
+    private Stream<Object> simpleValueAsStream(Object simpleValue) {
+        return Stream.of(simpleValue);
     }
 
     private List<String> evalJacsServiceArgs(JacsServiceData jacsServiceData) {
