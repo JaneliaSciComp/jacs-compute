@@ -511,6 +511,10 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
                 .toString();
     }
 
+    public String getShortName() {
+        return getName()+"#"+getId();
+    }
+
     public boolean hasNeverBeenProcessed() {
         return state == JacsServiceState.CREATED || state == JacsServiceState.QUEUED;
     }

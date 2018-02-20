@@ -60,6 +60,7 @@ public class SparkCluster {
     private File workingDirectory;
     private Long jobId;
     private String master;
+    private SparkApp app;
 
     @Inject
     public SparkCluster(MonitoredJobManager jobMgr,
@@ -90,6 +91,7 @@ public class SparkCluster {
         this.workingDirectory = null;
         this.jobId = null;
         this.master = null;
+        this.app = null;
     }
 
     public synchronized void startCluster(Path workingDirName, int numNodes) throws Exception {
@@ -98,9 +100,9 @@ public class SparkCluster {
         int numSlots = nodeSlots + nodeSlots * numNodes; // master + workers
 
         // Default to two tasks per slot (this seems empirically optimal)
-        this.defaultParallelism = 2 * nodeSlots * numNodes;
+        this.defaultParallelism = 3 * nodeSlots * numNodes;
 
-        log.info("Starting Spark cluster with {} nodes ({} total slots)", numNodes, numSlots);
+        log.info("Starting Spark cluster with {} worker nodes ({} total slots)", numNodes, numSlots);
         log.info("Working directory: {}", workingDirectory);
 
         JobTemplate jt = new JobTemplate();
@@ -178,10 +180,17 @@ public class SparkCluster {
     }
 
     private synchronized void processJobCompletion(Throwable exception) {
+
         if (exception != null) {
-            log.error("Spark cluster ended with error",exception);
+            log.error("Spark cluster ended with error", exception);
         }
-        if (jobId!=null) {
+
+        if (app != null && !app.isDone()) {
+            log.warn("Force killing Spark application with id {}", app.getHandle().getAppId());
+            app.getHandle().kill();
+        }
+
+        if (jobId != null) {
             log.warn("Spark cluster {} has died", jobId);
             reset();
         }
@@ -243,11 +252,15 @@ public class SparkCluster {
      * @return
      * @throws Exception
      */
-    public SparkApp runApp(BiConsumer<File, ? super Throwable> callback, String jarPath,
+    public synchronized SparkApp runApp(BiConsumer<File, ? super Throwable> callback, String jarPath,
                            String... appArgs) throws Exception {
 
         if (!isReady()) {
             throw new IllegalStateException("Cluster is not ready");
+        }
+
+        if (app != null) {
+            throw new IllegalStateException("An app is already running on this cluster");
         }
 
         Stopwatch s = Stopwatch.createStarted();
@@ -262,6 +275,7 @@ public class SparkCluster {
                 SparkAppHandle.State state = sparkAppHandle.getState();
                 log.info("Spark application state changed: "+state);
                 if (state.isFinal()) {
+                    app = null;
                     long seconds = s.stop().elapsed().getSeconds();
                     log.info("Spark application ran for {} seconds.", seconds);
                     if (state==SparkAppHandle.State.FINISHED) {
@@ -312,7 +326,9 @@ public class SparkCluster {
         // This bug is fixed in Spark 2.3, but unfortunately not backported to 2.2.x. We should upgrade to 2.3 as soon
         // as it's available.
 
-        return new SparkApp(this, handle);
+        app = new SparkApp(this, handle);
+
+        return app;
     }
 
     /**
