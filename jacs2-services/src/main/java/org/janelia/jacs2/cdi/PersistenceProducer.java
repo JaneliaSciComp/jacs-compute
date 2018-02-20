@@ -1,14 +1,9 @@
 package org.janelia.jacs2.cdi;
 
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoClientURI;
+import com.mongodb.*;
 import com.mongodb.client.MongoDatabase;
-import org.apache.commons.dbcp2.ConnectionFactory;
-import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp2.PoolableConnection;
-import org.apache.commons.dbcp2.PoolableConnectionFactory;
-import org.apache.commons.dbcp2.PoolingDataSource;
+import org.apache.commons.dbcp2.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -24,12 +19,18 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 @ApplicationScoped
 public class PersistenceProducer {
 
     @Inject
     private Logger log;
+
+    @Inject
+    @PropertyValue(name = "MongoDB.ServerURL")
+    private String mongoServerURL;
 
     @Inject
     @PropertyValue(name = "MongoDB.ConnectionURL")
@@ -49,7 +50,10 @@ public class PersistenceProducer {
             @PropertyValue(name = "MongoDB.ThreadsAllowedToBlockForConnectionMultiplier") int threadsAllowedToBlockMultiplier,
             @PropertyValue(name = "MongoDB.ConnectionsPerHost") int connectionsPerHost,
             @PropertyValue(name = "MongoDB.ConnectTimeout") int connectTimeout,
+            @PropertyValue(name = "MongoDB.Username") String username,
+            @PropertyValue(name = "MongoDB.Password") String password,
             ObjectMapperFactory objectMapperFactory) {
+
         CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(objectMapperFactory);
         MongoClientOptions.Builder optionsBuilder =
                 MongoClientOptions.builder()
@@ -57,9 +61,32 @@ public class PersistenceProducer {
                         .connectionsPerHost(connectionsPerHost)
                         .connectTimeout(connectTimeout)
                         .codecRegistry(codecRegistry);
+
+        if (mongoServerURL != null) {
+            // Alternative connection method to support passwords special characters not supported by MongoClientURI
+
+            List<ServerAddress> members = new ArrayList<>();
+            for (String serverMember : mongoServerURL.split(",")) {
+                members.add(new ServerAddress(serverMember));
+            }
+
+            if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
+                MongoCredential credential = MongoCredential.createMongoCRCredential(username, mongoDatabase, password.toCharArray());
+                MongoClient m = new MongoClient(members, credential, optionsBuilder.build());
+                log.info("Connected to MongoDB (" + mongoDatabase + "@" + mongoServerURL + ") as user " + username);
+                return m;
+            }
+            else {
+                MongoClient m = new MongoClient(members);
+                log.info("Connected to MongoDB (" + mongoDatabase + "@" + mongoServerURL + ")");
+                return m;
+            }
+        }
+
         MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
-        log.info("Creating Mongo client {} using database {}", mongoConnectionString, mongoDatabase);
-        return new MongoClient(mongoConnectionString);
+        MongoClient m = new MongoClient(mongoConnectionString);
+        log.info("Connected to MongoDB (" + mongoDatabase + "@" + mongoConnectionString + ")");
+        return m;
     }
 
     @Produces
