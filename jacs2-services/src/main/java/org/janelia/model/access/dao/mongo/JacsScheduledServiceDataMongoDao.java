@@ -58,7 +58,7 @@ public class JacsScheduledServiceDataMongoDao extends AbstractMongoDao<JacsSched
     }
 
     @Override
-    public List<JacsScheduledServiceData> findServiceScheduledAfter(String queueId, Date scheduledTime, boolean includeDisabled) {
+    public List<JacsScheduledServiceData> findServiceScheduledAtOrBefore(String queueId, Date scheduledTime, boolean includeDisabled) {
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
         if (StringUtils.isNotBlank(queueId)) {
             // if a queue is provided lookup only services for the specified queue
@@ -71,7 +71,7 @@ public class JacsScheduledServiceDataMongoDao extends AbstractMongoDao<JacsSched
         }
 
         filtersBuilder.add(Filters.or(
-                Filters.gt("nextStartTime", scheduledTime),
+                Filters.lte("nextStartTime", scheduledTime),
                 Filters.exists("nextStartTime", false)));
 
         if (!includeDisabled) {
@@ -95,13 +95,17 @@ public class JacsScheduledServiceDataMongoDao extends AbstractMongoDao<JacsSched
                 Filters.and(
                         Filters.eq("_id", scheduledServiceData.getId()),
                         Filters.or(
-                                Filters.gt("nextStartTime", currentScheduledTime),
+                                Filters.lte("nextStartTime", currentScheduledTime),
                                 Filters.exists("nextStartTime", false)),
                         Filters.or(
                                 Filters.eq("disabled", false),
                                 Filters.exists("disabled", false))
                 ),
-                Updates.set("nextStartTime", scheduledServiceData.getNextStartTime()),
+                Updates.combine(
+                        Updates.set("nextStartTime", scheduledServiceData.getNextStartTime()),
+                        Updates.set("lastStartTime", currentScheduledTime)
+                ),
+
                 updateOptions
         );
         return updatedScheduledServiceData == null ? Optional.empty() : Optional.of(updatedScheduledServiceData);

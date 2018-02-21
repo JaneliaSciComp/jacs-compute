@@ -3,17 +3,17 @@ package org.janelia.model.service;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.model.jacs2.AppendFieldValueHandler;
-import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
-import org.janelia.model.jacs2.domain.support.MongoMapping;
 import org.janelia.model.jacs2.BaseEntity;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
+import org.janelia.model.jacs2.domain.support.MongoMapping;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -366,6 +366,10 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public void setTags(List<String> tags) {
         this.tags = tags;
+    }
+
+    public void addTags(String... tags) {
+        Collections.addAll(this.tags, tags);
     }
 
     public RegisteredJacsNotification getProcessingNotification() {

@@ -18,6 +18,7 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
     private String name; // scheduled job name
     private String description; // scheduled job description
     private String serviceName; // service to be run
+    private String serviceVersion;
     private Integer servicePriority = 0; // service priority
     private String runServiceAs; // whom should this service run as
     private ProcessingLocation serviceProcessingLocation; // service processing location
@@ -62,6 +63,14 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
 
     public void setServiceName(String serviceName) {
         this.serviceName = serviceName;
+    }
+
+    public String getServiceVersion() {
+        return serviceVersion;
+    }
+
+    public void setServiceVersion(String serviceVersion) {
+        this.serviceVersion = serviceVersion;
     }
 
     public Integer getServicePriority() {
@@ -152,12 +161,18 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
         this.disabled = disabled;
     }
 
-    public JacsServiceData getRunningService() {
+    public JacsServiceData createServiceInstance() {
         JacsServiceData serviceData = new JacsServiceDataBuilder(null)
                 .setName(serviceName)
                 .setAuthKey(runServiceAs)
+                .setProcessingLocation(serviceProcessingLocation)
+                .addArgs(serviceArgs)
+                .setDictionaryArgs(serviceDictionaryArgs)
+                .copyResourcesFrom(serviceResources)
                 .build();
         serviceData.setQueueId(serviceQueueId);
+        serviceData.setPriority(servicePriority);
+        serviceData.addTags(name);
         return serviceData;
     }
 }

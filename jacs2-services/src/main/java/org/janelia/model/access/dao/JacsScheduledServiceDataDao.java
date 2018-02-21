@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface JacsScheduledServiceDataDao extends ReadWriteDao<JacsScheduledServiceData, Number> {
-    List<JacsScheduledServiceData> findServiceScheduledAfter(String queueId, Date scheduledTime, boolean includeDisabled);
+    List<JacsScheduledServiceData> findServiceScheduledAtOrBefore(String queueId, Date scheduledTime, boolean includeDisabled);
     Optional<JacsScheduledServiceData> updateServiceScheduledTime(JacsScheduledServiceData scheduledServiceData, Date currentScheduledTime);
 }

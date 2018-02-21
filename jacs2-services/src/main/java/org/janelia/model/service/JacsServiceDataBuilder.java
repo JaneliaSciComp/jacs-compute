@@ -38,6 +38,11 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
+    public JacsServiceDataBuilder setDictionaryArgs(Map<String, Object> dictionaryArgs) {
+        serviceData.setDictionaryArgs(dictionaryArgs);
+        return this;
+    }
+
     public JacsServiceDataBuilder clearArgs() {
         serviceData.clearArgs();
         return this;
