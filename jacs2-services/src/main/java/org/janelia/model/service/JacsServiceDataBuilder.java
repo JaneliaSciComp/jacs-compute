@@ -1,5 +1,6 @@
 package org.janelia.model.service;
 
+import java.util.List;
 import java.util.Map;
 
 public class JacsServiceDataBuilder {
@@ -23,7 +24,14 @@ public class JacsServiceDataBuilder {
         }
     }
 
-    public JacsServiceDataBuilder addArg(String... args) {
+    public JacsServiceDataBuilder addArgs(String... args) {
+        for (String arg : args) {
+            serviceData.addArg(arg);
+        }
+        return this;
+    }
+
+    public JacsServiceDataBuilder addArgs(List<String> args) {
         for (String arg : args) {
             serviceData.addArg(arg);
         }

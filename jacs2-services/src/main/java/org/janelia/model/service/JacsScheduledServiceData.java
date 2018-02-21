@@ -151,4 +151,13 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
     }
+
+    public JacsServiceData getRunningService() {
+        JacsServiceData serviceData = new JacsServiceDataBuilder(null)
+                .setName(serviceName)
+                .setAuthKey(runServiceAs)
+                .build();
+        serviceData.setQueueId(serviceQueueId);
+        return serviceData;
+    }
 }

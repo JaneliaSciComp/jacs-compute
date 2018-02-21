@@ -570,27 +570,27 @@ public class SampleStitchProcessorTest {
                                                   String channelDyeSpec, String outputChannelOrder,
                                                   boolean generateMips) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
-                .addArg("-sampleId", String.valueOf(sampleId))
-                .addArg("-area", area)
-                .addArg("-objective", objective)
-                .addArg("-sampleResultsId", TEST_RESULTS_ID)
-                .addArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
-                .addArg("-sampleLsmsSubDir", "lsms")
-                .addArg("-sampleSummarySubDir", "summary")
-                .addArg("-sampleSitchingSubDir", "stitching")
+                .addArgs("-sampleId", String.valueOf(sampleId))
+                .addArgs("-area", area)
+                .addArgs("-objective", objective)
+                .addArgs("-sampleResultsId", TEST_RESULTS_ID)
+                .addArgs("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
+                .addArgs("-sampleLsmsSubDir", "lsms")
+                .addArgs("-sampleSummarySubDir", "summary")
+                .addArgs("-sampleSitchingSubDir", "stitching")
                 .setWorkspace(SampleProcessorTestUtils.TEST_WORKING_DIR);
 
         if (StringUtils.isNotBlank(mergeAlgorithm))
-            testServiceDataBuilder.addArg("-mergeAlgorithm", mergeAlgorithm);
+            testServiceDataBuilder.addArgs("-mergeAlgorithm", mergeAlgorithm);
 
         if (StringUtils.isNotBlank(channelDyeSpec))
-            testServiceDataBuilder.addArg("-channelDyeSpec", channelDyeSpec);
+            testServiceDataBuilder.addArgs("-channelDyeSpec", channelDyeSpec);
 
         if (StringUtils.isNotBlank(outputChannelOrder))
-            testServiceDataBuilder.addArg("-outputChannelOrder", outputChannelOrder);
+            testServiceDataBuilder.addArgs("-outputChannelOrder", outputChannelOrder);
 
         if (generateMips)
-            testServiceDataBuilder.addArg("-generateMips");
+            testServiceDataBuilder.addArgs("-generateMips");
         JacsServiceData testServiceData = testServiceDataBuilder.build();
         testServiceData.setId(serviceId);
         return testServiceData;

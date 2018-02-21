@@ -264,10 +264,10 @@ public class DataTreeLoadProcessorTest {
     private JacsServiceData createTestServiceData(Number serviceId, String owner, String folderName, String storageLocation) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey(owner)
-                .addArg("-parentFolderId", String.valueOf(TEST_DATA_NODE_ID-1))
-                .addArg("-losslessImgExtensions", ".v3draw,.lsm")
-                .addArg("-storageLocation", storageLocation)
-                .addArg("-folderName", folderName)
+                .addArgs("-parentFolderId", String.valueOf(TEST_DATA_NODE_ID-1))
+                .addArgs("-losslessImgExtensions", ".v3draw,.lsm")
+                .addArgs("-storageLocation", storageLocation)
+                .addArgs("-folderName", folderName)
                 ;
         JacsServiceData testServiceData = testServiceDataBuilder
                 .setWorkspace("testlocal")
