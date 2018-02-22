@@ -3,6 +3,8 @@ package org.janelia.jacs2.dataservice.persistence;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.model.access.dao.ReadWriteDao;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
+import org.janelia.model.jacs2.page.PageRequest;
+import org.janelia.model.jacs2.page.PageResult;
 
 import javax.enterprise.inject.Instance;
 import java.util.Collection;
@@ -14,6 +16,16 @@ public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
 
     AbstractDataPersistence(Instance<D> daoSource) {
         this.daoSource = daoSource;
+    }
+
+    public T createEntity(T entity) {
+        D dao = daoSource.get();
+        try {
+            dao.save(entity);
+            return entity;
+        } finally {
+            daoSource.destroy(dao);
+        }
     }
 
     public T findById(I id) {
@@ -33,6 +45,15 @@ public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
         D dao = daoSource.get();
         try {
             return dao.findByIds(ids);
+        } finally {
+            daoSource.destroy(dao);
+        }
+    }
+
+    public PageResult<T> findAll(PageRequest pageRequest) {
+        D dao = daoSource.get();
+        try {
+            return dao.findAll(pageRequest);
         } finally {
             daoSource.destroy(dao);
         }

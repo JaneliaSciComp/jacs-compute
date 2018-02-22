@@ -1,6 +1,7 @@
 package org.janelia.model.service;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.model.jacs2.BaseEntity;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
@@ -159,6 +160,28 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
 
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("name", name)
+                .append("description", description)
+                .append("serviceName", serviceName)
+                .append("serviceVersion", serviceVersion)
+                .append("servicePriority", servicePriority)
+                .append("runServiceAs", runServiceAs)
+                .append("serviceProcessingLocation", serviceProcessingLocation)
+                .append("serviceQueueId", serviceQueueId)
+                .append("serviceArgs", serviceArgs)
+                .append("serviceDictionaryArgs", serviceDictionaryArgs)
+                .append("serviceResources", serviceResources)
+                .append("cronScheduleDescriptor", cronScheduleDescriptor)
+                .append("lastStartTime", lastStartTime)
+                .append("nextStartTime", nextStartTime)
+                .append("disabled", disabled)
+                .toString();
     }
 
     public JacsServiceData createServiceInstance() {

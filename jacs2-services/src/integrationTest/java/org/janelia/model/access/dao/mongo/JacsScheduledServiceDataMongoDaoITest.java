@@ -14,6 +14,8 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
 public class JacsScheduledServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsScheduledServiceData> {
@@ -44,13 +46,15 @@ public class JacsScheduledServiceDataMongoDaoITest extends AbstractMongoDaoITest
         for (int i = 0; i < nTestServices; i++) {
             timeToCheck = currentCal.getTime();
             for (String testQueueId : new String[] {null, TEST_QUEUE_ID}) {
-                verifyScheduledService(timeToCheck, testQueueId, i);
+                verifyScheduledService(timeToCheck, testQueueId, false, i, false);
+                verifyScheduledService(timeToCheck, testQueueId, true, i, false);
             }
             currentCal.add(Calendar.HOUR_OF_DAY, 1);
         }
         timeToCheck = currentCal.getTime();
         for (String testQueueId : new String[] {null, TEST_QUEUE_ID}) {
-            verifyScheduledService(timeToCheck, testQueueId, nTestServices);
+            verifyScheduledService(timeToCheck, testQueueId, false, nTestServices, false);
+            verifyScheduledService(timeToCheck, testQueueId, true, nTestServices, false);
         }
     }
 
@@ -66,22 +70,66 @@ public class JacsScheduledServiceDataMongoDaoITest extends AbstractMongoDaoITest
         Date timeToCheck;
         for (int i = 0; i < nTestServices; i++) {
             timeToCheck = currentCal.getTime();
-            verifyScheduledService(timeToCheck, null, 0);
-            verifyScheduledService(timeToCheck, TEST_QUEUE_ID, i);
-            verifyScheduledService(timeToCheck, "someotherqueue", 0);
+            verifyScheduledService(timeToCheck, null, false, 0, false);
+            verifyScheduledService(timeToCheck, TEST_QUEUE_ID, false, i, false);
+            verifyScheduledService(timeToCheck, "someotherqueue", false,0, false);
             currentCal.add(Calendar.HOUR_OF_DAY, 1);
         }
         timeToCheck = currentCal.getTime();
-        verifyScheduledService(timeToCheck, null, 0);
-        verifyScheduledService(timeToCheck, TEST_QUEUE_ID, nTestServices);
-        verifyScheduledService(timeToCheck, "someotherqueue", 0);
+        verifyScheduledService(timeToCheck, null, false, 0, false);
+        verifyScheduledService(timeToCheck, TEST_QUEUE_ID, false, nTestServices, false);
+        verifyScheduledService(timeToCheck, "someotherqueue", false, 0, false);
     }
 
-    private void verifyScheduledService(Date timestamp, String testQueueId, int expectedResults) {
-        List<JacsScheduledServiceData> scheduledServices = testDao.findServiceScheduledAtOrBefore(testQueueId, timestamp, false);
+    @Test
+    public void findScheduledServicesThatHaveBeenDisabled() {
+        int nTestServices = 10;
+        List<JacsScheduledServiceData> newServices = createMultipleTestItems(nTestServices);
+        newServices.forEach(sd -> {
+            sd.setDisabled(true);
+            testDao.save(sd);
+        });
+        Calendar currentCal = Calendar.getInstance();
+        Date timeToCheck;
+        for (int i = 0; i < nTestServices; i++) {
+            timeToCheck = currentCal.getTime();
+            verifyScheduledService(timeToCheck, null, false, 0, true);
+            verifyScheduledService(timeToCheck, null, true, i, true);
+            currentCal.add(Calendar.HOUR_OF_DAY, 1);
+        }
+        timeToCheck = currentCal.getTime();
+        verifyScheduledService(timeToCheck, null, false, 0, true);
+        verifyScheduledService(timeToCheck, null, true, nTestServices, true);
+    }
+
+    private void verifyScheduledService(Date timestamp, String testQueueId, boolean disabledFlag, int expectedResults, boolean expectedDisabledFlag) {
+        List<JacsScheduledServiceData> scheduledServices = testDao.findServicesScheduledAtOrBefore(testQueueId, timestamp, disabledFlag);
         assertThat(scheduledServices, hasSize(expectedResults));
         assertThat(scheduledServices, everyItem(Matchers.hasProperty("nextStartTime", Matchers.lessThanOrEqualTo(timestamp))));
-        assertThat(scheduledServices, everyItem(Matchers.hasProperty("disabled", Matchers.equalTo(false))));
+        assertThat(scheduledServices, everyItem(Matchers.hasProperty("disabled", Matchers.equalTo(expectedDisabledFlag))));
+    }
+
+    @Test
+    public void updateScheduledTime() {
+        int nTestServices = 10;
+        List<JacsScheduledServiceData> newServices = createMultipleTestItems(nTestServices);
+        testDao.saveAll(newServices);
+        Calendar currentCal = Calendar.getInstance();
+        currentCal.add(Calendar.MINUTE, 5); // this is to ensure that the next check is after the scheduled time
+        for (int i = 0; i < nTestServices; i++) {
+            JacsScheduledServiceData scheduledService = newServices.get(i);
+            Date timeToCheck = scheduledService.getNextStartTime();
+            currentCal.add(Calendar.HOUR_OF_DAY, 1);
+            scheduledService.setNextStartTime(currentCal.getTime());
+            JacsScheduledServiceData updatedService = testDao.updateServiceScheduledTime(scheduledService, timeToCheck)
+                    .orElse(null);
+            assertNotNull(updatedService);
+            assertThat(updatedService, Matchers.hasProperty("nextStartTime", Matchers.equalTo(scheduledService.getNextStartTime())));
+            // next call should not update any service since it has already been scheduled
+            JacsScheduledServiceData noServiceUpdated = testDao.updateServiceScheduledTime(scheduledService, timeToCheck)
+                    .orElse(null);
+            assertNull(noServiceUpdated);
+        }
     }
 
     @Override

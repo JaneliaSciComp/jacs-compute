@@ -166,6 +166,7 @@ public class ServiceInfoResource {
         }
     }
 
+    @RequireAuthentication
     @PUT
     @Path("/{service-instance-id}")
     @ApiOperation(value = "Update service info", notes = "Updates the info about the given service")

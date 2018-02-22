@@ -58,7 +58,7 @@ public class JacsScheduledServiceDataMongoDao extends AbstractMongoDao<JacsSched
     }
 
     @Override
-    public List<JacsScheduledServiceData> findServiceScheduledAtOrBefore(String queueId, Date scheduledTime, boolean includeDisabled) {
+    public List<JacsScheduledServiceData> findServicesScheduledAtOrBefore(String queueId, Date scheduledTime, boolean includeDisabled) {
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
         if (StringUtils.isNotBlank(queueId)) {
             // if a queue is provided lookup only services for the specified queue
