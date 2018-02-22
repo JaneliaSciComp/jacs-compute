@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class CronScheduledService {
+public class CronScheduledServiceManager {
 
     private final JacsScheduledServiceDataPersistence jacsScheduledServiceDataPersistence;
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
@@ -33,9 +33,9 @@ public class CronScheduledService {
     private final CronParser cronParser;
 
     @Inject
-    public CronScheduledService(JacsScheduledServiceDataPersistence jacsScheduledServiceDataPersistence,
-                                JacsServiceDataPersistence jacsServiceDataPersistence,
-                                @PropertyValue(name = "service.queue.id") String queueId) {
+    public CronScheduledServiceManager(JacsScheduledServiceDataPersistence jacsScheduledServiceDataPersistence,
+                                       JacsServiceDataPersistence jacsServiceDataPersistence,
+                                       @PropertyValue(name = "service.queue.id") String queueId) {
         this.jacsScheduledServiceDataPersistence = jacsScheduledServiceDataPersistence;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.queueId = queueId;
@@ -95,6 +95,7 @@ public class CronScheduledService {
         List<JacsScheduledServiceData> scheduledCandidates = jacsScheduledServiceDataPersistence.findServicesScheduledAtOrBefore(queueId, nowAsDate)
                 .stream()
                 .filter(scheduledService -> StringUtils.isNotBlank(scheduledService.getCronScheduleDescriptor()))
+                .filter(scheduledService -> StringUtils.isNotBlank(scheduledService.getServiceName()))
                 .flatMap(scheduledService -> {
                     Cron cron = cronParser.parse(scheduledService.getCronScheduleDescriptor());
                     ExecutionTime executionTime = ExecutionTime.forCron(cron);

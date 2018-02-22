@@ -16,29 +16,30 @@ import java.util.List;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
-public class CronScheduledServiceTest {
+public class CronScheduledServiceManagerTest {
 
     private static final String TEST_QUEUE_ID = "testQueue";
 
     private JacsScheduledServiceDataPersistence jacsScheduledServiceDataPersistence;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
-    private CronScheduledService cronScheduledService;
+    private CronScheduledServiceManager cronScheduledServiceManager;
 
     @Before
     public void setUp() {
         jacsScheduledServiceDataPersistence = Mockito.mock(JacsScheduledServiceDataPersistence.class);
         jacsServiceDataPersistence = Mockito.mock(JacsServiceDataPersistence.class);
-        cronScheduledService = new CronScheduledService(jacsScheduledServiceDataPersistence, jacsServiceDataPersistence, TEST_QUEUE_ID);
+        cronScheduledServiceManager = new CronScheduledServiceManager(jacsScheduledServiceDataPersistence, jacsServiceDataPersistence, TEST_QUEUE_ID);
     }
 
     @Test
     public void scheduleServices() {
         List<JacsScheduledServiceData> testData = ImmutableList.<JacsScheduledServiceData>builder()
-                .add(createTestData("* */5 */1 * * ?")) // every 5min
-                .add(createTestData("0 0 */1 * * ?")) // every hour
-                .add(createTestData("0 59 23 1 * ?"))
-                .add(createTestData("* 23 * ? * MON-FRI *"))
-                .add(createTestData(null))
+                .add(createTestData("j1", "s1", "* */5 */1 * * ?")) // every 5min
+                .add(createTestData("j2", "s2", "0 0 */1 * * ?")) // every hour
+                .add(createTestData("j3", "s3", "0 59 23 1 * ?"))
+                .add(createTestData("j4", "s4", "* 23 * ? * MON-FRI *"))
+                .add(createTestData("j5", "s5", null))
+                .add(createTestData("j6", null, "* 23 * ? * MON-FRI *"))
                 .build();
         Mockito.when(jacsScheduledServiceDataPersistence.findServicesScheduledAtOrBefore(ArgumentMatchers.eq(TEST_QUEUE_ID), ArgumentMatchers.any(Date.class)))
                 .thenReturn(testData);
@@ -46,12 +47,14 @@ public class CronScheduledServiceTest {
                 .then(invocation -> invocation.getArgument(0));
         Mockito.when(jacsServiceDataPersistence.createEntity(ArgumentMatchers.any(JacsServiceData.class)))
                 .then(invocation -> invocation.getArgument(0));
-        List<JacsServiceData> scheduledServices = cronScheduledService.scheduleServices();
+        List<JacsServiceData> scheduledServices = cronScheduledServiceManager.scheduleServices();
         assertThat(scheduledServices, hasSize(4));
     }
 
-    private JacsScheduledServiceData createTestData(String cronDescriptor) {
+    private JacsScheduledServiceData createTestData(String jobName, String serviceName, String cronDescriptor) {
         JacsScheduledServiceData scheduledService = new JacsScheduledServiceData();
+        scheduledService.setName(jobName);
+        scheduledService.setServiceName(serviceName);
         scheduledService.setCronScheduleDescriptor(cronDescriptor);
         return scheduledService;
     }

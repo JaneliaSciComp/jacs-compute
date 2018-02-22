@@ -4,20 +4,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
-import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.cronservice.CronScheduledService;
-import org.janelia.model.domain.enums.SubjectRole;
-import org.janelia.model.jacs2.DataInterval;
+import org.janelia.jacs2.dataservice.cronservice.CronScheduledServiceManager;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.service.JacsScheduledServiceData;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceState;
-import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.RequestScoped;
@@ -30,16 +21,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import java.math.BigInteger;
-import java.util.Date;
-import java.util.List;
-import java.util.function.Function;
 
 @RequestScoped
 @Produces("application/json")
@@ -49,7 +33,7 @@ public class ScheduledServiceInfoResource {
     private static final int DEFAULT_PAGE_SIZE = 100;
 
     @Inject private Logger logger;
-    @Inject private CronScheduledService jacsScheduledServiceDataManager;
+    @Inject private CronScheduledServiceManager jacsScheduledServiceDataManager;
 
     @RequireAuthentication
     @POST
