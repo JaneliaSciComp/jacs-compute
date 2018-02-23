@@ -64,6 +64,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
             jacsServiceDataBuilder.setWorkspace(executionContext.getParentWorkspace());
         }
         jacsServiceDataBuilder.addArgs(Stream.of(args).flatMap(arg -> Stream.of(arg.toStringArray())).toArray(String[]::new));
+        jacsServiceDataBuilder.setDictionaryArgs(executionContext.getDictionaryArgs());
         if (executionContext.getServiceState() != null) {
             jacsServiceDataBuilder.setState(executionContext.getServiceState());
         }

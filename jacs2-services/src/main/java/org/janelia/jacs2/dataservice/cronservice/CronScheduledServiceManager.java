@@ -105,16 +105,10 @@ public class CronScheduledServiceManager {
                     Cron cron = cronParser.parse(scheduledService.getCronScheduleDescriptor());
                     ExecutionTime executionTime = ExecutionTime.forCron(cron);
                     return executionTime.nextExecution(now.plus(checkInterval))
-                            .flatMap(nextTime -> executionTime.timeFromLastExecution(nextTime)
-                                        .map(durationSinceLastRun -> {
-                                            if (durationSinceLastRun.compareTo(checkInterval) <= 0) {
-                                                return Stream.<JacsScheduledServiceData>of();
-                                            } else {
-                                                scheduledService.setNextStartTime(Date.from(nextTime.toInstant()));
-                                                return Stream.of(scheduledService);
-                                            }
-                                        })
-                            )
+                            .map(nextTime -> {
+                                scheduledService.setNextStartTime(Date.from(nextTime.toInstant()));
+                                return Stream.of(scheduledService);
+                            })
                             .orElse(Stream.of());
                 })
                 .collect(Collectors.toList());

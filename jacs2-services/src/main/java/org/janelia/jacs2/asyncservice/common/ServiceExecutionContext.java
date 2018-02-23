@@ -79,6 +79,13 @@ public class ServiceExecutionContext {
             return this;
         }
 
+        public Builder addDictionaryArgs(Map<String, Object> dictionaryArgs) {
+            if (dictionaryArgs != null) {
+                serviceExecutionContext.dictionaryArgs.putAll(dictionaryArgs);
+            }
+            return this;
+        }
+
         public Builder registerProcessingNotification(String processingEvent, Optional<RegisteredJacsNotification> processingNotification) {
             processingNotification.ifPresent(n -> serviceExecutionContext.processingNotification = n.withEventName(processingEvent));
             return this;
@@ -110,6 +117,7 @@ public class ServiceExecutionContext {
     private String description;
     private final List<JacsServiceData> waitFor = new ArrayList<>();
     private final List<Number> waitForIds = new ArrayList<>();
+    private final Map<String, Object> dictionaryArgs = new LinkedHashMap<>();
     private final Map<String, String> resources = new LinkedHashMap<>();
     private RegisteredJacsNotification processingNotification;
     private final Map<String, RegisteredJacsNotification> processingStageNotifications = new HashMap<>();
@@ -156,6 +164,10 @@ public class ServiceExecutionContext {
 
     Map<String, String> getResources() {
         return resources;
+    }
+
+    Map<String, Object> getDictionaryArgs() {
+        return dictionaryArgs;
     }
 
     RegisteredJacsNotification getProcessingNotification() {

@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
 import com.beust.jcommander.Parameter;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
@@ -157,7 +158,10 @@ public class OctreeCreator extends AbstractExeBasedServiceProcessor<List<File>> 
 
     @Override
     protected void prepareResources(JacsServiceData jacsServiceData) {
-        ProcessorHelper.setCPUType(jacsServiceData.getResources(),"broadwell");
+        String cpuType = ProcessorHelper.getCPUType(jacsServiceData.getResources());
+        if (StringUtils.isBlank(cpuType)) {
+            ProcessorHelper.setCPUType(jacsServiceData.getResources(), "broadwell");
+        }
         // This should be based on input file size, but we don't currently have enough examples to generalize this.
         // Examples:
         // 12G input -> 66G

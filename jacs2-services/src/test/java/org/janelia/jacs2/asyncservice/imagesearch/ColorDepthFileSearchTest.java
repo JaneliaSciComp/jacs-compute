@@ -43,7 +43,7 @@ public class ColorDepthFileSearchTest {
     private ColorDepthFileSearch colorDepthFileSearch;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);
         clusterSource = mock(Instance.class);
