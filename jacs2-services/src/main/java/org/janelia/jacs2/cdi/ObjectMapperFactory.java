@@ -9,7 +9,6 @@ import org.janelia.model.access.dao.mongo.utils.MongoModule;
 
 import javax.enterprise.inject.Vetoed;
 
-@Vetoed
 public class ObjectMapperFactory {
     private static final ObjectMapperFactory INSTANCE = new ObjectMapperFactory();
 

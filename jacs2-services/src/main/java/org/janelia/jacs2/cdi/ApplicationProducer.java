@@ -14,14 +14,8 @@ import java.io.IOException;
 public class ApplicationProducer {
 
     @Produces
-    @ApplicationScoped
-    public ObjectMapperFactory objectMapperFactory() {
-        return ObjectMapperFactory.instance();
-    }
-
-    @Produces
-    public ObjectMapper objectMapper() {
-        return ObjectMapperFactory.instance().getDefaultObjectMapper();
+    public ObjectMapper objectMapper(ObjectMapperFactory objectMapperFactory) {
+        return objectMapperFactory.getDefaultObjectMapper();
     }
 
     @JacsDefault

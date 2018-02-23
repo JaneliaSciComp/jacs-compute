@@ -1,0 +1,50 @@
+{
+	"timepoints": {
+		"start": 0,
+		"every": 1,
+		"end": 50
+	},
+	"references": {
+		"start": 0,
+		"every": 1,
+		"end": 50
+	},
+	"inputString": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected",
+	"sourceString": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected.MultiFused/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039",
+	"outputString": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected.TimeFused/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039",
+	"inputID": "_blending",
+	"outputID": "_blending",
+	"lookUpTable": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Configurations_Mmu/SPM00_CM00_CM01_CHN00_CHN01_analyzeParameters/lookUpTable.mat",
+	"dataType": 1,
+	"specimen": 0,
+	"cameras": [0,1],
+	"sChannels": [0,1],
+	"tChannels": [0,1],
+	"reducedIO": 1,
+	"inputType": 0,
+	"outputType": 0,
+	"splitting": 10,
+	"intSizes": [10,5],
+	"correction": [3,3,0,0],
+	"percentile": 5,
+	"subSampling": 100,
+	"fusionType": 0,
+	"blending": [20,4],
+	"enforceFlag": [1,1,1,1,1,1,1,1,1],
+	"verbose": 0,
+	"cropping": [
+		[
+			[0,0,0,0,0,0],
+			[0,0,0,0,0,0]
+		]
+	],
+	"scaling": 4.999384615,
+	"leftFlags": [2,1],
+	"flipHFlag": 1,
+	"flipVFlag": 0,
+	"frontFlag": 1,
+	"localRun": [1,0],
+	"jobMemory": [1,0],
+	"coreMemory": 7,
+	"globalMask": [0,0]
+}

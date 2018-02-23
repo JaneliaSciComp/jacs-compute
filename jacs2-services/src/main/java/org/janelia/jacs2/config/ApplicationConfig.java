@@ -1,5 +1,7 @@
 package org.janelia.jacs2.config;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class ApplicationConfig extends XProperties {
     public String getStringPropertyValue(String name) {
         return getProperty(name);
@@ -11,17 +13,17 @@ public class ApplicationConfig extends XProperties {
 
     public Boolean getBooleanPropertyValue(String name) {
         String stringValue = getStringPropertyValue(name);
-        return stringValue == null ? false : Boolean.valueOf(stringValue);
+        return StringUtils.isBlank(stringValue) ? false : Boolean.valueOf(stringValue);
     }
 
     public Integer getIntegerPropertyValue(String name) {
         String stringValue = getStringPropertyValue(name);
-        return stringValue == null ? null : Integer.valueOf(stringValue);
+        return StringUtils.isBlank(stringValue) ? null : Integer.valueOf(stringValue);
     }
 
     public Integer getIntegerPropertyValue(String name, Integer defaultValue) {
         String stringValue = getStringPropertyValue(name);
-        return stringValue == null ? defaultValue : Integer.valueOf(stringValue);
+        return StringUtils.isBlank(stringValue) ? defaultValue : Integer.valueOf(stringValue);
     }
 
 }

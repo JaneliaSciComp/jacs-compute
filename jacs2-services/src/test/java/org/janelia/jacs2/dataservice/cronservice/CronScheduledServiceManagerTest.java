@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
+import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class CronScheduledServiceManagerTest {
                 .then(invocation -> invocation.getArgument(0));
         Mockito.when(jacsServiceDataPersistence.createEntity(ArgumentMatchers.any(JacsServiceData.class)))
                 .then(invocation -> invocation.getArgument(0));
-        List<JacsServiceData> scheduledServices = cronScheduledServiceManager.scheduleServices();
+        List<JacsServiceData> scheduledServices = cronScheduledServiceManager.scheduleServices(Duration.ofSeconds(60));
         assertThat(scheduledServices, hasSize(4));
     }
 

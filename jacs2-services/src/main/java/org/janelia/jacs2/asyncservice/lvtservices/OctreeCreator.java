@@ -56,13 +56,13 @@ public class OctreeCreator extends AbstractExeBasedServiceProcessor<List<File>> 
 
     @Inject
     OctreeCreator(ServiceComputationFactory computationFactory,
-                      JacsServiceDataPersistence jacsServiceDataPersistence,
-                      @Any Instance<ExternalProcessRunner> serviceRunners,
-                      @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                      @PropertyValue(name = "Octree.Bin.Path") String executable,
-                     JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
-                      @ApplicationProperties ApplicationConfig applicationConfig,
-                      Logger logger) {
+                  JacsServiceDataPersistence jacsServiceDataPersistence,
+                  @Any Instance<ExternalProcessRunner> serviceRunners,
+                  @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                  @PropertyValue(name = "Octree.Bin.Path") String executable,
+                  JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
+                  @ApplicationProperties ApplicationConfig applicationConfig,
+                  Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
         this.executable = executable;
     }

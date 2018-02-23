@@ -1,0 +1,63 @@
+{
+	"timepoints": {
+		"start": 0,
+		"every": 1,
+		"end": 50
+	},
+	"inputString": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected",
+	"outputString": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected.MultiFused/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039",
+	"outputID": "_blending",
+	"dataType": 1,
+	"specimen": 0,
+	"cameras": [0,1],
+	"channels": [0,1],
+	"reducedIO": 1,
+	"inputType": 0,
+	"outputType": 0,
+	"splitting": 10,
+	"kernelSize": 5,
+	"kernelSigma": 2,
+	"fraction": 0,
+	"maskMinimum": [1,100],
+	"maskFactor": 1,
+	"maskFusion": 1,
+	"padding": [0,50],
+	"slabSizes": [5,3],
+	"intSizes": [10,5],
+	"percentile": 5,
+	"subSampling": [1,100],
+	"medianFilter": 100,
+	"preciseGauss": 1,
+	"gaussFilter": [3,1],
+	"optimizer": 3,
+	"correction": [1,1,0,0],
+	"fusionType": 0,
+	"transitions": [0,0],
+	"blending": [20,4],
+	"enforceFlag": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+	"verbose": 0,
+	"cropping": [
+		[
+			[0,0,0,0,0,0],
+			[0,0,0,0,0,0]
+		]
+	],
+	"scaling": 4.999384615,
+	"leftFlags": [2,1],
+	"flipHFlag": 1,
+	"flipVFlag": 0,
+	"xOffsets": {
+		"start": -50,
+		"every": 10,
+		"end": 50
+	},
+	"yOffsets": {
+		"start": -50,
+		"every": 10,
+		"end": 50
+	},
+	"frontFlag": 1,
+	"localRun": [1,0],
+	"jobMemory": [1,0],
+	"coreMemory": 7
+}

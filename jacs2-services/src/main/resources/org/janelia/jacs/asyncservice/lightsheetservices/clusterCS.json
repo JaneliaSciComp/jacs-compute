@@ -1,0 +1,29 @@
+{
+	"inputRoot": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected.TimeFused/",
+	"outputRoot": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected.CorrectStack/",
+	"headerPattern": "Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.TM??????_timeFused_blending/",
+	"filePattern": "SPM00_TM??????_CM00_CM01_CHN00_CHN01.fusedStack",
+	"configRoot": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Configurations_Mmu/SPM00_CM00_CM01_CHN00_CHN01_stackCorrection",
+	"timepoints": {
+		"start": 0,
+		"every": 1,
+		"end": 50
+	},
+	"dataType": 1,
+	"percentile": [1,10],
+	"inputType": 0,
+	"outputType": 0,
+	"correctDrift": 1,
+	"referenceTime": 25,
+	"referenceROI": {
+		"_ArrayType_": "double",
+		"_ArraySize_": [0,0],
+		"_ArrayData_": null
+	},
+	"correctIntensity": 1,
+	"maxStampDigits": 6,
+	"localRun": [0,0],
+	"jobMemory": [1,0],
+	"coreMemory": 7,
+	"verbose": 0
+}

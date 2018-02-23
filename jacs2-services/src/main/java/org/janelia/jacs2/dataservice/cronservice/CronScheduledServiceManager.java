@@ -17,8 +17,11 @@ import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.service.JacsScheduledServiceData;
 import org.janelia.model.service.JacsServiceData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
@@ -26,6 +29,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CronScheduledServiceManager {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CronScheduledServiceManager.class);
 
     private final JacsScheduledServiceDataPersistence jacsScheduledServiceDataPersistence;
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
@@ -89,7 +94,7 @@ public class CronScheduledServiceManager {
         return jacsScheduledServiceDataPersistence.findAll(pageRequest);
     }
 
-    public List<JacsServiceData> scheduleServices() {
+    public List<JacsServiceData> scheduleServices(Duration checkInterval) {
         ZonedDateTime now = ZonedDateTime.now();
         Date nowAsDate = Date.from(now.toInstant());
         List<JacsScheduledServiceData> scheduledCandidates = jacsScheduledServiceDataPersistence.findServicesScheduledAtOrBefore(queueId, nowAsDate)
@@ -99,15 +104,23 @@ public class CronScheduledServiceManager {
                 .flatMap(scheduledService -> {
                     Cron cron = cronParser.parse(scheduledService.getCronScheduleDescriptor());
                     ExecutionTime executionTime = ExecutionTime.forCron(cron);
-                    return executionTime.nextExecution(now)
-                            .map(nextTime -> {
-                                scheduledService.setNextStartTime(Date.from(nextTime.toInstant()));
-                                return Stream.of(scheduledService);
-                            })
+                    return executionTime.nextExecution(now.plus(checkInterval))
+                            .flatMap(nextTime -> executionTime.timeFromLastExecution(nextTime)
+                                        .map(durationSinceLastRun -> {
+                                            if (durationSinceLastRun.compareTo(checkInterval) <= 0) {
+                                                return Stream.<JacsScheduledServiceData>of();
+                                            } else {
+                                                scheduledService.setNextStartTime(Date.from(nextTime.toInstant()));
+                                                return Stream.of(scheduledService);
+                                            }
+                                        })
+                            )
                             .orElse(Stream.of());
                 })
                 .collect(Collectors.toList());
+        LOG.debug("Service candidates to run at {}: {}", nowAsDate, scheduledCandidates);
         List<JacsScheduledServiceData> scheduledServices = jacsScheduledServiceDataPersistence.updateServicesScheduledAtOrBefore(scheduledCandidates, nowAsDate);
+        LOG.debug("Services scheduled to run at {}: {}", nowAsDate, scheduledServices);
         return scheduledServices.stream()
                 .map(scheduledService -> scheduledService.createServiceInstance())
                 .map(sd -> jacsServiceDataPersistence.createEntity(sd))

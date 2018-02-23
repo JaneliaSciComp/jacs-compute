@@ -15,6 +15,8 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.filter.AuthFilter;
 import org.janelia.jacs2.filter.CORSResponseFilter;
+import org.jboss.weld.environment.servlet.Listener;
+import org.jboss.weld.module.web.servlet.WeldInitialListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,21 +45,14 @@ public abstract class AbstractServicesApp {
         @Parameter(names = "-p", description = "Listener port number", required = false)
         protected int portNumber = 8080;
         @Parameter(names = "-h", description = "Display help", arity = 0, required = false)
-        private boolean displayUsage = false;
+        protected boolean displayUsage = false;
         @DynamicParameter(names = "-D", description = "Dynamic application parameters that could override application properties")
         private Map<String, String> applicationArgs = ApplicationConfigProvider.applicationArgs();
     }
 
-    protected void start(String[] args) throws ServletException {
-        final AppArgs appArgs = new AppArgs();
-        JCommander cmdline = new JCommander(appArgs);
-        cmdline.parse(args);
-        if (appArgs.displayUsage) {
-            cmdline.usage();
-        } else {
-            initializeApp(appArgs);
-            run();
-        }
+    protected void start(AppArgs appArgs) throws ServletException {
+        initializeApp(appArgs);
+        run();
     }
 
     protected void initializeApp(AppArgs appArgs) throws ServletException {
@@ -121,7 +116,8 @@ public abstract class AbstractServicesApp {
                         .setDeploymentName(restApiName)
                         .addFilter(new FilterInfo("corsFilter", CORSResponseFilter.class))
                         .addFilterUrlMapping("corsFilter", "/*", DispatcherType.REQUEST)
-                        .addListeners(getListeners())
+                        .addListener(Servlets.listener(Listener.class))
+                        .addListeners(getAppListeners())
                         .addServlets(restApiServlet, swaggerServlet);
 
         log.info("Deploying REST API servlet at "+contextPath);
@@ -135,5 +131,5 @@ public abstract class AbstractServicesApp {
 
     protected abstract String getV2ConfigName();
 
-    protected abstract ListenerInfo[] getListeners();
+    protected abstract ListenerInfo[] getAppListeners();
 }

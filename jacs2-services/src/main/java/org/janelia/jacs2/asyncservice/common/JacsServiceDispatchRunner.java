@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -40,7 +41,7 @@ public class JacsServiceDispatchRunner {
         try {
             jacsServiceDispatcher.dispatchServices();
         } catch (Exception e) {
-            logger.error("Critical error - job dispatch failed", e);
+            logger.error("Critical error - service dispatch failed", e);
         }
     }
 

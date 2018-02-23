@@ -1,0 +1,26 @@
+{
+	"timepoints": {
+		"start": 0,
+		"every": 1,
+		"end": 50
+	},
+	"fullInterval": {
+		"start": 0,
+		"every": 1,
+		"end": 50
+	},
+	"outputString": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.correctedMultiFused/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039",
+	"outputID": "_blending",
+	"dataType": 1,
+	"specimen": 0,
+	"cameras": [0,1],
+	"channels": [0,1],
+	"readFactors": 1,
+	"smoothing": [1,20],
+	"offsetRange": 10,
+	"angleRange": 10,
+	"intRange": 5,
+	"averaging": 0,
+	"staticFlag": 0,
+	"configRoot": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Configurations_Mmu/"
+}

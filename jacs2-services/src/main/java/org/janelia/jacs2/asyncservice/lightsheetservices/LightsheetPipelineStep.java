@@ -27,7 +27,7 @@ import java.util.List;
  * @author David Ackerman
  */
 @Named("lightsheetPipeline")
-public class LightsheetPipeline extends AbstractExeBasedServiceProcessor<List<File>> {
+public class LightsheetPipelineStep extends AbstractExeBasedServiceProcessor<List<File>> {
 
     static class LightsheetPipelineArgs extends ServiceArgs {
         @Parameter(names = "-stepName", description = "Input directory containing octree", required = true)
@@ -38,75 +38,27 @@ public class LightsheetPipeline extends AbstractExeBasedServiceProcessor<List<Fi
         String numTimePoints = "N/A";
         @Parameter(names = "-timePointsPerJob", description = "Number of tree levels", required = false)
         String timePointsPerJob = "N/A";
-       // @Parameter(names = "-jsonDirectory", description = "Directory with JSON files", required = true)
-       // String jsonDirectory;
     }
 
     private final String executable;
 
     @Inject
-    LightsheetPipeline(ServiceComputationFactory computationFactory,
-                       JacsServiceDataPersistence jacsServiceDataPersistence,
-                       @Any Instance<ExternalProcessRunner> serviceRunners,
-                       @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                       @PropertyValue(name = "LightsheetPipeline.Bin.Path") String executable,
-                       JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
-                       @ApplicationProperties ApplicationConfig applicationConfig,
-                       Logger logger) {
+    LightsheetPipelineStep(ServiceComputationFactory computationFactory,
+                           JacsServiceDataPersistence jacsServiceDataPersistence,
+                           @Any Instance<ExternalProcessRunner> serviceRunners,
+                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                           @PropertyValue(name = "LightsheetPipeline.Bin.Path") String executable,
+                           JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
+                           @ApplicationProperties ApplicationConfig applicationConfig,
+                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
-        this.executable = getFullExecutableName(executable);
+        this.executable = executable;
     }
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(LightsheetPipeline.class, new LightsheetPipelineArgs());
+        return ServiceArgs.getMetadata(LightsheetPipelineStep.class, new LightsheetPipelineArgs());
     }
-
-  /*  @Override
-    public ServiceResultHandler<List<File>> getResultHandler() {
-        return new AbstractFileListServiceResultHandler() {
-
-            private boolean verifyOctree(File dir) {
-
-                boolean checkChanFile = false;
-                for(File file : dir.listFiles((FileFilter)null)) {
-                    if (file.isDirectory()) {
-                        try {
-                            Integer.parseInt(file.getName());
-                            if (!verifyOctree(file)) return false;
-                        }
-                        catch (NumberFormatException e) {
-                            // Ignore dirs which are not numbers
-                        }
-                    }
-                    else {
-                        if (file.getName().startsWith("block") && file.getName().endsWith(".ktx")) {
-                            checkChanFile = true;
-                        }
-                    }
-                }
-                if (!checkChanFile) return false;
-                return true;
-            }
-
-            @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                File outputDir = new File(getArgs(depResults.getJacsServiceData()).output);
-                if (!outputDir.exists()) return false;
-                if (!verifyOctree(outputDir)) return false;
-                return true;
-            }
-
-            @Override
-            public List<File> collectResult(JacsServiceResult<?> depResults) {
-                LightsheetPipelineArgs args = getArgs(depResults.getJacsServiceData());
-                Path outputDir = getOutputDir(args);
-                return FileUtils.lookupFiles(outputDir, 100, "glob:*.ktx")
-                        .map(Path::toFile)
-                        .collect(Collectors.toList());
-            }
-        };
-    } */
 
     @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
@@ -119,7 +71,6 @@ public class LightsheetPipeline extends AbstractExeBasedServiceProcessor<List<Fi
     }
 
     private void createScript(LightsheetPipelineArgs args, ScriptWriter scriptWriter) {
-        //scriptWriter.read("JSONDIRECTORY");
         scriptWriter.read("STEPNAME");
         scriptWriter.read("JSONFILE");
         if ( args.stepName.contains("cluster")) //Then should run on one node
@@ -141,16 +92,15 @@ public class LightsheetPipeline extends AbstractExeBasedServiceProcessor<List<Fi
     @Override
     protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
         LightsheetPipelineArgs args = getArgs(jacsServiceData);
-        if ( args.stepName.contains("local") ) //Then should run on one node
-        {
+        if (args.stepName.contains("local") ) {
+            //Then should run on one node
             ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
             ScriptWriter scriptWriter = externalScriptCode.getCodeWriter();
             scriptWriter.add(args.stepName);
             scriptWriter.add(args.jsonFile);
             scriptWriter.close();
             return Arrays.asList(externalScriptCode);
-        }
-        else {
+        } else {
             List<ExternalCodeBlock> blocks = new ArrayList<>();
             Integer numJobs = (int) Math.ceil(Double.parseDouble(args.numTimePoints) / Integer.valueOf(args.timePointsPerJob));
             for (int jobNumber = 1; jobNumber <= numJobs; jobNumber++) {
@@ -166,7 +116,6 @@ public class LightsheetPipeline extends AbstractExeBasedServiceProcessor<List<Fi
      * which was intended for very large MouseLight data. It may not be optimal for smaller data.
      */
     private void parallelizeLightsheetStep(List<ExternalCodeBlock> blocks, LightsheetPipelineArgs args, Integer jobNumber) {
-
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter scriptWriter = externalScriptCode.getCodeWriter();
         scriptWriter.add(args.stepName);
@@ -199,7 +148,4 @@ public class LightsheetPipeline extends AbstractExeBasedServiceProcessor<List<Fi
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LightsheetPipelineArgs());
     }
 
-    /*private Path getOutputDir(LightsheetPipelineArgs args) {
-        return Paths.get(args.output).toAbsolutePath();
-    }*/
 }

@@ -70,9 +70,9 @@ public class KTXCreator extends AbstractExeBasedServiceProcessor<List<File>> {
                @ApplicationProperties ApplicationConfig applicationConfig,
                Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
-        this.ktxSrcDir = getFullExecutableName(ktxSrcDir);
-        this.executable = getFullExecutableName(executable);
-        this.anacondaDir = getFullExecutableName(anacondaDir);
+        this.ktxSrcDir = ktxSrcDir;
+        this.executable = executable;
+        this.anacondaDir = anacondaDir;
     }
 
     @Override
@@ -142,9 +142,9 @@ public class KTXCreator extends AbstractExeBasedServiceProcessor<List<File>> {
         scriptWriter.read("SUBTREE_PATH");
         scriptWriter.read("SUBTREE_DEPTH");
 
-        scriptWriter.exportVar("PATH", anacondaDir+":$PATH");
-        scriptWriter.exportVar("KTXSRC", ktxSrcDir);
-        scriptWriter.exportVar("PYTHONPATH", ktxSrcDir);
+        scriptWriter.exportVar("PATH", getFullExecutableName(anacondaDir)+":$PATH");
+        scriptWriter.exportVar("KTXSRC", getFullExecutableName(ktxSrcDir));
+        scriptWriter.exportVar("PYTHONPATH", getFullExecutableName(ktxSrcDir));
 
         scriptWriter.add("source activate pyktx");
 
