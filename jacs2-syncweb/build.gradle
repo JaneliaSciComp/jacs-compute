@@ -4,6 +4,10 @@ mainClassName = 'org.janelia.jacs2.app.SyncServicesApp'
 
 project(":jacs2-syncweb") {
     dependencies {
-        compile project(":jacs2-commonweb")
+        compile project(":jacs2-commonweb"),
+                CDI_SE_CORE_LIB,
+                JAX_RS_JERSEY_CDI_SERVLET_LIB,
+                JAX_RS_JERSEY_INJECT_LIB
+
     }
 }
