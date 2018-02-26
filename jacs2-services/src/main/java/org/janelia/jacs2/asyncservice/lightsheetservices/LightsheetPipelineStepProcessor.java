@@ -163,10 +163,8 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
 
     private String getJsonConfigFile(JacsServiceData jacsServiceData, LightsheetPipelineArgs args) {
         try {
-            InputStream s = this.getClass().getResourceAsStream("/org/janelia/jacs2/asyncservice/lightsheetservices/" + args.step.name() + ".json");
-            System.out.println("!!!!!! STREAM " + s);
+            InputStream s = this.getClass().getResourceAsStream("/lightsheetPipeline/" + args.step.name() + ".json");
             Map<String, Object> stepConfig = objectMapper.readValue(s, new TypeReference<Map<String, Object>>() {});
-            System.out.println("!!!!!! CONFIG " + stepConfig);
             stepConfig.putAll(jacsServiceData.getDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
             JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(jacsServiceData.getWorkspace()), jacsServiceData);
             File jsonConfigFile = serviceWorkingFolder.getServiceFolder("stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step + ".json").toFile();
