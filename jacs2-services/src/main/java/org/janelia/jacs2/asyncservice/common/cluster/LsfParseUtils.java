@@ -54,8 +54,8 @@ public class LsfParseUtils {
         if (memLsf == null) return null;
         Double bytes = null;
 
-        Pattern p = Pattern.compile("([\\d\\.]+) (\\w+)");
-        Matcher m = p.matcher(memLsf);
+        Pattern p = Pattern.compile("([\\d.]+)\\s+(\\w+)");
+        Matcher m = p.matcher(memLsf.trim());
         if (m.matches()) {
             double amount = Double.parseDouble(m.group(1));
             String units = m.group(2).toLowerCase();
@@ -84,5 +84,12 @@ public class LsfParseUtils {
         }
 
         return bytes.longValue();
+    }
+
+    public static void main(String[] args) {
+        System.out.println(parseMemToBytes("1.7 Gbytes "));
+        System.out.println(parseMemToBytes("1.7 Gbytes"));
+        System.out.println(parseMemToBytes(" 1.7   Gbytes  "));
+        System.out.println(parseMemToBytes("1.7z Gbytes"));
     }
 }
