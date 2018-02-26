@@ -74,12 +74,12 @@ public class LsfParseUtils {
                 bytes = TB * amount;
             }
             else {
-                log.warn("Could not parse units in max mem: {}", memLsf);
+                log.warn("Could not parse units in max mem: '{}'", units);
+                return null;
             }
         }
-
-        if (bytes == null) {
-            log.warn("Could not parse max mem: {}", memLsf);
+        else {
+            log.warn("Could not parse max mem: '{}'", memLsf);
             return null;
         }
 
@@ -90,6 +90,6 @@ public class LsfParseUtils {
         System.out.println(parseMemToBytes("1.7 Gbytes "));
         System.out.println(parseMemToBytes("1.7 Gbytes"));
         System.out.println(parseMemToBytes(" 1.7   Gbytes  "));
-        System.out.println(parseMemToBytes("1.7z Gbytes"));
+        System.out.println(parseMemToBytes("1.9 Gbytes"));
     }
 }
