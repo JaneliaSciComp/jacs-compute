@@ -84,14 +84,13 @@ public class PersistenceProducer {
             } else {
                 MongoClient m = new MongoClient(members, optionsBuilder.build());
                 log.info("Connected to MongoDB ({}@{})", mongoDatabase, mongoServer);
-                log.info("Connected to MongoDB (" + mongoDatabase + "@" + mongoServer + ")");
                 return m;
             }
         } else {
             // use the connection URI
             MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
             MongoClient m = new MongoClient(mongoConnectionString);
-            log.info("Connected to MongoDB (" + mongoDatabase + "@" + mongoConnectionString + ")");
+            log.info("Connected to MongoDB ({}@{})", mongoDatabase, mongoConnectionString);
             return m;
         }
     }
