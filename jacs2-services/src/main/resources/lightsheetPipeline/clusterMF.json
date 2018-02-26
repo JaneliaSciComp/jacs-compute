@@ -4,8 +4,8 @@
 		"every": 1,
 		"end": 50
 	},
-	"inputString": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected",
-	"outputString": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected.MultiFused/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039",
+	"inputString": "",
+	"outputString": "",
 	"outputID": "_blending",
 	"dataType": 1,
 	"specimen": 0,

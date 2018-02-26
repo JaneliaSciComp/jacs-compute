@@ -4,7 +4,13 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.*;
+import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
+import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
+import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
+import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -24,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,6 +54,8 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         Integer numTimePoints = 1;
         @Parameter(names = "-timePointsPerJob", description = "Number of time points per job")
         Integer timePointsPerJob = 1;
+        @Parameter(names = "-configDirectory", description = "Input directory containing step config file. The config file's name is <stepName>.json")
+        String configDirectory;
     }
 
     private final String executable;
@@ -163,16 +172,39 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
 
     private String getJsonConfigFile(JacsServiceData jacsServiceData, LightsheetPipelineArgs args) {
         try {
-            InputStream s = this.getClass().getResourceAsStream("/lightsheetPipeline/" + args.step.name() + ".json");
-            Map<String, Object> stepConfig = objectMapper.readValue(s, new TypeReference<Map<String, Object>>() {});
+            Map<String, Object> stepConfig = readJsonConfig(this.getClass().getResourceAsStream("/lightsheetPipeline/" + args.step.name() + ".json"));
+            if (StringUtils.isNotBlank(args.configDirectory)) {
+                 Path stepInputConfigPath = Paths.get(args.configDirectory, args.step.name() + ".json");
+                 if (Files.exists(stepInputConfigPath)) {
+                     stepConfig.putAll(readJsonConfig(Files.newInputStream(stepInputConfigPath)));
+                 }
+            }
             stepConfig.putAll(jacsServiceData.getDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
+            // write the final config file
             JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(jacsServiceData.getWorkspace()), jacsServiceData);
             File jsonConfigFile = serviceWorkingFolder.getServiceFolder("stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step + ".json").toFile();
-            Files.createDirectories(jsonConfigFile.getParentFile().toPath());
-            objectMapper.writeValue(jsonConfigFile, stepConfig);
+            writeJsonConfig(stepConfig, jsonConfigFile);
             return jsonConfigFile.getAbsolutePath();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
+
+    private Map<String, Object> readJsonConfig(InputStream inputStream) {
+        try {
+            return objectMapper.readValue(inputStream, new TypeReference<Map<String, Object>>() {});
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void writeJsonConfig(Map<String, Object> config, File configFile) {
+        try {
+            Files.createDirectories(configFile.getParentFile().toPath());
+            objectMapper.writeValue(configFile, config);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
 }

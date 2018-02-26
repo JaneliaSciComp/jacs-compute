@@ -4,8 +4,8 @@
 		"every": 1,
 		"end": 50
 	},
-	"inputDir": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected.CorrectStack/",
-	"outputDir": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected.Filtered/",
+	"inputDir": "",
+	"outputDir": "",
 	"header": "Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039",
 	"footer": "_timeFused_blending",
 	"stackLabel": ".corrected",

@@ -27,6 +27,8 @@ import java.util.Map;
 public class LightsheetProcessing extends AbstractServiceProcessor<Void> {
 
     static class LightsheetProcessingArgs extends ServiceArgs {
+        @Parameter(names = "-configDirectory", description = "Input directory containing config files. The config files are in JSON format and can only contain the overwritten attributes")
+        String configDirectory;
         @Parameter(names = "-allSelectedStepNames", description = "Selected pipeline steps to run", required = true)
         List<LightsheetPipelineStep> allSelectedSteps;
         @Parameter(names = "-allSelectedTimePoints", description = "Selected time points - the number of selected timepoints must be equal to the number of steps", required = true)
@@ -68,7 +70,9 @@ public class LightsheetProcessing extends AbstractServiceProcessor<Void> {
                         .build(),
                 new ServiceArg("-step", args.allSelectedSteps.get(0).name()),
                 new ServiceArg("-numTimePoints", args.allSelectedTimePoints.get(0)),
-                new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()));
+                new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
+                new ServiceArg("-configDirectory", args.configDirectory)
+        );
         int nSteps = args.allSelectedSteps.size();
         for (int i = 1; i < nSteps; i++) {
             final int stepIndex = i;
@@ -82,11 +86,12 @@ public class LightsheetProcessing extends AbstractServiceProcessor<Void> {
                         new ServiceArg("-step", args.allSelectedSteps.get(stepIndex).name()),
                         new ServiceArg("-stepIndex", stepIndex + 1),
                         new ServiceArg("-numTimePoints", args.allSelectedTimePoints.get(stepIndex)),
-                        new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()));
+                        new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
+                        new ServiceArg("-configDirectory", args.configDirectory)
+                );
             })
             ;
         }
-
         return stage.thenApply((JacsServiceResult<Void> lastStepResult) -> new JacsServiceResult<>(jacsServiceData, lastStepResult.getResult()));
     }
 

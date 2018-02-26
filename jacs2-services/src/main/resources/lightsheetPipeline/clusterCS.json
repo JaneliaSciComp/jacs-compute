@@ -1,9 +1,9 @@
 {
-	"inputRoot": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected.TimeFused/",
-	"outputRoot": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.corrected.CorrectStack/",
+	"inputRoot": "",
+	"outputRoot": "",
 	"headerPattern": "Mmu_E1_H2BeGFPxTmCherry_01_20170928_144039.TM??????_timeFused_blending/",
 	"filePattern": "SPM00_TM??????_CM00_CM01_CHN00_CHN01.fusedStack",
-	"configRoot": "/groups/lightsheet/lightsheet/home/ackermand/Lightsheet_Data/from_kellerp/Example Data/Configurations_Mmu/SPM00_CM00_CM01_CHN00_CHN01_stackCorrection",
+	"configRoot": "",
 	"timepoints": {
 		"start": 0,
 		"every": 1,
