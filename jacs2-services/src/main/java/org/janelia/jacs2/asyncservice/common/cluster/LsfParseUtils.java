@@ -54,8 +54,8 @@ public class LsfParseUtils {
         if (memLsf == null) return null;
         Double bytes = null;
 
-        Pattern p = Pattern.compile("([\\d\\.]+) (\\w+)");
-        Matcher m = p.matcher(memLsf);
+        Pattern p = Pattern.compile("([\\d.]+)\\s+(\\w+)");
+        Matcher m = p.matcher(memLsf.trim());
         if (m.matches()) {
             double amount = Double.parseDouble(m.group(1));
             String units = m.group(2).toLowerCase();
@@ -74,15 +74,22 @@ public class LsfParseUtils {
                 bytes = TB * amount;
             }
             else {
-                log.warn("Could not parse units in max mem: {}", memLsf);
+                log.warn("Could not parse units in max mem: '{}'", units);
+                return null;
             }
         }
-
-        if (bytes == null) {
-            log.warn("Could not parse max mem: {}", memLsf);
+        else {
+            log.warn("Could not parse max mem: '{}'", memLsf);
             return null;
         }
 
         return bytes.longValue();
+    }
+
+    public static void main(String[] args) {
+        System.out.println(parseMemToBytes("1.7 Gbytes "));
+        System.out.println(parseMemToBytes("1.7 Gbytes"));
+        System.out.println(parseMemToBytes(" 1.7   Gbytes  "));
+        System.out.println(parseMemToBytes("1.9 Gbytes"));
     }
 }

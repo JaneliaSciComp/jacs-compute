@@ -172,9 +172,9 @@ public class SparkCluster {
                 jobIdStr += "."+jobInfo.getArrayIndex();
             }
 
-            log.info("Job {} was queued for {}, ran for {}, and used "+maxMem+" of memory.", jobIdStr, queueTime, runTime);
+            log.info("Spark cluster job {} was queued for {}, ran for {}, and used "+maxMem+" of memory.", jobIdStr, queueTime, runTime);
             if (jobInfo.getExitCode()!=143) { // We expect the cluster to be closed by us (TERM_OWNER)
-                log.error("Job {} exited with code {} and reason {}", jobIdStr, jobInfo.getExitCode(), jobInfo.getExitReason());
+                log.error("Spark cluster job {} exited with code {} and reason {}", jobIdStr, jobInfo.getExitCode(), jobInfo.getExitReason());
             }
         }
     }
