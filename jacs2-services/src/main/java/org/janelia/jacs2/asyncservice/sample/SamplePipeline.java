@@ -3,10 +3,6 @@ package org.janelia.jacs2.asyncservice.sample;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.graph.GraphBuilder;
-import com.google.common.graph.MutableGraph;
-import com.google.common.graph.MutableValueGraph;
-import com.google.common.graph.ValueGraphBuilder;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.interfaces.HasIdentifier;
 import org.janelia.model.domain.sample.LSMImage;
@@ -15,7 +11,7 @@ import org.janelia.model.domain.sample.Sample;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.Future;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -26,25 +22,35 @@ public class SamplePipeline {
     public enum SamplePipelineStep {
         LSMProcessing,
         SampleProcessing,
-        PostProcessing
+        PostProcessing,
+        Alignment
     }
 
     public class SamplePipelineConfiguration {
 
-
-
-
+        private String name;
+        private String objective;
+        private String mergeAlgorithm;
+        private String channelDyeSpec;
+        private String outputChannelOrder;
+        private String outputColorSpec;
+        private String imageType;
+        private List<AlignmentConfiguration> alignments;
     }
 
-    private void createPipeline(Set<SamplePipelineStep> reuse) {
+    public class AlignmentConfiguration {
+        private String algorithmName;
+        private String algorithmParam;
+        private String algorithmResultName;
+    }
+
+    private void createPipeline(Sample sample, Set<SamplePipelineStep> reuse) {
 
         DAG dag = new DAG();
 
-        Sample s = new Sample();
+        for (ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
 
-        for (ObjectiveSample objectiveSample : s.getObjectiveSamples()) {
-
-            List<LSMImage> lsms = new ArrayList<>();
+            List<LSMImage> lsms = new ArrayList<>(); // TODO: get the LSMs for the sample
 
             Multimap<String, Task> lsmTaskByAreaTile = ArrayListMultimap.create();
             for(LSMImage lsm : lsms) {
@@ -172,12 +178,27 @@ public class SamplePipeline {
 
     class DAG {
 
-        private final Map<Long,Task> tasks = new HashMap<>();
+        private final List<Task> tasks = new ArrayList<>();
         private final Map<Long,Set<Long>> edges = new HashMap<>();
 
+        @JsonIgnore
+        private transient Map<Long,Task> tasksMap;
+
         public DAG addTask(Task task) {
-            tasks.put(task.getId(), task);
+            tasks.add(task);
+            tasksMap.put(task.getId(), task);
             return this;
+        }
+
+        public Task getTaskById(Long id) {
+            initTaskMap();
+            return tasksMap.get(id);
+        }
+
+        private void initTaskMap() {
+            if (tasksMap == null) {
+                tasksMap = tasks.stream().collect(Collectors.toMap(Task::getId, Function.identity()));
+            }
         }
 
         public DAG addEdge(Task sourceTask, Task targetTask) {
@@ -201,7 +222,7 @@ public class SamplePipeline {
         }
 
         public Set<Task> getDownstream(Task task) {
-            return edges.get(task.getId()).stream().map(id -> tasks.get(id)).collect(Collectors.toSet());
+            return edges.get(task.getId()).stream().map(id -> getTaskById(id)).collect(Collectors.toSet());
         }
 
         public Set<Task> getUpstream(Task task) {
@@ -210,7 +231,7 @@ public class SamplePipeline {
                 Long sourceId = entry.getKey();
                 for(Long targetId : entry.getValue()) {
                     if (targetId.equals(task.getId())) {
-                        upstream.add(tasks.get(sourceId));
+                        upstream.add(getTaskById(sourceId));
                     }
                 }
             }
