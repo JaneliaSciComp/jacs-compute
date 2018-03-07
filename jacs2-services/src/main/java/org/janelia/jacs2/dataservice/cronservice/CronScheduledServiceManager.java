@@ -112,9 +112,13 @@ public class CronScheduledServiceManager {
                             .orElse(Stream.of());
                 })
                 .collect(Collectors.toList());
-        LOG.debug("Service candidates to run at {}: {}", nowAsDate, scheduledCandidates);
+        if (!scheduledCandidates.isEmpty()) {
+            LOG.debug("Service candidates to run at {}: {}", nowAsDate, scheduledCandidates);
+        }
         List<JacsScheduledServiceData> scheduledServices = jacsScheduledServiceDataPersistence.updateServicesScheduledAtOrBefore(scheduledCandidates, nowAsDate);
-        LOG.debug("Services scheduled to run at {}: {}", nowAsDate, scheduledServices);
+        if (!scheduledServices.isEmpty()) {
+            LOG.debug("Services scheduled to run at {}: {}", nowAsDate, scheduledServices);
+        }
         return scheduledServices.stream()
                 .map(scheduledService -> scheduledService.createServiceInstance())
                 .map(sd -> jacsServiceDataPersistence.createEntity(sd))
