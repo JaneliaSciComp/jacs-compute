@@ -174,15 +174,15 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         try {
             Map<String, Object> stepConfig = readJsonConfig(this.getClass().getResourceAsStream("/lightsheetPipeline/" + args.step.name() + ".json"));
             if (StringUtils.isNotBlank(args.configDirectory)) {
-                 Path stepInputConfigPath = Paths.get(args.configDirectory, args.step.name() + ".json");
+                 Path stepInputConfigPath = Paths.get(args.configDirectory, String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json");
                  if (Files.exists(stepInputConfigPath)) {
                      stepConfig.putAll(readJsonConfig(Files.newInputStream(stepInputConfigPath)));
                  }
             }
             stepConfig.putAll(jacsServiceData.getDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
             // write the final config file
-            JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(jacsServiceData.getWorkspace()), jacsServiceData);
-            File jsonConfigFile = serviceWorkingFolder.getServiceFolder("stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step + ".json").toFile();
+            JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+            File jsonConfigFile = serviceWorkingFolder.getServiceFolder("stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json").toFile();
             writeJsonConfig(stepConfig, jsonConfigFile);
             return jsonConfigFile.getAbsolutePath();
         } catch (IOException e) {

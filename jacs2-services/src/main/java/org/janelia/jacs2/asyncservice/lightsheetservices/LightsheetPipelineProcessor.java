@@ -1,11 +1,8 @@
 package org.janelia.jacs2.asyncservice.lightsheetservices;
 
 import com.beust.jcommander.Parameter;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.janelia.jacs2.asyncservice.common.*;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
@@ -14,17 +11,16 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Complete lightsheet processing service which invokes multiple LightsheetProcessing steps.
+ * Complete lightsheet processing service which invokes multiple LightsheetPipelineProcessor steps.
  *
  * @author David Ackerman
  */
 @Named("lightsheetProcessing")
-public class LightsheetProcessing extends AbstractServiceProcessor<Void> {
+public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> {
 
     static class LightsheetProcessingArgs extends ServiceArgs {
         @Parameter(names = "-configDirectory", description = "Input directory containing config files. The config files are in JSON format and can only contain the overwritten attributes")
@@ -38,11 +34,11 @@ public class LightsheetProcessing extends AbstractServiceProcessor<Void> {
     private final WrappedServiceProcessor<LightsheetPipelineStepProcessor, Void> lightsheetPipelineStepProcessor;
 
     @Inject
-    LightsheetProcessing(ServiceComputationFactory computationFactory,
-                         JacsServiceDataPersistence jacsServiceDataPersistence,
-                         @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                         LightsheetPipelineStepProcessor lightsheetPipelineStepProcessor,
-                         Logger logger) {
+    LightsheetPipelineProcessor(ServiceComputationFactory computationFactory,
+                                JacsServiceDataPersistence jacsServiceDataPersistence,
+                                @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                                LightsheetPipelineStepProcessor lightsheetPipelineStepProcessor,
+                                Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.lightsheetPipelineStepProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, lightsheetPipelineStepProcessor);
 
@@ -50,7 +46,7 @@ public class LightsheetProcessing extends AbstractServiceProcessor<Void> {
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(LightsheetProcessing.class, new LightsheetProcessingArgs());
+        return ServiceArgs.getMetadata(LightsheetPipelineProcessor.class, new LightsheetProcessingArgs());
     }
 
     @Override
