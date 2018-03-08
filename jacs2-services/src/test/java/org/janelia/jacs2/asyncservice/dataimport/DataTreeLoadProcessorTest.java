@@ -152,7 +152,7 @@ public class DataTreeLoadProcessorTest {
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             eq(testStoragePrefix + "/f2.png"),
-                            eq(FileType.SignalMip),
+                            eq(FileType.Unclassified2d),
                             eq(testOwner));
                     Mockito.verifyNoMoreInteractions(folderService, vaa3dMipCmdProcessor, imageMagickConverterProcessor);
                     return r;

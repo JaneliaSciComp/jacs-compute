@@ -360,7 +360,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
     }
 
     private FileType getFileTypeByExtension(String fileArtifact, List<String> losslessImageExtensions, FileType fileTypeOverride) {
-        if (fileTypeOverride!=null) {
+        if (fileTypeOverride != null) {
             return fileTypeOverride;
         }
         String fileArtifactExt = FileUtils.getFileExtensionOnly(fileArtifact);
