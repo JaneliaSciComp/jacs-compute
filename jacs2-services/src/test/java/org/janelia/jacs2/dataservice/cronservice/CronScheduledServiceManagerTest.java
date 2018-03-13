@@ -35,12 +35,13 @@ public class CronScheduledServiceManagerTest {
     @Test
     public void scheduleServices() {
         List<JacsScheduledServiceData> testData = ImmutableList.<JacsScheduledServiceData>builder()
-                .add(createTestData("j1", "s1", "* */5 */1 * * ?")) // every 5min
-                .add(createTestData("j2", "s2", "0 0 */1 * * ?")) // every hour
-                .add(createTestData("j3", "s3", "0 59 23 1 * ?"))
-                .add(createTestData("j4", "s4", "* 23 * ? * MON-FRI *"))
+                .add(createTestData("j1", "s1", "*/5 */1 * * *")) // every 5min
+                .add(createTestData("j2", "s2", "0 */1 * * *")) // every hour
+                .add(createTestData("j3", "s3", "59 23 1 * *")) // 1st of the month 23:59
+                .add(createTestData("j4", "s4", "23 * * 8-12 1-5")) // Aug-Dec at the min 23 - MON-FRI
+                .add(createTestData("j4", "s4", "23 * * 8-12 MON-SAT")) // Aug-Dec at the min 23 - MON-SAT
                 .add(createTestData("j5", "s5", null))
-                .add(createTestData("j6", null, "* 23 * ? * MON-FRI *"))
+                .add(createTestData("j6", null, null))
                 .build();
         Mockito.when(jacsScheduledServiceDataPersistence.findServicesScheduledAtOrBefore(ArgumentMatchers.eq(TEST_QUEUE_ID), ArgumentMatchers.any(Date.class)))
                 .thenReturn(testData);
@@ -49,7 +50,7 @@ public class CronScheduledServiceManagerTest {
         Mockito.when(jacsServiceDataPersistence.createEntity(ArgumentMatchers.any(JacsServiceData.class)))
                 .then(invocation -> invocation.getArgument(0));
         List<JacsServiceData> scheduledServices = cronScheduledServiceManager.scheduleServices(Duration.ofSeconds(60));
-        assertThat(scheduledServices, hasSize(4));
+        assertThat(scheduledServices, hasSize(5));
     }
 
     private JacsScheduledServiceData createTestData(String jobName, String serviceName, String cronDescriptor) {

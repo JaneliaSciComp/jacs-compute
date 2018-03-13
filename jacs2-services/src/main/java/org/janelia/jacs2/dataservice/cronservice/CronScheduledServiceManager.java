@@ -44,7 +44,7 @@ public class CronScheduledServiceManager {
         this.jacsScheduledServiceDataPersistence = jacsScheduledServiceDataPersistence;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.queueId = queueId;
-        CronDefinition cronDefinition = CronDefinitionBuilder.instanceDefinitionFor(CronType.QUARTZ);
+        CronDefinition cronDefinition = CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX);
         this.cronParser = new CronParser(cronDefinition);
     }
 
