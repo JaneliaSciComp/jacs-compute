@@ -68,13 +68,13 @@ public class PersistenceProducer {
                         .connectTimeout(connectTimeout)
                         .codecRegistry(codecRegistry);
 
-        if (mongoServer != null) {
+        if (StringUtils.isNotBlank(mongoServer)) {
             // Alternative connection method to support passwords special characters not supported by MongoClientURI
             List<ServerAddress> members = Splitter.on(',').trimResults().omitEmptyStrings().splitToList(mongoServer)
                     .stream()
                     .map(ServerAddress::new)
                     .collect(Collectors.toList());
-            if (!StringUtils.isEmpty(username)) {
+            if (StringUtils.isNotBlank(username)) {
                 String credentialsDb = StringUtils.defaultIfBlank(authMongoDatabase, mongoDatabase);
                 char[] passwordChars = StringUtils.isBlank(password) ? null : password.toCharArray();
                 MongoCredential credential = MongoCredential.createMongoCRCredential(username, credentialsDb, passwordChars);
