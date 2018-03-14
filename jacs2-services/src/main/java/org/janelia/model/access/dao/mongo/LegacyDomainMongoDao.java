@@ -362,23 +362,23 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public List<Sample> getActiveSamplesForDataSet(String subjectKey, String dataSetIdentifier) {
-        return dao.getActiveSamplesForDataSet(subjectKey, dataSetIdentifier);
+    public List<Sample> getActiveSamplesByDataSet(String subjectKey, String dataSetIdentifier) {
+        return dao.getActiveSamplesByDataSet(subjectKey, dataSetIdentifier);
     }
 
     @Override
-    public List<Sample> getSamplesForDataSet(String subjectKey, String dataSetIdentifier) {
-        return dao.getSamplesForDataSet(subjectKey, dataSetIdentifier);
+    public List<Sample> getSamplesByDataSet(String subjectKey, String dataSetIdentifier) {
+        return dao.getSamplesByDataSet(subjectKey, dataSetIdentifier);
     }
 
     @Override
-    public List<LSMImage> getActiveLsmsForDataSet(String subjectKey, String dataSetIdentifier) {
-        return dao.getActiveLsmsForDataSet(subjectKey, dataSetIdentifier);
+    public List<LSMImage> getActiveLsmsByDataSet(String subjectKey, String dataSetIdentifier) {
+        return dao.getActiveLsmsByDataSet(subjectKey, dataSetIdentifier);
     }
 
     @Override
-    public List<LSMImage> getLsmsForDataSet(String subjectKey, String dataSetIdentifier) {
-        return dao.getLsmsForDataSet(subjectKey, dataSetIdentifier);
+    public List<LSMImage> getLsmsByDataSet(String subjectKey, String dataSetIdentifier) {
+        return dao.getLsmsByDataSet(subjectKey, dataSetIdentifier);
     }
 
     @Override
