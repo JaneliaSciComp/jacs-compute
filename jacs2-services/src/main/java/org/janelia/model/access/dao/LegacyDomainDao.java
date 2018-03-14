@@ -277,13 +277,13 @@ public interface LegacyDomainDao {
      */
     boolean unlockSample(String subjectKey, Long sampleId, Long taskId);
 
-    List<Sample> getActiveSamplesForDataSet(String subjectKey, String dataSetIdentifier);
+    List<Sample> getActiveSamplesByDataSet(String subjectKey, String dataSetIdentifier);
 
-    List<Sample> getSamplesForDataSet(String subjectKey, String dataSetIdentifier);
+    List<Sample> getSamplesByDataSet(String subjectKey, String dataSetIdentifier);
 
-    List<LSMImage> getActiveLsmsForDataSet(String subjectKey, String dataSetIdentifier);
+    List<LSMImage> getActiveLsmsByDataSet(String subjectKey, String dataSetIdentifier);
 
-    List<LSMImage> getLsmsForDataSet(String subjectKey, String dataSetIdentifier);
+    List<LSMImage> getLsmsByDataSet(String subjectKey, String dataSetIdentifier);
 
     List<Sample> getSamplesBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode);
 
