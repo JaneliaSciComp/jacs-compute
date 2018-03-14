@@ -187,6 +187,7 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
     public JacsServiceData createServiceInstance() {
         JacsServiceData serviceData = new JacsServiceDataBuilder(null)
                 .setName(serviceName)
+                .setOwnerKey(runServiceAs)
                 .setAuthKey(runServiceAs)
                 .setProcessingLocation(serviceProcessingLocation)
                 .addArgs(serviceArgs)
@@ -195,7 +196,7 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
                 .build();
         serviceData.setQueueId(serviceQueueId);
         serviceData.setPriority(servicePriority);
-        serviceData.addTags(name);
+        serviceData.addTags(name, name + "#" + id);
         return serviceData;
     }
 }

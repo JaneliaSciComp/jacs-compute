@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -108,6 +109,7 @@ public class ScheduledServiceInfoResource {
     @ApiOperation(value = "Update scheduled service")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Entry not found"),
             @ApiResponse(code = 500, message = "Error occurred") })
     public Response updateScheduledService(@PathParam("service-id") Long scheduledServiceId,
                                            JacsScheduledServiceData scheduledServiceData) {
@@ -122,6 +124,27 @@ public class ScheduledServiceInfoResource {
         return Response
                 .status(Response.Status.OK)
                 .entity(updatedScheduledServiceData)
+                .build();
+    }
+
+    @RequireAuthentication
+    @DELETE
+    @Path("/{service-id}")
+    @ApiOperation(value = "Delete scheduled service")
+    @ApiResponses(value = {
+            @ApiResponse(code = 204, message = "Success"),
+            @ApiResponse(code = 404, message = "Entry not found"),
+            @ApiResponse(code = 500, message = "Error occurred") })
+    public Response deleteScheduledService(@PathParam("service-id") Long scheduledServiceId) {
+        JacsScheduledServiceData existingScheduledServiceData = jacsScheduledServiceDataManager.getScheduledServiceById(scheduledServiceId);
+        if (existingScheduledServiceData == null) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .build();
+        }
+        jacsScheduledServiceDataManager.removeScheduledServiceById(existingScheduledServiceData);
+        return Response
+                .status(Response.Status.NO_CONTENT)
                 .build();
     }
 

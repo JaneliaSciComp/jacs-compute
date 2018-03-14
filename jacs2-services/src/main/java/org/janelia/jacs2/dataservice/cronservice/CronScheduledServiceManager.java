@@ -94,6 +94,10 @@ public class CronScheduledServiceManager {
         return jacsScheduledServiceDataPersistence.findAll(pageRequest);
     }
 
+    public void removeScheduledServiceById(JacsScheduledServiceData scheduledServiceData) {
+        jacsScheduledServiceDataPersistence.delete(scheduledServiceData);
+    }
+
     public List<JacsServiceData> scheduleServices(Duration checkInterval) {
         ZonedDateTime now = ZonedDateTime.now();
         Date nowAsDate = Date.from(now.toInstant());

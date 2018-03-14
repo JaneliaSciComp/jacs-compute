@@ -29,6 +29,9 @@ class JacsServiceDataMongoHelper {
         if (StringUtils.isNotBlank(pattern.getOwnerKey())) {
             filtersBuilder.add(Filters.eq("ownerKey", pattern.getOwnerKey()));
         }
+        if (StringUtils.isNotBlank(pattern.getAuthKey())) {
+            filtersBuilder.add(Filters.eq("authKey", pattern.getAuthKey()));
+        }
         if (StringUtils.isNotBlank(pattern.getVersion())) {
             filtersBuilder.add(Filters.eq("version", pattern.getVersion()));
         }

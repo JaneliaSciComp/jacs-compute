@@ -78,4 +78,13 @@ public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
             }
         }
     }
+
+    public void delete(T t) {
+        D dao = daoSource.get();
+        try {
+            dao.delete(t);
+        } finally {
+            daoSource.destroy(dao);
+        }
+    }
 }
