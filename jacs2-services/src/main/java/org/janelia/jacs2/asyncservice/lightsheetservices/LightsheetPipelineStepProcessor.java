@@ -37,6 +37,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.janelia.jacs2.utils.HttpUtils;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
 /**
  * Service for running a single lightsheet processing step.
  *
@@ -48,14 +55,14 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
     static class LightsheetPipelineArgs extends ServiceArgs {
         @Parameter(names = "-step", description = "Which pipeline step to run", required = true)
         LightsheetPipelineStep step;
-        @Parameter(names = "-stepIndex", description = "Which step index ia this")
+        @Parameter(names = "-stepIndex", description = "Which step index is this")
         Integer stepIndex = 1;
         @Parameter(names = "-numTimePoints", description = "Number of time points")
         Integer numTimePoints = 1;
         @Parameter(names = "-timePointsPerJob", description = "Number of time points per job")
         Integer timePointsPerJob = 1;
-        @Parameter(names = "-configDirectory", description = "Input directory containing step config file. The config file's name is <stepName>.json")
-        String configDirectory;
+        @Parameter(names = "-configAddress", description = "Input directory containing step config file. The config file's name is <stepName>.json")
+        String configAddress;
     }
 
     private final String executable;
@@ -137,11 +144,7 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         }
     }
 
-    /**
-     * Walks the input octree and generates a number of scripts to process it. This was simply
-     * transliterated from the Python version (ktx/src/tools/cluster/create_cluster_scripts.py),
-     * which was intended for very large MouseLight data. It may not be optimal for smaller data.
-     */
+    //Each time point gets its own job, assigned based on the job number
     private void parallelizeLightsheetStep(List<ExternalCodeBlock> blocks, LightsheetPipelineArgs args, Integer jobNumber, String jsonConfigFile) {
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter scriptWriter = externalScriptCode.getCodeWriter();
@@ -155,7 +158,6 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
 
     @Override
     protected void prepareResources(JacsServiceData jacsServiceData) {
-        // This doesn't need much memory, because it only processes a single tile at a time.
         String cpuType = ProcessorHelper.getCPUType(jacsServiceData.getResources());
         if (StringUtils.isBlank(cpuType)) {
             ProcessorHelper.setCPUType(jacsServiceData.getResources(), "broadwell");
@@ -163,7 +165,7 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         LightsheetPipelineArgs args = getArgs(jacsServiceData);
         ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), args.step.getRecommendedSlots());
         ProcessorHelper.setSoftJobDurationLimitInSeconds(jacsServiceData.getResources(), 5*60); // 5 minutes
-        ProcessorHelper.setHardJobDurationLimitInSeconds(jacsServiceData.getResources(), 12*60*60); // 1 hour
+        ProcessorHelper.setHardJobDurationLimitInSeconds(jacsServiceData.getResources(), 12*60*60); // 12 hours
     }
 
     private LightsheetPipelineArgs getArgs(JacsServiceData jacsServiceData) {
@@ -171,23 +173,16 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
     }
 
     private String getJsonConfigFile(JacsServiceData jacsServiceData, LightsheetPipelineArgs args) {
-        try {
-            Map<String, Object> stepConfig = readJsonConfig(this.getClass().getResourceAsStream("/lightsheetPipeline/" + args.step.name() + ".json"));
-            if (StringUtils.isNotBlank(args.configDirectory)) {
-                 Path stepInputConfigPath = Paths.get(args.configDirectory, String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json");
-                 if (Files.exists(stepInputConfigPath)) {
-                     stepConfig.putAll(readJsonConfig(Files.newInputStream(stepInputConfigPath)));
-                 }
-            }
-            stepConfig.putAll(jacsServiceData.getDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
-            // write the final config file
-            JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-            File jsonConfigFile = serviceWorkingFolder.getServiceFolder("stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json").toFile();
-            writeJsonConfig(stepConfig, jsonConfigFile);
-            return jsonConfigFile.getAbsolutePath();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        Map<String, Object> stepConfig = readJsonConfig(getJsonConfig("http://lightsheet:8089/config/templateConfigurations", args.step.name()));
+        if (StringUtils.isNotBlank(args.configAddress)) {
+            stepConfig.putAll(readJsonConfig(getJsonConfig(args.configAddress, args.step.name())));
         }
+        stepConfig.putAll(jacsServiceData.getDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
+        // write the final config file
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+        File jsonConfigFile = serviceWorkingFolder.getServiceFolder("stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json").toFile();
+        writeJsonConfig(stepConfig, jsonConfigFile);
+        return jsonConfigFile.getAbsolutePath();
     }
 
     private Map<String, Object> readJsonConfig(InputStream inputStream) {
@@ -206,5 +201,30 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
             throw new UncheckedIOException(e);
         }
     }
+    // Creates json file from http call
+    public InputStream getJsonConfig(String configAddress, String stepName) {
+        Client httpclient = null;
+        try {
+            configAddress = configAddress + "?stepName=" + stepName;
+            httpclient = HttpUtils.createHttpClient();
+            WebTarget target = httpclient.target(configAddress + "?stepName=" + stepName);//.path("entry_content").path(entryName);
+
+            Invocation.Builder requestBuilder = target.request();
+            Response response = requestBuilder.get();
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                throw new IllegalStateException(configAddress + " returned with " + response.getStatus());
+            }
+            return response.readEntity(InputStream.class);
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpclient != null) {
+                httpclient.close();
+            }
+        }
+    }
 
 }
+

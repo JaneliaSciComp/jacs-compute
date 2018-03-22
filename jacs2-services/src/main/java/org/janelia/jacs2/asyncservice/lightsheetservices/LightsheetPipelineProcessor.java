@@ -23,8 +23,8 @@ import java.util.Map;
 public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> {
 
     static class LightsheetProcessingArgs extends ServiceArgs {
-        @Parameter(names = "-configDirectory", description = "Input directory containing config files. The config files are in JSON format and can only contain the overwritten attributes")
-        String configDirectory;
+        @Parameter(names = "-configAddress", description = "Input directory containing config files. The config files are in JSON format and can only contain the overwritten attributes")
+        String configAddress;
         @Parameter(names = "-allSelectedStepNames", description = "Selected pipeline steps to run", required = true)
         List<LightsheetPipelineStep> allSelectedSteps;
         @Parameter(names = "-allSelectedTimePoints", description = "Selected time points - the number of selected timepoints must be equal to the number of steps", required = true)
@@ -67,7 +67,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                 new ServiceArg("-step", args.allSelectedSteps.get(0).name()),
                 new ServiceArg("-numTimePoints", args.allSelectedTimePoints.get(0)),
                 new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
-                new ServiceArg("-configDirectory", args.configDirectory)
+                new ServiceArg("-configAddress", args.configAddress)
         );
         int nSteps = args.allSelectedSteps.size();
         for (int i = 1; i < nSteps; i++) {
@@ -83,7 +83,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                         new ServiceArg("-stepIndex", stepIndex + 1),
                         new ServiceArg("-numTimePoints", args.allSelectedTimePoints.get(stepIndex)),
                         new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
-                        new ServiceArg("-configDirectory", args.configDirectory)
+                        new ServiceArg("-configAddress", args.configAddress)
                 );
             })
             ;
