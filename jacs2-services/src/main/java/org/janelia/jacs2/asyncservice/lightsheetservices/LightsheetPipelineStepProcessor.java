@@ -207,7 +207,7 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         try {
             configAddress = configAddress + "?stepName=" + stepName;
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(configAddress + "?stepName=" + stepName);//.path("entry_content").path(entryName);
+            WebTarget target = httpclient.target(configAddress);//.path("entry_content").path(entryName);
 
             Invocation.Builder requestBuilder = target.request();
             Response response = requestBuilder.get();
