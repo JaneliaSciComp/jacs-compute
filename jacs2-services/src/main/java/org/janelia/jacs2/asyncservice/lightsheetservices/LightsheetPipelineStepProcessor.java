@@ -61,7 +61,7 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         Integer numTimePoints = 1;
         @Parameter(names = "-timePointsPerJob", description = "Number of time points per job")
         Integer timePointsPerJob = 1;
-        @Parameter(names = "-configAddress", description = "Input directory containing step config file. The config file's name is <stepName>.json")
+        @Parameter(names = "-configAddress", description = "Address for accessing job's config json")
         String configAddress;
     }
 

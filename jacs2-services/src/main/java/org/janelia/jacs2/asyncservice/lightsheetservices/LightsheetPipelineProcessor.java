@@ -23,7 +23,7 @@ import java.util.Map;
 public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> {
 
     static class LightsheetProcessingArgs extends ServiceArgs {
-        @Parameter(names = "-configAddress", description = "Input directory containing config files. The config files are in JSON format and can only contain the overwritten attributes")
+        @Parameter(names = "-configAddress", description = "Address for accessing job's config json.")
         String configAddress;
         @Parameter(names = "-allSelectedStepNames", description = "Selected pipeline steps to run", required = true)
         List<LightsheetPipelineStep> allSelectedSteps;
