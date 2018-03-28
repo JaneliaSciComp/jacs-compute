@@ -52,6 +52,8 @@ import javax.ws.rs.core.Response;
 @Named("lightsheetPipeline")
 public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
+    private static final String DEFAULT_CONFIG_OUTPUT_PATH = "";
+
     static class LightsheetPipelineArgs extends ServiceArgs {
         @Parameter(names = "-step", description = "Which pipeline step to run", required = true)
         LightsheetPipelineStep step;
@@ -63,6 +65,8 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         Integer timePointsPerJob = 1;
         @Parameter(names = "-configAddress", description = "Address for accessing job's config json")
         String configAddress;
+        @Parameter(names = "-configOutputPath", description = "Path for outputting json configs", required=false)
+        String configOutputPath = DEFAULT_CONFIG_OUTPUT_PATH;
     }
 
     private final String executable;
@@ -177,8 +181,16 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         stepConfig.putAll(jacsServiceData.getDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
         // write the final config file
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        File jsonConfigFile = serviceWorkingFolder.getServiceFolder("stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json").toFile();
+        String fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json";
+        File jsonConfigFile = serviceWorkingFolder.getServiceFolder(fileName).toFile();
         writeJsonConfig(stepConfig, jsonConfigFile);
+        if (!args.configOutputPath.equals("")) {
+            String[] addressParts = args.configAddress.split("/");
+            String lightsheetJobID = addressParts[addressParts.length -1];
+            Path configOutputPath = Paths.get(args.configOutputPath + "/" + lightsheetJobID + "/" + fileName);
+            File configOutputPathFile = configOutputPath.toFile();
+            writeJsonConfig(stepConfig, configOutputPathFile);
+        }
         return jsonConfigFile.getAbsolutePath();
     }
 

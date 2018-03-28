@@ -21,6 +21,7 @@ import java.util.Map;
  */
 @Named("lightsheetProcessing")
 public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> {
+    private static final String DEFAULT_CONFIG_OUTPUT_PATH = "";
 
     static class LightsheetProcessingArgs extends ServiceArgs {
         @Parameter(names = "-configAddress", description = "Address for accessing job's config json.")
@@ -29,6 +30,8 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
         List<LightsheetPipelineStep> allSelectedSteps;
         @Parameter(names = "-allSelectedTimePoints", description = "Selected time points - the number of selected timepoints must be equal to the number of steps", required = true)
         List<String> allSelectedTimePoints;
+        @Parameter(names = "-configOutputPath", description = "Path for outputting json configs", required=false)
+        String configOutputPath = DEFAULT_CONFIG_OUTPUT_PATH;
     }
 
     private final WrappedServiceProcessor<LightsheetPipelineStepProcessor, Void> lightsheetPipelineStepProcessor;
@@ -67,7 +70,8 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                 new ServiceArg("-step", args.allSelectedSteps.get(0).name()),
                 new ServiceArg("-numTimePoints", args.allSelectedTimePoints.get(0)),
                 new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
-                new ServiceArg("-configAddress", args.configAddress)
+                new ServiceArg("-configAddress", args.configAddress),
+                new ServiceArg("-configOutputPath", args.configOutputPath)
         );
         int nSteps = args.allSelectedSteps.size();
         for (int i = 1; i < nSteps; i++) {
@@ -83,7 +87,8 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                         new ServiceArg("-stepIndex", stepIndex + 1),
                         new ServiceArg("-numTimePoints", args.allSelectedTimePoints.get(stepIndex)),
                         new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
-                        new ServiceArg("-configAddress", args.configAddress)
+                        new ServiceArg("-configAddress", args.configAddress),
+                        new ServiceArg("-configOutputPath", args.configOutputPath)
                 );
             })
             ;
