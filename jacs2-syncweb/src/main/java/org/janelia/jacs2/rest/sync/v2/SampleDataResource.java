@@ -77,8 +77,10 @@ public class SampleDataResource {
 
     @GET
     @Path("/{sample-id}")
-    public Sample getSample(@HeaderParam("authToken") String authToken, @PathParam("sample-id") Long sampleId) {
-        return sampleDataService.getSampleById(extractSubjectFromAuthToken(authToken), sampleId);
+    public Sample getSample(@HeaderParam("authToken") String authToken, @PathParam("sample-id") Long sampleId, @QueryParam("user") String userName) {
+        System.out.println("getSammple() Check1 - user="+userName);
+//        return sampleDataService.getSampleById(extractSubjectFromAuthToken(authToken), sampleId);
+        return sampleDataService.getSampleById(userName, sampleId);
     }
 
     @GET
