@@ -90,6 +90,14 @@ public class MongoDaoHelper {
                 .into(entityDocs);
     }
 
+    public static <T> long count(Bson queryFilter, MongoCollection<T> mongoCollection) {
+        if (queryFilter == null) {
+            return mongoCollection.count();
+        } else {
+            return mongoCollection.count(queryFilter);
+        }
+    }
+
     public static <T, I> void delete(MongoCollection<T> mongoCollection, I entityId) {
         mongoCollection.deleteOne(eq("_id", entityId));
     }

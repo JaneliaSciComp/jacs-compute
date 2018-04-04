@@ -115,6 +115,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         pattern.setState(null);
         PageResult<JacsServiceData> searchResult = testDao.findMatchingServices(pattern, new DataInterval<>(null, null), new PageRequest());
         assertThat(searchResult.getResultList(), hasSize(otherServices.size() + 1));
+        assertThat(testDao.countMatchingServices(pattern, new DataInterval<>(null, null)), equalTo(otherServices.size() + 1L));
 
         pattern.setTags(ImmutableList.of("t1", "t3", "t2"));
         searchResult = testDao.findMatchingServices(pattern, new DataInterval<>(null, null), new PageRequest());

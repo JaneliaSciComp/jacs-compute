@@ -8,6 +8,7 @@ import java.util.List;
 public class PageResult<T> {
     private long pageOffset;
     private long pageNumber;
+    private long totalCount;
     private int pageSize;
     private List<SortCriteria> sortCriteria;
     private List<T> resultList;
@@ -45,6 +46,14 @@ public class PageResult<T> {
 
     public void setPageSize(int pageSize) {
         this.pageSize = pageSize;
+    }
+
+    public long getTotalCount() {
+        return totalCount;
+    }
+
+    public void setTotalCount(long totalCount) {
+        this.totalCount = totalCount;
     }
 
     public List<SortCriteria> getSortCriteria() {

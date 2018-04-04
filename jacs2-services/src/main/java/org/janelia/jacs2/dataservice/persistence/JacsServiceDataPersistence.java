@@ -72,7 +72,9 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
     public PageResult<JacsServiceData> findMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
-            return jacsServiceDataDao.findMatchingServices(pattern, creationInterval, pageRequest);
+            PageResult<JacsServiceData> results = jacsServiceDataDao.findMatchingServices(pattern, creationInterval, pageRequest);
+            results.setTotalCount(jacsServiceDataDao.countMatchingServices(pattern, creationInterval));
+            return results;
         } finally {
             daoSource.destroy(jacsServiceDataDao);
         }
