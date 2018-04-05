@@ -1,5 +1,8 @@
 package org.janelia.model.jacs2.page;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 public class SortCriteria {
     private String field;
     private SortDirection direction;
@@ -33,4 +36,25 @@ public class SortCriteria {
         this.direction = direction;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SortCriteria that = (SortCriteria) o;
+
+        return new EqualsBuilder()
+                .append(field, that.field)
+                .append(direction, that.direction)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(field)
+                .append(direction)
+                .toHashCode();
+    }
 }
