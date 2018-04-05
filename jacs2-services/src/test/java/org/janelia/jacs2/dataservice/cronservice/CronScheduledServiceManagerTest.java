@@ -1,6 +1,7 @@
 package org.janelia.jacs2.dataservice.cronservice;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsScheduledServiceDataPersistence;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsScheduledServiceData;
@@ -14,8 +15,7 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertNotNull;
 
 public class CronScheduledServiceManagerTest {
 
@@ -49,8 +49,13 @@ public class CronScheduledServiceManagerTest {
                 .then(invocation -> invocation.getArgument(0));
         Mockito.when(jacsServiceDataPersistence.createEntity(ArgumentMatchers.any(JacsServiceData.class)))
                 .then(invocation -> invocation.getArgument(0));
-        List<JacsServiceData> scheduledServices = cronScheduledServiceManager.scheduleServices(Duration.ofSeconds(60));
-        assertThat(scheduledServices, hasSize(5));
+        cronScheduledServiceManager.scheduleServices(Duration.ofSeconds(60));
+        testData.forEach(scheduledService -> {
+            if (StringUtils.isNotBlank(scheduledService.getServiceName()) &&
+                    StringUtils.isNotBlank(scheduledService.getCronScheduleDescriptor())) {
+                assertNotNull(scheduledService.getNextStartTime());
+            }
+        });
     }
 
     private JacsScheduledServiceData createTestData(String jobName, String serviceName, String cronDescriptor) {

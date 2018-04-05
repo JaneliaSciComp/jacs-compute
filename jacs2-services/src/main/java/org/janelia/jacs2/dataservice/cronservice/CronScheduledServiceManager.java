@@ -108,12 +108,26 @@ public class CronScheduledServiceManager {
                 .flatMap(scheduledService -> {
                     Cron cron = cronParser.parse(scheduledService.getCronScheduleDescriptor());
                     ExecutionTime executionTime = ExecutionTime.forCron(cron);
-                    return executionTime.nextExecution(now.plus(checkInterval))
-                            .map(nextTime -> {
-                                scheduledService.setNextStartTime(Date.from(nextTime.toInstant()));
-                                return Stream.of(scheduledService);
-                            })
-                            .orElse(Stream.of());
+                    if (scheduledService.getNextStartTime() != null || executionTime.isMatch(now)) {
+                        return executionTime.nextExecution(now.plus(checkInterval))
+                                .map(nextTime -> {
+                                    scheduledService.setNextStartTime(Date.from(nextTime.toInstant()));
+                                    return Stream.of(scheduledService);
+                                })
+                                .orElse(Stream.of());
+                    } else {
+                        // this service has never been scheduled yet and the current time doesn't match
+                        // the configured cron fields
+                        return executionTime.nextExecution(now)
+                                .map(nextTime -> {
+                                    scheduledService.setNextStartTime(Date.from(nextTime.toInstant()));
+                                    jacsScheduledServiceDataPersistence.update(scheduledService, ImmutableMap.of(
+                                            "nextStartTime", new SetFieldValueHandler<>(scheduledService.getNextStartTime())
+                                    ));
+                                    return Stream.<JacsScheduledServiceData>of();
+                                })
+                                .orElse(Stream.of());
+                    }
                 })
                 .collect(Collectors.toList());
         if (!scheduledCandidates.isEmpty()) {
