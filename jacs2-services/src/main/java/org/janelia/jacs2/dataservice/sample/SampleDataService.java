@@ -68,6 +68,9 @@ public class SampleDataService {
 
     private Sample getSampleById(Subject subject, Number sampleId) {
         Sample sample = sampleDao.findById(sampleId);
+        if (sample==null) {
+            logger.error("getSampleById() : sample is null for sampleId="+sampleId);
+        }
         if (subject != null) {
             if (sample != null && subject.canRead(sample)) {
                 return sample;
