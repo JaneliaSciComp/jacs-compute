@@ -53,6 +53,13 @@ public class ApplicationProducer {
         return applicationConfig.getStringPropertyValue(property.name(), property.defaultValue());
     }
 
+    @Produces
+    @BoolPropertyValue(name = "")
+    public boolean booleanPropertyValueWithDefault(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
+        final BoolPropertyValue property = injectionPoint.getAnnotated().getAnnotation(BoolPropertyValue.class);
+        return applicationConfig.getBooleanPropertyValue(property.name(), property.defaultValue());
+    }
+
     @ApplicationScoped
     @ApplicationProperties
     @Produces

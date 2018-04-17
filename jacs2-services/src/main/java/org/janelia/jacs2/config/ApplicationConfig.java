@@ -12,8 +12,12 @@ public class ApplicationConfig extends XProperties {
     }
 
     public Boolean getBooleanPropertyValue(String name) {
+        return getBooleanPropertyValue(name, false);
+    }
+
+    public Boolean getBooleanPropertyValue(String name, boolean defaultValue) {
         String stringValue = getStringPropertyValue(name);
-        return StringUtils.isBlank(stringValue) ? false : Boolean.valueOf(stringValue);
+        return StringUtils.isBlank(stringValue) ? defaultValue : Boolean.valueOf(stringValue);
     }
 
     public Integer getIntegerPropertyValue(String name) {
