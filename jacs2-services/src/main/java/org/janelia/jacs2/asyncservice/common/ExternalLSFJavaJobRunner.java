@@ -9,11 +9,10 @@ import org.janelia.jacs2.asyncservice.common.cluster.LsfJavaJobInfo;
 import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
 import org.janelia.jacs2.asyncservice.qualifier.LSFJavaJob;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
+import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.GridExecutor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.security.Subject;
-import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceEventTypes;
@@ -29,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -44,9 +42,11 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
     private final ExecutorService lsfJobExecutor;
     private final LegacyDomainDao dao;
     private final ComputeAccounting accouting;
+    private final boolean requiresAccountInfo;
 
     @Inject
     public ExternalLSFJavaJobRunner(MonitoredJobManager jobMgr,
+                                    @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
                                     @GridExecutor ExecutorService lsfJobExecutor,
                                     LegacyDomainDao dao,
@@ -54,6 +54,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
                                     Logger logger) {
         super(jacsServiceDataPersistence, logger);
         this.jobMgr = jobMgr.getJobMgr();
+        this.requiresAccountInfo = requiresAccountInfo;
         this.lsfJobExecutor = lsfJobExecutor;
         this.dao = dao;
         this.accouting = accouting;
@@ -128,34 +129,19 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         }
 
         // Figure out who is going to get the bill
-        String billingAccount = getBillingAccount(serviceContext);
+        String billingAccount = accouting.getComputeAccount(serviceContext);
 
         // Apply a RegEx to replace any non-alphanumeric character with "_".
         jt.setJobName(billingAccount.replaceAll("\\W", "_") + "_" + serviceContext.getName());
 
         List<String> nativeSpec = createNativeSpec(serviceContext.getResources());
-        nativeSpec.add("-P "+billingAccount);
+
+        if (requiresAccountInfo)
+            nativeSpec.add("-P "+billingAccount);
+
         jt.setNativeSpecification(nativeSpec);
 
         return jt;
-    }
-
-    private String getBillingAccount(JacsServiceData serviceContext) {
-        String billingAccount = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());
-        if (!StringUtils.isBlank(billingAccount)) {
-            // User provided a billing account
-            Subject authenticatedUser = dao.getSubjectByKey(serviceContext.getAuthKey());
-            if (!SubjectUtils.isAdmin(authenticatedUser)) {
-                throw new ComputationException(serviceContext, "Admin access is required to override compute account");
-            }
-            logger.info("Using provided billing account {}", billingAccount);
-        }
-        else {
-            // Calculate billing account from job owner
-            billingAccount = accouting.getComputeAccount(serviceContext.getOwnerKey());
-            logger.info("Using billing account {} for user {}", billingAccount, serviceContext.getOwnerKey());
-        }
-        return billingAccount;
     }
 
     private List<String> createNativeSpec(Map<String, String> jobResources) {

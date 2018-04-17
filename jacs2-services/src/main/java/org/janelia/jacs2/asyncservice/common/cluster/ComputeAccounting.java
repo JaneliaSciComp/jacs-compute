@@ -5,11 +5,15 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheLoader.InvalidCacheLoadException;
 import com.google.common.cache.LoadingCache;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.imagesearch.ColorDepthFileSearch;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.security.Group;
+import org.janelia.model.security.Subject;
 import org.janelia.model.security.util.SubjectUtils;
+import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -140,5 +144,27 @@ public class ComputeAccounting {
         String subjectName = SubjectUtils.getSubjectName(subjectKey);
         return group+"-"+subjectName;
     }
-    
+
+    /**
+     * Returns the compute account to use for billing during the given service invocation.
+     * @param serviceContext
+     * @return
+     */
+    public String getComputeAccount(JacsServiceData serviceContext) {
+        String billingAccount = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());
+        if (!StringUtils.isBlank(billingAccount)) {
+            // User provided a billing account
+            Subject authenticatedUser = dao.getSubjectByKey(serviceContext.getAuthKey());
+            if (!SubjectUtils.isAdmin(authenticatedUser)) {
+                throw new ComputationException(serviceContext, "Admin access is required to override compute account");
+            }
+            log.info("Using provided billing account {}", billingAccount);
+        }
+        else {
+            // Calculate billing account from job owner
+            billingAccount = getComputeAccount(serviceContext.getOwnerKey());
+            log.info("Using billing account {} for user {}", billingAccount, serviceContext.getOwnerKey());
+        }
+        return billingAccount;
+    }
 }

@@ -121,7 +121,7 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
             if (args.numNodes != null) {
                 numNodes = args.numNodes;
             }
-            cluster.startCluster(serviceWorkingFolder.getServiceFolder(), numNodes);
+            cluster.startCluster(jacsServiceData, serviceWorkingFolder.getServiceFolder(), numNodes);
             // Allow user to override parallelism
             if (args.parallelism != null) {
                 cluster.setDefaultParallelism(args.parallelism);
