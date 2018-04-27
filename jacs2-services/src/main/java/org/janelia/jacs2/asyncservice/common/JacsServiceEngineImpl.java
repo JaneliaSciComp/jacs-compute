@@ -8,18 +8,17 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
-import org.janelia.model.jacs2.page.PageRequest;
-import org.janelia.model.jacs2.page.PageResult;
 import org.slf4j.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.Semaphore;
 
+@ApplicationScoped
 public class JacsServiceEngineImpl implements JacsServiceEngine {
     private static final int DEFAULT_MAX_RUNNING_SLOTS = 1000;
 
@@ -48,25 +47,10 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
     public ServerStats getServerStats() {
         ServerStats stats = new ServerStats();
 
-        // queued
         stats.setAvailableSlots(getAvailableSlots());
-        int waitingCapacity = jacsServiceQueue.getMaxReadyCapacity();
-        PageRequest servicePageRequest = new PageRequest();
-        servicePageRequest.setPageSize(waitingCapacity);
-        PageResult<JacsServiceData> waitingServiceInfo = jacsServiceDataPersistence.findServicesByState(
-                EnumSet.of(JacsServiceState.QUEUED),
-                servicePageRequest);
-
-        stats.setWaitingCapacity(waitingCapacity);
-        stats.setWaitingServices(waitingServiceInfo.getResultList());
-
-        // running
-        servicePageRequest.setPageSize(jacsServiceQueue.getPendingServicesSize());
-        PageResult<JacsServiceData> runningServiceInfo = jacsServiceDataPersistence.findServicesByState(
-                EnumSet.of(JacsServiceState.RUNNING),
-                servicePageRequest);
+        stats.setWaitingCapacity(jacsServiceQueue.getMaxReadyCapacity());
+        stats.setWaitingServicesCount(jacsServiceQueue.getReadyServicesSize());
         stats.setRunningServicesCount(jacsServiceQueue.getPendingServicesSize());
-        stats.setRunningServices(runningServiceInfo.getResultList());
 
         return stats;
     }

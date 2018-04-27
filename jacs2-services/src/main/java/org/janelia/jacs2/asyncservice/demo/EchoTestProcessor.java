@@ -41,6 +41,10 @@ public class EchoTestProcessor extends AbstractExeBasedServiceProcessor<Void> {
     public static class EchoArgs extends ServiceArgs {
         @Parameter(names = "-echo", description = "What to echo")
         String echoedString;
+
+        EchoArgs() {
+            super("Command that echos the specified string to the processor's output");
+        }
     }
 
     @Inject

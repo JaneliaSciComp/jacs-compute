@@ -31,6 +31,11 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
     }
 
     @Override
+    public long countServices(JacsServiceData ref, DataInterval<Date> creationInterval) {
+        return jacsServiceDataPersistence.countMatchingServices(ref, creationInterval);
+    }
+
+    @Override
     public PageResult<JacsServiceData> searchServices(JacsServiceData ref, DataInterval<Date> creationInterval, PageRequest pageRequest) {
         return jacsServiceDataPersistence.findMatchingServices(ref, creationInterval, pageRequest);
     }

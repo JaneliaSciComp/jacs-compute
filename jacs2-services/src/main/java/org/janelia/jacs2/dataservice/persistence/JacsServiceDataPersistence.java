@@ -69,6 +69,15 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
+    public long countMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval) {
+        JacsServiceDataDao jacsServiceDataDao = daoSource.get();
+        try {
+            return jacsServiceDataDao.countMatchingServices(pattern, creationInterval);
+        } finally {
+            daoSource.destroy(jacsServiceDataDao);
+        }
+    }
+
     public PageResult<JacsServiceData> findMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {

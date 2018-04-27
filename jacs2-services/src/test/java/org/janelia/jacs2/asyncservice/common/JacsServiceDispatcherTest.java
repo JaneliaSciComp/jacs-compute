@@ -117,7 +117,7 @@ public class JacsServiceDispatcherTest {
         when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
         testDispatcher.dispatchServices();
-        verify(logger).info("Abort service {} for now because there are not enough processing slots", testService);
+        verify(logger).debug("Abort service {} for now because there are not enough processing slots", testService);
     }
 
     @Test
