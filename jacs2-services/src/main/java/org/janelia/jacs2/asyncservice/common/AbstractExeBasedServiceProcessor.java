@@ -117,7 +117,9 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
 
     private boolean hasJobFinished(JacsServiceData jacsServiceData, ExeJobInfo jobInfo) {
         JacsServiceData updatedServiceData = refreshServiceData(jacsServiceData);
-        // if the service has been suspended wait until this job actually completes
+        // if the service has been canceled but the job hasn't finished terminate the job
+        // if the service has been suspended let the job complete
+        // so there's no need to do anything here
         if (updatedServiceData.hasBeenCanceled()) {
             if (!jobInfo.isDone()) {
                 jobInfo.terminate();
