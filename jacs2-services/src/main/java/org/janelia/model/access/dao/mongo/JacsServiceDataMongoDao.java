@@ -13,12 +13,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
+import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.JacsServiceDataDao;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
@@ -76,7 +78,7 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
         }
         Number rootServiceId = jacsServiceData.getRootServiceId();
         if (rootServiceId == null) {
-            rootServiceId = serviceId;
+            rootServiceId = jacsServiceData.getId();
         }
         Map<Number, JacsServiceData> fullServiceHierachy = new LinkedHashMap<>();
         MongoDaoHelper.find(
@@ -102,7 +104,7 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
                     .forEach(id -> sd.addServiceDependency(fullServiceHierachy.get(id)));
         });
 
-        return fullServiceHierachy.get(serviceId);
+        return fullServiceHierachy.get(jacsServiceData.getId());
     }
 
     @Override
@@ -144,11 +146,15 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
                     return mongoCollection.findOneAndUpdate(
                             Filters.and(
                                     Filters.eq("_id", sd.getId()),
+                                    Filters.eq("accessId", sd.getAccessId()),
                                     Filters.or(
                                             Filters.eq("queueId", queueId),
                                             Filters.exists("queueId", false))
                             ),
-                            Updates.set("queueId", queueId),
+                            Updates.combine(
+                                    Updates.set("queueId", queueId),
+                                    Updates.set("accessId", sd.nextAccessId())
+                            ),
                             updateOptions
                     );
                 })
@@ -177,6 +183,7 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
         List<JacsServiceData> serviceHierarchy = serviceData.serviceHierarchyStream().map((JacsServiceData s) -> {
             if (s.getId() == null) {
                 s.setId(idGenerator.generateId());
+                s.initAccessId();
                 toBeInserted.add(s);
                 s.updateParentService(s.getParentService());
             } else {
@@ -201,18 +208,27 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     }
 
     @Override
-    public void update(JacsServiceData entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
-        Map<String, EntityFieldValueHandler<?>> fieldsWithUpdatedDate = new LinkedHashMap<>(fieldsToUpdate);
-        entity.setModificationDate(new Date());
-        fieldsWithUpdatedDate.put("modificationDate", new SetFieldValueHandler<>(entity.getModificationDate()));
-        super.update(entity, fieldsWithUpdatedDate);
+    public DaoUpdateResult update(JacsServiceData entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+        Map<String, EntityFieldValueHandler<?>> serviceFieldsToUpdate = new LinkedHashMap<>(fieldsToUpdate);
+        Date newModificationDate = new Date();
+        int nextAccessId = entity.nextAccessId();
+        serviceFieldsToUpdate.put("modificationDate", new SetFieldValueHandler<>(newModificationDate));
+        serviceFieldsToUpdate.put("accessId", new SetFieldValueHandler<>(nextAccessId));
+        DaoUpdateResult result = super.update(entity, serviceFieldsToUpdate);
+        if (result.getEntitiesAffected() > 0) {
+            entity.setModificationDate(newModificationDate);
+            entity.setAccessId(nextAccessId);
+        }
+        return result;
     }
 
-    @Override
-    public void updateServiceResult(JacsServiceData serviceData) {
-        Map<String, EntityFieldValueHandler<?>> updatedFields = new HashMap<>();
-        updatedFields.put("serializableResult", new SetFieldValueHandler<>(serviceData.getSerializableResult()));
-        update(serviceData, updatedFields);
+    protected Bson getUpdateMatchCriteria(JacsServiceData entity) {
+        Bson idFilter = Filters.eq("_id", entity.getId());
+        Bson accessIdFilter = Filters.eq("accessId", entity.getAccessId());
+        return Filters.and(
+                idFilter,
+                accessIdFilter
+        );
     }
 
 }

@@ -47,15 +47,18 @@ public class ServiceDependenciesCompletedContinuationCond implements Continuatio
         // check if all dependencies are done
         List<JacsServiceData> runningDependencies = new ArrayList<>();
         List<JacsServiceData> failedDependencies = new ArrayList<>();
+        List<JacsServiceData> suspendedDependencies = new ArrayList<>();
         dependenciesGetter.apply(jacsServiceData)
                 .forEach(sd -> {
-                    if (!sd.hasCompleted()) {
-                        runningDependencies.add(sd);
+                    if (sd.hasBeenSuspended()) {
+                        suspendedDependencies.add(sd);
                     } else if (sd.hasCompletedUnsuccessfully()) {
                         failedDependencies.add(sd);
+                    } else if (!sd.hasCompleted()) {
+                        runningDependencies.add(sd);
                     }
                 });
-        verifyAndFailIfAnyDependencyFailed(jacsServiceData, failedDependencies);
+        verifyAndFailIfAnyDependencyFailed(jacsServiceData, failedDependencies, suspendedDependencies);
         if (CollectionUtils.isEmpty(runningDependencies)) {
             return new Cond<>(jacsServiceData, true);
         }
@@ -63,7 +66,9 @@ public class ServiceDependenciesCompletedContinuationCond implements Continuatio
         return new Cond<>(jacsServiceData, false);
     }
 
-    private void verifyAndFailIfAnyDependencyFailed(JacsServiceData jacsServiceData, List<JacsServiceData> failedDependencies) {
+    private void verifyAndFailIfAnyDependencyFailed(JacsServiceData jacsServiceData,
+                                                    List<JacsServiceData> failedDependencies,
+                                                    List<JacsServiceData> suspendedDependencies) {
         if (CollectionUtils.isNotEmpty(failedDependencies)) {
             jacsServiceDataPersistence.updateServiceState(
                     jacsServiceData,
@@ -73,6 +78,17 @@ public class ServiceDependenciesCompletedContinuationCond implements Continuatio
                             String.format("Canceled because one or more service dependencies finished unsuccessfully: %s", failedDependencies)));
             logger.warn("Service {} canceled because of {}", jacsServiceData, failedDependencies);
             throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getEntityRefId() + " canceled");
+        } else if (jacsServiceData.hasBeenSuspended() || CollectionUtils.isNotEmpty(suspendedDependencies)) {
+            if (!jacsServiceData.hasBeenSuspended()) {
+                jacsServiceDataPersistence.updateServiceState(
+                        jacsServiceData,
+                        JacsServiceState.SUSPENDED,
+                        JacsServiceData.createServiceEvent(
+                                JacsServiceEventTypes.SUSPEND,
+                                String.format("Suspended because one or more service dependencies has been suspended: %s", suspendedDependencies)));
+                logger.warn("Service {} suspended because of {}", jacsServiceData, suspendedDependencies);
+            }
+            throw new ServiceSuspendedException(jacsServiceData);
         }
     }
 

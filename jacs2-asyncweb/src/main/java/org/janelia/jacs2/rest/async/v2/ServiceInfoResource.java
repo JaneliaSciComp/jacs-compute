@@ -169,7 +169,6 @@ public class ServiceInfoResource {
         }
     }
 
-
     private JacsServiceData createSearchServicesPattern(String serviceName,
                                                         Long serviceId,
                                                         Long parentServiceId,

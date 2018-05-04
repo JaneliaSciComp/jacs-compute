@@ -14,6 +14,6 @@ import java.util.Map;
 public interface ReadWriteDao<T, I> extends ReadOnlyDao<T, I> {
     void save(T entity);
     void saveAll(Collection<T> entities);
-    void update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate);
+    DaoUpdateResult update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate);
     void delete(T entity);
 }

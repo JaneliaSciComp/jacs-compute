@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -75,11 +76,11 @@ public class JacsServiceDispatcher {
 
     @MdcContext
     private void dispatchService(JacsServiceData jacsServiceData) {
-
         logger.debug("Dispatch service {}", jacsServiceData);
 
         try {
             ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
+            JacsServiceState initialServiceState = jacsServiceData.getState();
             jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.DISPATCHED, JacsServiceEvent.NO_EVENT);
             serviceComputationFactory.newCompletedComputation(jacsServiceData)
                     .thenSuspendUntil(new WaitingForDependenciesContinuationCond<>(
@@ -88,28 +89,29 @@ public class JacsServiceDispatcher {
                             jacsServiceDataPersistence,
                             logger).negate())
                     .thenApply((JacsServiceData sd) -> {
-                        sendNotification(sd, JacsServiceLifecycleStage.START_PROCESSING);
+                        if (initialServiceState == JacsServiceState.QUEUED)
+                            sendNotification(sd, JacsServiceLifecycleStage.START_PROCESSING);
+                        else if (initialServiceState == JacsServiceState.RESUMED)
+                            sendNotification(sd, JacsServiceLifecycleStage.RESUME_PROCESSING);
+                        else
+                            sendNotification(sd, JacsServiceLifecycleStage.RETRY_PROCESSING);
                         ServiceArgsHandler serviceArgsHandler = new ServiceArgsHandler(jacsServiceDataPersistence);
                         Map<String, EntityFieldValueHandler<?>> sdUpdates = serviceArgsHandler.updateServiceArgs(serviceProcessor.getMetadata(), sd);
                         logger.debug("Update service args for {} to {}", sd, sdUpdates);
                         jacsServiceDataPersistence.update(sd, sdUpdates);
                         return sd;
                     })
-                    .thenCompose(sd -> serviceProcessor.process(sd))
+                    .thenCompose((JacsServiceData sd) -> serviceProcessor.process(sd))
                     .thenApply(r -> {
                         success(r.getJacsServiceData());
                         return r;
                     })
-                    .exceptionally(exc -> {
-                        fail(jacsServiceData, exc);
-                        throw new ComputationException(jacsServiceData, exc);
-                    })
+                    .exceptionally((Throwable exc) -> JacsServiceResult.class.cast(handleException(jacsServiceData, exc)))
                     .whenComplete((r, exc) -> {
                         serviceFinally(jacsServiceData);
-                    })
-            ;
+                    });
         } catch (Throwable e) {
-            fail(jacsServiceData, e);
+            handleException(jacsServiceData, e);
             serviceFinally(jacsServiceData);
         }
     }
@@ -156,33 +158,42 @@ public class JacsServiceDispatcher {
     }
 
     @MdcContext
-    private void fail(JacsServiceData serviceData, Throwable exc) {
-
+    private JacsServiceResult<Throwable> handleException(JacsServiceData serviceData, Throwable exc) {
         if (logger.isDebugEnabled()) {
             logger.error("Processing error executing {}", serviceData, exc);
-        }
-        else {
+        } else {
             logger.error("Processing error executing {}", serviceData.getShortName(), exc);
         }
 
         JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
         if (latestServiceData == null) {
             logger.warn("No Service not found for {}", serviceData.getId());
-            return;
+            return new JacsServiceResult<>(serviceData, exc);
         }
-        if (latestServiceData.hasCompletedSuccessfully()) {
-            logger.warn("Service {} has failed after has already been marked as successful", latestServiceData);
-        }
-        if (latestServiceData.hasCompletedUnsuccessfully()) {
-            // nothing to do
-            logger.debug("Service {} has already been marked as failed", latestServiceData);
+        if (latestServiceData.hasBeenSuspended()) {
+            sendNotification(latestServiceData, JacsServiceLifecycleStage.SUSPEND_PROCESSING);
+        } else  if (exc instanceof ServiceSuspendedException) {
+            if (!latestServiceData.hasCompleted()) {
+                // in this case only suspend it if it has not been completed
+                jacsServiceDataPersistence.updateServiceState(latestServiceData, JacsServiceState.SUSPENDED, JacsServiceEvent.NO_EVENT);
+                sendNotification(latestServiceData, JacsServiceLifecycleStage.SUSPEND_PROCESSING);
+            }
         } else {
-            jacsServiceDataPersistence.updateServiceState(
-                    latestServiceData,
-                    JacsServiceState.ERROR,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage())));
+            if (latestServiceData.hasCompletedSuccessfully()) {
+                logger.warn("Service {} has failed after has already been marked as successful", latestServiceData);
+            }
+            if (latestServiceData.hasCompletedUnsuccessfully()) {
+                // nothing to do
+                logger.debug("Service {} has already been marked as failed", latestServiceData);
+            } else {
+                jacsServiceDataPersistence.updateServiceState(
+                        latestServiceData,
+                        JacsServiceState.ERROR,
+                        JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage())));
+            }
+            sendNotification(latestServiceData, JacsServiceLifecycleStage.FAILED_PROCESSING);
         }
-        sendNotification(latestServiceData, JacsServiceLifecycleStage.FAILED_PROCESSING);
+        return new JacsServiceResult<>(serviceData, exc);
     }
 
     private void sendNotification(JacsServiceData sd, JacsServiceLifecycleStage lifecycleStage) {

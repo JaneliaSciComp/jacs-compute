@@ -26,6 +26,7 @@ import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -84,7 +85,13 @@ public class JacsServiceDispatcherTest {
         doAnswer(invocation -> {
             JacsServiceData sd = invocation.getArgument(0);
             JacsServiceState state = invocation.getArgument(1);
-            sd.setState(state);
+            if (!EnumSet.of(JacsServiceState.SUSPENDED,
+                    JacsServiceState.ERROR,
+                    JacsServiceState.CANCELED,
+                    JacsServiceState.TIMEOUT,
+                    JacsServiceState.SUCCESSFUL).contains(sd.getState())) {
+                sd.setState(state);
+            }
             return null;
         }).when(jacsServiceDataPersistence).updateServiceState(any(JacsServiceData.class), any(JacsServiceState.class), any(JacsServiceEvent.class));
 
@@ -107,6 +114,13 @@ public class JacsServiceDispatcherTest {
 
     private JacsServiceData enqueueTestService(String serviceName) {
         JacsServiceData testService = createTestService(TEST_ID, serviceName, new RegisteredJacsNotification().withDefaultLifecycleStages().addNotificationField("f1", "v1"));
+        return jacsServiceQueue.enqueueService(testService);
+    }
+
+
+    private JacsServiceData enqueueTestService(String serviceName, JacsServiceState serviceState) {
+        JacsServiceData testService = createTestService(TEST_ID, serviceName, new RegisteredJacsNotification().withDefaultLifecycleStages().addNotificationField("f1", "v1"));
+        testService.setState(serviceState);
         return jacsServiceQueue.enqueueService(testService);
     }
 
@@ -295,4 +309,49 @@ public class JacsServiceDispatcherTest {
         assertThat(testServiceData.getState(), equalTo(JacsServiceState.ERROR));
     }
 
+    @Test
+    public void suspendService() {
+        JacsServiceData testServiceData = enqueueTestService("suspendedService", JacsServiceState.SUSPENDED);
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
+                .thenReturn(new PageResult<>());
+        ServiceProcessor testProcessor = prepareServiceProcessor(testServiceData, null);
+
+        testDispatcher.dispatchServices();
+
+        ArgumentCaptor<JacsServiceData> jacsServiceArg = ArgumentCaptor.forClass(JacsServiceData.class);
+        verify(testProcessor, never()).process(jacsServiceArg.capture());
+        verify(jacsNotificationDao)
+                .save(argThat(new ArgumentMatcher<JacsNotification>() {
+                    @Override
+                    public boolean matches(JacsNotification argument) {
+                        return argument.getNotificationStage() == JacsServiceLifecycleStage.SUSPEND_PROCESSING;
+                    }
+                }));
+    }
+
+    @Test
+    public void suspendServiceDuringExecution() {
+        JacsServiceData testServiceData = enqueueTestService("suspendedService");
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
+                .thenReturn(new PageResult<>());
+        ServiceProcessor testProcessor = prepareServiceProcessor(testServiceData, new ServiceSuspendedException(testServiceData));
+
+        testDispatcher.dispatchServices();
+
+        ArgumentCaptor<JacsServiceData> jacsServiceArg = ArgumentCaptor.forClass(JacsServiceData.class);
+        verify(testProcessor).process(jacsServiceArg.capture());
+        verify(jacsServiceDataPersistence)
+                .updateServiceState(
+                        same(testServiceData),
+                        eq(JacsServiceState.SUSPENDED),
+                        eq(JacsServiceEvent.NO_EVENT)
+                );
+        verify(jacsNotificationDao)
+                .save(argThat(new ArgumentMatcher<JacsNotification>() {
+                    @Override
+                    public boolean matches(JacsNotification argument) {
+                        return argument.getNotificationStage() == JacsServiceLifecycleStage.SUSPEND_PROCESSING;
+                    }
+                }));
+    }
 }

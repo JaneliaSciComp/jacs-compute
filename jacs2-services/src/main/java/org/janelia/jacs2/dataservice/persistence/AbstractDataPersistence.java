@@ -1,6 +1,7 @@
 package org.janelia.jacs2.dataservice.persistence;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.ReadWriteDao;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.page.PageRequest;
@@ -10,6 +11,7 @@ import javax.enterprise.inject.Instance;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
     Instance<D> daoSource;
@@ -68,14 +70,17 @@ public class AbstractDataPersistence<D extends ReadWriteDao<T, I>, T, I> {
         }
     }
 
-    public void update(T t, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+    public Optional<Boolean> update(T t, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         if (fieldsToUpdate != null && fieldsToUpdate.size() > 0) {
             D dao = daoSource.get();
             try {
-                dao.update(t, fieldsToUpdate);
+                DaoUpdateResult updateResult = dao.update(t, fieldsToUpdate);
+                return Optional.of(updateResult.getEntitiesFound() > 0 && updateResult.getEntitiesAffected() > 0);
             } finally {
                 daoSource.destroy(dao);
             }
+        } else {
+            return Optional.empty();
         }
     }
 

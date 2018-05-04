@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
@@ -7,6 +8,7 @@ import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 
@@ -14,20 +16,68 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 @ApplicationScoped
 public class JacsServiceEngineImpl implements JacsServiceEngine {
     private static final int DEFAULT_MAX_RUNNING_SLOTS = 1000;
 
-    private final JacsServiceDataPersistence jacsServiceDataPersistence;
-    private final JacsServiceQueue jacsServiceQueue;
-    private final Instance<ServiceRegistry> serviceRegistrarSource;
-    private final Logger logger;
+    private static final Map<JacsServiceState, Set<JacsServiceState>> VALID_TRANSITIONS =
+            ImmutableMap.<JacsServiceState, Set<JacsServiceState>>builder()
+                    .put(JacsServiceState.CREATED, EnumSet.of(
+                            JacsServiceState.QUEUED,
+                            JacsServiceState.SUSPENDED,
+                            JacsServiceState.CANCELED, JacsServiceState.TIMEOUT
+                    ))
+                    .put(JacsServiceState.QUEUED, EnumSet.of(
+                            JacsServiceState.DISPATCHED,
+                            JacsServiceState.SUSPENDED,
+                            JacsServiceState.CANCELED, JacsServiceState.TIMEOUT
+                    ))
+                    .put(JacsServiceState.DISPATCHED, EnumSet.of(
+                            JacsServiceState.RUNNING,
+                            JacsServiceState.WAITING_FOR_DEPENDENCIES,
+                            JacsServiceState.SUSPENDED,
+                            JacsServiceState.CANCELED, JacsServiceState.TIMEOUT
+                    ))
+                    .put(JacsServiceState.RUNNING,  EnumSet.of(
+                            JacsServiceState.WAITING_FOR_DEPENDENCIES,
+                            JacsServiceState.SUSPENDED,
+                            JacsServiceState.CANCELED, JacsServiceState.TIMEOUT
+                    ))
+                    .put(JacsServiceState.WAITING_FOR_DEPENDENCIES, EnumSet.of(
+                            JacsServiceState.RUNNING,
+                            JacsServiceState.WAITING_FOR_DEPENDENCIES,
+                            JacsServiceState.SUSPENDED,
+                            JacsServiceState.CANCELED, JacsServiceState.TIMEOUT
+                    ))
+                    .put(JacsServiceState.CANCELED, Collections.emptySet())
+                    .put(JacsServiceState.TIMEOUT, Collections.emptySet())
+                    .put(JacsServiceState.ERROR, Collections.emptySet())
+                    .put(JacsServiceState.SUCCESSFUL, Collections.emptySet())
+                    .put(JacsServiceState.SUSPENDED, EnumSet.of(JacsServiceState.RESUMED))
+                    .put(JacsServiceState.RESUMED, EnumSet.of(
+                            JacsServiceState.DISPATCHED,
+                            JacsServiceState.SUSPENDED,
+                            JacsServiceState.CANCELED, JacsServiceState.TIMEOUT))
+                    .build();
+
+    private JacsServiceDataPersistence jacsServiceDataPersistence;
+    private JacsServiceQueue jacsServiceQueue;
+    private Instance<ServiceRegistry> serviceRegistrarSource;
+    private Logger logger;
     private int nAvailableSlots;
-    private final Semaphore availableSlots;
+    private Semaphore availableSlots;
+
+    JacsServiceEngineImpl() {
+        // CDI required ctor
+    }
 
     @Inject
     public JacsServiceEngineImpl(JacsServiceDataPersistence jacsServiceDataPersistence,
@@ -107,6 +157,7 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
         if (serviceArgs.getState() == null) {
             serviceArgs.setState(JacsServiceState.CREATED);
         }
+        serviceArgs.initAccessId();
         jacsServiceDataPersistence.saveHierarchy(serviceArgs);
         return serviceArgs;
     }
@@ -122,6 +173,7 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
         int prevPriority = -1;
         for (ListIterator<JacsServiceData> servicesItr = listOfServices.listIterator(listOfServices.size()); servicesItr.hasPrevious();) {
             JacsServiceData currentService = servicesItr.previous();
+            currentService.initAccessId();
             int currentPriority = currentService.priority();
             if (prevPriority >= 0) {
                 int newPriority = prevPriority + 1;
@@ -142,6 +194,69 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
             prevService = submitted;
         }
         return results;
+    }
+
+    @Override
+    public JacsServiceData updateServiceState(JacsServiceData serviceData, JacsServiceState serviceState) {
+        if (isTransitionInvalid(serviceData.getState(), serviceState)) {
+            throw new IllegalArgumentException("Invalid state transition from " + serviceData.getState() + " to " + serviceState);
+        }
+        switch (serviceState) {
+            case SUSPENDED:
+                return suspendService(serviceData);
+            case RESUMED:
+                return resumeService(serviceData);
+            default:
+                return singleServiceStateUpdate(serviceData, serviceState);
+        }
+    }
+
+    private JacsServiceData serviceHierarchyStateUpdate(JacsServiceData serviceData, JacsServiceState serviceState) {
+        serviceData.serviceHierarchyStream()
+                .filter(sd -> isTransitionValid(sd.getState(), serviceState))
+                .sorted((s1, s2) -> {
+                    // order them so that the ones that don't have any dependencies are first
+                    if (!s1.getDependenciesIds().contains(s2.getId())) {
+                        return -1;
+                    } else if (!s2.getDependenciesIds().contains(s1.getId())) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                })
+                .forEach(sd -> {
+                    singleServiceStateUpdate(sd, serviceState);
+                });
+        return jacsServiceDataPersistence.findServiceHierarchy(serviceData.getId());
+    }
+
+    private JacsServiceData singleServiceStateUpdate(JacsServiceData serviceData, JacsServiceState serviceState) {
+        return jacsServiceDataPersistence.updateServiceState(serviceData, serviceState, JacsServiceEvent.NO_EVENT)
+                .map(updateResult -> {
+                    if (updateResult) {
+                        return serviceData;
+                    } else {
+                        return jacsServiceDataPersistence.findById(serviceData.getId());
+                    }
+                })
+                .orElseThrow(() -> new IllegalArgumentException("Invalid service data"));
+    }
+
+    private boolean isTransitionValid(JacsServiceState from, JacsServiceState to) {
+        return from != null && to != null && VALID_TRANSITIONS.get(from) != null &&
+                (from == to || VALID_TRANSITIONS.get(from).contains(to));
+    }
+
+    private boolean isTransitionInvalid(JacsServiceState from, JacsServiceState to) {
+        return !isTransitionValid(from, to);
+    }
+
+    private JacsServiceData suspendService(JacsServiceData serviceData) {
+        return serviceHierarchyStateUpdate(serviceData, JacsServiceState.SUSPENDED);
+    }
+
+    private JacsServiceData resumeService(JacsServiceData serviceData) {
+        return serviceHierarchyStateUpdate(serviceData, JacsServiceState.RESUMED);
     }
 
 }
