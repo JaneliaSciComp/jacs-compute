@@ -42,6 +42,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
     private static final int MIN_NODES = 2;
     private static final int MAX_NODES = 16;
+    private static final int MAX_RESULTS_PER_MASK = 500;
 
     static class IntegratedColorDepthSearchArgs extends ServiceArgs {
         @Parameter(names = "-searchId", description = "GUID of the ColorDepthSearch object to use", required = true)
@@ -205,13 +206,14 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                             }
                             Reference maskRef = Reference.createFor(colorDepthMask);
 
+                            int i = 0;
                             while (scanner.hasNext()) {
                                 String line = scanner.nextLine();
                                 String[] s = line.split("\t");
-                                int i = 0;
-                                int score = Integer.parseInt(s[i++].trim());
-                                double scorePct = Double.parseDouble(s[i++].trim());
-                                String filepath = s[i++].trim();
+                                int c = 0;
+                                int score = Integer.parseInt(s[c++].trim());
+                                double scorePct = Double.parseDouble(s[c++].trim());
+                                String filepath = s[c++].trim();
 
                                 ColorDepthMatch match = new ColorDepthMatch();
                                 match.setMaskRef(maskRef);
@@ -219,6 +221,11 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                 match.setScore(score);
                                 match.setScorePercent(scorePct);
                                 colorDepthResult.addMatch(match);
+
+                                if (++i>=MAX_RESULTS_PER_MASK) {
+                                    logger.warn("Too many results returned, truncating at "+MAX_RESULTS_PER_MASK);
+                                    break;
+                                }
                             }
                         }
                         catch (IOException e) {

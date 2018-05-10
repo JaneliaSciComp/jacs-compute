@@ -6,13 +6,14 @@ import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-public class JacsJobRunner {
+public class JacsServiceDispatchRunner {
 
     private JacsServiceDispatcher jacsServiceDispatcher;
     private ScheduledExecutorService scheduler;
@@ -21,10 +22,10 @@ public class JacsJobRunner {
     private int period;
 
     @Inject
-    public JacsJobRunner(JacsServiceDispatcher jacsServiceDispatcher,
-                         @PropertyValue(name = "service.dispatcher.InitialDelayInSeconds") int initialDelay,
-                         @PropertyValue(name = "service.dispatcher.PeriodInSeconds") int period,
-                         Logger logger) {
+    public JacsServiceDispatchRunner(JacsServiceDispatcher jacsServiceDispatcher,
+                                     @PropertyValue(name = "service.dispatcher.InitialDelayInSeconds") int initialDelay,
+                                     @PropertyValue(name = "service.dispatcher.PeriodInSeconds") int period,
+                                     Logger logger) {
         this.jacsServiceDispatcher = jacsServiceDispatcher;
         this.initialDelay = initialDelay == 0 ? 30 : initialDelay;
         this.period = period == 0 ? 10 : period;
@@ -40,7 +41,7 @@ public class JacsJobRunner {
         try {
             jacsServiceDispatcher.dispatchServices();
         } catch (Exception e) {
-            logger.error("Critical error - job dispatch failed", e);
+            logger.error("Critical error - service dispatch failed", e);
         }
     }
 

@@ -422,9 +422,9 @@ public class SageLoaderProcessorTest {
     private JacsServiceData createTestServiceData(Number serviceId, List<String> sampleFiles, String serviceOutputPath, String serviceErrorPath) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey("testOwner")
-                .addArg("-configFile", "config.txt")
-                .addArg("-grammarFile", "grammar.txt")
-                .addArg("-sampleFiles", String.join(",", sampleFiles))
+                .addArgs("-configFile", "config.txt")
+                .addArgs("-grammarFile", "grammar.txt")
+                .addArgs("-sampleFiles", String.join(",", sampleFiles))
                 .setOutputPath(serviceOutputPath)
                 .setErrorPath(serviceErrorPath);
 

@@ -106,6 +106,12 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     }
 
     @Override
+    public long countMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval) {
+        Bson bsonFilter = JacsServiceDataMongoHelper.createBsonMatchingFilter(pattern, creationInterval);
+        return MongoDaoHelper.count(bsonFilter, mongoCollection);
+    }
+
+    @Override
     public PageResult<JacsServiceData> findMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest) {
         Bson bsonFilter = JacsServiceDataMongoHelper.createBsonMatchingFilter(pattern, creationInterval);
         List<JacsServiceData> results = MongoDaoHelper.find(bsonFilter, MongoDaoHelper.createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), mongoCollection, JacsServiceData.class);

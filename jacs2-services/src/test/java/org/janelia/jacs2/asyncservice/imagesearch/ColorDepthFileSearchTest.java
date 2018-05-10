@@ -43,7 +43,7 @@ public class ColorDepthFileSearchTest {
     private ColorDepthFileSearch colorDepthFileSearch;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);
         clusterSource = mock(Instance.class);
@@ -104,13 +104,13 @@ public class ColorDepthFileSearchTest {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey(owner)
                 .setAuthKey(owner)
-                .addArg("-inputFiles", "f1,f2,f3")
-                .addArg("-searchDirs", "s1,s2")
-                .addArg("-maskThresholds", "100").addArg("100").addArg("100")
-                .addArg("-numNodes", "9")
-                .addArg("-dataThreshold", "100")
-                .addArg("-pixColorFluctuation", "2.0")
-                .addArg("-pctPositivePixels", "10.0")
+                .addArgs("-inputFiles", "f1,f2,f3")
+                .addArgs("-searchDirs", "s1,s2")
+                .addArgs("-maskThresholds", "100").addArgs("100").addArgs("100")
+                .addArgs("-numNodes", "9")
+                .addArgs("-dataThreshold", "100")
+                .addArgs("-pixColorFluctuation", "2.0")
+                .addArgs("-pctPositivePixels", "10.0")
                 ;
         JacsServiceData testServiceData = testServiceDataBuilder
                 .setWorkspace("testlocal")

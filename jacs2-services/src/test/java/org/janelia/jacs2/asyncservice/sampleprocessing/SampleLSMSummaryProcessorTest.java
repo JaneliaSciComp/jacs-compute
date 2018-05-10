@@ -150,16 +150,16 @@ public class SampleLSMSummaryProcessorTest {
     private JacsServiceData createTestServiceData(Long serviceId, Long sampleId, String resultsId, String area, String objective, String channelDyeSpec) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey(TEST_OWNER)
-                .addArg("-sampleId", String.valueOf(sampleId))
-                .addArg("-area", area)
-                .addArg("-objective", objective)
-                .addArg("-sampleResultsId", resultsId)
-                .addArg("-sampleDataRootDir", TEST_WORKING_DIR)
-                .addArg("-sampleLsmsSubDir", "lsms")
-                .addArg("-sampleSummarySubDir", "summary")
+                .addArgs("-sampleId", String.valueOf(sampleId))
+                .addArgs("-area", area)
+                .addArgs("-objective", objective)
+                .addArgs("-sampleResultsId", resultsId)
+                .addArgs("-sampleDataRootDir", TEST_WORKING_DIR)
+                .addArgs("-sampleLsmsSubDir", "lsms")
+                .addArgs("-sampleSummarySubDir", "summary")
                 ;
         if (StringUtils.isNotBlank(channelDyeSpec))
-            testServiceDataBuilder.addArg("-channelDyeSpec", channelDyeSpec);
+            testServiceDataBuilder.addArgs("-channelDyeSpec", channelDyeSpec);
 
         JacsServiceData testService = testServiceDataBuilder.build();
         testService.setId(serviceId);

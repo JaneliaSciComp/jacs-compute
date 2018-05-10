@@ -1,5 +1,8 @@
 package org.janelia.model.jacs2.page;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import java.util.List;
 
 public class PageRequest {
@@ -49,5 +52,31 @@ public class PageRequest {
             offset += pageNumber * pageSize;
         }
         return offset;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PageRequest that = (PageRequest) o;
+
+        return new EqualsBuilder()
+                .append(firstPageOffset, that.firstPageOffset)
+                .append(pageNumber, that.pageNumber)
+                .append(pageSize, that.pageSize)
+                .append(sortCriteria, that.sortCriteria)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(firstPageOffset)
+                .append(pageNumber)
+                .append(pageSize)
+                .append(sortCriteria)
+                .toHashCode();
     }
 }

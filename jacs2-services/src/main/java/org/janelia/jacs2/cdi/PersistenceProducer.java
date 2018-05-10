@@ -1,5 +1,6 @@
 package org.janelia.jacs2.cdi;
 
+import com.google.common.base.Splitter;
 import com.mongodb.*;
 import com.mongodb.client.MongoDatabase;
 import org.apache.commons.dbcp2.*;
@@ -21,6 +22,7 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class PersistenceProducer {
@@ -30,7 +32,7 @@ public class PersistenceProducer {
 
     @Inject
     @PropertyValue(name = "MongoDB.ServerURL")
-    private String mongoServerURL;
+    private String mongoServer;
 
     @Inject
     @PropertyValue(name = "MongoDB.ConnectionURL")
@@ -39,6 +41,10 @@ public class PersistenceProducer {
     @Inject
     @PropertyValue(name = "MongoDB.Database")
     private String mongoDatabase;
+
+    @Inject
+    @PropertyValue(name = "MongoDB.AuthDatabase")
+    private String authMongoDatabase;
 
     @Inject
     @PropertyValue(name = "MongoDB.FutureDatabase")
@@ -62,31 +68,31 @@ public class PersistenceProducer {
                         .connectTimeout(connectTimeout)
                         .codecRegistry(codecRegistry);
 
-        if (mongoServerURL != null) {
+        if (StringUtils.isNotBlank(mongoServer)) {
             // Alternative connection method to support passwords special characters not supported by MongoClientURI
-
-            List<ServerAddress> members = new ArrayList<>();
-            for (String serverMember : mongoServerURL.split(",")) {
-                members.add(new ServerAddress(serverMember));
-            }
-
-            if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
-                MongoCredential credential = MongoCredential.createMongoCRCredential(username, mongoDatabase, password.toCharArray());
+            List<ServerAddress> members = Splitter.on(',').trimResults().omitEmptyStrings().splitToList(mongoServer)
+                    .stream()
+                    .map(ServerAddress::new)
+                    .collect(Collectors.toList());
+            if (StringUtils.isNotBlank(username)) {
+                String credentialsDb = StringUtils.defaultIfBlank(authMongoDatabase, mongoDatabase);
+                char[] passwordChars = StringUtils.isBlank(password) ? null : password.toCharArray();
+                MongoCredential credential = MongoCredential.createMongoCRCredential(username, credentialsDb, passwordChars);
                 MongoClient m = new MongoClient(members, credential, optionsBuilder.build());
-                log.info("Connected to MongoDB (" + mongoDatabase + "@" + mongoServerURL + ") as user " + username);
+                log.info("Connected to MongoDB ({}@{}) as user {}", mongoDatabase, mongoServer, username);
+                return m;
+            } else {
+                MongoClient m = new MongoClient(members, optionsBuilder.build());
+                log.info("Connected to MongoDB ({}@{})", mongoDatabase, mongoServer);
                 return m;
             }
-            else {
-                MongoClient m = new MongoClient(members);
-                log.info("Connected to MongoDB (" + mongoDatabase + "@" + mongoServerURL + ")");
-                return m;
-            }
+        } else {
+            // use the connection URI
+            MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
+            MongoClient m = new MongoClient(mongoConnectionString);
+            log.info("Connected to MongoDB ({}@{})", mongoDatabase, mongoConnectionString);
+            return m;
         }
-
-        MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
-        MongoClient m = new MongoClient(mongoConnectionString);
-        log.info("Connected to MongoDB (" + mongoDatabase + "@" + mongoConnectionString + ")");
-        return m;
     }
 
     @Produces

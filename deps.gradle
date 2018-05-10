@@ -20,7 +20,7 @@ dependencies {
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // database
-        MONGODB_VERSION = "3.6.1"
+        MONGODB_VERSION = "3.6.3"
         MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:${MONGODB_VERSION}"
         MYSQL_DRIVER_LIB = "mysql:mysql-connector-java:5.1.42"
         DBCP_LIB = "org.apache.commons:commons-dbcp2:2.1.1"
@@ -74,6 +74,9 @@ dependencies {
 
         // drmaa
         DRMAA1_LIB = "us.levk:drmaa-gridengine:6.2u5"
+
+        // cron utils
+        CRON_UTILS_LIB = "com.cronutils:cron-utils:7.0.1"
 
         // janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:0.1.0"

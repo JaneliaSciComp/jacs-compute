@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 
 public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServiceDataDao, JacsServiceData, Number> {
 
-    private static final Logger log = LoggerFactory.getLogger(JacsServiceDataPersistence.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JacsServiceDataPersistence.class);
 
     @Inject
     public JacsServiceDataPersistence(Instance<JacsServiceDataDao> serviceDataDaoSource) {
@@ -72,7 +72,9 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
     public PageResult<JacsServiceData> findMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
-            return jacsServiceDataDao.findMatchingServices(pattern, creationInterval, pageRequest);
+            PageResult<JacsServiceData> results = jacsServiceDataDao.findMatchingServices(pattern, creationInterval, pageRequest);
+            results.setTotalCount(jacsServiceDataDao.countMatchingServices(pattern, creationInterval));
+            return results;
         } finally {
             daoSource.destroy(jacsServiceDataDao);
         }
@@ -132,11 +134,10 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
     }
 
     public void updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, JacsServiceEvent serviceEvent) {
-        if (log.isDebugEnabled()) {
-            log.debug("Update service state for {} to {} with event {}", jacsServiceData, newServiceState, serviceEvent);
-        }
-        else {
-            log.info("Update service state for {} to {} with event {}", jacsServiceData.getId(), newServiceState, serviceEvent);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Update service state for {} to {} with event {}", jacsServiceData, newServiceState, serviceEvent);
+        } else {
+            LOG.info("Update service state for {} to {} with event {}", jacsServiceData.getId(), newServiceState, serviceEvent);
         }
         List<Consumer<JacsServiceDataDao>> actions = new ArrayList<>();
         actions.add(dao -> dao.update(jacsServiceData, jacsServiceData.updateState(newServiceState)));

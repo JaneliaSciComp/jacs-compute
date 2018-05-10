@@ -67,6 +67,8 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
         List<String> mipsExtensions = new ArrayList<>(ImmutableList.of(
                 ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd"
         ));
+        @Parameter(names = "-fileTypeOverride", description = "Override file type for all imported files", required = false)
+        FileType fileTypeOverride;
         @Parameter(names = "-cleanLocalFilesWhenDone", description = "Clean up local files when all data loading is done")
         boolean cleanLocalFilesWhenDone = false;
     }
@@ -188,6 +190,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
 
     private ServiceComputation<JacsServiceResult<List<DataLoadResult>>> generateMips(JacsServiceData jacsServiceData) {
         DataTreeLoadArgs args = getArgs(jacsServiceData);
+        FileType fileTypeOverride = args.fileTypeOverride;
         List<StorageService.StorageInfo> contentToLoad = storageService.listStorageContent(args.storageLocation, jacsServiceData.getOwnerKey());
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         List<DataLoadResult> contentWithMips = contentToLoad.stream()
@@ -249,7 +252,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
             List<DataLoadResult> dataLoadResults = Streams.concat(mipsResult.getResult().stream(), contentWithoutMips.stream())
                     .peek(mipsInfo -> {
                         mipsInfo.setFolderId(dataFolder.getId());
-                        folderService.addImageFile(dataFolder, mipsInfo.remoteContent.getEntryPath(), getFileTypeByExtension(mipsInfo.remoteContent.getEntryPath(), args.losslessImgExtensions), jacsServiceData.getOwnerKey());
+                        folderService.addImageFile(dataFolder, mipsInfo.remoteContent.getEntryPath(), getFileTypeByExtension(mipsInfo.remoteContent.getEntryPath(), args.losslessImgExtensions, fileTypeOverride), jacsServiceData.getOwnerKey());
                         File mipsFile = mipsInfo.localContentMipsPath != null ? mipsInfo.localContentMipsPath.toFile() : null;
                         if (mipsFile != null) {
                             FileInputStream mipsStream = null;
@@ -264,7 +267,8 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                                 if (mipsStream != null) {
                                     try {
                                         mipsStream.close();
-                                    } catch (IOException ignore) {
+                                    } catch (IOException e) {
+                                        logger.warn("Error closing MIP stream", e);
                                     }
                                 }
                              }
@@ -355,14 +359,14 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
                 });
     }
 
-    private FileType getFileTypeByExtension(String fileArtifact, List<String> losslessImageExtensions) {
+    private FileType getFileTypeByExtension(String fileArtifact, List<String> losslessImageExtensions, FileType fileTypeOverride) {
+        if (fileTypeOverride != null) {
+            return fileTypeOverride;
+        }
         String fileArtifactExt = FileUtils.getFileExtensionOnly(fileArtifact);
         if (losslessImageExtensions.contains(fileArtifactExt)) {
             return FileType.LosslessStack;
-        } else if (PNG_EXTENSION.equals(fileArtifactExt)) {
-            return FileType.SignalMip;
-        } else {
-            return FileType.Unclassified2d;
         }
+        return FileType.Unclassified2d;
     }
 }

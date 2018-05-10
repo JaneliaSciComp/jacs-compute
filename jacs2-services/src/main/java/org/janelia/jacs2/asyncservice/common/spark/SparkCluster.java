@@ -5,11 +5,14 @@ import org.apache.spark.launcher.SparkAppHandle;
 import org.apache.spark.launcher.SparkLauncher;
 import org.janelia.cluster.*;
 import org.janelia.cluster.lsf.LsfJobInfo;
+import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.common.cluster.LsfParseUtils;
 import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
+import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.model.service.JacsJobInstanceInfo;
+import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -36,8 +39,8 @@ public class SparkCluster {
 
     private static final ExecutorService completionMessageExecutor = Executors.newCachedThreadPool((runnable) -> {
         Thread thread = Executors.defaultThreadFactory().newThread(runnable);
-        // Ensure that we can shut down without these threads getting in the way
         thread.setName("SparkCompletionMessageThread");
+        // Ensure that we can shut down without these threads getting in the way
         thread.setDaemon(true);
         return thread;
     });
@@ -45,6 +48,9 @@ public class SparkCluster {
     // Configuration
     private final Logger log;
     private final JobManager jobMgr;
+    private final ComputeAccounting accouting;
+    private final boolean requiresAccountInfo;
+    private JacsServiceData jacsServiceData;
     private int nodeSlots;
     private String sparkVersion;
     private String sparkHomeDir;
@@ -64,6 +70,7 @@ public class SparkCluster {
 
     @Inject
     public SparkCluster(MonitoredJobManager jobMgr,
+                        @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
                         @IntPropertyValue(name = "service.spark.nodeSlots", defaultValue = 16) int nodeSlots,
                         @StrPropertyValue(name = "service.spark.sparkVersion", defaultValue = "2") String sparkVersion,
                         @StrPropertyValue(name = "service.spark.sparkHomeDir", defaultValue = "/misc/local/spark-2") String sparkHomeDir,
@@ -73,8 +80,10 @@ public class SparkCluster {
                         @IntPropertyValue(name = "service.spark.cluster.hard.duration.mins", defaultValue = 30) int sparkClusterHardDurationMins,
                         @StrPropertyValue(name = "service.spark.log4jconfig.filepath", defaultValue = "") String log4jFilepath,
                         @StrPropertyValue(name = "hadoop.homeDir") String hadoopHomeDir,
+                        ComputeAccounting accouting,
                         Logger log) {
         this.jobMgr = jobMgr.getJobMgr();
+        this.requiresAccountInfo = requiresAccountInfo;
         this.nodeSlots = nodeSlots;
         this.sparkVersion = sparkVersion;
         this.sparkHomeDir = sparkHomeDir;
@@ -84,6 +93,7 @@ public class SparkCluster {
         this.sparkClusterHardDurationMins = sparkClusterHardDurationMins;
         this.log4jFilepath = log4jFilepath;
         this.hadoopHomeDir = hadoopHomeDir;
+        this.accouting = accouting;
         this.log = log;
     }
 
@@ -94,8 +104,9 @@ public class SparkCluster {
         this.app = null;
     }
 
-    public synchronized void startCluster(Path workingDirName, int numNodes) throws Exception {
+    public synchronized void startCluster(JacsServiceData jacsServiceData, Path workingDirName, int numNodes) throws Exception {
 
+        this.jacsServiceData = jacsServiceData;
         this.workingDirectory = workingDirName.toFile();
         int numSlots = nodeSlots + nodeSlots * numNodes; // master + workers
 
@@ -123,7 +134,7 @@ public class SparkCluster {
         log.info("Starting Spark cluster {}", jobId);
     }
 
-    public Collection<JacsJobInstanceInfo> getJobInstanceInfos(Collection<JobInfo> infos) {
+    private Collection<JacsJobInstanceInfo> getJobInstanceInfos(Collection<JobInfo> infos) {
         Collection<JacsJobInstanceInfo> jacsInfos = new ArrayList<>();
         for (JobInfo jobInfo : infos) {
             JacsJobInstanceInfo jacsJobInstanceInfo = new JacsJobInstanceInfo();
@@ -197,11 +208,18 @@ public class SparkCluster {
     }
 
     private List<String> createNativeSpec(int slots) {
-        String jobName = "sparkbatch";
+
+        // Figure out who is going to get the bill
+        String billingAccount = accouting.getComputeAccount(jacsServiceData);
+
         List<String> spec = new ArrayList<>();
         spec.add("-a sparkbatch("+ sparkVersion +")");
         spec.add("-n "+slots);
         spec.add("-W  "+ sparkClusterHardDurationMins);
+
+        if (requiresAccountInfo)
+            spec.add("-P "+billingAccount);
+
         return spec;
     }
 

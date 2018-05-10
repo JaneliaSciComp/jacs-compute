@@ -84,8 +84,8 @@ public class FileCopyProcessorTest {
         File testDestFile = new File(testDirectory, "testDest");
         JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
                 .setName("fileCopy")
-                .addArg("-src", "/home/testSource")
-                .addArg("-dst", testDestFile.getAbsolutePath())
+                .addArgs("-src", "/home/testSource")
+                .addArgs("-dst", testDestFile.getAbsolutePath())
                 .build();
         testServiceData.setId(TEST_SERVICE_ID);
         fileCopyProcessor.prepareProcessing(testServiceData);
@@ -97,7 +97,7 @@ public class FileCopyProcessorTest {
         File testDestFile = new File(testDirectory, "testDest");
         JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
                 .setName("fileCopy")
-                .addArg("-dst", testDestFile.getAbsolutePath())
+                .addArgs("-dst", testDestFile.getAbsolutePath())
                 .build();
         verifyCompletionWithException(testServiceData);
     }
@@ -106,13 +106,13 @@ public class FileCopyProcessorTest {
     public void emptySourceOrTarget() throws ExecutionException, InterruptedException {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null);
         verifyCompletionWithException(testServiceDataBuilder
-                        .addArg("-dst", "dst") // the arg order is important here in order to capture the execution branch
-                        .addArg("-src", "")
+                        .addArgs("-dst", "dst") // the arg order is important here in order to capture the execution branch
+                        .addArgs("-src", "")
                         .build());
         verifyCompletionWithException(testServiceDataBuilder
                         .clearArgs()
-                        .addArg("-src", "src")
-                        .addArg("-dst", "")
+                        .addArgs("-src", "src")
+                        .addArgs("-dst", "")
                         .build());
    }
 
@@ -126,10 +126,10 @@ public class FileCopyProcessorTest {
         Path testSourcePath = Files.createTempFile(testDirectory.toPath(), "testFileCopySource", ".test");
         File testDestFile = new File(testDirectory, "testDest");
         JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
-                .addArg("-src", testSourcePath.toString())
-                .addArg("-dst", testDestFile.getAbsolutePath())
-                .addArg("-mv")
-                .addArg("-convert8")
+                .addArgs("-src", testSourcePath.toString())
+                .addArgs("-dst", testDestFile.getAbsolutePath())
+                .addArgs("-mv")
+                .addArgs("-convert8")
                 .build();
         assertTrue(Files.exists(testSourcePath));
         fileCopyProcessor.postProcessing(new JacsServiceResult<>(testServiceData, testDestFile));
@@ -142,10 +142,10 @@ public class FileCopyProcessorTest {
         try {
             File testDestFile = new File(testDirectory, "testDest");
             JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
-                    .addArg("-src", testDirectory.getAbsolutePath()) // pass in a non-empty dir so that it cannot be deleted
-                    .addArg("-dst", testDestFile.getAbsolutePath())
-                    .addArg("-mv")
-                    .addArg("-convert8")
+                    .addArgs("-src", testDirectory.getAbsolutePath()) // pass in a non-empty dir so that it cannot be deleted
+                    .addArgs("-dst", testDestFile.getAbsolutePath())
+                    .addArgs("-mv")
+                    .addArgs("-convert8")
                     .build();
             expectedException.expect(UncheckedIOException.class);
             fileCopyProcessor.postProcessing(new JacsServiceResult<>(testServiceData, testDestFile));
@@ -161,9 +161,9 @@ public class FileCopyProcessorTest {
         try {
             File testDestFile = new File(testDirectory, "testDest");
             JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
-                    .addArg("-src", testSourcePath.toString())
-                    .addArg("-dst", testDestFile.getAbsolutePath())
-                    .addArg("-convert8")
+                    .addArgs("-src", testSourcePath.toString())
+                    .addArgs("-dst", testDestFile.getAbsolutePath())
+                    .addArgs("-convert8")
                     .build();
             fileCopyProcessor.postProcessing(new JacsServiceResult<>(testServiceData, testDestFile));
             assertTrue(Files.exists(testSourcePath));
@@ -177,8 +177,8 @@ public class FileCopyProcessorTest {
         String testSource = "/home/testSource";
         File testDestFile = new File(testDirectory, "testDest");
         JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
-                .addArg("-src", testSource)
-                .addArg("-dst", testDestFile.getAbsolutePath())
+                .addArgs("-src", testSource)
+                .addArgs("-dst", testDestFile.getAbsolutePath())
                 .build();
         ExternalCodeBlock copyScript = fileCopyProcessor.prepareExternalScript(testServiceData);
         assertThat(copyScript.toString(),
@@ -190,10 +190,10 @@ public class FileCopyProcessorTest {
         String testSource = "/home/testSource";
         File testDestFile = new File(testDirectory, "testDest");
         JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
-                .addArg("-src", testSource)
-                .addArg("-dst", testDestFile.getAbsolutePath())
-                .addArg("-mv")
-                .addArg("-convert8")
+                .addArgs("-src", testSource)
+                .addArgs("-dst", testDestFile.getAbsolutePath())
+                .addArgs("-mv")
+                .addArgs("-convert8")
                 .build();
         ExternalCodeBlock copyScript = fileCopyProcessor.prepareExternalScript(testServiceData);
         assertThat(copyScript.toString(),
@@ -205,10 +205,10 @@ public class FileCopyProcessorTest {
         String testSource = "/home/testSource";
         File testDestFile = new File(testDirectory, "testDest");
         JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
-                .addArg("-src", testSource)
-                .addArg("-dst", testDestFile.getAbsolutePath())
-                .addArg("-mv")
-                .addArg("-convert8")
+                .addArgs("-src", testSource)
+                .addArgs("-dst", testDestFile.getAbsolutePath())
+                .addArgs("-mv")
+                .addArgs("-convert8")
                 .build();
         Map<String, String> env = fileCopyProcessor.prepareEnvironment(testServiceData);
         assertThat(env, hasEntry(equalTo("LD_LIBRARY_PATH"), containsString(libraryPath)));

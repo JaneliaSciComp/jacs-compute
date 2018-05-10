@@ -476,23 +476,23 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
 
     private JacsServiceData createTestServiceData(Long serviceId, Long sampleId, String area, String objective, String mergeAlgorithm, String channelDyeSpec, String outputChannelOrder) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
-                .addArg("-sampleId", String.valueOf(sampleId))
-                .addArg("-area", area)
-                .addArg("-objective", objective)
-                .addArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
-                .addArg("-sampleLsmsSubDir", "lsms")
-                .addArg("-sampleSummarySubDir", "summary")
-                .addArg("-sampleSitchingSubDir", "stitching")
+                .addArgs("-sampleId", String.valueOf(sampleId))
+                .addArgs("-area", area)
+                .addArgs("-objective", objective)
+                .addArgs("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
+                .addArgs("-sampleLsmsSubDir", "lsms")
+                .addArgs("-sampleSummarySubDir", "summary")
+                .addArgs("-sampleSitchingSubDir", "stitching")
                 .setWorkspace(SampleProcessorTestUtils.TEST_WORKING_DIR);
 
         if (StringUtils.isNotBlank(mergeAlgorithm))
-            testServiceDataBuilder.addArg("-mergeAlgorithm", mergeAlgorithm);
+            testServiceDataBuilder.addArgs("-mergeAlgorithm", mergeAlgorithm);
 
         if (StringUtils.isNotBlank(channelDyeSpec))
-            testServiceDataBuilder.addArg("-channelDyeSpec", channelDyeSpec);
+            testServiceDataBuilder.addArgs("-channelDyeSpec", channelDyeSpec);
 
         if (StringUtils.isNotBlank(outputChannelOrder))
-            testServiceDataBuilder.addArg("-outputChannelOrder", outputChannelOrder);
+            testServiceDataBuilder.addArgs("-outputChannelOrder", outputChannelOrder);
 
         JacsServiceData testServiceData = testServiceDataBuilder.build();
         testServiceData.setId(serviceId);

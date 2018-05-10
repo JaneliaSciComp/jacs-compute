@@ -853,42 +853,42 @@ public class FlylightSampleProcessorTest {
                                                   String alignmentResult) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey("testOwner")
-                .addArg("-sampleId", String.valueOf(sampleId));
+                .addArgs("-sampleId", String.valueOf(sampleId));
         if (StringUtils.isNotBlank(area)) {
-            testServiceDataBuilder.addArg("-area", area);
+            testServiceDataBuilder.addArgs("-area", area);
         }
         testServiceDataBuilder
-                .addArg("-objective", objective)
-                .addArg("-imageType", "MCFO")
-                .addArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
+                .addArgs("-objective", objective)
+                .addArgs("-imageType", "MCFO")
+                .addArgs("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)
                 .setWorkspace(SampleProcessorTestUtils.TEST_WORKING_DIR);
 
         if (StringUtils.isNotBlank(mergeAlgorithm))
-            testServiceDataBuilder.addArg("-mergeAlgorithm", mergeAlgorithm);
+            testServiceDataBuilder.addArgs("-mergeAlgorithm", mergeAlgorithm);
 
         if (StringUtils.isNotBlank(channelDyeSpec))
-            testServiceDataBuilder.addArg("-channelDyeSpec", channelDyeSpec);
+            testServiceDataBuilder.addArgs("-channelDyeSpec", channelDyeSpec);
 
         if (StringUtils.isNotBlank(outputChannelOrder))
-            testServiceDataBuilder.addArg("-outputChannelOrder", outputChannelOrder);
+            testServiceDataBuilder.addArgs("-outputChannelOrder", outputChannelOrder);
 
         if (skipSummary)
-            testServiceDataBuilder.addArg("-skipSummary");
+            testServiceDataBuilder.addArgs("-skipSummary");
 
         if (montageMipMaps)
-            testServiceDataBuilder.addArg("-montageMipMaps");
+            testServiceDataBuilder.addArgs("-montageMipMaps");
 
         if (persistResults)
-            testServiceDataBuilder.addArg("-persistResults");
+            testServiceDataBuilder.addArgs("-persistResults");
 
         if (StringUtils.isNotBlank(alignmentAlgorithm))
-            testServiceDataBuilder.addArg("-alignmentAlgorithm", alignmentAlgorithm);
+            testServiceDataBuilder.addArgs("-alignmentAlgorithm", alignmentAlgorithm);
 
         if (StringUtils.isNotBlank(alignmentResult))
-            testServiceDataBuilder.addArg("-alignmentResultName", alignmentResult);
+            testServiceDataBuilder.addArgs("-alignmentResultName", alignmentResult);
 
         if (runNeuronSeparationAfterSampleProcessing)
-            testServiceDataBuilder.addArg("-runNeuronSeparationAfterSampleProcessing");
+            testServiceDataBuilder.addArgs("-runNeuronSeparationAfterSampleProcessing");
 
         JacsServiceData testServiceData = testServiceDataBuilder.build();
         testServiceData.setId(serviceId);

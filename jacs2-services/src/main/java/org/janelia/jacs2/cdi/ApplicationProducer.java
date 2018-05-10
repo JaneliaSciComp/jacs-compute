@@ -14,14 +14,8 @@ import java.io.IOException;
 public class ApplicationProducer {
 
     @Produces
-    @ApplicationScoped
-    public ObjectMapperFactory objectMapperFactory() {
-        return ObjectMapperFactory.instance();
-    }
-
-    @Produces
-    public ObjectMapper objectMapper() {
-        return ObjectMapperFactory.instance().getDefaultObjectMapper();
+    public ObjectMapper objectMapper(ObjectMapperFactory objectMapperFactory) {
+        return objectMapperFactory.getDefaultObjectMapper();
     }
 
     @JacsDefault
@@ -57,6 +51,13 @@ public class ApplicationProducer {
     public String stringPropertyValueWithDefault(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
         final StrPropertyValue property = injectionPoint.getAnnotated().getAnnotation(StrPropertyValue.class);
         return applicationConfig.getStringPropertyValue(property.name(), property.defaultValue());
+    }
+
+    @Produces
+    @BoolPropertyValue(name = "")
+    public boolean booleanPropertyValueWithDefault(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
+        final BoolPropertyValue property = injectionPoint.getAnnotated().getAnnotation(BoolPropertyValue.class);
+        return applicationConfig.getBooleanPropertyValue(property.name(), property.defaultValue());
     }
 
     @ApplicationScoped

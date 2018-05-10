@@ -47,9 +47,7 @@ public class LVTDataImport extends AbstractServiceProcessor<File> {
 
     private final WrappedServiceProcessor<OctreeCreator, List<File>> octreeCreator;
     private final WrappedServiceProcessor<KTXCreator,List<File>> ktxCreator;
-
-    @Inject
-    private LegacyDomainDao dao;
+    private final LegacyDomainDao legacyDomainDao;
 
     @Inject
     LVTDataImport(ServiceComputationFactory computationFactory,
@@ -57,10 +55,12 @@ public class LVTDataImport extends AbstractServiceProcessor<File> {
                             @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                             OctreeCreator octreeCreator,
                             KTXCreator ktxCreator,
+                            LegacyDomainDao legacyDomainDao,
                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.octreeCreator = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, octreeCreator);
         this.ktxCreator = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, ktxCreator);
+        this.legacyDomainDao = legacyDomainDao;
     }
 
     @Override
@@ -135,9 +135,9 @@ public class LVTDataImport extends AbstractServiceProcessor<File> {
         TmSample sample = new TmSample();
         sample.setFilepath(filepath);
         sample.setName(sampleName);
-        sample = dao.save(subjectKey, sample);
-        TreeNode folder = dao.getOrCreateDefaultFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
-        dao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(sample)));
+        sample = legacyDomainDao.save(subjectKey, sample);
+        TreeNode folder = legacyDomainDao.getOrCreateDefaultFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
+        legacyDomainDao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(sample)));
         return sample;
     }
 

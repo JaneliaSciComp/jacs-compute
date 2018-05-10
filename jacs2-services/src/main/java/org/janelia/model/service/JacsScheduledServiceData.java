@@ -1,6 +1,7 @@
 package org.janelia.model.service;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.model.jacs2.BaseEntity;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
@@ -18,6 +19,7 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
     private String name; // scheduled job name
     private String description; // scheduled job description
     private String serviceName; // service to be run
+    private String serviceVersion;
     private Integer servicePriority = 0; // service priority
     private String runServiceAs; // whom should this service run as
     private ProcessingLocation serviceProcessingLocation; // service processing location
@@ -62,6 +64,14 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
 
     public void setServiceName(String serviceName) {
         this.serviceName = serviceName;
+    }
+
+    public String getServiceVersion() {
+        return serviceVersion;
+    }
+
+    public void setServiceVersion(String serviceVersion) {
+        this.serviceVersion = serviceVersion;
     }
 
     public Integer getServicePriority() {
@@ -150,5 +160,43 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
 
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("name", name)
+                .append("description", description)
+                .append("serviceName", serviceName)
+                .append("serviceVersion", serviceVersion)
+                .append("servicePriority", servicePriority)
+                .append("runServiceAs", runServiceAs)
+                .append("serviceProcessingLocation", serviceProcessingLocation)
+                .append("serviceQueueId", serviceQueueId)
+                .append("serviceArgs", serviceArgs)
+                .append("serviceDictionaryArgs", serviceDictionaryArgs)
+                .append("serviceResources", serviceResources)
+                .append("cronScheduleDescriptor", cronScheduleDescriptor)
+                .append("lastStartTime", lastStartTime)
+                .append("nextStartTime", nextStartTime)
+                .append("disabled", disabled)
+                .toString();
+    }
+
+    public JacsServiceData createServiceInstance() {
+        JacsServiceData serviceData = new JacsServiceDataBuilder(null)
+                .setName(serviceName)
+                .setOwnerKey(runServiceAs)
+                .setAuthKey(runServiceAs)
+                .setProcessingLocation(serviceProcessingLocation)
+                .addArgs(serviceArgs)
+                .setDictionaryArgs(serviceDictionaryArgs)
+                .copyResourcesFrom(serviceResources)
+                .build();
+        serviceData.setQueueId(serviceQueueId);
+        serviceData.setPriority(servicePriority);
+        serviceData.addTags(name, name + "#" + id);
+        return serviceData;
     }
 }

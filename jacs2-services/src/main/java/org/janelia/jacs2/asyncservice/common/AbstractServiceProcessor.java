@@ -1,11 +1,9 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.beust.jcommander.JCommander;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.security.util.SubjectUtils;
@@ -19,10 +17,7 @@ import org.slf4j.Logger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @MdcContext
@@ -68,7 +63,8 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         } else if (StringUtils.isNotBlank(executionContext.getParentWorkspace())) {
             jacsServiceDataBuilder.setWorkspace(executionContext.getParentWorkspace());
         }
-        jacsServiceDataBuilder.addArg(Stream.of(args).flatMap(arg -> Stream.of(arg.toStringArray())).toArray(String[]::new));
+        jacsServiceDataBuilder.addArgs(Stream.of(args).flatMap(arg -> Stream.of(arg.toStringArray())).toArray(String[]::new));
+        jacsServiceDataBuilder.setDictionaryArgs(executionContext.getDictionaryArgs());
         if (executionContext.getServiceState() != null) {
             jacsServiceDataBuilder.setState(executionContext.getServiceState());
         }

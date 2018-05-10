@@ -10,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-import javax.inject.Named;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
@@ -195,7 +194,7 @@ public class AbstractServiceProcessorTest {
 
         JacsServiceData testServiceData =
                 new JacsServiceDataBuilder(null)
-                        .addArg()
+                        .addArgs()
                         .addDependencyId(predecessorId)
                         .build();
         when(jacsServiceDataPersistence.findServiceDependencies(testServiceData)).thenReturn(ImmutableList.of(testServiceDataPredecessor));

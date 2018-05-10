@@ -24,6 +24,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
@@ -40,7 +41,7 @@ public class AsyncServiceResource {
 
     @RequireAuthentication
     @POST
-    @Consumes("application/json")
+    @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Submit a list of services", notes = "The submission assumes an implicit positional dependecy where each service depends on its predecessors")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Success"),
