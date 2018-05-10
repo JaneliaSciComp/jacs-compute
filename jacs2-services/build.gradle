@@ -15,7 +15,8 @@ project(":jacs2-services") {
                 JUEL_LIB,
                 MONGODB_DRIVER_LIB,
                 REFLECTIONS_LIB,
-                JAVA_LSF_LIB,       
+                JAVA_LSF_LIB,
+                DAGOBAH_LIB,
                 SPARK_LAUNCHER
 
         compile (JONGO_LIB) {

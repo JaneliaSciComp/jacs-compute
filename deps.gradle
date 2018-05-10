@@ -81,6 +81,7 @@ dependencies {
         // janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:0.1.0"
         JACS_MODEL_LIB = "org.janelia:jacs-model:1.0.1"
+        DAGOBAH_LIB = "org.janelia:dagobah:1.0.0"
 
         // testing
         JUNIT_VERSION = "4.12"
