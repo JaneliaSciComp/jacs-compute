@@ -7,7 +7,8 @@ public enum LightsheetPipelineStep {
     clusterPT(true, 2),
     clusterTF(true, 2),
     localAP(false, 32),
-    localEC(false, 32);
+    localEC(false, 32),
+    generateMiniStacks(false, 4);
 
     private boolean needsMoreThanOneJob;
     private int recommendedSlots;

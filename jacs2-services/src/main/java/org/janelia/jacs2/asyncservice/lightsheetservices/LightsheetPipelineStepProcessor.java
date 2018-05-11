@@ -181,10 +181,17 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         stepConfig.putAll(jacsServiceData.getDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
         // write the final config file
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        String fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json";
+        String fileName="";
+        if (args.step.name() == "generateMiniStacks") { //Use previous step name for file name
+            String[] parts = args.configAddress.split("\\?stepName=");
+            fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + parts[1] + ".json";
+        }
+        else{
+            fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json";
+        }
         File jsonConfigFile = serviceWorkingFolder.getServiceFolder(fileName).toFile();
         writeJsonConfig(stepConfig, jsonConfigFile);
-        if (!args.configOutputPath.equals("")) {
+        if (!args.configOutputPath.equals("") && args.step.name()!="generateMiniStacks") {
             String[] addressParts = args.configAddress.split("/");
             String lightsheetJobID = addressParts[addressParts.length -1];
             Path configOutputPath = Paths.get(args.configOutputPath + "/" + lightsheetJobID + "/" + fileName);
@@ -214,7 +221,9 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
     public InputStream getJsonConfig(String configAddress, String stepName) {
         Client httpclient = null;
         try {
-            configAddress = configAddress + "?stepName=" + stepName;
+            if (stepName != "generateMiniStacks") { //If the step name is generateMiniStack then the address to the required step is provided
+                configAddress = configAddress + "?stepName=" + stepName;
+            }
             httpclient = HttpUtils.createHttpClient();
             WebTarget target = httpclient.target(configAddress);//.path("entry_content").path(entryName);
 
