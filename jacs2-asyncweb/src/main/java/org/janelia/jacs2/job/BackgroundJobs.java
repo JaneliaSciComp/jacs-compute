@@ -4,14 +4,12 @@ import org.janelia.jacs2.asyncservice.common.JacsQueueSyncer;
 import org.janelia.jacs2.asyncservice.common.JacsScheduledServiceRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceDispatchRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationQueue;
+import org.janelia.jacs2.cdi.SeContainerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.se.SeContainer;
-import javax.enterprise.inject.se.SeContainerInitializer;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-@ApplicationScoped
 public class BackgroundJobs implements ServletContextListener {
 
     private JacsQueueSyncer queueSyncer;
@@ -21,12 +19,11 @@ public class BackgroundJobs implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
-        SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-        SeContainer container = containerInit.initialize();
-        queueSyncer = container.select(JacsQueueSyncer.class).get();
-        serviceDispatchRunner = container.select(JacsServiceDispatchRunner.class).get();
-        scheduledServicesRunner = container.select(JacsScheduledServiceRunner.class).get();
-        taskQueuePoller = container.select(ServiceComputationQueue.class).get();
+        SeContainer seContainer = SeContainerFactory.getSeContainer();
+        queueSyncer = seContainer.select(JacsQueueSyncer.class).get();
+        serviceDispatchRunner = seContainer.select(JacsServiceDispatchRunner.class).get();
+        scheduledServicesRunner = seContainer.select(JacsScheduledServiceRunner.class).get();
+        taskQueuePoller = seContainer.select(ServiceComputationQueue.class).get();
     }
 
     @Override

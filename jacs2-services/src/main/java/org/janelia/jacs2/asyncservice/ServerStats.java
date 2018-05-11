@@ -1,14 +1,10 @@
 package org.janelia.jacs2.asyncservice;
 
-import org.janelia.model.service.JacsServiceData;
-import java.util.List;
-
 public class ServerStats {
-    private int runningServicesCount;
-    private int availableSlots;
-    private int waitingCapacity;
-    private List<JacsServiceData> waitingServices;
-    private List<JacsServiceData>  runningServices;
+    private int runningServicesCount; // number of services running
+    private int availableSlots; // number of slots available for primary services
+    private int waitingCapacity; // queue capacity
+    private int waitingServicesCount; // number of enqueued services
 
     public int getRunningServicesCount() {
         return runningServicesCount;
@@ -34,17 +30,11 @@ public class ServerStats {
         this.waitingCapacity = waitingCapacity;
     }
 
-    public List<JacsServiceData>  getRunningServices() {
-        return runningServices;
+    public int getWaitingServicesCount() {
+        return waitingServicesCount;
     }
 
-    public void setRunningServices(List<JacsServiceData>  runningServices) {
-        this.runningServices = runningServices;
+    public void setWaitingServicesCount(int waitingServicesCount) {
+        this.waitingServicesCount = waitingServicesCount;
     }
-
-    public List<JacsServiceData> getWaitingServices() {
-        return waitingServices;
-    }
-
-    public void setWaitingServices(List<JacsServiceData>  waitingServices) { this.waitingServices = waitingServices; }
 }

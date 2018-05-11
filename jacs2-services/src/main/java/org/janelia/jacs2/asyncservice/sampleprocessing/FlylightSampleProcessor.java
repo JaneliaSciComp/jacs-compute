@@ -207,15 +207,15 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                             new ServiceArg("-montageMipMaps", args.montageMipMaps)
                                     )
                     )
-                            .thenCompose((JacsServiceResult<List<LSMSummary>> lsmSummariesResult) -> updateSampleSummaryResultsProcessor.process(
-                                            new ServiceExecutionContext.Builder(jacsServiceData)
-                                                    .description("Update LSM summary results")
-                                                    .waitFor(lsmSummariesResult.getJacsServiceData())
-                                                    .build(),
-                                            new ServiceArg("-sampleResultsId", sampleResultsId),
-                                            new ServiceArg("-sampleSummaryId", lsmSummariesResult.getJacsServiceData().getId())
-                                    )
+                    .thenCompose((JacsServiceResult<List<LSMSummary>> lsmSummariesResult) -> updateSampleSummaryResultsProcessor.process(
+                            new ServiceExecutionContext.Builder(jacsServiceData)
+                                    .description("Update LSM summary results")
+                                    .waitFor(lsmSummariesResult.getJacsServiceData())
+                                    .build(),
+                            new ServiceArg("-sampleResultsId", sampleResultsId),
+                            new ServiceArg("-sampleSummaryId", lsmSummariesResult.getJacsServiceData().getId())
                             )
+                    )
             ;
         }
         return initAndGetSampleImagesComputation

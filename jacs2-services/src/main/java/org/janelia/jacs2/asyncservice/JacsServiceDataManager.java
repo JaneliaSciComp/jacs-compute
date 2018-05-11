@@ -9,6 +9,7 @@ import java.util.Date;
 
 public interface JacsServiceDataManager {
     JacsServiceData retrieveServiceById(Number instanceId);
+    long countServices(JacsServiceData ref, DataInterval<Date> creationInterval);
     PageResult<JacsServiceData> searchServices(JacsServiceData ref, DataInterval<Date> creationInterval, PageRequest pageRequest);
     JacsServiceData updateService(Number instanceId, JacsServiceData serviceData);
 }

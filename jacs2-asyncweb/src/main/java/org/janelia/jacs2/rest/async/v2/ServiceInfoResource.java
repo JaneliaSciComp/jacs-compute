@@ -1,5 +1,6 @@
 package org.janelia.jacs2.rest.async.v2;
 
+import com.google.common.base.Splitter;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -13,6 +14,8 @@ import org.janelia.model.domain.enums.SubjectRole;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
+import org.janelia.model.jacs2.page.SortCriteria;
+import org.janelia.model.jacs2.page.SortDirection;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ServiceMetaData;
@@ -33,7 +36,9 @@ import javax.ws.rs.core.UriInfo;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RequestScoped
 @Produces("application/json")
@@ -45,6 +50,44 @@ public class ServiceInfoResource {
     @Inject private Logger logger;
     @Inject private JacsServiceDataManager jacsServiceDataManager;
     @Inject private ServiceRegistry serviceRegistry;
+
+    @RequireAuthentication
+    @GET
+    @Produces("text/plain")
+    @Path("/count")
+    @ApiOperation(value = "Count services", notes = "")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
+    public Response countServices(@QueryParam("service-name") String serviceName,
+                                   @QueryParam("service-id") Long serviceId,
+                                   @QueryParam("parent-id") Long parentServiceId,
+                                   @QueryParam("root-id") Long rootServiceId,
+                                   @QueryParam("service-owner") String serviceOwnerKey,
+                                   @QueryParam("service-state") String serviceState,
+                                   @QueryParam("service-tags") List<String> serviceTags,
+                                   @QueryParam("service-from") Date from,
+                                   @QueryParam("service-to") Date to,
+                                   @QueryParam("page") Integer pageNumber,
+                                   @QueryParam("length") Integer pageLength,
+                                   @QueryParam("sort-by") String sortCriteria,
+                                   @Context UriInfo uriInfo,
+                                   @Context SecurityContext securityContext) {
+        JacsServiceData pattern = createSearchServicesPattern(serviceName,
+                serviceId,
+                parentServiceId,
+                rootServiceId,
+                serviceOwnerKey,
+                serviceState,
+                serviceTags,
+                uriInfo,
+                securityContext);
+        long count = jacsServiceDataManager.countServices(pattern, new DataInterval<> (from, to));
+        return Response
+                .status(Response.Status.OK)
+                .entity(count)
+                .build();
+    }
 
     @RequireAuthentication
     @GET
@@ -63,9 +106,10 @@ public class ServiceInfoResource {
                                    @QueryParam("service-to") Date to,
                                    @QueryParam("page") Integer pageNumber,
                                    @QueryParam("length") Integer pageLength,
+                                   @QueryParam("sort-by") String sortCriteria,
                                    @Context UriInfo uriInfo,
                                    @Context SecurityContext securityContext) {
-        return searchServices(serviceName,
+        JacsServiceData pattern = createSearchServicesPattern(serviceName,
                 serviceId,
                 parentServiceId,
                 rootServiceId,
@@ -73,11 +117,15 @@ public class ServiceInfoResource {
                 serviceState,
                 serviceTags,
                 uriInfo,
-                securityContext,
-                (pattern) -> jacsServiceDataManager.searchServices(pattern, new DataInterval<> (from, to), createPageRequest(pageNumber, pageLength)));
+                securityContext);
+        PageResult<JacsServiceData> results = jacsServiceDataManager.searchServices(pattern, new DataInterval<> (from, to), createPageRequest(pageNumber, pageLength, sortCriteria));
+        return Response
+                .status(Response.Status.OK)
+                .entity(results)
+                .build();
     }
 
-    private PageRequest createPageRequest(Integer pageNumber, Integer pageLength) {
+    private PageRequest createPageRequest(Integer pageNumber, Integer pageLength, String sortCriteria) {
         PageRequest pageRequest = new PageRequest();
         if (pageNumber != null) {
             pageRequest.setPageNumber(pageNumber);
@@ -87,19 +135,49 @@ public class ServiceInfoResource {
         } else {
             pageRequest.setPageSize(DEFAULT_PAGE_SIZE);
         }
+        if (StringUtils.isNotBlank(sortCriteria)) {
+            pageRequest.setSortCriteria(Splitter.on(',')
+                    .omitEmptyStrings()
+                    .trimResults()
+                    .splitToList(sortCriteria).stream()
+                    .filter(StringUtils::isNotBlank)
+                    .map(this::createSortCriteria)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList())
+            );
+        }
         return pageRequest;
     }
 
-    private Response searchServices(String serviceName,
-                                    Long serviceId,
-                                    Long parentServiceId,
-                                    Long rootServiceId,
-                                    String serviceOwnerKey,
-                                    String serviceState,
-                                    List<String> serviceTags,
-                                    UriInfo uriInfo,
-                                    SecurityContext securityContext,
-                                    Function<JacsServiceData, PageResult<JacsServiceData>> searcher) {
+    private SortCriteria createSortCriteria(String sortDescriptor) {
+        List<String> scItemAttrs = Splitter.on(' ').trimResults().splitToList(sortDescriptor);
+        if (CollectionUtils.isEmpty(scItemAttrs)) {
+            return null;
+        }
+        String fieldName = scItemAttrs.get(0);
+        if (StringUtils.isBlank(fieldName)) {
+            return null;
+        }
+        String sortDirection = null;
+        if (scItemAttrs.size() > 1) {
+            sortDirection = scItemAttrs.get(1);
+        }
+        if (StringUtils.equalsIgnoreCase("DESC", sortDirection)) {
+            return new SortCriteria(fieldName, SortDirection.DESC);
+        } else {
+            return new SortCriteria(fieldName, SortDirection.ASC);
+        }
+    }
+
+    private JacsServiceData createSearchServicesPattern(String serviceName,
+                                                        Long serviceId,
+                                                        Long parentServiceId,
+                                                        Long rootServiceId,
+                                                        String serviceOwnerKey,
+                                                        String serviceState,
+                                                        List<String> serviceTags,
+                                                        UriInfo uriInfo,
+                                                        SecurityContext securityContext) {
         JacsServiceData pattern = new JacsServiceData();
         pattern.setId(serviceId);
         pattern.setParentServiceId(parentServiceId);
@@ -133,11 +211,7 @@ public class ServiceInfoResource {
                         pattern.addServiceArg(serviceArgName, paramEntry.getValue());
                     }
                 });
-        PageResult<JacsServiceData> results = searcher.apply(pattern);
-        return Response
-                .status(Response.Status.OK)
-                .entity(results)
-                .build();
+        return pattern;
     }
 
     @RequireAuthentication

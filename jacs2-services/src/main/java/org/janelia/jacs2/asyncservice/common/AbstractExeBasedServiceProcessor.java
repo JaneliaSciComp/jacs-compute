@@ -115,8 +115,17 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                 });
     }
 
-    protected boolean hasJobFinished(JacsServiceData jacsServiceData, ExeJobInfo jobInfo) {
-        if (jobInfo.isDone()) {
+    private boolean hasJobFinished(JacsServiceData jacsServiceData, ExeJobInfo jobInfo) {
+        JacsServiceData updatedServiceData = refreshServiceData(jacsServiceData);
+        // if the service has been canceled but the job hasn't finished terminate the job
+        // if the service has been suspended let the job complete
+        // so there's no need to do anything here
+        if (updatedServiceData.hasBeenCanceled()) {
+            if (!jobInfo.isDone()) {
+                jobInfo.terminate();
+            }
+            throw new ComputationException(jacsServiceData, "Terminate service " + jacsServiceData.getId());
+        } else if (jobInfo.isDone()) {
             return true;
         }
         try {
@@ -126,6 +135,10 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
             throw e;
         }
         return false;
+    }
+
+    private JacsServiceData refreshServiceData(JacsServiceData jacsServiceData) {
+        return jacsServiceData.hasId() ? jacsServiceDataPersistence.findById(jacsServiceData.getId()) : jacsServiceData;
     }
 
     protected abstract ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData);

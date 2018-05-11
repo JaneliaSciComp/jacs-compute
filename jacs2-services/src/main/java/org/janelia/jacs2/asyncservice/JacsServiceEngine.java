@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice;
 
 import org.janelia.jacs2.asyncservice.common.ServiceProcessor;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceState;
 
 import java.util.List;
 
@@ -14,4 +15,5 @@ public interface JacsServiceEngine {
     List<JacsServiceData> submitMultipleServices(List<JacsServiceData> listOfServices);
     boolean acquireSlot();
     void releaseSlot();
+    JacsServiceData updateServiceState(JacsServiceData serviceData, JacsServiceState serviceState);
 }

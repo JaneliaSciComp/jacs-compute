@@ -40,7 +40,6 @@ import java.util.Map;
 import org.janelia.jacs2.utils.HttpUtils;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
@@ -63,7 +62,7 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         Integer numTimePoints = 1;
         @Parameter(names = "-timePointsPerJob", description = "Number of time points per job")
         Integer timePointsPerJob = 1;
-        @Parameter(names = "-configAddress", description = "Address for accessing job's config json")
+        @Parameter(names = "-configAddress", description = "Address for accessing job's config json", required = true)
         String configAddress;
         @Parameter(names = "-configOutputPath", description = "Path for outputting json configs", required=false)
         String configOutputPath = DEFAULT_CONFIG_OUTPUT_PATH;
@@ -217,18 +216,18 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
             throw new UncheckedIOException(e);
         }
     }
+
     // Creates json file from http call
-    public InputStream getJsonConfig(String configAddress, String stepName) {
+    private InputStream getJsonConfig(String configAddress, String stepName) {
         Client httpclient = null;
         try {
             if (stepName != "generateMiniStacks") { //If the step name is generateMiniStack then the address to the required step is provided
                 configAddress = configAddress + "?stepName=" + stepName;
             }
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(configAddress);//.path("entry_content").path(entryName);
+            WebTarget target = httpclient.target(configAddress);
 
-            Invocation.Builder requestBuilder = target.request();
-            Response response = requestBuilder.get();
+            Response response = target.queryParam("stepName", stepName).request().get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(configAddress + " returned with " + response.getStatus());
             }

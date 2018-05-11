@@ -60,6 +60,7 @@ public class AbstractExeBasedServiceProcessorTest {
         }
     }
 
+    private JacsServiceDataPersistence jacsServiceDataPersistence;
     private AbstractExeBasedServiceProcessor<Void> testProcessor;
     private ExternalProcessRunner processRunner;
 
@@ -67,7 +68,7 @@ public class AbstractExeBasedServiceProcessorTest {
     public void setUp() {
         Logger logger = mock(Logger.class);
         ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
-        JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         JacsJobInstanceInfoDao jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);
         Instance<ExternalProcessRunner> serviceRunners = mock(Instance.class);
         processRunner = mock(ExternalProcessRunner.class);
@@ -95,6 +96,7 @@ public class AbstractExeBasedServiceProcessorTest {
         ExeJobInfo jobInfo = mock(ExeJobInfo.class);
         when(jobInfo.isDone()).thenReturn(true);
         when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class))).thenReturn(jobInfo);
+        when(jacsServiceDataPersistence.findById(TEST_SERVICE_ID)).thenReturn(testServiceData);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         testProcessor.processing(new JacsServiceResult<>(testServiceData))

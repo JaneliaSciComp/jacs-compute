@@ -59,6 +59,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private String workspace;
     private Number parentServiceId;
     private Number rootServiceId;
+    private int accessId;
     private List<JacsServiceEvent> events;
     private Date processStartTime = new Date();
     private Date creationDate = new Date();
@@ -296,6 +297,22 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.rootServiceId = rootServiceId;
     }
 
+    public int getAccessId() {
+        return accessId;
+    }
+
+    public void setAccessId(int accessId) {
+        this.accessId = accessId;
+    }
+
+    public void initAccessId() {
+        this.setAccessId(1);
+    }
+
+    public int nextAccessId() {
+        return accessId + 1;
+    }
+
     public List<JacsServiceEvent> getEvents() {
         return events;
     }
@@ -519,10 +536,6 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         return getName()+"#"+getId();
     }
 
-    public boolean hasNeverBeenProcessed() {
-        return state == JacsServiceState.CREATED || state == JacsServiceState.QUEUED;
-    }
-
     public boolean hasCompleted() {
         return hasCompletedSuccessfully() || hasCompletedUnsuccessfully();
     }
@@ -537,6 +550,14 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public boolean hasNotBeenWaitingForDependencies() {
         return state != JacsServiceState.WAITING_FOR_DEPENDENCIES;
+    }
+
+    public boolean hasBeenCanceled() {
+        return state == JacsServiceState.CANCELED;
+    }
+
+    public boolean hasBeenSuspended() {
+        return state == JacsServiceState.SUSPENDED;
     }
 
     public Long getServiceTimeout() {
@@ -558,6 +579,10 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
                 .filter(s -> s.getArgs().equals(dependency.getArgs()))
                 .filter(s -> s.getDependenciesIds().equals(dependency.getDependenciesIds()))
                 .findFirst();
+    }
+
+    public boolean doesItDependOn(Number serviceId) {
+        return dependenciesIds.contains(serviceId);
     }
 
     /**

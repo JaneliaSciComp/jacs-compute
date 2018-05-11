@@ -262,7 +262,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                 sampleDataService.getAnatomicalAreasBySampleIdObjectiveAndArea(jacsServiceData.getOwnerKey(), args.sampleId, args.sampleObjective, args.sampleArea);
         BiFunction<AnatomicalArea, TileLsmPair, MergeChannelsData> channelMappingFunc;
         MergeAlgorithm mergeAlgorithm = getMergeAlgorithm(args.mergeAlgorithm);
-        String multiscanBlendVersion = (mergeAlgorithm == MergeAlgorithm.DISTORTION_CORRECTION_MERGE || mergeAlgorithm == MergeAlgorithm.FLYLIGHT_ORDERED) ? "2" : null;
+        String multiscanBlendVersion = (mergeAlgorithm == MergeAlgorithm.FLYLIGHT_ORDERED) ? "2" : null;
 
         if (StringUtils.isNotBlank(args.channelDyeSpec) && StringUtils.isNotBlank(args.outputChannelOrder)) {
             // if it uses the channel dye spec and the output channel order is specified use the dye spec to deternine the ordering
@@ -410,7 +410,7 @@ public class MergeAndGroupSampleTilePairsProcessor extends AbstractBasicLifeCycl
                             mcd.tilePair.getSecondLsm()).toString()),
                     new ServiceArg("-microscope1", mcd.tilePair.getFirstLsm().getMicroscope()),
                     new ServiceArg("-microscope2", mcd.tilePair.getSecondLsm().getMicroscope()),
-                    new ServiceArg("-distortionCorrection", mergeAlgorithm == MergeAlgorithm.DISTORTION_CORRECTION_MERGE),
+                    new ServiceArg("-distortionCorrection", false),
                     new ServiceArg("-multiscanVersion", multiscanBlendVersion),
                     new ServiceArg("-outputFile", mergedResultFileName.toString())
             );

@@ -10,6 +10,7 @@ import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
+import org.janelia.model.service.JacsServiceState;
 
 import javax.inject.Inject;
 import java.util.Date;
@@ -28,6 +29,11 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
     @Override
     public JacsServiceData retrieveServiceById(Number instanceId) {
         return jacsServiceDataPersistence.findServiceHierarchy(instanceId);
+    }
+
+    @Override
+    public long countServices(JacsServiceData ref, DataInterval<Date> creationInterval) {
+        return jacsServiceDataPersistence.countMatchingServices(ref, creationInterval);
     }
 
     @Override
@@ -66,5 +72,4 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
         }
         return existingService;
     }
-
 }

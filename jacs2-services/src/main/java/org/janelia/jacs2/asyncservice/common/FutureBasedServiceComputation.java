@@ -4,6 +4,7 @@ import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -52,17 +53,14 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
     public T get() {
         ServiceComputationTask.ComputeResult<T> result = task.get();
         if (result.exc != null) {
-            if (result.exc instanceof ComputationException) {
-                throw (ComputationException) result.exc;
-            } else if (result.exc instanceof SuspendedException) {
-                throw (SuspendedException) result.exc;
-            } else if (result.exc instanceof CompletionException) {
-                throw (CompletionException) result.exc;
+            if (result.exc instanceof RuntimeException) {
+                throw (RuntimeException) result.exc;
             } else {
                 throw new CompletionException(result.exc);
             }
+        } else {
+            return result.result;
         }
-        return result.result;
     }
 
     @Override

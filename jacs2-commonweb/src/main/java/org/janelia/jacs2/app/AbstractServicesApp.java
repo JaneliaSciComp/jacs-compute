@@ -17,6 +17,7 @@ import org.janelia.jacs2.filter.AuthFilter;
 import org.janelia.jacs2.filter.CORSResponseFilter;
 import org.jboss.weld.environment.servlet.Listener;
 import org.jboss.weld.module.web.servlet.WeldInitialListener;
+import org.jboss.weld.module.web.servlet.WeldTerminalListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,8 +117,10 @@ public abstract class AbstractServicesApp {
                         .setDeploymentName(restApiName)
                         .addFilter(new FilterInfo("corsFilter", CORSResponseFilter.class))
                         .addFilterUrlMapping("corsFilter", "/*", DispatcherType.REQUEST)
+                        .addListener(Servlets.listener(WeldInitialListener.class))
                         .addListener(Servlets.listener(Listener.class))
                         .addListeners(getAppListeners())
+                        .addListener(Servlets.listener(WeldTerminalListener.class))
                         .addServlets(restApiServlet, swaggerServlet);
 
         log.info("Deploying REST API servlet at "+contextPath);
