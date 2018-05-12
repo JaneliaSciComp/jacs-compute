@@ -78,22 +78,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
         int nSteps = args.allSelectedSteps.size();
         for (int i = 1; i < nSteps; i++) {
             final int stepIndex = i;
-            if (clusterSteps.contains(args.allSelectedSteps.get(stepIndex-1).name()) ) {//If one of the cluster ones, generate a mini stack
-                stage = stage.thenCompose(firstStageResult -> {
-                            return lightsheetPipelineStepProcessor.process(
-                                    new ServiceExecutionContext.Builder(jacsServiceData)
-                                            .description("Step " + String.valueOf(stepIndex) + ": " + "generateMiniStack")
-                                            .waitFor(firstStageResult.getJacsServiceData()) // for dependency based on previous step
-                                            .build(),
-                                    new ServiceArg("-step", "generateMiniStacks"),
-                                    new ServiceArg("-stepIndex", stepIndex),
-                                    new ServiceArg("-numTimePoints", args.allSelectedTimePoints.get(stepIndex-1)),
-                                    new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
-                                    new ServiceArg("-configAddress", args.configAddress + "?stepName=" + args.allSelectedSteps.get(stepIndex-1).name()),
-                                    new ServiceArg("-configOutputPath", args.configOutputPath)
-                            );
-                });
-            }
+            stage = generateMiniStacksIfApplicable(stage, jacsServiceData, timePointsPerJob, stepIndex);
             stage = stage.thenCompose(firstStageResult -> {
                 // firstStageResult.getResult
                 return lightsheetPipelineStepProcessor.process(
@@ -112,10 +97,35 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
             ;
             //JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         }
+        stage = generateMiniStacksIfApplicable(stage, jacsServiceData, timePointsPerJob, nSteps-1);
         return stage.thenApply((JacsServiceResult<Void> lastStepResult) -> new JacsServiceResult<>(jacsServiceData, lastStepResult.getResult()));
     }
 
     private LightsheetProcessingArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LightsheetProcessingArgs());
+    }
+
+    private ServiceComputation<JacsServiceResult<Void>> generateMiniStacksIfApplicable(ServiceComputation<JacsServiceResult<Void>> stage,
+                                                                                          JacsServiceData jacsServiceData,
+                                                                                          Integer timePointsPerJob,
+                                                                                          int stepIndex){
+        LightsheetProcessingArgs args = getArgs(jacsServiceData);
+        if (clusterSteps.contains(args.allSelectedSteps.get(stepIndex-1).name()) ) {//If one of the cluster ones, generate a mini stack
+            stage = stage.thenCompose(firstStageResult -> {
+                return lightsheetPipelineStepProcessor.process(
+                        new ServiceExecutionContext.Builder(jacsServiceData)
+                                .description("Step " + String.valueOf(stepIndex) + ": " + "generateMiniStack")
+                                .waitFor(firstStageResult.getJacsServiceData()) // for dependency based on previous step
+                                .build(),
+                        new ServiceArg("-step", "generateMiniStacks"),
+                        new ServiceArg("-stepIndex", stepIndex),
+                        new ServiceArg("-numTimePoints", args.allSelectedTimePoints.get(stepIndex - 1)),
+                        new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
+                        new ServiceArg("-configAddress", args.configAddress + "?stepName=" + args.allSelectedSteps.get(stepIndex - 1).name()),
+                        new ServiceArg("-configOutputPath", args.configOutputPath)
+                );
+            });
+        }
+        return stage;
     }
 }
