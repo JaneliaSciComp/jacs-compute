@@ -97,7 +97,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
             ;
             //JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         }
-        stage = generateMiniStacksIfApplicable(stage, jacsServiceData, timePointsPerJob, nSteps-1);
+        stage = generateMiniStacksIfApplicable(stage, jacsServiceData, timePointsPerJob, nSteps);
         return stage.thenApply((JacsServiceResult<Void> lastStepResult) -> new JacsServiceResult<>(jacsServiceData, lastStepResult.getResult()));
     }
 
