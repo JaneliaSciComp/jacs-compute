@@ -221,13 +221,13 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
     private InputStream getJsonConfig(String configAddress, String stepName) {
         Client httpclient = null;
         try {
-            if (stepName != "generateMiniStacks") { //If the step name is generateMiniStack then the address to the required step is provided
-                configAddress = configAddress + "?stepName=" + stepName;
-            }
             httpclient = HttpUtils.createHttpClient();
             WebTarget target = httpclient.target(configAddress);
-
-            Response response = target.queryParam("stepName", stepName).request().get();
+            if (!"generateMiniStacks".equals(stepName)) {
+                // If the step name is not generateMiniStack then the address to the required step is provided
+                target = target.queryParam("stepName", stepName);
+            }
+            Response response = target.request().get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(configAddress + " returned with " + response.getStatus());
             }
