@@ -29,13 +29,29 @@ import java.util.List;
 @Named("singularity")
 public class SingularityContainerProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
+    static enum ContainerOperation {
+        run,
+        exec
+    }
     static class SingularityContainerArgs extends ServiceArgs {
+        @Parameter(names = "-op", description = "Singularity container operation {run (default) | exec}")
+        ContainerOperation operation = ContainerOperation.run;
         @Parameter(names = "-containerLocation", description = "Singularity container location", required = true)
         String containerLocation;
         @Parameter(names = "-singularityRuntime", description = "Singularity binary")
         String singularityRuntime;
         @Parameter(names = "-appName", description = "Containerized application Name")
         String appName;
+        @Parameter(names = "-bindPaths", description = "Container bind paths")
+        List<String> bindPaths;
+        @Parameter(names = "-overlay", description = "Container overlay")
+        String overlay;
+        @Parameter(names = "-enableNV", description = "Enable NVidia support")
+        boolean enableNV;
+        @Parameter(names = "-containerWorkingDir", description = "Container working directory")
+        String containerWorkingDirectory;
+        @Parameter(names = "-initialPwd", description = "Initial working directory inside the container")
+        String initialPwd;
         @Parameter(names = "-appArgs", description = "Containerized application arguments")
         List<String> appArgs;
 
@@ -80,9 +96,25 @@ public class SingularityContainerProcessor extends AbstractExeBasedServiceProces
     private void createScript(SingularityContainerArgs args, ScriptWriter scriptWriter) {
         scriptWriter
                 .addWithArgs(getRuntime((args)))
-                .addArg("run");
+                .addArg(args.operation.name());
         if (StringUtils.isNotBlank(args.appName)) {
             scriptWriter.addArgs("--app", args.appName);
+        }
+        String bindPaths = args.appArgs.stream().filter(StringUtils::isNotBlank).reduce("", (s1, s2) -> s1.trim() + "," + s2.trim());
+        if (StringUtils.isNotBlank(bindPaths)) {
+            scriptWriter.addArgs("--bind", bindPaths);
+        }
+        if (StringUtils.isNotBlank(args.containerWorkingDirectory)) {
+            scriptWriter.addArgs("--workdir", args.containerWorkingDirectory);
+        }
+        if (StringUtils.isNotBlank(args.overlay)) {
+            scriptWriter.addArgs("--overlay", args.overlay);
+        }
+        if (args.enableNV) {
+            scriptWriter.addArg("--nv");
+        }
+        if (StringUtils.isNotBlank(args.initialPwd)) {
+            scriptWriter.addArgs("--pwd", args.initialPwd);
         }
         scriptWriter.addArg(args.containerLocation);
         if (CollectionUtils.isNotEmpty(args.appArgs)) {
