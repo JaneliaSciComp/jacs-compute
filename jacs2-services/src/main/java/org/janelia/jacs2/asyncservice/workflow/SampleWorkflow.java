@@ -1,23 +1,41 @@
 package org.janelia.jacs2.asyncservice.workflow;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.janelia.dagobah.DAG;
+import org.janelia.dagobah.Task;
+import org.janelia.dagobah.TaskStatus;
 import org.janelia.model.domain.enums.FileType;
-import org.janelia.model.domain.interfaces.HasIdentifier;
+import org.janelia.model.domain.enums.algorithms.AlignmentAlgorithm;
+import org.janelia.model.domain.enums.algorithms.MergeAlgorithm;
+import org.janelia.model.domain.enums.algorithms.StitchAlgorithm;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.ObjectiveSample;
 import org.janelia.model.domain.sample.Sample;
 
 import java.io.File;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
+ * The Sample Workflow is a Dagobah-based DAG workflow with many capabilities:
+ * LSM metadata extraction
+ * Distortion correction
+ * Merging
+ * Stitching
+ * Alignments
+ * Neuron Separation
+ *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SampleWorkflow {
+
+    private SamplePipelineConfiguration config;
+    private Set<SamplePipelineStep> force;
+
+    public SampleWorkflow(SamplePipelineConfiguration config, Set<SamplePipelineStep> force) {
+        this.config = config;
+        this.force = force;
+    }
 
     public enum SamplePipelineStep {
         LSMProcessing,
@@ -27,188 +45,181 @@ public class SampleWorkflow {
     }
 
     public class SamplePipelineConfiguration {
-
         private String name;
         private String objective;
-        private String mergeAlgorithm;
+        private boolean normalization;
+        private boolean distortionCorrection;
+        private MergeAlgorithm mergeAlgorithm;
+        private StitchAlgorithm stitchAlgorithm;
         private String channelDyeSpec;
         private String outputChannelOrder;
         private String outputColorSpec;
         private String imageType;
         private List<AlignmentConfiguration> alignments;
+        private boolean neuronSeparation;
     }
 
     public class AlignmentConfiguration {
-        private String algorithmName;
+        private AlignmentAlgorithm algorithm;
         private String algorithmParam;
         private String algorithmResultName;
     }
 
-//    private void createPipeline(Sample sample, Set<SamplePipelineStep> reuse) {
-//
-//        DAG dag = new DAG();
-//
-//        for (ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
-//
-//            List<LSMImage> lsms = new ArrayList<>(); // TODO: get the LSMs for the sample
-//
-//            Multimap<String, Task> lsmTaskByAreaTile = ArrayListMultimap.create();
-//            for(LSMImage lsm : lsms) {
-//                Task task = createLSMTask(lsm); // Copy LSM, extract metadata, generate artifacts, apply distortion correction
-//                lsmTaskByAreaTile.put(lsm.getAnatomicalArea()+"~"+lsm.getTile(), task);
-//                dag.addTask(task);
-//            }
-//
-//            Task postUpdate = createPostProcessingUpdateTask();
-//            dag.addTask(postUpdate);
-//
-//            Multimap<String, Task> mergeTaskByArea = ArrayListMultimap.create();
-//            for (String areaTile : lsmTaskByAreaTile.keys()) {
-//
-//                String[] key = areaTile.split("~");
-//                String area = key[0];
-//                String tile = key[1];
-//
-//                Collection<Task> tasks = lsmTaskByAreaTile.get(areaTile);
-//
-//                if (tasks.isEmpty()) {
-//                    throw new IllegalStateException("No task(s) found for tile="+tile);
-//                }
-//                else if (tasks.size()>1) {
-//                    Task merge = createMergeTask(tile);
-//                    dag.addTask(merge).addEdges(tasks, merge); // lsm processing -> merge
-//
-//                    Task post = createPostProcessingTask(tile);
-//                    dag.addTask(post)
-//                            .addEdge(merge, post) // merge -> post processing
-//                            .addEdge(post, postUpdate); // post processing -> update sample
-//
-//                    mergeTaskByArea.put(area, merge);
-//                }
-//                else {
-//                    // skip merge because there is only one image in this tile
-//                    Task task = tasks.iterator().next();
-//                    mergeTaskByArea.put(area, task);
-//                }
-//            }
-//
-//            for (String area : mergeTaskByArea.keys()) {
-//                Collection<Task> tasks = mergeTaskByArea.get(area);
-//
-//                Task stitch = null;
-//
-//                if (tasks.isEmpty()) {
-//                    throw new IllegalStateException("No task(s) found for area="+area);
-//                }
-//                else if (tasks.size()>1) {
-//                    Task group = createGroupTask(area);
-//                    dag.addTask(group).addEdges(tasks, group); // merge -> group
-//
-//                    stitch = createStitchTask(area);
-//                    dag.addTask(stitch).addEdge(group, stitch); // group -> stitch
-//                }
-//                else {
-//                    // skip group/stitch because there is only one tile
-//                    stitch = tasks.iterator().next();
-//                }
-//
-//                Task artifactUpdate = createArtifactUpdateTask();
-//                dag.addTask(artifactUpdate);
-//
-//                Task artifacts = createArtifactTask(area);
-//                dag.addTask(artifacts)
-//                    .addEdge(stitch, artifacts) // stitch -> artifacts
-//                    .addEdge(artifacts, artifactUpdate); // post processing -> update sample
-//
-//
-//                Task post = createPostProcessingTask(area);
-//                dag.addTask(post)
-//                    .addEdge(stitch, post) // stitch -> post processing
-//                    .addEdge(post, postUpdate); // post processing -> update sample
-//
-//
-//                // TODO: add alignments
-//                // TODO: add neuron separation
-//
-//            }
-//        }
-//    }
-//
-//
-//    private Task createLSMTask(LSMImage lsm) {
-//        return null;
-//    }
-//
-//    private Task createMergeTask(String tileName) {
-//        return null;
-//    }
-//
-//    private Task createGroupTask(String areaName) {
-//        return null;
-//    }
-//
-//    private Task createPostProcessingTask(String tileName) {
-//        return null;
-//    }
-//
-//    private Task createPostProcessingUpdateTask() {
-//        return null;
-//    }
-//
-//    private Task createStitchTask(String tileName) {
-//        return null;
-//    }
-//
-//    private Task createArtifactTask(String tileName) {
-//        return null;
-//    }
-//
-//    private Task createArtifactUpdateTask() {
-//        return null;
-//    }
+    private void createPipeline(Sample sample, List<LSMImage> lsms) {
+
+        DAG dag = new DAG<Task>();
+
+        for (ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+
+            Task update = createLSMSummaryUpdateTask(objectiveSample);
+
+            Multimap<String, Task> lsmTaskByAreaTile = ArrayListMultimap.create();
+            for(LSMImage lsm : lsms) {
+                if (lsm.getObjective().equals(objectiveSample.getObjective())) {
+                    // Copy LSM, extract metadata, generate artifacts, apply distortion correction
+                    Task lsmSummary = createLSMProcessingTask(lsm);
+                    lsmTaskByAreaTile.put(lsm.getAnatomicalArea() + "~" + lsm.getTile(), lsmSummary);
+
+                    // Update database
+                    dag.addEdge(lsmSummary, update);
+                }
+            }
+
+            Task postUpdate = createPostProcessingUpdateTask(objectiveSample);
+
+            Multimap<String, Task> normalizeTaskByArea = ArrayListMultimap.create();
+            for (String areaTile : lsmTaskByAreaTile.keys()) {
+
+                String[] key = areaTile.split("~");
+                String area = key[0];
+                String tile = key[1];
+
+                Collection<Task> lsmTasks = lsmTaskByAreaTile.get(areaTile);
+
+                if (lsmTasks.isEmpty()) {
+                    throw new IllegalStateException("No task(s) found for tile="+tile);
+                }
+                else if (lsmTasks.size()>1) {
+                    Task merge = createMergeTask(objectiveSample, tile);
+                    Task post = createPostProcessingTask(objectiveSample, tile);
+                    Task normalize = createNormalizationTask(objectiveSample, tile);
+
+                    dag.addEdges(lsmTasks, merge); // lsm processing -> merge
+                    dag.addEdge(merge, post); // merge -> post processing
+                    dag.addEdge(post, postUpdate); // post processing -> update sample
+                    dag.addEdge(merge, normalize); // merge -> normalization
+
+                    normalizeTaskByArea.put(area, normalize);
+                }
+                else {
+                    // skip merge because there is only one image in this tile
+
+                    Task lsmTask = lsmTasks.iterator().next();
+                    Task normalize = createNormalizationTask(objectiveSample, tile);
+                    dag.addEdge(lsmTask, normalize); // lsm processing -> normalization
+
+                    normalizeTaskByArea.put(area, normalize);
+                }
+            }
+
+            for (String area : normalizeTaskByArea.keys()) {
+
+                Collection<Task> normalizeTasks = normalizeTaskByArea.get(area);
+                Task stitch;
+
+                if (normalizeTasks.isEmpty()) {
+                    throw new IllegalStateException("No task(s) found for area="+area);
+                }
+                else if (normalizeTasks.size()>1) {
+                    Task group = createGroupTask(objectiveSample, area);
+                    stitch = createStitchTask(objectiveSample, area);
+
+                    dag.addEdges(normalizeTasks, group); // normalize -> group
+                    dag.addEdge(group, stitch); // group -> stitch
+                }
+                else {
+                    // skip group/stitch because there is only one tile
+                    stitch = normalizeTasks.iterator().next();
+                }
+
+                Task artifactUpdate = createArtifactUpdateTask(objectiveSample);
+
+                Task artifacts = createArtifactTask(objectiveSample, area);
+                dag.addEdge(stitch, artifacts); // stitch -> artifacts
+                dag.addEdge(artifacts, artifactUpdate); // post processing -> update sample
+
+                Task post = createPostProcessingTask(objectiveSample, area);
+                dag.addEdge(stitch, post); // stitch -> post processing
+                dag.addEdge(post, postUpdate); // post processing -> update sample
 
 
+                // TODO: add alignments
+                // TODO: add neuron separation
 
+            }
+        }
+    }
 
-
-    private String getArea(String tile) {
+    private Task createLSMProcessingTask(LSMImage lsm) {
         return null;
     }
 
-
-    class TaskData {
-
+    private Task createDistortionCorrectionTask(LSMImage lsm) {
+        return null;
     }
 
-    class Image extends TaskData {
-        File rawFile;
-        File lossyFile;
-
+    private Task createLSMSummaryUpdateTask(ObjectiveSample objectiveSample) {
+        return null;
     }
 
-    class PrimaryImage extends Image {
-        private Long lsmId;
-        private File temporaryFile;
-        private File correctedFile;
+    private Task createMergeTask(ObjectiveSample objectiveSample, String tileName) {
+        return null;
     }
 
-    class SecondaryImage extends Image {
-        private List<Image> inputs;
-        private Map<FileType, File> mips;
-        private Map<FileType, File> movies;
+    private Task createNormalizationTask(ObjectiveSample objectiveSample, String tileName) {
+        return null;
     }
 
-    class TileImage extends SecondaryImage {
-        private String tileName;
+    private Task createGroupTask(ObjectiveSample objectiveSample, String areaName) {
+        return null;
     }
 
-    class AreaImage extends SecondaryImage {
-        private String areaName;
+    private Task createPostProcessingTask(ObjectiveSample objectiveSample, String tileName) {
+        return null;
     }
 
-    class AlignedImage extends AreaImage {
-        private String alignmentSpace;
+    private Task createPostProcessingUpdateTask(ObjectiveSample objectiveSample) {
+        return null;
     }
+
+    private Task createStitchTask(ObjectiveSample objectiveSample, String tileName) {
+        return null;
+    }
+
+    private Task createArtifactTask(ObjectiveSample objectiveSample, String tileName) {
+        return null;
+    }
+
+    private Task createArtifactUpdateTask(ObjectiveSample objectiveSample) {
+        return null;
+    }
+
+    private Long getNewId() {
+        // TODO:
+        return 0L;
+    }
+
+
+    private Map<String, Object> map(Object... values) {
+        Map<String, Object> map = new HashMap<>();
+        for (int i=0; i<values.length; i+=2) {
+            String key = (String)values[i];
+            Object value = values[i+1];
+            map.put(key, value);
+        }
+        return map;
+    }
+
 
 
 
