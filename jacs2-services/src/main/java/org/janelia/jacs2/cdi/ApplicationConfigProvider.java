@@ -69,8 +69,11 @@ public class ApplicationConfigProvider {
                 log.info("Reading application config from file {}", file);
                 return fromInputStream(fileInputStream);
             } catch (IOException e) {
+                log.error("Error reading configuration file {}", fileName, e);
                 throw new UncheckedIOException(e);
             }
+        } else {
+            log.warn("Configuration file {} not found", fileName);
         }
         return this;
     }
