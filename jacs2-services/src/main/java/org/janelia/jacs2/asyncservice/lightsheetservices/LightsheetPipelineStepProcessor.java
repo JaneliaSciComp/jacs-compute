@@ -180,8 +180,8 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         stepConfig.putAll(jacsServiceData.getDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
         // write the final config file
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        String fileName="";
-        if (args.step.name() == "generateMiniStacks") { //Use previous step name for file name
+        String fileName = "";
+        if ("generateMiniStacks".equals(args.step.name())) { // Use previous step name for file name
             String[] parts = args.configAddress.split("\\?stepName=");
             fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + parts[1] + ".json";
         }

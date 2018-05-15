@@ -210,9 +210,9 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
         List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles(jacsServiceData);
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> runtimeEnv = new LinkedHashMap<>();
+        runtimeEnv.putAll(prepareEnvironment(jacsServiceData));
         if (MapUtils.isNotEmpty(jacsServiceData.getEnv())) {
             runtimeEnv.putAll(jacsServiceData.getEnv());
-            runtimeEnv.putAll(prepareEnvironment(jacsServiceData));
         }
         prepareResources(jacsServiceData);
         ExternalProcessRunner processRunner = getProcessRunner(jacsServiceData);
