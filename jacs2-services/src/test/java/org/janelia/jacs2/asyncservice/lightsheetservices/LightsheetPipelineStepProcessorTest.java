@@ -39,6 +39,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -102,6 +104,18 @@ public class LightsheetPipelineStepProcessorTest {
 
     @Test
     public void prepareConfigFiles() {
+        WebTarget configEndpoint = prepareConfigEnpointTestTarget();
+        Mockito.when(testHttpClient.target(CONFIG_IP_ARG)).thenReturn(configEndpoint);
+        TEST_USER_CONFIGS.forEach((step, config) -> {
+            int stepIndex = 1;
+            JacsServiceData testServiceData = createTestService(step, stepIndex);
+            lightsheetPipelineStepProcessor.prepareConfigurationFiles(testServiceData);
+            assertTrue(new File(testDirectory,
+                    testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json").exists());
+        });
+    }
+
+    private WebTarget prepareConfigEnpointTestTarget() {
         WebTarget configEndpoint = Mockito.mock(WebTarget.class);
         Invocation.Builder configRequestBuilder = Mockito.mock(Invocation.Builder.class);
         Response configResponse = Mockito.mock(Response.class);
@@ -110,15 +124,36 @@ public class LightsheetPipelineStepProcessorTest {
         Mockito.when(configRequestBuilder.get()).thenReturn(configResponse);
         Mockito.when(configResponse.getStatus()).thenReturn(200);
         String testData = "{\"key\": \"val\"}";
-        Mockito.when(configResponse.readEntity(InputStream.class)).then(invocation -> {
-            return new ByteArrayInputStream(testData.getBytes());
-        });
-        Mockito.when(testHttpClient.target(CONFIG_IP_ARG)).thenReturn(configEndpoint);
+        Mockito.when(configResponse.readEntity(InputStream.class)).then(invocation -> new ByteArrayInputStream(testData.getBytes()));
+        return configEndpoint;
+    }
+
+    @Test
+    public void prepareConfigFilesForGenerateMinistacks() {
+        WebTarget configEndpoint = prepareConfigEnpointTestTarget();
         TEST_USER_CONFIGS.forEach((step, config) -> {
             int stepIndex = 1;
-            JacsServiceData testServiceData = createTestService(step, stepIndex);
+            Mockito.when(testHttpClient.target(CONFIG_IP_ARG + "?stepName=" + step)).thenReturn(configEndpoint);
+            JacsServiceData testServiceData = createMinistacksTestService(step, stepIndex);
+
             lightsheetPipelineStepProcessor.prepareConfigurationFiles(testServiceData);
             assertTrue(new File(testDirectory,
+                    testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json").exists());
+        });
+    }
+
+    @Test
+    public void prepareConfigFilesForGenerateMinistacksWithBadConfigAddress() {
+        WebTarget configEndpoint = prepareConfigEnpointTestTarget();
+        TEST_USER_CONFIGS.forEach((step, config) -> {
+            int stepIndex = 1;
+            Mockito.when(testHttpClient.target(CONFIG_IP_ARG + "?stepName=" + step)).thenReturn(configEndpoint);
+            JacsServiceData testServiceData = createMinistacksTestService(null, stepIndex);
+
+            assertThatThrownBy(() -> lightsheetPipelineStepProcessor.prepareConfigurationFiles(testServiceData))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Step name missing from the config url for generateMiniStacks");
+            assertFalse(new File(testDirectory,
                     testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json").exists());
         });
     }
@@ -134,4 +169,17 @@ public class LightsheetPipelineStepProcessorTest {
         testServiceData.setId(21L);
         return testServiceData;
     }
+
+    private JacsServiceData createMinistacksTestService(LightsheetPipelineStep step, int stepIndex) {
+        JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
+                .setWorkspace(testDirectory.getAbsolutePath())
+                .addArgs("-step", "generateMiniStacks")
+                .addArgs("-stepIndex", String.valueOf(stepIndex))
+                .addArgs("-configAddress", CONFIG_IP_ARG + (step != null ? "?stepName=" + step.name() : ""))
+                .setDictionaryArgs(TEST_USER_CONFIGS.get(step))
+                .build();
+        testServiceData.setId(21L);
+        return testServiceData;
+    }
+
 }
