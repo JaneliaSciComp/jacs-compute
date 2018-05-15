@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.config.ApplicationConfig;
@@ -208,13 +209,17 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
     private ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
         List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles(jacsServiceData);
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
-        Map<String, String> env = prepareEnvironment(jacsServiceData);
+        Map<String, String> runtimeEnv = new LinkedHashMap<>();
+        if (MapUtils.isNotEmpty(jacsServiceData.getEnv())) {
+            runtimeEnv.putAll(jacsServiceData.getEnv());
+            runtimeEnv.putAll(prepareEnvironment(jacsServiceData));
+        }
         prepareResources(jacsServiceData);
         ExternalProcessRunner processRunner = getProcessRunner(jacsServiceData);
         return processRunner.runCmds(
                 script,
                 externalConfigs,
-                env,
+                runtimeEnv,
                 getScriptDirName(jacsServiceData),
                 getProcessDir(jacsServiceData),
                 jacsServiceData);
