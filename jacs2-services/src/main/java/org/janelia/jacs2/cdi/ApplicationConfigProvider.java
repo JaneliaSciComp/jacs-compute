@@ -40,7 +40,7 @@ public class ApplicationConfigProvider {
             return this;
         }
         try (InputStream configStream = this.getClass().getResourceAsStream(resourceName)) {
-            log.info("Reading application config from "+resourceName);
+            log.info("Reading application config from resource {}", resourceName);
             return fromInputStream(configStream);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -55,6 +55,7 @@ public class ApplicationConfigProvider {
         if (StringUtils.isBlank(envVarValue)) {
             return this;
         }
+        log.info("Reading application config from environment {} -> {}", envVarName, envVarValue);
         return fromFile(envVarValue);
     }
 
@@ -65,7 +66,7 @@ public class ApplicationConfigProvider {
         File file = new File(fileName);
         if (file.exists() && file.isFile()) {
             try (InputStream fileInputStream = new FileInputStream(file)) {
-                log.info("Reading application config from "+file);
+                log.info("Reading application config from file {}", file);
                 return fromInputStream(fileInputStream);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
