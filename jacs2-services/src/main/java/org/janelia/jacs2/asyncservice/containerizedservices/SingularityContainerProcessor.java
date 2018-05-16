@@ -100,7 +100,7 @@ public class SingularityContainerProcessor extends AbstractExeBasedServiceProces
         if (StringUtils.isNotBlank(args.appName)) {
             scriptWriter.addArgs("--app", args.appName);
         }
-        String bindPaths = args.appArgs.stream().filter(StringUtils::isNotBlank).reduce("", (s1, s2) -> s1.trim() + "," + s2.trim());
+        String bindPaths = args.bindPaths.stream().filter(StringUtils::isNotBlank).reduce("", (s1, s2) -> s1.trim() + "," + s2.trim());
         if (StringUtils.isNotBlank(bindPaths)) {
             scriptWriter.addArgs("--bind", bindPaths);
         }
