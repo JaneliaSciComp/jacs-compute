@@ -134,11 +134,22 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
     }
 
     public void updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, JacsServiceEvent serviceEvent) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Update service state for {} to {} with event {}", jacsServiceData, newServiceState, serviceEvent);
-        } else {
-            LOG.info("Update service state for {} to {} with event {}", jacsServiceData.getId(), newServiceState, serviceEvent);
+
+        if (serviceEvent == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Update service state for {} to {}", jacsServiceData, newServiceState);
+            } else {
+                LOG.info("Update service state for {} to {}", jacsServiceData.getId(), newServiceState);
+            }
         }
+        else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Update service state for {} to {} with event {}", jacsServiceData, newServiceState, serviceEvent);
+            } else {
+                LOG.info("Update service state for {} to {} with event {}", jacsServiceData.getId(), newServiceState, serviceEvent);
+            }
+        }
+
         List<Consumer<JacsServiceDataDao>> actions = new ArrayList<>();
         actions.add(dao -> dao.update(jacsServiceData, jacsServiceData.updateState(newServiceState)));
         if (serviceEvent != JacsServiceEvent.NO_EVENT) {

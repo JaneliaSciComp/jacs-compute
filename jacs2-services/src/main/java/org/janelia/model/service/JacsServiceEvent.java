@@ -41,7 +41,7 @@ public class JacsServiceEvent implements Serializable {
 
     @Override
     public String toString() {
-        return ToStringBuilder.reflectionToString(this);
+        return name + "[" + value + ", " + eventTime + ']';
     }
 
     @Override

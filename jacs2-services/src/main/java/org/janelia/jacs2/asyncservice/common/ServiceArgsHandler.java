@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.common;
 import com.beust.jcommander.JCommander;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
@@ -34,13 +35,16 @@ class ServiceArgsHandler {
             serviceDataUpdates.putAll(serviceData.updateActualArgs(actualServiceArgs));
             // update service arguments arguments - this involves creating a dictionary that contains both
             // the parsed actual arguments and the dictionary arguments
-            JCommander cmdLineParser = new JCommander(serviceMetaData.getServiceArgsObject());
-            cmdLineParser.parse(actualServiceArgs.toArray(new String[actualServiceArgs.size()])); // parse the actual service args
-            serviceMetaData.getServiceArgDescriptors().forEach((ServiceArgDescriptor sd) -> {
-                String argName = sd.getArgName();
-                Object argValue = prepareArgValue(sd.getArg().get(serviceMetaData.getServiceArgsObject()));
-                serviceDataUpdates.putAll(serviceData.addServiceArg(argName, argValue));
-            });
+            ServiceArgs serviceArgsObject = serviceMetaData.getServiceArgsObject();
+            if (serviceArgsObject!=null) {
+                JCommander cmdLineParser = new JCommander(serviceMetaData.getServiceArgsObject());
+                cmdLineParser.parse(actualServiceArgs.toArray(new String[actualServiceArgs.size()])); // parse the actual service args
+                serviceMetaData.getServiceArgDescriptors().forEach((ServiceArgDescriptor sd) -> {
+                    String argName = sd.getArgName();
+                    Object argValue = prepareArgValue(sd.getArg().get(serviceMetaData.getServiceArgsObject()));
+                    serviceDataUpdates.putAll(serviceData.addServiceArg(argName, argValue));
+                });
+            }
             serviceDataUpdates.putAll(serviceData.addServiceArgs(serviceData.getDictionaryArgs())); // add the dictionary args
         }
         return serviceDataUpdates;

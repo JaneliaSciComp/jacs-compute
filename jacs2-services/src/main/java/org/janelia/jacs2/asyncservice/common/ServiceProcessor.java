@@ -3,11 +3,14 @@ package org.janelia.jacs2.asyncservice.common;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 
+import java.util.Collection;
+
 /**
  * Service processor parameterized on the result type
  * @param <R> result type
  */
 public interface ServiceProcessor<R> {
+
     /**
      * @return service metadata
      */
@@ -20,6 +23,16 @@ public interface ServiceProcessor<R> {
      * @return service data.
      */
     JacsServiceData createServiceData(ServiceExecutionContext executionContext, ServiceArg... args);
+
+    /**
+     * Create service data based on the current execution context and the provided arguments.
+     * @param executionContext
+     * @param args
+     * @return
+     */
+    default JacsServiceData createServiceData(ServiceExecutionContext executionContext, Collection<ServiceArg> args) {
+        return createServiceData(executionContext, args.toArray(new ServiceArg[args.size()]));
+    }
 
     /**
      * @return service result handler

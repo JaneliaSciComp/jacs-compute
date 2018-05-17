@@ -37,7 +37,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<R, S> extends Abstr
                 .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, this.isResultReady(pd)))
                 .thenApply(pd -> this.updateServiceResult(pd))
                 .thenApply(this::postProcessing)
-                ;
+                .whenComplete(this::doFinally);
     }
 
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
@@ -74,6 +74,10 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<R, S> extends Abstr
     }
 
     protected JacsServiceResult<R> postProcessing(JacsServiceResult<R> sr) {
+        return sr;
+    }
+
+    protected JacsServiceResult<R> doFinally(JacsServiceResult<R> sr, Throwable throwable) {
         return sr;
     }
 }

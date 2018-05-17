@@ -41,17 +41,24 @@ public class ServiceArgs {
         );
     }
 
+    public static <P extends ServiceProcessor, A extends ServiceArgs> ServiceMetaData getMetadata(Class<P> processorClass) {
+        return getMetadata(processorClass, null);
+    }
+
     public static <P extends ServiceProcessor, A extends ServiceArgs> ServiceMetaData getMetadata(Class<P> processorClass, A args) {
         Named namedAnnotation = processorClass.getAnnotation(Named.class);
         Preconditions.checkArgument(namedAnnotation != null);
         String serviceName = namedAnnotation.value();
+        // TODO: also get ServiceParameter annotations
         return createMetadata(serviceName, args);
     }
 
     static <A extends ServiceArgs> ServiceMetaData createMetadata(String serviceName, A args) {
         ServiceMetaData smd = new ServiceMetaData();
         smd.setServiceName(serviceName);
-        populateArgumentDescriptors(args, smd);
+        if (args != null) {
+            populateArgumentDescriptors(args, smd);
+        }
         return smd;
     }
 
