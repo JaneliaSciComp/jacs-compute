@@ -9,6 +9,7 @@ public class JacsServiceDataBuilder {
 
     public JacsServiceDataBuilder(JacsServiceData serviceContext) {
         this.serviceData = new JacsServiceData();
+        this.serviceData.initAccessId();
         if (serviceContext != null) {
             serviceData.setOwnerKey(serviceContext.getOwnerKey());
             serviceData.setAuthKey(serviceContext.getAuthKey());

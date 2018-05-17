@@ -168,10 +168,7 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         Sample retrievedSample = testDao.findById(testSample.getId());
         assertThat(retrievedSample, not(isNull(Sample.class)));
         assertThat(retrievedSample, not(same(testSample)));
-        assertThat(retrievedSample.getId(), allOf(
-                not(isNull(Long.class)),
-                equalTo(testSample.getId())
-        ));
+        assertThat(retrievedSample.getId(), equalTo(testSample.getId()));
     }
 
     @Test
@@ -242,7 +239,7 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         assertThat(savedSample.getLockKey(), nullValue());
         assertThat(savedSample.getLockTimestamp(), nullValue());
         // unlocking an unlocked sample has no effect
-        assertTrue(testDao.unlockEntity("AnyKey", savedSample));
+        assertFalse(testDao.unlockEntity("AnyKey", savedSample));
         savedSample = testDao.findById(testSample.getId());
         assertThat(savedSample.getLockKey(), nullValue());
         assertThat(savedSample.getLockTimestamp(), nullValue());

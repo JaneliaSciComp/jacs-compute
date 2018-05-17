@@ -70,27 +70,15 @@ public class JacsServiceEngineImplTest {
 
     @Test
     public void serverStatsReflectCurrentQueues() {
-        PageResult<JacsServiceData> waitingServices = new PageResult<>();
-        List<JacsServiceData> waitingResults = ImmutableList.<JacsServiceData>builder()
-                .add(createTestService(1L, "t1"))
-                .add(createTestService(2L, "t2"))
-                .build();
-        waitingServices.setResultList(waitingResults);
-
-        PageResult<JacsServiceData> runningServices = new PageResult<>();
-        List<JacsServiceData> runningResults = ImmutableList.<JacsServiceData>builder()
-                .add(createTestService(1L, "t1"))
-                .add(createTestService(2L, "t2"))
-                .add(createTestService(3L, "t3"))
-                .build();
-        runningServices.setResultList(runningResults);
-        when(jacsServiceDataPersistence.findServicesByState(eq(EnumSet.of(JacsServiceState.QUEUED)), any(PageRequest.class)))
-                .thenReturn(waitingServices);
-        when(jacsServiceDataPersistence.findServicesByState(eq(EnumSet.of(JacsServiceState.RUNNING)), any(PageRequest.class)))
-                .thenReturn(runningServices);
+        for (int i = 1; i <= 5; i++) {
+            jacsServiceQueue.enqueueService(createTestService((long) i, "s" + i));
+        }
+        for (int i = 0; i < 3; i++) {
+            jacsServiceQueue.dequeService();
+        }
         ServerStats stats = jacsServiceEngine.getServerStats();
-        assertThat(stats.getWaitingServices().size(), equalTo(2));
-        assertThat(stats.getRunningServices().size(), equalTo(3));
+        assertThat(stats.getWaitingServicesCount(), equalTo(2));
+        assertThat(stats.getRunningServicesCount(), equalTo(3));
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.mongodb.client.model.Updates;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
+import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.mongo.AbstractMongoDao;
 import org.janelia.model.access.dao.mongo.MongoDaoHelper;
 import org.janelia.model.jacs2.dao.DomainObjectDao;
@@ -74,11 +75,11 @@ public abstract class AbstractDomainObjectDao<T extends DomainObject> extends Ab
     }
 
     @Override
-    public void update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+    public DaoUpdateResult update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         Map<String, EntityFieldValueHandler<?>> fieldsWithUpdatedDate = new LinkedHashMap<>(fieldsToUpdate);
         entity.setUpdatedDate(new Date());
         fieldsWithUpdatedDate.put("updatedDate", new SetFieldValueHandler<>(entity.getUpdatedDate()));
-        super.update(entity, fieldsWithUpdatedDate);
+        return super.update(entity, fieldsWithUpdatedDate);
     }
 
     @Override
@@ -86,14 +87,16 @@ public abstract class AbstractDomainObjectDao<T extends DomainObject> extends Ab
         Preconditions.checkArgument(StringUtils.isNotBlank(lockKey));
         Bson lockedEntity = Updates.combine(Updates.set("lockKey", lockKey), Updates.set("lockTimestamp", new Date()));
         entity.setLockKey(lockKey);
-        return update(getUpdateMatchCriteria(entity), lockedEntity, new UpdateOptions()) > 0;
+        DaoUpdateResult updateResult = update(getUpdateMatchCriteria(entity), lockedEntity, new UpdateOptions());
+        return updateResult.getEntitiesFound() > 0 && updateResult.getEntitiesAffected() > 0;
     }
 
     @Override
     public boolean unlockEntity(String lockKey, T entity) {
         Bson lockedEntity = Updates.combine(Updates.unset("lockKey"), Updates.unset("lockTimestamp"));
         entity.setLockKey(lockKey);
-        return update(getUpdateMatchCriteria(entity), lockedEntity, new UpdateOptions()) > 0;
+        DaoUpdateResult updateResult = update(getUpdateMatchCriteria(entity), lockedEntity, new UpdateOptions());
+        return updateResult.getEntitiesFound() > 0 && updateResult.getEntitiesAffected() > 0;
     }
 
     protected Bson getUpdateMatchCriteria(T entity) {

@@ -180,10 +180,16 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         stepConfig.putAll(jacsServiceData.getDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
         // write the final config file
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        String fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json";
+        String fileName = "";
+        if ("generateMiniStacks".equals(args.step.name())) { // Use previous step name for file name
+            fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + extractStepFromConfigUrl(args.configAddress) + ".json";
+        }
+        else{
+            fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json";
+        }
         File jsonConfigFile = serviceWorkingFolder.getServiceFolder(fileName).toFile();
         writeJsonConfig(stepConfig, jsonConfigFile);
-        if (!args.configOutputPath.equals("")) {
+        if (StringUtils.isNotBlank(args.configOutputPath) && !"generateMiniStacks".equals(args.step.name())) {
             String[] addressParts = args.configAddress.split("/");
             String lightsheetJobID = addressParts[addressParts.length -1];
             Path configOutputPath = Paths.get(args.configOutputPath + "/" + lightsheetJobID + "/" + fileName);
@@ -191,6 +197,11 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
             writeJsonConfig(stepConfig, configOutputPathFile);
         }
         return jsonConfigFile.getAbsolutePath();
+    }
+
+    private String extractStepFromConfigUrl(String configUrl) {
+        String[] parts = configUrl.split("\\?stepName=");
+        return parts.length > 1 ? parts[1] : null;
     }
 
     private Map<String, Object> readJsonConfig(InputStream inputStream) {
@@ -215,14 +226,24 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(configAddress);
-
-            Response response = target.queryParam("stepName", stepName).request().get();
+            WebTarget target;
+            if ("generateMiniStacks".equals(stepName)) {
+                // the address must already contain the desired step but I want to check that is present
+                String stepFromConfigUrl = extractStepFromConfigUrl(configAddress);
+                if (StringUtils.isBlank(stepFromConfigUrl)) {
+                    throw new IllegalArgumentException("Step name missing from the config url for generateMiniStacks");
+                }
+                target = httpclient.target(configAddress);
+            } else {
+                // If the step name is not generateMiniStack then the address to the required step is provided
+                target = httpclient.target(configAddress).queryParam("stepName", stepName);
+            }
+            Response response = target.request().get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(configAddress + " returned with " + response.getStatus());
             }
             return response.readEntity(InputStream.class);
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException | IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);

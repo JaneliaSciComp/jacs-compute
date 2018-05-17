@@ -29,6 +29,10 @@ public class SleepTestProcessor extends AbstractExeBasedServiceProcessor<Void> {
     public static class SleepArgs extends ServiceArgs {
         @Parameter(names = "-seconds", description = "How long to sleep")
         Integer seconds = 0;
+
+        SleepArgs() {
+            super("Sleep command that suspends the processing for a specified number of seconds");
+        }
     }
 
     @Inject

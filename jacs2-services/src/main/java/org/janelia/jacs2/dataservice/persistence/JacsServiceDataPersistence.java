@@ -1,8 +1,11 @@
 package org.janelia.jacs2.dataservice.persistence;
 
+import com.google.common.collect.ImmutableMap;
+import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.JacsServiceDataDao;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
+import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.service.JacsServiceData;
@@ -17,6 +20,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,6 +68,15 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
             return jacsServiceDataDao.claimServiceByQueueAndState(queueId, requestStates, pageRequest);
+        } finally {
+            daoSource.destroy(jacsServiceDataDao);
+        }
+    }
+
+    public long countMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval) {
+        JacsServiceDataDao jacsServiceDataDao = daoSource.get();
+        try {
+            return jacsServiceDataDao.countMatchingServices(pattern, creationInterval);
         } finally {
             daoSource.destroy(jacsServiceDataDao);
         }
@@ -127,14 +140,15 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    public void update(JacsServiceData jacsServiceData, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+    public Optional<Boolean> update(JacsServiceData jacsServiceData, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         if (jacsServiceData.hasId()) {
-            super.update(jacsServiceData, fieldsToUpdate);
+            return super.update(jacsServiceData, fieldsToUpdate);
+        } else {
+            return Optional.empty();
         }
     }
 
-    public void updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, JacsServiceEvent serviceEvent) {
-
+    public Optional<Boolean> updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, JacsServiceEvent serviceEvent) {
         if (serviceEvent == null) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Update service state for {} to {}", jacsServiceData, newServiceState);
@@ -150,45 +164,57 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
             }
         }
 
-        List<Consumer<JacsServiceDataDao>> actions = new ArrayList<>();
-        actions.add(dao -> dao.update(jacsServiceData, jacsServiceData.updateState(newServiceState)));
+        Map<String, EntityFieldValueHandler<?>> serviceUpdates = new LinkedHashMap<>();
+        serviceUpdates.putAll(jacsServiceData.updateState(newServiceState));
         if (serviceEvent != JacsServiceEvent.NO_EVENT) {
-            actions.add(dao -> dao.update(jacsServiceData, jacsServiceData.addNewEvent(serviceEvent)));
+            serviceUpdates.putAll(jacsServiceData.addNewEvent(serviceEvent));
         }
-        if (jacsServiceData.hasId() && !actions.isEmpty()) {
+        if (jacsServiceData.hasId() && !serviceUpdates.isEmpty()) {
             JacsServiceDataDao jacsServiceDataDao = daoSource.get();
             try {
-                actions.forEach(action -> action.accept(jacsServiceDataDao));
+                DaoUpdateResult updateResult = jacsServiceDataDao.update(jacsServiceData, serviceUpdates);
+                return Optional.of(updateResult.getEntitiesFound() > 0 && updateResult.getEntitiesAffected() > 0);
             } finally {
                 daoSource.destroy(jacsServiceDataDao);
             }
+        } else {
+            return Optional.empty();
         }
     }
 
-    public void addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
+    public Optional<Boolean> addServiceEvent(JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
-            addServiceEvent(jacsServiceDataDao, jacsServiceData, serviceEvent);
+            return addServiceEvent(jacsServiceDataDao, jacsServiceData, serviceEvent);
         } finally {
             daoSource.destroy(jacsServiceDataDao);
         }
     }
 
-    private void addServiceEvent(JacsServiceDataDao jacsServiceDataDao, JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
+    private Optional<Boolean> addServiceEvent(JacsServiceDataDao jacsServiceDataDao, JacsServiceData jacsServiceData, JacsServiceEvent serviceEvent) {
         Map<String, EntityFieldValueHandler<?>> jacsServiceDataUpdates = jacsServiceData.addNewEvent(serviceEvent);
         if (jacsServiceData.hasId()) {
-            jacsServiceDataDao.update(jacsServiceData, jacsServiceDataUpdates);
+            DaoUpdateResult updateResult = jacsServiceDataDao.update(jacsServiceData, jacsServiceDataUpdates);
+            return Optional.of(updateResult.getEntitiesFound() > 0 && updateResult.getEntitiesAffected() > 0);
+        } else {
+            return Optional.empty();
         }
     }
 
-    public void updateServiceResult(JacsServiceData jacsServiceData) {
+    public Optional<Boolean> updateServiceResult(JacsServiceData jacsServiceData) {
         if (jacsServiceData.hasId()) {
             JacsServiceDataDao jacsServiceDataDao = daoSource.get();
             try {
-                jacsServiceDataDao.updateServiceResult(jacsServiceData);
+                DaoUpdateResult updateResult = jacsServiceDataDao.update(jacsServiceData,
+                        ImmutableMap.of(
+                                "serializableResult",
+                                new SetFieldValueHandler<>(jacsServiceData.getSerializableResult())));
+                return Optional.of(updateResult.getEntitiesFound() > 0 && updateResult.getEntitiesAffected() > 0);
             } finally {
                 daoSource.destroy(jacsServiceDataDao);
             }
+        } else {
+            return Optional.empty();
         }
     }
 

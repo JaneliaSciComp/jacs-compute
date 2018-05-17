@@ -5,14 +5,13 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceEvent;
-import org.janelia.model.service.JacsServiceEventTypes;
-import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.jacs2.page.SortCriteria;
 import org.janelia.model.jacs2.page.SortDirection;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
+import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -21,7 +20,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -35,8 +33,8 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
 
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private Queue<JacsServiceData> waitingServices;
-    private Set<Number> waitingServicesSet = new LinkedHashSet<>();
-    private Set<Number> submittedServicesSet = new LinkedHashSet<>();
+    private final Set<Number> waitingServicesSet = new LinkedHashSet<>();
+    private final Set<Number> submittedServicesSet = new LinkedHashSet<>();
     private Logger logger;
     private String queueId;
     private int maxReadyCapacity;
@@ -52,9 +50,12 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
                                     @PropertyValue(name = "service.queue.MaxCapacity") int maxReadyCapacity,
                                     Logger logger) {
         this.queueId = queueId;
-        this.maxReadyCapacity = maxReadyCapacity == 0 ? DEFAULT_MAX_READY_CAPACITY : maxReadyCapacity;
+        this.maxReadyCapacity = maxReadyCapacity < 0 ? 0 : maxReadyCapacity;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
-        this.waitingServices = new PriorityBlockingQueue<>(this.maxReadyCapacity, new DefaultServiceInfoComparator());
+        this.waitingServices = new PriorityBlockingQueue<>(
+                this.maxReadyCapacity == 0 ? DEFAULT_MAX_READY_CAPACITY : this.maxReadyCapacity,
+                new DefaultServiceInfoComparator()
+        );
         this.logger = logger;
         noWaitingSpaceAvailable = false;
     }
@@ -80,7 +81,8 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     public JacsServiceData dequeService() {
         synchronized (ACCESS_LOCK) {
             JacsServiceData queuedService = getWaitingService();
-            if (queuedService == null && enqueueAvailableServices(EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED))) {
+            if (queuedService == null && enqueueAvailableServices(EnumSet.of(
+                    JacsServiceState.CREATED, JacsServiceState.QUEUED, JacsServiceState.RESUMED))) {
                 queuedService = getWaitingService();
             }
             return queuedService;
@@ -136,11 +138,17 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
 
     @Override
     public void setMaxReadyCapacity(int maxReadyCapacity) {
-        this.maxReadyCapacity = maxReadyCapacity <= 0 ? DEFAULT_MAX_READY_CAPACITY : maxReadyCapacity;
+        this.maxReadyCapacity = maxReadyCapacity <=0 ? 0 : maxReadyCapacity;
     }
 
     private boolean addWaitingService(JacsServiceData jacsServiceData) {
         synchronized (ACCESS_LOCK) {
+            if (waitingCapacity() == 0 && !jacsServiceData.hasParentServiceId()) {
+                // don't enqueue root services if no spaces are available
+                // and if they already are in memory abort them if no slots are available
+                abortService(jacsServiceData);
+                return false;
+            }
             if (isInMemory(jacsServiceData)) {
                 return true;
             }
@@ -208,10 +216,11 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
             logger.debug("Service {} already waiting in the queue {}", jacsServiceData, this);
             return true;
         } else if (submittedServicesSet.contains(jacsServiceId)) {
-            if (EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED).contains(jacsServiceData.getState())) {
+            if (EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED, JacsServiceState.RESUMED).contains(jacsServiceData.getState())) {
                 if (jacsServiceData.getModificationDate() != null && System.currentTimeMillis() - jacsServiceData.getModificationDate().getTime() > MAX_WAIT_IN_SUBMIT_STATE_MILLIS) {
-                    // requeue the service
-                    logger.debug("Remove stale service {} from {}", jacsServiceData, this);
+                    // something is not quite right since the service hasn't been picked up yet
+                    // so abandon the service
+                    logger.info("Abort service {} from {} because it's been waiting for too long", jacsServiceData, this);
                     abortService(jacsServiceData);
                     return false;
                 } else {

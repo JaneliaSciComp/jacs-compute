@@ -53,6 +53,44 @@ public class ServiceInfoResource {
 
     @RequireAuthentication
     @GET
+    @Produces("text/plain")
+    @Path("/count")
+    @ApiOperation(value = "Count services", notes = "")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
+    public Response countServices(@QueryParam("service-name") String serviceName,
+                                   @QueryParam("service-id") Long serviceId,
+                                   @QueryParam("parent-id") Long parentServiceId,
+                                   @QueryParam("root-id") Long rootServiceId,
+                                   @QueryParam("service-owner") String serviceOwnerKey,
+                                   @QueryParam("service-state") String serviceState,
+                                   @QueryParam("service-tags") List<String> serviceTags,
+                                   @QueryParam("service-from") Date from,
+                                   @QueryParam("service-to") Date to,
+                                   @QueryParam("page") Integer pageNumber,
+                                   @QueryParam("length") Integer pageLength,
+                                   @QueryParam("sort-by") String sortCriteria,
+                                   @Context UriInfo uriInfo,
+                                   @Context SecurityContext securityContext) {
+        JacsServiceData pattern = createSearchServicesPattern(serviceName,
+                serviceId,
+                parentServiceId,
+                rootServiceId,
+                serviceOwnerKey,
+                serviceState,
+                serviceTags,
+                uriInfo,
+                securityContext);
+        long count = jacsServiceDataManager.countServices(pattern, new DataInterval<> (from, to));
+        return Response
+                .status(Response.Status.OK)
+                .entity(count)
+                .build();
+    }
+
+    @RequireAuthentication
+    @GET
     @ApiOperation(value = "Search queued services", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
@@ -71,7 +109,7 @@ public class ServiceInfoResource {
                                    @QueryParam("sort-by") String sortCriteria,
                                    @Context UriInfo uriInfo,
                                    @Context SecurityContext securityContext) {
-        return searchServices(serviceName,
+        JacsServiceData pattern = createSearchServicesPattern(serviceName,
                 serviceId,
                 parentServiceId,
                 rootServiceId,
@@ -79,8 +117,12 @@ public class ServiceInfoResource {
                 serviceState,
                 serviceTags,
                 uriInfo,
-                securityContext,
-                (pattern) -> jacsServiceDataManager.searchServices(pattern, new DataInterval<> (from, to), createPageRequest(pageNumber, pageLength, sortCriteria)));
+                securityContext);
+        PageResult<JacsServiceData> results = jacsServiceDataManager.searchServices(pattern, new DataInterval<> (from, to), createPageRequest(pageNumber, pageLength, sortCriteria));
+        return Response
+                .status(Response.Status.OK)
+                .entity(results)
+                .build();
     }
 
     private PageRequest createPageRequest(Integer pageNumber, Integer pageLength, String sortCriteria) {
@@ -127,16 +169,15 @@ public class ServiceInfoResource {
         }
     }
 
-    private Response searchServices(String serviceName,
-                                    Long serviceId,
-                                    Long parentServiceId,
-                                    Long rootServiceId,
-                                    String serviceOwnerKey,
-                                    String serviceState,
-                                    List<String> serviceTags,
-                                    UriInfo uriInfo,
-                                    SecurityContext securityContext,
-                                    Function<JacsServiceData, PageResult<JacsServiceData>> searcher) {
+    private JacsServiceData createSearchServicesPattern(String serviceName,
+                                                        Long serviceId,
+                                                        Long parentServiceId,
+                                                        Long rootServiceId,
+                                                        String serviceOwnerKey,
+                                                        String serviceState,
+                                                        List<String> serviceTags,
+                                                        UriInfo uriInfo,
+                                                        SecurityContext securityContext) {
         JacsServiceData pattern = new JacsServiceData();
         pattern.setId(serviceId);
         pattern.setParentServiceId(parentServiceId);
@@ -170,11 +211,7 @@ public class ServiceInfoResource {
                         pattern.addServiceArg(serviceArgName, paramEntry.getValue());
                     }
                 });
-        PageResult<JacsServiceData> results = searcher.apply(pattern);
-        return Response
-                .status(Response.Status.OK)
-                .entity(results)
-                .build();
+        return pattern;
     }
 
     @RequireAuthentication

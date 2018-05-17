@@ -9,6 +9,7 @@ import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.conversions.Bson;
 import org.janelia.model.access.dao.AbstractDao;
+import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.ReadWriteDao;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.model.jacs2.AppendFieldValueHandler;
@@ -110,21 +111,20 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     }
 
     @Override
-    public void update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+    public DaoUpdateResult update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         UpdateOptions updateOptions = new UpdateOptions();
         updateOptions.upsert(false);
-        update(entity, fieldsToUpdate, updateOptions);
-
+        return update(entity, fieldsToUpdate, updateOptions);
     }
 
-    private long update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate, UpdateOptions updateOptions) {
+    private DaoUpdateResult update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate, UpdateOptions updateOptions) {
         return update(getUpdateMatchCriteria(entity), getUpdates(fieldsToUpdate), updateOptions);
     }
 
-    protected long update(Bson query, Bson toUpdate, UpdateOptions updateOptions) {
+    protected DaoUpdateResult update(Bson query, Bson toUpdate, UpdateOptions updateOptions) {
         LOG.trace("Update: {} -> {}", query, toUpdate);
         UpdateResult result = mongoCollection.updateOne(query, toUpdate, updateOptions);
-        return result.getMatchedCount();
+        return new DaoUpdateResult(result.getMatchedCount(), result.getModifiedCount());
     }
 
     protected Bson getUpdates(Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {

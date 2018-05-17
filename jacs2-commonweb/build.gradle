@@ -13,4 +13,12 @@ project(":jacs2-commonweb") {
                 UNDERTOW_CORE_LIB,
                 UNDERTOW_SERVLET_LIB
     }
+
+    processResources {
+        filesMatching('**/version.txt') {
+            filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
+                    "version": project.version
+            ])
+        }
+    }
 }
