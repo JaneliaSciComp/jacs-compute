@@ -110,8 +110,8 @@ public class SparkCluster {
         this.workingDirectory = workingDirName.toFile();
         int numSlots = nodeSlots + nodeSlots * numNodes; // master + workers
 
-        // Default to two tasks per slot (this seems empirically optimal)
-        this.defaultParallelism = 3 * nodeSlots * numNodes;
+        // Default to three tasks per slot (this seems empirically optimal)
+        this.defaultParallelism = 3 * (nodeSlots-1) * numNodes;
 
         log.info("Starting Spark cluster with {} worker nodes ({} total slots)", numNodes, numSlots);
         log.info("Working directory: {}", workingDirectory);
