@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.janelia.dagobah.DAG;
 import org.janelia.dagobah.WorkflowProcessorKt;
+import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -40,6 +41,8 @@ public class SampleWorkflowExecutor extends AbstractBasicLifeCycleServiceProcess
         List<String> force;
     }
 
+    @Inject
+    private ServiceRegistry serviceRegistry;
     @Inject
     private Instance<Object> creator;
     private final LegacyDomainDao legacyDomainDao;
@@ -127,8 +130,7 @@ public class SampleWorkflowExecutor extends AbstractBasicLifeCycleServiceProcess
             logger.info("Processing Task#{}", task.getId());
 
             // Instantiate service and cache it
-            Class<? extends AbstractServiceProcessor> serviceClass = getServiceClassByName(task.getServiceClass());
-            AbstractServiceProcessor service = getInstance(serviceClass);
+            ServiceProcessor service = serviceRegistry.lookupService(task.getServiceClass());
 
             // Find upstream dependencies
             List<JacsServiceData> upstream = new ArrayList<>();
@@ -154,7 +156,7 @@ public class SampleWorkflowExecutor extends AbstractBasicLifeCycleServiceProcess
                            .build()));
 
             services.put(task.getId(), serviceData);
-            logger.info("Submitted {} (Task#{}) as Service#{}", task.getName(), task.getId(), serviceData.getId());
+            logger.info("Submitted {} as Service#{}", task.getName(), task.getId(), serviceData.getId());
         }
 
         return new JacsServiceResult<>(jacsServiceData);
@@ -172,25 +174,6 @@ public class SampleWorkflowExecutor extends AbstractBasicLifeCycleServiceProcess
         // TODO: delete files marked deleteOnExit
 
         return sr;
-    }
-
-    public static Class<? extends AbstractServiceProcessor> getServiceClassByName(String className) {
-        if (className==null) return null;
-        Class<?> clazz;
-        try {
-            clazz = Class.forName(className);
-        }
-        catch (ClassNotFoundException e) {
-            throw new RuntimeException("Service class not found: "+className);
-        }
-        if (!AbstractServiceProcessor.class.isAssignableFrom(clazz)) {
-            throw new RuntimeException("Not a service class: "+className);
-        }
-        return (Class<? extends AbstractServiceProcessor>)clazz;
-    }
-
-    public <T extends AbstractServiceProcessor> T getInstance(Class<T> clazz) {
-        return creator.select(clazz).get();
     }
 
     private SampleWorkflowExecutorArgs getArgs(JacsServiceData jacsServiceData) {

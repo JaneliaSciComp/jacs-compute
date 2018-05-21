@@ -1,8 +1,10 @@
 package org.janelia.jacs2.asyncservice.workflow;
 
+import com.beust.jcommander.internal.Maps;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.janelia.dagobah.DAG;
+import org.janelia.jacs2.asyncservice.common.ServiceProcessor;
 import org.janelia.jacs2.asyncservice.sample.CopyLSMService;
 import org.janelia.jacs2.asyncservice.sample.DistortionCorrectionService;
 import org.janelia.jacs2.asyncservice.sample.LSMProcessingService;
@@ -14,7 +16,9 @@ import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.workflow.SamplePipelineConfiguration;
 import org.janelia.model.domain.workflow.SamplePipelineOutput;
 import org.janelia.model.domain.workflow.WorkflowTask;
+import org.janelia.model.util.Utils;
 
+import javax.inject.Named;
 import java.util.*;
 
 /**
@@ -166,29 +170,32 @@ public class SampleWorkflow {
     private WorkflowTask createCopyLSMTask(LSMImage lsm) {
         WorkflowTask task = createTask();
         task.setName("Copy ("+lsm.getObjective()+"/"+lsm.getAnatomicalArea()+"/"+lsm.getTile()+")");
-        task.setServiceClass(CopyLSMService.class.getName());
+        task.setInputs(Utils.strObjMap("lsm", lsm));
+        task.setServiceClass(getName(CopyLSMService.class));
         return task;
     }
 
     private WorkflowTask createLSMProcessingTask(ObjectiveSample objectiveSample) {
         WorkflowTask task = createTask();
         task.setName("LSM Summary ("+objectiveSample.getObjective()+")");
-        task.setServiceClass(LSMProcessingService.class.getName());
-        return task;
-    }
-
-    private WorkflowTask createDistortionCorrectionTask(LSMImage lsm) {
-        WorkflowTask task = createTask();
-        task.setName("Distortion Correction ("+lsm.getObjective()+")");
-        task.setServiceClass(DistortionCorrectionService.class.getName());
+        task.setServiceClass(getName(LSMProcessingService.class));
+        if (force.contains(SamplePipelineOutput.LSMProcessing)) task.setForce(true);
         return task;
     }
 
     private WorkflowTask createLSMSummaryUpdateTask(ObjectiveSample objectiveSample) {
         WorkflowTask task = createTask();
         task.setName("LSM Summary Update ("+objectiveSample.getObjective()+")");
-        task.setServiceClass(LSMSummaryUpdateService.class.getName());
+        task.setServiceClass(getName(LSMSummaryUpdateService.class));
         task.setHasEffects(true);
+        if (force.contains(SamplePipelineOutput.LSMProcessing)) task.setForce(true);
+        return task;
+    }
+
+    private WorkflowTask createDistortionCorrectionTask(LSMImage lsm) {
+        WorkflowTask task = createTask();
+        task.setName("Distortion Correction ("+lsm.getObjective()+")");
+        task.setServiceClass(getName(DistortionCorrectionService.class));
         return task;
     }
 
@@ -254,13 +261,8 @@ public class SampleWorkflow {
         return idGenerator.generateId().longValue();
     }
 
-    private Map<String, Object> map(Object... values) {
-        Map<String, Object> map = new HashMap<>();
-        for (int i=0; i<values.length; i+=2) {
-            String key = (String)values[i];
-            Object value = values[i+1];
-            map.put(key, value);
-        }
-        return map;
+    private String getName(Class<? extends ServiceProcessor> serviceClass) {
+        Named annotation = serviceClass.getAnnotation(Named.class);
+        return annotation==null ? null : annotation.value();
     }
 }
