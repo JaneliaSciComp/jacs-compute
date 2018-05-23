@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice;
 
+import org.janelia.jacs2.asyncservice.common.ServiceInterceptor;
 import org.janelia.jacs2.asyncservice.common.ServiceProcessor;
 import org.janelia.model.service.ServiceMetaData;
 
@@ -9,4 +10,5 @@ public interface ServiceRegistry {
     ServiceMetaData getServiceMetadata(String serviceName);
     List<ServiceMetaData> getAllServicesMetadata();
     ServiceProcessor<?> lookupService(String serviceName);
+    ServiceInterceptor lookupInterceptor(String interceptorName);
 }

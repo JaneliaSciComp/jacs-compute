@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import org.janelia.model.access.dao.mongo.utils.MongoModule;
 
-import javax.enterprise.inject.Vetoed;
-
 public class ObjectMapperFactory {
     private static final ObjectMapperFactory INSTANCE = new ObjectMapperFactory();
 
@@ -40,6 +38,8 @@ public class ObjectMapperFactory {
     }
 
     public ObjectMapper newMongoCompatibleObjectMapper() {
-        return newObjectMapper().registerModule(new MongoModule());
+        return newObjectMapper().registerModule(new MongoModule())
+                // So that Map<String,Object> serializes DomainObjects with proper class metadata
+                .enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT, "class");
     }
 }

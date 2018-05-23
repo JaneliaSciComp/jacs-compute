@@ -59,6 +59,11 @@ public class ServiceExecutionContext {
             return this;
         }
 
+        public Builder addInterceptor(String interceptorName) {
+            serviceExecutionContext.interceptors.add(interceptorName);
+            return this;
+        }
+
         public Builder setWorkspace(String workspace) {
             serviceExecutionContext.workspace = workspace;
             return this;
@@ -112,6 +117,7 @@ public class ServiceExecutionContext {
     private final JacsServiceData parentServiceData;
     private ProcessingLocation processingLocation;
     private String serviceName;
+    private List<String> interceptors = new ArrayList<>();
     private String workspace;
     private JacsServiceState serviceState;
     private String description;
@@ -148,6 +154,10 @@ public class ServiceExecutionContext {
 
     String getServiceName() {
         return serviceName;
+    }
+
+    List<String> getInterceptors() {
+        return interceptors;
     }
 
     String getWorkspace() {

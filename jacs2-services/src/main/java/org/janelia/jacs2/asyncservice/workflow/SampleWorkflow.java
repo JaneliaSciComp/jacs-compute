@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.workflow;
 
-import com.beust.jcommander.internal.Maps;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.janelia.dagobah.DAG;
@@ -10,11 +9,14 @@ import org.janelia.jacs2.asyncservice.sample.DistortionCorrectionService;
 import org.janelia.jacs2.asyncservice.sample.LSMProcessingService;
 import org.janelia.jacs2.asyncservice.sample.LSMSummaryUpdateService;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.ObjectiveSample;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.workflow.SamplePipelineConfiguration;
 import org.janelia.model.domain.workflow.SamplePipelineOutput;
+import org.janelia.model.domain.workflow.WorkflowImage;
 import org.janelia.model.domain.workflow.WorkflowTask;
 import org.janelia.model.util.Utils;
 
@@ -170,7 +172,19 @@ public class SampleWorkflow {
     private WorkflowTask createCopyLSMTask(LSMImage lsm) {
         WorkflowTask task = createTask();
         task.setName("Copy ("+lsm.getObjective()+"/"+lsm.getAnatomicalArea()+"/"+lsm.getTile()+")");
-        task.setInputs(Utils.strObjMap("lsm", lsm));
+
+        WorkflowImage image = new WorkflowImage();
+        image.setOwnerKey(lsm.getOwnerKey());
+        image.setName(lsm.getName());
+        DomainUtils.setFilepath(image, FileType.LosslessStack, lsm.getFilepath());
+        image.setAnatomicalArea(lsm.getAnatomicalArea());
+        image.setTile(lsm.getTile());
+        image.setChannelColors(lsm.getChannelColors());
+        image.setChannelSpec(lsm.getChanSpec());
+        image.setImageSize(lsm.getImageSize());
+        image.setOpticalResolution(lsm.getOpticalResolution());
+
+        task.setInputs(Utils.strObjMap("lsm", image));
         task.setServiceClass(getName(CopyLSMService.class));
         return task;
     }

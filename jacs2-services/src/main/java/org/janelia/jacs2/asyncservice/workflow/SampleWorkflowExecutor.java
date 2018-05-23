@@ -2,12 +2,16 @@ package org.janelia.jacs2.asyncservice.workflow;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.janelia.dagobah.DAG;
 import org.janelia.dagobah.WorkflowProcessorKt;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.dataservice.nodes.FileStore;
+import org.janelia.jacs2.dataservice.nodes.FileStoreNode;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.domain.sample.DataSet;
@@ -16,18 +20,19 @@ import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.workflow.SamplePipelineConfiguration;
 import org.janelia.model.domain.workflow.SamplePipelineOutput;
 import org.janelia.model.domain.workflow.WorkflowTask;
+import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Executes a workflow as a set of services.
+ * Construct a workflow for a given Sample, and execute the workflow as a set of services.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
@@ -44,7 +49,8 @@ public class SampleWorkflowExecutor extends AbstractBasicLifeCycleServiceProcess
     @Inject
     private ServiceRegistry serviceRegistry;
     @Inject
-    private Instance<Object> creator;
+    private FileStore filestore;
+
     private final LegacyDomainDao legacyDomainDao;
 
     @Inject
@@ -91,8 +97,22 @@ public class SampleWorkflowExecutor extends AbstractBasicLifeCycleServiceProcess
 
     @Override
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
-        // TODO: lock sample
-        return super.prepareProcessing(jacsServiceData);
+
+        try {
+            // Create a file node for this pipeline execution and set it as a workspace so that all descendant services use it
+            FileStoreNode sampleNode = filestore.createNode(jacsServiceData.getOwnerName(), "Sample", jacsServiceData.getId().longValue());
+            jacsServiceDataPersistence.updateField(jacsServiceData,"workspace", sampleNode.toPath().toString());
+
+            // TODO: create pipeline run
+
+
+            // TODO: lock sample
+
+            return super.prepareProcessing(jacsServiceData);
+        }
+        catch (IOException e) {
+            throw new UncheckedExecutionException(e);
+        }
     }
 
     @Override
@@ -126,8 +146,10 @@ public class SampleWorkflowExecutor extends AbstractBasicLifeCycleServiceProcess
 
         Map<Long, JacsServiceData> services = new HashMap<>();
 
+        logger.info("Workflow Executor is Task#{}", jacsServiceData.getId());
+
         for (WorkflowTask task : WorkflowProcessorKt.getTasksToRun(dag)) {
-            logger.info("Processing Task#{}", task.getId());
+            logger.info("Processing Task#{}", task.getName());
 
             // Instantiate service and cache it
             ServiceProcessor service = serviceRegistry.lookupService(task.getServiceClass());
@@ -138,8 +160,10 @@ public class SampleWorkflowExecutor extends AbstractBasicLifeCycleServiceProcess
 
                 JacsServiceData upstreamService = services.get(upstreamTask.getId());
                 if (upstreamService==null) {
-                    // TODO: task does not need to run, take its outputs and use them
                     logger.info("  Upstream task does not need to run: Task#{}", upstreamTask.getId());
+                    // TODO: task does not need to run, take its outputs and use them
+                    Map<String, Object> outputs = upstreamTask.getOutputs();
+
                 }
                 else {
                     logger.info("  Adding upstream Service#{}", upstreamService.getId());
@@ -150,13 +174,14 @@ public class SampleWorkflowExecutor extends AbstractBasicLifeCycleServiceProcess
             // Submit service to run
             JacsServiceData serviceData = submitDependencyIfNotFound(
                     service.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
+                           .addInterceptor("workflowInterceptor")
                            .description(task.getName())
                            .addDictionaryArgs(task.getInputs())
                            .waitFor(upstream)
                            .build()));
 
             services.put(task.getId(), serviceData);
-            logger.info("Submitted {} as Service#{}", task.getName(), task.getId(), serviceData.getId());
+            logger.info("  Submitted as Service#{}", serviceData.getId());
         }
 
         return new JacsServiceResult<>(jacsServiceData);

@@ -15,13 +15,7 @@ import org.slf4j.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 @ApplicationScoped
@@ -46,7 +40,7 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
                             JacsServiceState.SUSPENDED,
                             JacsServiceState.CANCELED, JacsServiceState.TIMEOUT
                     ))
-                    .put(JacsServiceState.RUNNING,  EnumSet.of(
+                    .put(JacsServiceState.RUNNING, EnumSet.of(
                             JacsServiceState.WAITING_FOR_DEPENDENCIES,
                             JacsServiceState.SUSPENDED,
                             JacsServiceState.CANCELED, JacsServiceState.TIMEOUT
@@ -132,16 +126,6 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
         return getServiceProcessor(jacsServiceData.getName());
     }
 
-    @Override
-    public boolean acquireSlot() {
-        return availableSlots.tryAcquire();
-    }
-
-    @Override
-    public void releaseSlot() {
-        availableSlots.release();
-    }
-
     private ServiceProcessor<?> getServiceProcessor(String serviceName) {
         ServiceRegistry registrar = serviceRegistrarSource.get();
         ServiceProcessor<?> serviceProcessor = registrar.lookupService(serviceName);
@@ -150,6 +134,41 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
             throw new IllegalArgumentException("Unknown service: " + serviceName);
         }
         return serviceProcessor;
+    }
+
+    @Override
+    public Collection<ServiceInterceptor> getServiceInterceptors(JacsServiceData jacsServiceData) {
+        List<ServiceInterceptor> interceptorList = new ArrayList<>();
+        List<String> interceptors = jacsServiceData.getInterceptors();
+        if (interceptors != null) {
+            for (String interceptorName : interceptors) {
+                ServiceInterceptor serviceInterceptor = getServiceInterceptor(interceptorName);
+                if (serviceInterceptor!=null) {
+                    interceptorList.add(serviceInterceptor);
+                }
+            }
+        }
+        return interceptorList;
+    }
+
+    private ServiceInterceptor getServiceInterceptor(String serviceName) {
+        ServiceRegistry registrar = serviceRegistrarSource.get();
+        ServiceInterceptor serviceProcessor = registrar.lookupInterceptor(serviceName);
+        if (serviceProcessor == null) {
+            logger.error("No interceptor found for {}", serviceName);
+            throw new IllegalArgumentException("Unknown interceptor: " + serviceName);
+        }
+        return serviceProcessor;
+    }
+
+    @Override
+    public boolean acquireSlot() {
+        return availableSlots.tryAcquire();
+    }
+
+    @Override
+    public void releaseSlot() {
+        availableSlots.release();
     }
 
     @Override

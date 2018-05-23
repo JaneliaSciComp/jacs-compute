@@ -20,6 +20,12 @@ public class JacsServiceFolder {
     private final Path sharedFolderName;
     private final JacsServiceData serviceData;
 
+    /**
+     *
+     * @param serviceSpecificFolderName
+     * @param sharedFolderName
+     * @param serviceData
+     */
     public JacsServiceFolder(Path serviceSpecificFolderName, Path sharedFolderName, JacsServiceData serviceData) {
         this.serviceSpecificFolderName = serviceSpecificFolderName;
         this.sharedFolderName = sharedFolderName;

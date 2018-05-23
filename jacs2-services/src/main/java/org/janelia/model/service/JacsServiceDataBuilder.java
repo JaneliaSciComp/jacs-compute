@@ -59,6 +59,11 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
+    public JacsServiceDataBuilder setInterceptors(List<String> interceptors) {
+        serviceData.setInterceptors(interceptors);
+        return this;
+    }
+
     public JacsServiceDataBuilder setOwnerKey(String ownerKey) {
         serviceData.setOwnerKey(ownerKey);
         return this;

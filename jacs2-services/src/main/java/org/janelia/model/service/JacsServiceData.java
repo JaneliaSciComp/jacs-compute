@@ -11,6 +11,7 @@ import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
+import org.janelia.model.security.util.SubjectUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +39,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     @JsonProperty("_id")
     private Number id;
     private String name;
+    private List<String> interceptors;
     private String description;
     private String version;
     private ProcessingLocation processingLocation;
@@ -106,6 +108,14 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.name = name;
     }
 
+    public List<String> getInterceptors() {
+        return interceptors;
+    }
+
+    public void setInterceptors(List<String> interceptors) {
+        this.interceptors = interceptors;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -168,6 +178,10 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public void setOwnerKey(String ownerKey) {
         this.ownerKey = ownerKey;
+    }
+
+    public String getOwnerName() {
+        return SubjectUtils.getSubjectName(ownerKey);
     }
 
     public boolean canBeAccessedBy(String userKey) {
@@ -576,7 +590,9 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     public Optional<JacsServiceData> findSimilarDependency(JacsServiceData dependency) {
         return dependencies.stream()
                 .filter(s -> s.getName().equals(dependency.getName()))
+                .filter(s -> s.getDescription().equals(dependency.getDescription()))
                 .filter(s -> s.getArgs().equals(dependency.getArgs()))
+                .filter(s -> s.getDictionaryArgs().equals(dependency.getDictionaryArgs()))
                 .filter(s -> s.getDependenciesIds().equals(dependency.getDependenciesIds()))
                 .findFirst();
     }

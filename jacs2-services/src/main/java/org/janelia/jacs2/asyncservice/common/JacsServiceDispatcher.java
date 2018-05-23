@@ -16,8 +16,11 @@ import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 @ApplicationScoped
@@ -83,6 +86,10 @@ public class JacsServiceDispatcher {
             JacsServiceState initialServiceState = jacsServiceData.getState();
             jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.DISPATCHED, JacsServiceEvent.NO_EVENT);
             serviceComputationFactory.newCompletedComputation(jacsServiceData)
+                    .thenApply(sd -> {
+                        invokeInterceptors(sd, interceptor -> interceptor.onDispatch(sd));
+                        return sd;
+                    })
                     .thenSuspendUntil(new WaitingForDependenciesContinuationCond<>(
                             Function.identity(),
                             (JacsServiceData sd, JacsServiceData tmpSd) -> tmpSd,
@@ -99,16 +106,25 @@ public class JacsServiceDispatcher {
                         Map<String, EntityFieldValueHandler<?>> sdUpdates = serviceArgsHandler.updateServiceArgs(serviceProcessor.getMetadata(), sd);
                         logger.debug("Update service args for {} to {}", sd, sdUpdates);
                         jacsServiceDataPersistence.update(sd, sdUpdates);
+                        invokeInterceptors(sd, interceptor -> interceptor.beforeProcess(sd));
                         return sd;
                     })
                     .thenCompose((JacsServiceData sd) -> serviceProcessor.process(sd))
                     .thenApply(r -> {
-                        success(r.getJacsServiceData());
+                        JacsServiceData sd = r.getJacsServiceData();
+                        invokeInterceptors(sd, interceptor -> interceptor.afterProcess(sd));
                         return r;
                     })
-                    .exceptionally((Throwable exc) -> JacsServiceResult.class.cast(handleException(jacsServiceData, exc)))
                     .whenComplete((r, exc) -> {
-                        serviceFinally(jacsServiceData);
+                        JacsServiceData refreshedSd = jacsServiceDataPersistence.findById(jacsServiceData.getId());
+                        JacsServiceData sd = r==null ? refreshedSd : r.getJacsServiceData();
+                        if (exc != null) {
+                            handleException(sd, exc);
+                        }
+                        else {
+                            success(sd);
+                        }
+                        serviceFinally(sd);
                     });
         } catch (Throwable e) {
             handleException(jacsServiceData, e);
@@ -121,6 +137,14 @@ public class JacsServiceDispatcher {
         if (!jacsServiceData.hasParentServiceId()) {
             // release the slot acquired before the service was started
             jacsServiceEngine.releaseSlot();
+        }
+        invokeInterceptors(jacsServiceData, interceptor -> interceptor.andFinally(jacsServiceData));
+    }
+
+    private void invokeInterceptors(JacsServiceData sd, Consumer<ServiceInterceptor> consumer) {
+        if (sd==null) return;
+        for (ServiceInterceptor serviceInterceptor : jacsServiceEngine.getServiceInterceptors(sd)) {
+            consumer.accept(serviceInterceptor);
         }
     }
 

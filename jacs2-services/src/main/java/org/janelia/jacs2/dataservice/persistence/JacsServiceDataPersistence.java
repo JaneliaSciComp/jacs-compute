@@ -1,6 +1,7 @@
 package org.janelia.jacs2.dataservice.persistence;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.JacsServiceDataDao;
 import org.janelia.model.jacs2.DataInterval;
@@ -12,20 +13,13 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
+import org.janelia.model.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Consumer;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -145,6 +139,20 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
             return super.update(jacsServiceData, fieldsToUpdate);
         } else {
             return Optional.empty();
+        }
+    }
+
+    public void updateField(JacsServiceData jacsServiceData, String fieldName, Object value) {
+
+        try {
+            ReflectionUtils.setFieldValue(jacsServiceData, fieldName, value);
+        }
+        catch (NoSuchFieldException e) {
+            throw new IllegalArgumentException("JacsServiceData does not have a field called "+fieldName);
+        }
+
+        if (!update(jacsServiceData, ImmutableMap.of(fieldName, new SetFieldValueHandler<>(value))).orElse(false)) {
+            throw new IllegalStateException("Could not update field "+fieldName+" on JacsServiceData");
         }
     }
 

@@ -68,7 +68,8 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
                               Path processDir,
                               JacsServiceData serviceContext) {
         logger.debug("Begin bsub job invocation for {}", serviceContext);
-        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, JacsServiceEvent.NO_EVENT);
+        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING,
+                JacsServiceData.createServiceEvent(JacsServiceEventTypes.RUN, "Run service commands via LSF Java"));
         try {
             JobTemplate jt = prepareJobTemplate(externalCode, externalConfigs, env, scriptServiceFolder, processDir, serviceContext);
             String processingScript = jt.getRemoteCommand();
@@ -200,8 +201,9 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
     @Override
     protected void writeProcessingCode(ExternalCodeBlock externalCode, Map<String, String> env, ScriptWriter scriptWriter) {
         scriptWriter.add("#!/bin/bash");
+        scriptWriter.add("echo \"Running on \"`hostname`");
         for(String key : env.keySet()) {
-            scriptWriter.setVar(key, env.get(key));
+            scriptWriter.exportVar(key, env.get(key));
         }
         scriptWriter.add(externalCode.toString());
     }

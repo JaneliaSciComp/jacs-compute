@@ -39,7 +39,8 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
                               Path processDir,
                               JacsServiceData serviceContext) {
         logger.debug("Begin DRMAA job invocation for {}", serviceContext);
-        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, JacsServiceEvent.NO_EVENT);
+        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING,
+                JacsServiceData.createServiceEvent(JacsServiceEventTypes.RUN, "Run service commands via DRMAA"));
         String processingScript = scriptServiceFolder.getServiceFolder("<unknown>").toString();
         JobTemplate jt = null;
         try {

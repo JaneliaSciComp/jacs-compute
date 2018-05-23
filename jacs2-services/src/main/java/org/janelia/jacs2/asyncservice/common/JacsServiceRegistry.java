@@ -1,14 +1,19 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import org.janelia.model.service.ServiceMetaData;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
+import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.CDI;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class JacsServiceRegistry implements ServiceRegistry {
@@ -17,7 +22,8 @@ public class JacsServiceRegistry implements ServiceRegistry {
     private final Logger logger;
 
     @Inject
-    public JacsServiceRegistry(@Any Instance<ServiceProcessor<?>> anyServiceSource, Logger logger) {
+    public JacsServiceRegistry(@Any Instance<ServiceProcessor<?>> anyServiceSource,
+                               Logger logger) {
         this.anyServiceSource = anyServiceSource;
         this.logger = logger;
     }
@@ -38,13 +44,13 @@ public class JacsServiceRegistry implements ServiceRegistry {
         try {
             for (ServiceProcessor<?> service : getAllServices(anyServiceSource)) {
                 if (serviceName.equals(service.getMetadata().getServiceName())) {
-                    logger.trace("Service found for {}", serviceName);
+                    logger.trace("Service found: {}", serviceName);
                     return service;
                 }
             }
-            logger.error("NO Service found for {}", serviceName);
+            logger.error("No service found with name '{}'", serviceName);
         } catch (Throwable e) {
-            logger.error("Error while looking up {}", serviceName, e);
+            logger.error("Error while looking up service '{}'", serviceName, e);
         }
         return null;
     }
@@ -57,4 +63,15 @@ public class JacsServiceRegistry implements ServiceRegistry {
         return allServices;
     }
 
+    public ServiceInterceptor lookupInterceptor(String interceptorName) {
+        BeanManager bm = CDI.current().getBeanManager();
+        Set<Bean<?>> beans = bm.getBeans(interceptorName);
+        if (beans==null || beans.isEmpty()) {
+            logger.error("No interceptor found with name '{}'", interceptorName);
+            return null;
+        }
+        Bean<ServiceInterceptor> bean = (Bean<ServiceInterceptor>) bm.getBeans(ServiceInterceptor.class).iterator().next();
+        CreationalContext<ServiceInterceptor> ctx = bm.createCreationalContext(bean);
+        return (ServiceInterceptor) bm.getReference(bean, ServiceInterceptor.class, ctx);
+    }
 }

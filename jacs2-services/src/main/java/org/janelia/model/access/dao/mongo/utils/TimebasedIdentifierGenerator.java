@@ -69,6 +69,10 @@ public class TimebasedIdentifierGenerator {
         return idBlock.next();
     }
 
+    public Long generateLongId() {
+        return generateId().longValue();
+    }
+
     private synchronized IDBlock getIDBlock() {
         if (lastIDBlock != null && lastIDBlock.hasNext()) {
             return lastIDBlock;

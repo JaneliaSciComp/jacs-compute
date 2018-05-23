@@ -56,6 +56,9 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         } else {
             jacsServiceDataBuilder.setName(smd.getServiceName());
         }
+        if (executionContext.getInterceptors() != null) {
+            jacsServiceDataBuilder.setInterceptors(executionContext.getInterceptors());
+        }
         if (executionContext.getProcessingLocation() != null) {
             jacsServiceDataBuilder.setProcessingLocation(executionContext.getProcessingLocation());
         } else {
@@ -101,6 +104,10 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
      */
     protected String getServiceDictionaryArgsAsJson(JacsServiceData jacsServiceData) {
         return ServiceDataUtils.serializeObjectAsJson(jacsServiceData.getDictionaryArgs());
+    }
+
+    protected Path getServiceFolder(JacsServiceData jacsServiceData) {
+        return getWorkingDirectory(jacsServiceData).getServiceFolder();
     }
 
     protected JacsServiceFolder getWorkingDirectory(JacsServiceData jacsServiceData) {

@@ -3,10 +3,10 @@ package org.janelia.jacs2.asyncservice.common;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -72,7 +72,8 @@ public class WaitingForDependenciesContinuationCond<S> implements ContinuationCo
 
     private JacsServiceData resumeService(JacsServiceData jacsServiceData) {
         if (jacsServiceData.getState() != JacsServiceState.RUNNING) {
-            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.RUNNING, JacsServiceEvent.NO_EVENT);
+            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.RUNNING,
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.RUN, "Service resumed"));
         }
         return jacsServiceData;
     }
@@ -80,7 +81,8 @@ public class WaitingForDependenciesContinuationCond<S> implements ContinuationCo
     private JacsServiceData suspendService(JacsServiceData jacsServiceData) {
         if (jacsServiceData.hasNotBeenWaitingForDependencies()) {
             // if the service has not completed yet and it's not already suspended - update the state to suspended
-            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.WAITING_FOR_DEPENDENCIES, JacsServiceEvent.NO_EVENT);
+            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.WAITING_FOR_DEPENDENCIES,
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.SUSPEND, "Service suspended"));
         }
         return jacsServiceData;
     }

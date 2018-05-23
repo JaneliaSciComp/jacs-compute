@@ -6,13 +6,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation for marking services classes with named/typed parameters.
+ * Annotation for marking services classes with named/typed results.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-public @interface ServiceParameter {
+public @interface ServiceResult {
     String name();
     Class<?> type();
     String description();

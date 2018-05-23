@@ -46,7 +46,8 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                               Path processDir,
                               JacsServiceData serviceContext) {
         logger.debug("Begin local process invocation for {}", serviceContext);
-        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, JacsServiceEvent.NO_EVENT);
+        jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING,
+                JacsServiceData.createServiceEvent(JacsServiceEventTypes.RUN, "Run service commands locally"));
         String processingScript = scriptServiceFolder.getServiceFolder("<unknown>").toString();
         try {
             processingScript = createProcessingScript(externalCode, env, scriptServiceFolder, JacsServiceFolder.SERVICE_CONFIG_DIR);

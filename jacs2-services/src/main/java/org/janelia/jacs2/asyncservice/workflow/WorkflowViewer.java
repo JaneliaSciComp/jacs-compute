@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 public class WorkflowViewer extends JFrame {
 
     private boolean showInputs = false;
-    private Map<Long,Object> vertices = new HashMap<>();
+    private Map<Long, Object> vertices = new HashMap<>();
 
     public WorkflowViewer(DAG<WorkflowTask> dag) {
 
@@ -53,7 +53,7 @@ public class WorkflowViewer extends JFrame {
                     if (value instanceof WorkflowTask) {
                         WorkflowTask task = (WorkflowTask) value;
                         String label = task.getName().replaceFirst(" \\(", "<br>(");
-                        return "<html>"+label+"</html>";
+                        return "<html>" + label + "</html>";
                     }
                 }
 
@@ -76,25 +76,23 @@ public class WorkflowViewer extends JFrame {
                 String fillColor;
                 if (task.getHasEffects()) {
                     fillColor = "#fbdbff"; // light pink
-                }
-                else {
+                } else {
                     fillColor = "#c6eaff"; // light blue
                 }
 
                 String strokeColor;
                 if (taskIdsToRun.contains(task.getNodeId())) {
                     strokeColor = "#ff0000"; // red border if running
-                }
-                else {
+                } else {
                     // Not running, greyed out
                     fillColor = "#eeeeee";
                     strokeColor = "#888888";
                 }
 
-                String style = "ROUNDED;strokeColor="+strokeColor+";fillColor="+fillColor;
+                String style = "ROUNDED;strokeColor=" + strokeColor + ";fillColor=" + fillColor;
 
                 Object vertex = graph.insertVertex(parent, task.getId().toString(),
-                        task, 20, 20, 160,30, style);
+                        task, 20, 20, 160, 30, style);
                 vertices.put(task.getId(), vertex);
 
                 if (showInputs) {
@@ -114,13 +112,12 @@ public class WorkflowViewer extends JFrame {
                 for (Long targetId : edges.get(sourceId)) {
                     Object v1 = vertices.get(sourceId);
                     Object v2 = vertices.get(targetId);
-                    graph.insertEdge(parent, edgeId+"", "", v1, v2);
+                    graph.insertEdge(parent, edgeId + "", "", v1, v2);
                     edgeId++;
                 }
             }
 
-        }
-        finally {
+        } finally {
             graph.getModel().endUpdate();
         }
 
@@ -134,15 +131,16 @@ public class WorkflowViewer extends JFrame {
     public static void main(String args[]) throws IOException {
 
 //        String sampleId = "1927508702504419426";
-        String sampleId = "1978637843060228194";
-//        String sampleId = "2416765320409645154";
+//        String sampleId = "1978637843060228194";
+        String sampleId = "2416765320409645154";
 //        String sampleId = "2533483410182111330";
 
         String TEST_DATADIR = "src/test/resources/testdata/samples";
         Path testDataDir = Paths.get(TEST_DATADIR);
         ObjectMapper mapper = new ObjectMapper();
-        Path jsonFile = testDataDir.resolve("sampleandlsm_"+sampleId+".json");
-        List<DomainObject> objects = mapper.readValue(jsonFile.toFile(), new TypeReference<List<DomainObject>>(){});
+        Path jsonFile = testDataDir.resolve("sampleandlsm_" + sampleId + ".json");
+        List<DomainObject> objects = mapper.readValue(jsonFile.toFile(), new TypeReference<List<DomainObject>>() {
+        });
 
         Sample sample = getSample(objects);
         List<LSMImage> lsms = getImages(objects);
@@ -157,10 +155,10 @@ public class WorkflowViewer extends JFrame {
     }
 
     private static List<LSMImage> getImages(List<DomainObject> objects) {
-        return objects.stream().filter((object) -> object instanceof LSMImage).map((obj) -> (LSMImage)obj).collect(Collectors.toList());
+        return objects.stream().filter((object) -> object instanceof LSMImage).map((obj) -> (LSMImage) obj).collect(Collectors.toList());
     }
 
     private static Sample getSample(List<DomainObject> objects) {
-        return objects.stream().filter((object) -> object instanceof Sample).map((obj) -> (Sample)obj).collect(Collectors.toList()).get(0);
+        return objects.stream().filter((object) -> object instanceof Sample).map((obj) -> (Sample) obj).collect(Collectors.toList()).get(0);
     }
 }
