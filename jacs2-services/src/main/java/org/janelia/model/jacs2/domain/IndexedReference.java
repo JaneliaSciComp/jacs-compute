@@ -21,6 +21,11 @@ public class IndexedReference<T, I> {
                 .mapToObj(pos -> indexedMapper.apply(pos, content.get(pos)));
     }
 
+    public static <T, I> Stream<IndexedReference<T, I>> indexArrayContent(T[] content, BiFunction<Integer, T, IndexedReference<T, I>> indexedMapper) {
+        return IntStream.range(0, content.length)
+                .mapToObj(pos -> indexedMapper.apply(pos, content[pos]));
+    }
+
     private final T reference;
     private final I pos;
 

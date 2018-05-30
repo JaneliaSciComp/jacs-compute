@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -194,6 +195,13 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.errorPath = errorPath;
     }
 
+    /**
+     * Service arguments as passed in by the caller application. The arguments may contain placeholders for
+     * results of the current service' dependencies. The format of a placeholder argument is:
+     * "|>${serviceName_serviceId.fieldName}"
+     *
+     * @return
+     */
     public List<String> getArgs() {
         return args;
     }
@@ -223,13 +231,19 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.actualArgs = actualArgs;
     }
 
-    public Map<String, EntityFieldValueHandler<?>> updateActualArgs(List<String> actualArgs) {
+    public Map<String, EntityFieldValueHandler<?>> updateActualListArgs(List<String> actualArgs) {
         Map<String, EntityFieldValueHandler<?>> dataUpdates = new HashMap<>();
         this.actualArgs = actualArgs;
         dataUpdates.put("actualArgs", new SetFieldValueHandler<>(actualArgs));
         return dataUpdates;
     }
 
+    /**
+     * Service dictionary arguments as passed in by the caller application. Just like the list argument,
+     * dictionary arguments may also contain placeholders for results of the current service' dependencies.
+     *
+     * @see #getArgs() for the placeholder format
+     */
     public Map<String, Object> getDictionaryArgs() {
         return dictionaryArgs;
     }
@@ -238,6 +252,20 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.dictionaryArgs.clear();
         if (dictionaryArgs != null) {
             this.dictionaryArgs.putAll(dictionaryArgs);
+        }
+    }
+
+    @JsonIgnore
+    public Map<String, Object> getActualDictionaryArgs() {
+        if (serviceArgs == null) {
+            return dictionaryArgs;
+        } else {
+            Map<String, Object> actualDictionaryArgs = new LinkedHashMap<>();
+            dictionaryArgs.forEach((k, v) -> {
+                Object actualValue = serviceArgs.get(k);
+                actualDictionaryArgs.put(k, actualValue != null ? actualValue : v);
+            });
+            return actualDictionaryArgs;
         }
     }
 

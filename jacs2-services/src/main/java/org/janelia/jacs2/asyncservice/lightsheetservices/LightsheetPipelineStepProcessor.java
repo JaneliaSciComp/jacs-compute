@@ -177,7 +177,7 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
 
     private String getJsonConfigFile(JacsServiceData jacsServiceData, LightsheetPipelineArgs args) {
         Map<String, Object> stepConfig = readJsonConfig(getJsonConfig(args.configAddress, args.step.name()));
-        stepConfig.putAll(jacsServiceData.getDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
+        stepConfig.putAll(jacsServiceData.getActualDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
         Map<String, Double> temp = (Map<String, Double>) stepConfig.get("timepoints");
         //int startTime = temp.get("start").intValue();
         int startTime = ((Map<String, Double>) stepConfig.get("timepoints")).get("start").intValue();

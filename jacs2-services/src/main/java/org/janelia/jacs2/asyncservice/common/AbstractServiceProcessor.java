@@ -91,15 +91,6 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         return this.getErrorChecker().collectErrors(jacsServiceData);
     }
 
-    /**
-     * Helper method that can be used in service processor implementations that expect dictionary arguments.
-     * @param jacsServiceData
-     * @return
-     */
-    protected String getServiceDictionaryArgsAsJson(JacsServiceData jacsServiceData) {
-        return ServiceDataUtils.serializeObjectAsJson(jacsServiceData.getDictionaryArgs());
-    }
-
     protected JacsServiceFolder getWorkingDirectory(JacsServiceData jacsServiceData) {
         if (StringUtils.isNotBlank(jacsServiceData.getWorkspace())) {
             return new JacsServiceFolder(null, Paths.get(jacsServiceData.getWorkspace()), jacsServiceData);
@@ -110,6 +101,11 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         }
     }
 
+    /**
+     *
+     * @param jacsServiceData
+     * @return
+     */
     protected String[] getJacsServiceArgsArray(JacsServiceData jacsServiceData) {
         if (jacsServiceData.getActualArgs() == null) {
             new ServiceArgsHandler(jacsServiceDataPersistence).updateServiceArgs(getMetadata(), jacsServiceData);
