@@ -178,6 +178,12 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
     private String getJsonConfigFile(JacsServiceData jacsServiceData, LightsheetPipelineArgs args) {
         Map<String, Object> stepConfig = readJsonConfig(getJsonConfig(args.configAddress, args.step.name()));
         stepConfig.putAll(jacsServiceData.getDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
+        Map<String, Double> temp = (Map<String, Double>) stepConfig.get("timepoints");
+        //int startTime = temp.get("start").intValue();
+        int startTime = ((Map<String, Double>) stepConfig.get("timepoints")).get("start").intValue();
+        int endTime = temp.get("end").intValue();
+        int everyTime = temp.get("every").intValue();
+        int numTimePoints = 1+(endTime-startTime)/everyTime;
         // write the final config file
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         String fileName = "";
@@ -185,7 +191,8 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
             fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + extractStepFromConfigUrl(args.configAddress) + ".json";
         }
         else{
-            fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json";
+            //fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json";
+            fileName = "stepConfig_" + String.valueOf(numTimePoints) + "_" + args.step.name() + ".json";
         }
         File jsonConfigFile = serviceWorkingFolder.getServiceFolder(fileName).toFile();
         writeJsonConfig(stepConfig, jsonConfigFile);
