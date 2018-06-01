@@ -1,90 +1,92 @@
 package org.janelia.jacs2.asyncservice.sample;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.janelia.jacs2.asyncservice.common.*;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.fileservices.FileCopyProcessor;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.dataservice.nodes.FileStore;
-import org.janelia.jacs2.dataservice.nodes.FileStoreNode;
-import org.janelia.jacs2.dataservice.nodes.FileStorePath;
-import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.utils.ArchiveUtils;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
+import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.workflow.WorkflowImage;
 import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.ServiceMetaData;
-import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Map;
 
-/**
- * Create a temporary copy of an LSM file, unzipping it if necessary.
- */
 @Named("copyLSM")
-@ServiceParameter(name="lsm", type=WorkflowImage.class, description="Primary LSM image")
-@ServiceResult(name="lsm", type=WorkflowImage.class, description="Temporary LSM image")
-public class CopyLSMService extends AbstractServiceProcessor<WorkflowImage> {
+
+@Service(description="Create a temporary copy of an LSM file in the filestore, unzipping it if necessary")
+
+@ServiceInput(name="lsm",
+        type=LSMImage.class,
+        description="Primary LSM image")
+
+@ServiceResult(
+        name="outputImage",
+        type=WorkflowImage.class,
+        description="Temporary LSM image")
+
+public class CopyLSMService extends AbstractServiceProcessor2<WorkflowImage> {
 
     @Inject
-    private FileStore filestore;
-    private final WrappedServiceProcessor<FileCopyProcessor, File> fileCopyProcessor;
-
-    @Inject
-    CopyLSMService(ServiceComputationFactory computationFactory,
-                   JacsServiceDataPersistence serviceDataPersistence,
-                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                   FileCopyProcessor fileCopyProcessor,
-                   Logger logger) {
-        super(computationFactory, serviceDataPersistence, defaultWorkingDir, logger);
-        this.fileCopyProcessor = new WrappedServiceProcessor<>(computationFactory, serviceDataPersistence, fileCopyProcessor);
-    }
+    private FileCopyProcessor fileCopyProcessor;
 
     @Override
-    public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(CopyLSMService.class);
-    }
+    public ServiceComputation<JacsServiceResult<WorkflowImage>> process(JacsServiceData sd) {
 
-    @Override
-    public ServiceComputation<JacsServiceResult<WorkflowImage>> process(JacsServiceData jacsServiceData) {
+        Path serviceFolder = getServiceFolder(sd);
+        Map<String, Object> args = sd.getDictionaryArgs();
+        LSMImage lsm = (LSMImage)args.get("lsm");
 
-        WorkflowImage lsm = (WorkflowImage)jacsServiceData.getDictionaryArgs().get("lsm");
         String sourceFilepath = DomainUtils.getFilepath(lsm, FileType.LosslessStack);
+        if (sourceFilepath == null) {
+            throw new IllegalArgumentException("Source LSM has no lossless stack");
+        }
 
-        Path serviceFolder = getServiceFolder(jacsServiceData);
+        Path targetFilepath = getTargetLocation(sourceFilepath, serviceFolder);
 
-        String targetFilepath = getTargetLocation(sourceFilepath, serviceFolder);
-        logger.info("targetFilepath: "+targetFilepath);
-
-        return fileCopyProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
-                        .description("Convert input file")
-                        .build(),
+        return inline(fileCopyProcessor).process(getContext(sd,"Copy primary image"),
                 new ServiceArg("-src", sourceFilepath),
-                new ServiceArg("-dst", targetFilepath))
+                new ServiceArg("-dst", targetFilepath.toString()))
                 .thenApply((JacsServiceResult<File> result) -> {
                     // Create a new image based on the primary image
-                    WorkflowImage outputImage = new WorkflowImage(lsm);
+                    WorkflowImage outputImage = getWorkflowImage(lsm);
                     // Clear existing files
                     outputImage.setFiles(new HashMap<>());
                     // Add the temporary stack
-                    DomainUtils.setFilepath(outputImage, FileType.LosslessStack, targetFilepath);
+                    DomainUtils.setFilepath(outputImage, FileType.LosslessStack, targetFilepath.toString());
                     // Ensure it gets deleted once the workflow is done
                     outputImage.setDeleteOnExit(Sets.newHashSet(FileType.LosslessStack));
                     // Return the single result
-                    return new JacsServiceResult(jacsServiceData, outputImage);
+                    return updateServiceResult(sd, outputImage);
                 });
     }
 
-    private String getTargetLocation(String sourceFile, Path targetFileNode) {
+    private WorkflowImage getWorkflowImage(LSMImage lsm) {
+
+        WorkflowImage image = new WorkflowImage();
+        image.setOwnerKey(lsm.getOwnerKey());
+        image.setName(lsm.getName());
+        image.setAnatomicalArea(lsm.getAnatomicalArea());
+        image.setTile(lsm.getTile());
+        image.setChannelColors(lsm.getChannelColors());
+        image.setChannelSpec(lsm.getChanSpec());
+        image.setImageSize(lsm.getImageSize());
+        image.setOpticalResolution(lsm.getOpticalResolution());
+
+        return image;
+    }
+
+    private Path getTargetLocation(String sourceFile, Path targetFileNode) {
         if (sourceFile==null) return null;
         File file = new File(sourceFile);
         String filename = ArchiveUtils.getDecompressedFilepath(file.getName());
-        return targetFileNode.resolve(filename).toString();
+        return targetFileNode.resolve(filename);
     }
 }

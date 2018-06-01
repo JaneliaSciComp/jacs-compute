@@ -74,6 +74,8 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private Set<JacsServiceData> dependencies = new LinkedHashSet<>();
     private Set<Number> dependenciesIds = new LinkedHashSet<>();
     private Long serviceTimeout;
+    private Long workflowId;
+    private Long taskId;
 
     @Override
     public Number getId() {
@@ -580,6 +582,22 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
 
     public void setServiceTimeout(Long serviceTimeout) {
         this.serviceTimeout = serviceTimeout;
+    }
+
+    public Long getWorkflowId() {
+        return workflowId;
+    }
+
+    public void setWorkflowId(Long workflowId) {
+        this.workflowId = workflowId;
+    }
+
+    public Long getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(Long taskId) {
+        this.taskId = taskId;
     }
 
     @JsonIgnore

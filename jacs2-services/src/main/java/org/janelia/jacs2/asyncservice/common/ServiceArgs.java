@@ -5,10 +5,13 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacs2.asyncservice.sample.ServiceInput;
+import org.janelia.jacs2.asyncservice.sample.ServiceResult;
 import org.janelia.model.service.ServiceArgDescriptor;
 import org.janelia.model.service.ServiceMetaData;
 
 import javax.inject.Named;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,8 +52,18 @@ public class ServiceArgs {
         Named namedAnnotation = processorClass.getAnnotation(Named.class);
         Preconditions.checkArgument(namedAnnotation != null);
         String serviceName = namedAnnotation.value();
-        // TODO: also get ServiceParameter annotations
-        return createMetadata(serviceName, args);
+
+        ServiceMetaData smd = createMetadata(serviceName, args);
+
+        ServiceResult serviceResult = processorClass.getAnnotation(ServiceResult.class);
+        if (serviceResult != null) {
+            smd.setServiceResult(serviceResult);
+        }
+
+        ServiceInput[] annotationsByType = processorClass.getAnnotationsByType(ServiceInput.class);
+        smd.setServiceInputs(Arrays.asList(annotationsByType));
+
+        return smd;
     }
 
     static <A extends ServiceArgs> ServiceMetaData createMetadata(String serviceName, A args) {

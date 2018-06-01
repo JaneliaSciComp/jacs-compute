@@ -144,7 +144,7 @@ public class WorkflowViewer extends JFrame {
 
         Sample sample = getSample(objects);
         List<LSMImage> lsms = getImages(objects);
-        SampleWorkflow workflow = new SampleWorkflow(new SamplePipelineConfiguration(), Sets.newHashSet());
+        SampleWorkflowGenerator workflow = new SampleWorkflowGenerator(new SamplePipelineConfiguration(), Sets.newHashSet());
 
         DAG<WorkflowTask> dag = workflow.createPipeline(sample, lsms);
 

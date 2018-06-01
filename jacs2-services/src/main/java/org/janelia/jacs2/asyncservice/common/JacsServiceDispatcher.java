@@ -5,21 +5,13 @@ import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
-import org.janelia.model.service.JacsNotification;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceEvent;
-import org.janelia.model.service.JacsServiceEventTypes;
-import org.janelia.model.service.JacsServiceLifecycleStage;
-import org.janelia.model.service.JacsServiceState;
-import org.janelia.model.service.RegisteredJacsNotification;
+import org.janelia.model.service.*;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -87,8 +79,9 @@ public class JacsServiceDispatcher {
             jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.DISPATCHED, JacsServiceEvent.NO_EVENT);
             serviceComputationFactory.newCompletedComputation(jacsServiceData)
                     .thenApply(sd -> {
-                        invokeInterceptors(sd, interceptor -> interceptor.onDispatch(sd));
-                        return sd;
+                        JacsServiceData refreshedSd = refresh(jacsServiceData);
+                        invokeInterceptors(refreshedSd, interceptor -> interceptor.onDispatch(refreshedSd));
+                        return refreshedSd;
                     })
                     .thenSuspendUntil(new WaitingForDependenciesContinuationCond<>(
                             Function.identity(),
@@ -96,49 +89,58 @@ public class JacsServiceDispatcher {
                             jacsServiceDataPersistence,
                             logger).negate())
                     .thenApply((JacsServiceData sd) -> {
+
                         if (initialServiceState == JacsServiceState.QUEUED)
                             sendNotification(sd, JacsServiceLifecycleStage.START_PROCESSING);
                         else if (initialServiceState == JacsServiceState.RESUMED)
                             sendNotification(sd, JacsServiceLifecycleStage.RESUME_PROCESSING);
                         else
                             sendNotification(sd, JacsServiceLifecycleStage.RETRY_PROCESSING);
+
                         ServiceArgsHandler serviceArgsHandler = new ServiceArgsHandler(jacsServiceDataPersistence);
-                        Map<String, EntityFieldValueHandler<?>> sdUpdates = serviceArgsHandler.updateServiceArgs(serviceProcessor.getMetadata(), sd);
+                        Map<String, EntityFieldValueHandler<?>> sdUpdates =
+                                serviceArgsHandler.updateServiceArgs(serviceProcessor.getMetadata(), sd);
                         logger.debug("Update service args for {} to {}", sd, sdUpdates);
                         jacsServiceDataPersistence.update(sd, sdUpdates);
-                        invokeInterceptors(sd, interceptor -> interceptor.beforeProcess(sd));
-                        return sd;
+                        JacsServiceData refreshedSd = refresh(jacsServiceData);
+                        invokeInterceptors(refreshedSd, interceptor -> interceptor.beforeProcess(refreshedSd));
+                        return refreshedSd;
                     })
-                    .thenCompose((JacsServiceData sd) -> serviceProcessor.process(sd))
+                    .thenCompose((JacsServiceData sd) -> {
+                        JacsServiceData refreshedSd = refresh(jacsServiceData);
+                        return serviceProcessor.process(refreshedSd);
+                    })
                     .thenApply(r -> {
-                        JacsServiceData sd = r.getJacsServiceData();
-                        invokeInterceptors(sd, interceptor -> interceptor.afterProcess(sd));
-                        return r;
+                        JacsServiceData refreshedSd = refresh(jacsServiceData);
+                        invokeInterceptors(refreshedSd, interceptor -> interceptor.afterProcess(refreshedSd));
+                        return refreshedSd;
                     })
                     .whenComplete((r, exc) -> {
-                        JacsServiceData refreshedSd = jacsServiceDataPersistence.findById(jacsServiceData.getId());
-                        JacsServiceData sd = r==null ? refreshedSd : r.getJacsServiceData();
+                        JacsServiceData sd = refresh(jacsServiceData);
                         if (exc != null) {
                             handleException(sd, exc);
                         }
                         else {
                             success(sd);
                         }
-                        serviceFinally(sd);
+                        // We have to refresh again, because the methods above updated the service state
+                        serviceFinally(refresh(jacsServiceData));
                     });
-        } catch (Throwable e) {
-            handleException(jacsServiceData, e);
-            serviceFinally(jacsServiceData);
+        }
+        catch (Throwable e) {
+            handleException(refresh(jacsServiceData), e);
+            serviceFinally(refresh(jacsServiceData));
         }
     }
 
-    private void serviceFinally(JacsServiceData jacsServiceData) {
-        jacsServiceQueue.completeService(jacsServiceData);
-        if (!jacsServiceData.hasParentServiceId()) {
+    private void serviceFinally(JacsServiceData sd) {
+        jacsServiceQueue.completeService(sd);
+        if (!sd.hasParentServiceId()) {
             // release the slot acquired before the service was started
             jacsServiceEngine.releaseSlot();
         }
-        invokeInterceptors(jacsServiceData, interceptor -> interceptor.andFinally(jacsServiceData));
+        JacsServiceData refreshedSd = refresh(sd);
+        invokeInterceptors(refreshedSd, interceptor -> interceptor.andFinally(refreshedSd));
     }
 
     private void invokeInterceptors(JacsServiceData sd, Consumer<ServiceInterceptor> consumer) {
@@ -149,75 +151,76 @@ public class JacsServiceDispatcher {
     }
 
     @MdcContext
-    private void success(JacsServiceData serviceData) {
+    private void success(JacsServiceData sd) {
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Processing successful {}", serviceData);
+            logger.debug("Processing successful {}", sd);
         }
         else {
-            logger.info("Processing successful {}", serviceData.getShortName());
+            logger.info("Processing successful {}", sd.getShortName());
         }
 
-        JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
-        if (latestServiceData == null) {
-            logger.warn("No Service not found for {} - probably it was already archived", serviceData);
-            return;
+        if (sd.hasCompletedUnsuccessfully()) {
+            logger.warn("Attempted to overwrite failed state with success for {}", sd);
         }
-        if (latestServiceData.hasCompletedUnsuccessfully()) {
-            logger.warn("Attempted to overwrite failed state with success for {}", latestServiceData);
-        }
-        if (latestServiceData.hasCompletedSuccessfully()) {
+        if (sd.hasCompletedSuccessfully()) {
             // nothing to do
-            logger.debug("Service {} has already been marked as successful", latestServiceData);
-        } else {
+            logger.debug("Service {} has already been marked as successful", sd);
+        }
+        else {
             jacsServiceDataPersistence.updateServiceState(
-                    latestServiceData,
+                    sd,
                     JacsServiceState.SUCCESSFUL,
                     JacsServiceData.createServiceEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully"));
         }
-        sendNotification(latestServiceData, JacsServiceLifecycleStage.SUCCESSFUL_PROCESSING);
-        if (!latestServiceData.hasParentServiceId()) {
-            finalizeRootService(latestServiceData);
+        sendNotification(sd, JacsServiceLifecycleStage.SUCCESSFUL_PROCESSING);
+        if (!sd.hasParentServiceId()) {
+            finalizeRootService(sd);
         }
     }
 
     @MdcContext
-    private JacsServiceResult<Throwable> handleException(JacsServiceData serviceData, Throwable exc) {
-        if (logger.isDebugEnabled()) {
-            logger.error("Processing error executing {}", serviceData, exc);
-        } else {
-            logger.error("Processing error executing {}", serviceData.getShortName(), exc);
+    private JacsServiceResult<Throwable> handleException(JacsServiceData sd, Throwable exc) {
+
+        if (exc instanceof CancellationException) {
+            logger.info("Service was cancelled: {}", sd.getShortName());
+            return new JacsServiceResult<>(sd, exc);
         }
 
-        JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
-        if (latestServiceData == null) {
-            logger.warn("No Service not found for {}", serviceData.getId());
-            return new JacsServiceResult<>(serviceData, exc);
+        if (logger.isDebugEnabled()) {
+            logger.error("Processing error executing {}", sd, exc);
+        } else {
+            logger.error("Processing error executing {}", sd.getShortName(), exc);
         }
-        if (latestServiceData.hasBeenSuspended()) {
-            sendNotification(latestServiceData, JacsServiceLifecycleStage.SUSPEND_PROCESSING);
+
+        if (sd == null) {
+            logger.warn("No Service not found for {}", sd.getId());
+            return new JacsServiceResult<>(sd, exc);
+        }
+        if (sd.hasBeenSuspended()) {
+            sendNotification(sd, JacsServiceLifecycleStage.SUSPEND_PROCESSING);
         } else  if (exc instanceof ServiceSuspendedException) {
-            if (!latestServiceData.hasCompleted()) {
+            if (!sd.hasCompleted()) {
                 // in this case only suspend it if it has not been completed
-                jacsServiceDataPersistence.updateServiceState(latestServiceData, JacsServiceState.SUSPENDED, JacsServiceEvent.NO_EVENT);
-                sendNotification(latestServiceData, JacsServiceLifecycleStage.SUSPEND_PROCESSING);
+                jacsServiceDataPersistence.updateServiceState(sd, JacsServiceState.SUSPENDED, JacsServiceEvent.NO_EVENT);
+                sendNotification(sd, JacsServiceLifecycleStage.SUSPEND_PROCESSING);
             }
         } else {
-            if (latestServiceData.hasCompletedSuccessfully()) {
-                logger.warn("Service {} has failed after has already been marked as successful", latestServiceData);
+            if (sd.hasCompletedSuccessfully()) {
+                logger.warn("Service {} has failed after has already been marked as successful", sd);
             }
-            if (latestServiceData.hasCompletedUnsuccessfully()) {
+            if (sd.hasCompletedUnsuccessfully()) {
                 // nothing to do
-                logger.debug("Service {} has already been marked as failed", latestServiceData);
+                logger.debug("Service {} has already been marked as failed", sd);
             } else {
                 jacsServiceDataPersistence.updateServiceState(
-                        latestServiceData,
+                        sd,
                         JacsServiceState.ERROR,
                         JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage())));
             }
-            sendNotification(latestServiceData, JacsServiceLifecycleStage.FAILED_PROCESSING);
+            sendNotification(sd, JacsServiceLifecycleStage.FAILED_PROCESSING);
         }
-        return new JacsServiceResult<>(serviceData, exc);
+        return new JacsServiceResult<>(sd, exc);
     }
 
     private void sendNotification(JacsServiceData sd, JacsServiceLifecycleStage lifecycleStage) {
@@ -238,6 +241,14 @@ public class JacsServiceDispatcher {
 
     private void finalizeRootService(JacsServiceData sd) {
         logger.info("Finished {}", sd);
+    }
+
+    private JacsServiceData refresh(JacsServiceData sd) {
+        JacsServiceData refreshedSd = jacsServiceDataPersistence.findById(sd.getId());
+        if (refreshedSd == null) {
+            throw new IllegalStateException("Service data not found for "+sd.getId());
+        }
+        return refreshedSd;
     }
 
 }

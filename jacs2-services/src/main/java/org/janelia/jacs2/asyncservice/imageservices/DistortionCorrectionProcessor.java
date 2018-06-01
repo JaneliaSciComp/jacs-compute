@@ -25,7 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.StringJoiner;
 
-@Named("distortionCorrectionProcessor")
+@Named("_distortionCorrectionProcessor")
 public class DistortionCorrectionProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
 
     static class DistortionCorrectionArgs extends ServiceArgs {

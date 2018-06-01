@@ -93,6 +93,9 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
             entity.setId(idGenerator.generateId());
             mongoCollection.insertOne(entity);
         }
+        else {
+            mongoCollection.replaceOne(getUpdateMatchCriteria(entity), entity);
+        }
     }
 
     @Override

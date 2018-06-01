@@ -91,6 +91,16 @@ public class ServiceExecutionContext {
             return this;
         }
 
+        public Builder workflowId(Long workflowId) {
+            serviceExecutionContext.workflowId = workflowId;
+            return this;
+        }
+
+        public Builder taskId(Long taskId) {
+            serviceExecutionContext.taskId = taskId;
+            return this;
+        }
+
         public Builder registerProcessingNotification(String processingEvent, Optional<RegisteredJacsNotification> processingNotification) {
             processingNotification.ifPresent(n -> serviceExecutionContext.processingNotification = n.withEventName(processingEvent));
             return this;
@@ -127,6 +137,8 @@ public class ServiceExecutionContext {
     private final Map<String, String> resources = new LinkedHashMap<>();
     private RegisteredJacsNotification processingNotification;
     private final Map<String, RegisteredJacsNotification> processingStageNotifications = new HashMap<>();
+    private Long workflowId;
+    private Long taskId;
 
     private ServiceExecutionContext(JacsServiceData parentServiceData) {
         this.parentServiceData = parentServiceData;
@@ -186,5 +198,13 @@ public class ServiceExecutionContext {
 
     Map<String, RegisteredJacsNotification> getProcessingStageNotifications() {
         return processingStageNotifications;
+    }
+
+    public Long getWorkflowId() {
+        return workflowId;
+    }
+
+    public Long getTaskId() {
+        return taskId;
     }
 }

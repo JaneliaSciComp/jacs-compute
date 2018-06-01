@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Named("fijiMacro")
+@Named("_fijiMacro")
 public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
     static class FijiMacroArgs extends ServiceArgs {
@@ -57,22 +57,28 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
         List<String> resultsPatterns = new ArrayList<>();
     }
 
-    private final String fijiExecutable;
-    private final String fijiMacrosPath;
+
+    @Inject @PropertyValue(name = "InitXvfb.Path")
+    private String initXvfbPath;
+
+    @Inject @PropertyValue(name = "MonitorXvfb.Path")
+    private String monitorXvfbPath;
+
+    @Inject @PropertyValue(name = "Fiji.Bin.Path")
+    private String fijiExecutable;
+
+    @Inject @PropertyValue(name = "Fiji.Macro.Path")
+    private String fijiMacrosPath;
 
     @Inject
     FijiMacroProcessor(ServiceComputationFactory computationFactory,
                        JacsServiceDataPersistence jacsServiceDataPersistence,
                        @Any Instance<ExternalProcessRunner> serviceRunners,
                        @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                       @PropertyValue(name = "Fiji.Bin.Path") String fijiExecutable,
-                       @PropertyValue(name = "Fiji.Macro.Path") String fijiMacrosPath,
                        JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                        @ApplicationProperties ApplicationConfig applicationConfig,
                        Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
-        this.fijiExecutable = fijiExecutable;
-        this.fijiMacrosPath = fijiMacrosPath;
     }
 
     @Override
@@ -125,6 +131,7 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
             }
             JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
             if (!headless) {
+                scriptWriter.addWithArgs(". "+initXvfbPath).addArg("$DISPLAY_PORT");
                 X11Utils.setDisplayPort(serviceWorkingFolder.getServiceFolder().toString(), scriptWriter);
             }
             // Create temp dir so that large temporary avis are not created on the network drive
@@ -134,6 +141,7 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
             } else {
                 scratchServiceFolder = new JacsServiceFolder(null, Paths.get(args.temporaryOutput), jacsServiceData);
             }
+
             Path scratchDir = scratchServiceFolder.getServiceFolder();
             Files.createDirectories(scratchDir);
             ScriptUtils.createTempDir("cleanTemp", scratchDir.toString(), scriptWriter);
@@ -151,10 +159,9 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
                     .addArg(String.join(",", args.macroArgs));
             if (!headless) {
                 scriptWriter.endArgs("&");
-                // Monitor Fiji and take periodic screenshots, killing it eventually
                 scriptWriter.setVar("fpid", "$!");
-                X11Utils.startScreenCaptureLoop(scratchDir + "/xvfb-" + jacsServiceData.getId() + ".${PORT}",
-                        "PORT", "fpid", 30, getTimeoutInSeconds(jacsServiceData), scriptWriter);
+                // Monitor Fiji and take periodic screenshots, killing it eventually
+                scriptWriter.addWithArgs(". "+monitorXvfbPath).addArg("PORT").addArg("fpid").addArg(getTimeoutInSeconds(jacsServiceData)+"");
             } else {
                 scriptWriter.endArgs("");
             }

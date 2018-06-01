@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -77,7 +78,7 @@ public class ServiceDependenciesCompletedContinuationCond implements Continuatio
                             JacsServiceEventTypes.CANCELED,
                             String.format("Canceled because one or more service dependencies finished unsuccessfully: %s", failedDependencies)));
             logger.warn("Service {} canceled because of {}", jacsServiceData, failedDependencies);
-            throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getEntityRefId() + " canceled");
+            throw new CancellationException("Service " + jacsServiceData.getEntityRefId() + " canceled");
         } else if (jacsServiceData.hasBeenSuspended() || CollectionUtils.isNotEmpty(suspendedDependencies)) {
             if (!jacsServiceData.hasBeenSuspended()) {
                 jacsServiceDataPersistence.updateServiceState(

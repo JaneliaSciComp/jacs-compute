@@ -114,6 +114,16 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
+    public JacsServiceDataBuilder setWorkflowId(Long workflowId) {
+        serviceData.setWorkflowId(workflowId);
+        return this;
+    }
+
+    public JacsServiceDataBuilder setTaskId(Long taskId) {
+        serviceData.setTaskId(taskId);
+        return this;
+    }
+
     public JacsServiceDataBuilder copyResourcesFrom(Map<String, String> resources) {
         serviceData.getResources().putAll(resources);
         return this;

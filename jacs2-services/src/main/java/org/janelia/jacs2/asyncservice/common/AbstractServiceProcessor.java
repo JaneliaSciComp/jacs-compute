@@ -7,18 +7,11 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHa
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.security.util.SubjectUtils;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceDataBuilder;
-import org.janelia.model.service.JacsServiceEventTypes;
-import org.janelia.model.service.JacsServiceState;
-import org.janelia.model.service.ServiceMetaData;
+import org.janelia.model.service.*;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -64,6 +57,8 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         } else {
             jacsServiceDataBuilder.setProcessingLocation(executionContext.getParentServiceData().getProcessingLocation());
         }
+        jacsServiceDataBuilder.setWorkflowId(executionContext.getWorkflowId());
+        jacsServiceDataBuilder.setTaskId(executionContext.getTaskId());
         if (StringUtils.isNotBlank(executionContext.getWorkspace())) {
             jacsServiceDataBuilder.setWorkspace(executionContext.getWorkspace());
         } else if (StringUtils.isNotBlank(executionContext.getParentWorkspace())) {

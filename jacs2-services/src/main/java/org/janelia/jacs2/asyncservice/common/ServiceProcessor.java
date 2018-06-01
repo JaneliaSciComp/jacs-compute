@@ -19,16 +19,16 @@ public interface ServiceProcessor<R> {
     /**
      * Create service data based on the current execution context and the provided arguments.
      * @param executionContext current execution context.
-     * @param args service arguments.
-     * @return service data.
+     * @param args service arguments
+     * @return service data
      */
     JacsServiceData createServiceData(ServiceExecutionContext executionContext, ServiceArg... args);
 
     /**
      * Create service data based on the current execution context and the provided arguments.
-     * @param executionContext
-     * @param args
-     * @return
+     * @param executionContext current execution context
+     * @param args collection of service arguments
+     * @return service data
      */
     default JacsServiceData createServiceData(ServiceExecutionContext executionContext, Collection<ServiceArg> args) {
         return createServiceData(executionContext, args.toArray(new ServiceArg[args.size()]));
@@ -44,8 +44,6 @@ public interface ServiceProcessor<R> {
      */
     ServiceErrorChecker getErrorChecker();
 
-    ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData);
-
     /**
      * Default process mechanism given the execution context and the service arguments.
      * @param executionContext current execution context.
@@ -55,4 +53,11 @@ public interface ServiceProcessor<R> {
     default ServiceComputation<JacsServiceResult<R>> process(ServiceExecutionContext executionContext, ServiceArg... args) {
         return process(createServiceData(executionContext, args));
     }
+
+    /**
+     * Implements the actual service business logic.
+     * @param jacsServiceData service data
+     * @return result
+     */
+    ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData);
 }

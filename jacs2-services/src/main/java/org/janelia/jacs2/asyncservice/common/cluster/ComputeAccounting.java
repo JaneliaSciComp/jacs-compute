@@ -163,7 +163,7 @@ public class ComputeAccounting {
         else {
             // Calculate billing account from job owner
             billingAccount = getComputeAccount(serviceContext.getOwnerKey());
-            log.info("Using billing account {} for user {}", billingAccount, serviceContext.getOwnerKey());
+            log.info("Using billing account {} for {}", billingAccount, serviceContext.getOwnerKey());
         }
         return billingAccount;
     }

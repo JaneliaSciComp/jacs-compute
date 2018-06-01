@@ -6,18 +6,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import org.janelia.model.access.dao.mongo.utils.MongoModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ObjectMapperFactory {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ObjectMapperFactory.class);
+
     private static final ObjectMapperFactory INSTANCE = new ObjectMapperFactory();
+    public static ObjectMapperFactory instance() {
+        return INSTANCE;
+    }
 
     private final ObjectMapper defaultObjectMapper;
 
     ObjectMapperFactory() {
         defaultObjectMapper = newObjectMapper();
-    }
-
-    public static ObjectMapperFactory instance() {
-        return INSTANCE;
     }
 
     public ObjectMapper getDefaultObjectMapper() {
@@ -39,7 +43,7 @@ public class ObjectMapperFactory {
 
     public ObjectMapper newMongoCompatibleObjectMapper() {
         return newObjectMapper().registerModule(new MongoModule())
-                // So that Map<String,Object> serializes DomainObjects with proper class metadata
+                 // So that Map<String,Object> serializes DomainObjects with proper class metadata
                 .enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.JAVA_LANG_OBJECT, "class");
     }
 }

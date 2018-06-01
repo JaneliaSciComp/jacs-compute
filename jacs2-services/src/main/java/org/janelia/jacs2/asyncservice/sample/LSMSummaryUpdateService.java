@@ -1,43 +1,36 @@
 package org.janelia.jacs2.asyncservice.sample;
 
-import org.janelia.jacs2.asyncservice.common.*;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor2;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.model.domain.sample.LSMSummaryResult;
-import org.janelia.model.domain.workflow.WorkflowImage;
+import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.ServiceMetaData;
-import org.slf4j.Logger;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 
-/**
- * Create a temporary copy of an LSM file, unzipping it if necessary.
- */
 @Named("lsmSummaryUpdate")
-public class LSMSummaryUpdateService extends AbstractServiceProcessor<LSMSummaryResult> {
 
-    static class EmptyArgs extends ServiceArgs {
-    }
+@Service(description="Commit the LSM summary to the Sample")
 
-    @Inject
-    LSMSummaryUpdateService(ServiceComputationFactory computationFactory,
-                            JacsServiceDataPersistence jacsServiceDataPersistence,
-                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                            Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-    }
+@ServiceInput(name="result",
+        type=LSMSummaryResult.class,
+        description="LSM summary result")
 
-    @Override
-    public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(LSMSummaryUpdateService.class, new EmptyArgs());
-    }
+@ServiceResult(
+        name="sample",
+        type=Sample.class,
+        description="Updated sample")
+
+public class LSMSummaryUpdateService extends AbstractServiceProcessor2<Sample> {
 
     @Override
-    public ServiceComputation<JacsServiceResult<LSMSummaryResult>> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<Sample>> process(JacsServiceData sd) {
         LSMSummaryResult result = new LSMSummaryResult();
-        return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, result));
+
+        Sample sample = new Sample();
+
+        return computationFactory.newCompletedComputation(updateServiceResult(sd, sample));
     }
 
 }

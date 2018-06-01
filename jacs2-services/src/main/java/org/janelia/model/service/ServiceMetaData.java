@@ -2,6 +2,8 @@ package org.janelia.model.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.sample.ServiceInput;
+import org.janelia.jacs2.asyncservice.sample.ServiceResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +15,11 @@ public class ServiceMetaData {
     private List<ServiceArgDescriptor> serviceArgDescriptors = new ArrayList<>();
     @JsonIgnore
     private ServiceArgs serviceArgsObject;
+    // TODO: unify this service input annotation with the JCommander style
+    @JsonIgnore
+    private List<ServiceInput> serviceInputs;
+    @JsonIgnore
+    private ServiceResult serviceResult;
 
     public String getServiceName() {
         return serviceName;
@@ -48,5 +55,21 @@ public class ServiceMetaData {
 
     public void setServiceArgsObject(ServiceArgs serviceArgsObject) {
         this.serviceArgsObject = serviceArgsObject;
+    }
+
+    public List<ServiceInput> getServiceInputs() {
+        return serviceInputs;
+    }
+
+    public void setServiceInputs(List<ServiceInput> serviceInputs) {
+        this.serviceInputs = serviceInputs;
+    }
+
+    public ServiceResult getServiceResult() {
+        return serviceResult;
+    }
+
+    public void setServiceResult(ServiceResult serviceResult) {
+        this.serviceResult = serviceResult;
     }
 }

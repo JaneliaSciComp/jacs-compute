@@ -6,17 +6,14 @@ import org.janelia.dagobah.DAG;
 import org.janelia.jacs2.asyncservice.common.ServiceProcessor;
 import org.janelia.jacs2.asyncservice.sample.CopyLSMService;
 import org.janelia.jacs2.asyncservice.sample.DistortionCorrectionService;
-import org.janelia.jacs2.asyncservice.sample.LSMProcessingService;
+import org.janelia.jacs2.asyncservice.sample.LSMSummaryService;
 import org.janelia.jacs2.asyncservice.sample.LSMSummaryUpdateService;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
-import org.janelia.model.access.domain.DomainUtils;
-import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.ObjectiveSample;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.workflow.SamplePipelineConfiguration;
 import org.janelia.model.domain.workflow.SamplePipelineOutput;
-import org.janelia.model.domain.workflow.WorkflowImage;
 import org.janelia.model.domain.workflow.WorkflowTask;
 import org.janelia.model.util.Utils;
 
@@ -34,13 +31,13 @@ import java.util.*;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleWorkflow {
+public class SampleWorkflowGenerator {
 
     private final TimebasedIdentifierGenerator idGenerator;
     private final SamplePipelineConfiguration config;
     private final Set<SamplePipelineOutput> force;
 
-    public SampleWorkflow(SamplePipelineConfiguration config, Set<SamplePipelineOutput> force) {
+    public SampleWorkflowGenerator(SamplePipelineConfiguration config, Set<SamplePipelineOutput> force) {
         this.idGenerator = new TimebasedIdentifierGenerator(0);
         this.config = config;
         this.force = force;
@@ -81,7 +78,7 @@ public class SampleWorkflow {
             }
 
             // Run "LSM Summary"
-            WorkflowTask lsmSummary = createLSMProcessingTask(objectiveSample);
+            WorkflowTask lsmSummary = createLSMSummaryTask(objectiveSample);
             WorkflowTask update = createLSMSummaryUpdateTask(objectiveSample);
 
             dag.addEdges(lsmCopyTasks, lsmSummary);
@@ -172,27 +169,15 @@ public class SampleWorkflow {
     private WorkflowTask createCopyLSMTask(LSMImage lsm) {
         WorkflowTask task = createTask();
         task.setName("Copy ("+lsm.getObjective()+"/"+lsm.getAnatomicalArea()+"/"+lsm.getTile()+")");
-
-        WorkflowImage image = new WorkflowImage();
-        image.setOwnerKey(lsm.getOwnerKey());
-        image.setName(lsm.getName());
-        DomainUtils.setFilepath(image, FileType.LosslessStack, lsm.getFilepath());
-        image.setAnatomicalArea(lsm.getAnatomicalArea());
-        image.setTile(lsm.getTile());
-        image.setChannelColors(lsm.getChannelColors());
-        image.setChannelSpec(lsm.getChanSpec());
-        image.setImageSize(lsm.getImageSize());
-        image.setOpticalResolution(lsm.getOpticalResolution());
-
-        task.setInputs(Utils.strObjMap("lsm", image));
+        task.setInputs(Utils.strObjMap("lsm", lsm));
         task.setServiceClass(getName(CopyLSMService.class));
         return task;
     }
 
-    private WorkflowTask createLSMProcessingTask(ObjectiveSample objectiveSample) {
+    private WorkflowTask createLSMSummaryTask(ObjectiveSample objectiveSample) {
         WorkflowTask task = createTask();
         task.setName("LSM Summary ("+objectiveSample.getObjective()+")");
-        task.setServiceClass(getName(LSMProcessingService.class));
+        task.setServiceClass(getName(LSMSummaryService.class));
         if (force.contains(SamplePipelineOutput.LSMProcessing)) task.setForce(true);
         return task;
     }
@@ -277,6 +262,9 @@ public class SampleWorkflow {
 
     private String getName(Class<? extends ServiceProcessor> serviceClass) {
         Named annotation = serviceClass.getAnnotation(Named.class);
-        return annotation==null ? null : annotation.value();
+        if (annotation==null) {
+            throw new AssertionError("Service class does not have @Named annotation: "+serviceClass);
+        }
+        return annotation.value();
     }
 }

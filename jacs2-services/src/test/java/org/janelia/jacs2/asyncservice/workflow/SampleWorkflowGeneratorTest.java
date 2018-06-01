@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class SampleWorkflowTest {
+public class SampleWorkflowGeneratorTest {
 
     private static final String TEST_DATADIR = "src/test/resources/testdata/samples";
     private static Path testDataDir = Paths.get(TEST_DATADIR);
@@ -36,7 +36,7 @@ public class SampleWorkflowTest {
         Sample sample = getSample(objects);
         List<LSMImage> lsms = getImages(objects);
 
-        SampleWorkflow workflow = new SampleWorkflow(new SamplePipelineConfiguration(), Sets.newSet());
+        SampleWorkflowGenerator workflow = new SampleWorkflowGenerator(new SamplePipelineConfiguration(), Sets.newSet());
 
         DAG<WorkflowTask> dag = workflow.createPipeline(sample, lsms);
 
