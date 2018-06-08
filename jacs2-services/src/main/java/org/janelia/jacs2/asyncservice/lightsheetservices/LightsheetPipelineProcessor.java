@@ -87,7 +87,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                 new ServiceArg("-configAddress", args.configAddress),
                 new ServiceArg("-configOutputPath", configOutputPath)
         );
-        stage = generateMiniStacksIfApplicable(stage, jacsServiceData, 0, currentJobStepNames[0], args.configAddress, configOutputPath);
+        // stage = generateMiniStacksIfApplicable(stage, jacsServiceData, 0, currentJobStepNames[0], args.configAddress, configOutputPath);
 
         int nSteps = currentJobStepNames.length;
         for (int i = 1; i < nSteps; i++) {
@@ -109,7 +109,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
             })
             ;
             //JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-            stage = generateMiniStacksIfApplicable(stage, jacsServiceData, stepIndex, currentJobStepNames[stepIndex], args.configAddress, configOutputPath);
+      //      stage = generateMiniStacksIfApplicable(stage, jacsServiceData, stepIndex, currentJobStepNames[stepIndex], args.configAddress, configOutputPath);
         }
         return stage.thenApply((JacsServiceResult<Void> lastStepResult) -> new JacsServiceResult<>(jacsServiceData, lastStepResult.getResult()));
     }
