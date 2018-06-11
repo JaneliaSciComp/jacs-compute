@@ -1,7 +1,7 @@
 package org.janelia.jacs2.asyncservice.lightsheetservices;
 
 public enum LightsheetPipelineStep {
-    clusterCS(true, 8),
+    clusterCS(true, 6),
     clusterFR(true, 2),
     clusterMF(true, 2),
     clusterPT(true, 2),
