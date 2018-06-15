@@ -10,7 +10,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.imageservices.MIPGenerationProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.SignalAndReferenceChannelsMIPsProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.StitchAndBlendResult;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
@@ -42,7 +42,7 @@ public class SampleStitchProcessorTest {
 
     private MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor;
     private Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor;
-    private MIPGenerationProcessor mipGenerationProcessor;
+    private SignalAndReferenceChannelsMIPsProcessor signalAndReferenceChannelsMIPsProcessor;
     private SampleStitchProcessor sampleStitchProcessor;
 
     @Before
@@ -55,7 +55,7 @@ public class SampleStitchProcessorTest {
 
         mergeAndGroupSampleTilePairsProcessor = mock(MergeAndGroupSampleTilePairsProcessor.class);
         vaa3dStitchAndBlendProcessor = mock(Vaa3dStitchAndBlendProcessor.class);
-        mipGenerationProcessor = mock(MIPGenerationProcessor.class);
+        signalAndReferenceChannelsMIPsProcessor = mock(SignalAndReferenceChannelsMIPsProcessor.class);
 
         when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> {
             JacsServiceData sd = new JacsServiceData();
@@ -97,8 +97,8 @@ public class SampleStitchProcessorTest {
                 )
         ).thenCallRealMethod();
 
-        when(mipGenerationProcessor.getMetadata()).thenCallRealMethod();
-        when(mipGenerationProcessor.createServiceData(any(ServiceExecutionContext.class),
+        when(signalAndReferenceChannelsMIPsProcessor.getMetadata()).thenCallRealMethod();
+        when(signalAndReferenceChannelsMIPsProcessor.createServiceData(any(ServiceExecutionContext.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
                         any(ServiceArg.class),
@@ -112,7 +112,7 @@ public class SampleStitchProcessorTest {
                 SampleProcessorTestUtils.TEST_WORKING_DIR,
                 mergeAndGroupSampleTilePairsProcessor,
                 vaa3dStitchAndBlendProcessor,
-                mipGenerationProcessor,
+                signalAndReferenceChannelsMIPsProcessor,
                 idGenerator,
                 logger);
     }
@@ -160,7 +160,7 @@ public class SampleStitchProcessorTest {
         });
 
         ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
-        when(mipGenerationProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
+        when(signalAndReferenceChannelsMIPsProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
         when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
             return ImmutableList.of(new File("mip1"), new File("mip2"));
         });
@@ -202,7 +202,7 @@ public class SampleStitchProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", TEST_REFERENCE_CHANNELS)))
                     );
 
-                    verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
+                    verify(signalAndReferenceChannelsMIPsProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", new File("stitched").getAbsolutePath()))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/mips").getAbsolutePath()))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", TEST_SIGNAL_CHANNELS))),
@@ -264,7 +264,7 @@ public class SampleStitchProcessorTest {
         });
 
         ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
-        when(mipGenerationProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
+        when(signalAndReferenceChannelsMIPsProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
         when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
             return ImmutableList.of(new File("mip1"), new File("mip2"));
         });
@@ -306,7 +306,7 @@ public class SampleStitchProcessorTest {
                             argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", TEST_REFERENCE_CHANNELS)))
                     );
 
-                    verify(mipGenerationProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
+                    verify(signalAndReferenceChannelsMIPsProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                             any(ServiceArg.class),
                             any(ServiceArg.class),
                             any(ServiceArg.class),
@@ -367,7 +367,7 @@ public class SampleStitchProcessorTest {
         });
 
         ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
-        when(mipGenerationProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
+        when(signalAndReferenceChannelsMIPsProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
         when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
             return ImmutableList.of(new File("mip1"), new File("mip2"));
         });
@@ -409,7 +409,7 @@ public class SampleStitchProcessorTest {
                             any(ServiceArg.class)
                     );
 
-                    verify(mipGenerationProcessor).createServiceData(any(ServiceExecutionContext.class),
+                    verify(signalAndReferenceChannelsMIPsProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", "rtm1"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/mips").getAbsolutePath()))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", TEST_SIGNAL_CHANNELS))),
@@ -470,7 +470,7 @@ public class SampleStitchProcessorTest {
         });
 
         ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
-        when(mipGenerationProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
+        when(signalAndReferenceChannelsMIPsProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
         when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
             return ImmutableList.of(new File("mip1"), new File("mip2"));
         });
@@ -512,7 +512,7 @@ public class SampleStitchProcessorTest {
                             any(ServiceArg.class)
                     );
 
-                    verify(mipGenerationProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
+                    verify(signalAndReferenceChannelsMIPsProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
                             any(ServiceArg.class),
                             any(ServiceArg.class),
                             any(ServiceArg.class),

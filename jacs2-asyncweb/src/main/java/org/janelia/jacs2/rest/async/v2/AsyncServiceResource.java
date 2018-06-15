@@ -33,7 +33,7 @@ import javax.ws.rs.core.UriBuilder;
 import java.util.List;
 
 @RequestScoped
-@Produces("application/json")
+@Produces(MediaType.APPLICATION_JSON)
 @Path("/async-services")
 @Api(value = "Asynchronous JACS Service API")
 public class AsyncServiceResource {
@@ -66,7 +66,7 @@ public class AsyncServiceResource {
     @RequireAuthentication
     @POST
     @Path("/{service-name}")
-    @Consumes("application/json")
+    @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Submit a single service of the specified type", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Success"),

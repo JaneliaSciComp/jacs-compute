@@ -70,7 +70,7 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
                                   @Any Instance<ExternalProcessRunner> serviceRunners,
                                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                   @PropertyValue(name = "ImageMagick.Bin.Path") String convertToolLocation,
-                                  @PropertyValue(name = "ImageMagick.Montage.Name") String convertToolName,
+                                  @PropertyValue(name = "ImageMagick.Convert.Name") String convertToolName,
                                   @PropertyValue(name = "ImageMagick.Lib.Path") String libraryPath,
                                   JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                                   @ApplicationProperties ApplicationConfig applicationConfig,
