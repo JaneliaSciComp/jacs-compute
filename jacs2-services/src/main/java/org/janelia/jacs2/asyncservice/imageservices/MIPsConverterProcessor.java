@@ -1,7 +1,9 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
@@ -27,6 +29,8 @@ import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,8 +42,8 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
     private static final String PNG_EXTENSION = ".png";
 
     static class MIPsConverterArgs extends ServiceArgs {
-        @Parameter(names = "-inputFiles", description = "List of input files for which to generate mips", required = true)
-        List<String> inputFiles;
+        @Parameter(names = "-inputFiles", description = "List of input files for which to generate mips")
+        List<String> inputFiles = new ArrayList<>();
         @Parameter(names = "-outputDir", description = "MIPs output directory")
         String outputDir;
 
@@ -48,9 +52,23 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
         }
     }
 
-    static class MIPsResult {
+    public static class MIPsResult {
         String inputFile;
         String outputMIPsFile;
+
+        @JsonCreator
+        public MIPsResult(String inputFile, String outputMIPsFile) {
+            this.inputFile = inputFile;
+            this.outputMIPsFile = outputMIPsFile;
+        }
+
+        public String getInputFile() {
+            return inputFile;
+        }
+
+        public String getOutputMIPsFile() {
+            return outputMIPsFile;
+        }
     }
     private final WrappedServiceProcessor<Vaa3dMipCmdProcessor, List<File>> vaa3dMipCmdProcessor;
     private final WrappedServiceProcessor<ImageMagickConverterProcessor, List<File>> imageMagickConverterProcessor;
@@ -106,23 +124,27 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
 
     @SuppressWarnings("unchecked")
     private ServiceComputation<JacsServiceResult<List<MIPsResult>>> createMipsComputation(JacsServiceData jacsServiceData) {
-        List<MIPsResult> mipsInputs = prepareMipsInput(jacsServiceData);
-        return vaa3dMipCmdProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
-                        .description("Generate mips")
-                        .build(),
-                new ServiceArg("-inputFiles",
-                        mipsInputs.stream()
-                                .map((MIPsResult mipSource) -> mipSource.inputFile)
-                                .reduce((p1, p2) -> p1 + "," + p2)
-                                .orElse("")
-                ),
-                new ServiceArg("-outputFiles",
-                        mipsInputs.stream()
-                                .map((MIPsResult mipSource) -> mipSource.outputMIPsFile)
-                                .reduce((p1, p2) -> p1 + "," + p2)
-                                .orElse("")
-                ))
-                .thenCompose(tifMipsResults -> imageMagickConverterProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+        MIPsConverterArgs args = getArgs(jacsServiceData);
+        if (CollectionUtils.isEmpty(args.inputFiles)) {
+            return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, Collections.emptyList()));
+        } else {
+            List<MIPsResult> mipsInputs = prepareMipsInput(args, jacsServiceData);
+            return vaa3dMipCmdProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                            .description("Generate mips")
+                            .build(),
+                    new ServiceArg("-inputFiles",
+                            mipsInputs.stream()
+                                    .map((MIPsResult mipSource) -> mipSource.inputFile)
+                                    .reduce((p1, p2) -> p1 + "," + p2)
+                                    .orElse("")
+                    ),
+                    new ServiceArg("-outputFiles",
+                            mipsInputs.stream()
+                                    .map((MIPsResult mipSource) -> mipSource.outputMIPsFile)
+                                    .reduce((p1, p2) -> p1 + "," + p2)
+                                    .orElse("")
+                    ))
+                    .thenCompose(tifMipsResults -> imageMagickConverterProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                                     .description("Convert mips to png")
                                     .waitFor(tifMipsResults.getJacsServiceData())
                                     .build(),
@@ -138,46 +160,35 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
                                             .reduce((p1, p2) -> p1 + "," + p2)
                                             .orElse("")
                             )))
-                .thenApply(pngMipsResults -> {
-                    // find the correct mapping of the original input to the PNG result
-                    Map<Path, String> tif2pngConversions = pngMipsResults.getResult().stream()
-                            .map((File pngMipResultFile) -> {
-                                Path converterInput = FileUtils.replaceFileExt(pngMipResultFile.toPath(), TIFF_EXTENSION);
-                                try {
-                                    logger.debug("Delete TIFF file {} after it was converted to PNG: {}", converterInput, pngMipResultFile);
-                                    FileUtils.deletePath(converterInput);
-                                } catch (IOException e) {
-                                    logger.warn("Error deleting {}", converterInput, e);
-                                }
-                                return ImmutablePair.of(converterInput, pngMipResultFile.getAbsolutePath());
-                            })
-                            .collect(Collectors.toMap(tif2png -> tif2png.getLeft(), tif2png -> tif2png.getRight()));
-                    ;
-                    List<MIPsResult> mipsResults = mipsInputs.stream()
-                            .map(mipsInput -> {
-                                MIPsResult mipsResult = new MIPsResult();
-                                mipsResult.inputFile = mipsInput.inputFile;
-                                mipsResult.outputMIPsFile = tif2pngConversions.get(mipsInput.outputMIPsFile);
-                                return mipsResult;
-
-                            })
-                            .collect(Collectors.toList());
-                    return new JacsServiceResult<>(pngMipsResults.getJacsServiceData(), mipsResults);
-                });
+                    .thenApply(pngMipsResults -> {
+                        // find the correct mapping of the original input to the PNG result
+                        Map<Path, String> tif2pngConversions = pngMipsResults.getResult().stream()
+                                .map((File pngMipResultFile) -> {
+                                    Path converterInput = FileUtils.replaceFileExt(pngMipResultFile.toPath(), TIFF_EXTENSION);
+                                    try {
+                                        logger.debug("Delete TIFF file {} after it was converted to PNG: {}", converterInput, pngMipResultFile);
+                                        FileUtils.deletePath(converterInput);
+                                    } catch (IOException e) {
+                                        logger.warn("Error deleting {}", converterInput, e);
+                                    }
+                                    return ImmutablePair.of(converterInput, pngMipResultFile.getAbsolutePath());
+                                })
+                                .collect(Collectors.toMap(tif2png -> tif2png.getLeft(), tif2png -> tif2png.getRight()));
+                        List<MIPsResult> mipsResults = mipsInputs.stream()
+                                .map(mipsInput -> new MIPsResult(mipsInput.inputFile, tif2pngConversions.get(mipsInput.outputMIPsFile)))
+                                .collect(Collectors.toList());
+                        return new JacsServiceResult<>(pngMipsResults.getJacsServiceData(), mipsResults);
+                    });
+        }
     }
 
-    private List<MIPsResult> prepareMipsInput(JacsServiceData jacsServiceData) {
-        MIPsConverterArgs args = getArgs(jacsServiceData);
+    private List<MIPsResult> prepareMipsInput(MIPsConverterArgs args, JacsServiceData jacsServiceData) {
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         Path intermediateResultsDir = serviceWorkingFolder.getServiceFolder("tempTifs");
-
         return args.inputFiles.stream()
                 .map(inputName -> {
-                    MIPsResult tifMipResult = new MIPsResult();
-                    tifMipResult.inputFile = inputName;
                     String tifMipsName = FileUtils.getFileNameOnly(inputName) + "_mipArtifact" + TIFF_EXTENSION;
-                    tifMipResult.outputMIPsFile = intermediateResultsDir.resolve(tifMipsName).toString();
-                    return tifMipResult;
+                    return new MIPsResult(inputName, intermediateResultsDir.resolve(tifMipsName).toString());
                 })
                 .collect(Collectors.toList());
     }

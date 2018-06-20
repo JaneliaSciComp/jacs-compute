@@ -124,6 +124,7 @@ public class ServiceExecutionContext {
 
     private ServiceExecutionContext(JacsServiceData parentServiceData) {
         this.parentServiceData = parentServiceData;
+        ResourceHelper.setAuthToken(resources, ResourceHelper.getAuthToken(parentServiceData.getResources()));
     }
 
     JacsServiceData getParentServiceData() {

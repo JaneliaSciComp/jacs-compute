@@ -19,7 +19,13 @@ public class FileUtils {
 
     public static Stream<Path> lookupFiles(Path dir, int maxDepth, String pattern) {
         try {
-            PathMatcher inputFileMatcher = FileSystems.getDefault().getPathMatcher(pattern);
+            String fileLookupPattern;
+            if (StringUtils.isBlank(pattern)) {
+                fileLookupPattern = "glob:**/*";
+            } else {
+                fileLookupPattern = pattern;
+            }
+            PathMatcher inputFileMatcher = FileSystems.getDefault().getPathMatcher(fileLookupPattern);
             return Files.find(dir, maxDepth, (p, a) -> inputFileMatcher.matches(p));
         } catch (IOException e) {
             throw new UncheckedIOException(e);

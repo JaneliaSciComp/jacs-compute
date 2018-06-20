@@ -1,5 +1,7 @@
 package org.janelia.model.service;
 
+import org.janelia.jacs2.asyncservice.common.ResourceHelper;
+
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +24,7 @@ public class JacsServiceDataBuilder {
             serviceData.setQueueId(serviceContext.getQueueId());
             serviceData.setWorkspace(serviceContext.getWorkspace());
             serviceData.setTags(serviceContext.getTags()); // propagate the tags
+            ResourceHelper.setAuthToken(serviceData.getResources(), ResourceHelper.getAuthToken(serviceContext.getResources()));
         }
     }
 

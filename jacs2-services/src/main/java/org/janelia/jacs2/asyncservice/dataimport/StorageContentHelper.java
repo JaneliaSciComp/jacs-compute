@@ -1,0 +1,78 @@
+package org.janelia.jacs2.asyncservice.dataimport;
+
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.asyncservice.common.ResourceHelper;
+import org.janelia.jacs2.asyncservice.common.ServiceComputation;
+import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.model.service.JacsServiceData;
+import org.slf4j.Logger;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Helper class for downloading/uploading content to JADE.
+ */
+class StorageContentHelper {
+
+    private final ServiceComputationFactory computationFactory;
+    private final StorageService storageService;
+    private final Logger logger;
+
+    StorageContentHelper(ServiceComputationFactory computationFactory,
+                         StorageService storageService,
+                         Logger logger) {
+        this.computationFactory = computationFactory;
+        this.storageService = storageService;
+        this.logger = logger;
+    }
+
+    StorageService.StorageInfo getOrCreateStorage(String storageServiceURL, String storageId, String storageName, String ownerKey, String authToken) {
+        return storageService
+                .lookupStorage(storageServiceURL, storageId, storageName, ownerKey, authToken)
+                .orElse(storageService.createStorage(storageServiceURL, storageName, ownerKey, authToken));
+    }
+
+    ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> uploadContent(JacsServiceData jacsServiceData, String storageURL, List<StorageContentInfo> contentList) {
+        return computationFactory.<JacsServiceResult<List<StorageContentInfo>>>newComputation()
+                .supply(() -> new JacsServiceResult<>(
+                        jacsServiceData,
+                        contentList.stream()
+                                .peek(contentEntry -> {
+                                    FileInputStream inputStream = null;
+                                    try {
+                                        Path localPath = contentEntry.getLocalBasePath().resolve(contentEntry.getLocalRelativePath());
+                                        if (Files.exists(localPath)) {
+                                            logger.info("Upload {} to {}", localPath, storageURL);
+                                            inputStream = new FileInputStream(localPath.toFile());
+                                            contentEntry.setRemoteInfo(storageService.putStorageContent(
+                                                    storageURL,
+                                                    contentEntry.getLocalRelativePath().toString(),
+                                                    jacsServiceData.getOwnerKey(),
+                                                    ResourceHelper.getAuthToken(jacsServiceData.getResources()),
+                                                    inputStream
+                                            ));
+                                        }
+                                    } catch (IOException e) {
+                                        throw new UncheckedIOException(e);
+                                    } finally {
+                                        if (inputStream != null) {
+                                            try {
+                                                inputStream.close();
+                                            } catch (IOException e) {
+                                                // ignore
+                                            }
+                                        }
+                                    }
+                                })
+                                .collect(Collectors.toList())
+                ));
+    }
+
+}

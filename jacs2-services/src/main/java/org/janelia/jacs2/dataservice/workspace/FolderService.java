@@ -19,7 +19,7 @@ public class FolderService {
         this.folderDao = folderDao;
     }
 
-    public TreeNode createFolder(Number parentFolderId, String folderName, String subjectKey) {
+    public TreeNode getOrCreateFolder(Number parentFolderId, String folderName, String subjectKey) {
         try {
             if (parentFolderId == null) {
                 return folderDao.getOrCreateDefaultFolder(subjectKey, folderName);
