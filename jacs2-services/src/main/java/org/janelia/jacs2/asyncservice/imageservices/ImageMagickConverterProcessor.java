@@ -56,7 +56,7 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
     static class ImageConverterArgs extends ServiceArgs {
         @Parameter(names = "-inputFiles", description = "List of input files to be converted.", required = true)
         List<String> inputFiles;
-        @Parameter(names = "-outputFiles", description = "Number of tiles per side", required = false)
+        @Parameter(names = "-outputFiles", description = "List of output files")
         List<String> outputFiles;
     }
 

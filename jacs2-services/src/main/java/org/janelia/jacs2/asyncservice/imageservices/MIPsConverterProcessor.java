@@ -163,7 +163,7 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
                             )))
                     .thenApply(pngMipsResults -> {
                         // find the correct mapping of the original input to the PNG result
-                        Map<Path, String> tif2pngConversions = pngMipsResults.getResult().stream()
+                        Map<String, String> tif2pngConversions = pngMipsResults.getResult().stream()
                                 .map((File pngMipResultFile) -> {
                                     Path converterInput = FileUtils.replaceFileExt(pngMipResultFile.toPath(), TIFF_EXTENSION);
                                     try {
@@ -172,7 +172,7 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
                                     } catch (IOException e) {
                                         logger.warn("Error deleting {}", converterInput, e);
                                     }
-                                    return ImmutablePair.of(converterInput, pngMipResultFile.getAbsolutePath());
+                                    return ImmutablePair.of(converterInput.toString(), pngMipResultFile.getAbsolutePath());
                                 })
                                 .collect(Collectors.toMap(tif2png -> tif2png.getLeft(), tif2png -> tif2png.getRight()));
                         List<MIPsResult> mipsResults = mipsInputs.stream()
