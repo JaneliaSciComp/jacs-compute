@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -58,7 +59,7 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
         String outputMIPsFile;
 
         @JsonCreator
-        public MIPsResult(String inputFile, String outputMIPsFile) {
+        public MIPsResult(@JsonProperty("inputFile") String inputFile, @JsonProperty("outputMIPsFile") String outputMIPsFile) {
             this.inputFile = inputFile;
             this.outputMIPsFile = outputMIPsFile;
         }
