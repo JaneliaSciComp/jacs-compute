@@ -154,7 +154,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
      */
     private ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> generateContentMIPs(JacsServiceData jacsServiceData, List<StorageContentInfo> contentList) {
         StorageContentUploadArgs args = getArgs(jacsServiceData);
-        if (args.generateMIPs) {
+        if (args.generateMIPS()) {
             JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
             Path localMIPSRootPath = serviceWorkingFolder.getServiceFolder("temp");
             List<StorageContentInfo> mipsInputList = contentList.stream()

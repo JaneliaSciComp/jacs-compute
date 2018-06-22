@@ -139,7 +139,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
 
     private ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> generateContentMIPs(JacsServiceData jacsServiceData, List<StorageContentInfo> contentList) {
         DataTreeLoadArgs args = getArgs(jacsServiceData);
-        if (args.generateMIPs) {
+        if (args.generateMIPS()) {
             JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
             Path localMIPSRootPath = serviceWorkingFolder.getServiceFolder("temp");
             // for the mips inputs it only check if the extension matches the one that require mips - it does not check if the MIPs already exist.

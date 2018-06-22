@@ -123,7 +123,7 @@ public class DataTreeLoadProcessorTest {
         String testFolder = "testLocation";
         String testLocation = "http://testStorage";
         String testAuthToken = "testAuthToken";
-        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, true);
+        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, false);
 
         DataTreeLoadProcessor dataTreeLoadProcessor = createDataTreeLoadProcessor();
 
@@ -182,7 +182,7 @@ public class DataTreeLoadProcessorTest {
         String testFolder = "testLocation";
         String testLocation = "http://testStorage";
         String testAuthToken = "testAuthToken";
-        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, true);
+        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, false);
 
         DataTreeLoadProcessor dataTreeLoadProcessor = createDataTreeLoadProcessor();
 
@@ -316,7 +316,7 @@ public class DataTreeLoadProcessorTest {
         String testFolder = "testLocation";
         String testLocation = "http://testStorage";
         String testAuthToken = "testAuthToken";
-        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, false);
+        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, true);
 
         DataTreeLoadProcessor dataTreeLoadProcessor = createDataTreeLoadProcessor();
 
@@ -344,8 +344,6 @@ public class DataTreeLoadProcessorTest {
         Mockito.when(Files.notExists(any(Path.class))).thenReturn(true);
         Mockito.when(Files.exists(any(Path.class))).thenReturn(true);
         Mockito.when(Files.size(any(Path.class))).thenReturn(100L);
-
-        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp");
 
         Path f1Path = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f1.lsm");
         Path f2Path = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f2.v3draw");
@@ -408,15 +406,15 @@ public class DataTreeLoadProcessorTest {
                 });
     }
 
-    private JacsServiceData createTestServiceData(Number serviceId, String owner, String folderName, String storageLocation, String authToken, boolean generateMIPS) {
+    private JacsServiceData createTestServiceData(Number serviceId, String owner, String folderName, String storageLocation, String authToken, boolean skipsMIPS) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey(owner)
                 .addArgs("-parentDataNodeId", String.valueOf(TEST_DATA_NODE_ID-1))
                 .addArgs("-storageLocation", storageLocation)
                 .addArgs("-dataNodeName", folderName)
                 ;
-        if (generateMIPS) {
-            testServiceDataBuilder.addArgs("-generateMIPS");
+        if (skipsMIPS) {
+            testServiceDataBuilder.addArgs("-skipMIPS");
         }
         JacsServiceData testServiceData = testServiceDataBuilder
                 .setWorkspace(TEST_LOCAL_WORKSPACE)
