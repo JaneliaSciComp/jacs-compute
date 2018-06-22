@@ -13,7 +13,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -37,6 +40,61 @@ class StorageContentHelper {
         return storageService
                 .lookupStorage(storageServiceURL, storageId, storageName, ownerKey, authToken)
                 .orElse(storageService.createStorage(storageServiceURL, storageName, ownerKey, authToken));
+    }
+
+    ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> listContent(JacsServiceData jacsServiceData, String storageURL) {
+        return computationFactory.<JacsServiceResult<List<StorageContentInfo>>>newComputation()
+                .supply(() -> {
+                    List<StorageService.StorageEntryInfo> contentToLoad = storageService.listStorageContent(
+                            storageURL,
+                            jacsServiceData.getOwnerKey(),
+                            ResourceHelper.getAuthToken(jacsServiceData.getResources()));
+                    return new JacsServiceResult<>(jacsServiceData,
+                            contentToLoad.stream()
+                                    .filter(entry -> !entry.isCollectionFlag())
+                                    .map(entry -> {
+                                        StorageContentInfo storageContentInfo = new StorageContentInfo();
+                                        storageContentInfo.setRemoteInfo(entry);
+                                        return storageContentInfo;
+                                    })
+                                    .collect(Collectors.toList())
+                        );
+                })
+                ;
+    }
+
+    ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> downloadContent(JacsServiceData jacsServiceData,
+                                                                                    Path localBasePath,
+                                                                                    List<StorageContentInfo> contentList) {
+        return computationFactory.<JacsServiceResult<List<StorageContentInfo>>>newComputation()
+                .supply(() -> new JacsServiceResult<>(
+                        jacsServiceData,
+                        contentList.stream()
+                                .peek(contentEntry -> {
+                                    try {
+                                        Path entryRelativePath = Paths.get(contentEntry.getRemoteInfo().getEntryRelativePath());
+                                        Path localEntryFullPath = localBasePath.resolve(entryRelativePath);
+                                        if (Files.notExists(localEntryFullPath) || Files.size(localEntryFullPath) == 0) {
+                                            // no local copy found - so download it
+                                            Files.createDirectories(localEntryFullPath.getParent());
+                                            Files.copy(
+                                                    storageService.getStorageContent(
+                                                            contentEntry.getRemoteInfo().getStorageURL(),
+                                                            contentEntry.getRemoteInfo().getEntryRelativePath(),
+                                                            jacsServiceData.getOwnerKey(),
+                                                            ResourceHelper.getAuthToken(jacsServiceData.getResources())),
+                                                    localEntryFullPath,
+                                                    StandardCopyOption.REPLACE_EXISTING);
+                                        }
+                                        // set local path info
+                                        contentEntry.setLocalBasePath(localBasePath);
+                                        contentEntry.setLocalRelativePath(entryRelativePath);
+                                    } catch (IOException e) {
+                                        throw new UncheckedIOException(e);
+                                    }
+                                })
+                                .collect(Collectors.toList())
+                ));
     }
 
     ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> uploadContent(JacsServiceData jacsServiceData, String storageURL, List<StorageContentInfo> contentList) {

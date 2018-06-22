@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 @Named("mipsConverter")
 public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsConverterProcessor.MIPsResult>> {
 
+    private static final String MIP_ARTIFACT_SUFFIX = "_mipArtifact";
     private static final String TIFF_EXTENSION = ".tif";
     private static final String PNG_EXTENSION = ".png";
 
@@ -187,7 +188,7 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
         Path intermediateResultsDir = serviceWorkingFolder.getServiceFolder("tempTifs");
         return args.inputFiles.stream()
                 .map(inputName -> {
-                    String tifMipsName = FileUtils.getFileNameOnly(inputName) + "_mipArtifact" + TIFF_EXTENSION;
+                    String tifMipsName = FileUtils.getFileNameOnly(inputName) + MIP_ARTIFACT_SUFFIX + TIFF_EXTENSION;
                     return new MIPsResult(inputName, intermediateResultsDir.resolve(tifMipsName).toString());
                 })
                 .collect(Collectors.toList());

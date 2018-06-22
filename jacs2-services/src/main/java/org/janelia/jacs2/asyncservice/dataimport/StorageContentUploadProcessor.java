@@ -32,22 +32,18 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * This service uploads content to the storage server.
+ * This service uploads content to the storage server and creates a corresponding TreeNode entry. It also generates
+ * and uploads the MIPs for the
  */
 @Named("uploadStorageContent")
 public class StorageContentUploadProcessor extends AbstractServiceProcessor<List<StorageContentInfo>> {
 
-    static class StorageContentUploadArgs extends ServiceArgs {
-        @Parameter(names = "-dataNodeName", description = "Data node name")
-        String dataNodeName;
-        @Parameter(names = "-parentDataNodeId", description = "Parent data node ID")
-        Long parentDataNodeId;
+    static class StorageContentUploadArgs extends CommonDataNodeArgs {
         @Parameter(names = "-dirName", description = "Directory to be uploaded to JADE")
         String dirName;
         @Parameter(names = "-fileNameFilter", description = "File name filter for the files to upload to JADE. " +
@@ -62,15 +58,10 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
         String storageId;
         @Parameter(names = "-storageEntryName", description = "Storage entry name")
         String storageEntryName;
-        @Parameter(names = "-generateMIPS", description = "Generate MIPs for the content to be uploaded and upload the MIPs as well")
-        boolean generateMIPs = false;
-        @Parameter(names = "-mipsExtensions", description = "list of extensions for which to generate mips")
-        List<String> mipsExtensions = new ArrayList<>(ImmutableList.of(
-                ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd"
-        ));
 
         StorageContentUploadArgs() {
-            super("Service that uploads the content of a specified directory to jade. The user can specify a filter for uploading only matching files to JADE.");
+            super("Service that uploads the content of a specified directory to jade. " +
+                    "The user can specify a filter for uploading only matching files to JADE.");
         }
     }
 
@@ -155,6 +146,12 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
         }
     }
 
+    /**
+     * Generate the content MIPS and concatenate the input with the generated MIPs.
+     * @param jacsServiceData
+     * @param contentList
+     * @return the initial content list concatenated with the new MIPs entries.
+     */
     private ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> generateContentMIPs(JacsServiceData jacsServiceData, List<StorageContentInfo> contentList) {
         StorageContentUploadArgs args = getArgs(jacsServiceData);
         if (args.generateMIPs) {

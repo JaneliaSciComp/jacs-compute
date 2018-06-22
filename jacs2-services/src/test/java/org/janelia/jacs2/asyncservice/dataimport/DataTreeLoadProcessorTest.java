@@ -46,16 +46,18 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
-        GenerateMIPsForStorageContentProcessor.class
+        DataTreeLoadProcessor.class,
+        StorageContentHelper.class
 })
-public class GenerateMIPsForStorageContentProcessorTest {
+public class DataTreeLoadProcessorTest {
     private static final String DEFAULT_WORKING_DIR = "testWorking";
-    private static final String TEST_LOCAL_WORKSPACE = "testlocal";
+    private static final String TEST_LOCAL_WORKSPACE = "testDataTreeLocal";
     private static final Long TEST_DATA_NODE_ID = 10L;
     private static final Number TEST_SERVICE_ID = 1L;
 
@@ -104,13 +106,13 @@ public class GenerateMIPsForStorageContentProcessorTest {
                 });
     }
 
-    private GenerateMIPsForStorageContentProcessor createDataTreeLoadProcessor() {
-        return new GenerateMIPsForStorageContentProcessor(computationFactory,
+    private DataTreeLoadProcessor createDataTreeLoadProcessor() {
+        return new DataTreeLoadProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 DEFAULT_WORKING_DIR,
                 mipsConverterProcessor,
-                folderService,
                 storageService,
+                folderService,
                 logger);
     }
 
@@ -121,9 +123,9 @@ public class GenerateMIPsForStorageContentProcessorTest {
         String testFolder = "testLocation";
         String testLocation = "http://testStorage";
         String testAuthToken = "testAuthToken";
-        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken);
+        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, true);
 
-        GenerateMIPsForStorageContentProcessor generateMIPsForStorageContentProcessor = createDataTreeLoadProcessor();
+        DataTreeLoadProcessor dataTreeLoadProcessor = createDataTreeLoadProcessor();
 
         String testStorageRoot = "/storageRoot";
         String testStoragePrefix = "/storageRootPrefix";
@@ -138,7 +140,9 @@ public class GenerateMIPsForStorageContentProcessorTest {
         when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
         when(mipsConverterResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
-        ServiceComputation<JacsServiceResult<List<GenerateMIPsForStorageContentProcessor.ContentWithMIPsInfo>>> dataLoadComputation = generateMIPsForStorageContentProcessor.process(testService);
+        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp");
+
+        ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         dataLoadComputation
@@ -147,7 +151,7 @@ public class GenerateMIPsForStorageContentProcessorTest {
                     Mockito.verify(mipsConverterProcessor).getMetadata();
                     Mockito.verify(mipsConverterProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputFiles", "")))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.toString())))
                     );
                     Mockito.verify(mipsConverterProcessor).getResultHandler();
 
@@ -178,9 +182,9 @@ public class GenerateMIPsForStorageContentProcessorTest {
         String testFolder = "testLocation";
         String testLocation = "http://testStorage";
         String testAuthToken = "testAuthToken";
-        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken);
+        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, true);
 
-        GenerateMIPsForStorageContentProcessor generateMIPsForStorageContentProcessor = createDataTreeLoadProcessor();
+        DataTreeLoadProcessor dataTreeLoadProcessor = createDataTreeLoadProcessor();
 
         String testStorageRoot = "/storageRoot";
         String testStoragePrefix = "/storageRootPrefix";
@@ -231,7 +235,7 @@ public class GenerateMIPsForStorageContentProcessorTest {
         PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
         PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
 
-        ServiceComputation<JacsServiceResult<List<GenerateMIPsForStorageContentProcessor.ContentWithMIPsInfo>>> dataLoadComputation = generateMIPsForStorageContentProcessor.process(testService);
+        ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         dataLoadComputation
@@ -305,15 +309,117 @@ public class GenerateMIPsForStorageContentProcessorTest {
                 });
     }
 
-    private JacsServiceData createTestServiceData(Number serviceId, String owner, String folderName, String storageLocation, String authToken) {
+    @Test
+    public void processLsmsAndVaa3dsWithoutMIPS() throws Exception {
+        Long serviceId = 1L;
+        String testOwner = "testOwner";
+        String testFolder = "testLocation";
+        String testLocation = "http://testStorage";
+        String testAuthToken = "testAuthToken";
+        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, false);
+
+        DataTreeLoadProcessor dataTreeLoadProcessor = createDataTreeLoadProcessor();
+
+        String testStorageRoot = "/storageRoot";
+        String testStoragePrefix = "/storageRootPrefix";
+
+        Mockito.when(storageService.listStorageContent(testLocation, testOwner, testAuthToken))
+                .thenReturn(ImmutableList.of(
+                        new StorageService.StorageEntryInfo(testLocation, testStorageRoot, testStoragePrefix,"", true),
+                        new StorageService.StorageEntryInfo(testLocation, testStorageRoot, testStoragePrefix,"f1.lsm", false),
+                        new StorageService.StorageEntryInfo(testLocation, testStorageRoot, testStoragePrefix,"f2.v3draw", false)
+                ));
+        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(new ByteArrayInputStream("test".getBytes()));
+        Mockito.when(storageService.putStorageContent(anyString(), anyString(), anyString(), anyString(), any(InputStream.class)))
+                .then(invocation -> new StorageService.StorageEntryInfo(testLocation, testStorageRoot, testStoragePrefix, invocation.getArgument(1), false));
+
+        PowerMockito.mockStatic(Files.class);
+        Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
+        Mockito.when(Files.copy(any(InputStream.class), any(Path.class), any(CopyOption.class))).then((Answer<Long>) invocation -> {
+            InputStream is = invocation.getArgument(0);
+            return (long) is.available();
+        });
+
+        Mockito.when(Files.notExists(any(Path.class))).thenReturn(true);
+        Mockito.when(Files.exists(any(Path.class))).thenReturn(true);
+        Mockito.when(Files.size(any(Path.class))).thenReturn(100L);
+
+        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp");
+
+        Path f1Path = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f1.lsm");
+        Path f2Path = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f2.v3draw");
+
+        Path f1PngPath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f1_mipArtifact.png");
+        Path f2PngPath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f2_mipArtifact.png");
+
+        ServiceResultHandler<List<MIPsConverterProcessor.MIPsResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
+        when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
+        when(mipsConverterResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(
+                new MIPsConverterProcessor.MIPsResult(f1Path.toString(), f2PngPath.toString()),
+                new MIPsConverterProcessor.MIPsResult(f2Path.toString(), f1PngPath.toString())
+        ));
+
+        File f1PngMipArtifact = mock(File.class);
+        File f2PngMipArtifact = mock(File.class);
+        FileInputStream f1PngMipStream = mock(FileInputStream.class);
+        FileInputStream f2PngMipStream = mock(FileInputStream.class);
+        Mockito.when(f1PngMipArtifact.toPath()).thenReturn(f1PngPath);
+        Mockito.when(f2PngMipArtifact.toPath()).thenReturn(f2PngPath);
+        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
+        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
+
+        ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
+        Consumer successful = mock(Consumer.class);
+        Consumer failure = mock(Consumer.class);
+        dataLoadComputation
+                .thenApply(r -> {
+                    successful.accept(r);
+                    Mockito.verify(storageService).listStorageContent(
+                            eq(testLocation),
+                            eq(testOwner),
+                            eq(testAuthToken)
+                    );
+
+                    Mockito.verify(mipsConverterProcessor, never()).getMetadata();
+                    Mockito.verify(mipsConverterProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class)
+                    );
+                    Mockito.verify(mipsConverterProcessor, never()).getResultHandler();
+
+                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
+                    Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
+                            eq(testStoragePrefix + "/f1.lsm"),
+                            eq(FileType.LosslessStack),
+                            eq(testOwner));
+                    Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
+                            eq(testStoragePrefix + "/f2.v3draw"),
+                            eq(FileType.LosslessStack),
+                            eq(testOwner));
+
+                    Mockito.verifyNoMoreInteractions(mipsConverterProcessor, storageService, folderService);
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    failure.accept(exc);
+                    fail(exc.toString());
+                    return null;
+                });
+    }
+
+    private JacsServiceData createTestServiceData(Number serviceId, String owner, String folderName, String storageLocation, String authToken, boolean generateMIPS) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey(owner)
                 .addArgs("-parentDataNodeId", String.valueOf(TEST_DATA_NODE_ID-1))
                 .addArgs("-storageLocation", storageLocation)
                 .addArgs("-dataNodeName", folderName)
                 ;
+        if (generateMIPS) {
+            testServiceDataBuilder.addArgs("-generateMIPS");
+        }
         JacsServiceData testServiceData = testServiceDataBuilder
-                .setWorkspace("testlocal")
+                .setWorkspace(TEST_LOCAL_WORKSPACE)
                 .build();
         testServiceData.setId(serviceId);
         testServiceData.setName("generateMIPsForStorageContent");
