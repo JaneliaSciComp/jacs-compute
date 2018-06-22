@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.storage;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
 import org.slf4j.Logger;
@@ -139,6 +140,17 @@ public class StorageService {
 
         public boolean isCollectionFlag() {
             return collectionFlag;
+        }
+
+        @Override
+        public String toString() {
+            return new ToStringBuilder(this)
+                    .append("storageURL", storageURL)
+                    .append("entryRootPrefix", entryRootPrefix)
+                    .append("entryRootLocation", entryRootLocation)
+                    .append("entryRelativePath", entryRelativePath)
+                    .append("collectionFlag", collectionFlag)
+                    .toString();
         }
     }
     private final String storageServiceApiKey;

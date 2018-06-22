@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.domain.enums.FileType;
 
@@ -50,5 +51,16 @@ class StorageContentInfo {
 
     public void setFileType(FileType fileType) {
         this.fileType = fileType;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("dataNodeId", dataNodeId)
+                .append("remoteInfo", remoteInfo)
+                .append("localBasePath", localBasePath)
+                .append("localRelativePath", localRelativePath)
+                .append("fileType", fileType)
+                .toString();
     }
 }

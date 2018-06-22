@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
@@ -30,6 +31,7 @@ import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -185,12 +187,17 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
     }
 
     private List<MIPsResult> prepareMipsInput(MIPsConverterArgs args, JacsServiceData jacsServiceData) {
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        Path intermediateResultsDir = serviceWorkingFolder.getServiceFolder("tempTifs");
+        Path resultsDir;
+        if (StringUtils.isBlank(args.outputDir)) {
+            JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+            resultsDir = serviceWorkingFolder.getServiceFolder("tempTifs");
+        } else {
+            resultsDir = Paths.get(args.outputDir);
+        }
         return args.inputFiles.stream()
                 .map(inputName -> {
                     String tifMipsName = FileUtils.getFileNameOnly(inputName) + MIP_ARTIFACT_SUFFIX + TIFF_EXTENSION;
-                    return new MIPsResult(inputName, intermediateResultsDir.resolve(tifMipsName).toString());
+                    return new MIPsResult(inputName, resultsDir.resolve(tifMipsName).toString());
                 })
                 .collect(Collectors.toList());
     }

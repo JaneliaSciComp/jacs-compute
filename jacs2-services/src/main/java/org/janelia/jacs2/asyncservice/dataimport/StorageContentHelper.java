@@ -107,7 +107,7 @@ class StorageContentHelper {
                                     try {
                                         Path localPath = contentEntry.getLocalBasePath().resolve(contentEntry.getLocalRelativePath());
                                         if (Files.exists(localPath)) {
-                                            logger.info("Upload {} to {}", localPath, storageURL);
+                                            logger.info("Upload {}({}) to {}", contentEntry, localPath, storageURL);
                                             inputStream = new FileInputStream(localPath.toFile());
                                             contentEntry.setRemoteInfo(storageService.putStorageContent(
                                                     storageURL,
