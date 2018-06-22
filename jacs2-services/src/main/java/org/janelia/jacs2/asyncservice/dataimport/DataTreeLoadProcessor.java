@@ -115,7 +115,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
                 .thenCompose(storageContentResult ->
                         generateContentMIPs(storageContentResult.getJacsServiceData(), storageContentResult.getResult())
                                 .thenCompose(mipsContentResult -> storageContentHelper.uploadContent(mipsContentResult.getJacsServiceData(), args.storageLocation, mipsContentResult.getResult()))
-                                .thenApply(uploadedMipsResult -> new JacsServiceResult<>(uploadedMipsResult.getJacsServiceData(),
+                                .thenApply(uploadedMipsResult -> new JacsServiceResult<>(jacsServiceData,
                                         Stream.concat(
                                                 storageContentResult.getResult().stream(),
                                                 uploadedMipsResult.getResult().stream()
@@ -156,7 +156,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
                                     .orElse("")),
                             new ServiceArg("-outputDir", localMIPSRootPath.toString()))
                             .thenApply(mipsResults -> new JacsServiceResult<>(
-                                    mipsResults.getJacsServiceData(),
+                                    jacsServiceData,
                                     ImmutablePair.of(mipsResults.getResult(), downloadedMipsInputsResult.getResult()))) // pass the input through
                     )
                     .thenApply(mipsResults -> {

@@ -178,7 +178,7 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
                         List<MIPsResult> mipsResults = mipsInputs.stream()
                                 .map(mipsInput -> new MIPsResult(mipsInput.inputFile, tif2pngConversions.get(mipsInput.outputMIPsFile)))
                                 .collect(Collectors.toList());
-                        return new JacsServiceResult<>(pngMipsResults.getJacsServiceData(), mipsResults);
+                        return new JacsServiceResult<>(jacsServiceData, mipsResults);
                     });
         }
     }
