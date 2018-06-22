@@ -178,6 +178,7 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
         ImageConverterArgs args = getArgs(jacsServiceData);
         return getConverterArgs(args)
                 .filter(argsPair -> !argsPair.getLeft().equals(argsPair.getRight()))
+                .filter(argsPair -> FileUtils.fileNotExists(argsPair.getRight()))
                 .map(inOutArg -> {
                     ExternalCodeBlock configFileBlock = new ExternalCodeBlock();
                     ScriptWriter configWriter = configFileBlock.getCodeWriter();

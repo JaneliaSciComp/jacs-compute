@@ -37,7 +37,15 @@ public class FileUtils {
     }
 
     public static boolean fileNotExists(String filepath) {
-        return !fileExists(filepath);
+        return Files.notExists(Paths.get(filepath));
+    }
+
+    public static boolean fileExists(Path filepath) {
+        return Files.exists(filepath);
+    }
+
+    public static boolean fileNotExists(Path filepath) {
+        return Files.notExists(filepath);
     }
 
     public static Path createSubDirs(Path dir, String subDir) {
