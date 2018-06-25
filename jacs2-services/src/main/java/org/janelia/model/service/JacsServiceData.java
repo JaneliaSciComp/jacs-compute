@@ -605,7 +605,10 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         return dependencies.stream()
                 .filter(s -> s.getName().equals(dependency.getName()))
                 .filter(s -> s.getArgs().equals(dependency.getArgs()))
-                .filter(s -> s.getDependenciesIds().equals(dependency.getDependenciesIds()))
+                .filter(s -> s.getDependencies().stream() // compare dependencies but ignore the ones that are generated while processing s
+                        .filter(sd -> !sd.getParentServiceId().equals(s.getId()))
+                        .map(sd -> sd.getId())
+                        .collect(Collectors.toSet()).equals(dependency.getDependenciesIds()))
                 .findFirst();
     }
 
