@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -37,8 +39,10 @@ class StorageContentHelper {
     }
 
     StorageService.StorageInfo getOrCreateStorage(String storageServiceURL, String storageId, String storageName, String ownerKey, String authToken) {
-        return storageService
-                .lookupStorage(storageServiceURL, storageId, storageName, ownerKey, authToken)
+        Optional<StorageService.StorageInfo> storageLookup = storageService
+                .lookupStorage(storageServiceURL, storageId, storageName, ownerKey, authToken);
+
+        return storageLookup
                 .orElse(storageService.createStorage(storageServiceURL, storageName, ownerKey, authToken));
     }
 
