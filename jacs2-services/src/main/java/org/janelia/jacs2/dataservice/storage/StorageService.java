@@ -201,7 +201,7 @@ public class StorageService {
                 PageResult<StorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<StorageInfo>>(){});
                 if (storageInfoResult.getResultList().size() > 0) {
                     LOG.warn("Request {} returned more than one result {} please refine the query", target, storageInfoResult);
-                    return Optional.empty();
+                    return storageInfoResult.getResultList().stream().findFirst();
                 } else {
                     return storageInfoResult.getResultList().stream().findFirst();
                 }
