@@ -165,7 +165,10 @@ public class StorageService {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageServiceURL).path("storage");
+            WebTarget target = httpclient.target(storageServiceURL);
+            if (!StringUtils.endsWith(storageServiceURL, "/storage")) {
+                target = target.path("storage");
+            }
             if (StringUtils.isNotBlank(storageId)) {
                 target = target.queryParam("id", storageId);
             }
@@ -183,7 +186,12 @@ public class StorageService {
                 return Optional.empty();
             } else {
                 PageResult<StorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<StorageInfo>>(){});
-                return storageInfoResult.getResultList().stream().findFirst();
+                if (storageInfoResult.getResultList().size() > 0) {
+                    LOG.warn("Request {} returned more than one result {} please refine the query", target, storageInfoResult);
+                    return Optional.empty();
+                } else {
+                    return storageInfoResult.getResultList().stream().findFirst();
+                }
             }
         } catch (IllegalStateException e) {
             throw e;
@@ -200,7 +208,10 @@ public class StorageService {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageServiceURL).path("storage");
+            WebTarget target = httpclient.target(storageServiceURL);
+            if (!StringUtils.endsWith(storageServiceURL, "/storage")) {
+                target = target.path("storage");
+            }
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subject, authToken);
             StorageInfo storageData = new StorageInfo();
             storageData.setName(storageName);
