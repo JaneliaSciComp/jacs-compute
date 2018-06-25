@@ -1,5 +1,6 @@
 package org.janelia.jacs2.dataservice.storage;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
@@ -18,7 +19,10 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
@@ -101,6 +105,15 @@ public class StorageService {
 
         public void setStorageFormat(String storageFormat) {
             this.storageFormat = storageFormat;
+        }
+
+        @JsonIgnore
+        public String getStorageURL() {
+            try {
+                return UriBuilder.fromUri(new URI(getConnectionURL())).path("agent_storage").path(getStorageId()).build().toString();
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException(e);
+            }
         }
     }
 

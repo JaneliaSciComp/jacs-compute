@@ -198,7 +198,9 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                             args.storageId, storageName,
                             jacsServiceData.getOwnerKey(),
                             ResourceHelper.getAuthToken(jacsServiceData.getResources())))
-                    .thenCompose((StorageService.StorageInfo storageInfo) -> storageContentHelper.uploadContent(jacsServiceData, storageInfo.getConnectionURL(), contentList))
+                    .thenCompose((StorageService.StorageInfo storageInfo) -> storageContentHelper.uploadContent(jacsServiceData,
+                            storageInfo.getStorageURL(),
+                            contentList))
                     ;
         }
     }
