@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -136,6 +137,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
         } else {
             Path dirPath = Paths.get(args.dirName);
             return FileUtils.lookupFiles(dirPath, args.dirLookupDepth, args.fileNameFilter)
+                    .filter(fp -> Files.isRegularFile(fp))
                     .map(fp -> {
                         StorageContentInfo contentInfo = new StorageContentInfo();
                         contentInfo.setLocalBasePath(dirPath);
