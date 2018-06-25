@@ -241,7 +241,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
                                             })
                                             ;
                                 })
-                                .orElse(computationFactory.newCompletedComputation(groupedArea));
+                                .orElseGet(() -> computationFactory.newCompletedComputation(groupedArea));
                     } else {
                         return computationFactory.newCompletedComputation(groupedArea);
                     }

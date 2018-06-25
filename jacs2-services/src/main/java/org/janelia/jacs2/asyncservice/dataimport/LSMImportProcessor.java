@@ -481,7 +481,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
             Sample selectedSample = sampleCandidates.getResultList().stream()
                     .filter(s -> s.isSageSynced())
                     .findFirst()
-                    .orElse(sampleCandidates.getResultList().get(0))
+                    .orElseGet(() -> sampleCandidates.getResultList().get(0))
             ;
             // unsync all the other samples
             sampleCandidates.getResultList().stream()

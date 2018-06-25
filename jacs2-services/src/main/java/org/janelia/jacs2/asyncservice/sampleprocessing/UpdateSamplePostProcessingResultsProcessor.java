@@ -112,6 +112,6 @@ public class UpdateSamplePostProcessingResultsProcessor extends AbstractBasicLif
     private Path getPostProcessingResultOutputDir(UpdateSamplePostProcessingResultsArgs args) {
         return FileUtils.commonPath(args.resultsDirs)
                 .map(pn -> Paths.get(pn))
-                .orElse(Paths.get(StringUtils.defaultIfBlank(args.sampleDataRootDir, ""), StringUtils.defaultIfBlank(args.samplePostSubDir, "")));
+                .orElseGet(() -> Paths.get(StringUtils.defaultIfBlank(args.sampleDataRootDir, ""), StringUtils.defaultIfBlank(args.samplePostSubDir, "")));
     }
 }

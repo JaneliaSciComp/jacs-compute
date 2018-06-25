@@ -39,11 +39,10 @@ class StorageContentHelper {
     }
 
     StorageService.StorageInfo getOrCreateStorage(String storageServiceURL, String storageId, String storageName, String ownerKey, String authToken) {
-        Optional<StorageService.StorageInfo> storageLookup = storageService
-                .lookupStorage(storageServiceURL, storageId, storageName, ownerKey, authToken);
-
-        return storageLookup
-                .orElse(storageService.createStorage(storageServiceURL, storageName, ownerKey, authToken));
+        return storageService
+                .lookupStorage(storageServiceURL, storageId, storageName, ownerKey, authToken)
+                .orElseGet(() -> storageService.createStorage(storageServiceURL, storageName, ownerKey, authToken))
+                ;
     }
 
     ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> listContent(JacsServiceData jacsServiceData, String storageURL) {
