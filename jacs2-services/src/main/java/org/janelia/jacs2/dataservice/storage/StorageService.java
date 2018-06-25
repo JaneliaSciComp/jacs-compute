@@ -199,7 +199,7 @@ public class StorageService {
                 return Optional.empty();
             } else {
                 PageResult<StorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<StorageInfo>>(){});
-                if (storageInfoResult.getResultList().size() > 0) {
+                if (storageInfoResult.getResultList().size() > 1) {
                     LOG.warn("Request {} returned more than one result {} please refine the query", target, storageInfoResult);
                     return storageInfoResult.getResultList().stream().findFirst();
                 } else {
