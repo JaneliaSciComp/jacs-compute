@@ -229,6 +229,7 @@ public class StorageService {
             StorageInfo storageData = new StorageInfo();
             storageData.setName(storageName);
             storageData.setOwnerKey(subject);
+            storageData.setStorageFormat("DATA_DIRECTORY");
             Response response = requestBuilder.post(Entity.json(storageData));
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
