@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
+import org.janelia.model.jacs2.page.PageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -166,9 +167,13 @@ public class StorageService {
             httpclient = HttpUtils.createHttpClient();
             WebTarget target = httpclient.target(storageServiceURL).path("storage");
             if (StringUtils.isNotBlank(storageId)) {
-                target = target.path(storageId);
-            } else {
-                target = target.path(subject).path(storageName);
+                target = target.queryParam("id", storageId);
+            }
+            if (StringUtils.isNotBlank(storageName)) {
+                target = target.queryParam("name", storageName);
+            }
+            if (StringUtils.isNotBlank(subject)) {
+                target = target.queryParam("ownerKey", subject);
             }
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subject, authToken);
             Response response = requestBuilder.get();
@@ -177,7 +182,8 @@ public class StorageService {
                 LOG.warn("Request {} returned status {}", target, responseStatus);
                 return Optional.empty();
             } else {
-                return Optional.of(response.readEntity(StorageInfo.class));
+                PageResult<StorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<StorageInfo>>(){});
+                return storageInfoResult.getResultList().stream().findFirst();
             }
         } catch (IllegalStateException e) {
             throw e;
