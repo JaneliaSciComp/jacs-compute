@@ -164,23 +164,23 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
                                 .collect(Collectors.toMap(mr -> mr.getInputFile(), mr -> mr));
                         return new JacsServiceResult<>(jacsServiceData,
                                 // add the generated local mips to the content list
-                                    mipsResults.getResult().getRight().stream()
-                                            .map((StorageContentInfo mipsInput) -> {
-                                                String localMipsInputFullpath = mipsInput.getLocalBasePath().resolve(mipsInput.getLocalRelativePath()).toString();
-                                                String localMipsOutputFullpath = mipsIndexedResults.get(localMipsInputFullpath).getOutputMIPsFile();
-                                                Path localMipsOutputRelativepath = localMIPSRootPath.relativize(Paths.get(localMipsOutputFullpath));
-                                                StorageContentInfo mipsContentInfo = new StorageContentInfo();
-                                                mipsContentInfo.setRemoteInfo(new StorageService.StorageEntryInfo(
-                                                        mipsInput.getRemoteInfo().getStorageURL(),
-                                                        mipsInput.getRemoteInfo().getEntryRootLocation(),
-                                                        mipsInput.getRemoteInfo().getEntryRootPrefix(),
-                                                        localMipsOutputRelativepath.toString(),
-                                                        false));
-                                                mipsContentInfo.setLocalBasePath(localMIPSRootPath);
-                                                mipsContentInfo.setLocalRelativePath(localMipsOutputRelativepath);
-                                                mipsContentInfo.setFileType(FileType.SignalMip); // these entries are signal MIP entries
-                                                return mipsContentInfo;
-                                            })
+                                mipsResults.getResult().getRight().stream()
+                                        .map((StorageContentInfo mipsInput) -> {
+                                            String localMipsInputFullpath = mipsInput.getLocalBasePath().resolve(mipsInput.getLocalRelativePath()).toString();
+                                            String localMipsOutputFullpath = mipsIndexedResults.get(localMipsInputFullpath).getOutputMIPsFile();
+                                            Path localMipsOutputRelativepath = localMIPSRootPath.relativize(Paths.get(localMipsOutputFullpath));
+                                            StorageContentInfo mipsContentInfo = new StorageContentInfo();
+                                            mipsContentInfo.setRemoteInfo(new StorageService.StorageEntryInfo(
+                                                    mipsInput.getRemoteInfo().getStorageURL(),
+                                                    mipsInput.getRemoteInfo().getEntryRootLocation(),
+                                                    mipsInput.getRemoteInfo().getEntryRootPrefix(),
+                                                    localMipsOutputRelativepath.toString(),
+                                                    false));
+                                            mipsContentInfo.setLocalBasePath(localMIPSRootPath);
+                                            mipsContentInfo.setLocalRelativePath(localMipsOutputRelativepath);
+                                            mipsContentInfo.setFileType(FileType.SignalMip); // these entries are signal MIP entries
+                                            return mipsContentInfo;
+                                        })
                                         .collect(Collectors.toList()));
                     });
         } else {
@@ -193,9 +193,9 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
         if (args.cleanLocalFilesWhenDone) {
             return computationFactory.<JacsServiceResult<List<StorageContentInfo>>>newComputation()
                     .supply(() -> new JacsServiceResult<>(jacsServiceData, contentList.stream()
-                            .peek(contentWithMIPsInfo -> {
-                                if (contentWithMIPsInfo.getLocalRelativePath() != null) {
-                                    Path localContentPath = contentWithMIPsInfo.getLocalBasePath().resolve(contentWithMIPsInfo.getLocalRelativePath());
+                            .peek((StorageContentInfo contentInfo) -> {
+                                if (contentInfo.getLocalRelativePath() != null) {
+                                    Path localContentPath = contentInfo.getLocalBasePath().resolve(contentInfo.getLocalRelativePath());
                                     logger.info("Clean local file {} ", localContentPath);
                                     try {
                                         FileUtils.deletePath(localContentPath);
