@@ -45,11 +45,12 @@ class StorageContentHelper {
                 ;
     }
 
-    ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> listContent(JacsServiceData jacsServiceData, String storageURL) {
+    ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> listContent(JacsServiceData jacsServiceData, String storageURL, String storagePath) {
         return computationFactory.<JacsServiceResult<List<StorageContentInfo>>>newComputation()
                 .supply(() -> {
                     List<StorageService.StorageEntryInfo> contentToLoad = storageService.listStorageContent(
                             storageURL,
+                            storagePath,
                             jacsServiceData.getOwnerKey(),
                             ResourceHelper.getAuthToken(jacsServiceData.getResources()));
                     return new JacsServiceResult<>(jacsServiceData,

@@ -287,7 +287,7 @@ public class StorageService {
                 throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
             }
             JsonNode storageNode = response.readEntity(new GenericType<JsonNode>(){});
-            return extractStorageNodeFromJson(entryLocationUrl, storageNode);
+            return extractStorageNodeFromJson(entryLocationUrl, null, storageNode);
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
@@ -299,20 +299,26 @@ public class StorageService {
         }
     }
 
-    public List<StorageEntryInfo> listStorageContent(String storageLocation, String subject, String authToken) {
+    public List<StorageEntryInfo> listStorageContent(String storageLocationURL,
+                                                     String storagePath,
+                                                     String subject,
+                                                     String authToken) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageLocation).path("list");
+            WebTarget target = httpclient.target(storageLocationURL).path("list");
+            if (StringUtils.isNotBlank(storagePath)) {
+                target = target.path(storagePath);
+            }
             Invocation.Builder requestBuilder = createRequestWithCredentials(
                     target.request(MediaType.APPLICATION_JSON), subject, authToken);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
             List<JsonNode> storageCotent = response.readEntity(new GenericType<List<JsonNode>>(){});
             return storageCotent.stream()
-                    .map(content -> extractStorageNodeFromJson(storageLocation, content))
+                    .map(content -> extractStorageNodeFromJson(storageLocationURL, storagePath, content))
                     .collect(Collectors.toList());
         } catch (IllegalStateException e) {
             throw e;
@@ -344,11 +350,19 @@ public class StorageService {
         return requestWithCredentialsBuilder;
     }
 
-    private StorageEntryInfo extractStorageNodeFromJson(String storageUrl, JsonNode jsonNode) {
+    private StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storagePath, JsonNode jsonNode) {
         JsonNode rootLocation = jsonNode.get("rootLocation");
         JsonNode rootPrefix = jsonNode.get("rootPrefix");
         JsonNode nodeRelativePath = jsonNode.get("nodeRelativePath");
         JsonNode collectionFlag = jsonNode.get("collectionFlag");
-        return new StorageEntryInfo(storageUrl, rootLocation.asText(), rootPrefix.asText(), nodeRelativePath.asText(), collectionFlag.asBoolean());
+        String storageEntryURL = storageUrl;
+        if (StringUtils.isNotBlank(storagePath)) {
+            storageEntryURL = StringUtils.appendIfMissing(storageEntryURL, "/") + storagePath;
+        }
+        return new StorageEntryInfo(storageEntryURL,
+                rootLocation.asText(),
+                rootPrefix.asText(),
+                nodeRelativePath.asText(),
+                collectionFlag.asBoolean());
     }
 }

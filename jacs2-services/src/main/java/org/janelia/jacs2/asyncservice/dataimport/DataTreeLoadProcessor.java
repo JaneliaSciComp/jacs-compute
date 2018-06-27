@@ -52,8 +52,10 @@ import java.util.stream.Stream;
 public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<StorageContentInfo>> {
 
     static class DataTreeLoadArgs extends CommonDataNodeArgs {
-        @Parameter(names = "-storageLocation", description = "Data storage location", required = true)
-        String storageLocation;
+        @Parameter(names = {"-storageLocation", "-storageLocationURL"}, description = "Data storage location URL", required = true)
+        String storageLocationURL;
+        @Parameter(names = "-storagePath", description = "Data storage path relative to the storageURL")
+        String storagePath;
         @Parameter(names = "-fileTypeOverride", description = "Override file type for all imported files", required = false)
         FileType fileTypeOverride;
         @Parameter(names = "-cleanLocalFilesWhenDone", description = "Clean up local files when all data loading is done")
@@ -111,10 +113,13 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
     public ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> process(JacsServiceData jacsServiceData) {
         DataTreeLoadArgs args = getArgs(jacsServiceData);
         return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenCompose(sd -> storageContentHelper.listContent(jacsServiceData, args.storageLocation))
+                .thenCompose(sd -> storageContentHelper.listContent(jacsServiceData, args.storageLocationURL, args.storagePath))
                 .thenCompose(storageContentResult ->
                         generateContentMIPs(storageContentResult.getJacsServiceData(), storageContentResult.getResult())
-                                .thenCompose(mipsContentResult -> storageContentHelper.uploadContent(mipsContentResult.getJacsServiceData(), args.storageLocation, mipsContentResult.getResult()))
+                                .thenCompose(mipsContentResult -> storageContentHelper.uploadContent(
+                                        mipsContentResult.getJacsServiceData(),
+                                        args.storageLocationURL,
+                                        mipsContentResult.getResult()))
                                 .thenApply(uploadedMipsResult -> new JacsServiceResult<>(jacsServiceData,
                                         Stream.concat(
                                                 storageContentResult.getResult().stream(),
