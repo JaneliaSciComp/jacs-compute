@@ -353,11 +353,17 @@ public class StorageService {
     private StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storagePath, JsonNode jsonNode) {
         JsonNode rootLocation = jsonNode.get("rootLocation");
         JsonNode rootPrefix = jsonNode.get("rootPrefix");
+        JsonNode nodeAccessURL = jsonNode.get("nodeAccessURL");
         JsonNode nodeRelativePath = jsonNode.get("nodeRelativePath");
         JsonNode collectionFlag = jsonNode.get("collectionFlag");
-        String storageEntryURL = storageUrl;
-        if (StringUtils.isNotBlank(storagePath)) {
-            storageEntryURL = StringUtils.appendIfMissing(storageEntryURL, "/") + storagePath;
+        String storageEntryURL;
+        if (nodeAccessURL != null && StringUtils.isNotBlank(nodeAccessURL.asText())) {
+            storageEntryURL = nodeAccessURL.asText();
+        } else {
+            storageEntryURL = storageUrl;
+            if (StringUtils.isNotBlank(storagePath)) {
+                storageEntryURL = StringUtils.appendIfMissing(storageEntryURL, "/") + storagePath;
+            }
         }
         return new StorageEntryInfo(storageEntryURL,
                 rootLocation.asText(),
