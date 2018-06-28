@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ResourceHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -76,7 +77,8 @@ class StorageContentHelper {
                         contentList.stream()
                                 .peek(contentEntry -> {
                                     try {
-                                        Path entryRelativePath = Paths.get(contentEntry.getRemoteInfo().getEntryRelativePath());
+                                        String entryRelativePathName = contentEntry.getRemoteInfo().getEntryRelativePath();
+                                        Path entryRelativePath = Paths.get(sanitizeFileName(entryRelativePathName));
                                         Path localEntryFullPath = localBasePath.resolve(entryRelativePath);
                                         if (Files.notExists(localEntryFullPath) || Files.size(localEntryFullPath) == 0) {
                                             // no local copy found - so download it
@@ -99,6 +101,14 @@ class StorageContentHelper {
                                 })
                                 .collect(Collectors.toList())
                 ));
+    }
+
+    private String sanitizeFileName(String fname) {
+        if (StringUtils.isBlank(fname)) {
+            return fname;
+        } else {
+            return fname.replace('#', '_');
+        }
     }
 
     ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> uploadContent(JacsServiceData jacsServiceData, String storageURL, List<StorageContentInfo> contentList) {
