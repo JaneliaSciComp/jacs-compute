@@ -177,6 +177,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
                                             StorageContentInfo mipsContentInfo = new StorageContentInfo();
                                             mipsContentInfo.setRemoteInfo(new StorageService.StorageEntryInfo(
                                                     mipsInput.getRemoteInfo().getStorageURL(),
+                                                    mipsInput.getRemoteInfo().getStorageEntryURL(),
                                                     mipsInput.getRemoteInfo().getEntryRootLocation(),
                                                     mipsInput.getRemoteInfo().getEntryRootPrefix(),
                                                     localMipsOutputRelativepath.toString(),

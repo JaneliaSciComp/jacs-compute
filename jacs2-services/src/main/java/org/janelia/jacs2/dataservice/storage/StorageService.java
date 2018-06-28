@@ -119,13 +119,15 @@ public class StorageService {
 
     public static class StorageEntryInfo {
         private final String storageURL;
+        private final String storageEntryURL;
         private final String entryRootPrefix;
         private final String entryRootLocation;
         private final String entryRelativePath;
         private final boolean collectionFlag;
 
-        public StorageEntryInfo(String storageURL, String entryRootLocation, String entryRootPrefix, String entryRelativePath, boolean collectionFlag) {
+        public StorageEntryInfo(String storageURL, String storageEntryURL, String entryRootLocation, String entryRootPrefix, String entryRelativePath, boolean collectionFlag) {
             this.storageURL = storageURL;
+            this.storageEntryURL = storageEntryURL;
             this.entryRootLocation = entryRootLocation;
             this.entryRootPrefix = entryRootPrefix;
             this.entryRelativePath = entryRelativePath;
@@ -134,6 +136,10 @@ public class StorageService {
 
         public String getStorageURL() {
             return storageURL;
+        }
+
+        public String getStorageEntryURL() {
+            return storageEntryURL;
         }
 
         public String getEntryRootLocation() {
@@ -159,7 +165,7 @@ public class StorageService {
         @Override
         public String toString() {
             return new ToStringBuilder(this)
-                    .append("storageURL", storageURL)
+                    .append("storageEntryURL", storageEntryURL)
                     .append("entryRootPrefix", entryRootPrefix)
                     .append("entryRootLocation", entryRootLocation)
                     .append("entryRelativePath", entryRelativePath)
@@ -248,15 +254,15 @@ public class StorageService {
         }
     }
 
-    public InputStream getStorageContent(String storageLocation, String entryName, String subject, String authToken) {
+    public InputStream getStorageContent(String storageEntryURL, String entryName, String subject, String authToken) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageLocation).path("entry_content").path(entryName);
+            WebTarget target = httpclient.target(storageEntryURL);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
+                throw new IllegalStateException(storageEntryURL + "for " + entryName + " returned with " + response.getStatus());
             }
             return response.readEntity(InputStream.class);
         } catch (IllegalStateException e) {
@@ -270,24 +276,24 @@ public class StorageService {
         }
     }
 
-    public StorageEntryInfo putStorageContent(String storageLocation, String entryName, String subject, String authToken, InputStream dataStream) {
+    public StorageEntryInfo putStorageContent(String storageURL, String entryName, String subject, String authToken, InputStream dataStream) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageLocation).path("file").path(entryName);
+            WebTarget target = httpclient.target(storageURL).path("file").path(entryName);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
             String entryLocationUrl;
             if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
                 entryLocationUrl = response.getHeaderString("Location");
             } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
-                LOG.warn("Entry {} already exists at {}", entryName, storageLocation);
+                LOG.warn("Entry {} already exists at {}", entryName, storageURL);
                 entryLocationUrl = response.getHeaderString("Location");
             } else {
-                throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
+                throw new IllegalStateException(storageURL + " returned with " + response.getStatus());
             }
             JsonNode storageNode = response.readEntity(new GenericType<JsonNode>(){});
-            return extractStorageNodeFromJson(entryLocationUrl, null, storageNode);
+            return extractStorageNodeFromJson(storageURL, entryLocationUrl, null, storageNode);
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
@@ -318,7 +324,7 @@ public class StorageService {
             }
             List<JsonNode> storageCotent = response.readEntity(new GenericType<List<JsonNode>>(){});
             return storageCotent.stream()
-                    .map(content -> extractStorageNodeFromJson(storageLocationURL, storagePath, content))
+                    .map(content -> extractStorageNodeFromJson(storageLocationURL, null, storagePath, content))
                     .collect(Collectors.toList());
         } catch (IllegalStateException e) {
             throw e;
@@ -350,22 +356,27 @@ public class StorageService {
         return requestWithCredentialsBuilder;
     }
 
-    private StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storagePath, JsonNode jsonNode) {
+    private StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storageEntryUrl, String storagePath, JsonNode jsonNode) {
         JsonNode rootLocation = jsonNode.get("rootLocation");
         JsonNode rootPrefix = jsonNode.get("rootPrefix");
         JsonNode nodeAccessURL = jsonNode.get("nodeAccessURL");
         JsonNode nodeRelativePath = jsonNode.get("nodeRelativePath");
         JsonNode collectionFlag = jsonNode.get("collectionFlag");
-        String storageEntryURL;
+        String actualEntryURL;
         if (nodeAccessURL != null && StringUtils.isNotBlank(nodeAccessURL.asText())) {
-            storageEntryURL = nodeAccessURL.asText();
+            actualEntryURL = nodeAccessURL.asText();
+        } else if (StringUtils.isNotBlank(storageEntryUrl)) {
+            actualEntryURL = storageEntryUrl;
         } else {
-            storageEntryURL = storageUrl;
             if (StringUtils.isNotBlank(storagePath)) {
-                storageEntryURL = StringUtils.appendIfMissing(storageEntryURL, "/") + storagePath;
+                actualEntryURL = StringUtils.appendIfMissing(storageUrl, "/") + storagePath;
+            } else {
+                actualEntryURL = storageUrl;
             }
         }
-        return new StorageEntryInfo(storageEntryURL,
+        return new StorageEntryInfo(
+                storageUrl,
+                actualEntryURL,
                 rootLocation.asText(),
                 rootPrefix.asText(),
                 nodeRelativePath.asText(),
