@@ -314,14 +314,11 @@ public class StorageService {
             String entryLocationUrl;
             if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
                 entryLocationUrl = response.getHeaderString("Location");
-            } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
-                LOG.warn("Entry {} already exists at {}", entryName, storageURL);
-                entryLocationUrl = response.getHeaderString("Location");
+                JsonNode storageNode = response.readEntity(new GenericType<JsonNode>(){});
+                return extractStorageNodeFromJson(storageURL, entryLocationUrl, null, storageNode);
             } else {
                 throw new IllegalStateException(storageURL + " returned with " + response.getStatus());
             }
-            JsonNode storageNode = response.readEntity(new GenericType<JsonNode>(){});
-            return extractStorageNodeFromJson(storageURL, entryLocationUrl, null, storageNode);
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
