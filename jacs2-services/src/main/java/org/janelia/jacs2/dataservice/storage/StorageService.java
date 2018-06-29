@@ -310,7 +310,7 @@ public class StorageService {
             httpclient = HttpUtils.createHttpClient();
             WebTarget target = httpclient.target(storageURL).path("file").path(entryName);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
-            Response response = requestBuilder.post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            Response response = requestBuilder.put(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
             String entryLocationUrl;
             if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
                 entryLocationUrl = response.getHeaderString("Location");
