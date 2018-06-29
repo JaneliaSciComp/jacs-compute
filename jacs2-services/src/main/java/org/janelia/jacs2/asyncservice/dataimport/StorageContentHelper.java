@@ -123,13 +123,23 @@ class StorageContentHelper {
                                         if (Files.exists(localPath)) {
                                             logger.info("Upload {}({}) to {}", contentEntry, localPath, storageURL);
                                             inputStream = new FileInputStream(localPath.toFile());
-                                            contentEntry.setRemoteInfo(storageService.putStorageContent(
-                                                    storageURL,
-                                                    contentEntry.getLocalRelativePath().toString(),
-                                                    jacsServiceData.getOwnerKey(),
-                                                    ResourceHelper.getAuthToken(jacsServiceData.getResources()),
-                                                    inputStream
-                                            ));
+                                            if (StringUtils.isBlank(contentEntry.getRemoteInfo().getStorageId())) {
+                                                contentEntry.setRemoteInfo(storageService.putStorageContent(
+                                                        storageURL,
+                                                        contentEntry.getRemoteInfo().getEntryRootPrefix() + "/" + contentEntry.getRemoteInfo().getEntryRelativePath(),
+                                                        jacsServiceData.getOwnerKey(),
+                                                        ResourceHelper.getAuthToken(jacsServiceData.getResources()),
+                                                        inputStream
+                                                ));
+                                            } else {
+                                                contentEntry.setRemoteInfo(storageService.putStorageContent(
+                                                        storageURL,
+                                                        contentEntry.getRemoteInfo().getEntryRelativePath(),
+                                                        jacsServiceData.getOwnerKey(),
+                                                        ResourceHelper.getAuthToken(jacsServiceData.getResources()),
+                                                        inputStream
+                                                ));
+                                            }
                                         }
                                     } catch (IOException e) {
                                         throw new UncheckedIOException(e);

@@ -37,6 +37,10 @@ public class StorageService {
         private String storageId;
         private String name;
         private String ownerKey;
+        @JsonProperty("storageRootPrefixDir")
+        private String storageRootPrefix;
+        @JsonProperty("storageRootRealDir")
+        private String storageRootDir;
         private String path;
         private String storageHost;
         private List<String> storageTags;
@@ -65,6 +69,22 @@ public class StorageService {
 
         public void setOwnerKey(String ownerKey) {
             this.ownerKey = ownerKey;
+        }
+
+        public String getStorageRootPrefix() {
+            return storageRootPrefix;
+        }
+
+        public void setStorageRootPrefix(String storageRootPrefix) {
+            this.storageRootPrefix = storageRootPrefix;
+        }
+
+        public String getStorageRootDir() {
+            return storageRootDir;
+        }
+
+        public void setStorageRootDir(String storageRootDir) {
+            this.storageRootDir = storageRootDir;
         }
 
         public String getPath() {
@@ -118,6 +138,7 @@ public class StorageService {
     }
 
     public static class StorageEntryInfo {
+        private final String storageId;
         private final String storageURL;
         private final String storageEntryURL;
         private final String entryRootPrefix;
@@ -125,13 +146,18 @@ public class StorageService {
         private final String entryRelativePath;
         private final boolean collectionFlag;
 
-        public StorageEntryInfo(String storageURL, String storageEntryURL, String entryRootLocation, String entryRootPrefix, String entryRelativePath, boolean collectionFlag) {
+        public StorageEntryInfo(String storageId, String storageURL, String storageEntryURL, String entryRootLocation, String entryRootPrefix, String entryRelativePath, boolean collectionFlag) {
+            this.storageId = storageId;
             this.storageURL = storageURL;
             this.storageEntryURL = storageEntryURL;
             this.entryRootLocation = entryRootLocation;
             this.entryRootPrefix = entryRootPrefix;
             this.entryRelativePath = entryRelativePath;
             this.collectionFlag = collectionFlag;
+        }
+
+        public String getStorageId() {
+            return storageId;
         }
 
         public String getStorageURL() {
@@ -165,6 +191,8 @@ public class StorageService {
         @Override
         public String toString() {
             return new ToStringBuilder(this)
+                    .append("storageId", storageId)
+                    .append("storageURL", storageURL)
                     .append("storageEntryURL", storageEntryURL)
                     .append("entryRootPrefix", entryRootPrefix)
                     .append("entryRootLocation", entryRootLocation)
@@ -357,11 +385,16 @@ public class StorageService {
     }
 
     private StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storageEntryUrl, String storagePath, JsonNode jsonNode) {
+        JsonNode storageIdNode = jsonNode.get("storageId");
         JsonNode rootLocation = jsonNode.get("rootLocation");
         JsonNode rootPrefix = jsonNode.get("rootPrefix");
         JsonNode nodeAccessURL = jsonNode.get("nodeAccessURL");
         JsonNode nodeRelativePath = jsonNode.get("nodeRelativePath");
         JsonNode collectionFlag = jsonNode.get("collectionFlag");
+        String storageId = null;
+        if (storageIdNode != null) {
+            storageId = storageIdNode.asText();
+        }
         String actualEntryURL;
         if (nodeAccessURL != null && StringUtils.isNotBlank(nodeAccessURL.asText())) {
             actualEntryURL = nodeAccessURL.asText();
@@ -375,6 +408,7 @@ public class StorageService {
             }
         }
         return new StorageEntryInfo(
+                storageId,
                 storageUrl,
                 actualEntryURL,
                 rootLocation.asText(),

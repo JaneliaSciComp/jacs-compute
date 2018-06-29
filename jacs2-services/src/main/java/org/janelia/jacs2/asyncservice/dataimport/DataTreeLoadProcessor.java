@@ -176,6 +176,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
                                             Path localMipsOutputRelativepath = localMIPSRootPath.relativize(Paths.get(localMipsOutputFullpath));
                                             StorageContentInfo mipsContentInfo = new StorageContentInfo();
                                             mipsContentInfo.setRemoteInfo(new StorageService.StorageEntryInfo(
+                                                    mipsInput.getRemoteInfo().getStorageId(), // I want the MIPs in the same bundle if one exists
                                                     mipsInput.getRemoteInfo().getStorageURL(),
                                                     null, // I don't know the entry URL yet
                                                     mipsInput.getRemoteInfo().getEntryRootLocation(),

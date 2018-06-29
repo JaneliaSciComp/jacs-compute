@@ -199,10 +199,25 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                             args.storageServiceURL,
                             args.storageId, storageName,
                             jacsServiceData.getOwnerKey(),
-                            ResourceHelper.getAuthToken(jacsServiceData.getResources())))
+                            ResourceHelper.getAuthToken(jacsServiceData.getResources()))
+                    )
                     .thenCompose((StorageService.StorageInfo storageInfo) -> storageContentHelper.uploadContent(jacsServiceData,
                             storageInfo.getStorageURL(),
-                            contentList))
+                            contentList.stream()
+                                    .peek(ci -> {
+                                        // update the preliminary remoteinfo now that storage is available
+                                        ci.setRemoteInfo(new StorageService.StorageEntryInfo(
+                                                storageInfo.getStorageId(),
+                                                storageInfo.getStorageURL(),
+                                                null,
+                                                storageInfo.getStorageRootDir(),
+                                                storageInfo.getStorageRootPrefix(),
+                                                ci.getLocalRelativePath().toString(),
+                                                false
+                                        ));
+                                    })
+                                    .collect(Collectors.toList()))
+                    )
                     ;
         }
     }
