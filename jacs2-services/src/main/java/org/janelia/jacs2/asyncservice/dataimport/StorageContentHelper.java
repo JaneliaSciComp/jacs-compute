@@ -124,6 +124,8 @@ class StorageContentHelper {
                                             logger.info("Upload {}({}) to {}", contentEntry, localPath, storageURL);
                                             inputStream = new FileInputStream(localPath.toFile());
                                             if (StringUtils.isBlank(contentEntry.getRemoteInfo().getStorageId())) {
+                                                // if the data is pushed directly to the volume because there's no bundle specified
+                                                // use the full virtual path to push to "storage_path/file/{dataPath:.*}" endpoint
                                                 contentEntry.setRemoteInfo(storageService.putStorageContent(
                                                         storageURL,
                                                         contentEntry.getRemoteInfo().getEntryRootPrefix() + "/" + contentEntry.getRemoteInfo().getEntryRelativePath(),
@@ -132,6 +134,9 @@ class StorageContentHelper {
                                                         inputStream
                                                 ));
                                             } else {
+                                                // if the data is pushed to an existing bundle use the entry relative path
+                                                // storageURL should reference the bundle and the content will be pushed to
+                                                // "{dataBundleId}/file/{dataEntryPath:.*}" endpoint
                                                 contentEntry.setRemoteInfo(storageService.putStorageContent(
                                                         storageURL,
                                                         contentEntry.getRemoteInfo().getEntryRelativePath(),
