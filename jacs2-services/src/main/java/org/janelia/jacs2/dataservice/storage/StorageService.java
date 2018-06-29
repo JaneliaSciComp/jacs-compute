@@ -392,7 +392,7 @@ public class StorageService {
         JsonNode nodeRelativePath = jsonNode.get("nodeRelativePath");
         JsonNode collectionFlag = jsonNode.get("collectionFlag");
         String storageId = null;
-        if (storageIdNode != null) {
+        if (storageIdNode != null && !storageIdNode.isNull()) {
             storageId = storageIdNode.asText();
         }
         String actualEntryURL;
