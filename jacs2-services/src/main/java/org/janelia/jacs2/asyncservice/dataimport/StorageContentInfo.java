@@ -1,16 +1,19 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.domain.enums.FileType;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 class StorageContentInfo {
     private Number dataNodeId;
     private StorageService.StorageEntryInfo remoteInfo;
-    private Path localBasePath;
-    private Path localRelativePath;
+    private String localBasePath;
+    private String localRelativePath;
     private FileType fileType;
 
     public Number getDataNodeId() {
@@ -29,20 +32,25 @@ class StorageContentInfo {
         this.remoteInfo = remoteInfo;
     }
 
-    public Path getLocalBasePath() {
+    public String getLocalBasePath() {
         return localBasePath;
     }
 
-    public void setLocalBasePath(Path localBasePath) {
+    public void setLocalBasePath(String localBasePath) {
         this.localBasePath = localBasePath;
     }
 
-    public Path getLocalRelativePath() {
+    public String getLocalRelativePath() {
         return localRelativePath;
     }
 
-    public void setLocalRelativePath(Path localRelativePath) {
+    public void setLocalRelativePath(String localRelativePath) {
         this.localRelativePath = localRelativePath;
+    }
+
+    @JsonIgnore
+    public Path getLocalFullPath() {
+        return StringUtils.isNotBlank(localBasePath) ? Paths.get(localBasePath, localRelativePath) : Paths.get(localRelativePath);
     }
 
     public FileType getFileType() {

@@ -140,8 +140,8 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                     .filter(fp -> Files.isRegularFile(fp))
                     .map(fp -> {
                         StorageContentInfo contentInfo = new StorageContentInfo();
-                        contentInfo.setLocalBasePath(dirPath);
-                        contentInfo.setLocalRelativePath(dirPath.relativize(fp));
+                        contentInfo.setLocalBasePath(dirPath.toString());
+                        contentInfo.setLocalRelativePath(dirPath.relativize(fp).toString());
                         return contentInfo;
                     })
                     .collect(Collectors.toList());
@@ -166,7 +166,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                             .description("Generate MIPs")
                             .build(),
                     new ServiceArg("-inputFiles", mipsInputList.stream()
-                            .map(contentEntryInfo -> contentEntryInfo.getLocalBasePath().resolve(contentEntryInfo.getLocalRelativePath()).toString())
+                            .map(contentEntryInfo -> contentEntryInfo.getLocalFullPath().toString())
                             .reduce((p1, p2) -> p1 + "," + p2)
                             .orElse("")),
                     new ServiceArg("-outputDir", localMIPSRootPath.toString()))
@@ -176,8 +176,8 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                                     mipsResults.getResult().stream()
                                             .map(mr -> {
                                                 StorageContentInfo mipsContentInfo = new StorageContentInfo();
-                                                mipsContentInfo.setLocalBasePath(localMIPSRootPath);
-                                                mipsContentInfo.setLocalRelativePath(localMIPSRootPath.relativize(Paths.get(mr.getOutputMIPsFile())));
+                                                mipsContentInfo.setLocalBasePath(localMIPSRootPath.toString());
+                                                mipsContentInfo.setLocalRelativePath(localMIPSRootPath.relativize(Paths.get(mr.getOutputMIPsFile())).toString());
                                                 mipsContentInfo.setFileType(FileType.SignalMip); // these entries are signal MIP entries
                                                 return mipsContentInfo;
                                             }))

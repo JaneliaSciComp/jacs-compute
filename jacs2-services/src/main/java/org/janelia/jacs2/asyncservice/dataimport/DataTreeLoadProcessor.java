@@ -156,7 +156,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
                                     .description("Generate MIPs")
                                     .build(),
                             new ServiceArg("-inputFiles", downloadedMipsInputsResult.getResult().stream()
-                                    .map(contentEntryInfo -> contentEntryInfo.getLocalBasePath().resolve(contentEntryInfo.getLocalRelativePath()).toString())
+                                    .map(contentEntryInfo -> contentEntryInfo.getLocalFullPath().toString())
                                     .reduce((p1, p2) -> p1 + "," + p2)
                                     .orElse("")),
                             new ServiceArg("-outputDir", localMIPSRootPath.toString()))
@@ -171,7 +171,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
                                 // add the generated local mips to the content list
                                 mipsResults.getResult().getRight().stream()
                                         .map((StorageContentInfo mipsInput) -> {
-                                            String localMipsInputFullpath = mipsInput.getLocalBasePath().resolve(mipsInput.getLocalRelativePath()).toString();
+                                            String localMipsInputFullpath = mipsInput.getLocalFullPath().toString();
                                             String localMipsOutputFullpath = mipsIndexedResults.get(localMipsInputFullpath).getOutputMIPsFile();
                                             Path localMipsOutputRelativepath = localMIPSRootPath.relativize(Paths.get(localMipsOutputFullpath));
                                             StorageContentInfo mipsContentInfo = new StorageContentInfo();
@@ -188,8 +188,8 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
                                                             null,
                                                             FileUtils.getFileExtensionOnly(localMipsOutputFullpath)).toString(),
                                                     false));
-                                            mipsContentInfo.setLocalBasePath(localMIPSRootPath);
-                                            mipsContentInfo.setLocalRelativePath(localMipsOutputRelativepath);
+                                            mipsContentInfo.setLocalBasePath(localMIPSRootPath.toString());
+                                            mipsContentInfo.setLocalRelativePath(localMipsOutputRelativepath.toString());
                                             mipsContentInfo.setFileType(FileType.SignalMip); // these entries are signal MIP entries
                                             return mipsContentInfo;
                                         })
@@ -207,7 +207,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Storage
                     .supply(() -> new JacsServiceResult<>(jacsServiceData, contentList.stream()
                             .peek((StorageContentInfo contentInfo) -> {
                                 if (contentInfo.getLocalRelativePath() != null) {
-                                    Path localContentPath = contentInfo.getLocalBasePath().resolve(contentInfo.getLocalRelativePath());
+                                    Path localContentPath = contentInfo.getLocalFullPath();
                                     logger.info("Clean local file {} ", localContentPath);
                                     try {
                                         FileUtils.deletePath(localContentPath);

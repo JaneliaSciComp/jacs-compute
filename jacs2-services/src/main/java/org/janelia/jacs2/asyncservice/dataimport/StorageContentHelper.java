@@ -93,8 +93,8 @@ class StorageContentHelper {
                                                     StandardCopyOption.REPLACE_EXISTING);
                                         }
                                         // set local path info
-                                        contentEntry.setLocalBasePath(localBasePath);
-                                        contentEntry.setLocalRelativePath(entryRelativePath);
+                                        contentEntry.setLocalBasePath(localBasePath.toString());
+                                        contentEntry.setLocalRelativePath(entryRelativePath.toString());
                                     } catch (IOException e) {
                                         throw new UncheckedIOException(e);
                                     }
@@ -119,7 +119,7 @@ class StorageContentHelper {
                                 .peek(contentEntry -> {
                                     FileInputStream inputStream = null;
                                     try {
-                                        Path localPath = contentEntry.getLocalBasePath().resolve(contentEntry.getLocalRelativePath());
+                                        Path localPath = Paths.get(contentEntry.getLocalBasePath()).resolve(contentEntry.getLocalRelativePath());
                                         if (Files.exists(localPath)) {
                                             logger.info("Upload {}({}) to {}", contentEntry, localPath, storageURL);
                                             inputStream = new FileInputStream(localPath.toFile());
