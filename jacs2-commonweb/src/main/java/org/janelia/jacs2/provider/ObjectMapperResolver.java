@@ -17,8 +17,7 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
     @Inject
     public ObjectMapperResolver(ObjectMapperFactory mapperFactory) {
         this.mapper = mapperFactory.newObjectMapper()
-                .registerModule(new NumberSerializerModule())
-                ;
+                .registerModule(new NumberSerializerModule());
     }
 
     @Override

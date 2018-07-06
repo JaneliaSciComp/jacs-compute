@@ -14,6 +14,8 @@ class CommonDataNodeArgs extends ServiceArgs {
     Long parentDataNodeId;
     @Parameter(names = {"-skipMIPS", "-noMIPS"}, description = "If set do not generate MIPs for the content")
     boolean skipMIPS = false;
+    @Parameter(names = {"-standaloneMIPS"}, description = "If set the MIPS are created as images - otherwise they are added to the image stack of the source")
+    boolean standaloneMIPS = false;
     @Parameter(names = "-mipsExtensions", description = "list of extensions for which to generate mips")
     List<String> mipsExtensions = new ArrayList<>(ImmutableList.of(
             ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd"
