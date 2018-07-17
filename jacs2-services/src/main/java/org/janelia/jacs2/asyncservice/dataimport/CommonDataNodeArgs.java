@@ -20,6 +20,12 @@ class CommonDataNodeArgs extends ServiceArgs {
     List<String> mipsExtensions = new ArrayList<>(ImmutableList.of(
             ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd"
     ));
+    @Parameter(names = "-mipsChanSpec", description = "MIPS channel spec - all files must have the same channel spec")
+    String mipsChanSpec = "sssr";
+    @Parameter(names = "-mipsColorSpec", description = "MIPS color spec - if specified all files must have the same color spec")
+    String mipsColorSpec;
+    @Parameter(names = "-mipsOptions", description = "MIPS Options")
+    String mipsOptions = "mips:movies:legends:bcomp";
 
     CommonDataNodeArgs(String serviceDescription) {
         super(serviceDescription);

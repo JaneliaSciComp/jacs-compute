@@ -29,7 +29,6 @@ import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilder;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilderFactory;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceParams;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -44,7 +43,7 @@ import org.janelia.jacs2.asyncservice.imageservices.AbstractMIPsAndMoviesProcess
 import org.janelia.jacs2.asyncservice.imageservices.BasicMIPsAndMoviesProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.EnhancedMIPsAndMoviesProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.FijiUtils;
-import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesInput;
+import org.janelia.jacs2.asyncservice.imageservices.AreaMIPsAndMoviesInput;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -395,7 +394,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                     Multimap<String, SampleAreaResult> objectiveAreas = Multimaps.index(sampleResult.getResult().getSampleAreaResults(), SampleAreaResult::getObjective);
                     return objectiveAreas.asMap().entrySet().stream()
                             .map(objectiveAreasEntry -> {
-                                List<MIPsAndMoviesInput> mipsAndMoviesInputs =
+                                List<AreaMIPsAndMoviesInput> mipsAndMoviesInputs =
                                         objectiveAreasEntry.getValue().stream()
                                                 .filter(sar -> !sar.getAnatomicalArea().contains("-Verify"))
                                                 .flatMap(sar -> sar.getMipsAndMoviesInput().stream())
@@ -405,10 +404,10 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                                         .result())
                                                 .collect(Collectors.toList());
                                 if (objectiveAreasEntry.getKey().equals("20x") && mipsAndMoviesInputs.size() == 2 &&
-                                        mipsAndMoviesInputs.stream().map(MIPsAndMoviesInput::getArea).collect(Collectors.toSet()).equals(ImmutableSet.of("Brain", "VNC"))) {
+                                        mipsAndMoviesInputs.stream().map(AreaMIPsAndMoviesInput::getArea).collect(Collectors.toSet()).equals(ImmutableSet.of("Brain", "VNC"))) {
                                     // Special case - if there are exactly 2 20x tile - one Brain and one VNC then generate normalized mipmaps
-                                    MIPsAndMoviesInput brainArea = mipsAndMoviesInputs.stream().filter(sar -> "Brain".equals(sar.getArea())).findFirst().orElseThrow(IllegalStateException::new);
-                                    MIPsAndMoviesInput vncArea = mipsAndMoviesInputs.stream().filter(sar -> "VNC".equals(sar.getArea())).findFirst().orElseThrow(IllegalStateException::new);
+                                    AreaMIPsAndMoviesInput brainArea = mipsAndMoviesInputs.stream().filter(sar -> "Brain".equals(sar.getArea())).findFirst().orElseThrow(IllegalStateException::new);
+                                    AreaMIPsAndMoviesInput vncArea = mipsAndMoviesInputs.stream().filter(sar -> "VNC".equals(sar.getArea())).findFirst().orElseThrow(IllegalStateException::new);
                                     Path postProcessingResultsDir = getPostProcessingOutputDir(
                                             sampleDataRootDir,
                                             samplePostProcessingSubDir,
@@ -454,7 +453,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                                     // generate mipmaps for each image
                                     List<ServiceComputation<?>> mipsAndMoviesComputations =
                                             IndexedReference.indexListContent(mipsAndMoviesInputs, (pos, mipsInput) -> new IndexedReference<>(mipsInput, pos))
-                                                    .map((IndexedReference<MIPsAndMoviesInput, Integer> indexedMipsInput) -> {
+                                                    .map((IndexedReference<AreaMIPsAndMoviesInput, Integer> indexedMipsInput) -> {
                                                         Path postProcessingResultsDir = getPostProcessingOutputDir(
                                                                 sampleDataRootDir,
                                                                 samplePostProcessingSubDir,

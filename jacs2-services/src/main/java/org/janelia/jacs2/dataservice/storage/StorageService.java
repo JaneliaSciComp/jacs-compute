@@ -1,5 +1,6 @@
 package org.janelia.jacs2.dataservice.storage;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -146,7 +147,14 @@ public class StorageService {
         private final String entryRelativePath;
         private final boolean collectionFlag;
 
-        public StorageEntryInfo(String storageId, String storageURL, String storageEntryURL, String entryRootLocation, String entryRootPrefix, String entryRelativePath, boolean collectionFlag) {
+        @JsonCreator
+        public StorageEntryInfo(@JsonProperty("storageId") String storageId,
+                                @JsonProperty("storageURL") String storageURL,
+                                @JsonProperty("storageEntryURL") String storageEntryURL,
+                                @JsonProperty("entryRootLocation") String entryRootLocation,
+                                @JsonProperty("entryRootPrefix") String entryRootPrefix,
+                                @JsonProperty("entryRelativePath") String entryRelativePath,
+                                @JsonProperty("collectionFlag") boolean collectionFlag) {
             this.storageId = storageId;
             this.storageURL = storageURL;
             this.storageEntryURL = storageEntryURL;
@@ -186,6 +194,16 @@ public class StorageService {
 
         public boolean isCollectionFlag() {
             return collectionFlag;
+        }
+
+        @JsonIgnore
+        public boolean isCollection() {
+            return isCollectionFlag();
+        }
+
+        @JsonIgnore
+        public boolean isNotCollection() {
+            return !isCollectionFlag();
         }
 
         @Override

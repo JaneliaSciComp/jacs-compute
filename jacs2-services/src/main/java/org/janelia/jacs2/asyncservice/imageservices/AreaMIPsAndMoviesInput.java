@@ -1,6 +1,6 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
-public class MIPsAndMoviesInput {
+public class AreaMIPsAndMoviesInput {
     private String filepath;
     private String outputPrefix;
     private String chanspec;

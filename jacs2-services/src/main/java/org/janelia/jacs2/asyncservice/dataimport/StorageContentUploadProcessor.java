@@ -17,7 +17,9 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.imageservices.MIPsConverterProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
+import org.janelia.jacs2.asyncservice.imageservices.MultiInputMIPsAndMoviesProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.SimpleMIPsConverterProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -34,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,7 +45,7 @@ import java.util.stream.Stream;
  * and uploads the MIPs for the
  */
 @Named("uploadStorageContent")
-public class StorageContentUploadProcessor extends AbstractServiceProcessor<List<StorageContentInfo>> {
+public class StorageContentUploadProcessor extends AbstractServiceProcessor<List<ContentStack>> {
 
     static class StorageContentUploadArgs extends CommonDataNodeArgs {
         @Parameter(names = "-dirName", description = "Directory to be uploaded to JADE")
@@ -66,7 +69,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
         }
     }
 
-    private final WrappedServiceProcessor<MIPsConverterProcessor, List<MIPsConverterProcessor.MIPsResult>> mipsConverterProcessor;
+    private final WrappedServiceProcessor<MultiInputMIPsAndMoviesProcessor, List<MIPsAndMoviesResult>> mipsConverterProcessor;
     private final StorageContentHelper storageContentHelper;
     private final DataNodeContentHelper dataNodeContentHelper;
 
@@ -74,7 +77,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
     StorageContentUploadProcessor(ServiceComputationFactory computationFactory,
                                   JacsServiceDataPersistence jacsServiceDataPersistence,
                                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                  MIPsConverterProcessor mipsConverterProcessor,
+                                  MultiInputMIPsAndMoviesProcessor mipsConverterProcessor,
                                   StorageService storageService,
                                   FolderService folderService,
                                   Logger logger) {
@@ -90,8 +93,8 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
     }
 
     @Override
-    public ServiceResultHandler<List<StorageContentInfo>> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<List<StorageContentInfo>>() {
+    public ServiceResultHandler<List<ContentStack>> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<List<ContentStack>>() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
@@ -99,29 +102,37 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
 
             @SuppressWarnings("unchecked")
             @Override
-            public List<StorageContentInfo> collectResult(JacsServiceResult<?> depResults) {
-                JacsServiceResult<List<StorageContentInfo>> intermediateResult = (JacsServiceResult<List<StorageContentInfo>>)depResults;
+            public List<ContentStack> collectResult(JacsServiceResult<?> depResults) {
+                JacsServiceResult<List<ContentStack>> intermediateResult = (JacsServiceResult<List<ContentStack>>)depResults;
                 return intermediateResult.getResult();
             }
 
-            public List<StorageContentInfo> getServiceDataResult(JacsServiceData jacsServiceData) {
+            public List<ContentStack> getServiceDataResult(JacsServiceData jacsServiceData) {
                 return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<StorageContentInfo>>() {});
             }
         };
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<List<ContentStack>>> process(JacsServiceData jacsServiceData) {
         StorageContentUploadArgs args = getArgs(jacsServiceData);
         return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenCompose(sd -> generateContentMIPs(sd, prepareContentEntries(sd)))
+                .thenApply(sd -> new JacsServiceResult<>(sd, prepareContentEntries(sd)))
+                .thenCompose(contentResult -> generateContentMIPs(contentResult.getJacsServiceData(), contentResult.getResult()))
                 .thenCompose(contentWithMipsResult -> uploadContent(contentWithMipsResult.getJacsServiceData(), contentWithMipsResult.getResult()))
-                .thenCompose(uploadResult -> dataNodeContentHelper.addContentToTreeNode(
-                        uploadResult.getJacsServiceData(),
-                        args.dataNodeName,
-                        args.parentDataNodeId,
-                        FileType.Unclassified2d,
-                        uploadResult.getResult()))
+                .thenCompose(uploadResult -> args.standaloneMIPS
+                        ? dataNodeContentHelper.addStandaloneContentToTreeNode(
+                                uploadResult.getJacsServiceData(),
+                                args.dataNodeName,
+                                args.parentDataNodeId,
+                                FileType.Unclassified2d,
+                                uploadResult.getResult())
+                        : dataNodeContentHelper.addContentStackToTreeNode(
+                                uploadResult.getJacsServiceData(),
+                                args.dataNodeName,
+                                args.parentDataNodeId,
+                                FileType.Unclassified2d,
+                                uploadResult.getResult()))
                 .thenApply(dataNodeResult -> updateServiceResult(dataNodeResult.getJacsServiceData(), dataNodeResult.getResult()))
                 ;
     }
@@ -130,7 +141,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new StorageContentUploadArgs());
     }
 
-    private List<StorageContentInfo> prepareContentEntries(JacsServiceData jacsServiceData) {
+    private List<ContentStack> prepareContentEntries(JacsServiceData jacsServiceData) {
         StorageContentUploadArgs args = getArgs(jacsServiceData);
         if (StringUtils.isBlank(args.dirName)) {
             return ImmutableList.of();
@@ -142,7 +153,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                         StorageContentInfo contentInfo = new StorageContentInfo();
                         contentInfo.setLocalBasePath(dirPath.toString());
                         contentInfo.setLocalRelativePath(dirPath.relativize(fp).toString());
-                        return contentInfo;
+                        return new ContentStack(contentInfo);
                     })
                     .collect(Collectors.toList());
         }
@@ -154,40 +165,31 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
      * @param contentList
      * @return the initial content list concatenated with the new MIPs entries.
      */
-    private ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> generateContentMIPs(JacsServiceData jacsServiceData, List<StorageContentInfo> contentList) {
+    private ServiceComputation<JacsServiceResult<List<ContentStack>>> generateContentMIPs(JacsServiceData jacsServiceData, List<ContentStack> contentList) {
         StorageContentUploadArgs args = getArgs(jacsServiceData);
         if (args.generateMIPS()) {
             JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-            Path localMIPSRootPath = serviceWorkingFolder.getServiceFolder("temp");
-            List<StorageContentInfo> mipsInputList = contentList.stream()
-                    .filter((StorageContentInfo entry) -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getLocalRelativePath())))
+            Path localMIPSRootPath = serviceWorkingFolder.getServiceFolder("mips");
+            List<ContentStack> mipsInputList = contentList.stream()
+                    .filter((ContentStack entry) -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getMainRep().getLocalRelativePath())))
                     .collect(Collectors.toList());
             return mipsConverterProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                             .description("Generate MIPs")
                             .build(),
                     new ServiceArg("-inputFiles", mipsInputList.stream()
-                            .map(contentEntryInfo -> contentEntryInfo.getLocalFullPath().toString())
+                            .map(contentEntryInfo -> contentEntryInfo.getMainRep().getLocalFullPath().toString())
                             .reduce((p1, p2) -> p1 + "," + p2)
                             .orElse("")),
                     new ServiceArg("-outputDir", localMIPSRootPath.toString()))
-                    .thenApply(mipsResults -> new JacsServiceResult<>(jacsServiceData,
-                            Stream.concat(
-                                    contentList.stream(),
-                                    mipsResults.getResult().stream()
-                                            .map(mr -> {
-                                                StorageContentInfo mipsContentInfo = new StorageContentInfo();
-                                                mipsContentInfo.setLocalBasePath(localMIPSRootPath.toString());
-                                                mipsContentInfo.setLocalRelativePath(localMIPSRootPath.relativize(Paths.get(mr.getOutputMIPsFile())).toString());
-                                                mipsContentInfo.setFileType(FileType.SignalMip); // these entries are signal MIP entries
-                                                return mipsContentInfo;
-                                            }))
-                            .collect(Collectors.toList())));
+                    .thenApply(mipsResults -> new JacsServiceResult<>(
+                            jacsServiceData,
+                            storageContentHelper.addContentMips(contentList, localMIPSRootPath, mipsResults.getResult())));
         } else {
             return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, contentList));
         }
     }
 
-    private ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> uploadContent(JacsServiceData jacsServiceData, List<StorageContentInfo> contentList) {
+    private ServiceComputation<JacsServiceResult<List<ContentStack>>> uploadContent(JacsServiceData jacsServiceData, List<ContentStack> contentList) {
         StorageContentUploadArgs args = getArgs(jacsServiceData);
         String storageName = StringUtils.defaultIfBlank(args.storageEntryName, FileUtils.getFileNameOnly(args.dirName));
         if (StringUtils.isBlank(storageName)) {
@@ -201,20 +203,23 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                             jacsServiceData.getOwnerKey(),
                             ResourceHelper.getAuthToken(jacsServiceData.getResources()))
                     )
-                    .thenCompose((StorageService.StorageInfo storageInfo) -> storageContentHelper.uploadContent(jacsServiceData,
+                    .thenCompose((StorageService.StorageInfo storageInfo) -> storageContentHelper.uploadContent(
+                            jacsServiceData,
                             storageInfo.getStorageURL(),
                             contentList.stream()
-                                    .peek(ci -> {
-                                        // update the preliminary remoteinfo now that storage is available
-                                        ci.setRemoteInfo(new StorageService.StorageEntryInfo(
-                                                storageInfo.getStorageId(),
-                                                storageInfo.getStorageURL(),
-                                                null,
-                                                storageInfo.getStorageRootDir(),
-                                                storageInfo.getStorageRootPrefix(),
-                                                ci.getLocalRelativePath().toString(),
-                                                false
-                                        ));
+                                    .peek(contentEntry -> {
+                                        Stream.concat(Stream.of(), contentEntry.getAdditionalReps().stream())
+                                                .forEach(storageContentInfo -> {
+                                                    storageContentInfo.setRemoteInfo(new StorageService.StorageEntryInfo(
+                                                            storageInfo.getStorageId(),
+                                                            storageInfo.getStorageURL(),
+                                                            null,
+                                                            storageInfo.getStorageRootDir(),
+                                                            storageInfo.getStorageRootPrefix(),
+                                                            storageContentInfo.getLocalRelativePath(),
+                                                            false
+                                                    ));
+                                                });
                                     })
                                     .collect(Collectors.toList()))
                     )

@@ -651,9 +651,8 @@ public class FlylightSampleProcessorTest {
 
         ServiceResultHandler<List<SampleImageFile>> getSampleImageFilesResultHandler = mock(ServiceResultHandler.class);
         when(getSampleImageFilesProcessor.getResultHandler()).thenReturn(getSampleImageFilesResultHandler);
-        when(getSampleImageFilesResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
-            return new JacsServiceResult<>(invocation.getArgument(0), ImmutableList.of());
-        });
+        when(getSampleImageFilesResultHandler.getServiceDataResult(any(JacsServiceData.class)))
+                .then(invocation -> new JacsServiceResult<>(invocation.getArgument(0), ImmutableList.of()));
 
         ServiceResultHandler<SampleResult> sampleStitchResultHandler = mock(ServiceResultHandler.class);
         when(sampleStitchProcessor.getResultHandler()).thenReturn(sampleStitchResultHandler);
@@ -943,7 +942,7 @@ public class FlylightSampleProcessorTest {
     }
 
     private MIPsAndMoviesResult createMipsAndMoviesResult(String resultsDir, List<String> fileList) {
-        MIPsAndMoviesResult mipsAndMoviesResult = new MIPsAndMoviesResult();
+        MIPsAndMoviesResult mipsAndMoviesResult = new MIPsAndMoviesResult("");
         mipsAndMoviesResult.setResultsDir(resultsDir);
         mipsAndMoviesResult.setFileList(fileList);
         return mipsAndMoviesResult;

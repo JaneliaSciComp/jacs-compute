@@ -39,6 +39,15 @@ public class FolderService {
         }
     }
 
+    public void addImageStack(TreeNode folder, Image imageStack, String subjectKey) {
+        try {
+            folderDao.save(subjectKey, imageStack);
+            folderDao.addChildren(subjectKey, folder, ImmutableList.of(Reference.createFor(imageStack)));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     public void addImageFile(TreeNode folder, String imageFileName, FileType imageFileType, String subjectKey) {
         try {
             Image imageFile = new Image();

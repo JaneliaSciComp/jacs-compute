@@ -38,8 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Named("mipsConverter")
-public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsConverterProcessor.MIPsResult>> {
+@Named("simpleMipsConverter")
+public class SimpleMIPsConverterProcessor extends AbstractServiceProcessor<List<SimpleMIPsConverterProcessor.MIPsResult>> {
 
     private static final String MIP_ARTIFACT_SUFFIX = "_mipArtifact";
     private static final String TIFF_EXTENSION = ".tif";
@@ -78,12 +78,12 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
     private final WrappedServiceProcessor<ImageMagickConverterProcessor, List<File>> imageMagickConverterProcessor;
 
     @Inject
-    MIPsConverterProcessor(ServiceComputationFactory computationFactory,
-                           JacsServiceDataPersistence jacsServiceDataPersistence,
-                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                           Vaa3dMipCmdProcessor vaa3dMipCmdProcessor,
-                           ImageMagickConverterProcessor imageMagickConverterProcessor,
-                           Logger logger) {
+    SimpleMIPsConverterProcessor(ServiceComputationFactory computationFactory,
+                                 JacsServiceDataPersistence jacsServiceDataPersistence,
+                                 @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                                 Vaa3dMipCmdProcessor vaa3dMipCmdProcessor,
+                                 ImageMagickConverterProcessor imageMagickConverterProcessor,
+                                 Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.vaa3dMipCmdProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, vaa3dMipCmdProcessor);
         this.imageMagickConverterProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, imageMagickConverterProcessor);
@@ -91,7 +91,7 @@ public class MIPsConverterProcessor extends AbstractServiceProcessor<List<MIPsCo
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(MIPsConverterProcessor.class, new MIPsConverterArgs());
+        return ServiceArgs.getMetadata(SimpleMIPsConverterProcessor.class, new MIPsConverterArgs());
     }
 
     @Override

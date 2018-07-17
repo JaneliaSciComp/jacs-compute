@@ -10,11 +10,14 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.imageservices.MIPsConverterProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
+import org.janelia.jacs2.asyncservice.imageservices.MultiInputMIPsAndMoviesProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.SimpleMIPsConverterProcessor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
 import org.janelia.model.domain.enums.FileType;
+import org.janelia.model.domain.sample.Image;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
@@ -22,6 +25,7 @@ import org.janelia.model.service.JacsServiceState;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -66,7 +70,7 @@ public class DataTreeLoadProcessorTest {
     private ServiceComputationFactory computationFactory;
     private FolderService folderService;
     private StorageService storageService;
-    private MIPsConverterProcessor mipsConverterProcessor;
+    private MultiInputMIPsAndMoviesProcessor mipsConverterProcessor;
     private Logger logger;
 
     @Before
@@ -76,7 +80,7 @@ public class DataTreeLoadProcessorTest {
         computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
         folderService = mock(FolderService.class);
         storageService = mock(StorageService.class);
-        mipsConverterProcessor = mock(MIPsConverterProcessor.class);
+        mipsConverterProcessor = mock(MultiInputMIPsAndMoviesProcessor.class);
 
         Mockito.when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> {
             JacsServiceData sd = new JacsServiceData();
@@ -93,6 +97,9 @@ public class DataTreeLoadProcessorTest {
 
         Mockito.when(mipsConverterProcessor.getMetadata()).thenCallRealMethod();
         Mockito.when(mipsConverterProcessor.createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class)
         )).thenCallRealMethod();
@@ -125,7 +132,7 @@ public class DataTreeLoadProcessorTest {
         String testFolder = "testLocation";
         String testLocation = "http://testStorage";
         String testAuthToken = "testAuthToken";
-        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, false);
+        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, false, false);
 
         DataTreeLoadProcessor dataTreeLoadProcessor = createDataTreeLoadProcessor();
 
@@ -138,13 +145,13 @@ public class DataTreeLoadProcessorTest {
                         new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.png", testStorageRoot, testStoragePrefix,"f2.png", false)
                 ));
 
-        ServiceResultHandler<List<MIPsConverterProcessor.MIPsResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
+        ServiceResultHandler<List<MIPsAndMoviesResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
         when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
         when(mipsConverterResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
-        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp");
+        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/mips");
 
-        ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
+        ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         dataLoadComputation
@@ -153,18 +160,19 @@ public class DataTreeLoadProcessorTest {
                     Mockito.verify(mipsConverterProcessor).getMetadata();
                     Mockito.verify(mipsConverterProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.toString())))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.toString()))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", ""))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:bcomp")))
                     );
                     Mockito.verify(mipsConverterProcessor).getResultHandler();
 
                     Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
-                    Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/f1.gif"),
-                            eq(FileType.Unclassified2d),
+                    Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
+                            argThat(argument -> argument.getFilepath().equals(testStoragePrefix + "/f1.gif")),
                             eq(testOwner));
-                    Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/f2.png"),
-                            eq(FileType.Unclassified2d),
+                    Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
+                            argThat(argument -> argument.getFilepath().equals(testStoragePrefix + "/f2.png")),
                             eq(testOwner));
 
                     Mockito.verifyNoMoreInteractions(folderService, mipsConverterProcessor);
@@ -185,7 +193,7 @@ public class DataTreeLoadProcessorTest {
         String testFolder = "testLocation";
         String testLocation = "http://testStorage";
         String testAuthToken = "testAuthToken";
-        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, false);
+        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, false, false);
 
         DataTreeLoadProcessor dataTreeLoadProcessor = createDataTreeLoadProcessor();
 
@@ -221,21 +229,20 @@ public class DataTreeLoadProcessorTest {
         Mockito.when(Files.exists(any(Path.class))).thenReturn(true);
         Mockito.when(Files.size(any(Path.class))).thenReturn(100L);
 
-        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp");
+        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId);
 
-        Path f1Path = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f1.lsm");
-        Path f2Path = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f2.v3draw");
+        Path f1Path = basePath.resolve("mips/f1.lsm");
+        Path f2Path = basePath.resolve("mips/f2.v3draw");
 
-        Path f1PngPath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f1_mipArtifact.png");
-        Path f2PngPath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f2_mipArtifact.png");
+        Path f1PngPath = basePath.resolve("mips/f1_mipArtifact.png");
+        Path f2PngPath = basePath.resolve("mips/f2_mipArtifact.png");
 
-        ServiceResultHandler<List<MIPsConverterProcessor.MIPsResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
+        ServiceResultHandler<List<MIPsAndMoviesResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
         when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
         when(mipsConverterResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(
-                new MIPsConverterProcessor.MIPsResult(f1Path.toString(), f2PngPath.toString()),
-                new MIPsConverterProcessor.MIPsResult(f2Path.toString(), f1PngPath.toString())
+                new MIPsAndMoviesResult(f1Path.toString()).addFile(f1PngPath.toString()),
+                new MIPsAndMoviesResult(f2Path.toString()).addFile(f2PngPath.toString())
         ));
-
         File f1PngMipArtifact = mock(File.class);
         File f2PngMipArtifact = mock(File.class);
         FileInputStream f1PngMipStream = mock(FileInputStream.class);
@@ -245,7 +252,7 @@ public class DataTreeLoadProcessorTest {
         PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
         PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
 
-        ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
+        ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
         Consumer successful = mock(Consumer.class);
         Consumer failure = mock(Consumer.class);
         dataLoadComputation
@@ -258,14 +265,14 @@ public class DataTreeLoadProcessorTest {
                             eq(testAuthToken)
                     );
                     Mockito.verify(storageService).getStorageContent(
-                            eq(testLocation + "/" + basePath.relativize(f1Path)),
-                            eq(basePath.relativize(f1Path).toString()),
+                            eq(testLocation + "/" + f1Path.getFileName()),
+                            eq(f1Path.getFileName().toString()),
                             eq(testOwner),
                             eq(testAuthToken)
                     );
                     Mockito.verify(storageService).getStorageContent(
-                            eq(testLocation + "/" + basePath.relativize(f2Path)),
-                            eq(basePath.relativize(f2Path).toString()),
+                            eq(testLocation + "/" + f2Path.getFileName()),
+                            eq(f2Path.getFileName().toString()),
                             eq(testOwner),
                             eq(testAuthToken)
                     );
@@ -273,7 +280,253 @@ public class DataTreeLoadProcessorTest {
                     Mockito.verify(mipsConverterProcessor).getMetadata();
                     Mockito.verify(mipsConverterProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", f1Path + "," + f2Path))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.toString())))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.resolve("mips").toString()))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", ""))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:bcomp")))
+                    );
+                    Mockito.verify(mipsConverterProcessor).getResultHandler();
+
+                    Mockito.verify(storageService).putStorageContent(
+                            eq(testLocation),
+                            eq(basePath.relativize(f1PngPath).toString()),
+                            eq(testOwner),
+                            eq(testAuthToken),
+                            any(InputStream.class)
+                    );
+                    Mockito.verify(storageService).putStorageContent(
+                            eq(testLocation),
+                            eq(basePath.relativize(f2PngPath).toString()),
+                            eq(testOwner),
+                            eq(testAuthToken),
+                            any(InputStream.class)
+                    );
+                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
+                    Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
+                            argThat(argument -> argument.getFilepath().equals(testStoragePrefix + "/f1.lsm") &&
+                                    argument.getFiles().values().contains(testStoragePrefix + "/mips/f1_mipArtifact.png")),
+                            eq(testOwner));
+                    Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
+                            argThat(argument -> argument.getFilepath().equals(testStoragePrefix + "/f2.v3draw") &&
+                                    argument.getFiles().values().contains(testStoragePrefix + "/mips/f2_mipArtifact.png")),
+                            eq(testOwner));
+                    Mockito.verifyNoMoreInteractions(mipsConverterProcessor, storageService, folderService);
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    failure.accept(exc);
+                    fail(exc.toString());
+                    return null;
+                });
+    }
+
+    @Test
+    public void processLsmsAndVaa3dsWithoutMIPS() throws Exception {
+        Long serviceId = 1L;
+        String testStorageId = null;
+        String testOwner = "testOwner";
+        String testFolder = "testLocation";
+        String testLocation = "http://testStorage";
+        String testAuthToken = "testAuthToken";
+        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, true, false);
+
+        DataTreeLoadProcessor dataTreeLoadProcessor = createDataTreeLoadProcessor();
+
+        String testStorageRoot = "/storageRoot";
+        String testStoragePrefix = "/storageRootPrefix";
+
+        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
+                .thenReturn(ImmutableList.of(
+                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, testStoragePrefix,"", true),
+                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, testStoragePrefix,"f1.lsm", false),
+                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, testStoragePrefix,"f2.v3draw", false)
+                ));
+        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(new ByteArrayInputStream("test".getBytes()));
+        Mockito.when(storageService.putStorageContent(anyString(), anyString(), anyString(), anyString(), any(InputStream.class)))
+                .then(invocation -> new StorageService.StorageEntryInfo(
+                        testStorageId,
+                        testLocation,
+                        testLocation + "/entry_content/" + invocation.getArgument(1),
+                        testStorageRoot,
+                        testStoragePrefix,
+                        invocation.getArgument(1),
+                        false));
+
+        PowerMockito.mockStatic(Files.class);
+        Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
+        Mockito.when(Files.copy(any(InputStream.class), any(Path.class), any(CopyOption.class))).then((Answer<Long>) invocation -> {
+            InputStream is = invocation.getArgument(0);
+            return (long) is.available();
+        });
+
+        Mockito.when(Files.notExists(any(Path.class))).thenReturn(true);
+        Mockito.when(Files.exists(any(Path.class))).thenReturn(true);
+        Mockito.when(Files.size(any(Path.class))).thenReturn(100L);
+
+        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/mips");
+
+        Path f1Path = basePath.resolve("f1.lsm");
+        Path f2Path = basePath.resolve("f2.v3draw");
+
+        Path f1PngPath = basePath.resolve("f1_mipArtifact.png");
+        Path f2PngPath = basePath.resolve("f2_mipArtifact.png");
+
+        ServiceResultHandler<List<MIPsAndMoviesResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
+        when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
+        when(mipsConverterResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(
+                new MIPsAndMoviesResult(f1Path.toString()).addFile(f1PngPath.toString()),
+                new MIPsAndMoviesResult(f2Path.toString()).addFile(f2PngPath.toString())
+        ));
+
+        File f1PngMipArtifact = mock(File.class);
+        File f2PngMipArtifact = mock(File.class);
+        FileInputStream f1PngMipStream = mock(FileInputStream.class);
+        FileInputStream f2PngMipStream = mock(FileInputStream.class);
+        Mockito.when(f1PngMipArtifact.toPath()).thenReturn(f1PngPath);
+        Mockito.when(f2PngMipArtifact.toPath()).thenReturn(f2PngPath);
+        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
+        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
+
+        ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
+        Consumer successful = mock(Consumer.class);
+        Consumer failure = mock(Consumer.class);
+        dataLoadComputation
+                .thenApply(r -> {
+                    successful.accept(r);
+                    Mockito.verify(storageService).listStorageContent(
+                            eq(testLocation),
+                            isNull(),
+                            eq(testOwner),
+                            eq(testAuthToken)
+                    );
+
+                    Mockito.verify(mipsConverterProcessor, never()).getMetadata();
+                    Mockito.verify(mipsConverterProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
+                            any(ServiceArg.class),
+                            any(ServiceArg.class)
+                    );
+                    Mockito.verify(mipsConverterProcessor, never()).getResultHandler();
+
+                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
+                    Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
+                            argThat(argument -> argument.getFilepath().equals(testStoragePrefix + "/f1.lsm") &&
+                                    argument.getFiles().isEmpty()), // no MIPs wanted
+                            eq(testOwner));
+                    Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
+                            argThat(argument -> argument.getFilepath().equals(testStoragePrefix + "/f2.v3draw") &&
+                                    argument.getFiles().isEmpty()), // no MIPs wanted
+                            eq(testOwner));
+
+                    Mockito.verifyNoMoreInteractions(mipsConverterProcessor, storageService, folderService);
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    failure.accept(exc);
+                    fail(exc.toString());
+                    return null;
+                });
+    }
+
+    @Test
+    public void processLsmsAndVaa3dsWithStandaloneMIPs() throws Exception {
+        Long serviceId = 1L;
+        String testStorageId = "testStorageId";
+        String testOwner = "testOwner";
+        String testFolder = "testLocation";
+        String testLocation = "http://testStorage";
+        String testAuthToken = "testAuthToken";
+        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, false, true);
+
+        DataTreeLoadProcessor dataTreeLoadProcessor = createDataTreeLoadProcessor();
+
+        String testStorageRoot = "/storageRoot";
+        String testStoragePrefix = "/storageRootPrefix";
+
+        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
+                .thenReturn(ImmutableList.of(
+                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, testStoragePrefix,"", true),
+                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, testStoragePrefix,"f1.lsm", false),
+                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, testStoragePrefix,"f2.v3draw", false)
+                ));
+        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(new ByteArrayInputStream("test".getBytes()));
+        Mockito.when(storageService.putStorageContent(anyString(), anyString(), anyString(), anyString(), any(InputStream.class)))
+                .then(invocation -> new StorageService.StorageEntryInfo(
+                        testStorageId,
+                        testLocation,
+                        testLocation + "/entry_content/" + invocation.getArgument(1),
+                        testStorageRoot,
+                        testStoragePrefix,
+                        invocation.getArgument(1),
+                        false));
+
+        PowerMockito.mockStatic(Files.class);
+        Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
+        Mockito.when(Files.copy(any(InputStream.class), any(Path.class), any(CopyOption.class))).then((Answer<Long>) invocation -> {
+            InputStream is = invocation.getArgument(0);
+            return (long) is.available();
+        });
+
+        Mockito.when(Files.notExists(any(Path.class))).thenReturn(true);
+        Mockito.when(Files.exists(any(Path.class))).thenReturn(true);
+        Mockito.when(Files.size(any(Path.class))).thenReturn(100L);
+
+        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId);
+
+        Path f1Path = basePath.resolve("mips/f1.lsm");
+        Path f2Path = basePath.resolve("mips/f2.v3draw");
+
+        Path f1PngPath = basePath.resolve("mips/f1_mipArtifact.png");
+        Path f2PngPath = basePath.resolve("mips/f2_mipArtifact.png");
+
+        ServiceResultHandler<List<MIPsAndMoviesResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
+        when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
+        when(mipsConverterResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(
+                new MIPsAndMoviesResult(f1Path.toString()).addFile(f1PngPath.toString()),
+                new MIPsAndMoviesResult(f2Path.toString()).addFile(f2PngPath.toString())
+        ));
+        File f1PngMipArtifact = mock(File.class);
+        File f2PngMipArtifact = mock(File.class);
+        FileInputStream f1PngMipStream = mock(FileInputStream.class);
+        FileInputStream f2PngMipStream = mock(FileInputStream.class);
+        Mockito.when(f1PngMipArtifact.toPath()).thenReturn(f1PngPath);
+        Mockito.when(f2PngMipArtifact.toPath()).thenReturn(f2PngPath);
+        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
+        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
+
+        ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
+        Consumer successful = mock(Consumer.class);
+        Consumer failure = mock(Consumer.class);
+        dataLoadComputation
+                .thenApply(r -> {
+                    successful.accept(r);
+                    Mockito.verify(storageService).listStorageContent(
+                            eq(testLocation),
+                            isNull(),
+                            eq(testOwner),
+                            eq(testAuthToken)
+                    );
+                    Mockito.verify(storageService).getStorageContent(
+                            eq(testLocation + "/" + f1Path.getFileName()),
+                            eq(f1Path.getFileName().toString()),
+                            eq(testOwner),
+                            eq(testAuthToken)
+                    );
+                    Mockito.verify(storageService).getStorageContent(
+                            eq(testLocation + "/" + f2Path.getFileName()),
+                            eq(f2Path.getFileName().toString()),
+                            eq(testOwner),
+                            eq(testAuthToken)
+                    );
+
+                    Mockito.verify(mipsConverterProcessor).getMetadata();
+                    Mockito.verify(mipsConverterProcessor).createServiceData(any(ServiceExecutionContext.class),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", f1Path + "," + f2Path))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.resolve("mips").toString()))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", ""))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:bcomp")))
                     );
                     Mockito.verify(mipsConverterProcessor).getResultHandler();
 
@@ -297,16 +550,15 @@ public class DataTreeLoadProcessorTest {
                             eq(FileType.LosslessStack),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/f2.v3draw"),
-                            eq(FileType.LosslessStack),
-                            eq(testOwner));
-
-                    Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/f1_mipArtifact.png"), // this may need to be fixed
+                            eq(testStoragePrefix + "/mips/f1_mipArtifact.png"),
                             eq(FileType.SignalMip),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/f2_mipArtifact.png"),
+                            eq(testStoragePrefix + "/f2.v3draw"),
+                            eq(FileType.LosslessStack),
+                            eq(testOwner));
+                    Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
+                            eq(testStoragePrefix + "/mips/f2_mipArtifact.png"),
                             eq(FileType.SignalMip),
                             eq(testOwner));
 
@@ -320,113 +572,7 @@ public class DataTreeLoadProcessorTest {
                 });
     }
 
-    @Test
-    public void processLsmsAndVaa3dsWithoutMIPS() throws Exception {
-        Long serviceId = 1L;
-        String testStorageId = null;
-        String testOwner = "testOwner";
-        String testFolder = "testLocation";
-        String testLocation = "http://testStorage";
-        String testAuthToken = "testAuthToken";
-        JacsServiceData testService = createTestServiceData(serviceId, testOwner, testFolder, testLocation, testAuthToken, true);
-
-        DataTreeLoadProcessor dataTreeLoadProcessor = createDataTreeLoadProcessor();
-
-        String testStorageRoot = "/storageRoot";
-        String testStoragePrefix = "/storageRootPrefix";
-
-        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
-                .thenReturn(ImmutableList.of(
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, testStoragePrefix,"", true),
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, testStoragePrefix,"f1.lsm", false),
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, testStoragePrefix,"f2.v3draw", false)
-                ));
-        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(new ByteArrayInputStream("test".getBytes()));
-        Mockito.when(storageService.putStorageContent(anyString(), anyString(), anyString(), anyString(), any(InputStream.class)))
-                .then(invocation -> new StorageService.StorageEntryInfo(
-                        testStorageId,
-                        testLocation,
-                        testLocation + "/entry_content/" + invocation.getArgument(1),
-                        testStorageRoot,
-                        testStoragePrefix,
-                        invocation.getArgument(1),
-                        false));
-
-        PowerMockito.mockStatic(Files.class);
-        Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
-        Mockito.when(Files.copy(any(InputStream.class), any(Path.class), any(CopyOption.class))).then((Answer<Long>) invocation -> {
-            InputStream is = invocation.getArgument(0);
-            return (long) is.available();
-        });
-
-        Mockito.when(Files.notExists(any(Path.class))).thenReturn(true);
-        Mockito.when(Files.exists(any(Path.class))).thenReturn(true);
-        Mockito.when(Files.size(any(Path.class))).thenReturn(100L);
-
-        Path f1Path = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f1.lsm");
-        Path f2Path = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f2.v3draw");
-
-        Path f1PngPath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f1_mipArtifact.png");
-        Path f2PngPath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/temp/f2_mipArtifact.png");
-
-        ServiceResultHandler<List<MIPsConverterProcessor.MIPsResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
-        when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
-        when(mipsConverterResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(
-                new MIPsConverterProcessor.MIPsResult(f1Path.toString(), f2PngPath.toString()),
-                new MIPsConverterProcessor.MIPsResult(f2Path.toString(), f1PngPath.toString())
-        ));
-
-        File f1PngMipArtifact = mock(File.class);
-        File f2PngMipArtifact = mock(File.class);
-        FileInputStream f1PngMipStream = mock(FileInputStream.class);
-        FileInputStream f2PngMipStream = mock(FileInputStream.class);
-        Mockito.when(f1PngMipArtifact.toPath()).thenReturn(f1PngPath);
-        Mockito.when(f2PngMipArtifact.toPath()).thenReturn(f2PngPath);
-        PowerMockito.whenNew(FileInputStream.class).withArguments(f1PngPath.toFile()).thenReturn(f1PngMipStream);
-        PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
-
-        ServiceComputation<JacsServiceResult<List<StorageContentInfo>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
-        dataLoadComputation
-                .thenApply(r -> {
-                    successful.accept(r);
-                    Mockito.verify(storageService).listStorageContent(
-                            eq(testLocation),
-                            isNull(),
-                            eq(testOwner),
-                            eq(testAuthToken)
-                    );
-
-                    Mockito.verify(mipsConverterProcessor, never()).getMetadata();
-                    Mockito.verify(mipsConverterProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
-                    );
-                    Mockito.verify(mipsConverterProcessor, never()).getResultHandler();
-
-                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
-                    Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/f1.lsm"),
-                            eq(FileType.LosslessStack),
-                            eq(testOwner));
-                    Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/f2.v3draw"),
-                            eq(FileType.LosslessStack),
-                            eq(testOwner));
-
-                    Mockito.verifyNoMoreInteractions(mipsConverterProcessor, storageService, folderService);
-                    return r;
-                })
-                .exceptionally(exc -> {
-                    failure.accept(exc);
-                    fail(exc.toString());
-                    return null;
-                });
-    }
-
-    private JacsServiceData createTestServiceData(Number serviceId, String owner, String folderName, String storageLocation, String authToken, boolean skipsMIPS) {
+    private JacsServiceData createTestServiceData(Number serviceId, String owner, String folderName, String storageLocation, String authToken, boolean skipsMIPS, boolean standaloneMIPS) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey(owner)
                 .addArgs("-parentDataNodeId", String.valueOf(TEST_DATA_NODE_ID-1))
@@ -435,6 +581,8 @@ public class DataTreeLoadProcessorTest {
                 ;
         if (skipsMIPS) {
             testServiceDataBuilder.addArgs("-skipMIPS");
+        } else if (standaloneMIPS) {
+            testServiceDataBuilder.addArgs("-standaloneMIPS");
         }
         JacsServiceData testServiceData = testServiceDataBuilder
                 .setWorkspace(TEST_LOCAL_WORKSPACE)

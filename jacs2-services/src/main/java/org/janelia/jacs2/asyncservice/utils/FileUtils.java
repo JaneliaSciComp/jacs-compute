@@ -121,6 +121,14 @@ public class FileUtils {
         }
     }
 
+    public static Path getSubDir(Path parent, String dirName) {
+        if (parent == null) {
+            return Paths.get(dirName);
+        } else {
+            return parent.resolve(dirName);
+        }
+    }
+
     public static Path getFilePath(Path dir, String fileName) {
         return dir != null ? dir.resolve(getFileName(fileName)) : Paths.get(getFileName(fileName));
     }

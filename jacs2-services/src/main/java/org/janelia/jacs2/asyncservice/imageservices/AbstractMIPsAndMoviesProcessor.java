@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
-import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
@@ -32,33 +31,6 @@ import java.util.stream.Collectors;
 public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProcessor<MIPsAndMoviesResult> {
 
     protected static final String DEFAULT_OPTIONS = "mips:movies";
-
-    protected static class MIPsAndMoviesArgs extends ServiceArgs {
-        @Parameter(names = "-imgFile", description = "The name of the image file", required = true)
-        String imageFile;
-        @Parameter(names = "-imgFilePrefix", description = "Image file prefix", required = false)
-        String imageFilePrefix;
-        @Parameter(names = "-secondImgFile", description = "The name of the image file", required = false)
-        String secondImageFile;
-        @Parameter(names = "-secondImgFilePrefix", description = "Second image file prefix", required = false)
-        String secondImageFilePrefix;
-        @Parameter(names = "-mode", description = "Mode")
-        String mode = "none";
-        @Parameter(names = "-chanSpec", description = "Channel spec", required = true)
-        String chanSpec;
-        @Parameter(names = "-colorSpec", description = "Color spec", required = false)
-        String colorSpec;
-        @Parameter(names = "-divSpec", description = "Color spec", required = false)
-        String divSpec;
-        @Parameter(names = "-laser", description = "Laser", required = false)
-        Integer laser;
-        @Parameter(names = "-gain", description = "Gain", required = false)
-        Integer gain;
-        @Parameter(names = "-resultsDir", description = "Results directory", required = false)
-        String resultsDir;
-        @Parameter(names = "-options", description = "Options", required = false)
-        String options = "mips:movies:legends:bcomp";
-    }
 
     private final String mipsAndMoviesMacro;
     private final String scratchLocation;
@@ -94,7 +66,7 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
             @Override
             public MIPsAndMoviesResult collectResult(JacsServiceResult<?> depResults) {
                 MIPsAndMoviesArgs args = getArgs(depResults.getJacsServiceData());
-                MIPsAndMoviesResult result = new MIPsAndMoviesResult();
+                MIPsAndMoviesResult result = new MIPsAndMoviesResult(args.imageFile);
                 result.setResultsDir(getResultsDir(args).toString());
                 FileUtils.lookupFiles(getResultsDir(args), 1, resultsPattern)
                         .map(Path::toString)

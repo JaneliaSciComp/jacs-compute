@@ -10,19 +10,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 class StorageContentInfo {
-    private Number dataNodeId;
     private StorageService.StorageEntryInfo remoteInfo;
     private String localBasePath;
     private String localRelativePath;
     private FileType fileType;
-
-    public Number getDataNodeId() {
-        return dataNodeId;
-    }
-
-    public void setDataNodeId(Number dataNodeId) {
-        this.dataNodeId = dataNodeId;
-    }
 
     public StorageService.StorageEntryInfo getRemoteInfo() {
         return remoteInfo;
@@ -50,7 +41,13 @@ class StorageContentInfo {
 
     @JsonIgnore
     public Path getLocalFullPath() {
-        return StringUtils.isNotBlank(localBasePath) ? Paths.get(localBasePath, localRelativePath) : Paths.get(localRelativePath);
+        if (StringUtils.isBlank(localBasePath) && StringUtils.isBlank(localRelativePath)) {
+            return null;
+        } else if (StringUtils.isBlank(localBasePath)) {
+            return Paths.get(localRelativePath);
+        } else {
+            return Paths.get(localBasePath, localRelativePath);
+        }
     }
 
     public FileType getFileType() {
@@ -64,7 +61,6 @@ class StorageContentInfo {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("dataNodeId", dataNodeId)
                 .append("remoteInfo", remoteInfo)
                 .append("localBasePath", localBasePath)
                 .append("localRelativePath", localRelativePath)
