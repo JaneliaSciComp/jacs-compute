@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -53,7 +54,7 @@ class ServiceArgsHandler {
      * @return
      */
     Map<String, EntityFieldValueHandler<?>> updateServiceArgs(ServiceMetaData serviceMetaData, JacsServiceData serviceData) {
-        Map<String, EntityFieldValueHandler<?>> serviceDataUpdates = new HashMap<>();
+        Map<String, EntityFieldValueHandler<?>> serviceDataUpdates = new LinkedHashMap<>();
 
         // lazily instantiate actual service invocation arguments
         if (serviceData.getActualArgs() == null) {
@@ -64,13 +65,14 @@ class ServiceArgsHandler {
             // the parsed actual arguments and the actual dictionary arguments
             JCommander cmdLineParser = new JCommander(serviceMetaData.getServiceArgsObject());
             cmdLineParser.parse(actualServiceArgs.getListArgsAsArray()); // parse the actual list service args
-            serviceMetaData.getServiceArgDescriptors().forEach((ServiceArgDescriptor sd) -> {
-                String argName = sd.getArgName();
-                Object argValue = prepareArgValue(sd.getArg().get(serviceMetaData.getServiceArgsObject()));
-                serviceDataUpdates.putAll(serviceData.addServiceArg(argName, argValue));
-            });
-
-            serviceDataUpdates.putAll(serviceData.addServiceArgs(actualServiceArgs.getDictArgs())); // add the dictionary args
+            // Collectors.toMap cannot have null values so
+            // I had to use the alternative collect that takes a supplier, accumulator and combiner
+            Map<String, Object> serviceArgsUpdates = serviceMetaData.getServiceArgDescriptors().stream()
+                    .map((ServiceArgDescriptor sd) -> ImmutablePair.of(sd.getArgName(), prepareArgValue(sd.getArg().get(serviceMetaData.getServiceArgsObject()))))
+                    .collect(HashMap::new, (m, pv) -> m.put(pv.getLeft(), pv.getRight()), Map::putAll)
+                    ;
+            serviceArgsUpdates.putAll(actualServiceArgs.getDictArgs()); // add the dictionary args
+            serviceDataUpdates.putAll(serviceData.addServiceArgs(serviceArgsUpdates));
         }
         return serviceDataUpdates;
     }

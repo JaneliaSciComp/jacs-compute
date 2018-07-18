@@ -281,19 +281,25 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         Map<String, EntityFieldValueHandler<?>> dataUpdates = new HashMap<>();
         if (this.serviceArgs == null) {
             this.serviceArgs = new LinkedHashMap<>();
+            this.serviceArgs.put(arg, val);
+            dataUpdates.put("serviceArgs", new SetFieldValueHandler<>(this.serviceArgs));
+        } else {
+            this.serviceArgs.put(arg, val);
+            dataUpdates.put("serviceArgs." + arg, new SetFieldValueHandler<>(val));
         }
-        this.serviceArgs.put(arg, val);
-        dataUpdates.put("serviceArgs." + arg, new SetFieldValueHandler<>(val));
         return dataUpdates;
     }
 
     public Map<String, EntityFieldValueHandler<?>> addServiceArgs(Map<String, Object> serviceArgs) {
-        Map<String, EntityFieldValueHandler<?>> dataUpdates = new HashMap<>();
+        Map<String, EntityFieldValueHandler<?>> dataUpdates = new LinkedHashMap<>();
         if (this.serviceArgs == null) {
             this.serviceArgs = new LinkedHashMap<>();
+            this.serviceArgs.putAll(serviceArgs);
+            dataUpdates.put("serviceArgs", new SetFieldValueHandler<>(this.serviceArgs));
+        } else {
+            this.serviceArgs.putAll(serviceArgs);
+            serviceArgs.forEach((arg, val) -> dataUpdates.put("serviceArgs." + arg, new SetFieldValueHandler<>(val)));
         }
-        this.serviceArgs.putAll(serviceArgs);
-        serviceArgs.forEach((arg, val) -> dataUpdates.put("serviceArgs." + arg, new SetFieldValueHandler<>(val)));
         return dataUpdates;
     }
 

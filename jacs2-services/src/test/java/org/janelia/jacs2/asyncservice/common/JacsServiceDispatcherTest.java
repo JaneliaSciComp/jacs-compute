@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.model.access.dao.JacsNotificationDao;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.service.JacsNotification;
 import org.janelia.model.service.JacsServiceEvent;
@@ -27,6 +28,8 @@ import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -191,7 +194,9 @@ public class JacsServiceDispatcherTest {
                         JacsServiceState.RUNNING,
                         JacsServiceEvent.NO_EVENT);
         verify(jacsServiceDataPersistence)
-                .update(testServiceData, ImmutableMap.of("actualArgs", new SetFieldValueHandler<>(ImmutableList.of())));
+                .update(testServiceData, ImmutableMap.of(
+                        "actualArgs", new SetFieldValueHandler<List<String>>(ImmutableList.of()),
+                        "serviceArgs", new SetFieldValueHandler<Map<String, Object>>(ImmutableMap.of())));
         verify(jacsServiceDataPersistence)
                 .updateServiceState(
                         same(testServiceData),
