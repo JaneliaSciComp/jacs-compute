@@ -107,7 +107,9 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
                                     .collect(Collectors.toList());
                     return computationFactory
                             .newCompletedComputation(voidResult)
-                            .thenComposeAll(avi2MpegComputations, (JacsServiceResult<Void> vr, List<?> mpegResults) -> cleanConvertedAVIs((List<FileConverterResult>) mpegResults));
+                            .thenComposeAll(avi2MpegComputations, (JacsServiceResult<Void> vr, List<?> mpegResults) -> cleanConvertedAVIs(((List<JacsServiceResult<FileConverterResult>>) mpegResults)
+                                    .stream()
+                                    .map(fcr -> fcr.getResult()).collect(Collectors.toList())));
                 })
                 .thenSuspendUntil(this.suspendCondition(jacsServiceData))
                 .thenApply(mpegResults -> this.updateServiceResult(jacsServiceData, this.getResultHandler().collectResult(new JacsServiceResult<Void>(jacsServiceData))))
