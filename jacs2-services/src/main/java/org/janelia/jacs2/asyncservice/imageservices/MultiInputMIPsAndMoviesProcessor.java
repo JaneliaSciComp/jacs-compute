@@ -113,13 +113,18 @@ public class MultiInputMIPsAndMoviesProcessor extends AbstractServiceProcessor<L
         if (CollectionUtils.isEmpty(args.inputFiles)) {
             return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, Collections.emptyList()));
         } else {
+            List<FijiColor> colors = FijiUtils.getColorSpec(args.colorSpec, args.chanSpec);
+            if (colors.isEmpty()) {
+                colors = FijiUtils.getDefaultColorSpec(args.chanSpec, "RGB", '1');
+            }
+            String colorSpec = colors.stream().map(c -> String.valueOf(c.getCode())).collect(Collectors.joining(""));
             List<ServiceComputation<?>> mipsComputations = prepareMipsInput(args, jacsServiceData)
                     .map((MIPsAndMoviesArgs mipsArgs) -> basicMIPsAndMoviesProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                                     .description("Generate mips")
                                     .build(),
                             new ServiceArg("-imgFile", mipsArgs.imageFile),
                             new ServiceArg("-chanSpec", mipsArgs.chanSpec),
-                            new ServiceArg("-colorSpec", mipsArgs.colorSpec),
+                            new ServiceArg("-colorSpec", colorSpec),
                             new ServiceArg("-options", mipsArgs.options),
                             new ServiceArg("-resultsDir", mipsArgs.resultsDir)
                             ))
