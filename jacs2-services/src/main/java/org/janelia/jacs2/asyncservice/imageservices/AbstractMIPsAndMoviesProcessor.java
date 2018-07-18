@@ -20,7 +20,6 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,7 +34,7 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
     private final String mipsAndMoviesMacro;
     private final String scratchLocation;
     private final WrappedServiceProcessor<FijiMacroProcessor, Void> fijiMacroProcessor;
-    private final WrappedServiceProcessor<VideoFormatConverterProcessor, File> mpegConverterProcessor;
+    private final WrappedServiceProcessor<VideoFormatConverterProcessor, FileConverterResult> mpegConverterProcessor;
 
     AbstractMIPsAndMoviesProcessor(ServiceComputationFactory computationFactory,
                                    JacsServiceDataPersistence jacsServiceDataPersistence,
@@ -81,6 +80,7 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<MIPsAndMoviesResult>> process(JacsServiceData jacsServiceData) {
         MIPsAndMoviesArgs args = getArgs(jacsServiceData);
@@ -102,19 +102,12 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
                                                             .waitFor(voidResult.getJacsServiceData())
                                                             .build(),
                                                     new ServiceArg("-input", aviPath.toString())
-                                            ).thenApply(pd -> {
-                                                try {
-                                                    FileUtils.deletePath(aviPath);
-                                                } catch (IOException e) {
-                                                    logger.warn("Error removing {}", aviPath, e);
-                                                }
-                                                return pd.getResult();
-                                            })
+                                            )
                                     )
                                     .collect(Collectors.toList());
                     return computationFactory
                             .newCompletedComputation(voidResult)
-                            .thenCombineAll(avi2MpegComputations, (JacsServiceResult<Void> vr, List<?> mpegResults) -> (List<File>) mpegResults);
+                            .thenComposeAll(avi2MpegComputations, (JacsServiceResult<Void> vr, List<?> mpegResults) -> cleanConvertedAVIs((List<FileConverterResult>) mpegResults));
                 })
                 .thenSuspendUntil(this.suspendCondition(jacsServiceData))
                 .thenApply(mpegResults -> this.updateServiceResult(jacsServiceData, this.getResultHandler().collectResult(new JacsServiceResult<Void>(jacsServiceData))))
@@ -137,10 +130,25 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
                 new ServiceArg("-temporaryOutput", temporaryOutputDir.toString()),
                 new ServiceArg("-finalOutput", getResultsDir(args).toString()),
                 new ServiceArg("-headless", false),
-                new ServiceArg("-resultsPatterns", "*.properties"),
+                new ServiceArg("-resultsPatterns", "*.avi"),
                 new ServiceArg("-resultsPatterns", "*.png"),
-                new ServiceArg("-resultsPatterns", "*.avi")
+                new ServiceArg("-resultsPatterns", "*.properties")
         );
+    }
+
+    private ServiceComputation<List<String>> cleanConvertedAVIs(List<FileConverterResult> convertedAVIList) {
+        return computationFactory.<List<String>>newComputation()
+                .supply(() -> convertedAVIList.stream()
+                        .map((FileConverterResult convertedAVI) -> {
+                            try {
+                                logger.info("Delete converted result input of {}", convertedAVI);
+                                FileUtils.deletePath(Paths.get(convertedAVI.getInputFileName()));
+                            } catch (IOException e) {
+                                logger.warn("Error removing input of {}", convertedAVI, e);
+                            }
+                            return convertedAVI.getOutputFileName();
+                        })
+                        .collect(Collectors.toList()));
     }
 
     private Path getTemporaryOutput(MIPsAndMoviesArgs args, JacsServiceData jacsServiceData) {

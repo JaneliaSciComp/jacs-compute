@@ -1,8 +1,6 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +37,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Named("simpleMipsConverter")
-public class SimpleMIPsConverterProcessor extends AbstractServiceProcessor<List<SimpleMIPsConverterProcessor.MIPsResult>> {
+public class SimpleMIPsConverterProcessor extends AbstractServiceProcessor<List<FileConverterResult>> {
 
     private static final String MIP_ARTIFACT_SUFFIX = "_mipArtifact";
     private static final String TIFF_EXTENSION = ".tif";
@@ -56,24 +54,6 @@ public class SimpleMIPsConverterProcessor extends AbstractServiceProcessor<List<
         }
     }
 
-    public static class MIPsResult {
-        String inputFile;
-        String outputMIPsFile;
-
-        @JsonCreator
-        public MIPsResult(@JsonProperty("inputFile") String inputFile, @JsonProperty("outputMIPsFile") String outputMIPsFile) {
-            this.inputFile = inputFile;
-            this.outputMIPsFile = outputMIPsFile;
-        }
-
-        public String getInputFile() {
-            return inputFile;
-        }
-
-        public String getOutputMIPsFile() {
-            return outputMIPsFile;
-        }
-    }
     private final WrappedServiceProcessor<Vaa3dMipCmdProcessor, List<File>> vaa3dMipCmdProcessor;
     private final WrappedServiceProcessor<ImageMagickConverterProcessor, List<File>> imageMagickConverterProcessor;
 
@@ -95,27 +75,27 @@ public class SimpleMIPsConverterProcessor extends AbstractServiceProcessor<List<
     }
 
     @Override
-    public ServiceResultHandler<List<MIPsResult>> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<List<MIPsResult>>() {
+    public ServiceResultHandler<List<FileConverterResult>> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<List<FileConverterResult>>() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
             @Override
-            public List<MIPsResult> collectResult(JacsServiceResult<?> depResults) {
-                JacsServiceResult<List<MIPsResult>> intermediateResult = (JacsServiceResult<List<MIPsResult>>)depResults;
+            public List<FileConverterResult> collectResult(JacsServiceResult<?> depResults) {
+                JacsServiceResult<List<FileConverterResult>> intermediateResult = (JacsServiceResult<List<FileConverterResult>>)depResults;
                 return intermediateResult.getResult();
             }
 
-            public List<MIPsResult> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<MIPsResult>>() {});
+            public List<FileConverterResult> getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<FileConverterResult>>() {});
             }
         };
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<List<MIPsResult>>> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<List<FileConverterResult>>> process(JacsServiceData jacsServiceData) {
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenCompose(sd -> createMipsComputation(sd))
                 .thenApply(sr -> updateServiceResult(sr.getJacsServiceData(), sr.getResult()))
@@ -127,24 +107,24 @@ public class SimpleMIPsConverterProcessor extends AbstractServiceProcessor<List<
     }
 
     @SuppressWarnings("unchecked")
-    private ServiceComputation<JacsServiceResult<List<MIPsResult>>> createMipsComputation(JacsServiceData jacsServiceData) {
+    private ServiceComputation<JacsServiceResult<List<FileConverterResult>>> createMipsComputation(JacsServiceData jacsServiceData) {
         MIPsConverterArgs args = getArgs(jacsServiceData);
         if (CollectionUtils.isEmpty(args.inputFiles)) {
             return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, Collections.emptyList()));
         } else {
-            List<MIPsResult> mipsInputs = prepareMipsInput(args, jacsServiceData);
+            List<FileConverterResult> mipsInputs = prepareMipsInput(args, jacsServiceData);
             return vaa3dMipCmdProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                             .description("Generate mips")
                             .build(),
                     new ServiceArg("-inputFiles",
                             mipsInputs.stream()
-                                    .map((MIPsResult mipSource) -> mipSource.inputFile)
+                                    .map((FileConverterResult mipSource) -> mipSource.inputFileName)
                                     .reduce((p1, p2) -> p1 + "," + p2)
                                     .orElse("")
                     ),
                     new ServiceArg("-outputFiles",
                             mipsInputs.stream()
-                                    .map((MIPsResult mipSource) -> mipSource.outputMIPsFile)
+                                    .map((FileConverterResult mipSource) -> mipSource.outputFileName)
                                     .reduce((p1, p2) -> p1 + "," + p2)
                                     .orElse("")
                     ))
@@ -178,15 +158,15 @@ public class SimpleMIPsConverterProcessor extends AbstractServiceProcessor<List<
                                     return ImmutablePair.of(converterInput.toString(), pngMipResultFile.getAbsolutePath());
                                 })
                                 .collect(Collectors.toMap(tif2png -> tif2png.getLeft(), tif2png -> tif2png.getRight()));
-                        List<MIPsResult> mipsResults = mipsInputs.stream()
-                                .map(mipsInput -> new MIPsResult(mipsInput.inputFile, tif2pngConversions.get(mipsInput.outputMIPsFile)))
+                        List<FileConverterResult> mipsResults = mipsInputs.stream()
+                                .map(mipsInput -> new FileConverterResult(mipsInput.inputFileName, tif2pngConversions.get(mipsInput.outputFileName)))
                                 .collect(Collectors.toList());
                         return new JacsServiceResult<>(jacsServiceData, mipsResults);
                     });
         }
     }
 
-    private List<MIPsResult> prepareMipsInput(MIPsConverterArgs args, JacsServiceData jacsServiceData) {
+    private List<FileConverterResult> prepareMipsInput(MIPsConverterArgs args, JacsServiceData jacsServiceData) {
         Path resultsDir;
         if (StringUtils.isBlank(args.outputDir)) {
             JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
@@ -197,7 +177,7 @@ public class SimpleMIPsConverterProcessor extends AbstractServiceProcessor<List<
         return args.inputFiles.stream()
                 .map(inputName -> {
                     String tifMipsName = FileUtils.getFileNameOnly(inputName) + MIP_ARTIFACT_SUFFIX + TIFF_EXTENSION;
-                    return new MIPsResult(inputName, resultsDir.resolve(tifMipsName).toString());
+                    return new FileConverterResult(inputName, resultsDir.resolve(tifMipsName).toString());
                 })
                 .collect(Collectors.toList());
     }
