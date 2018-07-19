@@ -179,7 +179,12 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
     }
 
     protected Path getResultsDir(MIPsAndMoviesArgs args) {
-        return Paths.get(args.resultsDir);
+        Path resultsDir = Paths.get(args.resultsDir);
+        if (StringUtils.equals(resultsDir.getFileName().toString(), args.imageFilePrefix)) {
+            return resultsDir;
+        } else {
+            return resultsDir.resolve(args.imageFilePrefix);
+        }
     }
 
     private int getRequiredMemoryInGB() {
