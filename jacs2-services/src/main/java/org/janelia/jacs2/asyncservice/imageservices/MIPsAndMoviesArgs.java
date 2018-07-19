@@ -1,7 +1,9 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 
 class MIPsAndMoviesArgs extends ServiceArgs {
     @Parameter(names = "-imgFile", description = "The name of the image file", required = true)
@@ -28,4 +30,18 @@ class MIPsAndMoviesArgs extends ServiceArgs {
     String resultsDir;
     @Parameter(names = "-options", description = "Options", required = false)
     String options = "mips:movies:legends:bcomp";
+
+    String getImageFileName(String imageFileName) {
+        return StringUtils.defaultIfBlank(imageFileName, "");
+    }
+
+    String getImageFilePrefix(String imageFileName, String definedImageFilePrefix) {
+        if (StringUtils.isNotBlank(definedImageFilePrefix)) {
+            return definedImageFilePrefix;
+        } else  if (StringUtils.isBlank(imageFileName)) {
+            return "";
+        } else {
+            return FileUtils.getFileNameOnly(imageFileName);
+        }
+    }
 }

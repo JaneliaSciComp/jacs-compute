@@ -45,10 +45,10 @@ public class BasicMIPsAndMoviesProcessor extends AbstractMIPsAndMoviesProcessor 
     protected String getMIPsAndMoviesArgs(MIPsAndMoviesArgs args, Path outputDir) {
         StringJoiner builder = new StringJoiner(",");
         builder.add(outputDir.toString()); // output directory
-        builder.add(StringUtils.defaultIfBlank(args.imageFilePrefix, FileUtils.getFileNameOnly(args.imageFile))); // output prefix 1
-        builder.add(StringUtils.isNotBlank(args.secondImageFile) ? StringUtils.defaultIfBlank(args.secondImageFilePrefix, FileUtils.getFileNameOnly(args.secondImageFile)) : ""); // output prefix 2
-        builder.add(args.imageFile); // input file 1
-        builder.add(StringUtils.defaultIfBlank(args.secondImageFile, "")); // input file 2
+        builder.add(args.getImageFilePrefix(args.imageFile, args.imageFilePrefix)); // output prefix 1
+        builder.add(args.getImageFilePrefix(args.secondImageFile, args.secondImageFilePrefix)); // output prefix 2
+        builder.add(args.getImageFileName(args.imageFile)); // input file 1
+        builder.add(args.getImageFileName(args.secondImageFile)); // input file 2
         builder.add(args.laser == null ? "" : args.laser.toString());
         builder.add(args.gain == null ? "" : args.gain.toString());
         builder.add(args.chanSpec);

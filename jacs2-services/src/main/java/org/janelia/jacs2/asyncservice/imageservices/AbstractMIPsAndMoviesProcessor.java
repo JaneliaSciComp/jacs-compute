@@ -183,7 +183,7 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
         if (StringUtils.equals(resultsDir.getFileName().toString(), args.imageFilePrefix)) {
             return resultsDir;
         } else {
-            return resultsDir.resolve(args.imageFilePrefix);
+            return resultsDir.resolve(args.getImageFilePrefix(args.imageFile, args.imageFilePrefix));
         }
     }
 

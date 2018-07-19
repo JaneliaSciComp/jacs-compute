@@ -46,7 +46,7 @@ public class EnhancedMIPsAndMoviesProcessor extends AbstractMIPsAndMoviesProcess
     protected String getMIPsAndMoviesArgs(MIPsAndMoviesArgs args, Path outputDir) {
         StringJoiner builder = new StringJoiner(",");
         builder.add(outputDir.toString()); // output directory
-        builder.add(FileUtils.getFileNameOnly(args.imageFile)); // output prefix
+        builder.add(args.getImageFilePrefix(args.imageFile, args.imageFilePrefix)); // output prefix
         builder.add(args.mode); // mode
         builder.add(args.imageFile); // input file
         builder.add(args.chanSpec);
