@@ -335,7 +335,8 @@ public class StorageService {
                 JsonNode storageNode = response.readEntity(new GenericType<JsonNode>(){});
                 return extractStorageNodeFromJson(storageURL, entryLocationUrl, null, storageNode);
             } else {
-                throw new IllegalStateException(storageURL + " returned with " + response.getStatus());
+                LOG.warn("Put content using {} return status {}", target, response.getStatus());
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
         } catch (IllegalStateException e) {
             throw e;
