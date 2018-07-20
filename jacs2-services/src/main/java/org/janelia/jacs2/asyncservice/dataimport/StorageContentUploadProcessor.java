@@ -209,7 +209,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                             storageInfo.getStorageURL(),
                             contentList.stream()
                                     .peek(contentEntry -> {
-                                        Stream.concat(Stream.of(), contentEntry.getAdditionalReps().stream())
+                                        Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
                                                 .forEach(storageContentInfo -> {
                                                     storageContentInfo.setRemoteInfo(new StorageService.StorageEntryInfo(
                                                             storageInfo.getStorageId(),
