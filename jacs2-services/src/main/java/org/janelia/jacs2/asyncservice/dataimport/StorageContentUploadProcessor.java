@@ -178,7 +178,10 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                             .map(contentEntryInfo -> contentEntryInfo.getMainRep().getLocalFullPath().toString())
                             .reduce((p1, p2) -> p1 + "," + p2)
                             .orElse("")),
-                    new ServiceArg("-outputDir", localMIPSRootPath.toString()))
+                    new ServiceArg("-outputDir", localMIPSRootPath.toString()),
+                    new ServiceArg("-chanSpec", args.mipsChanSpec),
+                    new ServiceArg("-colorSpec", args.mipsColorSpec),
+                    new ServiceArg("-options", args.mipsOptions))
                     .thenApply(mipsResults -> new JacsServiceResult<>(
                             jacsServiceData,
                             storageContentHelper.addContentMips(contentList, localMIPSRootPath, mipsResults.getResult())));
