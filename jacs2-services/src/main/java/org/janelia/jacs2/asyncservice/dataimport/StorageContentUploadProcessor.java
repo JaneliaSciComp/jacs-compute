@@ -209,7 +209,16 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                             storageInfo.getStorageURL(),
                             contentList.stream()
                                     .peek(contentEntry -> {
-                                        Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
+                                        contentEntry.getMainRep().setRemoteInfo(new StorageService.StorageEntryInfo(
+                                                storageInfo.getStorageId(),
+                                                storageInfo.getStorageURL(),
+                                                null,
+                                                storageInfo.getStorageRootDir(),
+                                                storageInfo.getStorageRootPrefix(),
+                                                storageContentHelper.constructStorageEntryPath(contentEntry.getMainRep(), ""),
+                                                false
+                                        ));
+                                        contentEntry.getAdditionalReps()
                                                 .forEach(storageContentInfo -> {
                                                     storageContentInfo.setRemoteInfo(new StorageService.StorageEntryInfo(
                                                             storageInfo.getStorageId(),
@@ -217,7 +226,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                                                             null,
                                                             storageInfo.getStorageRootDir(),
                                                             storageInfo.getStorageRootPrefix(),
-                                                            storageContentInfo.getLocalRelativePath(),
+                                                            storageContentHelper.constructStorageEntryPath(contentEntry.getMainRep(), "mips"),
                                                             false
                                                     ));
                                                 });

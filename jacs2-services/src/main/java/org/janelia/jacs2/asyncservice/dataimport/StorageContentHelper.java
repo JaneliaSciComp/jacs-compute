@@ -145,7 +145,7 @@ class StorageContentHelper {
                                         null, // I don't know the entry URL yet
                                         inputStack.getMainRep().getRemoteInfo().getEntryRootLocation(),
                                         inputStack.getMainRep().getRemoteInfo().getEntryRootPrefix(),
-                                        Paths.get("mips",mipsContentInfo.getLocalRelativePath()).toString(),
+                                        constructStorageEntryPath(mipsContentInfo, "mips"),
                                         false));
                             }
                             inputStack.addRepresentation(mipsContentInfo);
@@ -153,6 +153,14 @@ class StorageContentHelper {
             }
         });
         return contentList;
+    }
+
+    String constructStorageEntryPath(StorageContentInfo storageContentInfo, String pathPrefix) {
+        if (StringUtils.isBlank(pathPrefix)) {
+            return storageContentInfo.getLocalRelativePath();
+        } else {
+            return Paths.get(pathPrefix, storageContentInfo.getLocalRelativePath()).toString();
+        }
     }
 
     private void uploadContent(StorageContentInfo storageContentInfo, String storageURL, String subjectKey, String authToken) {
