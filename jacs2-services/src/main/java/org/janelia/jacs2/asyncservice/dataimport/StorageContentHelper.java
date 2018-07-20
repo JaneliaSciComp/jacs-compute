@@ -146,12 +146,7 @@ class StorageContentHelper {
                                         null, // I don't know the entry URL yet
                                         inputStack.getMainRep().getRemoteInfo().getEntryRootLocation(),
                                         inputStack.getMainRep().getRemoteInfo().getEntryRootPrefix(),
-                                        FileUtils.getFilePath(
-                                                FileUtils.getSubDir(Paths.get(inputStack.getMainRep().getRemoteInfo().getEntryRelativePath()).getParent(), "mips"),
-                                                null,
-                                                FileUtils.getFileName(mipsFile),
-                                                null,
-                                                FileUtils.getFileExtensionOnly(mipsFile)).toString(),
+                                        Paths.get("mips",mipsContentInfo.getLocalRelativePath()).toString(),
                                         false));
                             }
                             inputStack.addRepresentation(mipsContentInfo);
