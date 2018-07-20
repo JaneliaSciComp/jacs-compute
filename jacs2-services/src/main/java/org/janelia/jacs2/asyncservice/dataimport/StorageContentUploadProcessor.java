@@ -226,7 +226,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                                                             null,
                                                             storageInfo.getStorageRootDir(),
                                                             storageInfo.getStorageRootPrefix(),
-                                                            storageContentHelper.constructStorageEntryPath(contentEntry.getMainRep(), "mips"),
+                                                            storageContentHelper.constructStorageEntryPath(storageContentInfo, "mips"),
                                                             false
                                                     ));
                                                 });
