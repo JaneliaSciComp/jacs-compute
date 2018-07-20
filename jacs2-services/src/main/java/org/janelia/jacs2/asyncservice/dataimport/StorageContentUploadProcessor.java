@@ -34,6 +34,7 @@ import javax.inject.Named;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,6 +61,8 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
         String storageId;
         @Parameter(names = "-storageEntryName", description = "Storage entry name")
         String storageEntryName;
+        @Parameter(names = "-storageTags", description = "Storage tags")
+        List<String> storageTags = new ArrayList<>();
 
         StorageContentUploadArgs() {
             super("Service that uploads the content of a specified directory to jade. " +
@@ -201,6 +204,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                     .supply(() -> storageContentHelper.getOrCreateStorage(
                             args.storageServiceURL,
                             args.storageId, storageName,
+                            args.storageTags,
                             jacsServiceData.getOwnerKey(),
                             ResourceHelper.getAuthToken(jacsServiceData.getResources()))
                     )

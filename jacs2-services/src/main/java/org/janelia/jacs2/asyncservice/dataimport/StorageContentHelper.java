@@ -40,10 +40,12 @@ class StorageContentHelper {
         this.logger = logger;
     }
 
-    StorageService.StorageInfo getOrCreateStorage(String storageServiceURL, String storageId, String storageName, String ownerKey, String authToken) {
+    StorageService.StorageInfo getOrCreateStorage(String storageServiceURL, String storageId,
+                                                  String storageName, List<String> storageTags,
+                                                  String ownerKey, String authToken) {
         return storageService
                 .lookupStorage(storageServiceURL, storageId, storageName, ownerKey, authToken)
-                .orElseGet(() -> storageService.createStorage(storageServiceURL, storageName, ownerKey, authToken))
+                .orElseGet(() -> storageService.createStorage(storageServiceURL, storageName, storageTags, ownerKey, authToken))
                 ;
     }
 

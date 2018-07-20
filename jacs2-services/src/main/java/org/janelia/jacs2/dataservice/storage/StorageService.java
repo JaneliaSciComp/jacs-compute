@@ -269,7 +269,7 @@ public class StorageService {
         }
     }
 
-    public StorageInfo createStorage(String storageServiceURL, String storageName, String subject, String authToken) {
+    public StorageInfo createStorage(String storageServiceURL, String storageName, List<String> storageTags, String subject, String authToken) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
@@ -282,6 +282,7 @@ public class StorageService {
             storageData.setName(storageName);
             storageData.setOwnerKey(subject);
             storageData.setStorageFormat("DATA_DIRECTORY");
+            storageData.setStorageTags(storageTags);
             Response response = requestBuilder.post(Entity.json(storageData));
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
