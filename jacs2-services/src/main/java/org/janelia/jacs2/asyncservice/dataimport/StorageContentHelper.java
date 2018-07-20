@@ -6,7 +6,6 @@ import org.janelia.jacs2.asyncservice.common.ResourceHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.service.JacsServiceData;
