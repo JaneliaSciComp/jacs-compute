@@ -136,7 +136,7 @@ class StorageContentHelper {
                 mipsAndMoviesResult.getFileList()
                         .forEach(mipsFile -> {
                             StorageContentInfo mipsContentInfo = new StorageContentInfo();
-                            mipsContentInfo.setFileType(FileType.SignalMip); // these entries are signal MIP entries
+                            mipsContentInfo.setFileType(FileTypeHelper.getFileTypeByExtension(mipsFile, FileType.SignalMip));
                             mipsContentInfo.setLocalBasePath(localMIPSRootPath.toString());
                             mipsContentInfo.setLocalRelativePath(localMIPSRootPath.relativize(Paths.get(mipsFile)).toString());
                             if (inputStack.getMainRep().getRemoteInfo() != null) {

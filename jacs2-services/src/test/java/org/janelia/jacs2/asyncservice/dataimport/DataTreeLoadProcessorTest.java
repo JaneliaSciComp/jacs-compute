@@ -234,8 +234,8 @@ public class DataTreeLoadProcessorTest {
         Path f1Path = basePath.resolve("mips/f1.lsm");
         Path f2Path = basePath.resolve("mips/f2.v3draw");
 
-        Path f1PngPath = basePath.resolve("mips/f1_mipArtifact.png");
-        Path f2PngPath = basePath.resolve("mips/f2_mipArtifact.png");
+        Path f1PngPath = basePath.resolve("mips/f1_signal.png");
+        Path f2PngPath = basePath.resolve("mips/f2_signal.png");
 
         ServiceResultHandler<List<MIPsAndMoviesResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
         when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
@@ -304,11 +304,11 @@ public class DataTreeLoadProcessorTest {
                     Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
                     Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             argThat(argument -> argument.getFilepath().equals(testStoragePrefix + "/f1.lsm") &&
-                                    argument.getFiles().values().contains(testStoragePrefix + "/mips/f1_mipArtifact.png")),
+                                    argument.getFiles().values().contains(testStoragePrefix + "/mips/f1_signal.png")),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             argThat(argument -> argument.getFilepath().equals(testStoragePrefix + "/f2.v3draw") &&
-                                    argument.getFiles().values().contains(testStoragePrefix + "/mips/f2_mipArtifact.png")),
+                                    argument.getFiles().values().contains(testStoragePrefix + "/mips/f2_signal.png")),
                             eq(testOwner));
                     Mockito.verifyNoMoreInteractions(mipsConverterProcessor, storageService, folderService);
                     return r;
@@ -369,8 +369,8 @@ public class DataTreeLoadProcessorTest {
         Path f1Path = basePath.resolve("f1.lsm");
         Path f2Path = basePath.resolve("f2.v3draw");
 
-        Path f1PngPath = basePath.resolve("f1_mipArtifact.png");
-        Path f2PngPath = basePath.resolve("f2_mipArtifact.png");
+        Path f1PngPath = basePath.resolve("f1_signal.png");
+        Path f2PngPath = basePath.resolve("f2_signal.png");
 
         ServiceResultHandler<List<MIPsAndMoviesResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
         when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
@@ -477,8 +477,8 @@ public class DataTreeLoadProcessorTest {
         Path f1Path = basePath.resolve("mips/f1.lsm");
         Path f2Path = basePath.resolve("mips/f2.v3draw");
 
-        Path f1PngPath = basePath.resolve("mips/f1_mipArtifact.png");
-        Path f2PngPath = basePath.resolve("mips/f2_mipArtifact.png");
+        Path f1PngPath = basePath.resolve("mips/f1_signal.png");
+        Path f2PngPath = basePath.resolve("mips/f2_signal.png");
 
         ServiceResultHandler<List<MIPsAndMoviesResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
         when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
@@ -550,7 +550,7 @@ public class DataTreeLoadProcessorTest {
                             eq(FileType.LosslessStack),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/mips/f1_mipArtifact.png"),
+                            eq(testStoragePrefix + "/mips/f1_signal.png"),
                             eq(FileType.SignalMip),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
@@ -558,7 +558,7 @@ public class DataTreeLoadProcessorTest {
                             eq(FileType.LosslessStack),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/mips/f2_mipArtifact.png"),
+                            eq(testStoragePrefix + "/mips/f2_signal.png"),
                             eq(FileType.SignalMip),
                             eq(testOwner));
 
