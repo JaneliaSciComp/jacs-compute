@@ -45,11 +45,11 @@ public class MultiInputMIPsAndMoviesProcessor extends AbstractServiceProcessor<L
         @Parameter(names = "-inputFiles", description = "List of input files for which to generate mips")
         List<String> inputFiles = new ArrayList<>();
         @Parameter(names = "-chanSpec", description = "Channel spec - all files must have the same channel spec")
-        String chanSpec = "sssr";
+        String chanSpec = "r"; // default to a single reference channel
         @Parameter(names = "-colorSpec", description = "Color spec - if specified all files must have the same color spec")
         String colorSpec;
         @Parameter(names = "-options", description = "Options")
-        String options = "mips:movies:legends:bcomp";
+        String options = "mips:movies";
         @Parameter(names = "-outputDir", description = "MIPs output directory")
         String outputDir;
 

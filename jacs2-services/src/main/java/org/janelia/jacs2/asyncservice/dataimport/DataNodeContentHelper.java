@@ -46,6 +46,7 @@ class DataNodeContentHelper {
                             .peek(contentEntry -> {
                                 logger.info("Add {} to {}", contentEntry, dataFolder);
                                 Image imageStack = new Image();
+                                imageStack.setUserDataFlag(true);
                                 imageStack.setFilepath(contentEntry.getMainRep().getRemoteInfo().getEntryPath());
                                 contentEntry.getAdditionalReps().forEach(ci -> {
                                     FileType fileType = ci.getFileType();
@@ -86,6 +87,7 @@ class DataNodeContentHelper {
                                             folderService.addImageFile(dataFolder,
                                                     ci.getRemoteInfo().getEntryPath(),
                                                     fileType,
+                                                    true,
                                                     jacsServiceData.getOwnerKey()
                                             );
                                         });

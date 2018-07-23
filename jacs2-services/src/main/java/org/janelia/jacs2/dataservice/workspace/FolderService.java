@@ -48,10 +48,11 @@ public class FolderService {
         }
     }
 
-    public void addImageFile(TreeNode folder, String imageFileName, FileType imageFileType, String subjectKey) {
+    public void addImageFile(TreeNode folder, String imageFileName, FileType imageFileType, boolean userDataFlag, String subjectKey) {
         try {
             Image imageFile = new Image();
             imageFile.setName(FileUtils.getFileName(imageFileName));
+            imageFile.setUserDataFlag(userDataFlag);
             imageFile.setFilepath(imageFileName);
             imageFile.getFiles().put(imageFileType, imageFileName);
             folderDao.save(subjectKey, imageFile);

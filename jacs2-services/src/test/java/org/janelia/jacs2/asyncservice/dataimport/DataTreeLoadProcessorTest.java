@@ -161,9 +161,9 @@ public class DataTreeLoadProcessorTest {
                     Mockito.verify(mipsConverterProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", ""))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.toString()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "r"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:bcomp")))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies")))
                     );
                     Mockito.verify(mipsConverterProcessor).getResultHandler();
 
@@ -281,9 +281,9 @@ public class DataTreeLoadProcessorTest {
                     Mockito.verify(mipsConverterProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", f1Path + "," + f2Path))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.resolve("mips").toString()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "r"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:bcomp")))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies")))
                     );
                     Mockito.verify(mipsConverterProcessor).getResultHandler();
 
@@ -524,9 +524,9 @@ public class DataTreeLoadProcessorTest {
                     Mockito.verify(mipsConverterProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", f1Path + "," + f2Path))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.resolve("mips").toString()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
+                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "r"))),
                             argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:bcomp")))
+                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies")))
                     );
                     Mockito.verify(mipsConverterProcessor).getResultHandler();
 
@@ -548,18 +548,22 @@ public class DataTreeLoadProcessorTest {
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             eq(testStoragePrefix + "/f1.lsm"),
                             eq(FileType.LosslessStack),
+                            eq(true),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             eq(testStoragePrefix + "/mips/f1_signal.png"),
                             eq(FileType.SignalMip),
+                            eq(true),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             eq(testStoragePrefix + "/f2.v3draw"),
                             eq(FileType.LosslessStack),
+                            eq(true),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             eq(testStoragePrefix + "/mips/f2_signal.png"),
                             eq(FileType.SignalMip),
+                            eq(true),
                             eq(testOwner));
 
                     Mockito.verifyNoMoreInteractions(mipsConverterProcessor, storageService, folderService);

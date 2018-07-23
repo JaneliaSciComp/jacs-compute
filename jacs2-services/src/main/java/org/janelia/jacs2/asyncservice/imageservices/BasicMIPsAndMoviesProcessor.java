@@ -3,7 +3,6 @@ package org.janelia.jacs2.asyncservice.imageservices;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.ServiceMetaData;

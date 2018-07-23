@@ -21,11 +21,11 @@ class CommonDataNodeArgs extends ServiceArgs {
             ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd"
     ));
     @Parameter(names = "-mipsChanSpec", description = "MIPS channel spec - all files must have the same channel spec")
-    String mipsChanSpec = "sssr";
+    String mipsChanSpec = "r"; // default to a single reference channel
     @Parameter(names = "-mipsColorSpec", description = "MIPS color spec - if specified all files must have the same color spec")
     String mipsColorSpec;
     @Parameter(names = "-mipsOptions", description = "MIPS Options")
-    String mipsOptions = "mips:movies:legends:bcomp";
+    String mipsOptions = "mips:movies";
 
     CommonDataNodeArgs(String serviceDescription) {
         super(serviceDescription);
