@@ -45,11 +45,9 @@ public class MultiInputMIPsAndMoviesProcessor extends AbstractServiceProcessor<L
         @Parameter(names = "-inputFiles", description = "List of input files for which to generate mips")
         List<String> inputFiles = new ArrayList<>();
         @Parameter(names = "-chanSpec", description = "Channel spec - all files must have the same channel spec")
-        String chanSpec = "r"; // default to a single reference channel
-        @Parameter(names = "-colorSpec", description = "Color spec - if specified all files must have the same color spec")
-        String colorSpec;
+        String chanSpec = "";
         @Parameter(names = "-options", description = "Options")
-        String options = "mips:movies";
+        String options = "mips:movies:hist";
         @Parameter(names = "-outputDir", description = "MIPs output directory")
         String outputDir;
 
@@ -58,16 +56,16 @@ public class MultiInputMIPsAndMoviesProcessor extends AbstractServiceProcessor<L
         }
     }
 
-    private final WrappedServiceProcessor<BasicMIPsAndMoviesProcessor, MIPsAndMoviesResult> basicMIPsAndMoviesProcessor;
+    private final WrappedServiceProcessor<SimpleMIPsAndMoviesProcessor, MIPsAndMoviesResult> mipsAndMoviesProcessor;
 
     @Inject
     MultiInputMIPsAndMoviesProcessor(ServiceComputationFactory computationFactory,
                                      JacsServiceDataPersistence jacsServiceDataPersistence,
                                      @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                     BasicMIPsAndMoviesProcessor basicMIPsAndMoviesProcessor,
+                                     SimpleMIPsAndMoviesProcessor mipsAndMoviesProcessor,
                                      Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.basicMIPsAndMoviesProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, basicMIPsAndMoviesProcessor);
+        this.mipsAndMoviesProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, mipsAndMoviesProcessor);
     }
 
     @Override
@@ -113,18 +111,12 @@ public class MultiInputMIPsAndMoviesProcessor extends AbstractServiceProcessor<L
         if (CollectionUtils.isEmpty(args.inputFiles)) {
             return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, Collections.emptyList()));
         } else {
-            List<FijiColor> colors = FijiUtils.getColorSpec(args.colorSpec, args.chanSpec);
-            if (colors.isEmpty()) {
-                colors = FijiUtils.getDefaultColorSpec(args.chanSpec, "RGB", '1');
-            }
-            String colorSpec = colors.stream().map(c -> String.valueOf(c.getCode())).collect(Collectors.joining(""));
             List<ServiceComputation<?>> mipsComputations = prepareMipsInput(args, jacsServiceData)
-                    .map((MIPsAndMoviesArgs mipsArgs) -> basicMIPsAndMoviesProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                    .map((MIPsAndMoviesArgs mipsArgs) -> mipsAndMoviesProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                                     .description("Generate mips")
                                     .build(),
                             new ServiceArg("-imgFile", mipsArgs.imageFile),
                             new ServiceArg("-chanSpec", mipsArgs.chanSpec),
-                            new ServiceArg("-colorSpec", colorSpec),
                             new ServiceArg("-options", mipsArgs.options),
                             new ServiceArg("-resultsDir", mipsArgs.resultsDir)
                             ))
@@ -150,7 +142,6 @@ public class MultiInputMIPsAndMoviesProcessor extends AbstractServiceProcessor<L
                     MIPsAndMoviesArgs mipsAndMoviesArgs = new MIPsAndMoviesArgs();
                     mipsAndMoviesArgs.imageFile = inputName;
                     mipsAndMoviesArgs.chanSpec = args.chanSpec;
-                    mipsAndMoviesArgs.colorSpec = args.colorSpec;
                     mipsAndMoviesArgs.resultsDir = resultsDir.toString();
                     mipsAndMoviesArgs.options = args.options;
                     return mipsAndMoviesArgs;

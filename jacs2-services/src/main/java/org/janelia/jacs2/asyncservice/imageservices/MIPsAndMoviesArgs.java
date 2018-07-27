@@ -16,7 +16,7 @@ class MIPsAndMoviesArgs extends ServiceArgs {
     String secondImageFilePrefix;
     @Parameter(names = "-mode", description = "Mode")
     String mode = "none";
-    @Parameter(names = "-chanSpec", description = "Channel spec", required = true)
+    @Parameter(names = "-chanSpec", description = "Channel spec")
     String chanSpec;
     @Parameter(names = "-colorSpec", description = "Color spec")
     String colorSpec;

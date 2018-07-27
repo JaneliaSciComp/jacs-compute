@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProcessor<MIPsAndMoviesResult> {
 
-    protected static final String DEFAULT_OPTIONS = "mips:movies";
+    static final String DEFAULT_OPTIONS = "mips:movies:legends:hist";
 
     private final String mipsAndMoviesMacro;
     private final String scratchLocation;
