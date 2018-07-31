@@ -29,7 +29,7 @@ import java.util.List;
 @Named("singularity")
 public class SingularityContainerProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
-    static enum ContainerOperation {
+    enum ContainerOperation {
         run,
         exec
     }

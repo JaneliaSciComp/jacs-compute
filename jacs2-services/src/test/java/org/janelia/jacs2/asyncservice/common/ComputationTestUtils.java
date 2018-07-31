@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class ComputationTestUtils {
 
@@ -27,14 +26,4 @@ public class ComputationTestUtils {
         return new ServiceComputationFactory(serviceComputationQueue, logger);
     }
 
-    public static ThrottledExeJobsQueue createTestThrottledProcessesQueue() {
-        ThrottledExeJobsQueue processesQueue = mock(ThrottledExeJobsQueue.class);
-        when(processesQueue.add(any(ThrottledJobInfo.class)))
-                .then(invocation -> {
-                    ThrottledJobInfo jobInfo = invocation.getArgument(0);
-                    jobInfo.start();
-                    return jobInfo;
-                });
-        return processesQueue;
-    }
 }
