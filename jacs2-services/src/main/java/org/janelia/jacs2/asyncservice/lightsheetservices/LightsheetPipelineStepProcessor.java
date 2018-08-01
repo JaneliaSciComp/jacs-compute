@@ -3,7 +3,9 @@ package org.janelia.jacs2.asyncservice.lightsheetservices;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -41,8 +43,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -108,14 +112,21 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
             LightsheetPipelineStepArgs args = getArgs(jacsServiceData);
             Pair<String, Map<String, Object>> stepConfig = getStepConfig(jacsServiceData, args);
             String stepConfigFile = stepConfig.getLeft();
-            Path stepConfigPath = Paths.get(stepConfigFile).getParent();
+            String stepConfigPath = Paths.get(stepConfigFile).getParent().toString();
             String containerLocation = getContainerLocation(stepConfig.getRight(), args);
             List<List<String>> stepJobArgs = getStepJobArgs(stepConfigFile, args);
             Map<String, String> stepResources = prepareResources(args, jacsServiceData.getResources());
+
+            Map<String, String> dataMountPoints = new LinkedHashMap<>();
+            dataMountPoints.put(stepConfigPath, stepConfigPath);
+            dataMountPoints.putAll(getDataMountPointsFromAppConfig());
+            dataMountPoints.putAll(getDataMountPointsFromDictionaryArgs(jacsServiceData.getActualDictionaryArgs()));
+            dataMountPoints.putAll(getDataMountPointsFromStepConfig(stepConfig.getRight()));
+
             List<ServiceComputation<?>> stepJobs = IndexedReference.indexListContent(stepJobArgs, (i, jobArgs) -> new IndexedReference<>(jobArgs, i))
                     .map(indexedJobArgs -> createStepJobComputation(
                             containerLocation,
-                            stepConfigPath,
+                            dataMountPoints,
                             args.step,
                             args.stepIndex,
                             indexedJobArgs.getPos(),
@@ -133,33 +144,32 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
     }
 
     private ServiceComputation<JacsServiceResult<Void>> createStepJobComputation(String containerLocation,
-                                                                                Path containerBindPath,
-                                                                                LightsheetPipelineStep step,
-                                                                                int stepIndex,
-                                                                                int jobIndex,
-                                                                                Map<String, String> jobResources,
-                                                                                List<String> jobArgs,
-                                                                                JacsServiceData jacsServiceData) {
+                                                                                 Map<String, String> mountPoints,
+                                                                                 LightsheetPipelineStep step,
+                                                                                 int stepIndex,
+                                                                                 int jobIndex,
+                                                                                 Map<String, String> jobResources,
+                                                                                 List<String> jobArgs,
+                                                                                 JacsServiceData jacsServiceData) {
+        String bindPath = mountPoints.entrySet().stream()
+                .map(en -> {
+                    if (StringUtils.isBlank(en.getValue())) {
+                        return en.getKey();
+                    } else {
+                        return en.getKey() + ":" + en.getValue();
+                    }
+                })
+                .reduce((b1, b2) -> b1 + "," + b2)
+                .orElse("");
         return containerProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Step " + stepIndex + ": " + step + " - job " + jobIndex)
                         .addResources(jobResources)
                         .build(),
                 new ServiceArg("-containerLocation", containerLocation),
-                new ServiceArg("-bindPaths", containerBindPath + ":" + containerBindPath),
+                new ServiceArg("-bindPaths", bindPath),
                 new ServiceArg("-appArgs", jobArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
         );
-    }
-
-    private Map<String, String> prepareResources(LightsheetPipelineStepArgs args, Map<String, String> jobResources) {
-        String cpuType = ProcessorHelper.getCPUType(jobResources);
-        if (StringUtils.isBlank(cpuType)) {
-            ProcessorHelper.setCPUType(jobResources, "broadwell");
-        }
-        ProcessorHelper.setRequiredSlots(jobResources, args.step.getRecommendedSlots());
-        ProcessorHelper.setSoftJobDurationLimitInSeconds(jobResources, 5*60); // 5 minutes
-        ProcessorHelper.setHardJobDurationLimitInSeconds(jobResources, 12*60*60); // 12 hours
-        return jobResources;
     }
 
     private LightsheetPipelineStepArgs getArgs(JacsServiceData jacsServiceData) {
@@ -171,10 +181,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         if (StringUtils.isNotBlank(containerImage)) {
             return containerImage;
         } else {
-            containerImage = (String) stepConfig.get("containerImage " + "." + args.step + "." + args.stepIndex);
-            if (containerImage == null) {
-                containerImage = (String) stepConfig.get("containerImage " + "." + args.step);
-            }
+            containerImage = (String) stepConfig.get("containerImage");
             if (StringUtils.isBlank(containerImage)) {
                 containerImage = StringUtils.appendIfMissing(applicationConfig.getStringPropertyValue("ImageProcessing.Collection"), "/");
                 containerImage += args.step.toString().toLowerCase();
@@ -189,26 +196,119 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         }
     }
 
+    private Map<String, String> prepareResources(LightsheetPipelineStepArgs args, Map<String, String> jobResources) {
+        String cpuType = ProcessorHelper.getCPUType(jobResources);
+        if (StringUtils.isBlank(cpuType)) {
+            ProcessorHelper.setCPUType(jobResources, "broadwell");
+        }
+        ProcessorHelper.setRequiredSlots(jobResources, args.step.getRecommendedSlots());
+        ProcessorHelper.setSoftJobDurationLimitInSeconds(jobResources, 5*60); // 5 minutes
+        ProcessorHelper.setHardJobDurationLimitInSeconds(jobResources, 12*60*60); // 12 hours
+        return jobResources;
+    }
+
+    private Map<String, String> getDataMountPointsFromDictionaryArgs(Map<String, Object> dictionaryArgs) {
+        String dataMountPoints =  (String) dictionaryArgs.get("dataMountPoints");
+        return parseMountPoints(dataMountPoints);
+    }
+
+    private Map<String, String> getDataMountPointsFromAppConfig() {
+        return parseMountPoints(applicationConfig.getStringPropertyValue("ImageProcessing.Lightsheet.DataMountPoints"));
+    }
+
+    private Map<String, String> getDataMountPointsFromStepConfig(Map<String, Object> stepConfig) {
+        Map<String, String> dataMountPoints = new LinkedHashMap<>();
+        // clusterPT
+        dataMountPoints.putAll(addMountPointFromStepConfig("inputFolder", stepConfig,
+                Function.identity()));
+        // clusterMF
+        dataMountPoints.putAll(addMountPointFromStepConfig("inputString", stepConfig,
+                Function.identity()));
+        dataMountPoints.putAll(addMountPointFromStepConfig("outputString", stepConfig,
+                outputTemplate -> Paths.get(outputTemplate).getParent().toString()));
+        // localAP
+        dataMountPoints.putAll(addMountPointFromStepConfig("configRoot", stepConfig,
+                Function.identity()));
+        // clusterTF
+        dataMountPoints.putAll(addMountPointFromStepConfig("sourceString", stepConfig,
+                sourceTemplate -> Paths.get(sourceTemplate).getParent().toString()));
+        dataMountPoints.putAll(addMountPointFromStepConfig("lookUpTable", stepConfig,
+                lookupTemplate -> Paths.get(lookupTemplate).getParent().toString()));
+        // localEC
+        dataMountPoints.putAll(addMountPointFromStepConfig("inputRoot", stepConfig,
+                Function.identity()));
+        // clusterCS
+        dataMountPoints.putAll(addMountPointFromStepConfig("outputRoot", stepConfig,
+                Function.identity()));
+        // clusterFR
+        dataMountPoints.putAll(addMountPointFromStepConfig("inputDir", stepConfig,
+                Function.identity()));
+        dataMountPoints.putAll(addMountPointFromStepConfig("outputDir", stepConfig,
+                Function.identity()));
+        return dataMountPoints;
+    }
+
+    private Map<String, String> parseMountPoints(String mountPointsString) {
+        if (StringUtils.isBlank(mountPointsString)) {
+            return ImmutableMap.of();
+        } else {
+            return Splitter.on(',').trimResults().omitEmptyStrings().splitToList(mountPointsString).stream()
+                    .map(kv -> {
+                        int kvSepIndex = kv.indexOf(':');
+                        if (kvSepIndex > 0) {
+                            return ImmutablePair.of(kv.substring(0, kvSepIndex), kv.substring(kvSepIndex + 1));
+                        } else if (kvSepIndex == 0) {
+                            return ImmutablePair.of(kv.substring(1), kv.substring(1));
+                        } else {
+                            return ImmutablePair.of(kv, "");
+                        }
+                    })
+                    .collect(LinkedHashMap::new, (m, p) -> m.put(p.getLeft(), p.getRight()), (m1, m2) -> m1.putAll(m2));
+        }
+    }
+
+    private Map<String, String> addMountPointFromStepConfig(String pathKey,
+                                                            Map<String, Object> stepConfig,
+                                                            Function<String, String> mapper) {
+        String pathValue = (String) stepConfig.get(pathKey);
+        String mountPoint = null;
+        if (StringUtils.isNotBlank(pathValue)) {
+            mountPoint = mapper.apply(pathValue);
+        }
+        if (StringUtils.isNotBlank(mountPoint)) {
+            return ImmutableMap.of(mountPoint, mountPoint);
+        } else {
+            return ImmutableMap.of();
+        }
+    }
+
     private String extractStepFromConfigUrl(String configUrl) {
         String[] parts = configUrl.split("\\?stepName=");
         return parts.length > 1 ? parts[1] : null;
     }
 
-    private Map<String, Object> readJsonConfig(InputStream inputStream) {
-        try {
-            return objectMapper.readValue(inputStream, new TypeReference<Map<String, Object>>() {});
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+    private Pair<String, Map<String, Object>> getStepConfig(JacsServiceData jacsServiceData, LightsheetPipelineStepArgs args) {
+        Map<String, Object> stepConfig = readJsonConfig(getJsonConfig(args.configAddress, args.step.name()));
+        stepConfig.putAll(jacsServiceData.getActualDictionaryArgs()); // overwrite arguments that were explicitly passed by the user in the dictionary args
+        // write the final config file
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+        String fileName = "";
+        if ("generateMiniStacks".equals(args.step.name())) { // Use previous step name for file name
+            fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + extractStepFromConfigUrl(args.configAddress) + ".json";
         }
-    }
-
-    private void writeJsonConfig(Map<String, Object> config, File configFile) {
-        try {
-            Files.createDirectories(configFile.getParentFile().toPath());
-            objectMapper.writeValue(configFile, config);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        else{
+            fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json";
         }
+        File jsonConfigFile = serviceWorkingFolder.getServiceFolder(fileName).toFile();
+        writeJsonConfig(stepConfig, jsonConfigFile);
+        if (StringUtils.isNotBlank(args.configOutputPath) && !"generateMiniStacks".equals(args.step.name())) {
+            String[] addressParts = args.configAddress.split("/");
+            String lightsheetJobID = addressParts[addressParts.length -1];
+            Path configOutputPath = Paths.get(args.configOutputPath + "/" + lightsheetJobID + "/" + fileName);
+            File configOutputPathFile = configOutputPath.toFile();
+            writeJsonConfig(stepConfig, configOutputPathFile);
+        }
+        return ImmutablePair.of(jsonConfigFile.getAbsolutePath(), stepConfig);
     }
 
     // Creates json file from http call
@@ -244,30 +344,22 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         }
     }
 
-    private Pair<String, Map<String, Object>> getStepConfig(JacsServiceData jacsServiceData, LightsheetPipelineStepArgs args) {
-        Map<String, Object> stepConfig = readJsonConfig(getJsonConfig(args.configAddress, args.step.name()));
-        stepConfig.putAll(jacsServiceData.getActualDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
-        // write the final config file
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        String fileName = "";
-        if ("generateMiniStacks".equals(args.step.name())) { // Use previous step name for file name
-            fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + extractStepFromConfigUrl(args.configAddress) + ".json";
+    private Map<String, Object> readJsonConfig(InputStream inputStream) {
+        try {
+            return objectMapper.readValue(inputStream, new TypeReference<Map<String, Object>>() {});
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        else{
-            fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json";
-        }
-        File jsonConfigFile = serviceWorkingFolder.getServiceFolder(fileName).toFile();
-        writeJsonConfig(stepConfig, jsonConfigFile);
-        if (StringUtils.isNotBlank(args.configOutputPath) && !"generateMiniStacks".equals(args.step.name())) {
-            String[] addressParts = args.configAddress.split("/");
-            String lightsheetJobID = addressParts[addressParts.length -1];
-            Path configOutputPath = Paths.get(args.configOutputPath + "/" + lightsheetJobID + "/" + fileName);
-            File configOutputPathFile = configOutputPath.toFile();
-            writeJsonConfig(stepConfig, configOutputPathFile);
-        }
-        return ImmutablePair.of(jsonConfigFile.getAbsolutePath(), stepConfig);
     }
 
+    private void writeJsonConfig(Map<String, Object> config, File configFile) {
+        try {
+            Files.createDirectories(configFile.getParentFile().toPath());
+            objectMapper.writeValue(configFile, config);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 
     private List<List<String>> getStepJobArgs(String jsonConfig, LightsheetPipelineStepArgs args) {
         if (args.step.cannotSplitJob()) {

@@ -98,7 +98,8 @@ public class LightsheetPipelineStepProcessorTest {
                 ImmutableMap.of(
                         "Container.Registry.URL", "shub://imagecatcher",
                         "ImageProcessing.Collection","{Container.Registry.URL}/imageprocessing",
-                        "ImageProcessing.Lightsheet.Version", "1.0"
+                        "ImageProcessing.Lightsheet.Version", "1.0",
+                        "ImageProcessing.Lightsheet.DataMountPoints", "/groups/lightsheet/lightsheet:/groups/lightsheet/lightsheet,/misc/local,:d1/d1.1,d2:"
                 ))
                 .build();
 
@@ -119,6 +120,56 @@ public class LightsheetPipelineStepProcessorTest {
     @After
     public void tearDown() throws IOException {
         FileUtils.deletePath(testDirectory.toPath());
+    }
+
+    @Test
+    public void processWithNonDefaultContainerLocation() {
+        WebTarget configEndpoint = prepareConfigEnpointTestTarget();
+        Mockito.when(testHttpClient.target(CONFIG_IP_ARG)).thenReturn(configEndpoint);
+        LOCAL_STEP_CONFIGS.forEach((step, config) -> {
+            int stepIndex = 1;
+            JacsServiceData testServiceData = createTestService(step, stepIndex, 100, 10, config);
+            testServiceData.getDictionaryArgs().put("containerImage", "shub://otherregistry/imageprocessing/" + step.name().toLowerCase() + ":latest");
+            Mockito.when(containerProcessor.process(any(ServiceExecutionContext.class),
+                    any(ServiceArg.class),
+                    any(ServiceArg.class),
+                    any(ServiceArg.class)))
+                    .then(invocation -> serviceComputationFactory.newCompletedComputation(new JacsServiceResult<Void>(testServiceData)))
+            ;
+
+            ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
+            Consumer successful = mock(Consumer.class);
+            Consumer failure = mock(Consumer.class);
+            stepComputation
+                    .thenApply(r -> {
+                        successful.accept(r);
+                        File stepConfigFile = new File(
+                                testDirectory,
+                                testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json");
+                        assertTrue(stepConfigFile.exists());
+                        Mockito.verify(containerProcessor).process(
+                                any(ServiceExecutionContext.class),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-containerLocation", "shub://otherregistry/imageprocessing/" + step.name().toLowerCase() + ":latest"))),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths",
+                                        stepConfigFile.getParentFile().getAbsolutePath() + ":" + stepConfigFile.getParentFile().getAbsolutePath() + "," +
+                                                "/groups/lightsheet/lightsheet:/groups/lightsheet/lightsheet" + "," +
+                                                "/misc/local" + "," +
+                                                "d1/d1.1:d1/d1.1" + "," +
+                                                "d2"
+                                ))),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath())))
+                        );
+                        Mockito.reset(containerProcessor);
+                        return r;
+                    })
+                    .exceptionally(exc -> {
+                        failure.accept(exc);
+                        fail(exc.toString());
+                        return null;
+                    })
+            ;
+            Mockito.verify(successful).accept(any());
+        });
     }
 
     @Test
@@ -148,7 +199,13 @@ public class LightsheetPipelineStepProcessorTest {
                         Mockito.verify(containerProcessor).process(
                                 any(ServiceExecutionContext.class),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-containerLocation", "shub://imagecatcher/imageprocessing/" + step.name().toLowerCase() + ":1.0"))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths", stepConfigFile.getParentFile().getAbsolutePath() + ":" + stepConfigFile.getParentFile().getAbsolutePath()))),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths",
+                                        stepConfigFile.getParentFile().getAbsolutePath() + ":" + stepConfigFile.getParentFile().getAbsolutePath() + "," +
+                                                "/groups/lightsheet/lightsheet:/groups/lightsheet/lightsheet" + "," +
+                                                "/misc/local" + "," +
+                                                "d1/d1.1:d1/d1.1" + "," +
+                                                "d2"
+                                ))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath())))
                         );
                         Mockito.reset(containerProcessor);
@@ -192,7 +249,13 @@ public class LightsheetPipelineStepProcessorTest {
                         Mockito.verify(containerProcessor).process(
                                 any(ServiceExecutionContext.class),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-containerLocation", "shub://imagecatcher/imageprocessing/" + step.name().toLowerCase() + ":1.0"))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths", stepConfigFile.getParentFile().getAbsolutePath() + ":" + stepConfigFile.getParentFile().getAbsolutePath()))),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths",
+                                        stepConfigFile.getParentFile().getAbsolutePath() + ":" + stepConfigFile.getParentFile().getAbsolutePath() + "," +
+                                                "/groups/lightsheet/lightsheet:/groups/lightsheet/lightsheet" + "," +
+                                                "/misc/local" + "," +
+                                                "d1/d1.1:d1/d1.1" + "," +
+                                                "d2"
+                                ))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath() + "," + String.valueOf(timePointsPerJob) + "," + "1")))
                         );
                         Mockito.reset(containerProcessor);
@@ -239,7 +302,13 @@ public class LightsheetPipelineStepProcessorTest {
                             Mockito.verify(containerProcessor).process(
                                     any(ServiceExecutionContext.class),
                                     argThat(new ServiceArgMatcher(new ServiceArg("-containerLocation", "shub://imagecatcher/imageprocessing/" + step.name().toLowerCase() + ":1.0"))),
-                                    argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths", stepConfigFile.getParentFile().getAbsolutePath() + ":" + stepConfigFile.getParentFile().getAbsolutePath()))),
+                                    argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths",
+                                            stepConfigFile.getParentFile().getAbsolutePath() + ":" + stepConfigFile.getParentFile().getAbsolutePath() + "," +
+                                                    "/groups/lightsheet/lightsheet:/groups/lightsheet/lightsheet" + "," +
+                                                    "/misc/local" + "," +
+                                                    "d1/d1.1:d1/d1.1" + "," +
+                                                    "d2"
+                                    ))),
                                     argThat(new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath() + "," + String.valueOf(timePointsPerJob) + "," + String.valueOf(j + 1))))
                             );
                         }
@@ -263,6 +332,19 @@ public class LightsheetPipelineStepProcessorTest {
             int stepIndex = 1;
             Mockito.when(testHttpClient.target(CONFIG_IP_ARG + "?stepName=" + step)).thenReturn(configEndpoint);
             JacsServiceData testServiceData = createMinistacksTestService(step, stepIndex, config);
+            testServiceData.getDictionaryArgs().putAll(ImmutableMap.<String, Object>builder()
+                    .put("inputFolder", "/in")
+                    .put("inputString", "/in")
+                    .put("outputString", "/out/sub")
+                    .put("configRoot", "/config")
+                    .put("sourceString", "/source/sub")
+                    .put("lookUpTable", "/lookup/ltFile")
+                    .put("inputRoot", "/inRoot/in")
+                    .put("outputRoot", "/outRoot/out")
+                    .put("inputDir", "/inDir/in")
+                    .put("outputDir", "/outDir/out")
+                    .build()
+            );
             Mockito.when(containerProcessor.process(any(ServiceExecutionContext.class),
                     any(ServiceArg.class),
                     any(ServiceArg.class),
@@ -282,7 +364,22 @@ public class LightsheetPipelineStepProcessorTest {
                         Mockito.verify(containerProcessor).process(
                                 any(ServiceExecutionContext.class),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-containerLocation", "shub://imagecatcher/imageprocessing/generateministacks:1.0"))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths", stepConfigFile.getParentFile().getAbsolutePath() + ":" + stepConfigFile.getParentFile().getAbsolutePath()))),
+                                argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths",
+                                        stepConfigFile.getParentFile().getAbsolutePath() + ":" + stepConfigFile.getParentFile().getAbsolutePath() + "," +
+                                                "/groups/lightsheet/lightsheet:/groups/lightsheet/lightsheet" + "," +
+                                                "/misc/local" + "," +
+                                                "d1/d1.1:d1/d1.1" + "," +
+                                                "d2" + "," +
+                                                "/in:/in" + "," +
+                                                "/out:/out" + "," +
+                                                "/config:/config" + "," +
+                                                "/source:/source" + "," +
+                                                "/lookup:/lookup" + "," +
+                                                "/inRoot/in:/inRoot/in" + "," +
+                                                "/outRoot/out:/outRoot/out" + "," +
+                                                "/inDir/in:/inDir/in" + "," +
+                                                "/outDir/out:/outDir/out"
+                                ))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath())))
                         );
                         Mockito.reset(containerProcessor);

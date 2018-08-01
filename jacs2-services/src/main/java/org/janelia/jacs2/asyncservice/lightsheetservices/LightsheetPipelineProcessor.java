@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.lightsheetservices;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
@@ -35,8 +36,6 @@ import java.util.Arrays;
  */
 @Named("lightsheetProcessing")
 public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> {
-    private static final String DEFAULT_CONFIG_OUTPUT_PATH = "";
-    private static final List<String> clusterSteps = Arrays.asList("clusterPT", "clusterMF", "clusterTF", "clusterCS", "clusterFR");
 
     static class LightsheetProcessingArgs extends ServiceArgs {
         @Parameter(names = "-configAddress", description = "Address for accessing job's config json.", required=true)
@@ -79,11 +78,11 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
         ServiceComputation<JacsServiceResult<Void>> stage = lightsheetPipelineStepProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Step 0: " + currentJobStepNames[0])
-                        .addDictionaryArgs((Map<String, Object>) jacsServiceData.getDictionaryArgs().get(currentJobStepNames[0]))
+                        .addDictionaryArgs(getStepDictionaryArgs(jacsServiceData.getDictionaryArgs(), currentJobStepNames[0]))
+                        .addDictionaryArgs(getStepDictionaryArgs(jacsServiceData.getDictionaryArgs(), currentJobStepNames[0] + ".0"))
                         .build(),
                 new ServiceArg("-step", currentJobStepNames[0]),
                 new ServiceArg("-stepIndex", 0),
-                new ServiceArg("-containerImage", getStepContainerImage(argumentsToRunJob, currentJobStepNames[0], 0)),
                 new ServiceArg("-numTimePoints",currentJobTimePoints[0]),
                 new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
                 new ServiceArg("-configAddress", args.configAddress),
@@ -95,11 +94,12 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
             stage = stage.thenCompose(previousStageResult -> lightsheetPipelineStepProcessor.process(
                         new ServiceExecutionContext.Builder(jacsServiceData)
                                 .description("Step " + String.valueOf(stepIndex) + ": " +currentJobStepNames[stepIndex])
+                                .addDictionaryArgs(getStepDictionaryArgs(jacsServiceData.getDictionaryArgs(), currentJobStepNames[stepIndex]))
+                                .addDictionaryArgs(getStepDictionaryArgs(jacsServiceData.getDictionaryArgs(), currentJobStepNames[stepIndex] + "." + stepIndex))
                                 .waitFor(previousStageResult.getJacsServiceData()) // for dependency based on previous step
                                 .build(),
                         new ServiceArg("-step", currentJobStepNames[stepIndex]),
                         new ServiceArg("-stepIndex", stepIndex),
-                        new ServiceArg("-containerImage", getStepContainerImage(argumentsToRunJob, currentJobStepNames[stepIndex], stepIndex)),
                         new ServiceArg("-numTimePoints", currentJobTimePoints[stepIndex]),
                         new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
                         new ServiceArg("-configAddress", args.configAddress),
@@ -145,11 +145,13 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
         }
     }
 
-    private String getStepContainerImage(Map<String, String> pipelineArgs, String stepName, Integer stepIndex) {
-        String containerImage = pipelineArgs.get("containerImage " + "." + stepName + "." + stepIndex);
-        if (containerImage == null) {
-            containerImage = pipelineArgs.get("containerImage " + "." + stepName);
-        }
-        return StringUtils.defaultIfBlank(containerImage, "");
+    private Map<String, Object> getStepDictionaryArgs(Map<String, Object> dictionaryArgs, String stepKey) {
+         Object stepConfig = dictionaryArgs.get(stepKey);
+         if (stepConfig != null && stepConfig instanceof Map) {
+             return (Map<String, Object>) stepConfig;
+         } else {
+             return ImmutableMap.of();
+         }
     }
+
 }
