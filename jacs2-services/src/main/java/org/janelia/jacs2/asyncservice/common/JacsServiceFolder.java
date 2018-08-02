@@ -63,7 +63,13 @@ public class JacsServiceFolder {
         if (serviceSpecificFolderName != null) {
             serviceFolder = serviceSpecificFolderName;
         } else {
-            serviceFolder = sharedFolderName.resolve(serviceData.getId().toString());
+            if (serviceData.getId() != null) {
+                serviceFolder = sharedFolderName.resolve(serviceData.getId().toString());
+            } else if (serviceData.getParentServiceId() != null) {
+                serviceFolder = sharedFolderName.resolve(serviceData.getParentServiceId().toString());
+            } else {
+                serviceFolder = sharedFolderName;
+            }
         }
         return morePathComponents
                 .map(serviceFolder::resolve)
