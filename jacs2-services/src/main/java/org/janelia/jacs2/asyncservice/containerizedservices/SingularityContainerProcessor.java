@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
 import com.beust.jcommander.Parameter;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
@@ -25,6 +26,7 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.List;
+import java.util.Map;
 
 @Named("singularity")
 public class SingularityContainerProcessor extends AbstractExeBasedServiceProcessor<Void> {
@@ -48,6 +50,8 @@ public class SingularityContainerProcessor extends AbstractExeBasedServiceProces
         String overlay;
         @Parameter(names = "-enableNV", description = "Enable NVidia support")
         boolean enableNV;
+        @Parameter(names = "-enableHttps", description = "Enable HTTPS for retrieving the container image")
+        private boolean enableHttps;
         @Parameter(names = "-containerWorkingDir", description = "Container working directory")
         String containerWorkingDirectory;
         @Parameter(names = "-initialPwd", description = "Initial working directory inside the container")
@@ -57,6 +61,10 @@ public class SingularityContainerProcessor extends AbstractExeBasedServiceProces
 
         SingularityContainerArgs() {
             super("Service that runs a singularity container");
+        }
+
+        boolean noHttps() {
+            return !enableHttps;
         }
     }
 
@@ -121,6 +129,16 @@ public class SingularityContainerProcessor extends AbstractExeBasedServiceProces
             args.appArgs.forEach(scriptWriter::addArg);
         }
         scriptWriter.endArgs();
+    }
+
+    @Override
+    protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
+        SingularityContainerArgs args = getArgs(jacsServiceData);
+        if (args.noHttps()) {
+            return ImmutableMap.of("SINGULARITY_NOHTTPS", "True");
+        } else {
+            return ImmutableMap.of();
+        }
     }
 
     private SingularityContainerArgs getArgs(JacsServiceData jacsServiceData) {
