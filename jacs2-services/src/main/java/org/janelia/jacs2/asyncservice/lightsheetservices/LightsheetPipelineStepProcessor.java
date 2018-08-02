@@ -84,7 +84,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         String configOutputPath = DEFAULT_CONFIG_OUTPUT_PATH;
     }
 
-    private final SingularityContainerProcessor containerProcessor;
+    private final WrappedServiceProcessor<SingularityContainerProcessor, Void> containerProcessor;
     private final ApplicationConfig applicationConfig;
     private final ObjectMapper objectMapper;
 
@@ -97,7 +97,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                                     ObjectMapper objectMapper,
                                     Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.containerProcessor = containerProcessor;
+        this.containerProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, containerProcessor);
         this.applicationConfig = applicationConfig;
         this.objectMapper = objectMapper;
     }

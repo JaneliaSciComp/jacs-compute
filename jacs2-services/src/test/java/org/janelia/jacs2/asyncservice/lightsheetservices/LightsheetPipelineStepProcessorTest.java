@@ -17,6 +17,7 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.utils.HttpUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
+import org.janelia.model.service.JacsServiceState;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -80,6 +81,7 @@ public class LightsheetPipelineStepProcessorTest {
                     .put("timepoints", ImmutableMap.of("start", 10, "every", 5, "end", 100))
                     .build()
     );
+    private static final Long TEST_SERVICE_ID = 21L;
 
     private File testDirectory;
     private Client testHttpClient;
@@ -108,6 +110,27 @@ public class LightsheetPipelineStepProcessorTest {
         PowerMockito.mockStatic(HttpUtils.class);
         Mockito.when(HttpUtils.createHttpClient()).thenReturn(testHttpClient);
 
+        Mockito.when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> {
+            JacsServiceData sd = new JacsServiceData();
+            sd.setId(invocation.getArgument(0));
+            sd.setState(JacsServiceState.SUCCESSFUL);
+            return sd;
+        });
+        Mockito.when(jacsServiceDataPersistence.createServiceIfNotFound(any(JacsServiceData.class))).then(invocation -> {
+            JacsServiceData jacsServiceData = invocation.getArgument(0);
+            jacsServiceData.setId(TEST_SERVICE_ID);
+            jacsServiceData.setState(JacsServiceState.SUCCESSFUL); // mark the service as completed otherwise the computation doesn't return
+            return jacsServiceData;
+        });
+
+        Mockito.when(containerProcessor.getMetadata()).thenCallRealMethod();
+        Mockito.when(containerProcessor.createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class)
+        )).thenCallRealMethod();
+        Mockito.when(containerProcessor.getResultHandler()).thenCallRealMethod();
+
         lightsheetPipelineStepProcessor = new LightsheetPipelineStepProcessor(serviceComputationFactory,
                 jacsServiceDataPersistence,
                 testDirectory.getAbsolutePath(),
@@ -130,12 +153,6 @@ public class LightsheetPipelineStepProcessorTest {
             int stepIndex = 1;
             JacsServiceData testServiceData = createTestService(step, stepIndex, 100, 10, config);
             testServiceData.getDictionaryArgs().put("containerImage", "shub://otherregistry/imageprocessing/" + step.name().toLowerCase() + ":latest");
-            Mockito.when(containerProcessor.process(any(ServiceExecutionContext.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class)))
-                    .then(invocation -> serviceComputationFactory.newCompletedComputation(new JacsServiceResult<Void>(testServiceData)))
-            ;
 
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
             Consumer successful = mock(Consumer.class);
@@ -147,7 +164,7 @@ public class LightsheetPipelineStepProcessorTest {
                                 testDirectory,
                                 testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json");
                         assertTrue(stepConfigFile.exists());
-                        Mockito.verify(containerProcessor).process(
+                        Mockito.verify(containerProcessor).createServiceData(
                                 any(ServiceExecutionContext.class),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-containerLocation", "shub://otherregistry/imageprocessing/" + step.name().toLowerCase() + ":latest"))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths",
@@ -159,7 +176,6 @@ public class LightsheetPipelineStepProcessorTest {
                                 ))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath())))
                         );
-                        Mockito.reset(containerProcessor);
                         return r;
                     })
                     .exceptionally(exc -> {
@@ -179,12 +195,6 @@ public class LightsheetPipelineStepProcessorTest {
         LOCAL_STEP_CONFIGS.forEach((step, config) -> {
             int stepIndex = 1;
             JacsServiceData testServiceData = createTestService(step, stepIndex, 100, 10, config);
-            Mockito.when(containerProcessor.process(any(ServiceExecutionContext.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class)))
-                    .then(invocation -> serviceComputationFactory.newCompletedComputation(new JacsServiceResult<Void>(testServiceData)))
-                    ;
 
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
             Consumer successful = mock(Consumer.class);
@@ -196,7 +206,7 @@ public class LightsheetPipelineStepProcessorTest {
                                 testDirectory,
                                 testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json");
                         assertTrue(stepConfigFile.exists());
-                        Mockito.verify(containerProcessor).process(
+                        Mockito.verify(containerProcessor).createServiceData(
                                 any(ServiceExecutionContext.class),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-containerLocation", "shub://imagecatcher/imageprocessing/" + step.name().toLowerCase() + ":1.0"))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths",
@@ -208,7 +218,6 @@ public class LightsheetPipelineStepProcessorTest {
                                 ))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath())))
                         );
-                        Mockito.reset(containerProcessor);
                         return r;
                     })
                     .exceptionally(exc -> {
@@ -229,12 +238,6 @@ public class LightsheetPipelineStepProcessorTest {
             int stepIndex = 1;
             int timePointsPerJob = 10;
             JacsServiceData testServiceData = createTestService(step, stepIndex, 10, timePointsPerJob, config);
-            Mockito.when(containerProcessor.process(any(ServiceExecutionContext.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class)))
-                    .then(invocation -> serviceComputationFactory.newCompletedComputation(new JacsServiceResult<Void>(testServiceData)))
-            ;
 
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
             Consumer successful = mock(Consumer.class);
@@ -246,7 +249,7 @@ public class LightsheetPipelineStepProcessorTest {
                                 testDirectory,
                                 testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json");
                         assertTrue(stepConfigFile.exists());
-                        Mockito.verify(containerProcessor).process(
+                        Mockito.verify(containerProcessor).createServiceData(
                                 any(ServiceExecutionContext.class),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-containerLocation", "shub://imagecatcher/imageprocessing/" + step.name().toLowerCase() + ":1.0"))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths",
@@ -258,7 +261,6 @@ public class LightsheetPipelineStepProcessorTest {
                                 ))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath() + "," + String.valueOf(timePointsPerJob) + "," + "1")))
                         );
-                        Mockito.reset(containerProcessor);
                         return r;
                     })
                     .exceptionally(exc -> {
@@ -280,12 +282,6 @@ public class LightsheetPipelineStepProcessorTest {
             int timePoints = 95;
             int timePointsPerJob = 10;
             JacsServiceData testServiceData = createTestService(step, stepIndex, timePoints, timePointsPerJob, config);
-            Mockito.when(containerProcessor.process(any(ServiceExecutionContext.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class)))
-                    .then(invocation -> serviceComputationFactory.newCompletedComputation(new JacsServiceResult<Void>(testServiceData)))
-            ;
 
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
             Consumer successful = mock(Consumer.class);
@@ -299,7 +295,7 @@ public class LightsheetPipelineStepProcessorTest {
                         assertTrue(stepConfigFile.exists());
                         int numJobs = (int) Math.ceil((double)timePoints / timePointsPerJob);
                         for (int j = 0; j < numJobs; j++) {
-                            Mockito.verify(containerProcessor).process(
+                            Mockito.verify(containerProcessor).createServiceData(
                                     any(ServiceExecutionContext.class),
                                     argThat(new ServiceArgMatcher(new ServiceArg("-containerLocation", "shub://imagecatcher/imageprocessing/" + step.name().toLowerCase() + ":1.0"))),
                                     argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths",
@@ -312,7 +308,6 @@ public class LightsheetPipelineStepProcessorTest {
                                     argThat(new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath() + "," + String.valueOf(timePointsPerJob) + "," + String.valueOf(j + 1))))
                             );
                         }
-                        Mockito.reset(containerProcessor);
                         return r;
                     })
                     .exceptionally(exc -> {
@@ -345,12 +340,6 @@ public class LightsheetPipelineStepProcessorTest {
                     .put("outputDir", "/var/tmp/out")
                     .build()
             );
-            Mockito.when(containerProcessor.process(any(ServiceExecutionContext.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class)))
-                    .thenReturn(serviceComputationFactory.newCompletedComputation(new JacsServiceResult<>(testServiceData)))
-                    ;
             ServiceComputation<JacsServiceResult<Void>> ministacksComputation = lightsheetPipelineStepProcessor.process(testServiceData);
             Consumer successful = mock(Consumer.class);
             Consumer failure = mock(Consumer.class);
@@ -361,7 +350,7 @@ public class LightsheetPipelineStepProcessorTest {
                                 testDirectory,
                                 testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json");
                         assertTrue(stepConfigFile.exists());
-                        Mockito.verify(containerProcessor).process(
+                        Mockito.verify(containerProcessor).createServiceData(
                                 any(ServiceExecutionContext.class),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-containerLocation", "shub://imagecatcher/imageprocessing/generateministacks:1.0"))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-bindPaths",
@@ -379,7 +368,6 @@ public class LightsheetPipelineStepProcessorTest {
                                 ))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath())))
                         );
-                        Mockito.reset(containerProcessor);
                         return r;
                     })
                     .exceptionally(exc -> {
@@ -399,12 +387,6 @@ public class LightsheetPipelineStepProcessorTest {
             int stepIndex = 1;
             Mockito.when(testHttpClient.target(CONFIG_IP_ARG + "?stepName=" + step)).thenReturn(configEndpoint);
             JacsServiceData testServiceData = createMinistacksTestService(null, stepIndex, config);
-            Mockito.when(containerProcessor.process(any(ServiceExecutionContext.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class),
-                    any(ServiceArg.class)))
-                    .thenReturn(serviceComputationFactory.newCompletedComputation(new JacsServiceResult<>(testServiceData)))
-            ;
             ServiceComputation<JacsServiceResult<Void>> ministacksComputation = lightsheetPipelineStepProcessor.process(testServiceData);
             Consumer successful = mock(Consumer.class);
             Consumer failure = mock(Consumer.class);
@@ -425,7 +407,6 @@ public class LightsheetPipelineStepProcessorTest {
                                 any(ServiceArg.class),
                                 any(ServiceArg.class)
                         );
-                        Mockito.reset(containerProcessor);
                         return null;
                     })
             ;
@@ -457,7 +438,7 @@ public class LightsheetPipelineStepProcessorTest {
                 .addArgs("-timePointsPerJob", String.valueOf(timePointsPerJob))
                 .setDictionaryArgs(dictionaryArgs)
                 .build();
-        testServiceData.setId(21L);
+        testServiceData.setId(TEST_SERVICE_ID);
         return testServiceData;
     }
 
@@ -469,7 +450,7 @@ public class LightsheetPipelineStepProcessorTest {
                 .addArgs("-configAddress", CONFIG_IP_ARG + (step != null ? "?stepName=" + step.name() : ""))
                 .setDictionaryArgs(dictionaryArgs)
                 .build();
-        testServiceData.setId(21L);
+        testServiceData.setId(TEST_SERVICE_ID);
         return testServiceData;
     }
 
