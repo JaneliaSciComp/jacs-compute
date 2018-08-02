@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -218,33 +219,46 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
 
     private Map<String, String> getDataMountPointsFromStepConfig(Map<String, Object> stepConfig) {
         Map<String, String> dataMountPoints = new LinkedHashMap<>();
+        Function<String, Optional<Pair<String, String>>> idMapping = (String i) -> Optional.of(ImmutablePair.of(i, i));
+        Function<String, Optional<Pair<String, String>>> existingPathOrParentMapping = (String ip) -> {
+            Path p = Paths.get(ip);
+            while (p != null && !p.toFile().exists()) p = p.getParent();
+            if (p == null) {
+                return Optional.empty();
+            } else {
+                String op = p.toString();
+                return Optional.of(ImmutablePair.of(op, op));
+            }
+        };
+        Function<String, String> parentPath = (String ip) -> Paths.get(ip).getParent().toString();
+
         // clusterPT
         dataMountPoints.putAll(addMountPointFromStepConfig("inputFolder", stepConfig,
-                Function.identity()));
+                idMapping));
         // clusterMF
         dataMountPoints.putAll(addMountPointFromStepConfig("inputString", stepConfig,
-                Function.identity()));
+                idMapping));
         dataMountPoints.putAll(addMountPointFromStepConfig("outputString", stepConfig,
-                outputTemplate -> Paths.get(outputTemplate).getParent().toString()));
+                parentPath.andThen(existingPathOrParentMapping)));
         // localAP
         dataMountPoints.putAll(addMountPointFromStepConfig("configRoot", stepConfig,
-                Function.identity()));
+                idMapping));
         // clusterTF
         dataMountPoints.putAll(addMountPointFromStepConfig("sourceString", stepConfig,
-                sourceTemplate -> Paths.get(sourceTemplate).getParent().toString()));
+                parentPath.andThen(existingPathOrParentMapping)));
         dataMountPoints.putAll(addMountPointFromStepConfig("lookUpTable", stepConfig,
-                lookupTemplate -> Paths.get(lookupTemplate).getParent().toString()));
+                parentPath.andThen(existingPathOrParentMapping)));
         // localEC
         dataMountPoints.putAll(addMountPointFromStepConfig("inputRoot", stepConfig,
-                Function.identity()));
+                idMapping));
         // clusterCS
         dataMountPoints.putAll(addMountPointFromStepConfig("outputRoot", stepConfig,
-                Function.identity()));
+                existingPathOrParentMapping));
         // clusterFR
         dataMountPoints.putAll(addMountPointFromStepConfig("inputDir", stepConfig,
-                Function.identity()));
+                idMapping));
         dataMountPoints.putAll(addMountPointFromStepConfig("outputDir", stepConfig,
-                Function.identity()));
+                existingPathOrParentMapping));
         return dataMountPoints;
     }
 
@@ -269,17 +283,16 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
 
     private Map<String, String> addMountPointFromStepConfig(String pathKey,
                                                             Map<String, Object> stepConfig,
-                                                            Function<String, String> mapper) {
+                                                            Function<String, Optional<Pair<String, String>>> mapper) {
         String pathValue = (String) stepConfig.get(pathKey);
-        String mountPoint = null;
+        Optional<Pair<String, String>> mountPoint;
         if (StringUtils.isNotBlank(pathValue)) {
             mountPoint = mapper.apply(pathValue);
-        }
-        if (StringUtils.isNotBlank(mountPoint)) {
-            return ImmutableMap.of(mountPoint, mountPoint);
         } else {
-            return ImmutableMap.of();
+            mountPoint = Optional.empty();
         }
+        return mountPoint.map(mp -> ImmutableMap.of(mp.getLeft(), mp.getRight()))
+                .orElse(ImmutableMap.of());
     }
 
     private String extractStepFromConfigUrl(String configUrl) {

@@ -335,14 +335,14 @@ public class LightsheetPipelineStepProcessorTest {
             testServiceData.getDictionaryArgs().putAll(ImmutableMap.<String, Object>builder()
                     .put("inputFolder", "/in")
                     .put("inputString", "/in")
-                    .put("outputString", "/out/sub")
+                    .put("outputString", "/tmp/sub")
                     .put("configRoot", "/config")
-                    .put("sourceString", "/source/sub")
-                    .put("lookUpTable", "/lookup/ltFile")
+                    .put("sourceString", "/tmp/sub")
+                    .put("lookUpTable", "/tmp/ltFile")
                     .put("inputRoot", "/inRoot/in")
-                    .put("outputRoot", "/outRoot/out")
+                    .put("outputRoot", "/tmp/out")
                     .put("inputDir", "/inDir/in")
-                    .put("outputDir", "/outDir/out")
+                    .put("outputDir", "/var/tmp/out")
                     .build()
             );
             Mockito.when(containerProcessor.process(any(ServiceExecutionContext.class),
@@ -371,14 +371,11 @@ public class LightsheetPipelineStepProcessorTest {
                                                 "d1/d1.1:d1/d1.1" + "," +
                                                 "d2" + "," +
                                                 "/in:/in" + "," +
-                                                "/out:/out" + "," +
+                                                "/tmp:/tmp" + "," +
                                                 "/config:/config" + "," +
-                                                "/source:/source" + "," +
-                                                "/lookup:/lookup" + "," +
                                                 "/inRoot/in:/inRoot/in" + "," +
-                                                "/outRoot/out:/outRoot/out" + "," +
                                                 "/inDir/in:/inDir/in" + "," +
-                                                "/outDir/out:/outDir/out"
+                                                "/var/tmp:/var/tmp"
                                 ))),
                                 argThat(new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath())))
                         );
