@@ -66,7 +66,7 @@ public class RunSingularityContainerProcessor extends AbstractSingularityContain
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(RunSingularityContainerProcessor.class, createContainerArgs());
+        return ServiceArgs.getMetadata(RunSingularityContainerProcessor.class, new RunSingularityContainerArgs());
     }
 
     @Override
@@ -103,7 +103,7 @@ public class RunSingularityContainerProcessor extends AbstractSingularityContain
     }
 
     @Override
-    public RunSingularityContainerArgs createContainerArgs() {
+    RunSingularityContainerArgs createContainerArgs() {
         return new RunSingularityContainerArgs();
     }
 

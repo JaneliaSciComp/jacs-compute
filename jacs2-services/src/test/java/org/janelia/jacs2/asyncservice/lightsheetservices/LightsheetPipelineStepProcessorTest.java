@@ -143,7 +143,6 @@ public class LightsheetPipelineStepProcessorTest {
         Mockito.when(pullContainerProcessor.createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class)
         )).thenCallRealMethod();
-        Mockito.when(pullContainerProcessor.createContainerArgs()).thenCallRealMethod();
         return pullContainerProcessor;
     }
 
@@ -153,7 +152,6 @@ public class LightsheetPipelineStepProcessorTest {
         Mockito.when(runContainerProcessor.createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class)
         )).thenCallRealMethod();
-        Mockito.when(runContainerProcessor.createContainerArgs()).thenCallRealMethod();
         return runContainerProcessor;
     }
 

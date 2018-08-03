@@ -47,7 +47,7 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(PullSingularityContainerProcessor.class, createContainerArgs());
+        return ServiceArgs.getMetadata(PullSingularityContainerProcessor.class, new PullSingularityContainerArgs());
     }
 
     @Override
@@ -83,7 +83,7 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
     }
 
     @Override
-    public PullSingularityContainerArgs createContainerArgs() {
+    PullSingularityContainerArgs createContainerArgs() {
         return new PullSingularityContainerArgs();
     }
 
