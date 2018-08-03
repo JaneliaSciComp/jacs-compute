@@ -74,6 +74,7 @@ public class JacsServiceDispatcher {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @MdcContext
     private void dispatchService(JacsServiceData jacsServiceData) {
         logger.debug("Dispatch service {}", jacsServiceData);

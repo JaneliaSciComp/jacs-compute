@@ -13,6 +13,7 @@ import static org.junit.Assert.assertThat;
 
 public class JacsServiceDataTest {
 
+    @SuppressWarnings("unchecked")
     @Test
     public void dependenciesTraversal() {
         JacsServiceData root = createJacsServiceData("n0", 1);

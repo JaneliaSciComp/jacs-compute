@@ -12,12 +12,10 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.imageservices.MultiInputMIPsAndMoviesProcessor;
-import org.janelia.jacs2.asyncservice.imageservices.SimpleMIPsConverterProcessor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
 import org.janelia.model.domain.enums.FileType;
-import org.janelia.model.domain.sample.Image;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
@@ -25,7 +23,6 @@ import org.janelia.model.service.JacsServiceState;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -52,7 +49,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
@@ -145,6 +141,7 @@ public class DataTreeLoadProcessorTest {
                         new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.png", testStorageRoot, testStoragePrefix,"f2.png", false)
                 ));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<MIPsAndMoviesResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
         when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
         when(mipsConverterResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
@@ -152,8 +149,10 @@ public class DataTreeLoadProcessorTest {
         Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId + "/mips");
 
         ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<List<ContentStack>>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         dataLoadComputation
                 .thenApply(r -> {
                     successful.accept(r);
@@ -237,6 +236,7 @@ public class DataTreeLoadProcessorTest {
         Path f1PngPath = basePath.resolve("mips/f1_signal.png");
         Path f2PngPath = basePath.resolve("mips/f2_signal.png");
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<MIPsAndMoviesResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
         when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
         when(mipsConverterResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(
@@ -253,8 +253,10 @@ public class DataTreeLoadProcessorTest {
         PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
 
         ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<List<ContentStack>>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         dataLoadComputation
                 .thenApply(r -> {
                     successful.accept(r);
@@ -372,6 +374,7 @@ public class DataTreeLoadProcessorTest {
         Path f1PngPath = basePath.resolve("f1_signal.png");
         Path f2PngPath = basePath.resolve("f2_signal.png");
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<MIPsAndMoviesResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
         when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
         when(mipsConverterResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(
@@ -389,8 +392,10 @@ public class DataTreeLoadProcessorTest {
         PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
 
         ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<List<ContentStack>>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         dataLoadComputation
                 .thenApply(r -> {
                     successful.accept(r);
@@ -480,6 +485,7 @@ public class DataTreeLoadProcessorTest {
         Path f1PngPath = basePath.resolve("mips/f1_signal.png");
         Path f2PngPath = basePath.resolve("mips/f2_signal.png");
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<MIPsAndMoviesResult>> mipsConverterResultHandler = mock(ServiceResultHandler.class);
         when(mipsConverterProcessor.getResultHandler()).thenReturn(mipsConverterResultHandler);
         when(mipsConverterResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(
@@ -496,8 +502,10 @@ public class DataTreeLoadProcessorTest {
         PowerMockito.whenNew(FileInputStream.class).withArguments(f2PngPath.toFile()).thenReturn(f2PngMipStream);
 
         ServiceComputation<JacsServiceResult<List<ContentStack>>> dataLoadComputation = dataTreeLoadProcessor.process(testService);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<List<ContentStack>>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         dataLoadComputation
                 .thenApply(r -> {
                     successful.accept(r);

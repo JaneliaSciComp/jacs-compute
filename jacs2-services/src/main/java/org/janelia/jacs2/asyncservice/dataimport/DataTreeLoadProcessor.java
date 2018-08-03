@@ -87,6 +87,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public List<ContentStack> collectResult(JacsServiceResult<?> depResults) {
                 JacsServiceResult<List<ContentStack>> intermediateResult = (JacsServiceResult<List<ContentStack>>)depResults;

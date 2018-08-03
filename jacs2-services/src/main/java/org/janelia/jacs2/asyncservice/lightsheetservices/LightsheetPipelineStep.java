@@ -10,20 +10,16 @@ public enum LightsheetPipelineStep {
     localEC(false, 32),
     generateMiniStacks(false, 32);
 
-    private boolean needsMoreThanOneJob;
+    private boolean canSplitJob;
     private int recommendedSlots;
 
-    LightsheetPipelineStep(boolean needsMoreThanOneJob, int recommendedSlots) {
-        this.needsMoreThanOneJob = needsMoreThanOneJob;
+    LightsheetPipelineStep(boolean canSplitJob, int recommendedSlots) {
+        this.canSplitJob = canSplitJob;
         this.recommendedSlots = recommendedSlots;
     }
 
-    public boolean requiresMoreThanOneJob() {
-        return needsMoreThanOneJob;
-    }
-
-    public boolean needsOnlyOneJob() {
-        return !needsMoreThanOneJob;
+    public boolean cannotSplitJob() {
+        return !canSplitJob;
     }
 
     public int getRecommendedSlots() {

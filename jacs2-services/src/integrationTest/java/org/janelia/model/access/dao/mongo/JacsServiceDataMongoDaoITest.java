@@ -132,6 +132,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         assertThat(searchResult.getResultList(), emptyCollectionOf(JacsServiceData.class));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void addServiceEvent() {
         JacsServiceData si = persistServiceWithEvents(createTestService("s", ProcessingLocation.LOCAL),
@@ -445,6 +446,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         );
         slist.forEach(testDao::save);
 
+        @SuppressWarnings("unchecked")
         Map<JacsServiceData, Matcher<Iterable<?>>> testData = ImmutableMap.<JacsServiceData, Matcher<Iterable<?>>>of(
                 new JacsServiceDataBuilder(null)
                         .addServiceArg("arg1", "v1.1")

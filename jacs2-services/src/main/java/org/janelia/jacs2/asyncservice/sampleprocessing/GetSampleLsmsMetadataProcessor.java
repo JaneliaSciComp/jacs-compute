@@ -57,6 +57,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractServiceProcessor<Lis
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public List<SampleImageFile> collectResult(JacsServiceResult<?> depResults) {
                 JacsServiceResult<List<SampleImageFile>> result = (JacsServiceResult<List<SampleImageFile>>)depResults;
@@ -69,6 +70,7 @@ public class GetSampleLsmsMetadataProcessor extends AbstractServiceProcessor<Lis
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<List<SampleImageFile>>> process(JacsServiceData jacsServiceData) {
         SampleServiceArgs args = getArgs(jacsServiceData);

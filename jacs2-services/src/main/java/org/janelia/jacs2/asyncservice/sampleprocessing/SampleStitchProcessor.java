@@ -91,6 +91,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public SampleResult collectResult(JacsServiceResult<?> depResults) {
                 JacsServiceResult<SampleResult> intermediateResult = (JacsServiceResult<SampleResult>)depResults;
@@ -103,6 +104,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<SampleResult>> process(JacsServiceData jacsServiceData) {
         SampleStitchArgs args = getArgs(jacsServiceData);

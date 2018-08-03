@@ -12,6 +12,7 @@ import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,6 +47,8 @@ class DataNodeContentHelper {
                             .peek(contentEntry -> {
                                 logger.info("Add {} to {}", contentEntry, dataFolder);
                                 Image imageStack = new Image();
+                                String imageName = Paths.get(contentEntry.getMainRep().getRemoteInfo().getEntryPath()).getFileName().toString();
+                                imageStack.setName(imageName);
                                 imageStack.setUserDataFlag(true);
                                 imageStack.setFilepath(contentEntry.getMainRep().getRemoteInfo().getEntryPath());
                                 contentEntry.getAdditionalReps().forEach(ci -> {

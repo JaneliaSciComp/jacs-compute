@@ -46,7 +46,8 @@ subprojects {
         compileJava {
             doFirst {
                 options.compilerArgs = [
-                    '-Xlint:deprecation'
+                    '-Xlint:deprecation',
+		    '-Xlint:unchecked'
                 ]
             }
         }
@@ -54,7 +55,17 @@ subprojects {
         compileTestJava {
             doFirst {
                 options.compilerArgs = [
-                    '-Xlint:deprecation'
+                    '-Xlint:deprecation',
+		    '-Xlint:unchecked'
+                ]
+            }
+        }
+
+        compileIntegrationTestJava {
+            doFirst {
+                options.compilerArgs = [
+                    '-Xlint:deprecation',
+		    '-Xlint:unchecked'
                 ]
             }
         }

@@ -61,6 +61,7 @@ public class ColorDepthFileSearchTest {
 
     private ColorDepthFileSearch colorDepthFileSearch;
 
+    @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
@@ -87,6 +88,7 @@ public class ColorDepthFileSearchTest {
                 logger);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void process() throws Exception {
         JacsServiceData testService = createTestServiceData(1L, "test");
@@ -112,8 +114,10 @@ public class ColorDepthFileSearchTest {
 
         ServiceComputation<JacsServiceResult<List<File>>> colorDepthFileSearchComputation = colorDepthFileSearch.process(testService);
 
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<List<File>>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         colorDepthFileSearchComputation
                 .thenApply(r -> {
                     successful.accept(r);

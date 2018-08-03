@@ -132,6 +132,7 @@ public class DomainModelUtils {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static <D> Map<String, Object> getFieldValues(D dObj) {
         try {
             Map<String, Object> objectFields = new HashMap<>();

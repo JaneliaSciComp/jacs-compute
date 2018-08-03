@@ -3,26 +3,34 @@ package org.janelia.jacs2.asyncservice.lightsheetservices;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
-import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
+import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
+import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
+import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
+import org.janelia.jacs2.asyncservice.containerizedservices.PullSingularityContainerProcessor;
+import org.janelia.jacs2.asyncservice.containerizedservices.RunSingularityContainerProcessor;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
+import org.janelia.model.jacs2.domain.IndexedReference;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
@@ -32,10 +40,13 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.janelia.jacs2.utils.HttpUtils;
 
@@ -49,15 +60,17 @@ import javax.ws.rs.core.Response;
  * @author David Ackerman
  */
 @Named("lightsheetPipeline")
-public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProcessor<Void> {
+public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Void> {
 
     private static final String DEFAULT_CONFIG_OUTPUT_PATH = "";
 
-    static class LightsheetPipelineArgs extends ServiceArgs {
+    static class LightsheetPipelineStepArgs extends ServiceArgs {
         @Parameter(names = "-step", description = "Which pipeline step to run", required = true)
         LightsheetPipelineStep step;
         @Parameter(names = "-stepIndex", description = "Which step index is this")
         Integer stepIndex = 1;
+        @Parameter(names = "-containerImage", description = "Container image")
+        String containerImage;
         @Parameter(names = "-numTimePoints", description = "Number of time points")
         Integer numTimePoints = 1;
         @Parameter(names = "-timePointsPerJob", description = "Number of time points per job")
@@ -68,116 +81,237 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
         String configOutputPath = DEFAULT_CONFIG_OUTPUT_PATH;
     }
 
-    private final String executable;
+    private final WrappedServiceProcessor<PullSingularityContainerProcessor, File> pullContainerProcessor;
+    private final WrappedServiceProcessor<RunSingularityContainerProcessor, Void> runContainerProcessor;
+    private final ApplicationConfig applicationConfig;
     private final ObjectMapper objectMapper;
 
     @Inject
     LightsheetPipelineStepProcessor(ServiceComputationFactory computationFactory,
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
-                                    @Any Instance<ExternalProcessRunner> serviceRunners,
                                     @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                    @PropertyValue(name = "LightsheetPipeline.Bin.Path") String executable,
-                                    JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                                     @ApplicationProperties ApplicationConfig applicationConfig,
+                                    PullSingularityContainerProcessor pullContainerProcessor,
+                                    RunSingularityContainerProcessor runContainerProcessor,
                                     ObjectMapper objectMapper,
                                     Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
-        this.executable = executable;
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
+        this.pullContainerProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, pullContainerProcessor);
+        this.runContainerProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, runContainerProcessor);
+        this.applicationConfig = applicationConfig;
         this.objectMapper = objectMapper;
     }
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(LightsheetPipelineStepProcessor.class, new LightsheetPipelineArgs());
+        return ServiceArgs.getMetadata(LightsheetPipelineStepProcessor.class, new LightsheetPipelineStepArgs());
     }
 
     @Override
-    protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
-        LightsheetPipelineArgs args = getArgs(jacsServiceData);
-        ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
-        ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
-        createScript(args, externalScriptWriter);
-        externalScriptWriter.close();
-        return externalScriptCode;
+    public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
+        try {
+            LightsheetPipelineStepArgs args = getArgs(jacsServiceData);
+            Pair<String, Map<String, Object>> stepConfig = getStepConfig(jacsServiceData, args);
+            String stepConfigFile = stepConfig.getLeft();
+            String stepConfigPath = Paths.get(stepConfigFile).getParent().toString();
+            String containerLocation = getContainerLocation(stepConfig.getRight(), args);
+            List<List<String>> stepJobArgs = getStepJobArgs(stepConfigFile, args);
+            Map<String, String> stepResources = prepareResources(args, jacsServiceData.getResources());
+
+            Map<String, String> dataMountPoints = new LinkedHashMap<>();
+            dataMountPoints.put(stepConfigPath, stepConfigPath);
+            dataMountPoints.putAll(getDataMountPointsFromAppConfig());
+            dataMountPoints.putAll(getDataMountPointsFromDictionaryArgs(jacsServiceData.getActualDictionaryArgs()));
+            dataMountPoints.putAll(getDataMountPointsFromStepConfig(stepConfig.getRight()));
+
+            return pullContainerProcessor.process(
+                    new ServiceExecutionContext.Builder(jacsServiceData)
+                            .description("Pull container image " + containerLocation)
+                            .build(),
+                    new ServiceArg("-containerLocation", containerLocation))
+                    .thenCompose(containerImageResult -> {
+                        List<ServiceComputation<?>> stepJobs = IndexedReference.indexListContent(stepJobArgs, (i, jobArgs) -> new IndexedReference<>(jobArgs, i))
+                                .map(indexedJobArgs -> createStepJobComputation(
+                                        containerImageResult,
+                                        dataMountPoints,
+                                        args.step,
+                                        args.stepIndex,
+                                        indexedJobArgs.getPos(),
+                                        stepResources,
+                                        indexedJobArgs.getReference(),
+                                        jacsServiceData))
+                                .collect(Collectors.toList());
+                        return computationFactory.newCompletedComputation(containerImageResult)
+                                .thenCombineAll(stepJobs, (ignored, stepResults) -> new JacsServiceResult<>(jacsServiceData))
+                                ;
+                    })
+                    ;
+        } catch (Exception e) {
+            logger.warn("Failed to read step config for {}", jacsServiceData, e);
+            return computationFactory.newFailedComputation(new ComputationException(jacsServiceData, e));
+        }
     }
 
-    private void createScript(LightsheetPipelineArgs args, ScriptWriter scriptWriter) {
-        scriptWriter.read("STEPNAME");
-        scriptWriter.read("JSONFILE");
-        if (args.step.requiresMoreThanOneJob()) {
-            // Then should run on one node
-            scriptWriter.read("TIMEPOINTSPERJOB");
-            scriptWriter.read("JOBNUMBER");
-        }
-        scriptWriter.addWithArgs(getFullExecutableName(executable));
-        scriptWriter.addArg("$STEPNAME");
-        scriptWriter.addArg("$JSONFILE");
-        if ( args.step.requiresMoreThanOneJob() ) {
-            // Then should run on one node
-            scriptWriter.addArg("$TIMEPOINTSPERJOB");
-            scriptWriter.addArg("$JOBNUMBER");
-        }
-        scriptWriter.endArgs();
+    private ServiceComputation<JacsServiceResult<Void>> createStepJobComputation(JacsServiceResult<File> containerImageResult,
+                                                                                 Map<String, String> mountPoints,
+                                                                                 LightsheetPipelineStep step,
+                                                                                 int stepIndex,
+                                                                                 int jobIndex,
+                                                                                 Map<String, String> jobResources,
+                                                                                 List<String> jobArgs,
+                                                                                 JacsServiceData jacsServiceData) {
+        String bindPath = mountPoints.entrySet().stream()
+                .map(en -> {
+                    if (StringUtils.isBlank(en.getValue())) {
+                        return en.getKey();
+                    } else {
+                        return en.getKey() + ":" + en.getValue();
+                    }
+                })
+                .reduce((b1, b2) -> b1 + "," + b2)
+                .orElse("");
+        return runContainerProcessor.process(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Step " + stepIndex + ": " + step + " - job " + jobIndex)
+                        .waitFor(containerImageResult.getJacsServiceData())
+                        .addResources(jobResources)
+                        .build(),
+                new ServiceArg("-containerLocation", containerImageResult.getResult().getAbsolutePath()),
+                new ServiceArg("-bindPaths", bindPath),
+                new ServiceArg("-appArgs", jobArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
+        );
     }
 
-    @Override
-    protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
-        LightsheetPipelineArgs args = getArgs(jacsServiceData);
-        String jsonConfigFile = getJsonConfigFile(jacsServiceData, args);
-        if (args.step.needsOnlyOneJob()) {
-            // Then should run on one node
-            ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
-            ScriptWriter scriptWriter = externalScriptCode.getCodeWriter();
-            scriptWriter.add(args.step.name());
-            scriptWriter.add(jsonConfigFile);
-            scriptWriter.close();
-            return Arrays.asList(externalScriptCode);
+    private LightsheetPipelineStepArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LightsheetPipelineStepArgs());
+    }
+
+    private String getContainerLocation(Map<String, Object> stepConfig, LightsheetPipelineStepArgs args) {
+        String containerImage = args.containerImage;
+        if (StringUtils.isNotBlank(containerImage)) {
+            return containerImage;
         } else {
-            List<ExternalCodeBlock> blocks = new ArrayList<>();
-            int numTimePoints = args.numTimePoints;
-            int timePointsPerJob = args.timePointsPerJob;
-            if (numTimePoints < 1) numTimePoints = 1;
-            if (timePointsPerJob < 1) timePointsPerJob = 1;
-
-            int numJobs = (int) Math.ceil((double)numTimePoints / timePointsPerJob);
-            for (int jobNumber = 1; jobNumber <= numJobs; jobNumber++) {
-                parallelizeLightsheetStep(blocks, args, jobNumber, jsonConfigFile);
+            containerImage = (String) stepConfig.get("containerImage");
+            if (StringUtils.isBlank(containerImage)) {
+                containerImage = StringUtils.appendIfMissing(applicationConfig.getStringPropertyValue("ImageProcessing.Collection"), "/");
+                containerImage += args.step.toString().toLowerCase();
+                String containerImageVersion = applicationConfig.getStringPropertyValue(
+                        "ImageProcessing.Lightsheet." + args.step + ".Version",
+                        applicationConfig.getStringPropertyValue("ImageProcessing.Lightsheet.Version"));
+                if (StringUtils.isNotBlank(containerImageVersion)) {
+                    containerImage += ":" + containerImageVersion;
+                }
             }
-            return blocks;
+            return containerImage;
         }
     }
 
-    //Each time point gets its own job, assigned based on the job number
-    private void parallelizeLightsheetStep(List<ExternalCodeBlock> blocks, LightsheetPipelineArgs args, Integer jobNumber, String jsonConfigFile) {
-        ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
-        ScriptWriter scriptWriter = externalScriptCode.getCodeWriter();
-        scriptWriter.add(args.step.name());
-        scriptWriter.add(jsonConfigFile);
-        scriptWriter.add(String.valueOf(args.timePointsPerJob));
-        scriptWriter.add(jobNumber.toString());
-        scriptWriter.close();
-        blocks.add(externalScriptCode);
-    }
-
-    @Override
-    protected void prepareResources(JacsServiceData jacsServiceData) {
-        String cpuType = ProcessorHelper.getCPUType(jacsServiceData.getResources());
+    private Map<String, String> prepareResources(LightsheetPipelineStepArgs args, Map<String, String> jobResources) {
+        String cpuType = ProcessorHelper.getCPUType(jobResources);
         if (StringUtils.isBlank(cpuType)) {
-            ProcessorHelper.setCPUType(jacsServiceData.getResources(), "broadwell");
+            ProcessorHelper.setCPUType(jobResources, "broadwell");
         }
-        LightsheetPipelineArgs args = getArgs(jacsServiceData);
-        ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(), args.step.getRecommendedSlots());
-        ProcessorHelper.setSoftJobDurationLimitInSeconds(jacsServiceData.getResources(), 5*60); // 5 minutes
-        ProcessorHelper.setHardJobDurationLimitInSeconds(jacsServiceData.getResources(), 12*60*60); // 12 hours
+        ProcessorHelper.setRequiredSlots(jobResources, args.step.getRecommendedSlots());
+        ProcessorHelper.setSoftJobDurationLimitInSeconds(jobResources, 5*60); // 5 minutes
+        ProcessorHelper.setHardJobDurationLimitInSeconds(jobResources, 12*60*60); // 12 hours
+        return jobResources;
     }
 
-    private LightsheetPipelineArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LightsheetPipelineArgs());
+    private Map<String, String> getDataMountPointsFromDictionaryArgs(Map<String, Object> dictionaryArgs) {
+        String dataMountPoints =  (String) dictionaryArgs.get("dataMountPoints");
+        return parseMountPoints(dataMountPoints);
     }
 
-    private String getJsonConfigFile(JacsServiceData jacsServiceData, LightsheetPipelineArgs args) {
+    private Map<String, String> getDataMountPointsFromAppConfig() {
+        return parseMountPoints(applicationConfig.getStringPropertyValue("ImageProcessing.Lightsheet.DataMountPoints"));
+    }
+
+    private Map<String, String> getDataMountPointsFromStepConfig(Map<String, Object> stepConfig) {
+        Map<String, String> dataMountPoints = new LinkedHashMap<>();
+        Function<String, Optional<Pair<String, String>>> idMapping = (String i) -> Optional.of(ImmutablePair.of(i, i));
+        Function<String, Optional<Pair<String, String>>> existingPathOrParentMapping = (String ip) -> {
+            Path p = Paths.get(ip);
+            while (p != null && !p.toFile().exists()) p = p.getParent();
+            if (p == null) {
+                return Optional.empty();
+            } else {
+                String op = p.toString();
+                return Optional.of(ImmutablePair.of(op, op));
+            }
+        };
+        Function<String, String> parentPath = (String ip) -> Paths.get(ip).getParent().toString();
+
+        // clusterPT
+        dataMountPoints.putAll(addMountPointFromStepConfig("inputFolder", stepConfig,
+                idMapping));
+        // clusterMF
+        dataMountPoints.putAll(addMountPointFromStepConfig("inputString", stepConfig,
+                idMapping));
+        dataMountPoints.putAll(addMountPointFromStepConfig("outputString", stepConfig,
+                parentPath.andThen(existingPathOrParentMapping)));
+        // localAP
+        dataMountPoints.putAll(addMountPointFromStepConfig("configRoot", stepConfig,
+                existingPathOrParentMapping));
+        // clusterTF
+        dataMountPoints.putAll(addMountPointFromStepConfig("sourceString", stepConfig,
+                parentPath.andThen(existingPathOrParentMapping)));
+        dataMountPoints.putAll(addMountPointFromStepConfig("lookUpTable", stepConfig,
+                parentPath.andThen(existingPathOrParentMapping)));
+        // localEC
+        dataMountPoints.putAll(addMountPointFromStepConfig("inputRoot", stepConfig,
+                idMapping));
+        // clusterCS
+        dataMountPoints.putAll(addMountPointFromStepConfig("outputRoot", stepConfig,
+                existingPathOrParentMapping));
+        // clusterFR
+        dataMountPoints.putAll(addMountPointFromStepConfig("inputDir", stepConfig,
+                idMapping));
+        dataMountPoints.putAll(addMountPointFromStepConfig("outputDir", stepConfig,
+                existingPathOrParentMapping));
+        return dataMountPoints;
+    }
+
+    private Map<String, String> parseMountPoints(String mountPointsString) {
+        if (StringUtils.isBlank(mountPointsString)) {
+            return ImmutableMap.of();
+        } else {
+            return Splitter.on(',').trimResults().omitEmptyStrings().splitToList(mountPointsString).stream()
+                    .map(kv -> {
+                        int kvSepIndex = kv.indexOf(':');
+                        if (kvSepIndex > 0) {
+                            return ImmutablePair.of(kv.substring(0, kvSepIndex), kv.substring(kvSepIndex + 1));
+                        } else if (kvSepIndex == 0) {
+                            return ImmutablePair.of(kv.substring(1), kv.substring(1));
+                        } else {
+                            return ImmutablePair.of(kv, "");
+                        }
+                    })
+                    .collect(LinkedHashMap::new, (m, p) -> m.put(p.getLeft(), p.getRight()), (m1, m2) -> m1.putAll(m2));
+        }
+    }
+
+    private Map<String, String> addMountPointFromStepConfig(String pathKey,
+                                                            Map<String, Object> stepConfig,
+                                                            Function<String, Optional<Pair<String, String>>> mapper) {
+        String pathValue = (String) stepConfig.get(pathKey);
+        Optional<Pair<String, String>> mountPoint;
+        if (StringUtils.isNotBlank(pathValue)) {
+            mountPoint = mapper.apply(pathValue);
+        } else {
+            mountPoint = Optional.empty();
+        }
+        return mountPoint.map(mp -> ImmutableMap.of(mp.getLeft(), mp.getRight()))
+                .orElse(ImmutableMap.of());
+    }
+
+    private String extractStepFromConfigUrl(String configUrl) {
+        String[] parts = configUrl.split("\\?stepName=");
+        return parts.length > 1 ? parts[1] : null;
+    }
+
+    private Pair<String, Map<String, Object>> getStepConfig(JacsServiceData jacsServiceData, LightsheetPipelineStepArgs args) {
         Map<String, Object> stepConfig = readJsonConfig(getJsonConfig(args.configAddress, args.step.name()));
-        stepConfig.putAll(jacsServiceData.getActualDictionaryArgs()); // overwrite arguments that were explicitly passed by the user
+        stepConfig.putAll(jacsServiceData.getActualDictionaryArgs()); // overwrite arguments that were explicitly passed by the user in the dictionary args
         // write the final config file
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         String fileName = "";
@@ -196,29 +330,7 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
             File configOutputPathFile = configOutputPath.toFile();
             writeJsonConfig(stepConfig, configOutputPathFile);
         }
-        return jsonConfigFile.getAbsolutePath();
-    }
-
-    private String extractStepFromConfigUrl(String configUrl) {
-        String[] parts = configUrl.split("\\?stepName=");
-        return parts.length > 1 ? parts[1] : null;
-    }
-
-    private Map<String, Object> readJsonConfig(InputStream inputStream) {
-        try {
-            return objectMapper.readValue(inputStream, new TypeReference<Map<String, Object>>() {});
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private void writeJsonConfig(Map<String, Object> config, File configFile) {
-        try {
-            Files.createDirectories(configFile.getParentFile().toPath());
-            objectMapper.writeValue(configFile, config);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return ImmutablePair.of(jsonConfigFile.getAbsolutePath(), stepConfig);
     }
 
     // Creates json file from http call
@@ -251,6 +363,45 @@ public class LightsheetPipelineStepProcessor extends AbstractExeBasedServiceProc
             if (httpclient != null) {
                 httpclient.close();
             }
+        }
+    }
+
+    private Map<String, Object> readJsonConfig(InputStream inputStream) {
+        try {
+            return objectMapper.readValue(inputStream, new TypeReference<Map<String, Object>>() {});
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void writeJsonConfig(Map<String, Object> config, File configFile) {
+        try {
+            Files.createDirectories(configFile.getParentFile().toPath());
+            objectMapper.writeValue(configFile, config);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private List<List<String>> getStepJobArgs(String jsonConfig, LightsheetPipelineStepArgs args) {
+        if (args.step.cannotSplitJob()) {
+            return ImmutableList.of(
+                    ImmutableList.of(jsonConfig)
+            );
+        } else {
+            int numTimePoints = args.numTimePoints;
+            int timePointsPerJob;
+            if (numTimePoints < 1) numTimePoints = 1;
+            if (args.timePointsPerJob < 1) {
+                timePointsPerJob = 1;
+            } else {
+                timePointsPerJob = args.timePointsPerJob;
+            }
+            int numJobs = (int) Math.ceil((double)numTimePoints / timePointsPerJob);
+            return IntStream.range(0, numJobs)
+                    .mapToObj(jobIndex -> ImmutableList.of(jsonConfig, String.valueOf(timePointsPerJob), String.valueOf(jobIndex + 1)))
+                    .collect(Collectors.toList())
+                    ;
         }
     }
 

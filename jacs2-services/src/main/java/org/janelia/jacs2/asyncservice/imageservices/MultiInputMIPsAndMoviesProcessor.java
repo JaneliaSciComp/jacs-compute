@@ -81,6 +81,7 @@ public class MultiInputMIPsAndMoviesProcessor extends AbstractServiceProcessor<L
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public List<MIPsAndMoviesResult> collectResult(JacsServiceResult<?> depResults) {
                 JacsServiceResult<List<MIPsAndMoviesResult>> intermediateResult = (JacsServiceResult<List<MIPsAndMoviesResult>>)depResults;
