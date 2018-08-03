@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.containerizedservices;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
@@ -61,7 +62,18 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
         };
     }
 
+    @Override
+    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
+        PullSingularityContainerArgs args = getArgs(depResults.getJacsServiceData());
+        Path localContainerImage = getLocalContainerImage(args);
+        if (localContainerImage.toFile().exists()) {
+            return computationFactory.newCompletedComputation(depResults);
+        } else {
+            return super.processing(depResults);
+        }
+    }
 
+    @Override
     protected Path getProcessDir(JacsServiceData jacsServiceData) {
         PullSingularityContainerArgs args = getArgs(jacsServiceData);
         return getLocalImagesDir(args);
