@@ -83,7 +83,7 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
     }
 
     @Override
-    PullSingularityContainerArgs createContainerArgs() {
+    public PullSingularityContainerArgs createContainerArgs() {
         return new PullSingularityContainerArgs();
     }
 

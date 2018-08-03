@@ -97,8 +97,8 @@ public class LightsheetPipelineStepProcessorTest {
         Logger logger = mock(Logger.class);
         ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
-        pullContainerProcessor = AbstractSingularityContainerProcessorTest.mockPullContainerProcessor();
-        runContainerProcessor = AbstractSingularityContainerProcessorTest.mockRunContainerProcessor();
+        pullContainerProcessor = mockPullContainerProcessor();
+        runContainerProcessor = mockRunContainerProcessor();
 
         ApplicationConfig applicationConfig = new ApplicationConfigProvider().fromMap(
                 ImmutableMap.of(
@@ -135,6 +135,26 @@ public class LightsheetPipelineStepProcessorTest {
                 runContainerProcessor,
                 ObjectMapperFactory.instance().getDefaultObjectMapper(),
                 logger);
+    }
+
+    private PullSingularityContainerProcessor mockPullContainerProcessor() {
+        PullSingularityContainerProcessor pullContainerProcessor = mock(PullSingularityContainerProcessor.class);
+        Mockito.when(pullContainerProcessor.getMetadata()).thenCallRealMethod();
+        Mockito.when(pullContainerProcessor.createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class)
+        )).thenCallRealMethod();
+        Mockito.when(pullContainerProcessor.createContainerArgs()).thenCallRealMethod();
+        return pullContainerProcessor;
+    }
+
+    private RunSingularityContainerProcessor mockRunContainerProcessor() {
+        RunSingularityContainerProcessor runContainerProcessor = mock(RunSingularityContainerProcessor.class);
+        Mockito.when(runContainerProcessor.getMetadata()).thenCallRealMethod();
+        Mockito.when(runContainerProcessor.createServiceData(any(ServiceExecutionContext.class),
+                any(ServiceArg.class)
+        )).thenCallRealMethod();
+        Mockito.when(runContainerProcessor.createContainerArgs()).thenCallRealMethod();
+        return runContainerProcessor;
     }
 
     @After

@@ -1,11 +1,8 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
@@ -17,7 +14,6 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
-import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -26,9 +22,8 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.List;
-import java.util.Map;
 
-@Named("runSingularity")
+@Named("runSingularityContainer")
 public class RunSingularityContainerProcessor extends AbstractSingularityContainerProcessor<RunSingularityContainerProcessor.RunSingularityContainerArgs, Void> {
 
     enum ContainerOperation {
@@ -108,7 +103,7 @@ public class RunSingularityContainerProcessor extends AbstractSingularityContain
     }
 
     @Override
-    RunSingularityContainerArgs createContainerArgs() {
+    public RunSingularityContainerArgs createContainerArgs() {
         return new RunSingularityContainerArgs();
     }
 

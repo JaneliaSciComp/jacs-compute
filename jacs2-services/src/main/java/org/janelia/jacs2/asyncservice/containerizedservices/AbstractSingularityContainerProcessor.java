@@ -72,7 +72,7 @@ abstract class AbstractSingularityContainerProcessor<A extends AbstractSingulari
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), createContainerArgs());
     }
 
-    abstract A createContainerArgs();
+    public abstract A createContainerArgs();
 
     Path getLocalImagesDir(A args) {
         if (StringUtils.isNotBlank(args.containerImagesDirectory)) {

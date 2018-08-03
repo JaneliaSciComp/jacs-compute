@@ -33,26 +33,6 @@ public class AbstractSingularityContainerProcessorTest {
     private final static String TEST_WORKING_DIR = "testDir";
     private final static String TEST_CONTAINER_IMAGES_DIR = TEST_WORKING_DIR + "/containerImages";
 
-    public static PullSingularityContainerProcessor mockPullContainerProcessor() {
-        PullSingularityContainerProcessor pullContainerProcessor = mock(PullSingularityContainerProcessor.class);
-        Mockito.when(pullContainerProcessor.getMetadata()).thenCallRealMethod();
-        Mockito.when(pullContainerProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class)
-        )).thenCallRealMethod();
-        Mockito.when(pullContainerProcessor.createContainerArgs()).thenCallRealMethod();
-        return pullContainerProcessor;
-    }
-
-    public static RunSingularityContainerProcessor mockRunContainerProcessor() {
-        RunSingularityContainerProcessor runContainerProcessor = mock(RunSingularityContainerProcessor.class);
-        Mockito.when(runContainerProcessor.getMetadata()).thenCallRealMethod();
-        Mockito.when(runContainerProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class)
-        )).thenCallRealMethod();
-        Mockito.when(runContainerProcessor.createContainerArgs()).thenCallRealMethod();
-        return runContainerProcessor;
-    }
-
     private PullSingularityContainerProcessor testContainerProcessor;
 
     @Before
