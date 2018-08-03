@@ -9,24 +9,20 @@ import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.function.Function;
 
-public abstract class AbstractSingularityContainerProcessor<A extends AbstractSingularityContainerArgs, R> extends AbstractExeBasedServiceProcessor<R> {
+abstract class AbstractSingularityContainerProcessor<R> extends AbstractExeBasedServiceProcessor<R> {
 
     private static final String DEFAULT_IMAGE_EXT = ".simg";
 
@@ -49,13 +45,13 @@ public abstract class AbstractSingularityContainerProcessor<A extends AbstractSi
 
     @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
-        A args = getArgs(jacsServiceData);
+        AbstractSingularityContainerArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         createScript(args, externalScriptCode.getCodeWriter());
         return externalScriptCode;
     }
 
-    abstract void createScript(A args, ScriptWriter scriptWriter);
+    abstract void createScript(AbstractSingularityContainerArgs args, ScriptWriter scriptWriter);
 
     @Override
     protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
@@ -67,13 +63,9 @@ public abstract class AbstractSingularityContainerProcessor<A extends AbstractSi
         }
     }
 
-    A getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), createContainerArgs());
-    }
+    abstract AbstractSingularityContainerArgs getArgs(JacsServiceData jacsServiceData);
 
-    abstract A createContainerArgs();
-
-    Path getLocalImagesDir(A args) {
+    Path getLocalImagesDir(AbstractSingularityContainerArgs args) {
         if (StringUtils.isNotBlank(args.containerImagesDirectory)) {
             return Paths.get(args.containerImagesDirectory);
         } else {
@@ -81,7 +73,7 @@ public abstract class AbstractSingularityContainerProcessor<A extends AbstractSi
         }
     }
 
-    Path getLocalContainerImage(A args) {
+    Path getLocalContainerImage(AbstractSingularityContainerArgs args) {
         Pair<Path, String> containerImageWithPath = getLocalContainerImage(args.containerLocation);
         if (containerImageWithPath.getLeft() != null) {
             // the configured container location is a local path so in this case simply take the given location.
@@ -91,7 +83,7 @@ public abstract class AbstractSingularityContainerProcessor<A extends AbstractSi
         }
     }
 
-    private String getContainerNameOrDefault(A args, String defaultContainerName) {
+    private String getContainerNameOrDefault(AbstractSingularityContainerArgs args, String defaultContainerName) {
         if (StringUtils.isNotBlank(args.containerName)) {
             return Paths.get(args.containerName).getFileName().toString();
         } else {

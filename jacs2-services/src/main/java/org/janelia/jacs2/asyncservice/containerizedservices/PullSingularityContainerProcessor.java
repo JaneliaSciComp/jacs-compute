@@ -24,13 +24,7 @@ import java.io.File;
 import java.nio.file.Path;
 
 @Named("pullSingularityContainer")
-public class PullSingularityContainerProcessor extends AbstractSingularityContainerProcessor<PullSingularityContainerProcessor.PullSingularityContainerArgs, File> {
-
-    public static class PullSingularityContainerArgs extends AbstractSingularityContainerArgs {
-        PullSingularityContainerArgs() {
-            super("Service that pulls a singularity container image");
-        }
-    }
+public class PullSingularityContainerProcessor extends AbstractSingularityContainerProcessor<File> {
 
     @Inject
     PullSingularityContainerProcessor(ServiceComputationFactory computationFactory,
@@ -74,7 +68,7 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
     }
 
     @Override
-    void createScript(PullSingularityContainerArgs args, ScriptWriter scriptWriter) {
+    void createScript(AbstractSingularityContainerArgs args, ScriptWriter scriptWriter) {
         scriptWriter
                 .addWithArgs(getRuntime((args)))
                 .addArg("pull")
@@ -82,9 +76,7 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
                 .endArgs();
     }
 
-    @Override
-    PullSingularityContainerArgs createContainerArgs() {
-        return new PullSingularityContainerArgs();
+    PullSingularityContainerArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new PullSingularityContainerArgs());
     }
-
 }
