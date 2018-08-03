@@ -10,7 +10,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.containerizedservices.PullSingularityContainerProcessor;
-import org.janelia.jacs2.asyncservice.containerizedservices.AbstractSingularityContainerProcessorTest;
 import org.janelia.jacs2.asyncservice.containerizedservices.RunSingularityContainerProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;

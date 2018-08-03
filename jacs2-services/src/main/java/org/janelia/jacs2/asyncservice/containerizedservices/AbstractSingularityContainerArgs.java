@@ -1,10 +1,7 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
 import com.beust.jcommander.Parameter;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
-
-import java.util.List;
 
 abstract class AbstractSingularityContainerArgs extends ServiceArgs {
     @Parameter(names = "-containerLocation", description = "Singularity container location", required = true)
