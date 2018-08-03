@@ -26,7 +26,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.function.Function;
 
-abstract class AbstractSingularityContainerProcessor<A extends AbstractSingularityContainerArgs, R> extends AbstractExeBasedServiceProcessor<R> {
+public abstract class AbstractSingularityContainerProcessor<A extends AbstractSingularityContainerArgs, R> extends AbstractExeBasedServiceProcessor<R> {
 
     private static final String DEFAULT_IMAGE_EXT = ".simg";
 
