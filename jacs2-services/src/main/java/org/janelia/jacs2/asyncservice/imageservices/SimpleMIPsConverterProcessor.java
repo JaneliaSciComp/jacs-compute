@@ -82,6 +82,7 @@ public class SimpleMIPsConverterProcessor extends AbstractServiceProcessor<List<
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public List<FileConverterResult> collectResult(JacsServiceResult<?> depResults) {
                 JacsServiceResult<List<FileConverterResult>> intermediateResult = (JacsServiceResult<List<FileConverterResult>>)depResults;

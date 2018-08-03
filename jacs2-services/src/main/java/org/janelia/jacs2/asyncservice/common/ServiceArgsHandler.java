@@ -95,7 +95,9 @@ class ServiceArgsHandler {
         if (argValue.getClass().isArray()) {
             return arrayValueAsStream((Object[]) argValue);
         } else if (argValue instanceof Iterable) {
-            return iterableValueAsStream((Iterable) argValue);
+            @SuppressWarnings("unchecked")
+            Iterable<Object> iterableArgValue = (Iterable<Object>) argValue;
+            return iterableValueAsStream(iterableArgValue);
         } else {
             return simpleValueAsStream(argValue);
         }
@@ -196,10 +198,12 @@ class ServiceArgsHandler {
                 Object[] objArray = castToArray(o);
                 return Arrays.asList(objArray).stream().flatMap(entry -> streamValues(entry));
             } else if (Collection.class.isAssignableFrom(o.getClass())) {
-                Collection objCollection = (Collection) o;
+                @SuppressWarnings("unchecked")
+                Collection<Object> objCollection = (Collection<Object>) o;
                 return objCollection.stream().flatMap(entry -> streamValues(entry));
             } else {
-                Map objMap = (Map) o;
+                @SuppressWarnings("unchecked")
+                Map<String, Object> objMap = (Map<String, Object>) o;
                 return objMap.values().stream().flatMap(entry -> streamValues(entry));
             }
         } else {
@@ -230,14 +234,16 @@ class ServiceArgsHandler {
                     .forEach(indexedVal -> valArray[indexedVal.getPos()] = evalValExpr(indexedVal.getReference(), argExprExtractor, evalContext));
             return valArray;
         } else if (Collection.class.isAssignableFrom(val.getClass())) {
-            Collection valCollection = (Collection) val;
+            @SuppressWarnings("unchecked")
+            Collection<Object> valCollection = (Collection<Object>) val;
             return valCollection.stream().map(valEntry -> evalValExpr(valEntry, argExprExtractor, evalContext)).collect(Collectors.toList());
         } else if (Map.class.isAssignableFrom(val.getClass())) {
-            Map valMap = (Map) val;
+            @SuppressWarnings("unchecked")
+            Map<String, Object> valMap = (Map<String, Object>) val;
             return valMap.entrySet().stream()
                     .collect(Collectors.toMap(
-                            (Map.Entry valEntry) -> valEntry.getKey(),
-                            (Map.Entry valEntry) -> evalValExpr(valEntry.getValue(), argExprExtractor, evalContext)));
+                            (Map.Entry<String, Object> valEntry) -> valEntry.getKey(),
+                            (Map.Entry<String, Object> valEntry) -> evalValExpr(valEntry.getValue(), argExprExtractor, evalContext)));
         } else if (val instanceof String) {
             String sval = (String) val;
             return argExprExtractor.apply(sval)

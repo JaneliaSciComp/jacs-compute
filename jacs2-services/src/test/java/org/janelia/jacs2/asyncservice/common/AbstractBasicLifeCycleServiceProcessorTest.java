@@ -2,8 +2,8 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
-import org.janelia.model.service.JacsServiceData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ServiceMetaData;
@@ -11,7 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -30,10 +29,10 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
 
     static class TestSuccessfulProcessorBasicLifeCycle extends AbstractBasicLifeCycleServiceProcessor<Void, Void> {
 
-        public TestSuccessfulProcessorBasicLifeCycle(ServiceComputationFactory computationFactory,
-                                                     JacsServiceDataPersistence jacsServiceDataPersistence,
-                                                     String defaultWorkingDir,
-                                                     Logger logger) {
+        TestSuccessfulProcessorBasicLifeCycle(ServiceComputationFactory computationFactory,
+                                              JacsServiceDataPersistence jacsServiceDataPersistence,
+                                              String defaultWorkingDir,
+                                              Logger logger) {
             super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         }
 
@@ -60,10 +59,10 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
 
     static class TestFailedProcessorBasicLifeCycle extends AbstractBasicLifeCycleServiceProcessor<Void, Void> {
 
-        public TestFailedProcessorBasicLifeCycle(ServiceComputationFactory computationFactory,
-                                                 JacsServiceDataPersistence jacsServiceDataPersistence,
-                                                 String defaultWorkingDir,
-                                                 Logger logger) {
+        TestFailedProcessorBasicLifeCycle(ServiceComputationFactory computationFactory,
+                                          JacsServiceDataPersistence jacsServiceDataPersistence,
+                                          String defaultWorkingDir,
+                                          Logger logger) {
             super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         }
 
@@ -123,8 +122,10 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
 
     @Test
     public void successfulProcessing() {
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
 
         JacsServiceData testJacsServiceDataDependency = new JacsServiceData();
         testJacsServiceDataDependency.setId(TEST_ID.longValue() + 1);
@@ -151,8 +152,10 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
 
     @Test
     public void processingFailureDueToDependencyFailure() {
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
 
         JacsServiceData testJacsServiceDataDependency = new JacsServiceData();
         testJacsServiceDataDependency.setId(TEST_ID.longValue() + 1);
@@ -178,8 +181,10 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
 
     @Test
     public void processingSuspended() {
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
 
         JacsServiceData testJacsServiceDataDependency = new JacsServiceData();
         testJacsServiceDataDependency.setId(TEST_ID.longValue() + 1);
@@ -209,8 +214,10 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
 
     @Test
     public void processingTimeout() {
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
 
         JacsServiceData testJacsServiceDataDependency = new JacsServiceData();
         testJacsServiceDataDependency.setId(TEST_ID.longValue() + 1);
@@ -238,8 +245,10 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
 
     @Test
     public void failedProcessing() throws ComputationException {
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
 
         testFailedProcessor.process(testJacsServiceData)
                 .whenComplete((r, e) -> {

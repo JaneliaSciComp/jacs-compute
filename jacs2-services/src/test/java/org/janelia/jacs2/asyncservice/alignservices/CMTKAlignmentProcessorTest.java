@@ -107,14 +107,17 @@ public class CMTKAlignmentProcessorTest {
         );
         String outputDir = testDirectory.toString();
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<CMTKAlignmentResultFiles> singleCmtkAlignmentResultHandler = mock(ServiceResultHandler.class);
         when(singleCMTKAlignmentProcessor.getResultHandler()).thenReturn(singleCmtkAlignmentResultHandler);
         when(singleCmtkAlignmentResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(new CMTKAlignmentResultFiles());
 
         JacsServiceData testServiceData = createTestServiceData(TEST_SERVICE_ID, inputImages, outputDir);
         ServiceComputation<JacsServiceResult<List<String>>> cmtkAlignment = cmtkAlignmentProcessor.process(testServiceData);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<List<String>>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         cmtkAlignment
                 .thenApply(r -> {
                     successful.accept(r);

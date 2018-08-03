@@ -45,7 +45,7 @@ public class CronScheduledServiceManagerTest {
                 .build();
         Mockito.when(jacsScheduledServiceDataPersistence.findServicesScheduledAtOrBefore(ArgumentMatchers.eq(TEST_QUEUE_ID), ArgumentMatchers.any(Date.class)))
                 .thenReturn(testData);
-        Mockito.when(jacsScheduledServiceDataPersistence.updateServicesScheduledAtOrBefore(ArgumentMatchers.any(List.class), ArgumentMatchers.any(Date.class)))
+        Mockito.when(jacsScheduledServiceDataPersistence.updateServicesScheduledAtOrBefore(ArgumentMatchers.anyList(), ArgumentMatchers.any(Date.class)))
                 .then(invocation -> invocation.getArgument(0));
         Mockito.when(jacsServiceDataPersistence.createEntity(ArgumentMatchers.any(JacsServiceData.class)))
                 .then(invocation -> invocation.getArgument(0));

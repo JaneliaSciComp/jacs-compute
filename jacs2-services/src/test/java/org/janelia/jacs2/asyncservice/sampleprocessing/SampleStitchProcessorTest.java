@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
 
 public class SampleStitchProcessorTest {
     private static final String TEST_RESULTS_ID = "23";
-    public static final String TEST_SIGNAL_CHANNELS = "0 1";
+    private static final String TEST_SIGNAL_CHANNELS = "0 1";
     private static final String TEST_REFERENCE_CHANNELS = "3";
 
     private MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor;
@@ -129,7 +129,7 @@ public class SampleStitchProcessorTest {
         String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
         Long testSampleId = SampleProcessorTestUtils.TEST_SAMPLE_ID;
 
-
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleAreaResult>> mergeAndGroupSampleTilePairsResultHandler = mock(ServiceResultHandler.class);
         when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenReturn(mergeAndGroupSampleTilePairsResultHandler);
         when(mergeAndGroupSampleTilePairsResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -150,6 +150,7 @@ public class SampleStitchProcessorTest {
             );
         });
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<StitchAndBlendResult> vaa3dStitchAndBlendResultHandler = mock(ServiceResultHandler.class);
         when(vaa3dStitchAndBlendProcessor.getResultHandler()).thenReturn(vaa3dStitchAndBlendResultHandler);
         when(vaa3dStitchAndBlendResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -159,6 +160,7 @@ public class SampleStitchProcessorTest {
             return stitchAndBlendResult;
         });
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
         when(signalAndReferenceChannelsMIPsProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
         when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -176,8 +178,10 @@ public class SampleStitchProcessorTest {
         );
 
         ServiceComputation<JacsServiceResult<SampleResult>> stitchProcessing = sampleStitchProcessor.process(testServiceData);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<SampleResult>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         stitchProcessing
                 .thenApply(r -> {
                     successful.accept(r);
@@ -234,6 +238,7 @@ public class SampleStitchProcessorTest {
         String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
         Long testSampleId = SampleProcessorTestUtils.TEST_SAMPLE_ID;
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleAreaResult>> mergeAndGroupSampleTilePairsResultHandler = mock(ServiceResultHandler.class);
         when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenReturn(mergeAndGroupSampleTilePairsResultHandler);
         when(mergeAndGroupSampleTilePairsResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -254,6 +259,7 @@ public class SampleStitchProcessorTest {
             );
         });
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<StitchAndBlendResult> vaa3dStitchAndBlendResultHandler = mock(ServiceResultHandler.class);
         when(vaa3dStitchAndBlendProcessor.getResultHandler()).thenReturn(vaa3dStitchAndBlendResultHandler);
         when(vaa3dStitchAndBlendResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -263,6 +269,7 @@ public class SampleStitchProcessorTest {
             return stitchAndBlendResult;
         });
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
         when(signalAndReferenceChannelsMIPsProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
         when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -280,8 +287,10 @@ public class SampleStitchProcessorTest {
         );
 
         ServiceComputation<JacsServiceResult<SampleResult>> stitchProcessing = sampleStitchProcessor.process(testServiceData);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<SampleResult>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         stitchProcessing
                 .thenApply(r -> {
                     successful.accept(r);
@@ -338,7 +347,7 @@ public class SampleStitchProcessorTest {
         String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
         Long testSampleId = SampleProcessorTestUtils.TEST_SAMPLE_ID;
 
-
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleAreaResult>> mergeAndGroupSampleTilePairsResultHandler = mock(ServiceResultHandler.class);
         when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenReturn(mergeAndGroupSampleTilePairsResultHandler);
         when(mergeAndGroupSampleTilePairsResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -357,6 +366,7 @@ public class SampleStitchProcessorTest {
             );
         });
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<StitchAndBlendResult> vaa3dStitchAndBlendResultHandler = mock(ServiceResultHandler.class);
         when(vaa3dStitchAndBlendProcessor.getResultHandler()).thenReturn(vaa3dStitchAndBlendResultHandler);
         when(vaa3dStitchAndBlendResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -366,6 +376,7 @@ public class SampleStitchProcessorTest {
             return stitchAndBlendResult;
         });
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
         when(signalAndReferenceChannelsMIPsProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
         when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -383,8 +394,10 @@ public class SampleStitchProcessorTest {
         );
 
         ServiceComputation<JacsServiceResult<SampleResult>> stitchProcessing = sampleStitchProcessor.process(testServiceData);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<SampleResult>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         stitchProcessing
                 .thenApply(r -> {
                     successful.accept(r);
@@ -441,7 +454,7 @@ public class SampleStitchProcessorTest {
         String outputChannelOrder = "membrane_ha,membrane_v5,membrane_flag,reference";
         Long testSampleId = SampleProcessorTestUtils.TEST_SAMPLE_ID;
 
-
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleAreaResult>> mergeAndGroupSampleTilePairsResultHandler = mock(ServiceResultHandler.class);
         when(mergeAndGroupSampleTilePairsProcessor.getResultHandler()).thenReturn(mergeAndGroupSampleTilePairsResultHandler);
         when(mergeAndGroupSampleTilePairsResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -460,6 +473,7 @@ public class SampleStitchProcessorTest {
             );
         });
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<StitchAndBlendResult> vaa3dStitchAndBlendResultHandler = mock(ServiceResultHandler.class);
         when(vaa3dStitchAndBlendProcessor.getResultHandler()).thenReturn(vaa3dStitchAndBlendResultHandler);
         when(vaa3dStitchAndBlendResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -469,6 +483,7 @@ public class SampleStitchProcessorTest {
             return stitchAndBlendResult;
         });
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<File>> mipGenerationResultHandler = mock(ServiceResultHandler.class);
         when(signalAndReferenceChannelsMIPsProcessor.getResultHandler()).thenReturn(mipGenerationResultHandler);
         when(mipGenerationResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
@@ -486,8 +501,10 @@ public class SampleStitchProcessorTest {
         );
 
         ServiceComputation<JacsServiceResult<SampleResult>> stitchProcessing = sampleStitchProcessor.process(testServiceData);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<SampleResult>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         stitchProcessing
                 .thenApply(r -> {
                     successful.accept(r);

@@ -72,6 +72,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractServiceProcessor<Li
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public List<SampleImageMIPsFile> collectResult(JacsServiceResult<?> depResults) {
                 JacsServiceResult<List<SampleImageMIPsFile>> result = (JacsServiceResult<List<SampleImageMIPsFile>>)depResults;
@@ -84,6 +85,7 @@ public class GetSampleMIPsAndMoviesProcessor extends AbstractServiceProcessor<Li
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<List<SampleImageMIPsFile>>> process(JacsServiceData jacsServiceData) {
         SampleMIPsAndMoviesArgs args = getArgs(jacsServiceData);

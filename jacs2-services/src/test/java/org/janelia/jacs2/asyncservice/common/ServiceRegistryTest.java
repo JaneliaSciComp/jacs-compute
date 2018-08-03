@@ -22,6 +22,7 @@ public class ServiceRegistryTest {
     @Before
     public void setUp() {
         Logger logger = mock(Logger.class);
+        @SuppressWarnings("unchecked")
         Instance<ServiceProcessor<?>> anyServiceSource = mock(Instance.class);
         ServiceProcessor<?> registeredService = mock(ServiceProcessor.class);
         testServiceRegistry = new JacsServiceRegistry(anyServiceSource, logger);

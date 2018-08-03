@@ -73,9 +73,9 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         @Parameter(names = "-imageLine", description = "Image line name", required = false)
         String imageLine;
         @Parameter(names = "-slideCodes", description = "Slide codes", required = false)
-        List<String> slideCodes = new ArrayList();
+        List<String> slideCodes = new ArrayList<>();
         @Parameter(names = "-lsmNames", description = "LSM names", required = false)
-        List<String> lsmNames = new ArrayList();
+        List<String> lsmNames = new ArrayList<>();
         @Parameter(names = "-debug", description = "Debug flag", required = false)
         boolean debugFlag;
 
@@ -124,6 +124,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public List<LSMImportResult> collectResult(JacsServiceResult<?> depResults) {
                 JacsServiceResult<List<LSMImportResult>> intermediateResult = (JacsServiceResult<List<LSMImportResult>>)depResults;
@@ -137,6 +138,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<List<LSMImportResult>>> process(JacsServiceData jacsServiceData) {
         LSMImportArgs args = getArgs(jacsServiceData);

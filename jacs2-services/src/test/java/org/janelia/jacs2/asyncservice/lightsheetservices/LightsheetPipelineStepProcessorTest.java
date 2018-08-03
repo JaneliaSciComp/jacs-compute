@@ -169,8 +169,10 @@ public class LightsheetPipelineStepProcessorTest {
             testServiceData.getDictionaryArgs().put("containerImage", "shub://otherregistry/imageprocessing/" + step.name().toLowerCase() + ":latest");
             prepareResultHandlers(step);
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
-            Consumer successful = mock(Consumer.class);
-            Consumer failure = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<Throwable> failure = mock(Consumer.class);
             stepComputation
                     .thenApply(r -> {
                         successful.accept(r);
@@ -211,8 +213,10 @@ public class LightsheetPipelineStepProcessorTest {
             JacsServiceData testServiceData = createTestService(step, stepIndex, 100, 10, config);
             prepareResultHandlers(step);
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
-            Consumer successful = mock(Consumer.class);
-            Consumer failure = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<Throwable> failure = mock(Consumer.class);
             stepComputation
                     .thenApply(r -> {
                         successful.accept(r);
@@ -254,8 +258,10 @@ public class LightsheetPipelineStepProcessorTest {
             JacsServiceData testServiceData = createTestService(step, stepIndex, 10, timePointsPerJob, config);
             prepareResultHandlers(step);
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
-            Consumer successful = mock(Consumer.class);
-            Consumer failure = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<Throwable> failure = mock(Consumer.class);
             stepComputation
                     .thenApply(r -> {
                         successful.accept(r);
@@ -298,8 +304,10 @@ public class LightsheetPipelineStepProcessorTest {
             JacsServiceData testServiceData = createTestService(step, stepIndex, timePoints, timePointsPerJob, config);
             prepareResultHandlers(step);
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
-            Consumer successful = mock(Consumer.class);
-            Consumer failure = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<Throwable> failure = mock(Consumer.class);
             stepComputation
                     .thenApply(r -> {
                         successful.accept(r);
@@ -356,8 +364,10 @@ public class LightsheetPipelineStepProcessorTest {
             );
             prepareResultHandlers(step);
             ServiceComputation<JacsServiceResult<Void>> ministacksComputation = lightsheetPipelineStepProcessor.process(testServiceData);
-            Consumer successful = mock(Consumer.class);
-            Consumer failure = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<Throwable> failure = mock(Consumer.class);
             ministacksComputation
                     .thenApply(r -> {
                         successful.accept(r);
@@ -403,8 +413,10 @@ public class LightsheetPipelineStepProcessorTest {
             JacsServiceData testServiceData = createMinistacksTestService(null, stepIndex, config);
             prepareResultHandlers(step);
             ServiceComputation<JacsServiceResult<Void>> ministacksComputation = lightsheetPipelineStepProcessor.process(testServiceData);
-            Consumer successful = mock(Consumer.class);
-            Consumer failure = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<Throwable> failure = mock(Consumer.class);
             ministacksComputation
                     .thenApply(r -> {
                         successful.accept(r);
@@ -444,6 +456,7 @@ public class LightsheetPipelineStepProcessorTest {
     }
 
     private void prepareResultHandlers(LightsheetPipelineStep step) {
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<File> pullContainerResultHandler = mock(ServiceResultHandler.class);
         Mockito.when(pullContainerResultHandler.getServiceDataResult(any(JacsServiceData.class)))
                 .then(invocation -> new File(testDirectory, step.name().toLowerCase() + ".simg"));

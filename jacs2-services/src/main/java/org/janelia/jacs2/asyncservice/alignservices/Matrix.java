@@ -1,17 +1,18 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
-public class Matrix<E> {
-    public Object[][] elems;
+class Matrix<E> {
+    Object[][] elems;
 
-    public Matrix(int rows, int cols) {
+    Matrix(int rows, int cols) {
         elems = new Object[rows][cols];
     }
 
-    public E getElem(int row, int col) {
+    @SuppressWarnings("unchecked")
+    E getElem(int row, int col) {
         return (E) elems[row][col];
     }
 
-    public void setElem(int row, int col, E elem) {
+    void setElem(int row, int col, E elem) {
         elems[row][col] = elem;
     }
 }

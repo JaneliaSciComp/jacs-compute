@@ -142,6 +142,7 @@ public class FlylightSampleProcessor extends AbstractServiceProcessor<List<Sampl
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public List<SampleProcessorResult> collectResult(JacsServiceResult<?> depResults) {
                 JacsServiceResult<List<SampleProcessorResult>> intermediateResult = (JacsServiceResult<List<SampleProcessorResult>>)depResults;

@@ -53,7 +53,8 @@ class JacsServiceDataMongoHelper {
         if (pattern.getServiceArgs() != null) {
             pattern.getServiceArgs().forEach((name, value) -> {
                 if (value instanceof Iterable) {
-                    Iterable iterableValue = (Iterable) value;
+                    @SuppressWarnings("unchecked")
+                    Iterable<Object> iterableValue = (Iterable<Object>) value;
                     filtersBuilder.add(Filters.in("serviceArgs." + name, iterableValue));
                 } else if (value instanceof DataInterval) {
                     DataInterval intervalValue = (DataInterval) value;

@@ -264,22 +264,27 @@ public class FlylightSampleProcessorTest {
                 "1234567891234567", "234/567/1234567891234567"
         );
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SamplePipelineRun>> initializeSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(initializeSamplePipelineResultsProcessor.getResultHandler()).thenReturn(initializeSamplePipelineResultsResultHandler);
         when(initializeSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleImageFile>> getSampleImageFilesResultHandler = mock(ServiceResultHandler.class);
         when(getSampleImageFilesProcessor.getResultHandler()).thenReturn(getSampleImageFilesResultHandler);
         when(getSampleImageFilesResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<LSMSummary>> sampleLSMSummaryResultHandler = mock(ServiceResultHandler.class);
         when(sampleLSMSummaryProcessor.getResultHandler()).thenReturn(sampleLSMSummaryResultHandler);
         when(sampleLSMSummaryResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<SampleResult> sampleStitchResultHandler = mock(ServiceResultHandler.class);
         when(sampleStitchProcessor.getResultHandler()).thenReturn(sampleStitchResultHandler);
         when(sampleStitchResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(new SampleResult());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleProcessorResult>> updateSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(updateSampleProcessingResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
         when(updateSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(new SampleProcessorResult()));
@@ -305,8 +310,10 @@ public class FlylightSampleProcessorTest {
             testServiceData.setId(testServiceId);
 
             ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> flylightProcessing = flylightSampleProcessor.process(testServiceData);
-            Consumer successful = mock(Consumer.class);
-            Consumer failure = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<JacsServiceResult<List<SampleProcessorResult>>> successful = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<Throwable> failure = mock(Consumer.class);
             flylightProcessing
                     .thenApply(r -> {
                         successful.accept(r);
@@ -430,16 +437,19 @@ public class FlylightSampleProcessorTest {
         }), eq(SampleProcessorTestUtils.TEST_SAMPLE_ID)))
                 .thenReturn(SampleProcessorTestUtils.createTestSample(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SamplePipelineRun>> initializeSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(initializeSamplePipelineResultsProcessor.getResultHandler()).thenReturn(initializeSamplePipelineResultsResultHandler);
         when(initializeSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleImageFile>> getSampleImageFilesResultHandler = mock(ServiceResultHandler.class);
         when(getSampleImageFilesProcessor.getResultHandler()).thenReturn(getSampleImageFilesResultHandler);
         when(getSampleImageFilesResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
             return new JacsServiceResult<>(invocation.getArgument(0), ImmutableList.of());
         });
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<SampleResult> sampleStitchResultHandler = mock(ServiceResultHandler.class);
         when(sampleStitchProcessor.getResultHandler()).thenReturn(sampleStitchResultHandler);
         when(sampleStitchResultHandler.getServiceDataResult(any(JacsServiceData.class)))
@@ -452,16 +462,19 @@ public class FlylightSampleProcessorTest {
                                         "stitchedFile",
                                         ImmutableList.of(createMergeTilePairResult("t1", "f1"), createMergeTilePairResult("t2", "f2"))))));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleProcessorResult>> updateSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(updateSampleProcessingResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
         when(updateSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class)))
                 .thenReturn(ImmutableList.of(createSampleProcessorResult(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area)));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<MIPsAndMoviesResult> enhancedMIPsAndMoviesResultHandler = mock(ServiceResultHandler.class);
         when(enhancedMIPsAndMoviesProcessor.getResultHandler()).thenReturn(enhancedMIPsAndMoviesResultHandler);
         when(enhancedMIPsAndMoviesResultHandler.getServiceDataResult(any(JacsServiceData.class)))
                 .thenReturn(createMipsAndMoviesResult(TEST_MIPS_DIR, ImmutableList.of("d1", "d2")));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<NeuronSeparationFiles> sampleNeuronSeparationResultHandler = mock(ServiceResultHandler.class);
         when(sampleNeuronSeparationProcessor.getResultHandler()).thenReturn(sampleNeuronSeparationResultHandler);
         when(sampleNeuronSeparationResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(new NeuronSeparationFiles());
@@ -486,8 +499,10 @@ public class FlylightSampleProcessorTest {
         testServiceData.setId(Long.valueOf(testServiceId));
 
         ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> flylightProcessing = flylightSampleProcessor.process(testServiceData);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<List<SampleProcessorResult>>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         flylightProcessing
                 .thenApply(r -> {
                     successful.accept(r);
@@ -645,15 +660,18 @@ public class FlylightSampleProcessorTest {
             return argument == null || "testOwner".equals(argument);
         }), eq(SampleProcessorTestUtils.TEST_SAMPLE_ID))).thenReturn(testSample);
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SamplePipelineRun>> initializeSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(initializeSamplePipelineResultsProcessor.getResultHandler()).thenReturn(initializeSamplePipelineResultsResultHandler);
         when(initializeSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleImageFile>> getSampleImageFilesResultHandler = mock(ServiceResultHandler.class);
         when(getSampleImageFilesProcessor.getResultHandler()).thenReturn(getSampleImageFilesResultHandler);
         when(getSampleImageFilesResultHandler.getServiceDataResult(any(JacsServiceData.class)))
                 .then(invocation -> new JacsServiceResult<>(invocation.getArgument(0), ImmutableList.of()));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<SampleResult> sampleStitchResultHandler = mock(ServiceResultHandler.class);
         when(sampleStitchProcessor.getResultHandler()).thenReturn(sampleStitchResultHandler);
         when(sampleStitchResultHandler.getServiceDataResult(any(JacsServiceData.class)))
@@ -669,6 +687,7 @@ public class FlylightSampleProcessorTest {
                         )
                 ));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleProcessorResult>> updateSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(updateSampleProcessingResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
         when(updateSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class)))
@@ -677,11 +696,13 @@ public class FlylightSampleProcessorTest {
                         createSampleProcessorResult(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, "VNC")
                 ));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<MIPsAndMoviesResult> basicMIPsAndMoviesResultHandler = mock(ServiceResultHandler.class);
         when(basicMIPsAndMoviesProcessor.getResultHandler()).thenReturn(basicMIPsAndMoviesResultHandler);
         when(basicMIPsAndMoviesResultHandler.getServiceDataResult(any(JacsServiceData.class)))
                 .thenReturn(createMipsAndMoviesResult(TEST_MIPS_DIR, ImmutableList.of("d1")));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<NeuronSeparationFiles> sampleNeuronSeparationResultHandler = mock(ServiceResultHandler.class);
         when(sampleNeuronSeparationProcessor.getResultHandler()).thenReturn(sampleNeuronSeparationResultHandler);
         when(sampleNeuronSeparationResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(new NeuronSeparationFiles());
@@ -706,8 +727,10 @@ public class FlylightSampleProcessorTest {
         testServiceData.setId(Long.valueOf(testServiceId));
 
         ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> flylightProcessing = flylightSampleProcessor.process(testServiceData);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<List<SampleProcessorResult>>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         flylightProcessing
                 .thenApply(r -> {
                     successful.accept(r);

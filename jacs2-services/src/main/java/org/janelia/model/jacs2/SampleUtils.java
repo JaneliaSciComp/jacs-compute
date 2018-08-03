@@ -454,6 +454,7 @@ public class SampleUtils {
                                     if ("tmogDate".equals(fieldName)) {
                                         // tmog is treated differently - simply take the max
                                         Date tmogDate = (Date) sageFieldValue;
+                                        @SuppressWarnings("unchecked")
                                         EntityFieldValueHandler<Date> currentTmogDateHandler = (EntityFieldValueHandler<Date>) consensusLsmFieldValues.get(fieldName);
                                         if (currentTmogDateHandler == null || tmogDate != null && tmogDate.after(currentTmogDateHandler.getFieldValue())) {
                                             consensusLsmFieldValues.put(fieldName, new SetFieldValueHandler<>(tmogDate));
@@ -506,6 +507,7 @@ public class SampleUtils {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static <D extends DomainObject> Map<String, SageField> getSageFields(Class<D> dType, Function<SageField, String> keyMapper) {
         Map<String, SageField> sageFields = new HashMap<>();
         for (Field field : ReflectionUtils.getAllFields(dType)) {

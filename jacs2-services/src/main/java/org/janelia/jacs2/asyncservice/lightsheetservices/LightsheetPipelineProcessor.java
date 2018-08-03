@@ -145,9 +145,10 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, Object> getStepDictionaryArgs(Map<String, Object> dictionaryArgs, String stepKey) {
          Object stepConfig = dictionaryArgs.get(stepKey);
-         if (stepConfig != null && stepConfig instanceof Map) {
+         if (stepConfig instanceof Map) {
              return (Map<String, Object>) stepConfig;
          } else {
              return ImmutableMap.of();

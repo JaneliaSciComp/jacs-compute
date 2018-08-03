@@ -39,6 +39,7 @@ public class DomainObjectService implements LockService {
     @Override
     public <T extends DomainObject> String lock(T entity, long timeout, TimeUnit timeunit) {
         long startTimeMillis = System.currentTimeMillis();
+        @SuppressWarnings("unchecked")
         DomainObjectDao<T> dao = (DomainObjectDao<T>) daoFactory.createDomainObjectDao(entity.getEntityName());
         String lockKey = nextKey();
         for (;;) {
@@ -63,6 +64,7 @@ public class DomainObjectService implements LockService {
 
     @Override
     public <T extends DomainObject> String tryLock(T entity) {
+        @SuppressWarnings("unchecked")
         DomainObjectDao<T> dao = (DomainObjectDao<T>) daoFactory.createDomainObjectDao(entity.getEntityName());
         String lockKey = nextKey();
         return tryLock(entity, lockKey, dao);
@@ -78,6 +80,7 @@ public class DomainObjectService implements LockService {
 
     @Override
     public <T extends DomainObject> boolean isLocked(T entity) {
+        @SuppressWarnings("unchecked")
         DomainObjectDao<T> dao = (DomainObjectDao<T>) daoFactory.createDomainObjectDao(entity.getEntityName());
         T existingEntity = dao.findById(entity.getId());
         if (existingEntity == null) {
@@ -88,6 +91,7 @@ public class DomainObjectService implements LockService {
 
     @Override
     public <T extends DomainObject> boolean unlock(String lockKey, T entity) {
+        @SuppressWarnings("unchecked")
         DomainObjectDao<T> dao = (DomainObjectDao<T>) daoFactory.createDomainObjectDao(entity.getEntityName());
         return dao.unlockEntity(lockKey, entity);
     }
