@@ -28,20 +28,16 @@ import javax.inject.Named;
 import java.util.List;
 import java.util.Map;
 
-@Named("singularity")
-public class SingularityContainerProcessor extends AbstractExeBasedServiceProcessor<Void> {
+@Named("runSingularity")
+public class RunSingularityContainerProcessor extends AbstractSingularityContainerProcessor<RunSingularityContainerProcessor.RunSingularityContainerArgs, Void> {
 
     enum ContainerOperation {
         run,
         exec
     }
-    static class SingularityContainerArgs extends ServiceArgs {
+    static class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
         @Parameter(names = "-op", description = "Singularity container operation {run (default) | exec}")
         ContainerOperation operation = ContainerOperation.run;
-        @Parameter(names = "-containerLocation", description = "Singularity container location", required = true)
-        String containerLocation;
-        @Parameter(names = "-singularityRuntime", description = "Singularity binary")
-        String singularityRuntime;
         @Parameter(names = "-appName", description = "Containerized application Name")
         String appName;
         @Parameter(names = "-bindPaths", description = "Container bind paths")
@@ -50,42 +46,27 @@ public class SingularityContainerProcessor extends AbstractExeBasedServiceProces
         String overlay;
         @Parameter(names = "-enableNV", description = "Enable NVidia support")
         boolean enableNV;
-        @Parameter(names = "-enableHttps", description = "Enable HTTPS for retrieving the container image")
-        private boolean enableHttps;
-        @Parameter(names = "-containerWorkingDir", description = "Container working directory")
-        String containerWorkingDirectory;
         @Parameter(names = "-initialPwd", description = "Initial working directory inside the container")
         String initialPwd;
         @Parameter(names = "-appArgs", description = "Containerized application arguments")
         List<String> appArgs;
 
-        SingularityContainerArgs() {
+        RunSingularityContainerArgs() {
             super("Service that runs a singularity container");
         }
-
-        boolean noHttps() {
-            return !enableHttps;
-        }
     }
-
-    private final String singularityExecutable;
 
     @Inject
-    SingularityContainerProcessor(ServiceComputationFactory computationFactory,
-                                  JacsServiceDataPersistence jacsServiceDataPersistence,
-                                  @Any Instance<ExternalProcessRunner> serviceRunners,
-                                  @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                  @PropertyValue(name = "Singularity.Bin.Path") String singularityExecutable,
-                                  JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
-                                  @ApplicationProperties ApplicationConfig applicationConfig,
-                                  Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
-        this.singularityExecutable = singularityExecutable;
-    }
-
-    @Override
-    public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(SingularityContainerProcessor.class, new SingularityContainerArgs());
+    RunSingularityContainerProcessor(ServiceComputationFactory computationFactory,
+                                     JacsServiceDataPersistence jacsServiceDataPersistence,
+                                     @Any Instance<ExternalProcessRunner> serviceRunners,
+                                     @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                                     @PropertyValue(name = "Singularity.Bin.Path") String singularityExecutable,
+                                     @PropertyValue(name = "Singularity.LocalImages.Path") String localSingularityImagesPath,
+                                     JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
+                                     @ApplicationProperties ApplicationConfig applicationConfig,
+                                     Logger logger) {
+        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, singularityExecutable, localSingularityImagesPath, jacsJobInstanceInfoDao, applicationConfig, logger);
     }
 
     @Override
@@ -94,14 +75,7 @@ public class SingularityContainerProcessor extends AbstractExeBasedServiceProces
     }
 
     @Override
-    protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
-        SingularityContainerArgs args = getArgs(jacsServiceData);
-        ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
-        createScript(args, externalScriptCode.getCodeWriter());
-        return externalScriptCode;
-    }
-
-    private void createScript(SingularityContainerArgs args, ScriptWriter scriptWriter) {
+    void createScript(RunSingularityContainerArgs args, ScriptWriter scriptWriter) {
         scriptWriter
                 .addWithArgs(getRuntime((args)))
                 .addArg(args.operation.name());
@@ -112,9 +86,6 @@ public class SingularityContainerProcessor extends AbstractExeBasedServiceProces
         if (StringUtils.isNotBlank(bindPaths)) {
             scriptWriter.addArgs("--bind", bindPaths);
         }
-        if (StringUtils.isNotBlank(args.containerWorkingDirectory)) {
-            scriptWriter.addArgs("--workdir", args.containerWorkingDirectory);
-        }
         if (StringUtils.isNotBlank(args.overlay)) {
             scriptWriter.addArgs("--overlay", args.overlay);
         }
@@ -124,7 +95,7 @@ public class SingularityContainerProcessor extends AbstractExeBasedServiceProces
         if (StringUtils.isNotBlank(args.initialPwd)) {
             scriptWriter.addArgs("--pwd", args.initialPwd);
         }
-        scriptWriter.addArg(args.containerLocation);
+        scriptWriter.addArg(getLocalContainerImage(args).toString());
         if (CollectionUtils.isNotEmpty(args.appArgs)) {
             args.appArgs.forEach(scriptWriter::addArg);
         }
@@ -132,24 +103,8 @@ public class SingularityContainerProcessor extends AbstractExeBasedServiceProces
     }
 
     @Override
-    protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
-        SingularityContainerArgs args = getArgs(jacsServiceData);
-        if (args.noHttps()) {
-            return ImmutableMap.of("SINGULARITY_NOHTTPS", "True");
-        } else {
-            return ImmutableMap.of();
-        }
+    RunSingularityContainerArgs createContainerArgs() {
+        return new RunSingularityContainerArgs();
     }
 
-    private SingularityContainerArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SingularityContainerArgs());
-    }
-
-    private String getRuntime(SingularityContainerArgs args) {
-        if (StringUtils.isNotBlank(args.singularityRuntime)) {
-            return args.singularityRuntime;
-        } else {
-            return getFullExecutableName(singularityExecutable);
-        }
-    }
 }

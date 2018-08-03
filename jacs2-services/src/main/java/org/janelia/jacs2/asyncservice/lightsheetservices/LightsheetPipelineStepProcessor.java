@@ -11,7 +11,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
-import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
@@ -21,8 +20,8 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
-import org.janelia.jacs2.asyncservice.containerizedservices.SingularityContainerProcessor;
-import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
+import org.janelia.jacs2.asyncservice.containerizedservices.PullSingularityContainerProcessor;
+import org.janelia.jacs2.asyncservice.containerizedservices.RunSingularityContainerProcessor;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
@@ -41,8 +40,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +81,8 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         String configOutputPath = DEFAULT_CONFIG_OUTPUT_PATH;
     }
 
-    private final WrappedServiceProcessor<SingularityContainerProcessor, Void> containerProcessor;
+    private final WrappedServiceProcessor<PullSingularityContainerProcessor, File> pullContainerProcessor;
+    private final WrappedServiceProcessor<RunSingularityContainerProcessor, Void> runContainerProcessor;
     private final ApplicationConfig applicationConfig;
     private final ObjectMapper objectMapper;
 
@@ -93,11 +91,13 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
                                     @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                     @ApplicationProperties ApplicationConfig applicationConfig,
-                                    SingularityContainerProcessor containerProcessor,
+                                    PullSingularityContainerProcessor pullContainerProcessor,
+                                    RunSingularityContainerProcessor runContainerProcessor,
                                     ObjectMapper objectMapper,
                                     Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.containerProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, containerProcessor);
+        this.pullContainerProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, pullContainerProcessor);
+        this.runContainerProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, runContainerProcessor);
         this.applicationConfig = applicationConfig;
         this.objectMapper = objectMapper;
     }
@@ -124,19 +124,27 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
             dataMountPoints.putAll(getDataMountPointsFromDictionaryArgs(jacsServiceData.getActualDictionaryArgs()));
             dataMountPoints.putAll(getDataMountPointsFromStepConfig(stepConfig.getRight()));
 
-            List<ServiceComputation<?>> stepJobs = IndexedReference.indexListContent(stepJobArgs, (i, jobArgs) -> new IndexedReference<>(jobArgs, i))
-                    .map(indexedJobArgs -> createStepJobComputation(
-                            containerLocation,
-                            dataMountPoints,
-                            args.step,
-                            args.stepIndex,
-                            indexedJobArgs.getPos(),
-                            stepResources,
-                            indexedJobArgs.getReference(),
-                            jacsServiceData))
-                    .collect(Collectors.toList());
-            return computationFactory.newCompletedComputation(null)
-                    .thenCombineAll(stepJobs, (empty, stepResults) -> new JacsServiceResult<>(jacsServiceData))
+            return pullContainerProcessor.process(
+                    new ServiceExecutionContext.Builder(jacsServiceData)
+                            .description("Pull container image " + containerLocation)
+                            .build(),
+                    new ServiceArg("-containerLocation", containerLocation))
+                    .thenCompose(containerImageResult -> {
+                        List<ServiceComputation<?>> stepJobs = IndexedReference.indexListContent(stepJobArgs, (i, jobArgs) -> new IndexedReference<>(jobArgs, i))
+                                .map(indexedJobArgs -> createStepJobComputation(
+                                        containerImageResult,
+                                        dataMountPoints,
+                                        args.step,
+                                        args.stepIndex,
+                                        indexedJobArgs.getPos(),
+                                        stepResources,
+                                        indexedJobArgs.getReference(),
+                                        jacsServiceData))
+                                .collect(Collectors.toList());
+                        return computationFactory.newCompletedComputation(containerImageResult)
+                                .thenCombineAll(stepJobs, (ignored, stepResults) -> new JacsServiceResult<>(jacsServiceData))
+                                ;
+                    })
                     ;
         } catch (Exception e) {
             logger.warn("Failed to read step config for {}", jacsServiceData, e);
@@ -144,7 +152,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         }
     }
 
-    private ServiceComputation<JacsServiceResult<Void>> createStepJobComputation(String containerLocation,
+    private ServiceComputation<JacsServiceResult<Void>> createStepJobComputation(JacsServiceResult<File> containerImageResult,
                                                                                  Map<String, String> mountPoints,
                                                                                  LightsheetPipelineStep step,
                                                                                  int stepIndex,
@@ -162,12 +170,13 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                 })
                 .reduce((b1, b2) -> b1 + "," + b2)
                 .orElse("");
-        return containerProcessor.process(
+        return runContainerProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Step " + stepIndex + ": " + step + " - job " + jobIndex)
+                        .waitFor(containerImageResult.getJacsServiceData())
                         .addResources(jobResources)
                         .build(),
-                new ServiceArg("-containerLocation", containerLocation),
+                new ServiceArg("-containerLocation", containerImageResult.getResult().getAbsolutePath()),
                 new ServiceArg("-bindPaths", bindPath),
                 new ServiceArg("-appArgs", jobArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
         );
