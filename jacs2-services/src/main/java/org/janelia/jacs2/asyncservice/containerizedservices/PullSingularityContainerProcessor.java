@@ -46,6 +46,11 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
     }
 
     @Override
+    public ServiceMetaData getMetadata() {
+        return ServiceArgs.getMetadata(PullSingularityContainerProcessor.class, createContainerArgs());
+    }
+
+    @Override
     public ServiceResultHandler<File> getResultHandler() {
         return new AbstractSingleFileServiceResultHandler() {
             @Override

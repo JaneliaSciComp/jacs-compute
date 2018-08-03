@@ -49,11 +49,6 @@ abstract class AbstractSingularityContainerProcessor<A extends AbstractSingulari
     }
 
     @Override
-    public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(this.getClass(), createContainerArgs());
-    }
-
-    @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
         A args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
