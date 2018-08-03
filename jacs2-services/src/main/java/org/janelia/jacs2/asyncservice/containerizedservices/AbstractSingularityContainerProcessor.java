@@ -33,7 +33,6 @@ abstract class AbstractSingularityContainerProcessor<A extends AbstractSingulari
     private final String singularityExecutable;
     private final String localSingularityImagesPath;
 
-    @Inject
     AbstractSingularityContainerProcessor(ServiceComputationFactory computationFactory,
                                           JacsServiceDataPersistence jacsServiceDataPersistence,
                                           Instance<ExternalProcessRunner> serviceRunners,

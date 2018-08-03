@@ -26,7 +26,7 @@ import java.nio.file.Path;
 @Named("pullSingularityContainer")
 public class PullSingularityContainerProcessor extends AbstractSingularityContainerProcessor<PullSingularityContainerProcessor.PullSingularityContainerArgs, File> {
 
-    static class PullSingularityContainerArgs extends AbstractSingularityContainerArgs {
+    public static class PullSingularityContainerArgs extends AbstractSingularityContainerArgs {
         PullSingularityContainerArgs() {
             super("Service that pulls a singularity container image");
         }

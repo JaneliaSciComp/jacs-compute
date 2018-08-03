@@ -30,7 +30,7 @@ public class RunSingularityContainerProcessor extends AbstractSingularityContain
         run,
         exec
     }
-    static class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
+    public static class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
         @Parameter(names = "-op", description = "Singularity container operation {run (default) | exec}")
         ContainerOperation operation = ContainerOperation.run;
         @Parameter(names = "-appName", description = "Containerized application Name")
