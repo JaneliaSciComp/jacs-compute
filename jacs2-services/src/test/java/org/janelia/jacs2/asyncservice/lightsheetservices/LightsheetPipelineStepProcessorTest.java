@@ -345,7 +345,7 @@ public class LightsheetPipelineStepProcessorTest {
                     .put("inputFolder", "/in")
                     .put("inputString", "/in")
                     .put("outputString", "/tmp/sub")
-                    .put("configRoot", "/config")
+                    .put("configRoot", "//tmp/config")
                     .put("sourceString", "/tmp/sub")
                     .put("lookUpTable", "/tmp/ltFile")
                     .put("inputRoot", "/inRoot/in")
@@ -376,7 +376,6 @@ public class LightsheetPipelineStepProcessorTest {
                                                 "d2" + "," +
                                                 "/in:/in" + "," +
                                                 "/tmp:/tmp" + "," +
-                                                "/config:/config" + "," +
                                                 "/inRoot/in:/inRoot/in" + "," +
                                                 "/inDir/in:/inDir/in" + "," +
                                                 "/var/tmp:/var/tmp"

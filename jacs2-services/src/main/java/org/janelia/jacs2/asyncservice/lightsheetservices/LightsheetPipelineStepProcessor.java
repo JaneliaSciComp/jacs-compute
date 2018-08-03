@@ -251,7 +251,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                 parentPath.andThen(existingPathOrParentMapping)));
         // localAP
         dataMountPoints.putAll(addMountPointFromStepConfig("configRoot", stepConfig,
-                idMapping));
+                existingPathOrParentMapping));
         // clusterTF
         dataMountPoints.putAll(addMountPointFromStepConfig("sourceString", stepConfig,
                 parentPath.andThen(existingPathOrParentMapping)));
