@@ -73,6 +73,7 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
                 .addWithArgs(getRuntime((args)))
                 .addArg("pull")
                 .addArgs("--name", getLocalContainerImage(args).getFileName().toString())
+                .addArgs(args.containerLocation)
                 .endArgs();
     }
 
