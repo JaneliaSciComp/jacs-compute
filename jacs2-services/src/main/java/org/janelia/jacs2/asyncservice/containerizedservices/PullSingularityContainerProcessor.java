@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Named("pullSingularityContainer")
 public class PullSingularityContainerProcessor extends AbstractSingularityContainerProcessor<File> {
@@ -76,7 +77,7 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
     @Override
     protected Path getProcessDir(JacsServiceData jacsServiceData) {
         PullSingularityContainerArgs args = getArgs(jacsServiceData);
-        return getLocalImagesDir(args);
+        return getLocalImagesDir(args).map(p -> Paths.get(p)).orElseGet(() -> super.getProcessDir(jacsServiceData));
     }
 
     @Override

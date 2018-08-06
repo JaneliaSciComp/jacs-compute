@@ -30,11 +30,11 @@ import java.util.Map;
 import java.util.Arrays;
 
 /**
- * Complete lightsheet processing service which invokes multiple LightsheetPipelineProcessor steps.
+ * Complete lightsheet pipeline processing service which invokes multiple LightsheetPipelineProcessor steps.
  *
  * @author David Ackerman
  */
-@Named("lightsheetProcessing")
+@Named("lightsheetPipeline")
 public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> {
 
     static class LightsheetProcessingArgs extends ServiceArgs {

@@ -21,7 +21,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.containerizedservices.PullSingularityContainerProcessor;
-import org.janelia.jacs2.asyncservice.containerizedservices.RunSingularityContainerProcessor;
+import org.janelia.jacs2.asyncservice.containerizedservices.SimpleRunSingularityContainerProcessor;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
@@ -55,11 +55,11 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 /**
- * Service for running a single lightsheet processing step.
+ * Service for running a single lightsheet pipeline step.
  *
  * @author David Ackerman
  */
-@Named("lightsheetPipeline")
+@Named("lightsheetPipelineStep")
 public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Void> {
 
     private static final String DEFAULT_CONFIG_OUTPUT_PATH = "";
@@ -77,12 +77,12 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         Integer timePointsPerJob = 1;
         @Parameter(names = "-configAddress", description = "Address for accessing job's config json", required = true)
         String configAddress;
-        @Parameter(names = "-configOutputPath", description = "Path for outputting json configs", required=false)
+        @Parameter(names = "-configOutputPath", description = "Path for outputting json configs")
         String configOutputPath = DEFAULT_CONFIG_OUTPUT_PATH;
     }
 
     private final WrappedServiceProcessor<PullSingularityContainerProcessor, File> pullContainerProcessor;
-    private final WrappedServiceProcessor<RunSingularityContainerProcessor, Void> runContainerProcessor;
+    private final WrappedServiceProcessor<SimpleRunSingularityContainerProcessor, Void> runContainerProcessor;
     private final ApplicationConfig applicationConfig;
     private final ObjectMapper objectMapper;
 
@@ -92,7 +92,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                                     @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                     @ApplicationProperties ApplicationConfig applicationConfig,
                                     PullSingularityContainerProcessor pullContainerProcessor,
-                                    RunSingularityContainerProcessor runContainerProcessor,
+                                    SimpleRunSingularityContainerProcessor runContainerProcessor,
                                     ObjectMapper objectMapper,
                                     Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);

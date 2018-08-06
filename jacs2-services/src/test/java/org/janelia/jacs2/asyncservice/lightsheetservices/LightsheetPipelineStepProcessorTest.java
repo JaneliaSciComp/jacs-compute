@@ -10,7 +10,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.containerizedservices.PullSingularityContainerProcessor;
-import org.janelia.jacs2.asyncservice.containerizedservices.RunSingularityContainerProcessor;
+import org.janelia.jacs2.asyncservice.containerizedservices.SimpleRunSingularityContainerProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
@@ -89,7 +89,7 @@ public class LightsheetPipelineStepProcessorTest {
     private Client testHttpClient;
     private LightsheetPipelineStepProcessor lightsheetPipelineStepProcessor;
     private PullSingularityContainerProcessor pullContainerProcessor;
-    private RunSingularityContainerProcessor runContainerProcessor;
+    private SimpleRunSingularityContainerProcessor runContainerProcessor;
 
     @Before
     public void setUp() throws Exception {
@@ -145,8 +145,8 @@ public class LightsheetPipelineStepProcessorTest {
         return pullContainerProcessor;
     }
 
-    private RunSingularityContainerProcessor mockRunContainerProcessor() {
-        RunSingularityContainerProcessor runContainerProcessor = mock(RunSingularityContainerProcessor.class);
+    private SimpleRunSingularityContainerProcessor mockRunContainerProcessor() {
+        SimpleRunSingularityContainerProcessor runContainerProcessor = mock(SimpleRunSingularityContainerProcessor.class);
         Mockito.when(runContainerProcessor.getMetadata()).thenCallRealMethod();
         Mockito.when(runContainerProcessor.createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class)

@@ -23,24 +23,24 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 @Named("runSingularityContainer")
-public class RunSingularityContainerProcessor extends AbstractSingularityContainerProcessor<Void> {
+public class SimpleRunSingularityContainerProcessor extends AbstractSingularityContainerProcessor<Void> {
 
     @Inject
-    RunSingularityContainerProcessor(ServiceComputationFactory computationFactory,
-                                     JacsServiceDataPersistence jacsServiceDataPersistence,
-                                     @Any Instance<ExternalProcessRunner> serviceRunners,
-                                     @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                     @PropertyValue(name = "Singularity.Bin.Path") String singularityExecutable,
-                                     @PropertyValue(name = "Singularity.LocalImages.Path") String localSingularityImagesPath,
-                                     JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
-                                     @ApplicationProperties ApplicationConfig applicationConfig,
-                                     Logger logger) {
+    SimpleRunSingularityContainerProcessor(ServiceComputationFactory computationFactory,
+                                           JacsServiceDataPersistence jacsServiceDataPersistence,
+                                           @Any Instance<ExternalProcessRunner> serviceRunners,
+                                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                                           @PropertyValue(name = "Singularity.Bin.Path") String singularityExecutable,
+                                           @PropertyValue(name = "Singularity.LocalImages.Path") String localSingularityImagesPath,
+                                           JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
+                                           @ApplicationProperties ApplicationConfig applicationConfig,
+                                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, singularityExecutable, localSingularityImagesPath, jacsJobInstanceInfoDao, applicationConfig, logger);
     }
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(RunSingularityContainerProcessor.class, new RunSingularityContainerArgs());
+        return ServiceArgs.getMetadata(SimpleRunSingularityContainerProcessor.class, new RunSingularityContainerArgs());
     }
 
     @Override
