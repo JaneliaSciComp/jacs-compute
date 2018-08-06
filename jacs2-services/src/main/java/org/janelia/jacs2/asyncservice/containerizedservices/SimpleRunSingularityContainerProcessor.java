@@ -22,7 +22,7 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-@Named("runSingularityContainer")
+@Named("simpleRunSingularityContainer")
 public class SimpleRunSingularityContainerProcessor extends AbstractSingularityContainerProcessor<Void> {
 
     @Inject
