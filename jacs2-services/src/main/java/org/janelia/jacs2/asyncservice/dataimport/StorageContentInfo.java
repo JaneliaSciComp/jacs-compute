@@ -13,7 +13,6 @@ class StorageContentInfo {
     private StorageService.StorageEntryInfo remoteInfo;
     private String localBasePath;
     private String localRelativePath;
-    private FileType fileType;
 
     public StorageService.StorageEntryInfo getRemoteInfo() {
         return remoteInfo;
@@ -50,21 +49,12 @@ class StorageContentInfo {
         }
     }
 
-    public FileType getFileType() {
-        return fileType;
-    }
-
-    public void setFileType(FileType fileType) {
-        this.fileType = fileType;
-    }
-
     @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .append("remoteInfo", remoteInfo)
                 .append("localBasePath", localBasePath)
                 .append("localRelativePath", localRelativePath)
-                .append("fileType", fileType)
                 .toString();
     }
 }

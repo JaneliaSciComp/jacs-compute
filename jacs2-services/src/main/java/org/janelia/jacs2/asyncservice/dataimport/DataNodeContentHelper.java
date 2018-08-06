@@ -12,8 +12,10 @@ import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,13 +52,21 @@ class DataNodeContentHelper {
                                 String imageName = Paths.get(contentEntry.getMainRep().getRemoteInfo().getEntryPath()).getFileName().toString();
                                 imageStack.setName(imageName);
                                 imageStack.setUserDataFlag(true);
-                                imageStack.setFilepath(contentEntry.getMainRep().getRemoteInfo().getEntryPath());
+                                Path mainRepPath = Paths.get(contentEntry.getMainRep().getRemoteInfo().getEntryPath());
+                                imageStack.setFilepath(mainRepPath.getParent().toString());
+                                Set<FileType> mainRepFileTypes = FileTypeHelper.getFileTypeByExtension(mainRepPath.toString());
+                                if (mainRepFileTypes.isEmpty()) {
+                                    DomainUtils.setFilepath(imageStack, defaultFileType, mainRepPath.toString());
+                                } else {
+                                    mainRepFileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, mainRepPath.toString()));
+                                }
                                 contentEntry.getAdditionalReps().forEach(ci -> {
-                                    FileType fileType = ci.getFileType();
-                                    if (fileType == null) {
-                                        fileType = FileTypeHelper.getFileTypeByExtension(ci.getRemoteInfo().getEntryPath(), defaultFileType);
+                                    Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(ci.getRemoteInfo().getEntryPath());
+                                    if (fileTypes.isEmpty()) {
+                                        DomainUtils.setFilepath(imageStack, defaultFileType, ci.getRemoteInfo().getEntryPath());
+                                    } else {
+                                        fileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, ci.getRemoteInfo().getEntryPath()));
                                     }
-                                    DomainUtils.setFilepath(imageStack, fileType, ci.getRemoteInfo().getEntryPath());
                                 });
                                 folderService.addImageStack(dataFolder,
                                         imageStack,
@@ -83,16 +93,22 @@ class DataNodeContentHelper {
                                 Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
                                         .forEach(ci -> {
                                             logger.info("Add {} to {}", ci.getRemoteInfo().getEntryPath(), dataFolder);
-                                            FileType fileType = ci.getFileType();
-                                            if (fileType == null) {
-                                                fileType = FileTypeHelper.getFileTypeByExtension(ci.getRemoteInfo().getEntryPath(), defaultFileType);
+                                            Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(ci.getRemoteInfo().getEntryPath());
+                                            if (fileTypes.isEmpty()) {
+                                                folderService.addImageFile(dataFolder,
+                                                        ci.getRemoteInfo().getEntryPath(),
+                                                        defaultFileType,
+                                                        true,
+                                                        jacsServiceData.getOwnerKey()
+                                                );
+                                            } else {
+                                                fileTypes.forEach(ft -> folderService.addImageFile(dataFolder,
+                                                        ci.getRemoteInfo().getEntryPath(),
+                                                        ft,
+                                                        true,
+                                                        jacsServiceData.getOwnerKey()
+                                                ));
                                             }
-                                            folderService.addImageFile(dataFolder,
-                                                    ci.getRemoteInfo().getEntryPath(),
-                                                    fileType,
-                                                    true,
-                                                    jacsServiceData.getOwnerKey()
-                                            );
                                         });
                                 contentEntry.setDataNodeId(dataFolder.getId());
                             })
