@@ -1,16 +1,18 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.google.common.collect.ImmutableList;
-import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
+import org.janelia.jacs2.asyncservice.common.ServiceProcessorTestHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.testhelpers.ListArgMatcher;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.janelia.model.service.JacsServiceState;
@@ -44,7 +46,7 @@ public class CMTKAlignmentProcessorTest {
     public void setUp() throws IOException {
         Logger logger = mock(Logger.class);
 
-        ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory computationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
 
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         singleCMTKAlignmentProcessor = mock(SingleCMTKAlignmentProcessor.class);
@@ -63,23 +65,7 @@ public class CMTKAlignmentProcessorTest {
             return jacsServiceData;
         });
 
-        when(singleCMTKAlignmentProcessor.getMetadata()).thenCallRealMethod();
-        when(singleCMTKAlignmentProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
-        )).thenCallRealMethod();
+        ServiceProcessorTestHelper.prepareServiceProcessorMetadataAsRealCall(singleCMTKAlignmentProcessor);
 
         cmtkAlignmentProcessor = new CMTKAlignmentProcessor(computationFactory,
                 jacsServiceDataPersistence,
@@ -123,54 +109,67 @@ public class CMTKAlignmentProcessorTest {
                     successful.accept(r);
                     verify(singleCMTKAlignmentProcessor).createServiceData(
                             any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859/images"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-template", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-a", "true"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-w", "true"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-r", "0102030405"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-X", "26"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-C", "8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-G", "80"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-R", "4"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-A", "--accuracy 0.8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-W", "--accuracy 0.8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-nthreads", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-verbose", false)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859/images")),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859")),
+                                            new ServiceArgMatcher(new ServiceArg("-template", "")),
+                                            new ServiceArgMatcher(new ServiceArg("-a", "true")),
+                                            new ServiceArgMatcher(new ServiceArg("-w", "true")),
+                                            new ServiceArgMatcher(new ServiceArg("-r", "0102030405")),
+                                            new ServiceArgMatcher(new ServiceArg("-X", "26")),
+                                            new ServiceArgMatcher(new ServiceArg("-C", "8")),
+                                            new ServiceArgMatcher(new ServiceArg("-G", "80")),
+                                            new ServiceArgMatcher(new ServiceArg("-R", "4")),
+                                            new ServiceArgMatcher(new ServiceArg("-A", "--accuracy 0.8")),
+                                            new ServiceArgMatcher(new ServiceArg("-W", "--accuracy 0.8")),
+                                            new ServiceArgMatcher(new ServiceArg("-nthreads", "")),
+                                            new ServiceArgMatcher(new ServiceArg("-verbose", false))
+                                    ))
+                            )
                     );
                     verify(singleCMTKAlignmentProcessor).createServiceData(
                             any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734/images"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-template", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-a", "true"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-w", "true"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-r", "0102030405"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-X", "26"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-C", "8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-G", "80"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-R", "4"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-A", "--accuracy 0.8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-W", "--accuracy 0.8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-nthreads", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-verbose", false)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734/images")),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734")),
+                                            new ServiceArgMatcher(new ServiceArg("-template", "")),
+                                            new ServiceArgMatcher(new ServiceArg("-a", "true")),
+                                            new ServiceArgMatcher(new ServiceArg("-w", "true")),
+                                            new ServiceArgMatcher(new ServiceArg("-r", "0102030405")),
+                                            new ServiceArgMatcher(new ServiceArg("-X", "26")),
+                                            new ServiceArgMatcher(new ServiceArg("-C", "8")),
+                                            new ServiceArgMatcher(new ServiceArg("-G", "80")),
+                                            new ServiceArgMatcher(new ServiceArg("-R", "4")),
+                                            new ServiceArgMatcher(new ServiceArg("-A", "--accuracy 0.8")),
+                                            new ServiceArgMatcher(new ServiceArg("-W", "--accuracy 0.8")),
+                                            new ServiceArgMatcher(new ServiceArg("-nthreads", "")),
+                                            new ServiceArgMatcher(new ServiceArg("-verbose", false))
+                                    ))
+                            )
+
                     );
                     verify(singleCMTKAlignmentProcessor).createServiceData(
                             any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625/images"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-template", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-a", "true"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-w", "true"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-r", "0102030405"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-X", "26"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-C", "8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-G", "80"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-R", "4"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-A", "--accuracy 0.8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-W", "--accuracy 0.8"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-nthreads", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-verbose", false)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625/images")),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625")),
+                                            new ServiceArgMatcher(new ServiceArg("-template", "")),
+                                            new ServiceArgMatcher(new ServiceArg("-a", "true")),
+                                            new ServiceArgMatcher(new ServiceArg("-w", "true")),
+                                            new ServiceArgMatcher(new ServiceArg("-r", "0102030405")),
+                                            new ServiceArgMatcher(new ServiceArg("-X", "26")),
+                                            new ServiceArgMatcher(new ServiceArg("-C", "8")),
+                                            new ServiceArgMatcher(new ServiceArg("-G", "80")),
+                                            new ServiceArgMatcher(new ServiceArg("-R", "4")),
+                                            new ServiceArgMatcher(new ServiceArg("-A", "--accuracy 0.8")),
+                                            new ServiceArgMatcher(new ServiceArg("-W", "--accuracy 0.8")),
+                                            new ServiceArgMatcher(new ServiceArg("-nthreads", "")),
+                                            new ServiceArgMatcher(new ServiceArg("-verbose", false))
+                                    ))
+                            )
                     );
                     return r;
                 })

@@ -57,7 +57,7 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
         if (StringUtils.isNotBlank(runArgs.appName)) {
             scriptWriter.addArgs("--app", runArgs.appName);
         }
-        String bindPaths = runArgs.bindPaths.stream().filter(StringUtils::isNotBlank).reduce((s1, s2) -> s1.trim() + "," + s2.trim()).orElse("");
+        String bindPaths = runArgs.bindPathsAsString();
         if (StringUtils.isNotBlank(bindPaths)) {
             scriptWriter.addArgs("--bind", bindPaths);
         }
@@ -73,6 +73,9 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
         scriptWriter.addArg(getLocalContainerImage(runArgs).toString());
         if (CollectionUtils.isNotEmpty(runArgs.appArgs)) {
             runArgs.appArgs.forEach(scriptWriter::addArg);
+        }
+        if (CollectionUtils.isNotEmpty(runArgs.otherArgs)) {
+            runArgs.otherArgs.stream().filter(StringUtils::isNotBlank).forEach(scriptWriter::addArg);
         }
         scriptWriter.endArgs();
     }

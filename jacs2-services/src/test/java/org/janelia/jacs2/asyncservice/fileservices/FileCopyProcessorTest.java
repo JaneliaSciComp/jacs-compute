@@ -2,7 +2,7 @@ package org.janelia.jacs2.asyncservice.fileservices;
 
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
-import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
@@ -56,7 +56,7 @@ public class FileCopyProcessorTest {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);
         Logger logger = mock(Logger.class);
-        ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
 
         ApplicationConfig applicationConfig = new ApplicationConfigProvider().fromMap(
                 ImmutableMap.of("Executables.ModuleBase", executablesBaseDir))

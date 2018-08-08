@@ -3,7 +3,7 @@ package org.janelia.jacs2.asyncservice.dataimport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
@@ -60,7 +60,7 @@ public class SageLoaderProcessorTest {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);
         logger = mock(Logger.class);
-        computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        computationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
     }
 
     private SageLoaderProcessor createSageLoaderProcessor(String sageEnvironment) {

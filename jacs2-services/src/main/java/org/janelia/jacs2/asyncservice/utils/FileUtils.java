@@ -22,6 +22,9 @@ public class FileUtils {
             String fileLookupPattern;
             if (StringUtils.isBlank(pattern)) {
                 fileLookupPattern = "glob:**/*";
+            } else if (!pattern.startsWith("glob:") && !pattern.startsWith("regex:")) {
+                // default to glob
+                fileLookupPattern = "glob:" + pattern;
             } else {
                 fileLookupPattern = pattern;
             }

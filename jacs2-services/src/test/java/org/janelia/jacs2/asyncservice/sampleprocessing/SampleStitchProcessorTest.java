@@ -2,18 +2,20 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
+import org.janelia.jacs2.asyncservice.common.ServiceProcessorTestHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.SignalAndReferenceChannelsMIPsProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.StitchAndBlendResult;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
+import org.janelia.jacs2.testhelpers.ListArgMatcher;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
@@ -29,6 +31,7 @@ import java.util.function.Consumer;
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -49,7 +52,7 @@ public class SampleStitchProcessorTest {
     public void setUp() {
         Logger logger = mock(Logger.class);
 
-        ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory computationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         TimebasedIdentifierGenerator idGenerator = mock(TimebasedIdentifierGenerator.class);
 
@@ -73,39 +76,11 @@ public class SampleStitchProcessorTest {
 
         when(idGenerator.generateId()).thenReturn(SampleProcessorTestUtils.TEST_SERVICE_ID);
 
-        when(mergeAndGroupSampleTilePairsProcessor.getMetadata()).thenCallRealMethod();
-        when(mergeAndGroupSampleTilePairsProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
-                )
-        ).thenCallRealMethod();
-
-        when(vaa3dStitchAndBlendProcessor.getMetadata()).thenCallRealMethod();
-        when(vaa3dStitchAndBlendProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
-                )
-        ).thenCallRealMethod();
-
-        when(signalAndReferenceChannelsMIPsProcessor.getMetadata()).thenCallRealMethod();
-        when(signalAndReferenceChannelsMIPsProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
-                )
-        ).thenCallRealMethod();
+        ServiceProcessorTestHelper.prepareServiceProcessorMetadataAsRealCall(
+                mergeAndGroupSampleTilePairsProcessor,
+                vaa3dStitchAndBlendProcessor,
+                signalAndReferenceChannelsMIPsProcessor
+        );
 
         sampleStitchProcessor = new SampleStitchProcessor(computationFactory,
                 jacsServiceDataPersistence,
@@ -187,31 +162,43 @@ public class SampleStitchProcessorTest {
                     successful.accept(r);
 
                     verify(mergeAndGroupSampleTilePairsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId)),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-area", area)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms")),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary")),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching")),
+                                            new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm)),
+                                            new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
+                                            new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))
+                                    )
+                            ))
                     );
 
                     verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/group").getAbsolutePath()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/stitch/" + "stitched-" + objective + area + ".v3draw").getAbsolutePath()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", TEST_REFERENCE_CHANNELS)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-inputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/group").getAbsolutePath())),
+                                            new ServiceArgMatcher(new ServiceArg("-outputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/stitch/" + "stitched-" + objective + area + ".v3draw").getAbsolutePath())),
+                                            new ServiceArgMatcher(new ServiceArg("-refchannel", TEST_REFERENCE_CHANNELS))
+                                    )
+                            ))
                     );
 
                     verify(signalAndReferenceChannelsMIPsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", new File("stitched").getAbsolutePath()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/mips").getAbsolutePath()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", TEST_SIGNAL_CHANNELS))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", TEST_REFERENCE_CHANNELS))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-inputFile", new File("stitched").getAbsolutePath())),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/mips").getAbsolutePath())),
+                                            new ServiceArgMatcher(new ServiceArg("-signalChannels", TEST_SIGNAL_CHANNELS)),
+                                            new ServiceArgMatcher(new ServiceArg("-referenceChannel", TEST_REFERENCE_CHANNELS)),
+                                            new ServiceArgMatcher(new ServiceArg("-imgFormat", "png"))
+                                    )
+                            ))
                     );
 
                     return r;
@@ -296,31 +283,35 @@ public class SampleStitchProcessorTest {
                     successful.accept(r);
 
                     verify(mergeAndGroupSampleTilePairsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId)),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-area", area)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms")),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary")),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching")),
+                                            new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm)),
+                                            new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
+                                            new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))
+                                    )
+                            ))
                     );
 
                     verify(vaa3dStitchAndBlendProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/group").getAbsolutePath()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/stitch/" + "stitched-" + objective + area + ".v3draw").getAbsolutePath()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-refchannel", TEST_REFERENCE_CHANNELS)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-inputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/group").getAbsolutePath())),
+                                            new ServiceArgMatcher(new ServiceArg("-outputFile", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/stitch/" + "stitched-" + objective + area + ".v3draw").getAbsolutePath())),
+                                            new ServiceArgMatcher(new ServiceArg("-refchannel", TEST_REFERENCE_CHANNELS))
+                                    )
+                            ))
                     );
 
                     verify(signalAndReferenceChannelsMIPsProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     return r;
@@ -403,31 +394,37 @@ public class SampleStitchProcessorTest {
                     successful.accept(r);
 
                     verify(mergeAndGroupSampleTilePairsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId)),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-area", area)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms")),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary")),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching")),
+                                            new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm)),
+                                            new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
+                                            new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))
+                                    )
+                            ))
                     );
 
                     verify(vaa3dStitchAndBlendProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     verify(signalAndReferenceChannelsMIPsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", "rtm1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/mips").getAbsolutePath()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", TEST_SIGNAL_CHANNELS))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", TEST_REFERENCE_CHANNELS))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFormat", "png")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-inputFile", "rtm1")),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", new File(SampleProcessorTestUtils.TEST_WORKING_DIR + "/" + area + "/mips").getAbsolutePath())),
+                                            new ServiceArgMatcher(new ServiceArg("-signalChannels", TEST_SIGNAL_CHANNELS)),
+                                            new ServiceArgMatcher(new ServiceArg("-referenceChannel", TEST_REFERENCE_CHANNELS)),
+                                            new ServiceArgMatcher(new ServiceArg("-imgFormat", "png"))
+                                    )
+                            ))
                     );
 
                     return r;
@@ -510,31 +507,29 @@ public class SampleStitchProcessorTest {
                     successful.accept(r);
 
                     verify(mergeAndGroupSampleTilePairsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", testSampleId)),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-area", area)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleResultsId", TEST_RESULTS_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", SampleProcessorTestUtils.TEST_WORKING_DIR)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "lsms")),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "summary")),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "stitching")),
+                                            new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm)),
+                                            new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
+                                            new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))
+                                    )
+                            ))
                     );
 
                     verify(vaa3dStitchAndBlendProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     verify(signalAndReferenceChannelsMIPsProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     return r;

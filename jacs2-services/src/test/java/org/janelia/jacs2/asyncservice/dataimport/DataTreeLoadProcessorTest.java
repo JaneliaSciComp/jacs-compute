@@ -1,7 +1,7 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
 import com.google.common.collect.ImmutableList;
-import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ResourceHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -9,12 +9,14 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
+import org.janelia.jacs2.asyncservice.common.ServiceProcessorTestHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.imageservices.MultiInputMIPsAndMoviesProcessor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
+import org.janelia.jacs2.testhelpers.ListArgMatcher;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.sample.Image;
 import org.janelia.model.domain.workspace.TreeNode;
@@ -76,7 +78,7 @@ public class DataTreeLoadProcessorTest {
     public void setUp() {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         logger = mock(Logger.class);
-        computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        computationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         folderService = mock(FolderService.class);
         storageService = mock(StorageService.class);
         mipsConverterProcessor = mock(MultiInputMIPsAndMoviesProcessor.class);
@@ -94,14 +96,7 @@ public class DataTreeLoadProcessorTest {
             return jacsServiceData;
         });
 
-        Mockito.when(mipsConverterProcessor.getMetadata()).thenCallRealMethod();
-        Mockito.when(mipsConverterProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
-        )).thenCallRealMethod();
+        ServiceProcessorTestHelper.prepareServiceProcessorMetadataAsRealCall(mipsConverterProcessor);
 
         Mockito.when(folderService.getOrCreateFolder(any(Number.class), anyString(), anyString()))
                 .then(invocation -> {
@@ -161,11 +156,15 @@ public class DataTreeLoadProcessorTest {
                     successful.accept(r);
                     Mockito.verify(mipsConverterProcessor).getMetadata();
                     Mockito.verify(mipsConverterProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.toString()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "r"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-inputFiles", "")),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.toString())),
+                                            new ServiceArgMatcher(new ServiceArg("-chanSpec", "r")),
+                                            new ServiceArgMatcher(new ServiceArg("-colorSpec", "")),
+                                            new ServiceArgMatcher(new ServiceArg("-options", "mips:movies"))
+                                    )
+                            ))
                     );
                     Mockito.verify(mipsConverterProcessor).getResultHandler();
 
@@ -286,11 +285,15 @@ public class DataTreeLoadProcessorTest {
 
             Mockito.verify(mipsConverterProcessor).getMetadata();
             Mockito.verify(mipsConverterProcessor).createServiceData(any(ServiceExecutionContext.class),
-                    argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", f1Path + "," + f2Path))),
-                    argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.resolve("mips").toString()))),
-                    argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "r"))),
-                    argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", ""))),
-                    argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies")))
+                    argThat(new ListArgMatcher<>(
+                            ImmutableList.of(
+                                    new ServiceArgMatcher(new ServiceArg("-inputFiles", f1Path + "," + f2Path)),
+                                    new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.resolve("mips").toString())),
+                                    new ServiceArgMatcher(new ServiceArg("-chanSpec", "r")),
+                                    new ServiceArgMatcher(new ServiceArg("-colorSpec", "")),
+                                    new ServiceArgMatcher(new ServiceArg("-options", "mips:movies"))
+                            )
+                    ))
             );
             Mockito.verify(mipsConverterProcessor).getResultHandler();
 
@@ -563,11 +566,15 @@ public class DataTreeLoadProcessorTest {
 
                     Mockito.verify(mipsConverterProcessor).getMetadata();
                     Mockito.verify(mipsConverterProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFiles", f1Path + "," + f2Path))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.resolve("mips").toString()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "r"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-inputFiles", f1Path + "," + f2Path)),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", basePath.resolve("mips").toString())),
+                                            new ServiceArgMatcher(new ServiceArg("-chanSpec", "r")),
+                                            new ServiceArgMatcher(new ServiceArg("-colorSpec", "")),
+                                            new ServiceArgMatcher(new ServiceArg("-options", "mips:movies"))
+                                    )
+                            ))
                     );
                     Mockito.verify(mipsConverterProcessor).getResultHandler();
 

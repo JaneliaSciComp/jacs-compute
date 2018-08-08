@@ -2,7 +2,7 @@ package org.janelia.jacs2.asyncservice.containerizedservices;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
@@ -33,7 +33,7 @@ public class AbstractSingularityContainerProcessorTest {
     @Before
     public void setUp() {
         Logger logger = mock(Logger.class);
-        ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         @SuppressWarnings("unchecked")
         Instance<ExternalProcessRunner> serviceRunners = mock(Instance.class);

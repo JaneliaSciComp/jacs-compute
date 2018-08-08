@@ -95,7 +95,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
     @Before
     public void setUp() {
         logger = mock(Logger.class);
-        serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
 
         testJacsServiceData = new JacsServiceData();
         testJacsServiceData.setName("test");

@@ -67,7 +67,7 @@ public class AbstractExeBasedServiceProcessorTest {
     @Before
     public void setUp() {
         Logger logger = mock(Logger.class);
-        ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         JacsJobInstanceInfoDao jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);
         @SuppressWarnings("unchecked")

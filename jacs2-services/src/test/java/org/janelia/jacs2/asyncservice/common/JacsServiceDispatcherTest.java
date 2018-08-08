@@ -61,7 +61,7 @@ public class JacsServiceDispatcherTest {
     @Before
     public void setUp() {
         logger = mock(Logger.class);
-        serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
 
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         jacsNotificationDao = mock(JacsNotificationDao.class);

@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
-public class ComputationTestUtils {
+public class ComputationTestHelper {
 
     public static ServiceComputationFactory createTestServiceComputationFactory(Logger logger) {
         ServiceComputationQueue serviceComputationQueue = mock(ServiceComputationQueue.class);

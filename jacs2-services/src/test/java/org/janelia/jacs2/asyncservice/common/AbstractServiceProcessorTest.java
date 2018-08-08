@@ -3,7 +3,6 @@ package org.janelia.jacs2.asyncservice.common;
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
@@ -97,7 +96,7 @@ public class AbstractServiceProcessorTest {
     @Before
     public void setUp() {
         Logger logger = mock(Logger.class);
-        ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         testProcessor = new TestProcessor(
                             serviceComputationFactory,

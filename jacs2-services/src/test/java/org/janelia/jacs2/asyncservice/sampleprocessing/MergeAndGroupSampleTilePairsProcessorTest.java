@@ -2,8 +2,9 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.ServiceProcessorTestHelper;
 import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
-import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
@@ -52,7 +53,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
     public void setUp() {
         Logger logger = mock(Logger.class);
 
-        ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory computationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
 
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         TimebasedIdentifierGenerator idGenerator = mock(TimebasedIdentifierGenerator.class);
@@ -70,9 +71,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
             return sd;
         });
 
-        when(jacsServiceDataPersistence.findServiceDependencies(any(JacsServiceData.class))).then(invocation -> {
-            return ImmutableList.of();
-        });
+        when(jacsServiceDataPersistence.findServiceDependencies(any(JacsServiceData.class))).then(invocation -> ImmutableList.of());
 
 
         when(jacsServiceDataPersistence.createServiceIfNotFound(any(JacsServiceData.class))).then(invocation -> {
@@ -84,7 +83,13 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
 
         when(idGenerator.generateId()).thenReturn(SampleProcessorTestUtils.TEST_SERVICE_ID);
 
-        when(updateSampleLSMMetadataProcessor.getMetadata()).thenCallRealMethod();
+        ServiceProcessorTestHelper.prepareServiceProcessorMetadataAsRealCall(
+                updateSampleLSMMetadataProcessor,
+                mergeLsmPairProcessor,
+                linkDataProcessor,
+                vaa3dChannelMapProcessor
+        );
+
         when(updateSampleLSMMetadataProcessor.createServiceData(any(ServiceExecutionContext.class),
                 any(ServiceArg.class),
                 any(ServiceArg.class),
@@ -95,30 +100,27 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
                 any(ServiceArg.class)
         )).thenCallRealMethod();
 
-        when(mergeLsmPairProcessor.getMetadata()).thenCallRealMethod();
         when(mergeLsmPairProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class)
                 )
         ).thenCallRealMethod();
 
-        when(linkDataProcessor.getMetadata()).thenCallRealMethod();
         when(linkDataProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
+                any(ServiceArg.class),
+                any(ServiceArg.class)
                 )
         ).thenCallRealMethod();
 
-        when(vaa3dChannelMapProcessor.getMetadata()).thenCallRealMethod();
         when(vaa3dChannelMapProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
+                any(ServiceArg.class),
+                any(ServiceArg.class),
+                any(ServiceArg.class)
                 )
         ).thenCallRealMethod();
 

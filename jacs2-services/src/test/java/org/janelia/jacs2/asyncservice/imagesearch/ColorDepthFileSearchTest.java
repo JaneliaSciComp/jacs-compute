@@ -1,6 +1,6 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
-import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -73,7 +73,7 @@ public class ColorDepthFileSearchTest {
         Mockito.when(cluster.isReady()).thenReturn(true);
         Mockito.when(sparkApp.isDone()).thenReturn(true);
         Logger logger = mock(Logger.class);
-        ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
 
         colorDepthFileSearch = new ColorDepthFileSearch(serviceComputationFactory,
                 jacsServiceDataPersistence,
