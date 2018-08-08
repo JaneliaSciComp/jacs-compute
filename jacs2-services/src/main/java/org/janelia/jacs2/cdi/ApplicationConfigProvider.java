@@ -97,7 +97,23 @@ public class ApplicationConfigProvider {
         return this;
     }
 
+    public ApplicationConfigProvider injectEnvProps() {
+
+        String prefix = "env.jacs_";
+        for (Object o : applicationConfig.keySet()) {
+            String key = o.toString();
+            if (key.toLowerCase().startsWith(prefix)) {
+                String newKey = key.substring(prefix.length()).replaceAll("_", ".");
+                log.debug("Replacing {} with value from {}", newKey, key);
+                applicationConfig.put(newKey, applicationConfig.get(key));
+            }
+        }
+
+        return this;
+    }
+
     public ApplicationConfig build() {
+        injectEnvProps();
         return applicationConfig;
     }
 
