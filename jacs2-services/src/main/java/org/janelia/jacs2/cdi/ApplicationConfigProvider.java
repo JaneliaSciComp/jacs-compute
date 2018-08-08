@@ -1,5 +1,6 @@
 package org.janelia.jacs2.cdi;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -100,11 +102,11 @@ public class ApplicationConfigProvider {
     public ApplicationConfigProvider injectEnvProps() {
 
         String prefix = "env.jacs_";
-        for (Object o : applicationConfig.keySet()) {
+        for (Object o : Sets.newHashSet(applicationConfig.keySet())) {
             String key = o.toString();
             if (key.toLowerCase().startsWith(prefix)) {
                 String newKey = key.substring(prefix.length()).replaceAll("_", ".");
-                log.debug("Replacing {} with value from {}", newKey, key);
+                log.debug("Overriding {} with value from env", newKey);
                 applicationConfig.put(newKey, applicationConfig.get(key));
             }
         }
