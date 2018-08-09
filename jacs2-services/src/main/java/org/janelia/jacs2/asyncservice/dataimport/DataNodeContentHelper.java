@@ -55,24 +55,23 @@ class DataNodeContentHelper {
                                 String imageName = Paths.get(entryRelativePath).getFileName().toString();
                                 imageStack.setName(imageName);
                                 imageStack.setUserDataFlag(true);
-                                Optional<StoragePathURI> mainRepPathURI = contentEntry.getMainRep().getRemoteInfo().getEntryPathURI();
-                                String mainRepStoragePath = mainRepPathURI.map(sp -> sp.getStoragePath()).orElse(entryRelativePath);
-                                imageStack.setFilepath(FileUtils.getParent(mainRepStoragePath));
-                                Set<FileType> mainRepFileTypes = FileTypeHelper.getFileTypeByExtension(mainRepStoragePath);
+                                StoragePathURI mainRepPathURI = contentEntry.getMainRep().getRemoteInfo().getEntryPathURI()
+                                        .orElseGet(() -> new StoragePathURI(contentEntry.getMainRep().getRemoteInfo().getEntryRelativePath()));
+                                imageStack.setFilepath(mainRepPathURI.getParent().map(spURI -> spURI.toString()).orElse(""));
+                                Set<FileType> mainRepFileTypes = FileTypeHelper.getFileTypeByExtension(mainRepPathURI.getStoragePath());
                                 if (mainRepFileTypes.isEmpty()) {
-                                    DomainUtils.setFilepath(imageStack, defaultFileType, mainRepStoragePath);
+                                    DomainUtils.setFilepath(imageStack, defaultFileType, mainRepPathURI.toString());
                                 } else {
-                                    mainRepFileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, mainRepStoragePath));
+                                    mainRepFileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, mainRepPathURI.toString()));
                                 }
                                 contentEntry.getAdditionalReps().forEach(ci -> {
-                                    String ciStoragePath = ci.getRemoteInfo().getEntryPathURI()
-                                            .map(sp -> sp.getStoragePath())
-                                            .orElse(ci.getRemoteInfo().getEntryRelativePath());
-                                    Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(ciStoragePath);
+                                    StoragePathURI ciStoragePathURI = ci.getRemoteInfo().getEntryPathURI()
+                                            .orElseGet(() -> new StoragePathURI(ci.getRemoteInfo().getEntryRelativePath()));
+                                    Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(ciStoragePathURI.getStoragePath());
                                     if (fileTypes.isEmpty()) {
-                                        DomainUtils.setFilepath(imageStack, defaultFileType, ciStoragePath);
+                                        DomainUtils.setFilepath(imageStack, defaultFileType, ciStoragePathURI.toString());
                                     } else {
-                                        fileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, ciStoragePath));
+                                        fileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, ciStoragePathURI.toString()));
                                     }
                                 });
                                 folderService.addImageStack(dataFolder,
@@ -100,22 +99,23 @@ class DataNodeContentHelper {
                                 Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
                                         .forEach(ci -> {
                                             logger.info("Add {} to {}", ci.getRemoteInfo(), dataFolder);
-                                            String ciStoragePath = ci.getRemoteInfo().getEntryPathURI()
-                                                    .map(sp -> sp.getStoragePath())
-                                                    .orElse(ci.getRemoteInfo().getEntryRelativePath());
-                                            Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(ciStoragePath);
+                                            StoragePathURI storagePathURI = ci.getRemoteInfo().getEntryPathURI()
+                                                    .orElseGet(() -> new StoragePathURI(ci.getRemoteInfo().getEntryRelativePath()));
+                                            Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(storagePathURI.getStoragePath());
                                             if (fileTypes.isEmpty()) {
                                                 folderService.addImageFile(dataFolder,
-                                                        FileUtils.getParent(ciStoragePath),
-                                                        FileUtils.getFileName(ciStoragePath),
+                                                        FileUtils.getFileName(storagePathURI.getStoragePath()),
+                                                        storagePathURI.getParent().map(spURI -> spURI.toString()).orElse(""),
+                                                        storagePathURI.toString(),
                                                         defaultFileType,
                                                         true,
                                                         jacsServiceData.getOwnerKey()
                                                 );
                                             } else {
                                                 fileTypes.forEach(ft -> folderService.addImageFile(dataFolder,
-                                                        FileUtils.getParent(ciStoragePath),
-                                                        FileUtils.getFileName(ciStoragePath),
+                                                        FileUtils.getFileName(storagePathURI.getStoragePath()),
+                                                        storagePathURI.getParent().map(spURI -> spURI.toString()).orElse(""),
+                                                        storagePathURI.toString(),
                                                         ft,
                                                         true,
                                                         jacsServiceData.getOwnerKey()

@@ -43,6 +43,14 @@ public class StoragePathURI {
         return storagePath;
     }
 
+    public Optional<StoragePathURI> getParent() {
+        if (isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new StoragePathURI(schema, FileUtils.getParent(this.storagePath)));
+        }
+    }
+
     public Optional<StoragePathURI> resolve(String childPath) {
         if (isEmpty()) {
             return Optional.empty();

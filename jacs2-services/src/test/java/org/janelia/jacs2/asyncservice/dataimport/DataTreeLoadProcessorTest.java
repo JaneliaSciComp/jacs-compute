@@ -440,7 +440,7 @@ public class DataTreeLoadProcessorTest {
                     Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
                     Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             argThat((Image argument) -> Stream.<Predicate<Image>>of(
-                                    (Image ti) -> ti.getFilepath().equals(testStoragePrefix),
+                                    (Image ti) -> ti.getFilepath().equals("jade://" + testStoragePrefix),
                                     (Image ti) -> ti.getFiles().entrySet().stream().noneMatch(e -> e.getKey() == FileType.SignalMip && e.getValue().contains("f1_signal.png")),
                                     (Image ti) -> ti.getFiles().entrySet().stream().anyMatch(e -> e.getKey() == FileType.LosslessStack && e.getValue().equals("f1.lsm"))
                                     )
@@ -490,7 +490,7 @@ public class DataTreeLoadProcessorTest {
                 .thenReturn(ImmutableList.of(
                         new StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "", true),
                         new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "f1.lsm", false),
-                        new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "f2.v3draw", false)
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, new StoragePathURI(testStoragePrefix), "f2.v3draw", false)
                 ));
         Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new ByteArrayInputStream("test".getBytes()));
@@ -596,26 +596,30 @@ public class DataTreeLoadProcessorTest {
                     );
                     Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix),
                             eq("f1.lsm"),
+                            eq("jade://" + testStoragePrefix),
+                            eq("jade://" + testStoragePrefix + "/f1.lsm"),
                             eq(FileType.LosslessStack),
                             eq(true),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/mips"),
                             eq("f1_signal.png"),
+                            eq(testStoragePrefix + "/mips"),
+                            eq(testStoragePrefix + "/mips/f1_signal.png"),
                             eq(FileType.SignalMip),
                             eq(true),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix),
                             eq("f2.v3draw"),
+                            eq(testStoragePrefix),
+                            eq(testStoragePrefix + "/f2.v3draw"),
                             eq(FileType.LosslessStack),
                             eq(true),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/mips"),
                             eq("f2_signal.png"),
+                            eq(testStoragePrefix + "/mips"),
+                            eq(testStoragePrefix + "/mips/f2_signal.png"),
                             eq(FileType.SignalMip),
                             eq(true),
                             eq(testOwner));
