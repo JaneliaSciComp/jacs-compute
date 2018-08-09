@@ -14,6 +14,8 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.imageservices.MultiInputMIPsAndMoviesProcessor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
+import org.janelia.jacs2.dataservice.storage.StoragePathURI;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
 import org.janelia.jacs2.testhelpers.ListArgMatcher;
@@ -134,9 +136,9 @@ public class DataTreeLoadProcessorTest {
         String testStoragePrefix = "/storageRootPrefix";
         Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
                 .thenReturn(ImmutableList.of(
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, testStoragePrefix,"", true),
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.gif", testStorageRoot, testStoragePrefix,"f1.gif", false),
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.png", testStorageRoot, testStoragePrefix,"f2.png", false)
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, new StoragePathURI(testStoragePrefix),"", true),
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.gif", testStorageRoot, new StoragePathURI(testStoragePrefix), "f1.gif", false),
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.png", testStorageRoot, new StoragePathURI(testStoragePrefix), "f2.png", false)
                 ));
 
         @SuppressWarnings("unchecked")
@@ -206,19 +208,19 @@ public class DataTreeLoadProcessorTest {
 
         Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
                 .thenReturn(ImmutableList.of(
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, testStoragePrefix,"", true),
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, testStoragePrefix,"f1.lsm", false),
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, testStoragePrefix,"f2.v3draw", false)
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, new StoragePathURI(testStoragePrefix), "", true),
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, new StoragePathURI(testStoragePrefix), "f1.lsm", false),
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, new StoragePathURI(testStoragePrefix), "f2.v3draw", false)
                 ));
         Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new ByteArrayInputStream("test".getBytes()));
         Mockito.when(storageService.putStorageContent(anyString(), anyString(), anyString(), anyString(), any(InputStream.class)))
-                .then(invocation -> new StorageService.StorageEntryInfo(
+                .then(invocation -> new StorageEntryInfo(
                         testStorageId,
                         testLocation,
                         testLocation + "/entry_content/" + invocation.getArgument(1),
                         testStorageRoot,
-                        testStoragePrefix,
+                        new StoragePathURI(testStoragePrefix),
                         invocation.getArgument(1),
                         false));
 
@@ -361,19 +363,19 @@ public class DataTreeLoadProcessorTest {
 
         Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
                 .thenReturn(ImmutableList.of(
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, testStoragePrefix,"", true),
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, testStoragePrefix,"f1.lsm", false),
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, testStoragePrefix,"f2.v3draw", false)
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, new StoragePathURI(testStoragePrefix), "", true),
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "f1.lsm", false),
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, new StoragePathURI(testStoragePrefix), "f2.v3draw", false)
                 ));
         Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new ByteArrayInputStream("test".getBytes()));
         Mockito.when(storageService.putStorageContent(anyString(), anyString(), anyString(), anyString(), any(InputStream.class)))
-                .then(invocation -> new StorageService.StorageEntryInfo(
+                .then(invocation -> new StorageEntryInfo(
                         testStorageId,
                         testLocation,
                         testLocation + "/entry_content/" + invocation.getArgument(1),
                         testStorageRoot,
-                        testStoragePrefix,
+                        new StoragePathURI(testStoragePrefix),
                         invocation.getArgument(1),
                         false));
 
@@ -486,19 +488,19 @@ public class DataTreeLoadProcessorTest {
 
         Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
                 .thenReturn(ImmutableList.of(
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, testStoragePrefix,"", true),
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, testStoragePrefix,"f1.lsm", false),
-                        new StorageService.StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, testStoragePrefix,"f2.v3draw", false)
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "", true),
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "f1.lsm", false),
+                        new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "f2.v3draw", false)
                 ));
         Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new ByteArrayInputStream("test".getBytes()));
         Mockito.when(storageService.putStorageContent(anyString(), anyString(), anyString(), anyString(), any(InputStream.class)))
-                .then(invocation -> new StorageService.StorageEntryInfo(
+                .then(invocation -> new StorageEntryInfo(
                         testStorageId,
                         testLocation,
                         testLocation + "/entry_content/" + invocation.getArgument(1),
                         testStorageRoot,
-                        testStoragePrefix,
+                        new StoragePathURI(testStoragePrefix),
                         invocation.getArgument(1),
                         false));
 
@@ -594,22 +596,26 @@ public class DataTreeLoadProcessorTest {
                     );
                     Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/f1.lsm"),
+                            eq(testStoragePrefix),
+                            eq("f1.lsm"),
                             eq(FileType.LosslessStack),
                             eq(true),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/mips/f1_signal.png"),
+                            eq(testStoragePrefix + "/mips"),
+                            eq("f1_signal.png"),
                             eq(FileType.SignalMip),
                             eq(true),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/f2.v3draw"),
+                            eq(testStoragePrefix),
+                            eq("f2.v3draw"),
                             eq(FileType.LosslessStack),
                             eq(true),
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
-                            eq(testStoragePrefix + "/mips/f2_signal.png"),
+                            eq(testStoragePrefix + "/mips"),
+                            eq("f2_signal.png"),
                             eq(FileType.SignalMip),
                             eq(true),
                             eq(testOwner));

@@ -22,6 +22,8 @@ import org.janelia.jacs2.asyncservice.imageservices.MultiInputMIPsAndMoviesProce
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.dataservice.storage.DataStorageInfo;
+import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
 import org.janelia.model.domain.enums.FileType;
@@ -199,7 +201,7 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
             logger.warn("No storage name or dir has been specified");
             return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, ImmutableList.of()));
         } else {
-            return computationFactory.<StorageService.StorageInfo>newComputation()
+            return computationFactory.<DataStorageInfo>newComputation()
                     .supply(() -> storageContentHelper.getOrCreateStorage(
                             args.storageServiceURL,
                             args.storageId, storageName,
@@ -207,28 +209,28 @@ public class StorageContentUploadProcessor extends AbstractServiceProcessor<List
                             jacsServiceData.getOwnerKey(),
                             ResourceHelper.getAuthToken(jacsServiceData.getResources()))
                     )
-                    .thenCompose((StorageService.StorageInfo storageInfo) -> storageContentHelper.uploadContent(
+                    .thenCompose((DataStorageInfo storageInfo) -> storageContentHelper.uploadContent(
                             jacsServiceData,
                             storageInfo.getStorageURL(),
                             contentList.stream()
                                     .peek(contentEntry -> {
-                                        contentEntry.getMainRep().setRemoteInfo(new StorageService.StorageEntryInfo(
+                                        contentEntry.getMainRep().setRemoteInfo(new StorageEntryInfo(
                                                 storageInfo.getStorageId(),
                                                 storageInfo.getStorageURL(),
                                                 null,
                                                 storageInfo.getStorageRootDir(),
-                                                storageInfo.getStorageRootPrefix(),
+                                                storageInfo.getStorageRootPathURI(),
                                                 storageContentHelper.constructStorageEntryPath(contentEntry.getMainRep(), ""),
                                                 false
                                         ));
                                         contentEntry.getAdditionalReps()
                                                 .forEach(storageContentInfo -> {
-                                                    storageContentInfo.setRemoteInfo(new StorageService.StorageEntryInfo(
+                                                    storageContentInfo.setRemoteInfo(new StorageEntryInfo(
                                                             storageInfo.getStorageId(),
                                                             storageInfo.getStorageURL(),
                                                             null,
                                                             storageInfo.getStorageRootDir(),
-                                                            storageInfo.getStorageRootPrefix(),
+                                                            storageInfo.getStorageRootPathURI(),
                                                             storageContentHelper.constructStorageEntryPath(storageContentInfo, "mips"),
                                                             false
                                                     ));

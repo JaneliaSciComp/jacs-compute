@@ -48,12 +48,12 @@ public class FolderService {
         }
     }
 
-    public void addImageFile(TreeNode folder, String imageFileName, FileType imageFileType, boolean userDataFlag, String subjectKey) {
+    public void addImageFile(TreeNode folder, String imageFilePath, String imageFileName, FileType imageFileType, boolean userDataFlag, String subjectKey) {
         try {
             Image imageFile = new Image();
             imageFile.setName(FileUtils.getFileName(imageFileName));
             imageFile.setUserDataFlag(userDataFlag);
-            imageFile.setFilepath(imageFileName);
+            imageFile.setFilepath(imageFilePath);
             imageFile.getFiles().put(imageFileType, imageFileName);
             folderDao.save(subjectKey, imageFile);
             folderDao.addChildren(subjectKey, folder, ImmutableList.of(Reference.createFor(imageFile)));

@@ -6,8 +6,9 @@ import org.janelia.jacs2.asyncservice.common.ResourceHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
+import org.janelia.jacs2.dataservice.storage.DataStorageInfo;
+import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StorageService;
-import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
@@ -40,9 +41,9 @@ class StorageContentHelper {
         this.logger = logger;
     }
 
-    StorageService.StorageInfo getOrCreateStorage(String storageServiceURL, String storageId,
-                                                  String storageName, List<String> storageTags,
-                                                  String ownerKey, String authToken) {
+    DataStorageInfo getOrCreateStorage(String storageServiceURL, String storageId,
+                                       String storageName, List<String> storageTags,
+                                       String ownerKey, String authToken) {
         return storageService
                 .lookupStorage(storageServiceURL, storageId, storageName, ownerKey, authToken)
                 .orElseGet(() -> storageService.createStorage(storageServiceURL, storageName, storageTags, ownerKey, authToken))
@@ -52,7 +53,7 @@ class StorageContentHelper {
     ServiceComputation<JacsServiceResult<List<ContentStack>>> listContent(JacsServiceData jacsServiceData, String storageURL, String storagePath) {
         return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
                 .supply(() -> {
-                    List<StorageService.StorageEntryInfo> contentToLoad = storageService.listStorageContent(
+                    List<StorageEntryInfo> contentToLoad = storageService.listStorageContent(
                             storageURL,
                             storagePath,
                             jacsServiceData.getOwnerKey(),
@@ -87,7 +88,7 @@ class StorageContentHelper {
                                             Files.createDirectories(localEntryFullPath.getParent());
                                             Files.copy(
                                                     storageService.getStorageContent(
-                                                            contentEntry.getMainRep().getRemoteInfo().getStorageEntryURL(),
+                                                            contentEntry.getMainRep().getRemoteInfo().getEntryURL(),
                                                             contentEntry.getMainRep().getRemoteInfo().getEntryRelativePath(),
                                                             jacsServiceData.getOwnerKey(),
                                                             ResourceHelper.getAuthToken(jacsServiceData.getResources())),
@@ -120,7 +121,7 @@ class StorageContentHelper {
                         contentList.stream()
                                 .peek(contentEntry -> {
                                     Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
-                                            .filter(sci -> sci.getRemoteInfo().getStorageEntryURL() == null) // only upload the ones that don't have a storageEntryURL, i.e., not there yet
+                                            .filter(sci -> sci.getRemoteInfo().getEntryURL() == null) // only upload the ones that don't have a storageEntryURL, i.e., not there yet
                                             .forEach(sci -> uploadContent(sci, storageURL, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources())));
                                 })
                                 .collect(Collectors.toList())
@@ -140,12 +141,12 @@ class StorageContentHelper {
                             mipsContentInfo.setLocalBasePath(localMIPSRootPath.toString());
                             mipsContentInfo.setLocalRelativePath(localMIPSRootPath.relativize(Paths.get(mipsFile)).toString());
                             if (inputStack.getMainRep().getRemoteInfo() != null) {
-                                mipsContentInfo.setRemoteInfo(new StorageService.StorageEntryInfo(
+                                mipsContentInfo.setRemoteInfo(new StorageEntryInfo(
                                         inputStack.getMainRep().getRemoteInfo().getStorageId(), // I want the MIPs in the same bundle if one exists
                                         inputStack.getMainRep().getRemoteInfo().getStorageURL(),
                                         null, // I don't know the entry URL yet
-                                        inputStack.getMainRep().getRemoteInfo().getEntryRootLocation(),
-                                        inputStack.getMainRep().getRemoteInfo().getEntryRootPrefix(),
+                                        inputStack.getMainRep().getRemoteInfo().getStorageRootLocation(),
+                                        inputStack.getMainRep().getRemoteInfo().getStorageRootPathURI(),
                                         constructStorageEntryPath(mipsContentInfo, "mips"),
                                         false));
                             }
@@ -176,7 +177,7 @@ class StorageContentHelper {
                     // use the full virtual path to push to "storage_path/file/{dataPath:.*}" endpoint
                     storageContentInfo.setRemoteInfo(storageService.putStorageContent(
                             storageURL,
-                            storageContentInfo.getRemoteInfo().getEntryRootPrefix() + "/" + storageContentInfo.getRemoteInfo().getEntryRelativePath(),
+                            storageContentInfo.getRemoteInfo().getStorageRootPathURI() + "/" + storageContentInfo.getRemoteInfo().getEntryRelativePath(),
                             subjectKey,
                             authToken,
                             inputStream

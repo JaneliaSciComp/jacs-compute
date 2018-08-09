@@ -116,6 +116,15 @@ public class FileUtils {
         return StringUtils.isBlank(fn) ? "" : createExtension(com.google.common.io.Files.getFileExtension(fn));
     }
 
+    public static String getParent(String fp) {
+        if (StringUtils.isBlank(fp)) {
+            return "";
+        } else {
+            Path p = Paths.get(fp).getParent();
+            return p != null ? p.toString() : "";
+        }
+    }
+
     private static String createExtension(String ext) {
         if (StringUtils.isBlank(ext)) {
             return "";

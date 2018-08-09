@@ -3,22 +3,21 @@ package org.janelia.jacs2.asyncservice.dataimport;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.jacs2.dataservice.storage.StorageService;
-import org.janelia.model.domain.enums.FileType;
+import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 class StorageContentInfo {
-    private StorageService.StorageEntryInfo remoteInfo;
+    private StorageEntryInfo remoteInfo;
     private String localBasePath;
     private String localRelativePath;
 
-    public StorageService.StorageEntryInfo getRemoteInfo() {
+    public StorageEntryInfo getRemoteInfo() {
         return remoteInfo;
     }
 
-    public void setRemoteInfo(StorageService.StorageEntryInfo remoteInfo) {
+    public void setRemoteInfo(StorageEntryInfo remoteInfo) {
         this.remoteInfo = remoteInfo;
     }
 

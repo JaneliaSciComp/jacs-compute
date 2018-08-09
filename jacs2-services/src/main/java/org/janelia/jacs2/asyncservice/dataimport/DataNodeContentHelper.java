@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.dataservice.storage.StoragePathURI;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
@@ -12,9 +14,9 @@ import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,23 +51,28 @@ class DataNodeContentHelper {
                             .peek(contentEntry -> {
                                 logger.info("Add {} to {}", contentEntry, dataFolder);
                                 Image imageStack = new Image();
-                                String imageName = Paths.get(contentEntry.getMainRep().getRemoteInfo().getEntryPath()).getFileName().toString();
+                                String entryRelativePath = contentEntry.getMainRep().getRemoteInfo().getEntryRelativePath();
+                                String imageName = Paths.get(entryRelativePath).getFileName().toString();
                                 imageStack.setName(imageName);
                                 imageStack.setUserDataFlag(true);
-                                Path mainRepPath = Paths.get(contentEntry.getMainRep().getRemoteInfo().getEntryPath());
-                                imageStack.setFilepath(mainRepPath.getParent().toString());
-                                Set<FileType> mainRepFileTypes = FileTypeHelper.getFileTypeByExtension(mainRepPath.toString());
+                                Optional<StoragePathURI> mainRepPathURI = contentEntry.getMainRep().getRemoteInfo().getEntryPathURI();
+                                String mainRepStoragePath = mainRepPathURI.map(sp -> sp.getStoragePath()).orElse(entryRelativePath);
+                                imageStack.setFilepath(FileUtils.getParent(mainRepStoragePath));
+                                Set<FileType> mainRepFileTypes = FileTypeHelper.getFileTypeByExtension(mainRepStoragePath);
                                 if (mainRepFileTypes.isEmpty()) {
-                                    DomainUtils.setFilepath(imageStack, defaultFileType, mainRepPath.toString());
+                                    DomainUtils.setFilepath(imageStack, defaultFileType, mainRepStoragePath);
                                 } else {
-                                    mainRepFileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, mainRepPath.toString()));
+                                    mainRepFileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, mainRepStoragePath));
                                 }
                                 contentEntry.getAdditionalReps().forEach(ci -> {
-                                    Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(ci.getRemoteInfo().getEntryPath());
+                                    String ciStoragePath = ci.getRemoteInfo().getEntryPathURI()
+                                            .map(sp -> sp.getStoragePath())
+                                            .orElse(ci.getRemoteInfo().getEntryRelativePath());
+                                    Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(ciStoragePath);
                                     if (fileTypes.isEmpty()) {
-                                        DomainUtils.setFilepath(imageStack, defaultFileType, ci.getRemoteInfo().getEntryPath());
+                                        DomainUtils.setFilepath(imageStack, defaultFileType, ciStoragePath);
                                     } else {
-                                        fileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, ci.getRemoteInfo().getEntryPath()));
+                                        fileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, ciStoragePath));
                                     }
                                 });
                                 folderService.addImageStack(dataFolder,
@@ -92,18 +99,23 @@ class DataNodeContentHelper {
                             .peek(contentEntry -> {
                                 Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
                                         .forEach(ci -> {
-                                            logger.info("Add {} to {}", ci.getRemoteInfo().getEntryPath(), dataFolder);
-                                            Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(ci.getRemoteInfo().getEntryPath());
+                                            logger.info("Add {} to {}", ci.getRemoteInfo(), dataFolder);
+                                            String ciStoragePath = ci.getRemoteInfo().getEntryPathURI()
+                                                    .map(sp -> sp.getStoragePath())
+                                                    .orElse(ci.getRemoteInfo().getEntryRelativePath());
+                                            Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(ciStoragePath);
                                             if (fileTypes.isEmpty()) {
                                                 folderService.addImageFile(dataFolder,
-                                                        ci.getRemoteInfo().getEntryPath(),
+                                                        FileUtils.getParent(ciStoragePath),
+                                                        FileUtils.getFileName(ciStoragePath),
                                                         defaultFileType,
                                                         true,
                                                         jacsServiceData.getOwnerKey()
                                                 );
                                             } else {
                                                 fileTypes.forEach(ft -> folderService.addImageFile(dataFolder,
-                                                        ci.getRemoteInfo().getEntryPath(),
+                                                        FileUtils.getParent(ciStoragePath),
+                                                        FileUtils.getFileName(ciStoragePath),
                                                         ft,
                                                         true,
                                                         jacsServiceData.getOwnerKey()
