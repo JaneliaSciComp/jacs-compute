@@ -133,7 +133,9 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
                                             new ServiceArg("", args.otherArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
                                         )
                                     : ImmutableList.of(
-                                            new ServiceArg("", Stream.concat(args.otherArgs.stream(), Stream.of(expandedArg)).reduce((s1, s2) -> s1 + "," + s2).orElse(""))
+                                            new ServiceArg("", Stream.concat(
+                                                    Stream.of(expandedArg),
+                                                    args.otherArgs.stream()).reduce((s1, s2) -> s1 + "," + s2).orElse(""))
                                         )
                                 )
                                 .build();
