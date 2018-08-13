@@ -50,6 +50,8 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
         FileType fileTypeOverride;
         @Parameter(names = "-cleanLocalFilesWhenDone", description = "Clean up local files when all data loading is done")
         boolean cleanLocalFilesWhenDone = false;
+        @Parameter(names = "-cleanStorageOnFailure", description = "If this flag is set - clean up the storage if the indexing operation failed")
+        boolean cleanStorageOnFailure = false;
 
         DataTreeLoadArgs() {
             super("Service that creates a TreeNode for the specified storage content");
@@ -126,6 +128,12 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                                 storageContentResult.getResult()))
                 .thenCompose(storageContentResult -> cleanLocalContent(storageContentResult.getJacsServiceData(), storageContentResult.getResult()))
                 .thenApply(sr -> updateServiceResult(sr.getJacsServiceData(), sr.getResult()))
+                .whenComplete((r, exc) -> {
+                    if (exc != null && args.cleanStorageOnFailure) {
+                        // in case of a failure remove the content
+                        storageContentHelper.removeContent(jacsServiceData, args.storageLocationURL, args.storagePath);
+                    }
+                })
                 ;
     }
 

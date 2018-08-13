@@ -188,7 +188,32 @@ public class StorageService {
         }
     }
 
-    Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, String jacsPrincipal, String authToken) {
+    public void removeStorageContent(String storageLocationURL, String storagePath, String subject, String authToken) {
+        Client httpclient = null;
+        try {
+            httpclient = HttpUtils.createHttpClient();
+            WebTarget target = httpclient.target(storageLocationURL);
+            if (StringUtils.isNotBlank(storagePath)) {
+                target = target.path(storagePath);
+            }
+            Invocation.Builder requestBuilder = createRequestWithCredentials(
+                    target.request(MediaType.APPLICATION_JSON), subject, authToken);
+            Response response = requestBuilder.delete();
+            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
+            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpclient != null) {
+                httpclient.close();
+            }
+        }
+    }
+
+    private Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, String jacsPrincipal, String authToken) {
         Invocation.Builder requestWithCredentialsBuilder = requestBuilder;
         if (StringUtils.isNotBlank(authToken)) {
             requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(

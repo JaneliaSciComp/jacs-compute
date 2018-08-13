@@ -114,6 +114,14 @@ class StorageContentHelper {
         }
     }
 
+    void removeContent(JacsServiceData jacsServiceData, String storageURL, String storagePath) {
+        storageService.removeStorageContent(
+                storageURL,
+                storagePath,
+                jacsServiceData.getOwnerKey(),
+                ResourceHelper.getAuthToken(jacsServiceData.getResources()));
+    }
+
     ServiceComputation<JacsServiceResult<List<ContentStack>>> uploadContent(JacsServiceData jacsServiceData, String storageURL, List<ContentStack> contentList) {
         return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
                 .supply(() -> new JacsServiceResult<>(
