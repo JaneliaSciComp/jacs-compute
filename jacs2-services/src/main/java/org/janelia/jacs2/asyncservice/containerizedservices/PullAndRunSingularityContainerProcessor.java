@@ -29,7 +29,6 @@ import java.util.stream.Stream;
 @Named("runSingularityContainer")
 public class PullAndRunSingularityContainerProcessor extends AbstractServiceProcessor<Void> {
 
-    private final String localSingularityImagesPath;
     private final WrappedServiceProcessor<PullSingularityContainerProcessor, File> pullContainerProcessor;
     private final WrappedServiceProcessor<SimpleRunSingularityContainerProcessor, Void> runContainerProcessor;
 
@@ -37,12 +36,10 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
     PullAndRunSingularityContainerProcessor(ServiceComputationFactory computationFactory,
                                             JacsServiceDataPersistence jacsServiceDataPersistence,
                                             @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                            @PropertyValue(name = "Singularity.LocalImages.Path") String localSingularityImagesPath,
                                             PullSingularityContainerProcessor pullContainerProcessor,
                                             SimpleRunSingularityContainerProcessor runContainerProcessor,
                                             Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.localSingularityImagesPath = localSingularityImagesPath;
         this.pullContainerProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, pullContainerProcessor);
         this.runContainerProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, runContainerProcessor);
     }
@@ -65,10 +62,6 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
 
     private ExpandedRunSingularityContainerArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ExpandedRunSingularityContainerArgs());
-    }
-
-    private String getContainerLocation(ExpandedRunSingularityContainerArgs args) {
-        return SingularityContainerHelper.getLocalContainerImageMapper().andThen(Path::toString).apply(args, this.localSingularityImagesPath);
     }
 
     private List<String> expandArguments(ExpandedRunSingularityContainerArgs args) {
