@@ -16,5 +16,6 @@ public enum JacsServiceEventTypes {
     START_PROCESS_ERROR,
     PROCESSING_ERROR,
     PROCESSING_COMPLETED,
+    REMOVE_DATA,
     UPDATE_STATE
 }

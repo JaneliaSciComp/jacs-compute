@@ -23,6 +23,7 @@ import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -130,8 +131,13 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                 .thenApply(sr -> updateServiceResult(sr.getJacsServiceData(), sr.getResult()))
                 .whenComplete((r, exc) -> {
                     if (exc != null && args.cleanStorageOnFailure) {
+                        logger.info("Remove storage data from {} due to processing error", args.storageLocationURL, exc);
                         // in case of a failure remove the content
                         storageContentHelper.removeContent(jacsServiceData, args.storageLocationURL, args.storagePath);
+                        jacsServiceDataPersistence.addServiceEvent(
+                                jacsServiceData,
+                                JacsServiceData.createServiceEvent(JacsServiceEventTypes.REMOVE_DATA,
+                                        String.format("Removed storage data from %s due to processing error %s", args.storageLocationURL, exc.toString())));
                     }
                 })
                 ;
