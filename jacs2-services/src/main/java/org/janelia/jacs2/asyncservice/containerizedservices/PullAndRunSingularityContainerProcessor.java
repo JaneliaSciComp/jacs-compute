@@ -58,7 +58,7 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
         return pullContainerProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Pull container image " + args.containerLocation)
                         .build(),
-                new ServiceArg("-containerLocation", getContainerLocation(args)))
+                new ServiceArg("-containerLocation", args.containerLocation))
                 .thenCompose(containerImageResult -> createExpandedItemsComputation(containerImageResult, args, expandArguments(args), jacsServiceData))
                 ;
     }
