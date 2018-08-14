@@ -102,7 +102,7 @@ public class ApplicationConfigProvider {
     public ApplicationConfigProvider injectEnvProps() {
 
         String prefix = "env.jacs_";
-        for (Object o : Sets.newHashSet(applicationConfig.keySet())) {
+        for (Object o : Sets.newLinkedHashSet(applicationConfig.keySet())) {
             String key = o.toString();
             if (key.toLowerCase().startsWith(prefix)) {
                 String newKey = key.substring(prefix.length()).replaceAll("_", ".");
