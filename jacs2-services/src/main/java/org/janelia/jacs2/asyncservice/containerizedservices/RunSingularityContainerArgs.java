@@ -101,8 +101,8 @@ class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
     String initialPwd;
     @Parameter(names = "-appArgs", description = "Containerized application arguments")
     List<String> appArgs = new ArrayList<>();
-    @Parameter(description = "Other positional container arguments")
-    List<String> otherArgs = new ArrayList<>();
+    @Parameter(description = "Remaining positional container arguments")
+    List<String> remainingPositionalArgs = new ArrayList<>();
 
     RunSingularityContainerArgs() {
         this("Service that runs a singularity container");

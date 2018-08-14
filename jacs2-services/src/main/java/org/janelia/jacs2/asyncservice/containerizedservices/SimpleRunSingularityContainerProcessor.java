@@ -74,8 +74,8 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
         if (CollectionUtils.isNotEmpty(runArgs.appArgs)) {
             runArgs.appArgs.forEach(scriptWriter::addArg);
         }
-        if (CollectionUtils.isNotEmpty(runArgs.otherArgs)) {
-            runArgs.otherArgs.stream().filter(StringUtils::isNotBlank).forEach(scriptWriter::addArg);
+        if (CollectionUtils.isNotEmpty(runArgs.remainingPositionalArgs)) {
+            runArgs.remainingPositionalArgs.stream().filter(StringUtils::isNotBlank).forEach(scriptWriter::addArg);
         }
         scriptWriter.endArgs();
     }

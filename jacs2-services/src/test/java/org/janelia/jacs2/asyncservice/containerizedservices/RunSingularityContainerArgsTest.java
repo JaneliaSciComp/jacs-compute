@@ -112,7 +112,7 @@ public class RunSingularityContainerArgsTest {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 1 && item.bindPaths.get(0).isEmpty() &&
                                         item.appArgs.size() == 0 &&
-                                        ImmutableList.of("other1", "other2").equals(item.otherArgs);
+                                        ImmutableList.of("other1", "other2").equals(item.remainingPositionalArgs);
                             }
                             @Override
                             public void describeTo(Description description) {
