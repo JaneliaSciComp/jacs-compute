@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -71,7 +72,9 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
     private List<String> expandArguments(ExpandedRunSingularityContainerArgs args) {
         Stream<String> expandedArgsStream;
         if (StringUtils.isNotBlank(args.expandedDir)) {
-            expandedArgsStream = FileUtils.lookupFiles(Paths.get(args.expandedDir), args.expandedDepth, args.expandedPattern).map(Path::toString);
+            expandedArgsStream = FileUtils.lookupFiles(Paths.get(args.expandedDir), args.expandedDepth, args.expandedPattern)
+                    .filter(p -> Files.isRegularFile(p))
+                    .map(Path::toString);
         } else {
             expandedArgsStream = Stream.of();
         }
