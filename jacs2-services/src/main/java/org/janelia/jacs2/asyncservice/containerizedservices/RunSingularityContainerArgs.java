@@ -3,12 +3,17 @@ package org.janelia.jacs2.asyncservice.containerizedservices;
 import com.beust.jcommander.IStringConverter;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.SubParameter;
+import com.beust.jcommander.converters.CommaParameterSplitter;
+import com.beust.jcommander.converters.DefaultListConverter;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
     enum ContainerOperation {
@@ -53,7 +58,6 @@ class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
     }
 
     static class BindPathConverter implements IStringConverter<BindPath> {
-
         @Override
         public BindPath convert(String value) {
             BindPath bindPath = new BindPath();
@@ -85,6 +89,7 @@ class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
 
         }
     }
+
     @Parameter(names = "-op", description = "Singularity container operation {run (default) | exec}")
     ContainerOperation operation = ContainerOperation.run;
     @Parameter(names = "-appName", description = "Containerized application Name")
@@ -101,8 +106,6 @@ class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
     String initialPwd;
     @Parameter(names = "-appArgs", description = "Containerized application arguments")
     List<String> appArgs = new ArrayList<>();
-    @Parameter(description = "Remaining positional container arguments")
-    List<String> remainingPositionalArgs = new ArrayList<>();
 
     RunSingularityContainerArgs() {
         this("Service that runs a singularity container");

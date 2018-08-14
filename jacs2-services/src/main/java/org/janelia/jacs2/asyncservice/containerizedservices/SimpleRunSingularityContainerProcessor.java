@@ -21,6 +21,7 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.List;
 
 @Named("simpleRunSingularityContainer")
 public class SimpleRunSingularityContainerProcessor extends AbstractSingularityContainerProcessor<Void> {
@@ -74,8 +75,9 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
         if (CollectionUtils.isNotEmpty(runArgs.appArgs)) {
             runArgs.appArgs.forEach(scriptWriter::addArg);
         }
-        if (CollectionUtils.isNotEmpty(runArgs.remainingPositionalArgs)) {
-            runArgs.remainingPositionalArgs.stream().filter(StringUtils::isNotBlank).forEach(scriptWriter::addArg);
+        List<String> remainingArgs = runArgs.getRemainingArgs();
+        if (CollectionUtils.isNotEmpty(remainingArgs)) {
+            remainingArgs.stream().filter(StringUtils::isNotBlank).forEach(scriptWriter::addArg);
         }
         scriptWriter.endArgs();
     }

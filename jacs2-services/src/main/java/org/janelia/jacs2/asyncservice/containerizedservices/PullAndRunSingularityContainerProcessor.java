@@ -103,7 +103,7 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
                         new ServiceArg("-enableNV", args.enableNV),
                         new ServiceArg("-initialPwd", args.initialPwd),
                         new ServiceArg("-appArgs", args.appArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
-                        new ServiceArg("", args.remainingPositionalArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
+                        new ServiceArg("", args.getRemainingArgs().stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
                 );
         } else {
             List<ServiceComputation<?>> expandedItemJobs = expandedArgs.stream()
@@ -125,14 +125,14 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
                                 .add(new ServiceArg("-initialPwd", args.initialPwd))
                                 .add(new ServiceArg("-appArgs", args.appArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")))
                                 .addAll(args.hasExpandedArgFlag()
-                                    ? ImmutableList.<ServiceArg>of(
+                                    ? ImmutableList.of(
                                             new ServiceArg(args.expandedArgFlag, expandedArg),
-                                            new ServiceArg("", args.remainingPositionalArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
+                                            new ServiceArg("", args.getRemainingArgs().stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
                                         )
                                     : ImmutableList.of(
                                             new ServiceArg("", Stream.concat(
                                                     Stream.of(expandedArg),
-                                                    args.remainingPositionalArgs.stream()).reduce((s1, s2) -> s1 + "," + s2).orElse(""))
+                                                    args.getRemainingArgs().stream()).reduce((s1, s2) -> s1 + "," + s2).orElse(""))
                                         )
                                 )
                                 .build();

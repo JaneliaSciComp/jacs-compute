@@ -19,7 +19,7 @@ public class RunSingularityContainerArgsTest {
             private final String[] sargs;
             private final Matcher<RunSingularityContainerArgs> checker;
 
-            TestData(String[] sargs, Matcher<RunSingularityContainerArgs> checker) {
+            private TestData(String[] sargs, Matcher<RunSingularityContainerArgs> checker) {
                 this.sargs = sargs;
                 this.checker = checker;
             }
@@ -112,7 +112,26 @@ public class RunSingularityContainerArgsTest {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 1 && item.bindPaths.get(0).isEmpty() &&
                                         item.appArgs.size() == 0 &&
-                                        ImmutableList.of("other1", "other2").equals(item.remainingPositionalArgs);
+                                        ImmutableList.of("other1", "other2").equals(item.getRemainingArgs());
+                            }
+                            @Override
+                            public void describeTo(Description description) {
+                                description.appendText("Expected containerLocation -> shub://location, bindPaths -> <empty>, otherArgs -> other1, other2");
+                            }
+                        }
+                ),
+                new TestData(
+                        new String[] {
+                                "-containerLocation", "shub://location",
+                                "other1,other2", "other3", "other4,other5"
+                        },
+                        new TypeSafeMatcher<RunSingularityContainerArgs>() {
+                            @Override
+                            protected boolean matchesSafely(RunSingularityContainerArgs item) {
+                                return "shub://location".equals(item.containerLocation) &&
+                                        item.bindPaths.size() == 0 &&
+                                        item.appArgs.size() == 0 &&
+                                        ImmutableList.of("other1", "other2", "other3", "other4", "other5").equals(item.getRemainingArgs());
                             }
                             @Override
                             public void describeTo(Description description) {
