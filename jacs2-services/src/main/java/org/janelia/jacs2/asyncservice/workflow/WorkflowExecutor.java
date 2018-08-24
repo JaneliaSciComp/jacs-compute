@@ -59,15 +59,9 @@ public abstract class WorkflowExecutor<T> extends AbstractBasicLifeCycleServiceP
         return new JacsServiceResult<>(sd);
     }
 
-    // Cannot be abstract due to https://issues.jboss.org/browse/WELD-2470
-    protected DAG<WorkflowTask> createDAG(JacsServiceData sd) {
-        throw new NotImplementedException("This method must be implemented by the subclass");
-    }
+    protected abstract DAG<WorkflowTask> createDAG(JacsServiceData sd);
 
-    // Cannot be abstract due to https://issues.jboss.org/browse/WELD-2470
-    protected T getResult(JacsServiceData jacsServiceData) {
-        throw new NotImplementedException("This method must be implemented by the subclass");
-    }
+    protected abstract T getResult(JacsServiceData jacsServiceData);
 
     private void submitDAG(JacsServiceData sd, DAG<WorkflowTask> dag) {
 
