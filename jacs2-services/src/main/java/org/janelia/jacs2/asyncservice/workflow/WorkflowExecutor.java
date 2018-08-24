@@ -107,7 +107,7 @@ public abstract class WorkflowExecutor<T> extends AbstractBasicLifeCycleServiceP
             // Submit a service to execute the task
             JacsServiceData dep = submitDependencyIfNotFound(
                     service.createServiceData(new ServiceExecutionContext.Builder(sd)
-                            .addInterceptor(WorkflowInterceptor.NAME)
+                            .addInterceptor(WorkflowInterceptor.class)
                             .description(task.getName())
                             .waitFor(upstream)
                             .workflowId(workflow.getId())

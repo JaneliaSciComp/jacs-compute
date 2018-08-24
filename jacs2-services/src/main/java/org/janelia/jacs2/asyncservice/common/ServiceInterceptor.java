@@ -9,7 +9,7 @@ import org.janelia.model.service.JacsServiceData;
  *
  *  The service data passed to these methods is guaranteed to be fresh from the database.
  *
- *  When implementing an interceptor, use the @Named annotation to give it a unique name, and then put that
+ *  When implementing an interceptor, you must use the @Named annotation to give it a unique name, and then put that
  *  name into the JacsServiceData.interceptors list for any service which should be intercepted.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>

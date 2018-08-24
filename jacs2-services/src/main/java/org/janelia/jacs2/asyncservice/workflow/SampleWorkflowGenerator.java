@@ -3,7 +3,6 @@ package org.janelia.jacs2.asyncservice.workflow;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.janelia.dagobah.DAG;
-import org.janelia.jacs2.asyncservice.common.ServiceProcessor;
 import org.janelia.jacs2.asyncservice.sample.CopyLSMService;
 import org.janelia.jacs2.asyncservice.sample.DistortionCorrectionService;
 import org.janelia.jacs2.asyncservice.sample.LSMSummaryService;
@@ -17,8 +16,9 @@ import org.janelia.model.domain.workflow.SamplePipelineOutput;
 import org.janelia.model.domain.workflow.WorkflowTask;
 import org.janelia.model.util.Utils;
 
-import javax.inject.Named;
 import java.util.*;
+
+import static org.janelia.jacs2.utils.ServiceUtils.getName;
 
 /**
  * The Sample Workflow is a Dagobah-based DAG workflow with many capabilities:
@@ -260,11 +260,4 @@ public class SampleWorkflowGenerator {
         return idGenerator.generateId().longValue();
     }
 
-    private String getName(Class<? extends ServiceProcessor> serviceClass) {
-        Named annotation = serviceClass.getAnnotation(Named.class);
-        if (annotation==null) {
-            throw new AssertionError("Service class does not have @Named annotation: "+serviceClass);
-        }
-        return annotation.value();
-    }
 }

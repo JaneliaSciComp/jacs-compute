@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.janelia.jacs2.utils.ServiceUtils.getName;
+
 public class ServiceExecutionContext {
 
     public static class Builder {
@@ -61,6 +63,11 @@ public class ServiceExecutionContext {
 
         public Builder addInterceptor(String interceptorName) {
             serviceExecutionContext.interceptors.add(interceptorName);
+            return this;
+        }
+
+        public <T extends ServiceInterceptor> Builder addInterceptor(Class<T> interceptorName) {
+            serviceExecutionContext.interceptors.add(getName(interceptorName));
             return this;
         }
 

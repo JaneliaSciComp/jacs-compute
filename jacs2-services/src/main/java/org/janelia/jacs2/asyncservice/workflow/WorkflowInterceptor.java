@@ -32,8 +32,6 @@ import java.util.Collection;
 @Named("workflowInterceptor")
 public class WorkflowInterceptor implements ServiceInterceptor {
 
-    public static final String NAME = "workflowInterceptor";
-
     private static final Logger log = LoggerFactory.getLogger(WorkflowInterceptor.class);
 
     @Inject
