@@ -31,6 +31,7 @@ public class ServiceInfoResourceTest extends AbstractAsyncServicesAppResourceTes
 
     private static final String TEST_USERNAME = "test";
 
+    @SuppressWarnings("unchecked")
     @Test
     public void searchServices() {
         User testUser = new User();

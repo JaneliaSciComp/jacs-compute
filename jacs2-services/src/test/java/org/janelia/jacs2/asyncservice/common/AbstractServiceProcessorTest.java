@@ -2,6 +2,8 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import org.hamcrest.Matchers;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
@@ -13,8 +15,10 @@ import org.slf4j.Logger;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.collection.IsArrayContainingInOrder.arrayContaining;
+import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -92,7 +96,7 @@ public class AbstractServiceProcessorTest {
     @Before
     public void setUp() {
         Logger logger = mock(Logger.class);
-        ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         testProcessor = new TestProcessor(
                             serviceComputationFactory,
@@ -106,12 +110,18 @@ public class AbstractServiceProcessorTest {
         class TestData {
             final Object result;
             final String[] args;
-            final String[] expectedResult;
+            final Map<String, Object> dictArgs;
+            final String[] expectedListArgs;
+            final Map<String, Object> expectedDictArgs;
 
-            TestData(Object result, String[] args, String[] expectedResult) {
+            TestData(Object result,
+                     String[] args, Map<String, Object> dictArgs,
+                     String[] expectedListArgs, Map<String, Object> expectedDictArgs) {
                 this.result = result;
                 this.args = args;
-                this.expectedResult = expectedResult;
+                this.dictArgs = dictArgs;
+                this.expectedListArgs = expectedListArgs;
+                this.expectedDictArgs = expectedDictArgs;
             }
 
             List<String> getArgList() {
@@ -120,6 +130,7 @@ public class AbstractServiceProcessorTest {
 
         }
         List<TestData> testData = ImmutableList.of(
+                // Test 0
                 new TestData(
                         new T1("t1F1 value",
                                 "t1F2 value",
@@ -136,10 +147,35 @@ public class AbstractServiceProcessorTest {
                                 }
                         ),
                         new String[] {
-                                "arg1", "|>${t1F1}", "arg2", "|>${t1F2}", "arg3", "|>${t1ArrayField[0]}", "arg4", "|>${t1ArrayField[1]},${t1ObjectArrayField[0].t2ArrayField[1]}"
+                                "arg1", "|>${predServiceName_1.t1F1}",
+                                "arg2", "|>${predServiceName_1.t1F2}",
+                                "arg3", "|>${predServiceName_1.t1ArrayField[0]}",
+                                "arg4", "|>${predServiceName_1.t1ArrayField[1]},${predServiceName_1.t1ObjectArrayField[0].t2ArrayField[1]}"
                         },
-                        new String[]{"arg1", "t1F1 value", "arg2", "t1F2 value", "arg3", "t1vof_1", "arg4", "t1vof_2,0 t2vof_2"}
+                        ImmutableMap.of(
+                                "dictArg1", ImmutableMap.<String, String>of(
+                                        "t1F1", "|>${predServiceName_1.t1F1}",
+                                        "t1F2", "|>${predServiceName_1.t1F2}"),
+                                "dictArg2", ImmutableMap.<String, String>of(
+                                        "t1ArrayField", "|>${predServiceName_1.t1ArrayField}",
+                                        "t1ObjectArray_1", "|>${predServiceName_1.t1ObjectArrayField[0].t2ArrayField[1]}")
+                        ),
+                        new String[] {
+                                "arg1", "t1F1 value",
+                                "arg2", "t1F2 value",
+                                "arg3", "t1vof_1",
+                                "arg4", "t1vof_2,0 t2vof_2"
+                        },
+                        ImmutableMap.of(
+                                "dictArg1", ImmutableMap.of(
+                                        "t1F1", "t1F1 value",
+                                        "t1F2", "t1F2 value"),
+                                "dictArg2", ImmutableMap.of(
+                                        "t1ArrayField", ImmutableList.of("t1vof_1", "t1vof_2"),
+                                        "t1ObjectArray_1", "0 t2vof_2")
+                        )
                 ),
+                // Test 1
                 new TestData(
                         new T1("t1F1 value",
                                 null,
@@ -156,41 +192,153 @@ public class AbstractServiceProcessorTest {
                                 }
                         ),
                         new String[] {
-                                "arg1", "|>${t1F1}", "arg2", "|>${t1F2}", "arg3", "|>${t1ArrayField[0]}", "arg4", "|>${t1ArrayField[1]}", "|>${t1ObjectArrayField[1].t2F2}", "|>${t1ObjectArrayField[2].t2F2}",
-                                "|>${t1ObjectArrayField[0].t2Number}", "|>${t1ObjectArrayField[1].t2Number}"
+                                "arg1", "|>${predServiceName_1.t1F1}",
+                                "arg2", "|>${predServiceName_1.t1F2}",
+                                "arg3", "|>${predServiceName_1.t1ArrayField[0]}",
+                                "arg4", "|>${predServiceName_1.t1ArrayField[1]}",
+                                "|>${predServiceName_1.t1ObjectArrayField[1].t2F2}",
+                                "|>${predServiceName_1.t1ObjectArrayField[2].t2F2}",
+                                "|>${predServiceName_1.t1ObjectArrayField[0].t2Number}",
+                                "|>${predServiceName_1.t1ObjectArrayField[1].t2Number}"
                         },
-                        new String[]{"arg1", "t1F1 value", "arg2", "${t1F2}", "arg3", "t1vof_1", "arg4", "t1vof_2", "1 t2F2 value", "${t1ObjectArrayField[2].t2F2}", "300", "400"}
+                        ImmutableMap.of(
+                                "dictArg1", ImmutableMap.<String, String>of(
+                                        "t1F1", "|>${predServiceName_1.t1F1}",
+                                        "t1F2", "|>${predServiceName_1.t1F2}"),
+                                "dictArg2", ImmutableMap.<String, String>of(
+                                        "t1ArrayField_1", "|>${predServiceName_1.t1ArrayField[1]}",
+                                        "t1ObjectArray_0", "|>${predServiceName_1.t1ObjectArrayField[0]}"),
+                                "dictArg3", ImmutableMap.<String, String>of(
+                                        "t1ObjectArray_1", "|>${predServiceName_1.t1ObjectArrayField[1]}",
+                                        "t1ObjectArray_1_t2Number", "|>${predServiceName_1.t1ObjectArrayField[1].t2Number}")
+                        ),
+                        new String[] {
+                                "arg1", "t1F1 value",
+                                "arg2", "${predServiceName_1.t1F2}",
+                                "arg3", "t1vof_1",
+                                "arg4", "t1vof_2",
+                                "1 t2F2 value",
+                                "${predServiceName_1.t1ObjectArrayField[2].t2F2}",
+                                "300",
+                                "400"
+                        },
+                        ImmutableMap.of(
+                                "dictArg1", ImmutableMap.of(
+                                        "t1F1", "t1F1 value",
+                                        "t1F2", "${predServiceName_1.t1F2}"),
+                                "dictArg2", ImmutableMap.of(
+                                        "t1ObjectArray_0", ImmutableMap.of(
+                                                "t2F1", "0 t2F1 value",
+                                                "t2F2", "0 t2F2 value",
+                                                "t2Number", 300L,
+                                                "t2ArrayField", ImmutableList.of("0 t2vof_1", "0 t2vof_2")
+                                        ),
+                                        "t1ArrayField_1", "t1vof_2"),
+                                "dictArg3", ImmutableMap.of(
+                                        "t1ObjectArray_1", ImmutableMap.of(
+                                                "t2F1", "1 t2F1 value",
+                                                "t2F2", "1 t2F2 value",
+                                                "t2Number", 400L,
+                                                "t2ArrayField", ImmutableList.of("1 t2vof_1", "1 t2vof_2")
+
+                                        ),
+                                        "t1ObjectArray_1_t2Number", 400L)
+                        )
                 ),
+                // Test 2
                 new TestData(
                         "s1",
-                        new String[] {"arg1", "|>${result}"},
-                        new String[] {"arg1", "s1"}
+                        new String[] {"arg1", "|>${predServiceName_1}"},
+                        ImmutableMap.of(
+                                "result", "|>${predServiceName_1}",
+                                "nonResult", "|>${asIs}"
+                        ),
+                        new String[] {"arg1", "s1"},
+                        ImmutableMap.of(
+                                "result", "s1",
+                                "nonResult", "${asIs}"
+                        )
                 ),
+                // Test 3
                 new TestData(
                         new BigInteger("123456789123456789123456789"),
-                        new String[] {"arg1", "|>${result}"},
-                        new String[] {"arg1", "123456789123456789123456789"}
+                        new String[] {"arg1", "|>${predServiceName_1}"},
+                        ImmutableMap.of(
+                                "result", "|>${predServiceName_1}"
+                        ),
+                        new String[] {"arg1", "123456789123456789123456789"},
+                        ImmutableMap.<String, Object>of(
+                                "result", new BigInteger("123456789123456789123456789")
+                        )
                 ),
+                // Test 4
                 new TestData(
                         123456789123456789L,
-                        new String[] {"arg1", "|>${result}"},
-                        new String[] {"arg1", "123456789123456789"}
+                        new String[] {"arg1", "|>${predServiceName_1}"},
+                        ImmutableMap.of(
+                                "result", "|>${predServiceName_1}"
+                        ),
+                        new String[] {"arg1", "123456789123456789"},
+                        ImmutableMap.of(
+                                "result", 123456789123456789L
+                        )
                 ),
+                // Test 5
                 new TestData(
-                        new Object[]{
+                        new Object[] {
                                 "s1",
                                 "s2",
                                 "s3",
                                 new T2("1 t2F1 value", "1 t2F2 value", 500L, new String[]{"1 t2vof_1", "1 t2vof_2"}),
                                 600L
                         },
-                        new String[]{"arg1", "|>${result[0]}", "arg2", "|>${result[1]}", "arg3", "|>this is ${result[3].t2F1}", "arg4", "|>${result[3].t2ArrayField[1]}", "|>${result[4]}"},
-                        new String[]{"arg1", "s1", "arg2", "s2", "arg3", "this is 1 t2F1 value", "arg4", "1 t2vof_2", "600"}
+                        new String[] {
+                                "arg1", "|>${predServiceName_1[0]}",
+                                "arg2", "|>${predServiceName_1[1]}",
+                                "arg3", "|>this is ${predServiceName_1[3].t2F1}",
+                                "arg4", "|>${predServiceName_1[3].t2ArrayField[1]}",
+                                "|>${predServiceName_1[4]}"
+                        },
+                        ImmutableMap.of(
+                                "dictArg1", ImmutableMap.<String, String>of(
+                                        "wholeResult", "|>${predServiceName_1}",
+                                        "a1", "|>${predServiceName_1[0]}"),
+                                "dictArg2", ImmutableMap.<String, String>of(
+                                        "a1", "|>${predServiceName_1[1]}")
+                        ),
+                        new String[] {
+                                "arg1", "s1",
+                                "arg2", "s2",
+                                "arg3", "this is 1 t2F1 value",
+                                "arg4", "1 t2vof_2",
+                                "600"
+                        },
+                        ImmutableMap.of(
+                                "dictArg1", ImmutableMap.of(
+                                        "wholeResult", ImmutableList.of(
+                                                "s1",
+                                                "s2",
+                                                "s3",
+                                                ImmutableMap.of(
+                                                        "t2F1", "1 t2F1 value",
+                                                        "t2F2", "1 t2F2 value",
+                                                        "t2Number", 500L,
+                                                        "t2ArrayField", ImmutableList.of("1 t2vof_1", "1 t2vof_2")
+                                                ),
+                                                600L
+                                        ),
+                                        "a1", "s1"
+                                ),
+                                "dictArg2", ImmutableMap.of(
+                                        "a1", "s2"
+                                )
+                        )
                 )
         );
         Long predecessorId = 1L;
         JacsServiceData testServiceDataPredecessor = new JacsServiceData();
         testServiceDataPredecessor.setId(predecessorId);
+        testServiceDataPredecessor.setName("predServiceName");
 
         JacsServiceData testServiceData =
                 new JacsServiceDataBuilder(null)
@@ -199,12 +347,22 @@ public class AbstractServiceProcessorTest {
                         .build();
         when(jacsServiceDataPersistence.findServiceDependencies(testServiceData)).thenReturn(ImmutableList.of(testServiceDataPredecessor));
 
+        int tIndex = 0;
         for (TestData td : testData) {
+            // clear actual service args
             testServiceData.setActualArgs(null);
+            testServiceData.setServiceArgs(null);
             testServiceData.setArgs(ImmutableList.copyOf(td.args));
+            testServiceData.setDictionaryArgs(td.dictArgs);
             testServiceDataPredecessor.setSerializableResult(td.result);
             String[] serviceArgs = testProcessor.getJacsServiceArgsArray(testServiceData);
-            assertThat(td.getArgList().toString(), serviceArgs, arrayContaining(td.expectedResult));
+            int currentIndex = tIndex;
+            assertThat("Test " + currentIndex, serviceArgs, arrayContaining(td.expectedListArgs));
+            td.expectedDictArgs.forEach((k, v) -> {
+                assertThat("Test " + currentIndex, testServiceData.getServiceArgs(), Matchers.hasKey(k));
+                assertThat("Test " + currentIndex, testServiceData.getServiceArgs().get(k), Matchers.equalTo(v));
+            });
+            tIndex++;
         }
     }
 

@@ -19,7 +19,16 @@ public class FileUtils {
 
     public static Stream<Path> lookupFiles(Path dir, int maxDepth, String pattern) {
         try {
-            PathMatcher inputFileMatcher = FileSystems.getDefault().getPathMatcher(pattern);
+            String fileLookupPattern;
+            if (StringUtils.isBlank(pattern)) {
+                fileLookupPattern = "glob:**/*";
+            } else if (!pattern.startsWith("glob:") && !pattern.startsWith("regex:")) {
+                // default to glob
+                fileLookupPattern = "glob:" + pattern;
+            } else {
+                fileLookupPattern = pattern;
+            }
+            PathMatcher inputFileMatcher = FileSystems.getDefault().getPathMatcher(fileLookupPattern);
             return Files.find(dir, maxDepth, (p, a) -> inputFileMatcher.matches(p));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -31,7 +40,15 @@ public class FileUtils {
     }
 
     public static boolean fileNotExists(String filepath) {
-        return !fileExists(filepath);
+        return Files.notExists(Paths.get(filepath));
+    }
+
+    public static boolean fileExists(Path filepath) {
+        return Files.exists(filepath);
+    }
+
+    public static boolean fileNotExists(Path filepath) {
+        return Files.notExists(filepath);
     }
 
     public static Path createSubDirs(Path dir, String subDir) {
@@ -99,11 +116,28 @@ public class FileUtils {
         return StringUtils.isBlank(fn) ? "" : createExtension(com.google.common.io.Files.getFileExtension(fn));
     }
 
+    public static String getParent(String fp) {
+        if (StringUtils.isBlank(fp)) {
+            return "";
+        } else {
+            Path p = Paths.get(fp).getParent();
+            return p != null ? p.toString() : "";
+        }
+    }
+
     private static String createExtension(String ext) {
         if (StringUtils.isBlank(ext)) {
             return "";
         } else {
             return StringUtils.prependIfMissing(ext, ".");
+        }
+    }
+
+    public static Path getSubDir(Path parent, String dirName) {
+        if (parent == null) {
+            return Paths.get(dirName);
+        } else {
+            return parent.resolve(dirName);
         }
     }
 

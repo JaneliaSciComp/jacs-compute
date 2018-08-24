@@ -100,6 +100,7 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<List<PipelineResult>>> process(JacsServiceData jacsServiceData) {
         SampleResultsCompressionArgs args = getArgs(jacsServiceData);

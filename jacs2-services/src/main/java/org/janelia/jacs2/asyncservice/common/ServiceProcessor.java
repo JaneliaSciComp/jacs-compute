@@ -4,6 +4,8 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 
 import java.util.Collection;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Service processor parameterized on the result type
@@ -22,7 +24,17 @@ public interface ServiceProcessor<R> {
      * @param args service arguments
      * @return service data
      */
-    JacsServiceData createServiceData(ServiceExecutionContext executionContext, ServiceArg... args);
+    default JacsServiceData createServiceData(ServiceExecutionContext executionContext, ServiceArg... args) {
+        return createServiceData(executionContext, Arrays.asList(args));
+    }
+
+    /**
+     * Create service data based on the current execution context and the provided arguments.
+     * @param executionContext current execution context.
+     * @param args service arguments.
+     * @return service data.
+     */
+    JacsServiceData createServiceData(ServiceExecutionContext executionContext, List<ServiceArg> args);
 
     /**
      * Create service data based on the current execution context and the provided arguments.
@@ -44,6 +56,8 @@ public interface ServiceProcessor<R> {
      */
     ServiceErrorChecker getErrorChecker();
 
+    ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData);
+
     /**
      * Default process mechanism given the execution context and the service arguments.
      * @param executionContext current execution context.
@@ -55,9 +69,12 @@ public interface ServiceProcessor<R> {
     }
 
     /**
-     * Implements the actual service business logic.
-     * @param jacsServiceData service data
-     * @return result
+     * Default process mechanism given the execution context and the service arguments.
+     * @param executionContext current execution context.
+     * @param args service arguments.
+     * @return service information.
      */
-    ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData);
+    default ServiceComputation<JacsServiceResult<R>> process(ServiceExecutionContext executionContext, List<ServiceArg> args) {
+        return process(createServiceData(executionContext, args));
+    }
 }

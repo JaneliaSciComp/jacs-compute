@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesInput;
+import org.janelia.jacs2.asyncservice.imageservices.AreaMIPsAndMoviesInput;
 import org.janelia.jacs2.asyncservice.imageservices.tools.ChannelComponents;
 
 import java.util.ArrayList;
@@ -192,13 +192,13 @@ public class SampleAreaResult {
     }
 
     @JsonIgnore
-    public List<MIPsAndMoviesInput> getMipsAndMoviesInput() {
-        ImmutableList.Builder<MIPsAndMoviesInput> mipsAndMoviesInputBuilder = ImmutableList.builder();
+    public List<AreaMIPsAndMoviesInput> getMipsAndMoviesInput() {
+        ImmutableList.Builder<AreaMIPsAndMoviesInput> mipsAndMoviesInputBuilder = ImmutableList.builder();
         if (CollectionUtils.isNotEmpty(groupResults)) {
             groupResults.forEach(mtpr -> mipsAndMoviesInputBuilder.add(mapTilePairResultToMipsAndMoviesInput(mtpr)));
         }
         if (StringUtils.isNotBlank(stichFile)) {
-            MIPsAndMoviesInput stitchedMipsAndMoviesInput = new MIPsAndMoviesInput();
+            AreaMIPsAndMoviesInput stitchedMipsAndMoviesInput = new AreaMIPsAndMoviesInput();
             String key = StringUtils.defaultIfBlank(anatomicalArea, "stitched");
             stitchedMipsAndMoviesInput.setFilepath(stichFile);
             StringBuilder prefixBuilder = new StringBuilder();
@@ -224,8 +224,8 @@ public class SampleAreaResult {
         return mipsAndMoviesInputBuilder.build();
     }
 
-    private MIPsAndMoviesInput mapTilePairResultToMipsAndMoviesInput(MergeTilePairResult mtpr) {
-        MIPsAndMoviesInput tprMipsAndMoviesInput = new MIPsAndMoviesInput();
+    private AreaMIPsAndMoviesInput mapTilePairResultToMipsAndMoviesInput(MergeTilePairResult mtpr) {
+        AreaMIPsAndMoviesInput tprMipsAndMoviesInput = new AreaMIPsAndMoviesInput();
         tprMipsAndMoviesInput.setFilepath(mtpr.getMergeResultFile());
         tprMipsAndMoviesInput.setOutputPrefix(sanitize(sampleName) + "-" + sanitize(mtpr.getTileName()) + (StringUtils.isNotBlank(sampleEffector) ? "-" + sanitize(sampleEffector) : ""));
         tprMipsAndMoviesInput.setChanspec(mtpr.getChannelComponents().channelSpec);

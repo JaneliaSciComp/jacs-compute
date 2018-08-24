@@ -16,7 +16,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.imageservices.MIPGenerationProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.SignalAndReferenceChannelsMIPsProcessor;
 import org.janelia.jacs2.asyncservice.imageservices.StitchAndBlendResult;
 import org.janelia.jacs2.asyncservice.imageservices.Vaa3dStitchAndBlendProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -59,7 +59,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
 
     private final WrappedServiceProcessor<MergeAndGroupSampleTilePairsProcessor, List<SampleAreaResult>> mergeAndGroupSampleTilePairsProcessor;
     private final WrappedServiceProcessor<Vaa3dStitchAndBlendProcessor, StitchAndBlendResult> vaa3dStitchAndBlendProcessor;
-    private final WrappedServiceProcessor<MIPGenerationProcessor, List<File>> mipGenerationProcessor;
+    private final WrappedServiceProcessor<SignalAndReferenceChannelsMIPsProcessor, List<File>> signalAndReferenceChannelsMIPsProcessor;
     private final TimebasedIdentifierGenerator idGenerator;
 
     @Inject
@@ -68,13 +68,13 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                           MergeAndGroupSampleTilePairsProcessor mergeAndGroupSampleTilePairsProcessor,
                           Vaa3dStitchAndBlendProcessor vaa3dStitchAndBlendProcessor,
-                          MIPGenerationProcessor mipGenerationProcessor,
+                          SignalAndReferenceChannelsMIPsProcessor signalAndReferenceChannelsMIPsProcessor,
                           @JacsDefault TimebasedIdentifierGenerator idGenerator,
                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.mergeAndGroupSampleTilePairsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, mergeAndGroupSampleTilePairsProcessor);
         this.vaa3dStitchAndBlendProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, vaa3dStitchAndBlendProcessor);
-        this.mipGenerationProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, mipGenerationProcessor);
+        this.signalAndReferenceChannelsMIPsProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, signalAndReferenceChannelsMIPsProcessor);
         this.idGenerator = idGenerator;
     }
 
@@ -91,6 +91,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
             public SampleResult collectResult(JacsServiceResult<?> depResults) {
                 JacsServiceResult<SampleResult> intermediateResult = (JacsServiceResult<SampleResult>)depResults;
@@ -103,6 +104,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<SampleResult>> process(JacsServiceData jacsServiceData) {
         SampleStitchArgs args = getArgs(jacsServiceData);
@@ -241,7 +243,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
                                             })
                                             ;
                                 })
-                                .orElse(computationFactory.newCompletedComputation(groupedArea));
+                                .orElseGet(() -> computationFactory.newCompletedComputation(groupedArea));
                     } else {
                         return computationFactory.newCompletedComputation(groupedArea);
                     }
@@ -285,7 +287,7 @@ public class SampleStitchProcessor extends AbstractServiceProcessor<SampleResult
     }
 
     private ServiceComputation<JacsServiceResult<List<File>>> generateMips(JacsServiceData jacsServiceData, Path tileFile, Path outputDir, String signalChannels, String referenceChannel, JacsServiceData... deps) {
-        return mipGenerationProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+        return signalAndReferenceChannelsMIPsProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Generate mips")
                         .waitFor(deps)
                         .build(),

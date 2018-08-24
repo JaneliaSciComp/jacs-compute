@@ -16,11 +16,11 @@ import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -67,9 +67,10 @@ public class AbstractExeBasedServiceProcessorTest {
     @Before
     public void setUp() {
         Logger logger = mock(Logger.class);
-        ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         JacsJobInstanceInfoDao jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);
+        @SuppressWarnings("unchecked")
         Instance<ExternalProcessRunner> serviceRunners = mock(Instance.class);
         processRunner = mock(ExternalProcessRunner.class);
         when(processRunner.supports(ProcessingLocation.LOCAL)).thenReturn(true);
@@ -95,10 +96,12 @@ public class AbstractExeBasedServiceProcessorTest {
         testServiceData.setProcessingLocation(ProcessingLocation.LOCAL);
         ExeJobInfo jobInfo = mock(ExeJobInfo.class);
         when(jobInfo.isDone()).thenReturn(true);
-        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class))).thenReturn(jobInfo);
+        when(processRunner.runCmds(any(ExternalCodeBlock.class), anyList(), anyMap(), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class))).thenReturn(jobInfo);
         when(jacsServiceDataPersistence.findById(TEST_SERVICE_ID)).thenReturn(testServiceData);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         testProcessor.processing(new JacsServiceResult<>(testServiceData))
             .whenComplete((r, e) -> {
                 if (e == null) {
@@ -121,9 +124,11 @@ public class AbstractExeBasedServiceProcessorTest {
         ExeJobInfo jobInfo = mock(ExeJobInfo.class);
         when(jobInfo.isDone()).thenReturn(true);
         when(jobInfo.hasFailed()).thenReturn(true);
-        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class))).thenReturn(jobInfo);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        when(processRunner.runCmds(any(ExternalCodeBlock.class), anyList(), anyMap(), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class))).thenReturn(jobInfo);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         testProcessor.processing(new JacsServiceResult<>(testServiceData))
                 .whenComplete((r, e) -> {
                     if (e == null) {
@@ -145,10 +150,12 @@ public class AbstractExeBasedServiceProcessorTest {
         testServiceData.setProcessingLocation(ProcessingLocation.LOCAL);
         ExeJobInfo jobInfo = mock(ExeJobInfo.class);
         when(jobInfo.isDone()).thenReturn(false);
-        when(processRunner.runCmds(any(ExternalCodeBlock.class), any(List.class), any(Map.class), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class)))
+        when(processRunner.runCmds(any(ExternalCodeBlock.class), anyList(), anyMap(), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class)))
                 .thenReturn(jobInfo);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         testProcessor.processing(new JacsServiceResult<>(testServiceData))
                 .whenComplete((r, e) -> {
                     if (e == null) {

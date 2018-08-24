@@ -1,27 +1,29 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.CoreDumpServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
+import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
+import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
-import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.asyncservice.common.ComputationException;
-import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
-import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -35,7 +37,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 
 @Named("mpegConverter")
-public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProcessor<File> {
+public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProcessor<FileConverterResult> {
 
     static class VideoConverterArgs extends ServiceArgs {
         private static final String DEFAULT_OUTPUT_EXT = ".mp4";
@@ -79,8 +81,8 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
     }
 
     @Override
-    public ServiceResultHandler<File> getResultHandler() {
-        return new AbstractSingleFileServiceResultHandler() {
+    public ServiceResultHandler<FileConverterResult> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<FileConverterResult>() {
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
@@ -90,9 +92,14 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
             }
 
             @Override
-            public File collectResult(JacsServiceResult<?> depResults) {
+            public FileConverterResult collectResult(JacsServiceResult<?> depResults) {
                 VideoConverterArgs args = getArgs(depResults.getJacsServiceData());
-                return getOutputFile(args);
+                return new FileConverterResult(args.input, args.getOutputName());
+            }
+
+            @Override
+            public FileConverterResult getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<FileConverterResult>() {});
             }
         };
     }

@@ -28,6 +28,7 @@ public class JacsScheduledServiceDataPersistenceTest {
     private JacsScheduledServiceDataDao dao;
     private JacsScheduledServiceDataPersistence jacsScheduledServiceDataPersistence;
 
+    @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
         daoSource = Mockito.mock(Instance.class);
@@ -56,7 +57,7 @@ public class JacsScheduledServiceDataPersistenceTest {
         assertThat(scheduledServices, Matchers.everyItem(Matchers.hasProperty("id", new TypeSafeMatcher<Integer>() {
             @Override
             protected boolean matchesSafely(Integer item) {
-                return item.intValue() % 2 == 0;
+                return item % 2 == 0;
             }
 
             @Override

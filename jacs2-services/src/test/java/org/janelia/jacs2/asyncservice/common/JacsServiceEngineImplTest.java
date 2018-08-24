@@ -5,28 +5,24 @@ import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
+import org.janelia.model.service.JacsServiceData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
-
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -41,6 +37,7 @@ public class JacsServiceEngineImplTest {
     private Logger logger;
     private int idSequence = 1;
 
+    @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
@@ -60,7 +57,7 @@ public class JacsServiceEngineImplTest {
     @Test
     public void increaseNumberOfSlots() {
         PageResult<JacsServiceData> serviceDataPageResult = new PageResult<>();
-        when(jacsServiceDataPersistence.findServicesByState(any(Set.class), any(PageRequest.class))).thenReturn(serviceDataPageResult);
+        when(jacsServiceDataPersistence.findServicesByState(anySet(), any(PageRequest.class))).thenReturn(serviceDataPageResult);
         int nSlots = 110;
         jacsServiceEngine.setProcessingSlotsCount(0);
         jacsServiceEngine.setProcessingSlotsCount(nSlots);
@@ -81,6 +78,7 @@ public class JacsServiceEngineImplTest {
         assertThat(stats.getRunningServicesCount(), equalTo(3));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void prioritiesMustBeDescending() {
         List<JacsServiceData> services = ImmutableList.of(

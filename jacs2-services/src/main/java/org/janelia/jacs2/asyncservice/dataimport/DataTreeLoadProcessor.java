@@ -2,11 +2,7 @@ package org.janelia.jacs2.asyncservice.dataimport;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Streams;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -18,137 +14,67 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.imageservices.ImageMagickConverterProcessor;
-import org.janelia.jacs2.asyncservice.imageservices.Vaa3dMipCmdProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
+import org.janelia.jacs2.asyncservice.imageservices.MultiInputMIPsAndMoviesProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
 import org.janelia.model.domain.enums.FileType;
-import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+/**
+ * This service creates a TreeNode for the given storage content. Optionally it can also generate and register the MIPs
+ * as well for the storage content.
+ */
 @Named("dataTreeLoad")
-public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTreeLoadProcessor.DataLoadResult>> {
+public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<ContentStack>> {
 
-    private static final String TIFF_EXTENSION = ".tif";
-    private static final String PNG_EXTENSION = ".png";
-
-    static class DataTreeLoadArgs extends ServiceArgs {
-        @Parameter(names = "-folderName", description = "Folder name", required = true)
-        String folderName;
-        @Parameter(names = "-parentFolderId", description = "Parent folder ID")
-        Long parentFolderId;
-        @Parameter(names = "-storageLocation", description = "Data storage location", required = true)
-        String storageLocation;
-        @Parameter(names = "-losslessImgExtensions", description = "list of extensions for which to generate mips")
-        List<String> losslessImgExtensions = new ArrayList<>(ImmutableList.of(
-                ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw"
-        ));
-        @Parameter(names = "-mipsExtensions", description = "list of extensions for which to generate mips")
-        List<String> mipsExtensions = new ArrayList<>(ImmutableList.of(
-                ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd"
-        ));
+    static class DataTreeLoadArgs extends CommonDataNodeArgs {
+        @Parameter(names = {"-storageLocation", "-storageLocationURL"}, description = "Data storage location URL", required = true)
+        String storageLocationURL;
+        @Parameter(names = "-storagePath", description = "Data storage path relative to the storageURL")
+        String storagePath;
         @Parameter(names = "-fileTypeOverride", description = "Override file type for all imported files", required = false)
         FileType fileTypeOverride;
         @Parameter(names = "-cleanLocalFilesWhenDone", description = "Clean up local files when all data loading is done")
         boolean cleanLocalFilesWhenDone = false;
-    }
+        @Parameter(names = "-cleanStorageOnFailure", description = "If this flag is set - clean up the storage if the indexing operation failed")
+        boolean cleanStorageOnFailure = false;
 
-    static class DataLoadResult {
-        private Number folderId;
-        private StorageService.StorageInfo remoteContent;
-        private Path localContentPath;
-        private Path localContentMipsPath;
-        private StorageService.StorageInfo remoteContentMips;
-        private String remoteContentMipsUrl;
-
-        public Number getFolderId() {
-            return folderId;
-        }
-
-        public void setFolderId(Number folderId) {
-            this.folderId = folderId;
-        }
-
-        public StorageService.StorageInfo getRemoteContent() {
-            return remoteContent;
-        }
-
-        public void setRemoteContent(StorageService.StorageInfo remoteContent) {
-            this.remoteContent = remoteContent;
-        }
-
-        public Path getLocalContentPath() {
-            return localContentPath;
-        }
-
-        public void setLocalContentPath(Path localContentPath) {
-            this.localContentPath = localContentPath;
-        }
-
-        public Path getLocalContentMipsPath() {
-            return localContentMipsPath;
-        }
-
-        public void setLocalContentMipsPath(Path localContentMipsPath) {
-            this.localContentMipsPath = localContentMipsPath;
-        }
-
-        public StorageService.StorageInfo getRemoteContentMips() {
-            return remoteContentMips;
-        }
-
-        public void setRemoteContentMips(StorageService.StorageInfo remoteContentMips) {
-            this.remoteContentMips = remoteContentMips;
-        }
-
-        public String getRemoteContentMipsUrl() {
-            return remoteContentMipsUrl;
-        }
-
-        public void setRemoteContentMipsUrl(String remoteContentMipsUrl) {
-            this.remoteContentMipsUrl = remoteContentMipsUrl;
+        DataTreeLoadArgs() {
+            super("Service that creates a TreeNode for the specified storage content");
         }
     }
 
-    private final FolderService folderService;
-    private final StorageService storageService;
-    private final WrappedServiceProcessor<Vaa3dMipCmdProcessor, List<File>> vaa3dMipCmdProcessor;
-    private final WrappedServiceProcessor<ImageMagickConverterProcessor, List<File>> imageMagickConverterProcessor;
+    private final WrappedServiceProcessor<MultiInputMIPsAndMoviesProcessor, List<MIPsAndMoviesResult>> mipsConverterProcessor;
+    private final StorageContentHelper storageContentHelper;
+    private final DataNodeContentHelper dataNodeContentHelper;
 
     @Inject
     DataTreeLoadProcessor(ServiceComputationFactory computationFactory,
                           JacsServiceDataPersistence jacsServiceDataPersistence,
                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                          FolderService folderService,
+                          MultiInputMIPsAndMoviesProcessor mipsConverterProcessor,
                           StorageService storageService,
-                          Vaa3dMipCmdProcessor vaa3dMipCmdProcessor,
-                          ImageMagickConverterProcessor imageMagickConverterProcessor,
+                          FolderService folderService,
                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.folderService = folderService;
-        this.storageService = storageService;
-        this.vaa3dMipCmdProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, vaa3dMipCmdProcessor);
-        this.imageMagickConverterProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, imageMagickConverterProcessor);
+        this.mipsConverterProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, mipsConverterProcessor);
+        this.storageContentHelper = new StorageContentHelper(computationFactory, storageService, logger);
+        this.dataNodeContentHelper = new DataNodeContentHelper(computationFactory, folderService, logger);
     }
 
     @Override
@@ -157,30 +83,63 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
     }
 
     @Override
-    public ServiceResultHandler<List<DataLoadResult>> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<List<DataLoadResult>>() {
+    public ServiceResultHandler<List<ContentStack>> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<List<ContentStack>>() {
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
             }
 
+            @SuppressWarnings("unchecked")
             @Override
-            public List<DataLoadResult> collectResult(JacsServiceResult<?> depResults) {
-                JacsServiceResult<List<DataLoadResult>> intermediateResult = (JacsServiceResult<List<DataLoadResult>>)depResults;
+            public List<ContentStack> collectResult(JacsServiceResult<?> depResults) {
+                JacsServiceResult<List<ContentStack>> intermediateResult = (JacsServiceResult<List<ContentStack>>)depResults;
                 return intermediateResult.getResult();
             }
 
-            public List<DataLoadResult> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<DataLoadResult>>() {});
+            public List<ContentStack> getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<StorageContentInfo>>() {});
             }
         };
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<List<DataLoadResult>>> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<List<ContentStack>>> process(JacsServiceData jacsServiceData) {
+        DataTreeLoadArgs args = getArgs(jacsServiceData);
         return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenCompose(this::generateMips)
+                .thenCompose(sd -> storageContentHelper.listContent(jacsServiceData, args.storageLocationURL, args.storagePath))
+                .thenCompose(storageContentResult -> generateContentMIPs(storageContentResult.getJacsServiceData(), storageContentResult.getResult()))
+                .thenCompose(mipsContentResult -> storageContentHelper.uploadContent(
+                        mipsContentResult.getJacsServiceData(),
+                        args.storageLocationURL,
+                        mipsContentResult.getResult())
+                )
+                .thenCompose(storageContentResult -> args.standaloneMIPS
+                        ? dataNodeContentHelper.addStandaloneContentToTreeNode(
+                                storageContentResult.getJacsServiceData(),
+                                args.dataNodeName,
+                                args.parentDataNodeId,
+                                FileType.Unclassified2d,
+                                storageContentResult.getResult())
+                        : dataNodeContentHelper.addContentStackToTreeNode(
+                                storageContentResult.getJacsServiceData(),
+                                args.dataNodeName,
+                                args.parentDataNodeId,
+                                FileType.Unclassified2d,
+                                storageContentResult.getResult()))
+                .thenCompose(storageContentResult -> cleanLocalContent(storageContentResult.getJacsServiceData(), storageContentResult.getResult()))
                 .thenApply(sr -> updateServiceResult(sr.getJacsServiceData(), sr.getResult()))
+                .whenComplete((r, exc) -> {
+                    if (exc != null && args.cleanStorageOnFailure) {
+                        logger.info("Remove storage data from {} due to processing error", args.storageLocationURL, exc);
+                        // in case of a failure remove the content
+                        storageContentHelper.removeContent(jacsServiceData, args.storageLocationURL, args.storagePath);
+                        jacsServiceDataPersistence.addServiceEvent(
+                                jacsServiceData,
+                                JacsServiceData.createServiceEvent(JacsServiceEventTypes.REMOVE_DATA,
+                                        String.format("Removed storage data from %s due to processing error %s", args.storageLocationURL, exc.toString())));
+                    }
+                })
                 ;
     }
 
@@ -188,185 +147,58 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<DataTre
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new DataTreeLoadArgs());
     }
 
-    private ServiceComputation<JacsServiceResult<List<DataLoadResult>>> generateMips(JacsServiceData jacsServiceData) {
+    private ServiceComputation<JacsServiceResult<List<ContentStack>>> generateContentMIPs(JacsServiceData jacsServiceData, List<ContentStack> contentList) {
         DataTreeLoadArgs args = getArgs(jacsServiceData);
-        FileType fileTypeOverride = args.fileTypeOverride;
-        List<StorageService.StorageInfo> contentToLoad = storageService.listStorageContent(args.storageLocation, jacsServiceData.getOwnerKey());
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        List<DataLoadResult> contentWithMips = contentToLoad.stream()
-                .filter(entry -> !entry.isCollectionFlag())
-                .filter(entry -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getEntryRelativePath())))
-                .map((StorageService.StorageInfo content) -> {
-                    try {
-                        Path localStoredMipSource = Paths.get(content.getEntryRootLocation(), content.getEntryRelativePath());
-                        Path mipSourcePath;
-                        if (Files.exists(localStoredMipSource)) {
-                            mipSourcePath = localStoredMipSource;
-                        } else {
-                            Path mipSourceRootPath = serviceWorkingFolder.getServiceFolder("temp");
-                            mipSourcePath = mipSourceRootPath.resolve(FileUtils.getFileName(content.getEntryRelativePath()));
-                        }
-                        if (Files.notExists(mipSourcePath) || Files.size(mipSourcePath) == 0) {
-                            // no local copy found
-                            Files.createDirectories(mipSourcePath.getParent());
-                            Files.copy(storageService.getStorageContent(args.storageLocation, content.getEntryRelativePath(), jacsServiceData.getOwnerKey()), mipSourcePath, StandardCopyOption.REPLACE_EXISTING);
-                        }
-                        Path mipsDirPath = mipSourcePath.getParent();
-                        String tifMipsName = FileUtils.getFileNameOnly(mipSourcePath) + "_mipArtifact" + TIFF_EXTENSION;
-                        Path tifMipsPath = mipsDirPath == null ? Paths.get(tifMipsName) : mipsDirPath.resolve(tifMipsName);
-
-                        DataLoadResult dataLoadResult = new DataLoadResult();
-                        dataLoadResult.remoteContent = content;
-                        dataLoadResult.localContentPath = mipSourcePath;
-                        dataLoadResult.localContentMipsPath = tifMipsPath;
-                        dataLoadResult.remoteContentMips = new StorageService.StorageInfo(
-                                content.getStorageLocation(),
-                                content.getEntryRootLocation(),
-                                content.getEntryRootPrefix(),
-                                FileUtils.getFilePath(Paths.get(content.getEntryRelativePath()).getParent(), tifMipsName).toString(),
-                                false);
-                        return dataLoadResult;
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                })
-                .collect(Collectors.toList());
-        List<DataLoadResult> contentWithoutMips = contentToLoad.stream()
-                .filter(entry -> !entry.isCollectionFlag())
-                .filter(entry -> !args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getEntryRelativePath())))
-                .map(content -> {
-                    DataLoadResult dataLoadResult = new DataLoadResult();
-                    dataLoadResult.remoteContent = content;
-                    return dataLoadResult;
-                })
-                .collect(Collectors.toList());
-
-        ServiceComputation<JacsServiceResult<List<DataLoadResult>>> mipsComputation;
-        if (contentWithMips.isEmpty()) {
-            mipsComputation = computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, ImmutableList.of()));
-        } else {
-            mipsComputation = createMipsComputation(jacsServiceData, contentWithMips);
-        }
-        return mipsComputation.thenApply((JacsServiceResult<List<DataLoadResult>> mipsResult) -> {
-            TreeNode dataFolder = folderService.createFolder(args.parentFolderId, args.folderName, jacsServiceData.getOwnerKey());
-            List<DataLoadResult> dataLoadResults = Streams.concat(mipsResult.getResult().stream(), contentWithoutMips.stream())
-                    .peek(mipsInfo -> {
-                        mipsInfo.setFolderId(dataFolder.getId());
-                        folderService.addImageFile(dataFolder, mipsInfo.remoteContent.getEntryPath(), getFileTypeByExtension(mipsInfo.remoteContent.getEntryPath(), args.losslessImgExtensions, fileTypeOverride), jacsServiceData.getOwnerKey());
-                        File mipsFile = mipsInfo.localContentMipsPath != null ? mipsInfo.localContentMipsPath.toFile() : null;
-                        if (mipsFile != null) {
-                            FileInputStream mipsStream = null;
-                            try {
-                                mipsStream = new FileInputStream(mipsFile);
-                                StorageService.StorageInfo mipsStorageEntry = storageService.putStorageContent(mipsInfo.remoteContentMips.getStorageLocation(), mipsInfo.remoteContentMips.getEntryRelativePath(), jacsServiceData.getOwnerKey(), mipsStream);
-                                mipsInfo.remoteContentMipsUrl = mipsStorageEntry.getStorageLocation();
-                                folderService.addImageFile(dataFolder, mipsStorageEntry.getEntryPath(), FileType.SignalMip, jacsServiceData.getOwnerKey());
-                            } catch (Exception e) {
-                                throw new ComputationException(jacsServiceData, e);
-                            } finally {
-                                if (mipsStream != null) {
-                                    try {
-                                        mipsStream.close();
-                                    } catch (IOException e) {
-                                        logger.warn("Error closing MIP stream", e);
-                                    }
-                                }
-                             }
-                        }
-                        if (args.cleanLocalFilesWhenDone) {
-                            try {
-                                FileUtils.deletePath(mipsInfo.localContentPath);
-                            } catch (IOException e) {
-                                logger.warn("Error deleting {}", mipsInfo.localContentPath, e);
-                            }
-                            try {
-                                FileUtils.deletePath(mipsInfo.localContentMipsPath);
-                            } catch (IOException e) {
-                                logger.warn("Error deleting {}", mipsInfo.localContentMipsPath, e);
-                            }
-                        }
-                    })
+        if (args.generateMIPS()) {
+            JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+            Path localMIPSRootPath = serviceWorkingFolder.getServiceFolder("mips");
+            // for the mips inputs it only check if the extension matches the one that require mips - it does not check if the MIPs already exist.
+            List<ContentStack> mipsInputList = contentList.stream()
+                    .filter((ContentStack entry) -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getMainRep().getRemoteInfo().getEntryRelativePath())))
                     .collect(Collectors.toList());
-            return new JacsServiceResult<>(jacsServiceData, dataLoadResults);
-        });
-    }
-
-    @SuppressWarnings("unchecked")
-    private ServiceComputation<JacsServiceResult<List<DataLoadResult>>> createMipsComputation(JacsServiceData jacsServiceData, List<DataLoadResult> mipsInputs) {
-        return vaa3dMipCmdProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
-                        .description("Generate mips")
-                        .build(),
-                new ServiceArg("-inputFiles",
-                        mipsInputs.stream()
-                                .map((DataLoadResult mipSource) -> mipSource.localContentPath.toString())
-                                .reduce((p1, p2) -> p1 + "," + p2)
-                                .orElse("")
-                ),
-                new ServiceArg("-outputFiles",
-                        mipsInputs.stream()
-                                .map((DataLoadResult mipSource) -> mipSource.localContentMipsPath.toString())
-                                .reduce((p1, p2) -> p1 + "," + p2)
-                                .orElse("")
-                ))
-                .thenCompose(tifMipsResults -> imageMagickConverterProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
-                                    .description("Convert mips to png")
-                                    .waitFor(tifMipsResults.getJacsServiceData())
+            return storageContentHelper.downloadContent(jacsServiceData, localMIPSRootPath, mipsInputList) // only download the entries for which we need to generate MIPs
+                    .thenCompose((JacsServiceResult<List<ContentStack>> downloadedMipsInputsResult) -> mipsConverterProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                                    .description("Generate MIPs")
                                     .build(),
-                            new ServiceArg("-inputFiles",
-                                    tifMipsResults.getResult().stream()
-                                            .map((File tifMipResultFile) -> tifMipResultFile.getAbsolutePath())
-                                            .reduce((p1, p2) -> p1 + "," + p2)
-                                            .orElse("")
-                            ),
-                            new ServiceArg("-outputFiles",
-                                    tifMipsResults.getResult().stream()
-                                            .map((File tifMipResultFile) -> FileUtils.replaceFileExt(tifMipResultFile.toPath(), PNG_EXTENSION).toString())
-                                            .reduce((p1, p2) -> p1 + "," + p2)
-                                            .orElse("")
-                            )))
-                .thenApply(pngMipsResults -> {
-                    Map<Path, Path> tif2pngConversions = pngMipsResults.getResult().stream()
-                            .map((File pngMipResultFile) -> {
-                                Path converterInput = FileUtils.replaceFileExt(pngMipResultFile.toPath(), TIFF_EXTENSION);
-                                try {
-                                    logger.debug("Delete TIFF file {} after it was converted to PNG: {}", converterInput, pngMipResultFile);
-                                    FileUtils.deletePath(converterInput);
-                                } catch (IOException e) {
-                                    logger.warn("Error deleting {}", converterInput, e);
-                                }
-                                return ImmutablePair.of(converterInput, pngMipResultFile.toPath());
-                            })
-                            .collect(Collectors.toMap(tif2png -> tif2png.getLeft(), tif2png -> tif2png.getRight()));
-                    ;
-                    List<DataLoadResult> mipsResults = mipsInputs.stream()
-                            .map(mipsInput -> {
-                                DataLoadResult mipsResult = new DataLoadResult();
-                                mipsResult.setFolderId(mipsInput.getFolderId());
-                                mipsResult.remoteContent = mipsInput.remoteContent;
-                                mipsResult.localContentPath = mipsInput.localContentPath;
-                                mipsResult.localContentMipsPath = tif2pngConversions.get(mipsInput.localContentMipsPath);
-                                mipsResult.remoteContentMips = new StorageService.StorageInfo(
-                                        mipsInput.remoteContentMips.getStorageLocation(),
-                                        mipsInput.remoteContentMips.getEntryRootLocation(),
-                                        mipsInput.remoteContentMips.getEntryRootPrefix(),
-                                        FileUtils.replaceFileExt(Paths.get(mipsInput.remoteContentMips.getEntryRelativePath()), PNG_EXTENSION).toString(),
-                                        false);
-                                return mipsResult;
-
-                            })
-                            .collect(Collectors.toList());
-                    return new JacsServiceResult<>(pngMipsResults.getJacsServiceData(), mipsResults);
-                });
+                            new ServiceArg("-inputFiles", downloadedMipsInputsResult.getResult().stream()
+                                    .map(contentEntryInfo -> contentEntryInfo.getMainRep().getLocalFullPath().toString())
+                                    .reduce((p1, p2) -> p1 + "," + p2)
+                                    .orElse("")),
+                            new ServiceArg("-outputDir", localMIPSRootPath.toString()),
+                            new ServiceArg("-chanSpec", args.mipsChanSpec),
+                            new ServiceArg("-colorSpec", args.mipsColorSpec),
+                            new ServiceArg("-options", args.mipsOptions))
+                    )
+                    .thenApply(mipsResults -> new JacsServiceResult<>(
+                            jacsServiceData,
+                                    storageContentHelper.addContentMips(contentList, localMIPSRootPath, mipsResults.getResult())));
+        } else {
+            return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, contentList));
+        }
     }
 
-    private FileType getFileTypeByExtension(String fileArtifact, List<String> losslessImageExtensions, FileType fileTypeOverride) {
-        if (fileTypeOverride != null) {
-            return fileTypeOverride;
+    private ServiceComputation<JacsServiceResult<List<ContentStack>>> cleanLocalContent(JacsServiceData jacsServiceData, List<ContentStack> contentList) {
+        DataTreeLoadArgs args = getArgs(jacsServiceData);
+        if (args.cleanLocalFilesWhenDone) {
+            return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
+                    .supply(() -> new JacsServiceResult<>(jacsServiceData, contentList.stream()
+                            .peek((ContentStack contentEntry) -> {
+                                Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
+                                        .forEach(sci -> {
+                                            if (sci.getLocalRelativePath() != null) {
+                                                Path localContentPath = sci.getLocalFullPath();
+                                                logger.info("Clean local file {} ", localContentPath);
+                                                try {
+                                                    FileUtils.deletePath(localContentPath);
+                                                } catch (IOException e) {
+                                                    logger.warn("Error deleting {}", localContentPath, e);
+                                                }
+                                            }
+                                        });
+                            })
+                            .collect(Collectors.toList())));
+        } else {
+            return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, contentList));
         }
-        String fileArtifactExt = FileUtils.getFileExtensionOnly(fileArtifact);
-        if (losslessImageExtensions.contains(fileArtifactExt)) {
-            return FileType.LosslessStack;
-        }
-        return FileType.Unclassified2d;
     }
 }

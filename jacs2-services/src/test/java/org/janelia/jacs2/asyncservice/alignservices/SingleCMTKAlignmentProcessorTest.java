@@ -2,7 +2,7 @@ package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
@@ -50,7 +50,7 @@ public class SingleCMTKAlignmentProcessorTest {
     public void setUp() throws IOException {
         Logger logger = mock(Logger.class);
 
-        ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory computationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
 
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         JacsJobInstanceInfoDao jacsJobInstanceInfoDao = mock(JacsJobInstanceInfoDao.class);

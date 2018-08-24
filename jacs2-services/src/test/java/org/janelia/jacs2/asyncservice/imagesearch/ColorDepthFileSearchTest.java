@@ -1,31 +1,50 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
-import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.spark.SparkApp;
 import org.janelia.jacs2.asyncservice.common.spark.SparkCluster;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({
+        ColorDepthFileSearch.class,
+        FileUtils.class
+})
 public class ColorDepthFileSearchTest {
+
+    private static final String TEST_WORKSPACE = "testColorDepthLocalWorkspace";
 
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private JacsJobInstanceInfoDao jacsJobInstanceInfoDao;
@@ -42,6 +61,7 @@ public class ColorDepthFileSearchTest {
 
     private ColorDepthFileSearch colorDepthFileSearch;
 
+    @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
@@ -53,7 +73,7 @@ public class ColorDepthFileSearchTest {
         Mockito.when(cluster.isReady()).thenReturn(true);
         Mockito.when(sparkApp.isDone()).thenReturn(true);
         Logger logger = mock(Logger.class);
-        ServiceComputationFactory serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
 
         colorDepthFileSearch = new ColorDepthFileSearch(serviceComputationFactory,
                 jacsServiceDataPersistence,
@@ -68,10 +88,19 @@ public class ColorDepthFileSearchTest {
                 logger);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void process() throws Exception {
         JacsServiceData testService = createTestServiceData(1L, "test");
         JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
+
+        PowerMockito.mockStatic(Files.class);
+        Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
+        Mockito.when(Files.find(any(Path.class), anyInt(), any(BiPredicate.class))).then(invocation -> {
+            Path root = invocation.getArgument(0);
+            return Stream.of(root.resolve("f1_results.txt"));
+        });
+
         Mockito.when(cluster.runApp(null, null,
                 "-m", "f1", "f2", "f3", "-i", "s1,s2",
                 "--maskThresholds", "100", "100", "100",
@@ -85,8 +114,10 @@ public class ColorDepthFileSearchTest {
 
         ServiceComputation<JacsServiceResult<List<File>>> colorDepthFileSearchComputation = colorDepthFileSearch.process(testService);
 
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<List<File>>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         colorDepthFileSearchComputation
                 .thenApply(r -> {
                     successful.accept(r);
@@ -113,7 +144,7 @@ public class ColorDepthFileSearchTest {
                 .addArgs("-pctPositivePixels", "10.0")
                 ;
         JacsServiceData testServiceData = testServiceDataBuilder
-                .setWorkspace("testlocal")
+                .setWorkspace(TEST_WORKSPACE)
                 .build();
         testServiceData.setId(serviceId);
         testServiceData.setName("colorDepthFileSearch");

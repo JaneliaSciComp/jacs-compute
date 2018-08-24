@@ -1,7 +1,6 @@
 package org.janelia.jacs2.app;
 
 import com.beust.jcommander.DynamicParameter;
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import io.swagger.jersey.config.JerseyJaxrsConfig;
 import io.undertow.Handlers;
@@ -10,18 +9,18 @@ import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.resource.PathResourceManager;
 import io.undertow.server.handlers.resource.ResourceHandler;
 import io.undertow.servlet.Servlets;
-import io.undertow.servlet.api.*;
+import io.undertow.servlet.api.DeploymentInfo;
+import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.ListenerInfo;
+import io.undertow.servlet.api.ServletInfo;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
-import org.janelia.jacs2.filter.AuthFilter;
-import org.janelia.jacs2.filter.CORSResponseFilter;
 import org.jboss.weld.environment.servlet.Listener;
 import org.jboss.weld.module.web.servlet.WeldInitialListener;
 import org.jboss.weld.module.web.servlet.WeldTerminalListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -115,8 +114,6 @@ public abstract class AbstractServicesApp {
                         .setClassLoader(this.getClass().getClassLoader())
                         .setContextPath(contextPath)
                         .setDeploymentName(restApiName)
-                        .addFilter(new FilterInfo("corsFilter", CORSResponseFilter.class))
-                        .addFilterUrlMapping("corsFilter", "/*", DispatcherType.REQUEST)
                         .addListener(Servlets.listener(WeldInitialListener.class))
                         .addListener(Servlets.listener(Listener.class))
                         .addListeners(getAppListeners())

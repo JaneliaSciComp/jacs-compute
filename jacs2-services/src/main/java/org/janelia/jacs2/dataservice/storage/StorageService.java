@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
+import org.janelia.model.jacs2.page.PageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,53 +17,14 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class StorageService {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageService.class);
 
-    public static class StorageInfo {
-        private final String storageLocation;
-        private final String entryRootPrefix;
-        private final String entryRootLocation;
-        private final String entryRelativePath;
-        private final boolean collectionFlag;
-
-        public StorageInfo(String storageLocation, String entryRootLocation, String entryRootPrefix, String entryRelativePath, boolean collectionFlag) {
-            this.storageLocation = storageLocation;
-            this.entryRootLocation = entryRootLocation;
-            this.entryRootPrefix = entryRootPrefix;
-            this.entryRelativePath = entryRelativePath;
-            this.collectionFlag = collectionFlag;
-        }
-
-        public String getStorageLocation() {
-            return storageLocation;
-        }
-
-        public String getEntryRootLocation() {
-            return entryRootLocation;
-        }
-
-        public String getEntryRootPrefix() {
-            return entryRootPrefix;
-        }
-
-        public String getEntryRelativePath() {
-            return entryRelativePath;
-        }
-
-        public String getEntryPath() {
-            return Paths.get(entryRootPrefix, entryRelativePath).toString();
-        }
-
-        public boolean isCollectionFlag() {
-            return collectionFlag;
-        }
-    }
     private final String storageServiceApiKey;
 
     @Inject
@@ -70,19 +32,90 @@ public class StorageService {
         this.storageServiceApiKey = storageServiceApiKey;
     }
 
-    public InputStream getStorageContent(String storageLocation, String entryName, String subject) {
+    public Optional<DataStorageInfo> lookupStorage(String storageServiceURL, String storageId, String storageName, String subject, String authToken) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageLocation).path("entry_content").path(entryName);
+            WebTarget target = httpclient.target(storageServiceURL);
+            if (!StringUtils.endsWith(storageServiceURL, "/storage")) {
+                target = target.path("storage");
+            }
+            if (StringUtils.isNotBlank(storageId)) {
+                target = target.queryParam("id", storageId);
+            }
+            if (StringUtils.isNotBlank(storageName)) {
+                target = target.queryParam("name", storageName);
+            }
+            if (StringUtils.isNotBlank(subject)) {
+                target = target.queryParam("ownerKey", subject);
+            }
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subject, authToken);
+            Response response = requestBuilder.get();
+            int responseStatus = response.getStatus();
+            if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
+                LOG.warn("Request {} returned status {}", target, responseStatus);
+                return Optional.empty();
+            } else {
+                PageResult<DataStorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<DataStorageInfo>>(){});
+                if (storageInfoResult.getResultList().size() > 1) {
+                    LOG.warn("Request {} returned more than one result {} please refine the query", target, storageInfoResult);
+                    return storageInfoResult.getResultList().stream().findFirst();
+                } else {
+                    return storageInfoResult.getResultList().stream().findFirst();
+                }
+            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpclient != null) {
+                httpclient.close();
+            }
+        }
+    }
 
-            Invocation.Builder requestBuilder = target.request()
-                    .header("Authorization", "APIKEY " + storageServiceApiKey)
-                    .header("JacsSubject", StringUtils.defaultIfBlank(subject, ""))
-                    ;
+    public DataStorageInfo createStorage(String storageServiceURL, String storageName, List<String> storageTags, String subject, String authToken) {
+        Client httpclient = null;
+        try {
+            httpclient = HttpUtils.createHttpClient();
+            WebTarget target = httpclient.target(storageServiceURL);
+            if (!StringUtils.endsWith(storageServiceURL, "/storage")) {
+                target = target.path("storage");
+            }
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subject, authToken);
+            DataStorageInfo storageData = new DataStorageInfo();
+            storageData.setName(storageName);
+            storageData.setOwnerKey(subject);
+            storageData.setStorageFormat("DATA_DIRECTORY");
+            storageData.setStorageTags(storageTags);
+            Response response = requestBuilder.post(Entity.json(storageData));
+            int responseStatus = response.getStatus();
+            if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
+                LOG.warn("Error while trying to create storage {} for {} using {} - returned status {}", storageName, subject, target, responseStatus);
+                throw new IllegalStateException("Error while trying to create storage " + storageName + " for " + subject);
+            }
+            return response.readEntity(DataStorageInfo.class);
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpclient != null) {
+                httpclient.close();
+            }
+        }
+    }
+
+    public InputStream getStorageContent(String storageEntryURL, String entryName, String subject, String authToken) {
+        Client httpclient = null;
+        try {
+            httpclient = HttpUtils.createHttpClient();
+            WebTarget target = httpclient.target(storageEntryURL);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
+                throw new IllegalStateException(storageEntryURL + "for " + entryName + " returned with " + response.getStatus());
             }
             return response.readEntity(InputStream.class);
         } catch (IllegalStateException e) {
@@ -96,27 +129,22 @@ public class StorageService {
         }
     }
 
-    public StorageInfo putStorageContent(String storageLocation, String entryName, String subject, InputStream dataStream) {
+    public StorageEntryInfo putStorageContent(String storageURL, String entryName, String subject, String authToken, InputStream dataStream) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageLocation).path("file").path(entryName);
-
-            Invocation.Builder requestBuilder = target.request()
-                    .header("Authorization", "APIKEY " + storageServiceApiKey)
-                    .header("JacsSubject", StringUtils.defaultIfBlank(subject, ""));
-            Response response = requestBuilder.post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            WebTarget target = httpclient.target(storageURL).path("file").path(entryName);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
+            Response response = requestBuilder.put(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
             String entryLocationUrl;
             if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
                 entryLocationUrl = response.getHeaderString("Location");
-            } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
-                LOG.warn("Entry {} already exists at {}", entryName, storageLocation);
-                entryLocationUrl = response.getHeaderString("Location");
+                JsonNode storageNode = response.readEntity(new GenericType<JsonNode>(){});
+                return extractStorageNodeFromJson(storageURL, entryLocationUrl, null, storageNode);
             } else {
-                throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
+                LOG.warn("Put content using {} return status {}", target, response.getStatus());
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
-            JsonNode storageNode = response.readEntity(new GenericType<JsonNode>(){});
-            return extractStorageNodeFromJson(entryLocationUrl, storageNode);
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
@@ -128,23 +156,26 @@ public class StorageService {
         }
     }
 
-    public List<StorageInfo> listStorageContent(String storageLocation, String subject) {
+    public List<StorageEntryInfo> listStorageContent(String storageLocationURL,
+                                                     String storagePath,
+                                                     String subject,
+                                                     String authToken) {
         Client httpclient = null;
         try {
             httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageLocation).path("list");
-
-            Invocation.Builder requestBuilder = target.request(MediaType.APPLICATION_JSON)
-                    .header("Authorization", "APIKEY " + storageServiceApiKey)
-                    .header("JacsSubject", StringUtils.defaultIfBlank(subject, ""))
-                    ;
+            WebTarget target = httpclient.target(storageLocationURL).path("list");
+            if (StringUtils.isNotBlank(storagePath)) {
+                target = target.path(storagePath);
+            }
+            Invocation.Builder requestBuilder = createRequestWithCredentials(
+                    target.request(MediaType.APPLICATION_JSON), subject, authToken);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new IllegalStateException(storageLocation + " returned with " + response.getStatus());
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
             List<JsonNode> storageCotent = response.readEntity(new GenericType<List<JsonNode>>(){});
             return storageCotent.stream()
-                    .map(content -> extractStorageNodeFromJson(storageLocation, content))
+                    .map(content -> extractStorageNodeFromJson(storageLocationURL, null, storagePath, content))
                     .collect(Collectors.toList());
         } catch (IllegalStateException e) {
             throw e;
@@ -157,11 +188,80 @@ public class StorageService {
         }
     }
 
-    private StorageInfo extractStorageNodeFromJson(String storageUrl, JsonNode jsonNode) {
-        JsonNode rootLocation = jsonNode.get("rootLocation");
-        JsonNode rootPrefix = jsonNode.get("rootPrefix");
+    public void removeStorageContent(String storageLocationURL, String storagePath, String subject, String authToken) {
+        Client httpclient = null;
+        try {
+            httpclient = HttpUtils.createHttpClient();
+            WebTarget target = httpclient.target(storageLocationURL);
+            if (StringUtils.isNotBlank(storagePath)) {
+                target = target.path(storagePath);
+            }
+            Invocation.Builder requestBuilder = createRequestWithCredentials(
+                    target.request(MediaType.APPLICATION_JSON), subject, authToken);
+            Response response = requestBuilder.delete();
+            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
+            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpclient != null) {
+                httpclient.close();
+            }
+        }
+    }
+
+    private Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, String jacsPrincipal, String authToken) {
+        Invocation.Builder requestWithCredentialsBuilder = requestBuilder;
+        if (StringUtils.isNotBlank(authToken)) {
+            requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
+                    "Authorization",
+                    "Bearer " + authToken);
+        } else if (StringUtils.isNotBlank(storageServiceApiKey)) {
+            requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
+                    "Authorization",
+                    "APIKEY " + storageServiceApiKey);
+        }
+        if (StringUtils.isNotBlank(jacsPrincipal)) {
+            requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
+                    "JacsSubject",
+                    jacsPrincipal);
+        }
+        return requestWithCredentialsBuilder;
+    }
+
+    private StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storageEntryUrl, String storagePath, JsonNode jsonNode) {
+        JsonNode storageIdNode = jsonNode.get("storageId");
+        JsonNode storageRootLocation = jsonNode.get("storageRootLocation");
+        JsonNode storageRootPathURI = jsonNode.get("storageRootPathURI");
+        JsonNode nodeAccessURL = jsonNode.get("nodeAccessURL");
         JsonNode nodeRelativePath = jsonNode.get("nodeRelativePath");
         JsonNode collectionFlag = jsonNode.get("collectionFlag");
-        return new StorageInfo(storageUrl,rootLocation.asText(), rootPrefix.asText(), nodeRelativePath.asText(), collectionFlag.asBoolean());
+        String storageId = null;
+        if (storageIdNode != null && !storageIdNode.isNull()) {
+            storageId = storageIdNode.asText();
+        }
+        String actualEntryURL;
+        if (nodeAccessURL != null && StringUtils.isNotBlank(nodeAccessURL.asText())) {
+            actualEntryURL = nodeAccessURL.asText();
+        } else if (StringUtils.isNotBlank(storageEntryUrl)) {
+            actualEntryURL = storageEntryUrl;
+        } else {
+            if (StringUtils.isNotBlank(storagePath)) {
+                actualEntryURL = StringUtils.appendIfMissing(storageUrl, "/") + storagePath;
+            } else {
+                actualEntryURL = storageUrl;
+            }
+        }
+        return new StorageEntryInfo(
+                storageId,
+                storageUrl,
+                actualEntryURL,
+                storageRootLocation.asText(),
+                new StoragePathURI(storageRootPathURI.asText()),
+                nodeRelativePath.asText(),
+                collectionFlag.asBoolean());
     }
 }

@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiResponses;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
+import org.janelia.jacs2.asyncservice.common.ResourceHelper;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.domain.enums.SubjectRole;
@@ -33,7 +34,7 @@ import javax.ws.rs.core.UriBuilder;
 import java.util.List;
 
 @RequestScoped
-@Produces("application/json")
+@Produces(MediaType.APPLICATION_JSON)
 @Path("/async-services")
 @Api(value = "Asynchronous JACS Service API")
 public class AsyncServiceResource {
@@ -66,7 +67,7 @@ public class AsyncServiceResource {
     @RequireAuthentication
     @POST
     @Path("/{service-name}")
-    @Consumes("application/json")
+    @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Submit a single service of the specified type", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Success"),

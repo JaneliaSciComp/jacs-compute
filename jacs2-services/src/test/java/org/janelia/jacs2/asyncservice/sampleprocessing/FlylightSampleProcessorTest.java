@@ -4,11 +4,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.janelia.jacs2.asyncservice.common.ServiceProcessorTestHelper;
+import org.janelia.jacs2.testhelpers.ListArgMatcher;
 import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.model.jacs2.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentServiceBuilderFactory;
 import org.janelia.jacs2.asyncservice.alignservices.AlignmentProcessor;
-import org.janelia.jacs2.asyncservice.common.ComputationTestUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
@@ -30,6 +32,7 @@ import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ServiceMetaData;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -40,6 +43,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -76,7 +80,7 @@ public class FlylightSampleProcessorTest {
     public void setUp() {
         Logger logger = mock(Logger.class);
 
-        ServiceComputationFactory computationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        ServiceComputationFactory computationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
 
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         sampleDataService = mock(SampleDataService.class);
@@ -111,113 +115,19 @@ public class FlylightSampleProcessorTest {
             return jacsServiceData;
         });
 
-        when(initializeSamplePipelineResultsProcessor.getMetadata()).thenCallRealMethod();
-        when(initializeSamplePipelineResultsProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
-        )).thenCallRealMethod();
+        ServiceProcessorTestHelper.prepareServiceProcessorMetadataAsRealCall(
+                initializeSamplePipelineResultsProcessor,
+                getSampleImageFilesProcessor,
+                sampleLSMSummaryProcessor,
+                sampleStitchProcessor,
+                updateSampleProcessingResultsProcessor,
+                basicMIPsAndMoviesProcessor,
+                enhancedMIPsAndMoviesProcessor,
+                sampleNeuronSeparationProcessor,
+                cleanSampleImageFilesProcessor
+        );
 
-        when(getSampleImageFilesProcessor.getMetadata()).thenCallRealMethod();
-        when(getSampleImageFilesProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
-        )).thenCallRealMethod();
-
-        when(sampleLSMSummaryProcessor.getMetadata()).thenCallRealMethod();
-        when(sampleLSMSummaryProcessor.createServiceData(any(ServiceExecutionContext.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class),
-                any(ServiceArg.class)
-        )).thenCallRealMethod();
-
-        when(sampleStitchProcessor.getMetadata()).thenCallRealMethod();
-        when(sampleStitchProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
-                )
-        ).thenCallRealMethod();
-
-        when(updateSampleProcessingResultsProcessor.getMetadata()).thenCallRealMethod();
-        when(updateSampleProcessingResultsProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
-                )
-        ).thenCallRealMethod();
-
-        when(basicMIPsAndMoviesProcessor.getMetadata()).thenCallRealMethod();
-        when(basicMIPsAndMoviesProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
-                )
-        ).thenCallRealMethod();
-
-        when(enhancedMIPsAndMoviesProcessor.getMetadata()).thenCallRealMethod();
-        when(enhancedMIPsAndMoviesProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
-                )
-        ).thenCallRealMethod();
-
-        when(sampleNeuronSeparationProcessor.getMetadata()).thenCallRealMethod();
-        when(sampleNeuronSeparationProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
-                )
-        ).thenCallRealMethod();
-
-        when(cleanSampleImageFilesProcessor.getMetadata()).thenCallRealMethod();
-        when(cleanSampleImageFilesProcessor.createServiceData(any(ServiceExecutionContext.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class),
-                        any(ServiceArg.class)
-                )
-        ).thenCallRealMethod();
-        when(cleanSampleImageFilesProcessor.getResultHandler()).thenCallRealMethod();
+        ServiceProcessorTestHelper.prepareServiceResultHandlerAsRealCall(cleanSampleImageFilesProcessor);
 
         flylightSampleProcessor = new FlylightSampleProcessor(computationFactory,
                 jacsServiceDataPersistence,
@@ -264,22 +174,27 @@ public class FlylightSampleProcessorTest {
                 "1234567891234567", "234/567/1234567891234567"
         );
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SamplePipelineRun>> initializeSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(initializeSamplePipelineResultsProcessor.getResultHandler()).thenReturn(initializeSamplePipelineResultsResultHandler);
         when(initializeSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleImageFile>> getSampleImageFilesResultHandler = mock(ServiceResultHandler.class);
         when(getSampleImageFilesProcessor.getResultHandler()).thenReturn(getSampleImageFilesResultHandler);
         when(getSampleImageFilesResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<LSMSummary>> sampleLSMSummaryResultHandler = mock(ServiceResultHandler.class);
         when(sampleLSMSummaryProcessor.getResultHandler()).thenReturn(sampleLSMSummaryResultHandler);
         when(sampleLSMSummaryResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<SampleResult> sampleStitchResultHandler = mock(ServiceResultHandler.class);
         when(sampleStitchProcessor.getResultHandler()).thenReturn(sampleStitchResultHandler);
         when(sampleStitchResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(new SampleResult());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleProcessorResult>> updateSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(updateSampleProcessingResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
         when(updateSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of(new SampleProcessorResult()));
@@ -305,8 +220,10 @@ public class FlylightSampleProcessorTest {
             testServiceData.setId(testServiceId);
 
             ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> flylightProcessing = flylightSampleProcessor.process(testServiceData);
-            Consumer successful = mock(Consumer.class);
-            Consumer failure = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<JacsServiceResult<List<SampleProcessorResult>>> successful = mock(Consumer.class);
+            @SuppressWarnings("unchecked")
+            Consumer<Throwable> failure = mock(Consumer.class);
             flylightProcessing
                     .thenApply(r -> {
                         successful.accept(r);
@@ -314,94 +231,85 @@ public class FlylightSampleProcessorTest {
                         String expectedSampleRootDir = testSampleDir + "/" + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
 
                         verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)))
+                                argThat(new ListArgMatcher<>(
+                                        ImmutableList.of(
+                                                new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString())),
+                                                new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                                new ServiceArgMatcher(new ServiceArg("-area", area)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))
+                                        )
+                                ))
                         );
 
                         verify(sampleLSMSummaryProcessor).createServiceData(any(ServiceExecutionContext.class),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-basicMipMapsOptions", DEFAULT_MIP_MAPS_OPTIONS))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-montageMipMaps", true)))
+                                argThat(new ListArgMatcher<>(
+                                        ImmutableList.of(
+                                                new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString())),
+                                                new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                                new ServiceArgMatcher(new ServiceArg("-area", area)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir)),
+                                                new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
+                                                new ServiceArgMatcher(new ServiceArg("-basicMipMapsOptions", DEFAULT_MIP_MAPS_OPTIONS)),
+                                                new ServiceArgMatcher(new ServiceArg("-montageMipMaps", true))
+                                        )
+                                ))
                         );
 
                         verify(updateSampleSummaryResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummaryId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString())))
+                                argThat(new ListArgMatcher<>(
+                                        ImmutableList.of(
+                                                new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleSummaryId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString()))
+                                        )
+                                ))
                         );
 
                         verify(sampleStitchProcessor).createServiceData(any(ServiceExecutionContext.class),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-generateMips", true)))
+                                argThat(new ListArgMatcher<>(
+                                        ImmutableList.of(
+                                                new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString())),
+                                                new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                                new ServiceArgMatcher(new ServiceArg("-area", area)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir)),
+                                                new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm)),
+                                                new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
+                                                new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)),
+                                                new ServiceArgMatcher(new ServiceArg("-generateMips", true))
+                                        )
+                                ))
                         );
 
                         verify(updateSampleProcessingResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                                argThat(new ServiceArgMatcher(new ServiceArg("-sampleProcessingId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString())))
+                                argThat(new ListArgMatcher<>(
+                                        ImmutableList.of(
+                                                new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleProcessingId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString()))
+                                        )
+                                ))
                         );
 
                         verify(sampleNeuronSeparationProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class)
+                                anyList()
                         );
 
                         verify(alignmentProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class)
+                                anyList()
                         );
 
                         verify(updateAlignmentResultsProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class)
+                                anyList()
                         );
 
                         verify(sampleNeuronWarpingProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class),
-                                any(ServiceArg.class)
+                                anyList()
                         );
 
                         return r;
@@ -430,16 +338,19 @@ public class FlylightSampleProcessorTest {
         }), eq(SampleProcessorTestUtils.TEST_SAMPLE_ID)))
                 .thenReturn(SampleProcessorTestUtils.createTestSample(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SamplePipelineRun>> initializeSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(initializeSamplePipelineResultsProcessor.getResultHandler()).thenReturn(initializeSamplePipelineResultsResultHandler);
         when(initializeSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleImageFile>> getSampleImageFilesResultHandler = mock(ServiceResultHandler.class);
         when(getSampleImageFilesProcessor.getResultHandler()).thenReturn(getSampleImageFilesResultHandler);
         when(getSampleImageFilesResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
             return new JacsServiceResult<>(invocation.getArgument(0), ImmutableList.of());
         });
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<SampleResult> sampleStitchResultHandler = mock(ServiceResultHandler.class);
         when(sampleStitchProcessor.getResultHandler()).thenReturn(sampleStitchResultHandler);
         when(sampleStitchResultHandler.getServiceDataResult(any(JacsServiceData.class)))
@@ -452,16 +363,19 @@ public class FlylightSampleProcessorTest {
                                         "stitchedFile",
                                         ImmutableList.of(createMergeTilePairResult("t1", "f1"), createMergeTilePairResult("t2", "f2"))))));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleProcessorResult>> updateSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(updateSampleProcessingResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
         when(updateSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class)))
                 .thenReturn(ImmutableList.of(createSampleProcessorResult(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, area)));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<MIPsAndMoviesResult> enhancedMIPsAndMoviesResultHandler = mock(ServiceResultHandler.class);
         when(enhancedMIPsAndMoviesProcessor.getResultHandler()).thenReturn(enhancedMIPsAndMoviesResultHandler);
         when(enhancedMIPsAndMoviesResultHandler.getServiceDataResult(any(JacsServiceData.class)))
                 .thenReturn(createMipsAndMoviesResult(TEST_MIPS_DIR, ImmutableList.of("d1", "d2")));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<NeuronSeparationFiles> sampleNeuronSeparationResultHandler = mock(ServiceResultHandler.class);
         when(sampleNeuronSeparationProcessor.getResultHandler()).thenReturn(sampleNeuronSeparationResultHandler);
         when(sampleNeuronSeparationResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(new NeuronSeparationFiles());
@@ -486,8 +400,10 @@ public class FlylightSampleProcessorTest {
         testServiceData.setId(Long.valueOf(testServiceId));
 
         ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> flylightProcessing = flylightSampleProcessor.process(testServiceData);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<List<SampleProcessorResult>>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         flylightProcessing
                 .thenApply(r -> {
                     successful.accept(r);
@@ -495,123 +411,126 @@ public class FlylightSampleProcessorTest {
                     String expectedSampleRootDir = testSampleDir + "/" + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
 
                     verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString())),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-area", area)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))
+                                    )
+                            ))
                     );
 
                     verify(sampleLSMSummaryProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     verify(sampleStitchProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-area", area))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-generateMips", true)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString())),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-area", area)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm)),
+                                            new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
+                                            new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)),
+                                            new ServiceArgMatcher(new ServiceArg("-generateMips", true))
+                                    )
+                            ))
                     );
 
                     verify(updateSampleProcessingResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleProcessingId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString())))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleProcessingId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString()))
+                                    )
+                            ))
                     );
 
                     verify(enhancedMIPsAndMoviesProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFile", "f1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-mode", "MCFO"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-imgFile", "f1")),
+                                            new ServiceArgMatcher(new ServiceArg("-mode", "MCFO")),
+                                            new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr")),
+                                            new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1")),
+                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area)),
+                                            new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist"))
+                                    )
+                            ))
                     );
                     verify(enhancedMIPsAndMoviesProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFile", "f2"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-mode", "MCFO"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-imgFile", "f2")),
+                                            new ServiceArgMatcher(new ServiceArg("-mode", "MCFO")),
+                                            new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr")),
+                                            new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1")),
+                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area)),
+                                            new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist"))
+                                    )
+                            ))
                     );
                     verify(enhancedMIPsAndMoviesProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFile", "stitchedFile"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-mode", "MCFO"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-imgFile", "stitchedFile")),
+                                            new ServiceArgMatcher(new ServiceArg("-mode", "MCFO")),
+                                            new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr")),
+                                            new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1")),
+                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area)),
+                                            new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist"))
+                                    )
+                            ))
                     );
 
                     verify(updateSamplePostProcessingResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-samplePostSubDir", "Post" + "/" + testLsmSubDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultDirs", String.join(",", TEST_MIPS_DIR, TEST_MIPS_DIR, TEST_MIPS_DIR))))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-samplePostSubDir", "Post" + "/" + testLsmSubDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-resultDirs", String.join(",", TEST_MIPS_DIR, TEST_MIPS_DIR, TEST_MIPS_DIR)))
+                                    )
+                            ))
                     );
 
                     verify(sampleNeuronSeparationProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/" + area))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-previousResultFile", "")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE)),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/" + area)),
+                                            new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1")),
+                                            new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3")),
+                                            new ServiceArgMatcher(new ServiceArg("-previousResultFile", ""))
+                                    )
+
+                            ))
                     );
 
                     verify(alignmentProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     verify(updateAlignmentResultsProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     verify(sampleNeuronWarpingProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     return r;
@@ -645,16 +564,18 @@ public class FlylightSampleProcessorTest {
             return argument == null || "testOwner".equals(argument);
         }), eq(SampleProcessorTestUtils.TEST_SAMPLE_ID))).thenReturn(testSample);
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SamplePipelineRun>> initializeSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(initializeSamplePipelineResultsProcessor.getResultHandler()).thenReturn(initializeSamplePipelineResultsResultHandler);
         when(initializeSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleImageFile>> getSampleImageFilesResultHandler = mock(ServiceResultHandler.class);
         when(getSampleImageFilesProcessor.getResultHandler()).thenReturn(getSampleImageFilesResultHandler);
-        when(getSampleImageFilesResultHandler.getServiceDataResult(any(JacsServiceData.class))).then(invocation -> {
-            return new JacsServiceResult<>(invocation.getArgument(0), ImmutableList.of());
-        });
+        when(getSampleImageFilesResultHandler.getServiceDataResult(any(JacsServiceData.class)))
+                .then(invocation -> new JacsServiceResult<>(invocation.getArgument(0), ImmutableList.of()));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<SampleResult> sampleStitchResultHandler = mock(ServiceResultHandler.class);
         when(sampleStitchProcessor.getResultHandler()).thenReturn(sampleStitchResultHandler);
         when(sampleStitchResultHandler.getServiceDataResult(any(JacsServiceData.class)))
@@ -670,6 +591,7 @@ public class FlylightSampleProcessorTest {
                         )
                 ));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<List<SampleProcessorResult>> updateSamplePipelineResultsResultHandler = mock(ServiceResultHandler.class);
         when(updateSampleProcessingResultsProcessor.getResultHandler()).thenReturn(updateSamplePipelineResultsResultHandler);
         when(updateSamplePipelineResultsResultHandler.getServiceDataResult(any(JacsServiceData.class)))
@@ -678,11 +600,13 @@ public class FlylightSampleProcessorTest {
                         createSampleProcessorResult(SampleProcessorTestUtils.TEST_SAMPLE_ID, objective, "VNC")
                 ));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<MIPsAndMoviesResult> basicMIPsAndMoviesResultHandler = mock(ServiceResultHandler.class);
         when(basicMIPsAndMoviesProcessor.getResultHandler()).thenReturn(basicMIPsAndMoviesResultHandler);
         when(basicMIPsAndMoviesResultHandler.getServiceDataResult(any(JacsServiceData.class)))
                 .thenReturn(createMipsAndMoviesResult(TEST_MIPS_DIR, ImmutableList.of("d1")));
 
+        @SuppressWarnings("unchecked")
         ServiceResultHandler<NeuronSeparationFiles> sampleNeuronSeparationResultHandler = mock(ServiceResultHandler.class);
         when(sampleNeuronSeparationProcessor.getResultHandler()).thenReturn(sampleNeuronSeparationResultHandler);
         when(sampleNeuronSeparationResultHandler.getServiceDataResult(any(JacsServiceData.class))).thenReturn(new NeuronSeparationFiles());
@@ -707,129 +631,129 @@ public class FlylightSampleProcessorTest {
         testServiceData.setId(Long.valueOf(testServiceId));
 
         ServiceComputation<JacsServiceResult<List<SampleProcessorResult>>> flylightProcessing = flylightSampleProcessor.process(testServiceData);
-        Consumer successful = mock(Consumer.class);
-        Consumer failure = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<List<SampleProcessorResult>>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
         flylightProcessing
                 .thenApply(r -> {
                     successful.accept(r);
                     String expectedSampleRootDir = testSampleDir + "/" + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
 
                     verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-area", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString())),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-area", "")),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))
+                                    )
+                            ))
                     );
 
                     verify(sampleLSMSummaryProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     verify(sampleStitchProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString()))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-area", ""))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-generateMips", true)))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID.toString())),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-area", "")),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm)),
+                                            new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
+                                            new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)),
+                                            new ServiceArgMatcher(new ServiceArg("-generateMips", true))
+                                    )
+                            ))
                     );
 
                     verify(updateSampleProcessingResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleProcessingId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString())))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleProcessingId", SampleProcessorTestUtils.TEST_SERVICE_ID.toString()))
+                                    )
+                            ))
                     );
 
                     verify(basicMIPsAndMoviesProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFile", "fBrain"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-imgFilePrefix", "testSample-Brain"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-secondImgFile", "fVNC"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-secondImgFilePrefix", "testSample-VNC"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-mode", "MCFO"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/NormalizedBrainVNC"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-imgFile", "fBrain")),
+                                            new ServiceArgMatcher(new ServiceArg("-imgFilePrefix", "testSample-Brain")),
+                                            new ServiceArgMatcher(new ServiceArg("-secondImgFile", "fVNC")),
+                                            new ServiceArgMatcher(new ServiceArg("-secondImgFilePrefix", "testSample-VNC")),
+                                            new ServiceArgMatcher(new ServiceArg("-mode", "MCFO")),
+                                            new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr")),
+                                            new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1")),
+                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/NormalizedBrainVNC")),
+                                            new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist"))
+                                    )
+                            ))
                     );
 
                     verify(updateSamplePostProcessingResultsProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-samplePostSubDir", "Post" + "/" + testLsmSubDir))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultDirs", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/NormalizedBrainVNC")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-samplePostSubDir", "Post" + "/" + testLsmSubDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-resultDirs", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/NormalizedBrainVNC"))
+                                    )
+                            ))
                     );
 
                     verify(sampleNeuronSeparationProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/Brain"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-previousResultFile", "")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE)),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/Brain")),
+                                            new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1")),
+                                            new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3")),
+                                            new ServiceArgMatcher(new ServiceArg("-previousResultFile", ""))
+                                    )
+                            ))
                     );
                     verify(sampleNeuronSeparationProcessor).createServiceData(any(ServiceExecutionContext.class),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-objective", objective))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/VNC"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("-previousResultFile", "")))
+                            argThat(new ListArgMatcher<>(
+                                    ImmutableList.of(
+                                            new ServiceArgMatcher(new ServiceArg("-sampleId", SampleProcessorTestUtils.TEST_SAMPLE_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-objective", objective)),
+                                            new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID)),
+                                            new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE)),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/VNC")),
+                                            new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1")),
+                                            new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3")),
+                                            new ServiceArgMatcher(new ServiceArg("-previousResultFile", ""))
+                                    )
+                            ))
                     );
 
                     verify(alignmentProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     verify(updateAlignmentResultsProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     verify(sampleNeuronWarpingProcessor, never()).createServiceData(any(ServiceExecutionContext.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class),
-                            any(ServiceArg.class)
+                            anyList()
                     );
 
                     return r;
@@ -943,7 +867,7 @@ public class FlylightSampleProcessorTest {
     }
 
     private MIPsAndMoviesResult createMipsAndMoviesResult(String resultsDir, List<String> fileList) {
-        MIPsAndMoviesResult mipsAndMoviesResult = new MIPsAndMoviesResult();
+        MIPsAndMoviesResult mipsAndMoviesResult = new MIPsAndMoviesResult("");
         mipsAndMoviesResult.setResultsDir(resultsDir);
         mipsAndMoviesResult.setFileList(fileList);
         return mipsAndMoviesResult;

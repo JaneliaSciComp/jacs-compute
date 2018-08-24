@@ -39,7 +39,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     @Override
-    public JacsServiceData createServiceData(ServiceExecutionContext executionContext, ServiceArg... args) {
+    public JacsServiceData createServiceData(ServiceExecutionContext executionContext, List<ServiceArg> args) {
         ServiceMetaData smd = getMetadata();
         JacsServiceDataBuilder jacsServiceDataBuilder =
                 new JacsServiceDataBuilder(executionContext.getParentServiceData())
@@ -64,7 +64,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         } else if (StringUtils.isNotBlank(executionContext.getParentWorkspace())) {
             jacsServiceDataBuilder.setWorkspace(executionContext.getParentWorkspace());
         }
-        jacsServiceDataBuilder.addArgs(Stream.of(args).flatMap(arg -> Stream.of(arg.toStringArray())).toArray(String[]::new));
+        jacsServiceDataBuilder.addArgs(args.stream().flatMap(arg -> Stream.of(arg.toStringArray())).toArray(String[]::new));
         jacsServiceDataBuilder.setDictionaryArgs(executionContext.getDictionaryArgs());
         if (executionContext.getServiceState() != null) {
             jacsServiceDataBuilder.setState(executionContext.getServiceState());
@@ -115,6 +115,11 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         }
     }
 
+    /**
+     *
+     * @param jacsServiceData
+     * @return
+     */
     protected String[] getJacsServiceArgsArray(JacsServiceData jacsServiceData) {
         if (jacsServiceData.getActualArgs() == null) {
             new ServiceArgsHandler(jacsServiceDataPersistence).updateServiceArgs(getMetadata(), jacsServiceData);

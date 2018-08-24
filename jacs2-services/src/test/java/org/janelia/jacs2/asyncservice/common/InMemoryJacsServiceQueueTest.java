@@ -2,20 +2,20 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
+import org.janelia.model.service.JacsServiceData;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -56,7 +56,7 @@ public class InMemoryJacsServiceQueueTest {
                 .add(createTestService(7L, "t7"))
                 .build();
         serviceDataPageResult.setResultList(serviceResults);
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class))).thenReturn(serviceDataPageResult);
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class))).thenReturn(serviceDataPageResult);
         jacsServiceQueue.refreshServiceQueue();
         assertThat(jacsServiceQueue.getReadyServicesSize(), equalTo(serviceResults.size()));
     }

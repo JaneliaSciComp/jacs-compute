@@ -166,7 +166,7 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
                 createSampleObjective("o3")));
         testDao.save(testSample);
         Sample retrievedSample = testDao.findById(testSample.getId());
-        assertThat(retrievedSample, not(isNull(Sample.class)));
+        assertThat(retrievedSample, not(nullValue(Sample.class)));
         assertThat(retrievedSample, not(same(testSample)));
         assertThat(retrievedSample.getId(), equalTo(testSample.getId()));
     }
@@ -272,6 +272,7 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         assertThat(savedLockedSample.getLockKey(), equalTo("NewKey"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void updateSampleObjectivePipelineRuns() {
         Sample testSample = createTestSample("ds1", "sc1");
@@ -290,6 +291,7 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         );
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void updateSampleObjectivePipelineResult() {
         Sample testSample = createTestSample("ds1", "sc1");

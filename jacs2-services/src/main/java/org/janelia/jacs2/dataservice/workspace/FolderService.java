@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.workspace;
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.sample.Image;
 import org.janelia.model.domain.workspace.TreeNode;
@@ -19,7 +20,7 @@ public class FolderService {
         this.folderDao = folderDao;
     }
 
-    public TreeNode createFolder(Number parentFolderId, String folderName, String subjectKey) {
+    public TreeNode getOrCreateFolder(Number parentFolderId, String folderName, String subjectKey) {
         try {
             if (parentFolderId == null) {
                 return folderDao.getOrCreateDefaultFolder(subjectKey, folderName);
@@ -39,12 +40,22 @@ public class FolderService {
         }
     }
 
-    public void addImageFile(TreeNode folder, String imageFileName, FileType imageFileType, String subjectKey) {
+    public void addImageStack(TreeNode folder, Image imageStack, String subjectKey) {
+        try {
+            folderDao.save(subjectKey, imageStack);
+            folderDao.addChildren(subjectKey, folder, ImmutableList.of(Reference.createFor(imageStack)));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public void addImageFile(TreeNode folder, String imageName, String imageFolderPath, String imageFilePath, FileType imageFileType, boolean userDataFlag, String subjectKey) {
         try {
             Image imageFile = new Image();
-            imageFile.setName(FileUtils.getFileName(imageFileName));
-            imageFile.setFilepath(imageFileName);
-            imageFile.getFiles().put(imageFileType, imageFileName);
+            imageFile.setName(imageName);
+            imageFile.setUserDataFlag(userDataFlag);
+            imageFile.setFilepath(imageFolderPath);
+            DomainUtils.setFilepath(imageFile, imageFileType, imageFilePath);
             folderDao.save(subjectKey, imageFile);
             folderDao.addChildren(subjectKey, folder, ImmutableList.of(Reference.createFor(imageFile)));
         } catch (Exception e) {

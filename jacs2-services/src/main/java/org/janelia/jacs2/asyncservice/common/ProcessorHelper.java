@@ -8,54 +8,54 @@ public class ProcessorHelper {
 
     private static final String DEFAULT_CPU_TYPE = "haswell";
 
-    public static int getProcessingSlots(Map<String, String> jobResources) {
-        int nProcessingSlots = getRequiredSlots(jobResources);
-        nProcessingSlots = Math.max(nProcessingSlots, calculateRequiredSlotsBasedOnMem(jobResources));
+    public static int getProcessingSlots(Map<String, String> serviceResources) {
+        int nProcessingSlots = getRequiredSlots(serviceResources);
+        nProcessingSlots = Math.max(nProcessingSlots, calculateRequiredSlotsBasedOnMem(serviceResources));
         return nProcessingSlots > 0 ? nProcessingSlots : 1;
     }
 
-    public static int getRequiredSlots(Map<String, String> jobResources) {
-        String requiredSlots = StringUtils.defaultIfBlank(jobResources.get("nSlots"), "0");
+    public static int getRequiredSlots(Map<String, String> serviceResources) {
+        String requiredSlots = StringUtils.defaultIfBlank(serviceResources.get("nSlots"), "0");
         int nSlots = Integer.parseInt(requiredSlots);
         return nSlots <= 0 ? 0 : nSlots;
     }
 
-    public static int setRequiredSlots(Map<String, String> jobResources, int slots) {
-        int currentRequiredSlots = getRequiredSlots(jobResources);
+    public static int setRequiredSlots(Map<String, String> serviceResources, int slots) {
+        int currentRequiredSlots = getRequiredSlots(serviceResources);
         int requiredSlots = Math.max(currentRequiredSlots, slots);
-        jobResources.put("nSlots", String.valueOf(requiredSlots));
+        serviceResources.put("nSlots", String.valueOf(requiredSlots));
         return requiredSlots;
     }
 
-    public static String getCPUType(Map<String, String> jobResources) {
-        String cpuType = jobResources.get("cpuType");
+    public static String getCPUType(Map<String, String> serviceResources) {
+        String cpuType = serviceResources.get("cpuType");
         return cpuType != null ? cpuType.toLowerCase() : null;
     }
 
-    public static String setCPUType(Map<String, String> jobResources, String cpuType) {
-        jobResources.put("cpuType", cpuType);
+    public static String setCPUType(Map<String, String> serviceResources, String cpuType) {
+        serviceResources.put("cpuType", cpuType);
         return cpuType;
     }
 
-    public static int getRequiredMemoryInGB(Map<String, String> jobResources) {
-        String requiredMemory = StringUtils.defaultIfBlank(jobResources.get("memInGB"), "0");
+    public static int getRequiredMemoryInGB(Map<String, String> serviceResources) {
+        String requiredMemory = StringUtils.defaultIfBlank(serviceResources.get("memInGB"), "0");
         int requiredMemoryInGB = Integer.parseInt(requiredMemory);
         return requiredMemoryInGB <= 0 ? 0 : requiredMemoryInGB;
     }
 
-    public static int setRequiredMemoryInGB(Map<String, String> jobResources, int mem) {
-        int currentRequiredMemory = getRequiredMemoryInGB(jobResources);
+    public static int setRequiredMemoryInGB(Map<String, String> serviceResources, int mem) {
+        int currentRequiredMemory = getRequiredMemoryInGB(serviceResources);
         int requiredMemoryInGB = Math.max(currentRequiredMemory, mem);
-        jobResources.put("memInGB", String.valueOf(requiredMemoryInGB));
+        serviceResources.put("memInGB", String.valueOf(requiredMemoryInGB));
         return requiredMemoryInGB;
     }
 
-    private static int calculateRequiredSlotsBasedOnMem(Map<String, String> jobResources) {
-        int mem = getRequiredMemoryInGB(jobResources);
+    private static int calculateRequiredSlotsBasedOnMem(Map<String, String> serviceResources) {
+        int mem = getRequiredMemoryInGB(serviceResources);
         if (mem <= 0) {
             return 0;
         }
-        String cpuType = StringUtils.defaultIfBlank(getCPUType(jobResources), DEFAULT_CPU_TYPE);
+        String cpuType = StringUtils.defaultIfBlank(getCPUType(serviceResources), DEFAULT_CPU_TYPE);
         double memPerSlotInGB;
         switch (cpuType) {
             case "broadwell":
@@ -68,31 +68,31 @@ public class ProcessorHelper {
         return (int) Math.ceil(mem / memPerSlotInGB);
     }
 
-    public static String getGridBillingAccount(Map<String, String> jobResources) {
-        return jobResources.get("gridAccountId");
+    public static String getGridBillingAccount(Map<String, String> serviceResources) {
+        return serviceResources.get("gridAccountId");
     }
 
-    public static long getSoftJobDurationLimitInSeconds(Map<String, String> jobResources) {
-        String jobDuration = StringUtils.defaultIfBlank(jobResources.get("softGridJobDurationInSeconds"), "-1");
+    public static long getSoftJobDurationLimitInSeconds(Map<String, String> serviceResources) {
+        String jobDuration = StringUtils.defaultIfBlank(serviceResources.get("softGridJobDurationInSeconds"), "-1");
         return Long.parseLong(jobDuration);
     }
 
-    public static long setSoftJobDurationLimitInSeconds(Map<String, String> jobResources, long limit) {
-        jobResources.put("softGridJobDurationInSeconds", ""+limit);
+    public static long setSoftJobDurationLimitInSeconds(Map<String, String> serviceResources, long limit) {
+        serviceResources.put("softGridJobDurationInSeconds", ""+limit);
         return limit;
     }
 
-    public static long getHardJobDurationLimitInSeconds(Map<String, String> jobResources) {
-        String jobDuration = StringUtils.defaultIfBlank(jobResources.get("hardGridJobDurationInSeconds"), "-1");
+    public static long getHardJobDurationLimitInSeconds(Map<String, String> serviceResources) {
+        String jobDuration = StringUtils.defaultIfBlank(serviceResources.get("hardGridJobDurationInSeconds"), "-1");
         return Long.parseLong(jobDuration);
     }
 
-    public static long setHardJobDurationLimitInSeconds(Map<String, String> jobResources, long limit) {
-        jobResources.put("hardGridJobDurationInSeconds", ""+limit);
+    public static long setHardJobDurationLimitInSeconds(Map<String, String> serviceResources, long limit) {
+        serviceResources.put("hardGridJobDurationInSeconds", ""+limit);
         return limit;
     }
 
-    public static String getGridJobResourceLimits(Map<String, String> jobResources) {
-        return jobResources.get("gridResourceLimits");
+    public static String getGridJobResourceLimits(Map<String, String> serviceResources) {
+        return serviceResources.get("gridResourceLimits");
     }
 }

@@ -110,8 +110,8 @@ public class SparkCluster {
         this.workingDirectory = workingDirName.toFile();
         int numSlots = nodeSlots + nodeSlots * numNodes; // master + workers
 
-        // Default to two tasks per slot (this seems empirically optimal)
-        this.defaultParallelism = 3 * nodeSlots * numNodes;
+        // Default to three tasks per slot (this seems empirically optimal)
+        this.defaultParallelism = 3 * (nodeSlots-1) * numNodes;
 
         log.info("Starting Spark cluster with {} worker nodes ({} total slots)", numNodes, numSlots);
         log.info("Working directory: {}", workingDirectory);
@@ -262,15 +262,29 @@ public class SparkCluster {
     }
 
     /**
-     * Run the app given by the specified jar file on the currently running cluster. If the cluster is not ready an
-     * IllegalStateException will be thrown. Command line arguments can be passed through via appArgs arguments.
+     * Run the default main class in the specified jar file on the currently running cluster.
      * @param callback called when the application has ended
      * @param jarPath absolute path to a far jar file containing the  with dependencies
      * @param appArgs
      * @return
      * @throws Exception
      */
-    public synchronized SparkApp runApp(BiConsumer<File, ? super Throwable> callback, String jarPath,
+    public SparkApp runApp(BiConsumer<File, ? super Throwable> callback, String jarPath,
+                                        String... appArgs) throws Exception {
+        return runApp(callback, jarPath, null, appArgs);
+    }
+
+    /**
+     * Run the given main class in the specified jar file on the currently running cluster.
+     * If the cluster is not ready an IllegalStateException will be thrown. Command line arguments can be passed
+     * through via appArgs arguments.
+     * @param callback called when the application has ended
+     * @param jarPath absolute path to a far jar file containing the  with dependencies
+     * @param appArgs
+     * @return
+     * @throws Exception
+     */
+    public synchronized SparkApp runApp(BiConsumer<File, ? super Throwable> callback, String jarPath, String mainClass,
                            String... appArgs) throws Exception {
 
         if (!isReady()) {
@@ -317,7 +331,7 @@ public class SparkCluster {
         log.info("sparkExecutorCores={}", sparkExecutorCores);
         log.info("defaultParallelism={}", defaultParallelism);
 
-        SparkAppHandle handle = new SparkLauncher()
+        SparkLauncher sparkLauncher = new SparkLauncher()
                 .redirectError()
                 .redirectOutput(outFile)
                 .setAppResource(jarPath)
@@ -334,11 +348,16 @@ public class SparkCluster {
                 .setConf(SparkLauncher.EXECUTOR_EXTRA_JAVA_OPTIONS, "-Dlog4j.configuration=file://"+log4jProperties.getAbsolutePath())
                 .addSparkArg("--driver-java-options",
                         "-Dlog4j.configuration=file://"+log4jProperties.getAbsolutePath()+
-                        " -Dhadoop.home.dir="+ hadoopHomeDir +
-                        " -Djava.library.path="+ hadoopHomeDir +"/lib/native"
-                        )
-                .addAppArgs(appArgs)
-                .startApplication(listener);
+                                " -Dhadoop.home.dir="+ hadoopHomeDir +
+                                " -Djava.library.path="+ hadoopHomeDir +"/lib/native"
+                )
+                .addAppArgs(appArgs);
+
+        if (mainClass!=null) {
+            sparkLauncher.setMainClass(mainClass);
+        }
+
+        SparkAppHandle handle = sparkLauncher.startApplication(listener);
 
         // Currently, if the process fails here, then we don't get any notification. We'll have to wait until time out.
         // This bug is fixed in Spark 2.3, but unfortunately not backported to 2.2.x. We should upgrade to 2.3 as soon

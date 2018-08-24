@@ -1,7 +1,7 @@
 package org.janelia.jacs2.asyncservice.lightsheetservices;
 
 public enum LightsheetPipelineStep {
-    clusterCS(true, 8),
+    clusterCS(true, 6),
     clusterFR(true, 2),
     clusterMF(true, 2),
     clusterPT(true, 2),
@@ -10,20 +10,16 @@ public enum LightsheetPipelineStep {
     localEC(false, 32),
     generateMiniStacks(false, 32);
 
-    private boolean needsMoreThanOneJob;
+    private boolean canSplitJob;
     private int recommendedSlots;
 
-    LightsheetPipelineStep(boolean needsMoreThanOneJob, int recommendedSlots) {
-        this.needsMoreThanOneJob = needsMoreThanOneJob;
+    LightsheetPipelineStep(boolean canSplitJob, int recommendedSlots) {
+        this.canSplitJob = canSplitJob;
         this.recommendedSlots = recommendedSlots;
     }
 
-    public boolean requiresMoreThanOneJob() {
-        return needsMoreThanOneJob;
-    }
-
-    public boolean needsOnlyOneJob() {
-        return !needsMoreThanOneJob;
+    public boolean cannotSplitJob() {
+        return !canSplitJob;
     }
 
     public int getRecommendedSlots() {

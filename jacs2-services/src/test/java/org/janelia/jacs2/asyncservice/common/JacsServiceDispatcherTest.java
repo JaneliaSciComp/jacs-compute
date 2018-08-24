@@ -3,37 +3,37 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
+import org.janelia.jacs2.asyncservice.ServiceRegistry;
+import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.jacs2.page.PageRequest;
+import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.service.JacsNotification;
+import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceLifecycleStage;
-import org.janelia.model.service.RegisteredJacsNotification;
-import org.janelia.model.jacs2.page.PageRequest;
-import org.janelia.model.jacs2.page.PageResult;
-import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
-import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.asyncservice.ServiceRegistry;
+import org.janelia.model.service.RegisteredJacsNotification;
 import org.janelia.model.service.ServiceMetaData;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
 import java.util.EnumSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -53,19 +53,19 @@ public class JacsServiceDispatcherTest {
     private JacsNotificationDao jacsNotificationDao;
     private JacsServiceQueue jacsServiceQueue;
     private JacsServiceEngine jacsServiceEngine;
-    private Instance<ServiceRegistry> serviceRegistrarSource;
     private ServiceRegistry serviceRegistry;
     private Logger logger;
     private JacsServiceDispatcher testDispatcher;
 
+    @SuppressWarnings("unchecked")
     @Before
     public void setUp() {
         logger = mock(Logger.class);
-        serviceComputationFactory = ComputationTestUtils.createTestServiceComputationFactory(logger);
+        serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
 
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         jacsNotificationDao = mock(JacsNotificationDao.class);
-        serviceRegistrarSource = mock(Instance.class);
+        Instance<ServiceRegistry> serviceRegistrarSource = mock(Instance.class);
         serviceRegistry = mock(ServiceRegistry.class);
         jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, "queue", 10, logger);
         jacsServiceEngine = new JacsServiceEngineImpl(jacsServiceDataPersistence, jacsServiceQueue, serviceRegistrarSource, 10, logger);
@@ -128,7 +128,7 @@ public class JacsServiceDispatcherTest {
     public void dispatchServiceWhenNoSlotsAreAvailable() {
         jacsServiceEngine.setProcessingSlotsCount(0);
         JacsServiceData testService = enqueueTestService("test");
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
         testDispatcher.dispatchServices();
         verify(logger).debug("Abort service {} for now because there are not enough processing slots", testService);
@@ -138,7 +138,7 @@ public class JacsServiceDispatcherTest {
     public void runSubmittedService() {
         JacsServiceData testServiceData = enqueueTestService("submittedService");
 
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
 
         verifyDispatch(testServiceData);
@@ -150,7 +150,7 @@ public class JacsServiceDispatcherTest {
 
         PageResult<JacsServiceData> nonEmptyPageResult = new PageResult<>();
         nonEmptyPageResult.setResultList(ImmutableList.of(testServiceData));
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
                 .thenReturn(nonEmptyPageResult)
                 .thenReturn(new PageResult<>());
 
@@ -191,7 +191,9 @@ public class JacsServiceDispatcherTest {
                         JacsServiceState.RUNNING,
                         JacsServiceEvent.NO_EVENT);
         verify(jacsServiceDataPersistence)
-                .update(testServiceData, ImmutableMap.of("actualArgs", new SetFieldValueHandler<>(ImmutableList.of())));
+                .update(testServiceData, ImmutableMap.of(
+                        "actualArgs", new SetFieldValueHandler<List<String>>(ImmutableList.of()),
+                        "serviceArgs", new SetFieldValueHandler<Map<String, Object>>(ImmutableMap.of())));
         verify(jacsServiceDataPersistence)
                 .updateServiceState(
                         same(testServiceData),
@@ -228,12 +230,12 @@ public class JacsServiceDispatcherTest {
         assertThat(testServiceData.getState(), equalTo(JacsServiceState.SUCCESSFUL));
     }
 
-    private ServiceProcessor prepareServiceProcessor(JacsServiceData testServiceData, Exception exc) {
-        ServiceProcessor testProcessor = mock(ServiceProcessor.class);
+    private ServiceProcessor<?> prepareServiceProcessor(JacsServiceData testServiceData, Exception exc) {
+        ServiceProcessor<?> testProcessor = mock(ServiceProcessor.class);
 
         when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> testServiceData);
         when(jacsServiceDataPersistence.findServiceDependencies(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
-        when(serviceRegistry.lookupService(testServiceData.getName())).thenReturn(testProcessor);
+        when(serviceRegistry.lookupService(testServiceData.getName())).then(invocation -> testProcessor);
 
         when(testProcessor.getMetadata()).then((Answer<ServiceMetaData>) invocation -> {
             ServiceMetaData smd = new ServiceMetaData();
@@ -251,7 +253,7 @@ public class JacsServiceDispatcherTest {
     @Test
     public void serviceProcessingError() {
         JacsServiceData testServiceData = enqueueTestService("submittedService");
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
         ComputationException processException = new ComputationException(testServiceData, "test exception");
         ServiceProcessor testProcessor = prepareServiceProcessor(testServiceData, processException);
@@ -312,7 +314,7 @@ public class JacsServiceDispatcherTest {
     @Test
     public void suspendService() {
         JacsServiceData testServiceData = enqueueTestService("suspendedService", JacsServiceState.SUSPENDED);
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
         ServiceProcessor testProcessor = prepareServiceProcessor(testServiceData, null);
 
@@ -332,7 +334,7 @@ public class JacsServiceDispatcherTest {
     @Test
     public void suspendServiceDuringExecution() {
         JacsServiceData testServiceData = enqueueTestService("suspendedService");
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), any(Set.class), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
         ServiceProcessor testProcessor = prepareServiceProcessor(testServiceData, new ServiceSuspendedException(testServiceData));
 

@@ -56,7 +56,7 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
     static class ImageConverterArgs extends ServiceArgs {
         @Parameter(names = "-inputFiles", description = "List of input files to be converted.", required = true)
         List<String> inputFiles;
-        @Parameter(names = "-outputFiles", description = "Number of tiles per side", required = false)
+        @Parameter(names = "-outputFiles", description = "List of output files")
         List<String> outputFiles;
     }
 
@@ -70,7 +70,7 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
                                   @Any Instance<ExternalProcessRunner> serviceRunners,
                                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                   @PropertyValue(name = "ImageMagick.Bin.Path") String convertToolLocation,
-                                  @PropertyValue(name = "ImageMagick.Montage.Name") String convertToolName,
+                                  @PropertyValue(name = "ImageMagick.Convert.Name") String convertToolName,
                                   @PropertyValue(name = "ImageMagick.Lib.Path") String libraryPath,
                                   JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                                   @ApplicationProperties ApplicationConfig applicationConfig,
@@ -178,6 +178,7 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
         ImageConverterArgs args = getArgs(jacsServiceData);
         return getConverterArgs(args)
                 .filter(argsPair -> !argsPair.getLeft().equals(argsPair.getRight()))
+                .filter(argsPair -> FileUtils.fileNotExists(argsPair.getRight()))
                 .map(inOutArg -> {
                     ExternalCodeBlock configFileBlock = new ExternalCodeBlock();
                     ScriptWriter configWriter = configFileBlock.getCodeWriter();

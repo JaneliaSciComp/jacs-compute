@@ -5,6 +5,8 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 
+import java.util.List;
+
 @MdcContext
 public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implements ServiceProcessor<T> {
 
@@ -26,7 +28,7 @@ public class WrappedServiceProcessor<S extends ServiceProcessor<T>, T> implement
     }
 
     @Override
-    public JacsServiceData createServiceData(ServiceExecutionContext executionContext, ServiceArg... args) {
+    public JacsServiceData createServiceData(ServiceExecutionContext executionContext, List<ServiceArg> args) {
         return wrappedProcessor.createServiceData(executionContext, args);
     }
 

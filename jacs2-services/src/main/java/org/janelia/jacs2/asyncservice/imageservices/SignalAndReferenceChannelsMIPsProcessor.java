@@ -44,13 +44,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Named("mipGeneration")
-public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<List<File>> {
+/**
+ * This is a MIP generation service based on NeuronSeparator/mipCreator.sh script.
+ * The service generates separate MIPs for the signal and for the reference channels.
+ */
+@Named("signalAndReferenceChannelMIPs")
+public class SignalAndReferenceChannelsMIPsProcessor extends AbstractExeBasedServiceProcessor<List<File>> {
 
-    static class MIPGenerationArgs extends ServiceArgs {
+    static class SignalAndReferenceChannelsMIPsArgs extends ServiceArgs {
         @Parameter(names = "-inputFile", description = "The name of the input file", required = true)
         String inputFile;
-        @Parameter(names = "-signalChannels", description = "Zero based space or comma separated signal channels", required = false)
+        @Parameter(names = "-signalChannels", description = "Zero based space or comma separated signal channels")
         String signalChannels;
         @Parameter(names = "-referenceChannel", description = "Zero based reference channel", required = false)
         String referenceChannel;
@@ -58,21 +62,25 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Lis
         String outputDir;
         @Parameter(names = "-imgFormat", description = "Image format: {jpg, png}", required = false)
         String imgFormat = "png";
+
+        SignalAndReferenceChannelsMIPsArgs() {
+            super("Generate separate MIPs for the signal and reference channels from input file");
+        }
     }
 
     private final String executable;
     private final String libraryPath;
 
     @Inject
-    MIPGenerationProcessor(ServiceComputationFactory computationFactory,
-                           JacsServiceDataPersistence jacsServiceDataPersistence,
-                           @Any Instance<ExternalProcessRunner> serviceRunners,
-                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                           @PropertyValue(name = "MipCreator.ScriptPath") String executable,
-                           @PropertyValue(name = "VAA3D.Library.Path") String libraryPath,
-                           JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
-                           @ApplicationProperties ApplicationConfig applicationConfig,
-                           Logger logger) {
+    SignalAndReferenceChannelsMIPsProcessor(ServiceComputationFactory computationFactory,
+                                            JacsServiceDataPersistence jacsServiceDataPersistence,
+                                            @Any Instance<ExternalProcessRunner> serviceRunners,
+                                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                                            @PropertyValue(name = "MipCreator.ScriptPath") String executable,
+                                            @PropertyValue(name = "VAA3D.Library.Path") String libraryPath,
+                                            JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
+                                            @ApplicationProperties ApplicationConfig applicationConfig,
+                                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
         this.executable = executable;
         this.libraryPath = libraryPath;
@@ -80,7 +88,7 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Lis
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(MIPGenerationProcessor.class, new MIPGenerationArgs());
+        return ServiceArgs.getMetadata(SignalAndReferenceChannelsMIPsProcessor.class, new SignalAndReferenceChannelsMIPsArgs());
     }
 
     @Override
@@ -95,7 +103,7 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Lis
 
             @Override
             public List<File> collectResult(JacsServiceResult<?> depResults) {
-                MIPGenerationArgs args = getArgs(depResults.getJacsServiceData());
+                SignalAndReferenceChannelsMIPsArgs args = getArgs(depResults.getJacsServiceData());
                 Path outputDir = getOutputDir(args);
                 String pattern = String.format("glob:**/*{_signal,_reference}.%s", getOutputFileExt(args));
                 return FileUtils.lookupFiles(outputDir, 1, pattern)
@@ -127,7 +135,7 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Lis
 
     @Override
     protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
-        MIPGenerationArgs args = getArgs(jacsServiceData);
+        SignalAndReferenceChannelsMIPsArgs args = getArgs(jacsServiceData);
         try {
             Files.createDirectories(getOutputDir(args));
         } catch (IOException e) {
@@ -138,13 +146,13 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Lis
 
     @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
-        MIPGenerationArgs args = getArgs(jacsServiceData);
+        SignalAndReferenceChannelsMIPsArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         createScript(jacsServiceData, args, externalScriptCode.getCodeWriter());
         return externalScriptCode;
     }
 
-    private void createScript(JacsServiceData jacsServiceData, MIPGenerationArgs args, ScriptWriter scriptWriter) {
+    private void createScript(JacsServiceData jacsServiceData, SignalAndReferenceChannelsMIPsArgs args, ScriptWriter scriptWriter) {
         try {
             JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
             X11Utils.setDisplayPort(serviceWorkingFolder.getServiceFolder().toString(), scriptWriter);
@@ -168,19 +176,19 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Lis
         );
     }
 
-    private MIPGenerationArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new MIPGenerationArgs());
+    private SignalAndReferenceChannelsMIPsArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SignalAndReferenceChannelsMIPsArgs());
     }
 
     private String getExecutable() {
         return getFullExecutableName(executable);
     }
 
-    private Path getOutputDir(MIPGenerationArgs args) {
+    private Path getOutputDir(SignalAndReferenceChannelsMIPsArgs args) {
         return Paths.get(args.outputDir).toAbsolutePath();
     }
 
-    private String getSignalChannels(MIPGenerationArgs args) {
+    private String getSignalChannels(SignalAndReferenceChannelsMIPsArgs args) {
         String signalChannels = args.signalChannels;
         if (StringUtils.isBlank(signalChannels)) {
             return "";
@@ -189,7 +197,7 @@ public class MIPGenerationProcessor extends AbstractExeBasedServiceProcessor<Lis
         return channelsList.isEmpty() ? "" : String.join(" ", channelsList);
     }
 
-    private String getOutputFileExt(MIPGenerationArgs args) {
+    private String getOutputFileExt(SignalAndReferenceChannelsMIPsArgs args) {
         return args.imgFormat;
     }
 }
