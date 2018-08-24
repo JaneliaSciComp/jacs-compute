@@ -20,6 +20,7 @@ import javax.inject.Named;
 import java.lang.annotation.Annotation;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -50,7 +51,7 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
     }
 
     @Override
-    public JacsServiceData createServiceData(ServiceExecutionContext executionContext, ServiceArg... args) {
+    public JacsServiceData createServiceData(ServiceExecutionContext executionContext, List<ServiceArg> args) {
         ServiceMetaData smd = getMetadata();
         JacsServiceDataBuilder jacsServiceDataBuilder =
                 new JacsServiceDataBuilder(executionContext.getParentServiceData())
@@ -75,7 +76,7 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
         } else if (StringUtils.isNotBlank(executionContext.getParentWorkspace())) {
             jacsServiceDataBuilder.setWorkspace(executionContext.getParentWorkspace());
         }
-        jacsServiceDataBuilder.addArgs(Stream.of(args).flatMap(arg -> Stream.of(arg.toStringArray())).toArray(String[]::new));
+        jacsServiceDataBuilder.addArgs(Stream.of(args).flatMap(arg -> Stream.of(arg)).toArray(String[]::new));
         jacsServiceDataBuilder.setDictionaryArgs(executionContext.getDictionaryArgs());
         if (executionContext.getServiceState() != null) {
             jacsServiceDataBuilder.setState(executionContext.getServiceState());

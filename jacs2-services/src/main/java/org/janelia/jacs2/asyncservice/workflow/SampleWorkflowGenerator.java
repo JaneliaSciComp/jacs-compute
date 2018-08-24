@@ -51,7 +51,7 @@ public class SampleWorkflowGenerator {
      */
     public DAG<WorkflowTask> createPipeline(Sample sample, List<LSMImage> lsms) {
 
-        DAG<WorkflowTask> dag = new DAG();
+        DAG<WorkflowTask> dag = new DAG<>();
 
         // Treat each objective separately
         for (ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {

@@ -89,4 +89,6 @@ public class FijiMacroService extends AbstractExeBasedServiceProcessor2<Void> {
     private FijiMacroArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new FijiMacroArgs());
     }
+
+
 }
