@@ -76,7 +76,7 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
         } else if (StringUtils.isNotBlank(executionContext.getParentWorkspace())) {
             jacsServiceDataBuilder.setWorkspace(executionContext.getParentWorkspace());
         }
-        jacsServiceDataBuilder.addArgs(Stream.of(args).flatMap(arg -> Stream.of(arg)).toArray(String[]::new));
+        jacsServiceDataBuilder.addArgs(args.stream().flatMap(arg -> Stream.of(arg.toStringArray())).toArray(String[]::new));
         jacsServiceDataBuilder.setDictionaryArgs(executionContext.getDictionaryArgs());
         if (executionContext.getServiceState() != null) {
             jacsServiceDataBuilder.setState(executionContext.getServiceState());
