@@ -41,7 +41,7 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
     @Inject
     private FileStore filestore;
     @Inject
-    private DomainDAO legacyDomainDao;
+    private DomainDAO domainDao;
 
     @Override
     public ServiceMetaData getMetadata() {
@@ -61,7 +61,7 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
         Long taskId = sd.getId().longValue();
 
         // Lock the sample for the duration of the workflow
-        SampleLock lock = legacyDomainDao.lockSample(owner, sampleId, taskId, "Sample Workflow");
+        SampleLock lock = domainDao.lockSample(owner, sampleId, taskId, "Sample Workflow");
         if (lock==null) {
             throw new IllegalStateException("Could not obtain lock on Sample#"+sampleId);
         }
@@ -82,17 +82,17 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
         Long sampleId = args.sampleId;
         Set<SamplePipelineOutput> force = args.force.stream().map((SamplePipelineOutput::valueOf)).collect(Collectors.toSet());
 
-        Sample sample = legacyDomainDao.getDomainObject(sd.getOwnerKey(), Sample.class, sampleId);
+        Sample sample = domainDao.getDomainObject(sd.getOwnerKey(), Sample.class, sampleId);
         if (sample==null) {
             throw new ComputationException(sd, "Could not find Sample#"+sampleId);
         }
 
-        List<LSMImage> lsms = legacyDomainDao.getActiveLsmsBySampleId(sd.getOwnerKey(), sampleId);
+        List<LSMImage> lsms = domainDao.getActiveLsmsBySampleId(sd.getOwnerKey(), sampleId);
         if (lsms==null || lsms.size() != sample.getLsmReferences().size()) {
             throw new ComputationException(sd, "Could not retrieve LSMs for Sample#"+sampleId);
         }
 
-        DataSet dataSet = legacyDomainDao.getDataSetByIdentifier(sd.getOwnerKey(), sample.getDataSet());
+        DataSet dataSet = domainDao.getDataSetByIdentifier(sd.getOwnerKey(), sample.getDataSet());
         if (dataSet==null) {
             throw new ComputationException(sd, "Could not find data set "+sample.getDataSet());
         }
@@ -127,7 +127,7 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
         // TODO: delete files marked deleteOnExit
 
         // Unlock sample
-        if (legacyDomainDao.unlockSample(owner, sampleId, taskId)) {
+        if (domainDao.unlockSample(owner, sampleId, taskId)) {
             logger.info("Unlocked Sample#"+sampleId);
         }
         else {
@@ -139,7 +139,7 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
     protected Sample getResult(JacsServiceData jacsServiceData) {
         SampleWorkflowExecutorArgs args = getArgs(jacsServiceData);
         Long sampleId = args.sampleId;
-        Sample sample = legacyDomainDao.getDomainObject(jacsServiceData.getOwnerKey(), Sample.class, sampleId);
+        Sample sample = domainDao.getDomainObject(jacsServiceData.getOwnerKey(), Sample.class, sampleId);
         if (sample==null) {
             throw new ComputationException(jacsServiceData, "Could not find Sample#"+sampleId);
         }

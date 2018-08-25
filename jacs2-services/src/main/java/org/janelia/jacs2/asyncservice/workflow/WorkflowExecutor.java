@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Construct a workflow for a given Sample, and execute the workflow as a set of services.
+ * Construct a workflow and execute it as a set of services.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
