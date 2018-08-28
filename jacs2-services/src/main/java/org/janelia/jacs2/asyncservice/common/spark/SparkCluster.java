@@ -269,7 +269,7 @@ public class SparkCluster {
      * @return
      * @throws Exception
      */
-    public SparkApp runApp(BiConsumer<File, ? super Throwable> callback, String jarPath,
+    public SparkApp runDefaultApp(BiConsumer<File, ? super Throwable> callback, String jarPath,
                                         String... appArgs) throws Exception {
         return runApp(callback, jarPath, null, appArgs);
     }

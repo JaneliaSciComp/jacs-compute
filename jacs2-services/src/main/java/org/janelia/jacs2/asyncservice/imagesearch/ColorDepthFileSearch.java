@@ -197,7 +197,7 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
 
         try {
             logger.info("Starting Spark application");
-            return cluster.runApp(null, jarPath, appArgsArr);
+            return cluster.runDefaultApp(null, jarPath, appArgsArr);
         }
         catch (Exception e) {
             throw new ComputationException(jacsServiceData, e);

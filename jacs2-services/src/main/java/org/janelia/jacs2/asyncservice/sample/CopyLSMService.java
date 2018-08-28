@@ -87,6 +87,6 @@ public class CopyLSMService extends AbstractServiceProcessor2<WorkflowImage> {
         if (sourceFile==null) return null;
         File file = new File(sourceFile);
         String filename = ArchiveUtils.getDecompressedFilepath(file.getName());
-        return targetFileNode.resolve(filename);
+        return targetFileNode.resolve("temp").resolve(filename);
     }
 }

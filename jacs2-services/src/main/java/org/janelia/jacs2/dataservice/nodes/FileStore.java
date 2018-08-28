@@ -65,5 +65,4 @@ public class FileStore {
     public FileStoreNode getNode(String ownerKey, String nodeName, Long nodeId) {
         return new FileStoreNode(baseDir, ownerKey, nodeName, nodeId);
     }
-
 }

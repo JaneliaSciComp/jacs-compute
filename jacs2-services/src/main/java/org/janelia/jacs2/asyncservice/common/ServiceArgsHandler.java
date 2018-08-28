@@ -12,12 +12,15 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.mongo.AbstractMongoDao;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.domain.IndexedReference;
 
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceArgDescriptor;
 import org.janelia.model.service.ServiceMetaData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -34,6 +37,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class ServiceArgsHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(ServiceArgsHandler.class);
+
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
     private final ObjectMapper objectMapper;
 
@@ -64,8 +70,10 @@ class ServiceArgsHandler {
 
             // update service arguments arguments - this involves creating a dictionary that contains both
             // the parsed actual arguments and the actual dictionary arguments
-            JCommander cmdLineParser = new JCommander(serviceMetaData.getServiceArgsObject());
-            cmdLineParser.parse(actualServiceArgs.getListArgsAsArray()); // parse the actual list service args
+            if (serviceMetaData.getServiceArgsObject()!=null) {
+                JCommander cmdLineParser = new JCommander(serviceMetaData.getServiceArgsObject());
+                cmdLineParser.parse(actualServiceArgs.getListArgsAsArray()); // parse the actual list service args
+            }
             // Collectors.toMap cannot have null values so
             // I had to use the alternative collect that takes a supplier, accumulator and combiner
             Map<String, Object> serviceArgsUpdates = serviceMetaData.getServiceArgDescriptors().stream()

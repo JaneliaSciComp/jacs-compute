@@ -19,6 +19,7 @@ import org.janelia.model.service.ServiceMetaData;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,7 +36,7 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
         @Parameter(names = "-sampleId", description = "GUID of the sample to run", required = true)
         Long sampleId;
         @Parameter(names = "-force", description = "Which pipeline steps should be forced to reprocess", required = true, variableArity = true)
-        List<String> force;
+        List<String> force = new ArrayList<>();
     }
 
     @Inject
