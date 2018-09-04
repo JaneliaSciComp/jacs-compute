@@ -302,6 +302,11 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<LSMS
             throw new MissingGridResultException(rootPath, "Did not find properties file at "+propertiesFile);
         }
 
+        // Copy over the results from earlier steps
+        result.setChannelColors(lsm.getChannelColors());
+        result.setChannelDyeNames(lsm.getChannelDyeNames());
+        DomainUtils.setFilepath(result, FileType.LsmMetadata, DomainUtils.getFilepath(lsm, FileType.LsmMetadata));
+
         return result;
     }
 

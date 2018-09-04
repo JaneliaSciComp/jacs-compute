@@ -26,7 +26,7 @@ public class ScriptWriter {
     }
 
     public ScriptWriter traceOff() {
-        return setTrace(true);
+        return setTrace(false);
     }
 
     private ScriptWriter setTrace(boolean trace) {

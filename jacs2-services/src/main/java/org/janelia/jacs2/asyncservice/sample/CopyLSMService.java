@@ -57,7 +57,7 @@ public class CopyLSMService extends AbstractServiceProcessor2<WorkflowImage> {
                 new ServiceArg("-dst", targetFilepath.toString()))
                 .thenApply((JacsServiceResult<File> result) -> {
                     // Create a new image based on the primary image
-                    WorkflowImage outputImage = getWorkflowImage(lsm);
+                    WorkflowImage outputImage = new WorkflowImage(lsm);
                     // Clear existing files
                     outputImage.setFiles(new HashMap<>());
                     // Add the temporary stack
@@ -67,21 +67,6 @@ public class CopyLSMService extends AbstractServiceProcessor2<WorkflowImage> {
                     // Return the single result
                     return updateServiceResult(sd, outputImage);
                 });
-    }
-
-    private WorkflowImage getWorkflowImage(LSMImage lsm) {
-
-        WorkflowImage image = new WorkflowImage();
-        image.setOwnerKey(lsm.getOwnerKey());
-        image.setName(lsm.getName());
-        image.setAnatomicalArea(lsm.getAnatomicalArea());
-        image.setTile(lsm.getTile());
-        image.setChannelColors(lsm.getChannelColors());
-        image.setChannelSpec(lsm.getChanSpec());
-        image.setImageSize(lsm.getImageSize());
-        image.setOpticalResolution(lsm.getOpticalResolution());
-
-        return image;
     }
 
     private Path getTargetLocation(String sourceFile, Path targetFileNode) {
