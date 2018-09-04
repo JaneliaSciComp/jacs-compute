@@ -21,6 +21,23 @@ public class ScriptWriter {
         this.w = w;
     }
 
+    public ScriptWriter traceOn() {
+        return setTrace(true);
+    }
+
+    public ScriptWriter traceOff() {
+        return setTrace(true);
+    }
+
+    private ScriptWriter setTrace(boolean trace) {
+        try {
+            w.append("set ").append(trace ? "-" : "+").append("x\n");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return this;
+    }
+
     public ScriptWriter openFunction(String fname) throws IOException {
         w.append(indent).append("function ").append(fname).append(" {").append('\n');
         addIndent();

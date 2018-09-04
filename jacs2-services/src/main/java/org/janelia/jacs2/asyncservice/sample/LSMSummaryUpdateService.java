@@ -8,14 +8,16 @@ import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.service.JacsServiceData;
 
 import javax.inject.Named;
+import java.util.Collection;
 
 @Named("lsmSummaryUpdate")
 
 @Service(description="Commit the LSM summary to the Sample")
 
-@ServiceInput(name="result",
+@ServiceInput(name="lsmSummary",
         type=LSMSummaryResult.class,
-        description="LSM summary result")
+        description="LSM summary result",
+        variadic = true)
 
 @ServiceResult(
         name="sample",
@@ -26,7 +28,10 @@ public class LSMSummaryUpdateService extends AbstractServiceProcessor2<Sample> {
 
     @Override
     public ServiceComputation<JacsServiceResult<Sample>> process(JacsServiceData sd) {
-        LSMSummaryResult result = new LSMSummaryResult();
+
+        Collection<LSMSummaryResult> lsmSummaryResults = (Collection<LSMSummaryResult>)sd.getDictionaryArgs().get("lsmSummary");
+
+        logger.info("lsmSummaryResults={}", lsmSummaryResults);
 
         Sample sample = new Sample();
 

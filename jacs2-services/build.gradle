@@ -17,6 +17,9 @@ project(":jacs2-services") {
                 REFLECTIONS_LIB,
                 JAVA_LSF_LIB,
                 DAGOBAH_LIB,
+                COMMONS_IO_LIB,
+                GSON_LIB,
+                COMMONS_HTTPCLIENT3,
                 SPARK_LAUNCHER
 
         compile (JONGO_LIB) {

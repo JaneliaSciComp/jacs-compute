@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter;
 import org.janelia.dagobah.DAG;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.nodes.FileStore;
 import org.janelia.jacs2.dataservice.nodes.FileStoreNode;
 import org.janelia.model.access.domain.DomainDAO;
@@ -19,6 +20,8 @@ import org.janelia.model.service.ServiceMetaData;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -126,6 +129,19 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
         }
 
         // TODO: delete files marked deleteOnExit
+
+        // Delete any temp/tmp directories in the workspace
+        if (sd.getWorkspace()!=null) {
+            logger.info("Looking for temp files to delete in {}", sd.getWorkspace());
+            FileUtils.lookupFiles(Paths.get(sd.getWorkspace()), 10, "**/{temp,tmp.*}").forEach(tempPath -> {
+                logger.info("Deleting {}", tempPath);
+                try {
+                    FileUtils.deleteDirectory(tempPath.toFile());
+                } catch (IOException e) {
+                    logger.error("Error deleting " + tempPath, e);
+                }
+            });
+        }
 
         // Unlock sample
         if (domainDao.unlockSample(owner, sampleId, taskId)) {

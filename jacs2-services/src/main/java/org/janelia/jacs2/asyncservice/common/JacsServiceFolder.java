@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.service.JacsServiceData;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -80,5 +81,14 @@ public class JacsServiceFolder {
         return morePathComponents
                 .map(serviceFolder::resolve)
                 .orElse(serviceFolder);
+    }
+
+    @Override
+    public String toString() {
+        return getServiceFolder().toString();
+    }
+
+    public File toFile() {
+        return getServiceFolder().toFile();
     }
 }

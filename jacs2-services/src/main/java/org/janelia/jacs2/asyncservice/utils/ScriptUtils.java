@@ -6,9 +6,8 @@ public class ScriptUtils {
 
     public static void createTempDir(String cleanupFunctionName, String tempParentDir, ScriptWriter scriptWriter) throws IOException {
         scriptWriter
-                .setVar("TMPDIR", tempParentDir)
-                .add("mkdir -p $TMPDIR")
-                .setVar("TEMP_DIR", "`mktemp -d`")
+                .addWithArgs("mkdir -p ").endArgs(tempParentDir)
+                .setVar("TEMP_DIR", "`TMPDIR="+tempParentDir+" mktemp -d`")
                 .openFunction(cleanupFunctionName)
                 .add("rm -rf $TEMP_DIR")
                 .echo("Cleaned up $TEMP_DIR")

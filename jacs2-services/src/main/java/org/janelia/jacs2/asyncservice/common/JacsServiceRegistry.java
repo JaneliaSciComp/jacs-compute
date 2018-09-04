@@ -58,6 +58,7 @@ public class JacsServiceRegistry implements ServiceRegistry {
         catch (Throwable e) {
             logger.error("Error while looking up service '{}'", serviceName, e);
         }
+
         return null;
     }
 

@@ -14,6 +14,7 @@ import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.service.*;
 
+import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -32,6 +33,7 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
     private int jobIntervalCheck;
 
     @Inject
+    @Any
     private Instance<ExternalProcessRunner> serviceRunners;
 
     @Inject
@@ -161,6 +163,28 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
      * @param jacsServiceData
      */
     protected void prepareResources(JacsServiceData jacsServiceData) {
+
+        Map<String, String> jobResources = jacsServiceData.getResources();
+
+        Integer requiredSlots = getRequiredSlots();
+        if (requiredSlots != null) {
+            ProcessorHelper.setRequiredSlots(jobResources, requiredSlots);
+        }
+
+        Integer requiredMemoryInGB = getRequiredMemoryInGB();
+        if (requiredMemoryInGB!=null) {
+            ProcessorHelper.setRequiredMemoryInGB(jobResources, requiredMemoryInGB);
+        }
+
+        Integer hardRuntimeLimitSeconds = getHardRuntimeLimitSeconds();
+        if (hardRuntimeLimitSeconds!=null) {
+            ProcessorHelper.setHardJobDurationLimitInSeconds(jobResources, hardRuntimeLimitSeconds);
+        }
+
+        Integer softRuntimeLimitSeconds = getSoftRuntimeLimitSeconds();
+        if (softRuntimeLimitSeconds!=null) {
+            ProcessorHelper.setSoftJobDurationLimitInSeconds(jobResources, softRuntimeLimitSeconds);
+        }
     }
 
     private Optional<String> getEnvVar(String varName) {
@@ -247,11 +271,56 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
             }
         }
         for (ExternalProcessRunner serviceRunner : serviceRunners) {
+            logger.trace("Checking {} for {}", serviceRunner, location);
             if (serviceRunner.supports(location)) {
+                logger.trace("Matched");
                 return serviceRunner;
             }
         }
         throw new IllegalArgumentException("Unsupported runner: " + location);
+    }
+
+    /**
+     * Override this method to specify the minimum number of slots needed for this grid job. At least this many slots
+     * will be allocated, but more slots may be allocated to fulfill the memory requirement provided by
+     * getRequiredMemoryInGB.
+     *
+     * Defaults to 1 slot.
+     *
+     * @return the minimum number of slots needed for this grid job.
+     */
+    protected Integer getRequiredSlots() {
+        return null;
+    }
+
+    /**
+     * Override this method to specify the minimum amount of memory needed for this grid job. Enough slots will be
+     * allocated to achieve this memory requirement.
+     *
+     * Defaults to 1 GB.
+     *
+     * @return the minimum amount of memory needed for this grid job.
+     */
+    protected Integer getRequiredMemoryInGB() {
+        return null;
+    }
+
+    /**
+     * Override this method to specify a hard runtime limit in seconds. This method returns null by default, meaning that
+     * no hard runtime limit will be added.
+     * @return
+     */
+    protected Integer getHardRuntimeLimitSeconds() {
+        return null;
+    }
+
+    /**
+     * Override this method to specify a soft runtime limit in seconds. This method returns null by default, meaning that
+     * no hard runtime limit will be added.
+     * @return
+     */
+    protected Integer getSoftRuntimeLimitSeconds() {
+        return null;
     }
 
 }

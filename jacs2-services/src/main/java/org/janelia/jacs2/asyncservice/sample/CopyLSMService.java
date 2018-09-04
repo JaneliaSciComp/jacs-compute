@@ -1,9 +1,10 @@
 package org.janelia.jacs2.asyncservice.sample;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
-import org.janelia.jacs2.asyncservice.common.*;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor2;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.asyncservice.common.ServiceArg;
+import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.fileservices.FileCopyProcessor;
 import org.janelia.jacs2.utils.ArchiveUtils;
 import org.janelia.model.access.domain.DomainUtils;
@@ -19,7 +20,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-@Named("copyLSM")
+@Named("lsmCopy")
 
 @Service(description="Create a temporary copy of an LSM file in the filestore, unzipping it if necessary")
 
