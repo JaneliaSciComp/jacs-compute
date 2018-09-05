@@ -207,7 +207,6 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
     @Override
     public ServiceComputation<JacsServiceResult<List<File>>> process(JacsServiceData jacsServiceData) {
         // Create the working directory
-        // TODO: this should be managed by a FileNode interface, which has not yet been ported from JACSv1
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         try {
             Files.createDirectories(serviceWorkingFolder.getServiceFolder());

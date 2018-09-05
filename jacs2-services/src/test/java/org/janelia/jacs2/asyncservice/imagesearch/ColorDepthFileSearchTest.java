@@ -101,16 +101,21 @@ public class ColorDepthFileSearchTest {
             return Stream.of(root.resolve("f1_results.txt"));
         });
 
-        Mockito.when(cluster.runApp(null, null,
-                "-m", "f1", "f2", "f3", "-i", "s1,s2",
-                "--maskThresholds", "100", "100", "100",
-                "--dataThreshold", "100",
-                "--pixColorFluctuation", "2.0",
-                "--pctPositivePixels", "10.0",
-                "-o",
-                serviceWorkingFolder.getServiceFolder("f1_results.txt").toFile().getAbsolutePath(),
-                serviceWorkingFolder.getServiceFolder("f2_results.txt").toFile().getAbsolutePath(),
-                serviceWorkingFolder.getServiceFolder("f3_results.txt").toFile().getAbsolutePath())).thenReturn(sparkApp);
+        Mockito.when(cluster.runApp(
+                null,
+                null,
+                new String[] {
+                        "-m", "f1", "f2", "f3", "-i", "s1,s2",
+                        "--maskThresholds", "100", "100", "100",
+                        "--dataThreshold", "100",
+                        "--pixColorFluctuation", "2.0",
+                        "--pctPositivePixels", "10.0",
+                        "-o",
+                        serviceWorkingFolder.getServiceFolder("f1_results.txt").toFile().getAbsolutePath(),
+                        serviceWorkingFolder.getServiceFolder("f2_results.txt").toFile().getAbsolutePath(),
+                        serviceWorkingFolder.getServiceFolder("f3_results.txt").toFile().getAbsolutePath()
+                }))
+                .thenReturn(sparkApp);
 
         ServiceComputation<JacsServiceResult<List<File>>> colorDepthFileSearchComputation = colorDepthFileSearch.process(testService);
 
