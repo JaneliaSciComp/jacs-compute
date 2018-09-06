@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.lightsheetservices;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.*;
@@ -70,10 +71,11 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
     @Override
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         LightsheetProcessingArgs args = getArgs(jacsServiceData);
-        final Integer timePointsPerJob = 1; // FIXED AT 4
         Map<String, String> argumentsToRunJob = readJsonConfig(getJsonConfig(args.configAddress));
-        String[] currentJobStepNames =  argumentsToRunJob.get("currentJACSJobStepNames").split(",");
-        String[] currentJobTimePoints =  argumentsToRunJob.get("currentJACSJobTimePoints").split(",");
+        String currentJACSJobStepNameValues = argumentsToRunJob.get("currentJACSJobStepNames");
+        Preconditions.checkArgument(StringUtils.isBlank(currentJACSJobStepNameValues),
+                "currentJACSJobStepNames is not set");
+        String[] currentJobStepNames =  currentJACSJobStepNameValues.split(",");
         String configOutputPath =  argumentsToRunJob.get("configOutputPath");
         ServiceComputation<JacsServiceResult<Void>> stage = lightsheetPipelineStepProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
@@ -83,8 +85,6 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                         .build(),
                 new ServiceArg("-step", currentJobStepNames[0]),
                 new ServiceArg("-stepIndex", 0),
-                new ServiceArg("-numTimePoints",currentJobTimePoints[0]),
-                new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
                 new ServiceArg("-configAddress", args.configAddress),
                 new ServiceArg("-configOutputPath", configOutputPath)
         );
@@ -100,8 +100,6 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                                 .build(),
                         new ServiceArg("-step", currentJobStepNames[stepIndex]),
                         new ServiceArg("-stepIndex", stepIndex),
-                        new ServiceArg("-numTimePoints", currentJobTimePoints[stepIndex]),
-                        new ServiceArg("-timePointsPerJob", timePointsPerJob.toString()),
                         new ServiceArg("-configAddress", args.configAddress),
                         new ServiceArg("-configOutputPath", configOutputPath)
                 ))
