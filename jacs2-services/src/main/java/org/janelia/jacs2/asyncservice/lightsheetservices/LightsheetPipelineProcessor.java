@@ -73,7 +73,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
         LightsheetProcessingArgs args = getArgs(jacsServiceData);
         Map<String, String> argumentsToRunJob = readJsonConfig(getJsonConfig(args.configAddress));
         String currentJACSJobStepNameValues = argumentsToRunJob.get("currentJACSJobStepNames");
-        Preconditions.checkArgument(StringUtils.isBlank(currentJACSJobStepNameValues),
+        Preconditions.checkArgument(StringUtils.isNotBlank(currentJACSJobStepNameValues),
                 "currentJACSJobStepNames is not set");
         String[] currentJobStepNames =  currentJACSJobStepNameValues.split(",");
         String configOutputPath =  argumentsToRunJob.get("configOutputPath");
