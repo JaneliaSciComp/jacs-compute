@@ -39,7 +39,6 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
     private final ApplicationConfig applicationConfig;
     private final int jobIntervalCheck;
 
-
     public AbstractExeBasedServiceProcessor(ServiceComputationFactory computationFactory,
                                             JacsServiceDataPersistence jacsServiceDataPersistence,
                                             Instance<ExternalProcessRunner> serviceRunners,

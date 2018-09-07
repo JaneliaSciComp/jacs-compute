@@ -19,9 +19,6 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
 
     protected String createNativeSpec(Map<String, String> jobResources, String jobRunningDir) {
         StringBuilder nativeSpecBuilder = new StringBuilder();
-        if (StringUtils.isNotBlank(jobRunningDir)) {
-            nativeSpecBuilder.append("-cwd ").append(jobRunningDir).append(' ');
-        }
         // append accountID for billing
         String billingAccount = ProcessorHelper.getGridBillingAccount(jobResources);
         if (StringUtils.isNotBlank(billingAccount)) {
@@ -81,6 +78,13 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
                     .append('"')
                     .append(' ')
                     ;
+        }
+        if (StringUtils.isNotBlank(jobRunningDir)) {
+            nativeSpecBuilder.append("-cwd ")
+                    .append('"')
+                    .append(jobRunningDir)
+                    .append('"')
+                    .append(' ');
         }
         return nativeSpecBuilder.toString();
     }
