@@ -129,6 +129,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
             target = httpclient.target(configAddress).queryParam("stepName", "getArgumentsToRunJob");
             Response response = target.request().get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                logger.error("Request for json config to {} returned with {}", target, response.getStatus());
                 throw new IllegalStateException(configAddress + " returned with " + response.getStatus());
             }
             return response.readEntity(InputStream.class);
