@@ -17,8 +17,11 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
         super(drmaaSession, jacsServiceDataPersistence, logger);
     }
 
-    protected String createNativeSpec(Map<String, String> jobResources) {
+    protected String createNativeSpec(Map<String, String> jobResources, String jobRunningDir) {
         StringBuilder nativeSpecBuilder = new StringBuilder();
+        if (StringUtils.isNotBlank(jobRunningDir)) {
+            nativeSpecBuilder.append("-cwd ").append(jobRunningDir).append(' ');
+        }
         // append accountID for billing
         String billingAccount = ProcessorHelper.getGridBillingAccount(jobResources);
         if (StringUtils.isNotBlank(billingAccount)) {

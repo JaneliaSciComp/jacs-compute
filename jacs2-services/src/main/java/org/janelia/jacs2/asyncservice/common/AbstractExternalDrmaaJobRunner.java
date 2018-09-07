@@ -65,7 +65,7 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
                 jt.setOutputPath(":" + Paths.get(serviceContext.getOutputPath(), scriptServiceFolder.getServiceOutputPattern(".%J.%I")));
                 jt.setErrorPath(":" + Paths.get(serviceContext.getErrorPath(), scriptServiceFolder.getServiceErrorPattern(".%J.%I")));
             }
-            String nativeSpec = createNativeSpec(serviceContext.getResources());
+            String nativeSpec = createNativeSpec(serviceContext.getResources(), processDirectory.getAbsolutePath());
             if (StringUtils.isNotBlank(nativeSpec)) {
                 jt.setNativeSpecification(nativeSpec);
             }
@@ -101,6 +101,6 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
         }
     }
 
-    protected abstract String createNativeSpec(Map<String, String> jobResources);
+    protected abstract String createNativeSpec(Map<String, String> jobResources, String jobRunningDir);
 
 }

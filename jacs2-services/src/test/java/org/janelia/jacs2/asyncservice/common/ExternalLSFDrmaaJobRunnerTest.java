@@ -55,7 +55,7 @@ public class ExternalLSFDrmaaJobRunnerTest {
                 ), "-n 4 -R \"affinity[core(1)] select[haswell,ssd_scratch,avx2]\" ")
         );
         for (TestData td : testData) {
-            assertThat(lsfDrmaaJobRunner.createNativeSpec(td.jobResources), equalTo(td.expectedResult));
+            assertThat(lsfDrmaaJobRunner.createNativeSpec(td.jobResources, ""), equalTo(td.expectedResult));
         }
     }
 }

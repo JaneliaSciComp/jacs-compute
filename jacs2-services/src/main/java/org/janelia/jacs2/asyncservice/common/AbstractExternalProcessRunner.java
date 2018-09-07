@@ -134,6 +134,7 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
     }
 
     protected void writeProcessingCode(ExternalCodeBlock externalCode, Map<String, String> env, ScriptWriter scriptWriter) {
+        env.forEach(scriptWriter::exportVar);
         scriptWriter.add(externalCode.toString());
     }
 
