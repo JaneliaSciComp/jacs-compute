@@ -133,7 +133,8 @@ abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
         return configFiles;
     }
 
-    protected void writeProcessingCode(ExternalCodeBlock externalCode, Map<String, String> env, ScriptWriter scriptWriter) {
+    private void writeProcessingCode(ExternalCodeBlock externalCode, Map<String, String> env, ScriptWriter scriptWriter) {
+        scriptWriter.add("#!/bin/bash");
         env.forEach(scriptWriter::exportVar);
         scriptWriter.add(externalCode.toString());
     }

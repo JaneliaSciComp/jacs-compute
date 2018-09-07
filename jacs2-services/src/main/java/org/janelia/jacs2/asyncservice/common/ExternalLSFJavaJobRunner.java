@@ -197,12 +197,4 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         return spec;
     }
 
-    @Override
-    protected void writeProcessingCode(ExternalCodeBlock externalCode, Map<String, String> env, ScriptWriter scriptWriter) {
-        scriptWriter.add("#!/bin/bash");
-        for(String key : env.keySet()) {
-            scriptWriter.setVar(key, env.get(key));
-        }
-        scriptWriter.add(externalCode.toString());
-    }
 }
