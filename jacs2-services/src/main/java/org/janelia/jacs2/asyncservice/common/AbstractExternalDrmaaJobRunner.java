@@ -50,11 +50,11 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
             prepareOutputDir(serviceContext.getErrorPath(), "Error file must be set before running the service " + serviceContext.getName());
 
             jt = drmaaSession.createJobTemplate();
+            File processDirectory = prepareProcessingDir(processDir);
+            jt.setWorkingDirectory(processDirectory.getAbsolutePath());
             jt.setJobName(serviceContext.getName());
             jt.setRemoteCommand(processingScript);
             jt.setArgs(Collections.emptyList());
-            File processDirectory = prepareProcessingDir(processDir);
-            jt.setWorkingDirectory(processDirectory.getAbsolutePath());
             logger.debug("Using working directory {} for {}", processDirectory, serviceContext);
             jt.setJobEnvironment(env);
             if (CollectionUtils.size(externalConfigs) < 1) {
