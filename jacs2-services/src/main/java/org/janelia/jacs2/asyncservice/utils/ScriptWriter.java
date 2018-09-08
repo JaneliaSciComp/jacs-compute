@@ -38,15 +38,23 @@ public class ScriptWriter {
         return this;
     }
 
-    public ScriptWriter openFunction(String fname) throws IOException {
-        w.append(indent).append("function ").append(fname).append(" {").append('\n');
-        addIndent();
+    public ScriptWriter openFunction(String fname) {
+        try {
+            w.append(indent).append("function ").append(fname).append(" {").append('\n');
+            addIndent();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         return this;
     }
 
-    public ScriptWriter closeFunction(String fname) throws IOException {
-        removeIndent();
-        w.append(indent).append("}").append(" # end ").append(fname).append('\n');
+    public ScriptWriter closeFunction(String fname) {
+        try {
+            removeIndent();
+            w.append(indent).append("}").append(" # end ").append(fname).append('\n');
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         return this;
     }
 

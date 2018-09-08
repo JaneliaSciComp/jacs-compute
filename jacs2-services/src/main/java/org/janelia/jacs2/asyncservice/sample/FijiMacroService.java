@@ -1,7 +1,10 @@
 package org.janelia.jacs2.asyncservice.sample;
 
 import com.beust.jcommander.Parameter;
-import org.janelia.jacs2.asyncservice.common.*;
+import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor2;
+import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
+import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
@@ -11,10 +14,6 @@ import org.janelia.model.service.ServiceMetaData;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 
 @Named("fijiMacro")
@@ -50,40 +49,36 @@ public class FijiMacroService extends AbstractExeBasedServiceProcessor2<Void> {
     }
 
     @Override
-    protected void createScript(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) {
+    protected void createScript(ScriptWriter scriptWriter) {
+        JacsServiceData jacsServiceData = currentService.getJacsServiceData();
         FijiMacroArgs args = getArgs(jacsServiceData);
-        try {
-            JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-            scriptWriter.addWithArgs("cd").addArg(serviceWorkingFolder.toString());
 
-            // Init virtual framebuffer
-            scriptWriter.addWithArgs(". "+initXvfbPath).addArg("$DISPLAY_PORT");
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+        scriptWriter.addWithArgs("cd").addArg(serviceWorkingFolder.toString());
 
-            // Move to scratch directory
-            Files.createDirectories(Paths.get(scratchDir));
-            ScriptUtils.createTempDir("cleanTemp", scratchDir, scriptWriter);
-            scriptWriter.addWithArgs("cd").addArg("$TEMP_DIR");
+        // Init virtual framebuffer
+        scriptWriter.addWithArgs(". "+initXvfbPath).addArg("$DISPLAY_PORT");
 
-            // Combine the exit handlers
-            scriptWriter
-                    .add("function exitHandler() { cleanXvfb; cleanTemp; }")
-                    .add("trap exitHandler EXIT");
+        // Move to scratch directory
+        ScriptUtils.createTempDir("cleanTemp", scratchDir, scriptWriter);
+        scriptWriter.addWithArgs("cd").addArg("$TEMP_DIR");
 
-            // Run FIJI
-            scriptWriter
-                    .addWithArgs(fijiExecutable)
-                    .addArg("-macro").addArg(args.macroPath)
-                    .addArg(String.join(",", args.macroArgs))
-                    .addArg("&");
+        // Combine the exit handlers
+        scriptWriter
+                .add("function exitHandler() { cleanXvfb; cleanTemp; }")
+                .add("trap exitHandler EXIT");
 
-            // Monitor Fiji and take periodic screenshots, killing it eventually
-            scriptWriter.setVar("fpid", "$!");
-            scriptWriter.addWithArgs(". "+monitorXvfbPath).addArg("PORT").addArg("fpid").addArg(getTimeoutInSeconds(jacsServiceData)+"");
+        // Run FIJI
+        scriptWriter
+                .addWithArgs(fijiExecutable)
+                .addArg("-macro").addArg(args.macroPath)
+                .addArg(String.join(",", args.macroArgs))
+                .addArg("&");
 
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        // Monitor Fiji and take periodic screenshots, killing it eventually
+        scriptWriter.setVar("fpid", "$!");
+        scriptWriter.addWithArgs(". "+monitorXvfbPath).addArg("PORT").addArg("fpid").addArg(getTimeoutInSeconds(jacsServiceData)+"");
+
     }
 
     private FijiMacroArgs getArgs(JacsServiceData jacsServiceData) {

@@ -143,11 +143,8 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
         return globals;
     }
 
-
     @Override
     protected void doFinally(JacsServiceData sd, Throwable throwable) {
-
-        super.doFinally(sd, throwable);
 
         SampleWorkflowExecutorArgs args = getArgs(sd);
         Long sampleId = args.sampleId;
@@ -187,7 +184,8 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
     }
 
     @Override
-    protected Sample getResult(JacsServiceData jacsServiceData) {
+    protected Sample createResult() {
+        JacsServiceData jacsServiceData = currentService.getJacsServiceData();
         SampleWorkflowExecutorArgs args = getArgs(jacsServiceData);
         Long sampleId = args.sampleId;
         Sample sample = domainDao.getDomainObject(jacsServiceData.getOwnerKey(), Sample.class, sampleId);

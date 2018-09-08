@@ -5,7 +5,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -46,8 +45,8 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
     private ApplicationConfig applicationConfig;
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) throws Exception {
-        JacsServiceData jacsServiceDataHierarchy = super.prepareProcessing(jacsServiceData);
+    protected JacsServiceData prepareProcessing(JacsServiceData sd) throws Exception {
+        JacsServiceData jacsServiceDataHierarchy = super.prepareProcessing(sd);
         updateOutputAndErrorPaths(jacsServiceDataHierarchy);
         return jacsServiceDataHierarchy;
     }
@@ -67,16 +66,15 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) {
-        ExeJobInfo jobInfo = runExternalProcess(depsResult.getJacsServiceData());
-        PeriodicallyCheckableState<JacsServiceResult<Void>> periodicResultCheck = new PeriodicallyCheckableState<>(depsResult, jobIntervalCheck);
+    protected ServiceComputation<JacsServiceData> processing(JacsServiceData sd) {
+        ExeJobInfo jobInfo = runExternalProcess(sd);
+        PeriodicallyCheckableState<JacsServiceData> periodicResultCheck = new PeriodicallyCheckableState<>(sd, jobIntervalCheck);
         return computationFactory.newCompletedComputation(periodicResultCheck)
-                .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceResult<Void>> state) -> new ContinuationCond.Cond<>(state,
-                        periodicResultCheck.updateCheckTime() && hasJobFinished(periodicResultCheck.getState().getJacsServiceData(), jobInfo)))
+                .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceData> state) -> new ContinuationCond.Cond<>(state,
+                        periodicResultCheck.updateCheckTime() && hasJobFinished(periodicResultCheck.getState(), jobInfo)))
                 .thenApply(pdCond -> {
 
-                    JacsServiceResult<Void> pd = pdCond.getState();
-                    JacsServiceData jacsServiceData = pd.getJacsServiceData();
+                    JacsServiceData jacsServiceData = pdCond.getState();
 
                     // Persist all final job instance metadata
                     Collection<JacsJobInstanceInfo> completedJobInfos = jobInfo.getJobInstanceInfos();
@@ -102,7 +100,7 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
                                 JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, errorMessage));
                         throw new ComputationException(jacsServiceData, errorMessage);
                     }
-                    return pd;
+                    return sd;
                 });
     }
 
@@ -141,11 +139,23 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
         return jacsServiceData.hasId() ? jacsServiceDataPersistence.findById(jacsServiceData.getId()) : jacsServiceData;
     }
 
-    protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
+    private void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
+        long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
+        if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
+            jacsServiceDataPersistence.updateServiceState(
+                    jacsServiceData,
+                    JacsServiceState.TIMEOUT,
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart)));
+            logger.warn("Service {} timed out after {}ms", jacsServiceData, timeSinceStart);
+            throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " timed out");
+        }
+    }
+
+    protected ExternalCodeBlock prepareExternalScript() {
         try {
             ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
             ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
-            createScript(jacsServiceData, externalScriptWriter);
+            createScript(externalScriptWriter);
             externalScriptWriter.close();
             return externalScriptCode;
         }
@@ -154,15 +164,19 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
         }
     }
 
-    protected abstract void createScript(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) throws IOException;
+    /**
+     * Override this to create the script that is run on the cluster.
+     * @param scriptWriter script writer which will be written to a file
+     * @throws IOException if there is a problem writing to the file
+     */
+    protected abstract void createScript(ScriptWriter scriptWriter) throws IOException;
 
     /**
      * Override this to add environment variables which should exist when the script is run. The default implementation
      * returns an empty map.
-     * @param jacsServiceData
-     * @return
+     * @return map of environment variables for the executable process
      */
-    protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
+    protected Map<String, String> prepareEnvironment() {
         return ImmutableMap.of();
     }
 
@@ -197,10 +211,6 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
 
     private Optional<String> getEnvVar(String varName) {
         return Optional.ofNullable(System.getenv(varName));
-    }
-
-    protected ApplicationConfig getApplicationConfig() {
-        return applicationConfig;
     }
 
     protected String getFullExecutableName(String... execPathComponents) {
@@ -241,10 +251,10 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
     }
 
     private ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
-        List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles(jacsServiceData);
-        ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
+        List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles();
+        ExternalCodeBlock script = prepareExternalScript();
         Map<String, String> runtimeEnv = new LinkedHashMap<>();
-        runtimeEnv.putAll(prepareEnvironment(jacsServiceData));
+        runtimeEnv.putAll(prepareEnvironment());
         if (MapUtils.isNotEmpty(jacsServiceData.getEnv())) {
             runtimeEnv.putAll(jacsServiceData.getEnv());
         }
@@ -259,7 +269,7 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
                 jacsServiceData);
     }
 
-    protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
+    protected List<ExternalCodeBlock> prepareConfigurationFiles() {
         return Collections.emptyList();
     }
 

@@ -8,6 +8,7 @@ import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.X11Utils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.utils.CurrentService;
 import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
@@ -43,6 +44,8 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
     @Inject
     protected JacsServiceDataPersistence jacsServiceDataPersistence;
 
+    @Inject
+    protected CurrentService currentService;
 
     @Override
     public ServiceMetaData getMetadata() {
@@ -50,13 +53,13 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
     }
 
     @SuppressWarnings("unchecked")
-    protected <T> T getServiceInput(JacsServiceData sd, String name) {
-        return (T)sd.getDictionaryArgs().get(name);
+    protected <T> T getServiceInput(String name) {
+        return (T)currentService.getInput(name);
     }
 
     @SuppressWarnings("unchecked")
-    protected <T> T getRequiredServiceInput(JacsServiceData sd, String name) {
-        T value = (T)sd.getDictionaryArgs().get(name);
+    protected <T> T getRequiredServiceInput(String name) {
+        T value = (T)currentService.getInput(name);
         if (value==null) {
             throw new IllegalStateException("Service input "+name+" must be specified");
         }
@@ -151,6 +154,7 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
     }
 
     // Convenience method
+    @SuppressWarnings("unchecked")
     private <C extends Class<AbstractServiceProcessor2<U>>> C getServiceClass() {
 
         Class<?> clazz = this.getClass();

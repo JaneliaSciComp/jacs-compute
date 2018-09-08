@@ -18,10 +18,9 @@ public class DatabaseIndexingService extends AbstractBasicLifeCycleServiceProces
     private DomainDAO domainDao;
 
     @Override
-    protected Void execute(JacsServiceData sd) throws Exception {
+    protected void execute(JacsServiceData sd) throws Exception {
         IndexCreation indexCreation = new IndexCreation(domainDao);
         indexCreation.ensureIndexes();
         logger.info("Indexing complete.");
-        return null;
     }
 }

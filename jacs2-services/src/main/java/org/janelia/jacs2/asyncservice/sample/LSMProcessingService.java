@@ -3,7 +3,6 @@ package org.janelia.jacs2.asyncservice.sample;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor2;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.exceptions.MissingGridResultException;
 import org.janelia.jacs2.asyncservice.sample.helpers.FileDiscoveryHelper;
 import org.janelia.jacs2.asyncservice.sample.helpers.SampleHelper;
@@ -13,6 +12,7 @@ import org.janelia.jacs2.asyncservice.utils.ScriptUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.asyncservice.utils.Task;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.utils.CurrentService;
 import org.janelia.model.access.domain.ChanSpecUtils;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.access.domain.FijiColor;
@@ -77,12 +77,13 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<Sing
     private Instance<SampleHelper> sampleHelperInstance;
 
     @Override
-    protected void createScript(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) throws IOException {
+    protected void createScript(ScriptWriter scriptWriter) {
 
-        WorkflowImage lsm = (WorkflowImage)jacsServiceData.getDictionaryArgs().get("lsm");
+        WorkflowImage lsm = (WorkflowImage)currentService.getInput("lsm");
         String lsmFilepath = DomainUtils.getFilepath(lsm, FileType.LosslessStack);
 
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+        JacsServiceData sd = currentService.getJacsServiceData();
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(sd);
         String workdir = serviceWorkingFolder.toString();
 
         // Set up variables
@@ -117,7 +118,7 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<Sing
 
         // Monitor Fiji and take periodic screenshots, killing it eventually
         scriptWriter.setVar("fpid", "$!");
-        scriptWriter.addWithArgs(". "+monitorXvfbPath).addArg("$XVFB_PORT").addArg("$fpid").endArgs(getTimeoutInSeconds(jacsServiceData)+"");
+        scriptWriter.addWithArgs(". "+monitorXvfbPath).addArg("$XVFB_PORT").addArg("$fpid").endArgs(getTimeoutInSeconds(sd)+"");
 
         // Encode avi movies as mp4 and delete the input avi's
         String hcmd = getFormattedH264ConvertCommand("$fin", "$fout", false);
@@ -138,6 +139,8 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<Sing
     }
 
     private String getMacroArgs(WorkflowImage lsm, String outputDir) {
+
+        assert currentService.getJacsServiceData()!=null;
 
         String filepath = DomainUtils.getFilepath(lsm, FileType.LosslessStack);
         String prefix = SamplePipelineUtils.getLSMPrefix(lsm);
@@ -206,14 +209,13 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<Sing
     }
 
     @Override
-    protected JacsServiceResult<SingleLSMSummaryResult> postProcessing(JacsServiceResult<SingleLSMSummaryResult> sr) throws Exception {
+    protected SingleLSMSummaryResult createResult() throws Exception {
 
-        JacsServiceData jacsServiceData = sr.getJacsServiceData();
-
-        WorkflowImage lsm = (WorkflowImage)jacsServiceData.getDictionaryArgs().get("lsm");
+        WorkflowImage lsm = (WorkflowImage)currentService.getInput("lsm");
         String prefix = SamplePipelineUtils.getLSMPrefix(lsm);
 
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+        JacsServiceData sd = currentService.getJacsServiceData();
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(sd);
         File outputDir = serviceWorkingFolder.toFile();
 
         File[] files = outputDir.listFiles();
@@ -237,10 +239,7 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<Sing
             throw new MissingGridResultException(outputDir.getAbsolutePath(), "No output files found for input "+prefix+" in "+outputDir);
         }
 
-        SingleLSMSummaryResult result = discoverFiles(jacsServiceData, outputDir);
-        jacsServiceData.setSerializableResult(result);
-        jacsServiceDataPersistence.updateServiceResult(jacsServiceData);
-        return new JacsServiceResult<>(jacsServiceData, result);
+        return discoverFiles(sd, outputDir);
     }
 
     public SingleLSMSummaryResult discoverFiles(JacsServiceData jacsServiceData, File outputPath) throws Exception {

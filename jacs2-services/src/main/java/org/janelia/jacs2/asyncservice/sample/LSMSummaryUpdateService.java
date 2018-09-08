@@ -44,14 +44,15 @@ public class LSMSummaryUpdateService extends AbstractBasicLifeCycleServiceProces
     private final String resultName = "LSM Summary Result";
 
     @Override
-    protected Sample execute(JacsServiceData sd) throws Exception {
+    protected Sample createResult() throws Exception {
 
+        JacsServiceData sd = currentService.getJacsServiceData();
         SampleHelper sampleHelper = sampleHelperInstance.get();
         sampleHelper.init(sd, logger);
 
-        Collection<SingleLSMSummaryResult> lsmSummaryResults = getRequiredServiceInput(sd,"lsmSummary");
-        Long sampleId = getRequiredServiceInput(sd,"sampleId");
-        Long pipelineRunId = getRequiredServiceInput(sd,"pipelineRunId");
+        Collection<SingleLSMSummaryResult> lsmSummaryResults = getRequiredServiceInput("lsmSummary");
+        Long sampleId = getRequiredServiceInput("sampleId");
+        Long pipelineRunId = getRequiredServiceInput("pipelineRunId");
 
         logger.info("Got lsmSummaryResults={}", lsmSummaryResults);
 

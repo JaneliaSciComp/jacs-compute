@@ -2,14 +2,12 @@ package org.janelia.jacs2.asyncservice.sample;
 
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor2;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.exceptions.MissingGridResultException;
 import org.janelia.jacs2.asyncservice.sample.aux.LSMMetadata;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.asyncservice.utils.Task;
 import org.janelia.jacs2.cdi.SingularityAppFactory;
-import org.janelia.jacs2.utils.CurrentServiceHolder;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.workflow.WorkflowImage;
@@ -41,20 +39,16 @@ public class LSMMetadataService extends AbstractExeBasedServiceProcessor2<Workfl
     @Inject
     private SingularityAppFactory singularityApps;
 
-    @Inject
-    private CurrentServiceHolder currentService;
-
     @Override
-    protected void createScript(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) throws IOException {
+    protected void createScript(ScriptWriter scriptWriter) throws IOException {
 
-        logger.info("GOT CURRENT SERVICE = {}", currentService.getJacsServiceData());
-
-        WorkflowImage lsm = (WorkflowImage) jacsServiceData.getDictionaryArgs().get("lsm");
+        WorkflowImage lsm = (WorkflowImage) currentService.getInput("lsm");
         String lsmFilepath = DomainUtils.getFilepath(lsm, FileType.LosslessStack);
         String prefix = FileUtils.getFileName(lsmFilepath);
         String metadataFile  = prefix+".json";
 
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+        JacsServiceData sd = currentService.getJacsServiceData();
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(sd);
         String workdir = serviceWorkingFolder.toString();
 
         scriptWriter.add("set -ex");
@@ -70,18 +64,15 @@ public class LSMMetadataService extends AbstractExeBasedServiceProcessor2<Workfl
     }
 
     @Override
-    protected JacsServiceResult<WorkflowImage> postProcessing(JacsServiceResult<WorkflowImage> sr) throws Exception {
+    protected WorkflowImage createResult() throws Exception {
 
-        logger.info("GOT CURRENT SERVICE = {}", currentService.getJacsServiceData());
-
-        JacsServiceData jacsServiceData = sr.getJacsServiceData();
-
-        WorkflowImage lsm = (WorkflowImage)jacsServiceData.getDictionaryArgs().get("lsm");
+        WorkflowImage lsm = (WorkflowImage)currentService.getInput("lsm");
         String lsmFilepath = DomainUtils.getFilepath(lsm, FileType.LosslessStack);
         String prefix = FileUtils.getFileName(lsmFilepath);
         String metadataFile  = prefix+".json";
 
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+        JacsServiceData sd = currentService.getJacsServiceData();
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(sd);
         File outputDir = serviceWorkingFolder.toFile();
         File outputFile = new File(outputDir, metadataFile);
         if (!outputFile.exists()) {
@@ -126,9 +117,7 @@ public class LSMMetadataService extends AbstractExeBasedServiceProcessor2<Workfl
             outputImage.setChannelDyeNames(Task.csvStringFromCollection(dyeNames));
         }
 
-        jacsServiceData.setSerializableResult(outputImage);
-        jacsServiceDataPersistence.updateServiceResult(jacsServiceData);
-        return new JacsServiceResult<>(jacsServiceData, outputImage);
+        return outputImage;
     }
 
     @Override

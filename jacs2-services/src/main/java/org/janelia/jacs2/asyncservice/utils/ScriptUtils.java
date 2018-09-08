@@ -1,10 +1,8 @@
 package org.janelia.jacs2.asyncservice.utils;
 
-import java.io.IOException;
-
 public class ScriptUtils {
 
-    public static void createTempDir(String cleanupFunctionName, String tempParentDir, ScriptWriter scriptWriter) throws IOException {
+    public static void createTempDir(String cleanupFunctionName, String tempParentDir, ScriptWriter scriptWriter) {
         scriptWriter
                 .addWithArgs("mkdir -p ").endArgs(tempParentDir)
                 .setVar("TEMP_DIR", "`TMPDIR="+tempParentDir+" mktemp -d`")
