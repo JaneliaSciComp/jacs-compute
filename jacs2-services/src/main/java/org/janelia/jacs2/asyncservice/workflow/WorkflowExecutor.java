@@ -1,7 +1,7 @@
 package org.janelia.jacs2.asyncservice.workflow;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.NotImplementedException;
+import com.google.common.base.Joiner;
 import org.janelia.dagobah.DAG;
 import org.janelia.dagobah.WorkflowProcessorKt;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
@@ -61,12 +61,23 @@ public abstract class WorkflowExecutor<T> extends AbstractBasicLifeCycleServiceP
 
     protected abstract DAG<WorkflowTask> createDAG(JacsServiceData sd);
 
+    protected Map<String, Object> getGlobals(JacsServiceData jacsServiceData) {
+        return new HashMap<>();
+    }
+
     protected abstract T getResult(JacsServiceData jacsServiceData);
 
     private void submitDAG(JacsServiceData sd, DAG<WorkflowTask> dag) {
 
         Workflow workflow = workflowDao.saveDAG(dag);
         logger.info("Saved new workflow as {}", workflow);
+
+        Map<String, Object> globals = getGlobals(sd);
+        if (!globals.isEmpty()) {
+            workflow.setGlobals(getGlobals(sd));
+            workflowDao.saveWorkflow(workflow);
+            logger.info("Added globals to workflow: {}", globals);
+        }
 
         jacsServiceDataPersistence.updateField(sd,"workflowId", workflow.getId());
 

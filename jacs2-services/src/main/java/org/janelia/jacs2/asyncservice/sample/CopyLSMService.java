@@ -28,7 +28,7 @@ import java.util.Map;
         type=LSMImage.class,
         description="Primary LSM image")
 
-@ServiceResult(
+@ServiceOutput(
         name="outputImage",
         type=WorkflowImage.class,
         description="Temporary LSM image")
@@ -58,6 +58,8 @@ public class CopyLSMService extends AbstractServiceProcessor2<WorkflowImage> {
                 .thenApply((JacsServiceResult<File> result) -> {
                     // Create a new image based on the primary image
                     WorkflowImage outputImage = new WorkflowImage(lsm);
+                    // Propagate id
+                    outputImage.setId(lsm.getId());
                     // Clear existing files
                     outputImage.setFiles(new HashMap<>());
                     // Add the temporary stack

@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.X11Utils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -48,6 +47,20 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
     @Override
     public ServiceMetaData getMetadata() {
         return ServiceArgs.getMetadata(getServiceClass());
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T> T getServiceInput(JacsServiceData sd, String name) {
+        return (T)sd.getDictionaryArgs().get(name);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T> T getRequiredServiceInput(JacsServiceData sd, String name) {
+        T value = (T)sd.getDictionaryArgs().get(name);
+        if (value==null) {
+            throw new IllegalStateException("Service input "+name+" must be specified");
+        }
+        return value;
     }
 
     @Override
@@ -100,19 +113,6 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
         return new DefaultServiceErrorChecker(logger);
     }
 
-//    protected List<String> getErrors(JacsServiceData jacsServiceData) {
-//        return this.getErrorChecker().collectErrors(jacsServiceData);
-//    }
-
-//    /**
-//     * Helper method that can be used in service processor implementations that expect dictionary arguments.
-//     * @param jacsServiceData
-//     * @return
-//     */
-//    protected String getServiceDictionaryArgsAsJson(JacsServiceData jacsServiceData) {
-//        return ServiceDataUtils.serializeObjectAsJson(jacsServiceData.getDictionaryArgs());
-//    }
-
     protected Path getServiceFolder(JacsServiceData jacsServiceData) {
         return getWorkingDirectory(jacsServiceData).getServiceFolder();
     }
@@ -140,51 +140,17 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
         return Paths.get(baseDir, pathElemsBuilder.build().toArray(new String[0])).toAbsolutePath();
     }
 
-//    protected JacsServiceData submitDependencyIfNotFound(JacsServiceData dependency) {
-//        return jacsServiceDataPersistence.createServiceIfNotFound(dependency);
-//    }
-//
-//    protected <S> ContinuationCond<S> suspendCondition(JacsServiceData jacsServiceData) {
-//        return new WaitingForDependenciesContinuationCond<>(
-//                new ServiceDependenciesCompletedContinuationCond(dependenciesGetterFunc(), jacsServiceDataPersistence, logger),
-//                (S state) -> jacsServiceData,
-//                (S state, JacsServiceData tmpSd) -> state,
-//                jacsServiceDataPersistence,
-//                logger
-//        ).negate();
-//    }
-//
-
     protected JacsServiceResult<U> updateServiceResult(JacsServiceData jacsServiceData, U result) {
         jacsServiceData.setSerializableResult(result);
         jacsServiceDataPersistence.updateServiceResult(jacsServiceData);
         return new JacsServiceResult<>(jacsServiceData, result);
     }
 
-//    void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
-//        long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
-//        if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
-//            jacsServiceDataPersistence.updateServiceState(
-//                    jacsServiceData,
-//                    JacsServiceState.TIMEOUT,
-//                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart)));
-//            logger.warn("Service {} timed out after {}ms", jacsServiceData, timeSinceStart);
-//            throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " timed out");
-//        }
-//    }
-
-//    @Override
-//    public ServiceComputation<JacsServiceResult<U>> process(JacsServiceData jacsServiceData) {
-//        Path serviceFolder = getServiceFolder(jacsServiceData);
-//        ServiceInput serviceInput = getServiceClass().getAnnotation(ServiceInput.class);
-//        T input = (T)jacsServiceData.getDictionaryArgs().get(serviceInput.name());
-//        return process(jacsServiceData, serviceFolder, input);
-//    }
-
     protected <T> WrappedServiceProcessor<ServiceProcessor<T>, T> inline(ServiceProcessor<T> serviceProcessor) {
         return new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, serviceProcessor);
     }
 
+    // Convenience method
     private <C extends Class<AbstractServiceProcessor2<U>>> C getServiceClass() {
 
         Class<?> clazz = this.getClass();
@@ -195,7 +161,7 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
         }
 
         if (annotation==null) {
-            throw new IllegalStateException("Cannot find @ServiceInput annotation in service class hierarchy");
+            throw new IllegalStateException("Cannot find @Named annotation in service class hierarchy");
         }
 
         return (C)clazz;

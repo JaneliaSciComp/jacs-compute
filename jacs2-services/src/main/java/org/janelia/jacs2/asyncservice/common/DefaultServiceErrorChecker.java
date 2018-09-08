@@ -102,10 +102,10 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
 
     protected Consumer<String> getStdOutConsumer(JacsServiceData jacsServiceData, List<String> errors) {
         return (String s) -> {
-            logger.trace(s);
             if (ignoreErrorMessage(s)) {
-                // ignore this line even if the regex may say it's an error
-            } else if (hasErrors(s)) {
+                logger.trace(s);
+            }
+            else if (hasErrors(s)) {
                 logger.error(s);
                 errors.add(s);
             }
@@ -114,10 +114,10 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
 
     private Consumer<String> getStdErrConsumer(List<String> errors) {
         return (String s) -> {
-            logger.info(s); // log at info level because I noticed a lot of the external tools write to stderr.
             if (ignoreErrorMessage(s)) {
-                // ignore this line even if the regex may say it's an error
-            } else if (hasErrors(s)) {
+                logger.trace(s);
+            }
+            else if (hasErrors(s)) {
                 logger.error(s);
                 errors.add(s);
             }

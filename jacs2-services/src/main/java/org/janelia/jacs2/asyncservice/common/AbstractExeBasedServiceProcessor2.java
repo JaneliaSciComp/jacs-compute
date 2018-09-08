@@ -5,6 +5,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -17,6 +18,8 @@ import org.janelia.model.service.*;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -139,14 +142,19 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
     }
 
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
-        ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
-        ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
-        createScript(jacsServiceData, externalScriptWriter);
-        externalScriptWriter.close();
-        return externalScriptCode;
+        try {
+            ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
+            ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
+            createScript(jacsServiceData, externalScriptWriter);
+            externalScriptWriter.close();
+            return externalScriptCode;
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
-    protected abstract void createScript(JacsServiceData jacsServiceData, ScriptWriter scriptWriter);
+    protected abstract void createScript(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) throws IOException;
 
     /**
      * Override this to add environment variables which should exist when the script is run. The default implementation

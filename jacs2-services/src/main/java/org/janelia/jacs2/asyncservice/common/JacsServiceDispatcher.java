@@ -15,6 +15,7 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@MdcContext
 @ApplicationScoped
 public class JacsServiceDispatcher {
 
@@ -69,8 +70,8 @@ public class JacsServiceDispatcher {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @MdcContext
+    @SuppressWarnings("unchecked")
     private void dispatchService(JacsServiceData jacsServiceData) {
         logger.debug("Dispatch service {}", jacsServiceData);
 

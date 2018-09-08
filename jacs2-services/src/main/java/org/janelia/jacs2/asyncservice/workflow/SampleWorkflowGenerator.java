@@ -8,6 +8,7 @@ import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.ObjectiveSample;
 import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.sample.SamplePipelineRun;
 import org.janelia.model.domain.workflow.SamplePipelineConfiguration;
 import org.janelia.model.domain.workflow.SamplePipelineOutput;
 import org.janelia.model.domain.workflow.WorkflowTask;
@@ -44,14 +45,18 @@ public class SampleWorkflowGenerator {
      * Create a pipeline workflow for the given sample.
      * @param sample the sample to process
      * @param lsms the sample's LSM images
+     * @param pipelineRuns the pipeline runs to put results into
      * @return
      */
-    public DAG<WorkflowTask> createPipeline(Sample sample, List<LSMImage> lsms) {
+    public DAG<WorkflowTask> createPipeline(Sample sample, List<LSMImage> lsms, List<SamplePipelineRun> pipelineRuns) {
 
         DAG<WorkflowTask> dag = new DAG<>();
 
         // Treat each objective separately
         for (ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
+
+            // Find pipeline run
+            SamplePipelineRun pipelineRun = getPipelineRun(pipelineRuns, objectiveSample.getObjective());
 
             // Copy the LSMs and run distortion correction
             Multimap<String, WorkflowTask> lsmTaskByAreaTile = ArrayListMultimap.create();
@@ -86,7 +91,7 @@ public class SampleWorkflowGenerator {
             }
 
             // Collect all LSM Processing results and update the database
-            WorkflowTask update = createLSMSummaryUpdateTask(objectiveSample);
+            WorkflowTask update = createLSMSummaryUpdateTask(objectiveSample, pipelineRun);
             dag.addEdges(lsmProcessingTasks, update);
 
 //            // For each tile, merge and normalize the LSMs
@@ -195,11 +200,12 @@ public class SampleWorkflowGenerator {
         return task;
     }
 
-    private WorkflowTask createLSMSummaryUpdateTask(ObjectiveSample objectiveSample) {
+    private WorkflowTask createLSMSummaryUpdateTask(ObjectiveSample objectiveSample, SamplePipelineRun pipelineRun) {
         WorkflowTask task = createTask();
         task.setName("LSM Summary Update ("+objectiveSample.getObjective()+")");
         task.setServiceClass(getName(LSMSummaryUpdateService.class));
         task.setHasEffects(true);
+        task.getInputs().put("pipelineRunId", pipelineRun.getId());
         if (force.contains(SamplePipelineOutput.LSMProcessing)) task.setForce(true);
         return task;
     }
@@ -273,4 +279,12 @@ public class SampleWorkflowGenerator {
         return idGenerator.generateId().longValue();
     }
 
+    private SamplePipelineRun getPipelineRun(List<SamplePipelineRun> pipelineRuns, String objective) {
+        for (SamplePipelineRun pipelineRun : pipelineRuns) {
+            if (pipelineRun.getParent().getObjective().equals(objective)) {
+                return pipelineRun;
+            }
+        }
+        return null;
+    }
 }

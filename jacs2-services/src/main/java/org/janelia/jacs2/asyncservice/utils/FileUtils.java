@@ -456,6 +456,7 @@ public class FileUtils {
     }
 
     public static String getFilePrefix(String filepath) {
+        if (filepath==null) return null;
         File file = new File(filepath);
         String name = file.getName();
         int index = name.lastIndexOf('.');

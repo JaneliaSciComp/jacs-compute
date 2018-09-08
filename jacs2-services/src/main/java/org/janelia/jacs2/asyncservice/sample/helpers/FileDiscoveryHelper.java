@@ -1,5 +1,9 @@
 package org.janelia.jacs2.asyncservice.sample.helpers;
 
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -8,23 +12,21 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
-import org.slf4j.Logger;
-
 /**
  * Helper methods for creating virtual representations of the file system in the Entity model.
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class FileDiscoveryHelperNG extends DomainHelper {
+public class FileDiscoveryHelper {
+
+    private static final Logger log = LoggerFactory.getLogger(FileDiscoveryHelper.class);
 
     public final Long FILE_3D_SIZE_THRESHOLD = new Long(5000000L);
 
     private Set<Pattern> exclusions = new HashSet<Pattern>();
     private boolean excludeSymLinks = true;
     
-    public FileDiscoveryHelperNG(String ownerKey, Logger logger) {
-        super(ownerKey, logger);
+    public FileDiscoveryHelper() {
         addFileExclusion("*.log");
         addFileExclusion("*.oos");
         addFileExclusion("sge_*");
@@ -64,7 +66,7 @@ public class FileDiscoveryHelperNG extends DomainHelper {
     	
     	List<File> allFiles = new ArrayList<File>();
         List<File> files = FileUtils.getOrderedFilesInDir(dir);
-        logger.info("Found "+files.size()+" files in "+dir.getAbsolutePath());
+        log.info("Found "+files.size()+" files in "+dir.getAbsolutePath());
         
         for (File resultFile : files) {
         	String filename = resultFile.getName();
@@ -94,10 +96,10 @@ public class FileDiscoveryHelperNG extends DomainHelper {
 
         List<String> filepaths = new ArrayList<>();
         File dir = new File(rootPath);
-        logger.debug("Processing results in "+dir.getAbsolutePath());
+        log.debug("Processing results in "+dir.getAbsolutePath());
         
         if (!dir.canRead()) {
-            logger.warn("Cannot read from folder "+dir.getAbsolutePath());
+            log.warn("Cannot read from folder "+dir.getAbsolutePath());
             return filepaths;
         }
         

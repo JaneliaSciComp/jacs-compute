@@ -14,6 +14,7 @@ import org.janelia.dagobah.WorkflowProcessorKt;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.sample.SamplePipelineRun;
 import org.janelia.model.domain.workflow.SamplePipelineConfiguration;
 import org.janelia.model.domain.workflow.WorkflowTask;
 
@@ -21,10 +22,7 @@ import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -144,9 +142,10 @@ public class WorkflowViewer extends JFrame {
 
         Sample sample = getSample(objects);
         List<LSMImage> lsms = getImages(objects);
-        SampleWorkflowGenerator workflow = new SampleWorkflowGenerator(new SamplePipelineConfiguration(), Sets.newHashSet());
+        List<SamplePipelineRun> pipelineRuns = Arrays.asList();
 
-        DAG<WorkflowTask> dag = workflow.createPipeline(sample, lsms);
+        SampleWorkflowGenerator workflow = new SampleWorkflowGenerator(new SamplePipelineConfiguration(), Sets.newHashSet());
+        DAG<WorkflowTask> dag = workflow.createPipeline(sample, lsms, pipelineRuns);
 
         WorkflowViewer frame = new WorkflowViewer(dag);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);

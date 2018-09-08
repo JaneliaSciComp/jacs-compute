@@ -1,24 +1,24 @@
 package org.janelia.jacs2.asyncservice.sample;
 
-import org.janelia.jacs2.asyncservice.common.*;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor2;
+import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.exceptions.MissingGridResultException;
 import org.janelia.jacs2.asyncservice.sample.aux.LSMMetadata;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.asyncservice.utils.Task;
 import org.janelia.jacs2.cdi.SingularityAppFactory;
+import org.janelia.jacs2.utils.CurrentServiceHolder;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.workflow.WorkflowImage;
 import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.ServiceMetaData;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,7 +31,7 @@ import java.util.List;
         type=WorkflowImage.class,
         description="Input LSM image")
 
-@ServiceResult(
+@ServiceOutput(
         name="outputImage",
         type=WorkflowImage.class,
         description="Output image with attached secondary data")
@@ -41,47 +41,38 @@ public class LSMMetadataService extends AbstractExeBasedServiceProcessor2<Workfl
     @Inject
     private SingularityAppFactory singularityApps;
 
-    @Override
-    public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(LSMMetadataService.class);
-    }
+    @Inject
+    private CurrentServiceHolder currentService;
 
     @Override
-    public ServiceResultHandler<WorkflowImage> getResultHandler() {
-        return new EmptyServiceResultHandler<>();
-    }
+    protected void createScript(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) throws IOException {
 
-    @Override
-    protected void createScript(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) {
+        logger.info("GOT CURRENT SERVICE = {}", currentService.getJacsServiceData());
+
         WorkflowImage lsm = (WorkflowImage) jacsServiceData.getDictionaryArgs().get("lsm");
         String lsmFilepath = DomainUtils.getFilepath(lsm, FileType.LosslessStack);
         String prefix = FileUtils.getFileName(lsmFilepath);
         String metadataFile  = prefix+".json";
 
-        try {
-            JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-            String workdir = serviceWorkingFolder.toString();
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+        String workdir = serviceWorkingFolder.toString();
 
-            scriptWriter.add("set -ex");
-            scriptWriter.setVar("LSM_FILEPATH", lsmFilepath);
-            scriptWriter.setVar("OUTPUT_DIR", workdir);
-            scriptWriter.setVar("METADATA_FILE", metadataFile);
-            scriptWriter.addWithArgs("cd").endArgs("$OUTPUT_DIR");
+        scriptWriter.add("set -ex");
+        scriptWriter.setVar("LSM_FILEPATH", lsmFilepath);
+        scriptWriter.setVar("OUTPUT_DIR", workdir);
+        scriptWriter.setVar("METADATA_FILE", metadataFile);
+        scriptWriter.addWithArgs("cd").endArgs("$OUTPUT_DIR");
 
-            // Extract LSM metadata
-//            SingularityApp dumpPerlApp = singularityApps.getSingularityApp("informatics_perl", "dump_perl");
-            SingularityApp dumpJsonApp = singularityApps.getSingularityApp("informatics_perl", "dump_json");
-            List<String> externalDirs = Arrays.asList("$LSM_FILEPATH", serviceWorkingFolder.toString());
-//            scriptWriter.add(dumpPerlApp.getSingularityCommand(externalDirs, Arrays.asList("$LSM_FILEPATH")));
-            scriptWriter.add(dumpJsonApp.getSingularityCommand(externalDirs, Arrays.asList("$LSM_FILEPATH", ">$METADATA_FILE")));
-
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        // Extract LSM metadata
+        SingularityApp dumpJsonApp = singularityApps.getSingularityApp("informatics_perl", "dump_json");
+        List<String> externalDirs = Arrays.asList("$LSM_FILEPATH", serviceWorkingFolder.toString());
+        scriptWriter.add(dumpJsonApp.getSingularityCommand(externalDirs, Arrays.asList("$LSM_FILEPATH", ">$METADATA_FILE")));
     }
 
     @Override
     protected JacsServiceResult<WorkflowImage> postProcessing(JacsServiceResult<WorkflowImage> sr) throws Exception {
+
+        logger.info("GOT CURRENT SERVICE = {}", currentService.getJacsServiceData());
 
         JacsServiceData jacsServiceData = sr.getJacsServiceData();
 
@@ -98,6 +89,8 @@ public class LSMMetadataService extends AbstractExeBasedServiceProcessor2<Workfl
         }
 
         WorkflowImage outputImage = new WorkflowImage(lsm);
+        outputImage.setId(lsm.getId());
+
         String jsonFilepath = outputFile.getAbsolutePath();
         logger.info("  Setting JSON Metadata: "+jsonFilepath);
         DomainUtils.setFilepath(outputImage, FileType.LsmMetadata, jsonFilepath);

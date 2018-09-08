@@ -22,8 +22,7 @@ public class JacsServiceRegistry implements ServiceRegistry {
     private final Logger logger;
 
     @Inject
-    public JacsServiceRegistry(@Any Instance<ServiceProcessor<?>> anyServiceSource,
-                               Logger logger) {
+    public JacsServiceRegistry(@Any Instance<ServiceProcessor<?>> anyServiceSource, Logger logger) {
         this.anyServiceSource = anyServiceSource;
         this.logger = logger;
     }
@@ -41,25 +40,7 @@ public class JacsServiceRegistry implements ServiceRegistry {
 
     @Override
     public ServiceProcessor<?> lookupService(String serviceName) {
-        try {
-            for (ServiceProcessor<?> service : getAllServices(anyServiceSource)) {
-                try {
-                    if (serviceName.equals(service.getMetadata().getServiceName())) {
-                        logger.trace("Service found: {}", serviceName);
-                        return service;
-                    }
-                }
-                catch (Exception e) {
-                    logger.error("Error reading service metadata for: "+service.getClass().getName(), e);
-                }
-            }
-            logger.error("No service found with name '{}'", serviceName);
-        }
-        catch (Throwable e) {
-            logger.error("Error while looking up service '{}'", serviceName, e);
-        }
-
-        return null;
+        return getBeanByName(ServiceProcessor.class, serviceName);
     }
 
     private List<ServiceProcessor<?>> getAllServices(@Any Instance<ServiceProcessor<?>> services) {
@@ -71,14 +52,30 @@ public class JacsServiceRegistry implements ServiceRegistry {
     }
 
     public ServiceInterceptor lookupInterceptor(String interceptorName) {
+        return getBeanByName(ServiceInterceptor.class, interceptorName);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getBeanByName(Class<T> beanType, String beanName) {
+
+        // Find beans with the given type and name
         BeanManager bm = CDI.current().getBeanManager();
-        Set<Bean<?>> beans = bm.getBeans(interceptorName);
+        Set<Bean<?>> beans = bm.getBeans(beanName).stream()
+                .filter(b -> beanType.isAssignableFrom(b.getBeanClass()))
+                .collect(Collectors.toSet());
+
         if (beans==null || beans.isEmpty()) {
-            logger.error("No interceptor found with name '{}'", interceptorName);
+            logger.error("No service found with name '{}'", beanName);
             return null;
         }
-        Bean<ServiceInterceptor> bean = (Bean<ServiceInterceptor>) bm.getBeans(ServiceInterceptor.class).iterator().next();
-        CreationalContext<ServiceInterceptor> ctx = bm.createCreationalContext(bean);
-        return (ServiceInterceptor) bm.getReference(bean, ServiceInterceptor.class, ctx);
+
+        if (beans.size()>1) {
+            logger.warn("More than one service found with name '{}'. Choosing one at random!", beanName);
+        }
+
+        // Get an instance
+        Bean<T> bean = (Bean<T>) beans.iterator().next();
+        CreationalContext<T> ctx = bm.createCreationalContext(bean);
+        return (T) bm.getReference(bean, bean.getBeanClass(), ctx);
     }
 }

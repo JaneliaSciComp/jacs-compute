@@ -54,9 +54,7 @@ public class FileStorePath {
         return node.toPath().resolve(rest);
     }
 
-    @Deprecated
     public String getFilepath(boolean stripSubPath) {
-
         Path path = node.toPath();
         if (stripSubPath) {
             return path.toString();

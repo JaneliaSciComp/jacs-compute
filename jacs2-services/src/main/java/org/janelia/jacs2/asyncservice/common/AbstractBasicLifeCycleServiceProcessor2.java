@@ -3,7 +3,6 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
@@ -46,6 +45,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor2<R> extends Abstrac
         }
     }
 
+    @MdcContext
     protected JacsServiceData prepareProcessingUnchecked(JacsServiceData jacsServiceData) {
         try {
             return prepareProcessing(jacsServiceData);
@@ -85,6 +85,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor2<R> extends Abstrac
         return jacsServiceDataPersistence.createServiceIfNotFound(dependency);
     }
 
+    @MdcContext
     protected boolean areAllDependenciesDone(JacsServiceData jacsServiceData) {
         return new ServiceDependenciesCompletedContinuationCond(
                 dependenciesGetterFunc(),
@@ -96,6 +97,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor2<R> extends Abstrac
         return (JacsServiceData serviceData) -> jacsServiceDataPersistence.findServiceDependencies(serviceData).stream();
     }
 
+    @MdcContext
     protected ServiceComputation<JacsServiceResult<Void>> processingUnchecked(JacsServiceResult<Void> depsResult) {
         try {
             return processing(depsResult);
@@ -105,8 +107,11 @@ public abstract class AbstractBasicLifeCycleServiceProcessor2<R> extends Abstrac
         }
     }
 
-    protected abstract ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) throws Exception;
+    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) throws Exception {
+        return computationFactory.newCompletedComputation(depsResult);
+    }
 
+    @MdcContext
     protected boolean isResultReady(JacsServiceResult<Void> depsResults) {
         if (getResultHandler().isResultReady(depsResults)) {
             return true;
@@ -127,35 +132,34 @@ public abstract class AbstractBasicLifeCycleServiceProcessor2<R> extends Abstrac
         }
     }
 
+    @MdcContext
     protected JacsServiceResult<R> updateServiceResult(JacsServiceResult<Void> depsResult) {
-        R r = this.getResultHandler().collectResult(depsResult);
         JacsServiceData jacsServiceData = depsResult.getJacsServiceData();
+
+        R r;
+        ServiceResultHandler<R> resultHandler = this.getResultHandler();
+        if (resultHandler instanceof EmptyServiceResultHandler) {
+            try {
+                r = execute(jacsServiceData);
+                jacsServiceData.setSerializableResult(r);
+                jacsServiceDataPersistence.updateServiceResult(jacsServiceData);
+            }
+            catch (Exception e) {
+                throw new UncheckedExecutionException(e);
+            }
+        }
+        else {
+            r = this.getResultHandler().collectResult(depsResult);
+        }
+
         return updateServiceResult(jacsServiceData, r);
     }
 
-    /**
-     * Overrides updateServiceResult to use the ResultHandler.
-     *
-     * @param jacsServiceData
-     * @param result
-     * @return
-     */
-    @Override
-    protected JacsServiceResult<R> updateServiceResult(JacsServiceData jacsServiceData, R result) {
-
-        if (this.getResultHandler() instanceof EmptyServiceResultHandler) {
-            logger.warn("updateServiceResult was called, but service uses EmptyServiceResultHandler");
-        }
-
-        if (this.getResultHandler() instanceof VoidServiceResultHandler) {
-            logger.warn("updateServiceResult was called, but service uses VoidServiceResultHandler");
-        }
-
-        this.getResultHandler().updateServiceDataResult(jacsServiceData, result);
-        jacsServiceDataPersistence.updateServiceResult(jacsServiceData);
-        return new JacsServiceResult<>(jacsServiceData, result);
+    protected R execute(JacsServiceData sd) throws Exception {
+        return null;
     }
 
+    @MdcContext
     private JacsServiceResult<R> postProcessingUnchecked(JacsServiceResult<R> sr) {
         try {
             return postProcessing(sr);

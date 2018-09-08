@@ -31,7 +31,7 @@ public class DomainHelper {
     @Inject
     protected DomainDAO domainDao;
 
-    public DomainHelper(String ownerKey, Logger logger) {
+    public void init(String ownerKey, Logger logger) {
         this.ownerKey = ownerKey;
         this.logger = logger;
         this.contextLogger = logger;

@@ -3,7 +3,7 @@ package org.janelia.model.service;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.sample.ServiceInput;
-import org.janelia.jacs2.asyncservice.sample.ServiceResult;
+import org.janelia.jacs2.asyncservice.sample.ServiceOutput;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ public class ServiceMetaData {
     @JsonIgnore
     private List<ServiceInput> serviceInputs;
     @JsonIgnore
-    private ServiceResult serviceResult;
+    private ServiceOutput serviceResult;
 
     public String getServiceName() {
         return serviceName;
@@ -65,11 +65,11 @@ public class ServiceMetaData {
         this.serviceInputs = serviceInputs;
     }
 
-    public ServiceResult getServiceResult() {
+    public ServiceOutput getServiceResult() {
         return serviceResult;
     }
 
-    public void setServiceResult(ServiceResult serviceResult) {
+    public void setServiceResult(ServiceOutput serviceResult) {
         this.serviceResult = serviceResult;
     }
 }

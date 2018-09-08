@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-public @interface ServiceResult {
+public @interface ServiceOutput {
     String name();
     Class<?> type();
     String description();

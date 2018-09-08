@@ -1,7 +1,7 @@
 package org.janelia.jacs2.dataservice.persistence;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.UncheckedExecutionException;
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.JacsServiceDataDao;
 import org.janelia.model.jacs2.DataInterval;
@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@MdcContext
 public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServiceDataDao, JacsServiceData, Number> {
 
     private static final Logger LOG = LoggerFactory.getLogger(JacsServiceDataPersistence.class);

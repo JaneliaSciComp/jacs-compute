@@ -29,7 +29,7 @@ import java.util.Map;
         type=WorkflowImage.class,
         description="Uncorrected input image")
 
-@ServiceResult(
+@ServiceOutput(
         name="outputImage",
         type=WorkflowImage.class,
         description="Corrected image stack")

@@ -1,34 +1,36 @@
 package org.janelia.jacs2.asyncservice.sample;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.*;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor2;
+import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.exceptions.MissingGridResultException;
-import org.janelia.jacs2.asyncservice.sample.helpers.FileDiscoveryHelperNG;
+import org.janelia.jacs2.asyncservice.sample.helpers.FileDiscoveryHelper;
 import org.janelia.jacs2.asyncservice.sample.helpers.SampleHelper;
+import org.janelia.jacs2.asyncservice.sample.helpers.SamplePipelineUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.asyncservice.utils.Task;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.utils.ArchiveUtils;
 import org.janelia.model.access.domain.ChanSpecUtils;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.access.domain.FijiColor;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.sample.FileGroup;
-import org.janelia.model.domain.sample.LSMSummaryResult;
+import org.janelia.model.domain.sample.pipeline.SingleLSMSummaryResult;
 import org.janelia.model.domain.workflow.WorkflowImage;
 import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.ServiceMetaData;
 
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.List;
+import java.util.Properties;
+import java.util.StringJoiner;
 
 @Named("lsmProcessing")
 
@@ -38,12 +40,12 @@ import java.util.*;
         type=WorkflowImage.class,
         description="Primary LSM image")
 
-@ServiceResult(
+@ServiceOutput(
         name="outputImage",
-        type=LSMSummaryResult.class,
+        type=SingleLSMSummaryResult.class,
         description="LSM secondary data")
 
-public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<LSMSummaryResult> {
+public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<SingleLSMSummaryResult> {
 
     @Inject @PropertyValue(name = "InitXvfb.Path")
     private String initXvfbPath;
@@ -70,89 +72,75 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<LSMS
     private String ffmpegExecutable;
 
     private final String options = "mips:movies:legends:bcomp";
-    private final String resultName = "LSM Summary Result";
+
+    @Inject
+    private Instance<SampleHelper> sampleHelperInstance;
 
     @Override
-    public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(LSMProcessingService.class);
-    }
-
-    @Override
-    public ServiceResultHandler<LSMSummaryResult> getResultHandler() {
-        return new EmptyServiceResultHandler<>();
-    }
-
-    @Override
-    protected void createScript(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) {
+    protected void createScript(JacsServiceData jacsServiceData, ScriptWriter scriptWriter) throws IOException {
 
         WorkflowImage lsm = (WorkflowImage)jacsServiceData.getDictionaryArgs().get("lsm");
         String lsmFilepath = DomainUtils.getFilepath(lsm, FileType.LosslessStack);
 
-        try {
-            JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-            String workdir = serviceWorkingFolder.toString();
+        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+        String workdir = serviceWorkingFolder.toString();
 
-            // Set up variables
-            scriptWriter.add("set -e")
-                    .setVar("LSM_FILEPATH", lsmFilepath)
-                    .setVar("OUTPUT_DIR", workdir)
-                    .addWithArgs("cd").endArgs("$OUTPUT_DIR");
+        // Set up variables
+        scriptWriter.add("set -e")
+                .setVar("LSM_FILEPATH", lsmFilepath)
+                .setVar("OUTPUT_DIR", workdir)
+                .addWithArgs("cd").endArgs("$OUTPUT_DIR");
 
-            // Init virtual framebuffer
-            scriptWriter
-                    .setVar("START_PORT", "`shuf -i 5000-6000 -n 1`")
-                    .addWithArgs(". "+initXvfbPath).endArgs("$START_PORT");
+        // Init virtual framebuffer
+        scriptWriter
+                .setVar("START_PORT", "`shuf -i 5000-6000 -n 1`")
+                .addWithArgs(". "+initXvfbPath).endArgs("$START_PORT");
 
-            // Create temp dir so that large temporary avis are not created on the network drive
-            ScriptUtils.createTempDir("cleanTemp", scratchDir, scriptWriter);
+        // Create temp dir so that large temporary avis are not created on the network drive
+        ScriptUtils.createTempDir("cleanTemp", scratchDir, scriptWriter);
 
-            // Combine the exit handlers
-            scriptWriter
-                    .add("function exitHandler() { cleanXvfb; cleanTemp; }")
-                    .add("trap exitHandler EXIT");
+        // Combine the exit handlers
+        scriptWriter
+                .add("function exitHandler() { cleanXvfb; cleanTemp; }")
+                .add("trap exitHandler EXIT");
 
-            // Run FIJI
-            String outputDir = "$TEMP_DIR";
-            String macroPath = macroDir+"/"+macroFilename;
-            scriptWriter
-                    .traceOn()
-                    .addWithArgs(fijiExecutable)
-                    .addArg("-macro").addArg(macroPath)
-                    .addArg(String.join(",", getMacroArgs(lsm, outputDir)))
-                    .endArgs("&")
-                    .traceOff();
+        // Run FIJI
+        String outputDir = "$TEMP_DIR";
+        String macroPath = macroDir+"/"+macroFilename;
+        scriptWriter
+                .traceOn()
+                .addWithArgs(fijiExecutable)
+                .addArg("-macro").addArg(macroPath)
+                .addArg(String.join(",", getMacroArgs(lsm, outputDir)))
+                .endArgs("&")
+                .traceOff();
 
-            // Monitor Fiji and take periodic screenshots, killing it eventually
-            scriptWriter.setVar("fpid", "$!");
-            scriptWriter.addWithArgs(". "+monitorXvfbPath).addArg("$XVFB_PORT").addArg("$fpid").endArgs(getTimeoutInSeconds(jacsServiceData)+"");
+        // Monitor Fiji and take periodic screenshots, killing it eventually
+        scriptWriter.setVar("fpid", "$!");
+        scriptWriter.addWithArgs(". "+monitorXvfbPath).addArg("$XVFB_PORT").addArg("$fpid").endArgs(getTimeoutInSeconds(jacsServiceData)+"");
 
-            // Encode avi movies as mp4 and delete the input avi's
-            String hcmd = getFormattedH264ConvertCommand("$fin", "$fout", false);
-            scriptWriter
-                    .add("cd $TEMP_DIR")
-                    .add("for fin in *.avi; do")
-                    .add("    fout=${fin%.avi}.mp4")
-                    .add("    "+ hcmd + " && rm $fin")
-                    .add("done");
+        // Encode avi movies as mp4 and delete the input avi's
+        String hcmd = getFormattedH264ConvertCommand("$fin", "$fout", false);
+        scriptWriter
+                .add("cd $TEMP_DIR")
+                .add("for fin in *.avi; do")
+                .add("    fout=${fin%.avi}.mp4")
+                .add("    "+ hcmd + " && rm $fin")
+                .add("done");
 
-            // Move everything to the final output directory
-            scriptWriter
-                    .traceOn()
-                    .add("cp $TEMP_DIR/*.png $OUTPUT_DIR || true")
-                    .add("cp $TEMP_DIR/*.mp4 $OUTPUT_DIR || true")
-                    .add("cp $TEMP_DIR/*.properties $OUTPUT_DIR || true")
-                    .traceOff();
-
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        // Move everything to the final output directory
+        scriptWriter
+                .traceOn()
+                .add("cp $TEMP_DIR/*.png $OUTPUT_DIR || true")
+                .add("cp $TEMP_DIR/*.mp4 $OUTPUT_DIR || true")
+                .add("cp $TEMP_DIR/*.properties $OUTPUT_DIR || true")
+                .traceOff();
     }
 
     private String getMacroArgs(WorkflowImage lsm, String outputDir) {
 
         String filepath = DomainUtils.getFilepath(lsm, FileType.LosslessStack);
-        String prefix = getLSMPrefix(lsm);
+        String prefix = SamplePipelineUtils.getLSMPrefix(lsm);
         String chanSpec = lsm.getChannelSpec();
         String chanColors = lsm.getChannelColors();
         String area = lsm.getAnatomicalArea();
@@ -218,12 +206,12 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<LSMS
     }
 
     @Override
-    protected JacsServiceResult<LSMSummaryResult> postProcessing(JacsServiceResult<LSMSummaryResult> sr) throws Exception {
+    protected JacsServiceResult<SingleLSMSummaryResult> postProcessing(JacsServiceResult<SingleLSMSummaryResult> sr) throws Exception {
 
         JacsServiceData jacsServiceData = sr.getJacsServiceData();
 
         WorkflowImage lsm = (WorkflowImage)jacsServiceData.getDictionaryArgs().get("lsm");
-        String prefix = getLSMPrefix(lsm);
+        String prefix = SamplePipelineUtils.getLSMPrefix(lsm);
 
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         File outputDir = serviceWorkingFolder.toFile();
@@ -249,22 +237,25 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<LSMS
             throw new MissingGridResultException(outputDir.getAbsolutePath(), "No output files found for input "+prefix+" in "+outputDir);
         }
 
-        LSMSummaryResult result = discoverFiles(jacsServiceData, outputDir);
+        SingleLSMSummaryResult result = discoverFiles(jacsServiceData, outputDir);
         jacsServiceData.setSerializableResult(result);
         jacsServiceDataPersistence.updateServiceResult(jacsServiceData);
         return new JacsServiceResult<>(jacsServiceData, result);
     }
 
-    public LSMSummaryResult discoverFiles(JacsServiceData jacsServiceData, File outputPath) throws Exception {
+    public SingleLSMSummaryResult discoverFiles(JacsServiceData jacsServiceData, File outputPath) throws Exception {
 
         String rootPath = outputPath.getAbsolutePath();
         WorkflowImage lsm = (WorkflowImage)jacsServiceData.getDictionaryArgs().get("lsm");
-        String prefix = getLSMPrefix(lsm);
+        String prefix = SamplePipelineUtils.getLSMPrefix(lsm);
 
-        SampleHelper sampleHelper = new SampleHelper(jacsServiceData, logger);
-        FileDiscoveryHelperNG helper = new FileDiscoveryHelperNG(jacsServiceData.getOwnerKey(), logger);
+        SampleHelper sampleHelper = sampleHelperInstance.get();
+        sampleHelper.init(jacsServiceData, logger);
+
+        FileDiscoveryHelper helper = new FileDiscoveryHelper();
         List<String> filepaths = helper.getFilepaths(rootPath);
-        LSMSummaryResult result = new LSMSummaryResult();
+        SingleLSMSummaryResult result = new SingleLSMSummaryResult();
+        result.setLsmId(lsm.getId());
         result.setFilepath(rootPath);
 
         List<FileGroup> groups = sampleHelper.createFileGroups(result.getFilepath(), filepaths);
@@ -302,18 +293,13 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<LSMS
             throw new MissingGridResultException(rootPath, "Did not find properties file at "+propertiesFile);
         }
 
-        // Copy over the results from earlier steps
+        // Copy over the results from earlier metadata step
         result.setChannelColors(lsm.getChannelColors());
         result.setChannelDyeNames(lsm.getChannelDyeNames());
         DomainUtils.setFilepath(result, FileType.LsmMetadata, DomainUtils.getFilepath(lsm, FileType.LsmMetadata));
+        DomainUtils.setFilepath(result, FileType.LosslessStack, DomainUtils.getFilepath(lsm, FileType.LosslessStack));
 
         return result;
-    }
-
-    private String getLSMPrefix(WorkflowImage lsm) {
-        String filepath = DomainUtils.getFilepath(lsm, FileType.LosslessStack);
-        String decompressedFilepath = ArchiveUtils.getDecompressedFilepath(filepath);
-        return FileUtils.getFilePrefix(decompressedFilepath);
     }
 
     @Override

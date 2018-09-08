@@ -7,6 +7,7 @@ import org.janelia.dagobah.TaskStatus;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ServiceInterceptor;
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.sample.ServiceInput;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.domain.WorkflowDAO;
@@ -29,6 +30,7 @@ import java.util.Collection;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@MdcContext
 @Named("workflowInterceptor")
 public class WorkflowInterceptor implements ServiceInterceptor {
 
@@ -82,13 +84,13 @@ public class WorkflowInterceptor implements ServiceInterceptor {
         Multimap<Class<?>,Object> outputByType = ArrayListMultimap.create();
         for (WorkflowTask upstreamTask : dag.getUpstream(task)) {
 
-            log.info("  Propagating outputs of upstream {}", upstreamTask);
+            log.info("  Propagating outputs of upstream {} (status={})", upstreamTask, upstreamTask.getStatus());
 
             if (!upstreamTask.getStatus().isFinal()) {
-                throw new ComputationException("Upstream task is not complete");
+                throw new ComputationException("Upstream task is not complete: "+upstreamTask.getId());
             }
             if (upstreamTask.getStatus()!=TaskStatus.Complete) {
-                throw new ComputationException("Upstream task was not successful");
+                throw new ComputationException("Upstream task was not successful: "+upstreamTask.getId());
             }
 
             for (Object obj : upstreamTask.getOutputs().values()) {
@@ -111,6 +113,12 @@ public class WorkflowInterceptor implements ServiceInterceptor {
                     continue;
                 }
                 else {
+                    Object globalValue = workflow.getGlobals().get(serviceInput.name());
+                    if (globalValue!=null) {
+                        log.info("Using global value of {}", serviceInput.name());
+                        addInput(task, serviceInput.name(), globalValue);
+                        continue;
+                    }
                     throw new ComputationException("No available inputs of type " +
                             serviceInput.type().getSimpleName());
                 }

@@ -18,6 +18,7 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.sample.aux.AnatomicalArea;
 import org.janelia.jacs2.asyncservice.sample.aux.SlideImage;
 import org.janelia.jacs2.asyncservice.sample.aux.SlideImageGroup;
@@ -28,10 +29,8 @@ import org.janelia.jacs2.utils.StringUtils;
 import org.janelia.model.access.domain.ChanSpecUtils;
 import org.janelia.model.access.domain.DomainObjectAttribute;
 import org.janelia.model.access.domain.DomainUtils;
-import org.janelia.model.domain.DomainConstants;
-import org.janelia.model.domain.DomainObject;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.ReverseReference;
+import org.janelia.model.access.domain.LockingDAO;
+import org.janelia.model.domain.*;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.enums.PipelineStatus;
 import org.janelia.model.domain.interfaces.HasFileGroups;
@@ -59,6 +58,7 @@ import org.janelia.model.domain.support.ReprocessOnChange;
 import org.janelia.model.domain.support.SAGEAttribute;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.util.SampleResultComparator;
 import org.reflections.ReflectionUtils;
 
 import com.google.common.collect.HashMultimap;
@@ -66,7 +66,9 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
 
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 /**
  * Helper methods for dealing with Samples.
@@ -76,12 +78,19 @@ import javax.inject.Inject;
  * 
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
+@Named("sampleHelper")
+@Default
 public class SampleHelper extends DomainHelper {
 
     private static final String DEFAULT_SAMPLE_NAME_PATTERN = "{Line}-{Slide Code}";
 
+    private long writeLockTimeoutMs = 1000 * 10;
+
     @PropertyValue(name = "service.DefaultWorkingDir")
     private String centralDir;
+
+    @Inject
+    private LockingDAO lockingDao;
 
     @Inject
     private QuotaValidator quotaValidator;
@@ -112,8 +121,11 @@ public class SampleHelper extends DomainHelper {
     private JacsServiceData task;
     private boolean debug = false;
 
-    public SampleHelper(JacsServiceData task, Logger logger) {
-        super(task.getOwnerKey(), logger);
+    public SampleHelper() {
+    }
+
+    public void init(JacsServiceData task, Logger logger) {
+        super.init(task.getOwnerKey(), logger);
         this.task = task;
     }
 
@@ -1981,7 +1993,7 @@ public class SampleHelper extends DomainHelper {
         if (debug) return lsm;
         return domainDao.save(ownerKey, lsm);
     }
-    
+
     public Sample saveSample(Sample sample) throws Exception {
         if (debug) return sample;
         return domainDao.save(ownerKey, sample);
@@ -1992,14 +2004,40 @@ public class SampleHelper extends DomainHelper {
         return domainDao.save(ownerKey, neuron);
     }
 
-    public SamplePipelineRun addNewPipelineRun(ObjectiveSample objectiveSample, String name, String pipelineProcess, int pipelineVersion) {
+    /* --------------------------- */
+
+    public <T extends DomainObject> T lockAndRetrieve(Class<T> clazz, Long id) {
+
+        Long lockingTaskId = task.getRootServiceId().longValue();
+        Reference ref = Reference.createFor(clazz, id);
+        DomainObjectLock lock = lockingDao.lockObject(ownerKey, ref, lockingTaskId, "SampleHelper", writeLockTimeoutMs);
+        if (lock==null) {
+            throw new ComputationException("Could not obtain lock for "+ref);
+        }
+        T object = domainDao.getDomainObject(ownerKey, clazz, id);
+        if (object==null) {
+            throw new ComputationException("Locked object, but it disappeared: "+ref);
+        }
+        logger.info("Locked {}", object);
+        return object;
+    }
+
+    public void unlock(DomainObject object) {
+        Reference ref = Reference.createFor(object);
+        Long lockingTaskId = task.getRootServiceId().longValue();
+        lockingDao.unlockObject(ownerKey, ref, lockingTaskId);
+        logger.info("Unlocked {}", object);
+    }
+
+    /* --------------------------- */
+
+    public SamplePipelineRun addNewPipelineRun(String name, String pipelineProcess, int pipelineVersion) {
         SamplePipelineRun run = new SamplePipelineRun();
         run.setId(domainDao.getNewId());
         run.setCreationDate(new Date());
         run.setName(name);
         run.setPipelineProcess(pipelineProcess);
         run.setPipelineVersion(pipelineVersion);
-        objectiveSample.addRun(run);
         return run;
     }
 
@@ -2086,6 +2124,7 @@ public class SampleHelper extends DomainHelper {
 
     public PipelineResult addResult(SamplePipelineRun run, PipelineResult result) {
         run.addResult(result);
+        Collections.sort(run.getResults(), new SampleResultComparator());
         return result;
     }
 

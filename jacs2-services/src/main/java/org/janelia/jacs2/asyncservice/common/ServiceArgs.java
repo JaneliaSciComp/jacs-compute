@@ -7,7 +7,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.asyncservice.sample.ServiceInput;
-import org.janelia.jacs2.asyncservice.sample.ServiceResult;
+import org.janelia.jacs2.asyncservice.sample.ServiceOutput;
 import org.janelia.model.service.ServiceArgDescriptor;
 import org.janelia.model.service.ServiceMetaData;
 
@@ -58,7 +58,7 @@ public class ServiceArgs {
 
         ServiceMetaData smd = createMetadata(serviceName, args);
 
-        ServiceResult serviceResult = processorClass.getAnnotation(ServiceResult.class);
+        ServiceOutput serviceResult = processorClass.getAnnotation(ServiceOutput.class);
         if (serviceResult != null) {
             smd.setServiceResult(serviceResult);
         }
