@@ -75,7 +75,6 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
 
         // Update service data
         currentService.setJacsServiceData(sd);
-        logger.info("UPDATED SD to "+sd);
 
         // Lock the sample for the duration of the workflow
         SampleLock lock = sampleHelper.lockSample(sampleId, "Sample Workflow");

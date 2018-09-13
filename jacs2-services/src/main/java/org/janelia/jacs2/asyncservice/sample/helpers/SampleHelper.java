@@ -121,7 +121,6 @@ public class SampleHelper extends DomainHelper {
     }
 
     public SampleLock lockSample(Long sampleId, String description) {
-        log.info("GOT SD "+currentService.getJacsServiceData());
         Long lockingTaskId = getRootServiceId().longValue();
         return domainDao.lockSample(getOwnerKey(), sampleId, lockingTaskId, description);
     }
@@ -2021,7 +2020,7 @@ public class SampleHelper extends DomainHelper {
         return run;
     }
 
-    public LSMSummaryResult addNewLSMSummaryResult(String resultName) {
+    public LSMSummaryResult createLSMSummaryResult(String resultName) {
         LSMSummaryResult result = new LSMSummaryResult();
         result.setId(domainDao.getNewId());
         result.setCreationDate(new Date());

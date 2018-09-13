@@ -3,16 +3,17 @@ package org.janelia.jacs2.asyncservice.workflow;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.janelia.dagobah.DAG;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.sample.*;
+import org.janelia.jacs2.asyncservice.sample.helpers.SampleHelper;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
-import org.janelia.model.domain.sample.LSMImage;
-import org.janelia.model.domain.sample.ObjectiveSample;
-import org.janelia.model.domain.sample.Sample;
-import org.janelia.model.domain.sample.SamplePipelineRun;
+import org.janelia.model.domain.sample.*;
 import org.janelia.model.domain.workflow.SamplePipelineConfiguration;
 import org.janelia.model.domain.workflow.SamplePipelineOutput;
 import org.janelia.model.domain.workflow.WorkflowTask;
 import org.janelia.model.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -30,6 +31,8 @@ import static org.janelia.jacs2.utils.ServiceUtils.getName;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class SampleWorkflowGenerator {
+
+    private static final Logger log = LoggerFactory.getLogger(SampleWorkflowGenerator.class);
 
     private final TimebasedIdentifierGenerator idGenerator;
     private final SamplePipelineConfiguration config;
@@ -57,6 +60,9 @@ public class SampleWorkflowGenerator {
 
             // Find pipeline run
             SamplePipelineRun pipelineRun = getPipelineRun(pipelineRuns, objectiveSample.getObjective());
+            if (pipelineRun == null) {
+                throw new IllegalArgumentException("Argument pipelineRuns is missing objective "+objectiveSample.getObjective());
+            }
 
             // Copy the LSMs and run distortion correction
             Multimap<String, WorkflowTask> lsmTaskByAreaTile = ArrayListMultimap.create();
@@ -82,17 +88,21 @@ public class SampleWorkflowGenerator {
             // Run LSM Metadata and Processing for each copied LSM
             Collection<WorkflowTask> lsmProcessingTasks = new ArrayList<>();
             for (WorkflowTask lsmCopyTask : lsmCopyTasks) {
-                WorkflowTask lsmMetadata = createLSMMetadataTask(objectiveSample);
-                dag.addEdge(lsmCopyTask, lsmMetadata);
+//                WorkflowTask lsmMetadata = createLSMMetadataTask(objectiveSample);
+//                dag.addEdge(lsmCopyTask, lsmMetadata);
 
                 WorkflowTask lsmProcessing = createLSMProcessingTask(objectiveSample);
                 lsmProcessingTasks.add(lsmProcessing);
-                dag.addEdge(lsmMetadata, lsmProcessing);
+                dag.addEdge(lsmCopyTask, lsmProcessing);
             }
 
-            // Collect all LSM Processing results and update the database
+            // Collect all LSM Processing results
+            WorkflowTask combine = createCombineLSMSummaryTask(objectiveSample);
+            dag.addEdges(lsmProcessingTasks, combine);
+
+            // Update the database
             WorkflowTask update = createLSMSummaryUpdateTask(objectiveSample, pipelineRun);
-            dag.addEdges(lsmProcessingTasks, update);
+            dag.addEdge(combine, update);
 
 //            // For each tile, merge and normalize the LSMs
 //            Multimap<String, WorkflowTask> normalizeTaskByArea = ArrayListMultimap.create();
@@ -184,13 +194,13 @@ public class SampleWorkflowGenerator {
         return task;
     }
 
-    private WorkflowTask createLSMMetadataTask(ObjectiveSample objectiveSample) {
-        WorkflowTask task = createTask();
-        task.setName("LSM Metadata ("+objectiveSample.getObjective()+")");
-        task.setServiceClass(getName(LSMMetadataService.class));
-        if (force.contains(SamplePipelineOutput.LSMProcessing)) task.setForce(true);
-        return task;
-    }
+//    private WorkflowTask createLSMMetadataTask(ObjectiveSample objectiveSample) {
+//        WorkflowTask task = createTask();
+//        task.setName("LSM Metadata ("+objectiveSample.getObjective()+")");
+//        task.setServiceClass(getName(LSMMetadataService.class));
+//        if (force.contains(SamplePipelineOutput.LSMProcessing)) task.setForce(true);
+//        return task;
+//    }
 
     private WorkflowTask createLSMProcessingTask(ObjectiveSample objectiveSample) {
         WorkflowTask task = createTask();
@@ -200,13 +210,27 @@ public class SampleWorkflowGenerator {
         return task;
     }
 
+    private WorkflowTask createCombineLSMSummaryTask(ObjectiveSample objectiveSample) {
+        WorkflowTask task = createTask();
+        task.setName("Combine LSM Summaries ("+objectiveSample.getObjective()+")");
+        task.setServiceClass(getName(CombineLSMSummaries.class));
+
+        // Set existing result
+        LSMSummaryResult latestResultOfType = objectiveSample.getLatestResultOfType(LSMSummaryResult.class);
+        if (latestResultOfType!=null) {
+            log.info("Setting existing result for lsmSummary={}", latestResultOfType);
+            task.getOutputs().put("lsmSummary", latestResultOfType);
+        }
+
+        return task;
+    }
+
     private WorkflowTask createLSMSummaryUpdateTask(ObjectiveSample objectiveSample, SamplePipelineRun pipelineRun) {
         WorkflowTask task = createTask();
         task.setName("LSM Summary Update ("+objectiveSample.getObjective()+")");
         task.setServiceClass(getName(LSMSummaryUpdateService.class));
         task.setHasEffects(true);
         task.getInputs().put("pipelineRunId", pipelineRun.getId());
-        if (force.contains(SamplePipelineOutput.LSMProcessing)) task.setForce(true);
         return task;
     }
 
