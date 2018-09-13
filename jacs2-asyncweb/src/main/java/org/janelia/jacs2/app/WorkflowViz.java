@@ -45,10 +45,11 @@ public class WorkflowViz {
         return workflowDAO.getDAG(workflow);
     }
 
-    // Currently for this to work in IntelliJ, you have to run this manually:
+    //
+    // Currently for this to work in IntelliJ, you have to copy this manually once:
     // cp -R jacs2-services/out/production/resources/META-INF jacs2-services/out/production/classes/
     //
-    // There is a workaround here: https://intellij-support.jetbrains.com/hc/en-us/community/posts/115000603804-Running-Weld-CDI-under-IDEA-and-beans-xml-placement
+    // There is a potential workaround here: https://intellij-support.jetbrains.com/hc/en-us/community/posts/115000603804-Running-Weld-CDI-under-IDEA-and-beans-xml-placement
     //
     public static void main(String... args) {
 
@@ -62,7 +63,7 @@ public class WorkflowViz {
 //        Weld weld = new Weld();
 //        WeldContainer container = weld.initialize();
 
-        // None of the above works, we need to add the class manually, not sure why.
+        // None of the above works, we need to add the class manually, I'm not sure why.
         SeContainerInitializer containerInit = SeContainerInitializer
                 .newInstance()
                 .addBeanClasses(WorkflowViz.class);

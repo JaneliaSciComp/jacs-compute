@@ -103,14 +103,8 @@ public class WorkflowViewer extends JFrame {
             graph.getModel().endUpdate();
         }
 
-        // Run layout
-//        mxIGraphLayout layout = new mxHierarchicalLayout(graph);
-//        layout.execute(graph.getDefaultParent());
-
         mxGraphComponent graphComponent = new mxGraphComponent(graph);
         add(graphComponent);
-
-//        updateNodes(dag);
     }
 
     public void updateNodes(DAG<WorkflowTask> dag) {
