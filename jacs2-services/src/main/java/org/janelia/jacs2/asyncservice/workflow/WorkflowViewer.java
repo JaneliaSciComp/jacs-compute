@@ -10,7 +10,6 @@ import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.view.mxGraph;
 import org.janelia.dagobah.DAG;
 import org.janelia.dagobah.Task;
-import org.janelia.dagobah.WorkflowProcessorKt;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.sample.LSMImage;
 import org.janelia.model.domain.sample.Sample;
@@ -30,12 +29,19 @@ import java.util.stream.Collectors;
  */
 public class WorkflowViewer extends JFrame {
 
-    private boolean showInputs = false;
+    private static final int NODE_PADDING = 10;
+    private static final int NODE_WIDTH = 190;
+    private static final int NODE_HEIGHT = 50;
+
+    private boolean showInputs = true;
+    private mxGraph graph;
     private Map<Long, Object> vertices = new HashMap<>();
+    private Set<String> creation = new HashSet<>();
+    private Integer edgeId = 1;
 
     public WorkflowViewer(DAG<WorkflowTask> dag) {
 
-        mxGraph graph = new mxGraph() {
+        this.graph = new mxGraph() {
             // Overrides method to disallow label editing
             @Override
             public boolean isCellEditable(Object cell) {
@@ -50,7 +56,14 @@ public class WorkflowViewer extends JFrame {
 
                     if (value instanceof WorkflowTask) {
                         WorkflowTask task = (WorkflowTask) value;
-                        String label = task.getName().replaceFirst(" \\(", "<br>(");
+//                        String label = task.getName().replaceFirst(" \\(", "<br>(");
+                        String label = task.getName();
+                        if (task.getHasEffects()) {
+                            label += "<br><b>Has Effects</b>";
+                        }
+                        if (task.getForce()) {
+                            label += "<br><b>Forced</b>";
+                        }
                         return "<html>" + label + "</html>";
                     }
                 }
@@ -65,42 +78,73 @@ public class WorkflowViewer extends JFrame {
         Object parent = graph.getDefaultParent();
 
         try {
-            Integer edgeId = 1;
 
-            Set<Long> taskIdsToRun = WorkflowProcessorKt.getTasksToRun(dag).stream().map(Task::getNodeId).collect(Collectors.toSet());
+            updateNodes(dag);
+//            for (WorkflowTask task : dag.getNodes()) {
+//
+//                Object vertex = graph.insertVertex(parent, task.getId().toString(),
+//                        task, NODE_PADDING, NODE_PADDING, NODE_WIDTH, NODE_HEIGHT, "");
+//                vertices.put(task.getId(), vertex);
+//
+//                if (showInputs) {
+//                    for (String inputKey : task.getInputs().keySet()) {
+//                        Object value = task.getInputs().get(inputKey);
+//                        String label = "<html>" + inputKey + "<br>" + value + "</html>";
+//                        Object inputVertex = graph.insertVertex(parent, task.getId().toString() + "_" + inputKey,
+//                                label, NODE_PADDING, NODE_PADDING, NODE_WIDTH, NODE_HEIGHT, getInputStyle());
+//                        graph.insertEdge(parent, edgeId + "", "", inputVertex, vertex);
+//                        edgeId++;
+//                    }
+//                }
+//            }
+
+
+        } finally {
+            graph.getModel().endUpdate();
+        }
+
+        // Run layout
+//        mxIGraphLayout layout = new mxHierarchicalLayout(graph);
+//        layout.execute(graph.getDefaultParent());
+
+        mxGraphComponent graphComponent = new mxGraphComponent(graph);
+        add(graphComponent);
+
+//        updateNodes(dag);
+    }
+
+    public void updateNodes(DAG<WorkflowTask> dag) {
+
+        try {
+            graph.getModel().beginUpdate();
+            Object parent = graph.getDefaultParent();
 
             for (WorkflowTask task : dag.getNodes()) {
-
-                String fillColor;
-                if (task.getHasEffects()) {
-                    fillColor = "#fbdbff"; // light pink
-                } else {
-                    fillColor = "#c6eaff"; // light blue
+                Object vertex = vertices.get(task.getId());
+                if (vertex==null) {
+                    vertex = graph.insertVertex(parent, task.getId().toString(),
+                            task, NODE_PADDING, NODE_PADDING, NODE_WIDTH, NODE_HEIGHT, "");
+                    vertices.put(task.getId(), vertex);
                 }
-
-                String strokeColor;
-                if (taskIdsToRun.contains(task.getNodeId())) {
-                    strokeColor = "#ff0000"; // red border if running
-                } else {
-                    // Not running, greyed out
-                    fillColor = "#eeeeee";
-                    strokeColor = "#888888";
-                }
-
-                String style = "ROUNDED;strokeColor=" + strokeColor + ";fillColor=" + fillColor;
-
-                Object vertex = graph.insertVertex(parent, task.getId().toString(),
-                        task, 20, 20, 160, 30, style);
-                vertices.put(task.getId(), vertex);
+                graph.setCellStyle(getStyle(task), Arrays.asList(vertex).toArray());
 
                 if (showInputs) {
                     for (String inputKey : task.getInputs().keySet()) {
-                        Object value = task.getInputs().get(inputKey);
-                        String label = "<html>" + inputKey + "<br>" + value + "</html>";
-                        Object inputVertex = graph.insertVertex(parent, task.getId().toString() + "_" + inputKey,
-                                label, 20, 20, 150, 30);
-                        graph.insertEdge(parent, edgeId + "", "", inputVertex, vertex);
-                        edgeId++;
+                        String key = task.getId()+"_"+inputKey;
+                        if (!creation.contains(key)) {
+                            creation.add(key);
+                            Object value = task.getInputs().get(inputKey);
+                            if (value instanceof Collection) {
+                                int size = ((Collection)value).size();
+                                value = size+" items";
+                            }
+                            String label = "<html>" + inputKey + "<br>" + value + "</html>";
+                            Object inputVertex = graph.insertVertex(parent, task.getId().toString() + "_" + inputKey,
+                                    label, NODE_PADDING, NODE_PADDING, NODE_WIDTH, NODE_HEIGHT, getInputStyle());
+                            graph.insertEdge(parent, edgeId + "", "", inputVertex, vertex);
+                            edgeId++;
+                        }
+
                     }
                 }
             }
@@ -108,22 +152,52 @@ public class WorkflowViewer extends JFrame {
             Map<Long, Set<Long>> edges = dag.getEdges();
             for (Long sourceId : edges.keySet()) {
                 for (Long targetId : edges.get(sourceId)) {
-                    Object v1 = vertices.get(sourceId);
-                    Object v2 = vertices.get(targetId);
-                    graph.insertEdge(parent, edgeId + "", "", v1, v2);
-                    edgeId++;
+                    String key = sourceId+"_"+targetId;
+                    if (!creation.contains(key)) {
+                        creation.add(key);
+                        Object v1 = vertices.get(sourceId);
+                        Object v2 = vertices.get(targetId);
+                        graph.insertEdge(parent, edgeId + "", "", v1, v2);
+                        edgeId++;
+                    }
                 }
             }
+
+            // Run layout
+            mxIGraphLayout layout = new mxHierarchicalLayout(graph);
+            layout.execute(graph.getDefaultParent());
 
         } finally {
             graph.getModel().endUpdate();
         }
+    }
 
-        mxIGraphLayout layout = new mxHierarchicalLayout(graph);
-        layout.execute(graph.getDefaultParent());
+    private String getStyle(Task task) {
 
-        mxGraphComponent graphComponent = new mxGraphComponent(graph);
-        add(graphComponent);
+        // Default is gray
+        String fillColor = "#eeeeee";
+        String strokeColor = "#888888";
+
+        switch (task.getStatus()) {
+            case Pending:
+                break;
+            case Running:
+                fillColor = "#c6eaff"; // light blue
+                strokeColor = "#000000"; // black border
+                break;
+            case Complete:
+                fillColor = "#e3ffc7"; // light green
+                break;
+            case Error:
+                fillColor = "#fbdbff"; // light pink
+                break;
+        }
+
+        return "ROUNDED;strokeColor=" + strokeColor + ";fillColor=" + fillColor;
+    }
+
+    private String getInputStyle() {
+        return "ROUNDED;strokeColor=#888888;fillColor=#ffffff";
     }
 
     public static void main(String args[]) throws IOException {

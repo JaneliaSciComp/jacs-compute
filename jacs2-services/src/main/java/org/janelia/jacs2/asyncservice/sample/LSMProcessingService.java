@@ -247,6 +247,7 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<Sing
         List<String> filepaths = helper.getFilepaths(rootPath);
         SingleLSMSummaryResult result = new SingleLSMSummaryResult();
         result.setLsmId(lsm.getId());
+        result.setLsmName(lsm.getName());
         result.setFilepath(rootPath);
 
         List<FileGroup> groups = sampleHelper.createFileGroups(result.getFilepath(), filepaths);

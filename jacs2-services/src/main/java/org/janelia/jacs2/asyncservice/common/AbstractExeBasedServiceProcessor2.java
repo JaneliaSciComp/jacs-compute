@@ -13,6 +13,7 @@ import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.service.*;
+import org.slf4j.Logger;
 
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
@@ -114,7 +115,14 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
 
     @Override
     public ServiceErrorChecker getErrorChecker() {
-        return new CoreDumpServiceErrorChecker(logger);
+        return new DefaultServiceErrorChecker(logger) {
+            @Override
+            protected boolean hasErrors(String l) {
+                // Ignore errors for now
+                // TODO: we will have an implementation from JACSv1 here
+                return false;
+            }
+        };
     }
 
     private boolean hasJobFinished(JacsServiceData jacsServiceData, ExeJobInfo jobInfo) {

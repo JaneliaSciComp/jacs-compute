@@ -2,8 +2,9 @@ package org.janelia.jacs2.asyncservice.sample;
 
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor2;
 import org.janelia.jacs2.asyncservice.sample.helpers.SampleHelper;
-import org.janelia.jacs2.asyncservice.sample.helpers.SamplePipelineUtils;
-import org.janelia.model.domain.sample.*;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.model.domain.sample.FileGroup;
+import org.janelia.model.domain.sample.LSMSummaryResult;
 import org.janelia.model.domain.sample.pipeline.SingleLSMSummaryResult;
 
 import javax.inject.Inject;
@@ -39,7 +40,7 @@ public class CombineLSMSummaries extends AbstractBasicLifeCycleServiceProcessor2
         LSMSummaryResult lsmSummaryResult = sampleHelper.createLSMSummaryResult(resultName);
 
         for (SingleLSMSummaryResult partialResult : lsmSummaryResults) {
-            String prefix = SamplePipelineUtils.getLSMPrefix(partialResult);
+            String prefix = FileUtils.getPrefix(partialResult.getLsmName());
             FileGroup group = new FileGroup(prefix);
             group.setFiles(partialResult.getFiles());
             lsmSummaryResult.addGroup(group);

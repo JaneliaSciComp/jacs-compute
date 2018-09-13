@@ -11,6 +11,9 @@ import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 import javax.inject.Inject;
 import javax.swing.*;
+import java.util.Timer;
+import java.util.TimerTask;
+
 
 @Default
 public class WorkflowViz {
@@ -19,12 +22,27 @@ public class WorkflowViz {
     private WorkflowDAO workflowDAO;
 
     public void view(Long workflowId) {
-        Workflow workflow = workflowDAO.getWorkflow(workflowId);
-        DAG<WorkflowTask> dag = workflowDAO.getDAG(workflow);
+
+        DAG<WorkflowTask> dag = getDAG(workflowId);
         WorkflowViewer frame = new WorkflowViewer(dag);
+
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                DAG<WorkflowTask> dag = getDAG(workflowId);
+                frame.updateNodes(dag);
+            }
+        }, 0, 1000);
+
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
+    }
+
+    private DAG<WorkflowTask> getDAG(Long workflowId) {
+        Workflow workflow = workflowDAO.getWorkflow(workflowId);
+        return workflowDAO.getDAG(workflow);
     }
 
     // Currently for this to work in IntelliJ, you have to run this manually:
@@ -34,7 +52,7 @@ public class WorkflowViz {
     //
     public static void main(String... args) {
 
-        String workflowId = "2580185441223311381";
+        String workflowId = "2580226879638208533";
 
 //        SeContainer container = SeContainerFactory.getSeContainer();
 

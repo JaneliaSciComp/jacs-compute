@@ -455,6 +455,15 @@ public class FileUtils {
         return ids;
     }
 
+    public static String getPrefix(String filepath) {
+        if (filepath==null) return null;
+        File file = new File(filepath);
+        String name = file.getName();
+        int index = name.indexOf('.');
+        if (index<0) return name;
+        return name.substring(0, index);
+    }
+
     public static String getFilePrefix(String filepath) {
         if (filepath==null) return null;
         File file = new File(filepath);

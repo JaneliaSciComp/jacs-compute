@@ -50,8 +50,16 @@ public abstract class WorkflowExecutor<T> extends AbstractBasicLifeCycleServiceP
 
     @Override
     protected JacsServiceResult<Void> submitServiceDependencies(JacsServiceData sd) {
+
+        // The subclass creates a DAG
         DAG<WorkflowTask> dag = createDAG(sd);
+
+        // Propagate force flags downwards
+        WorkflowProcessorKt.propagateForce(dag);
+
+        // Submit the DAG for execution as child services of this service
         submitDAG(sd, dag);
+
         return new JacsServiceResult<>(sd);
     }
 
