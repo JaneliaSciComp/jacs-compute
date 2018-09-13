@@ -50,9 +50,9 @@ public class DistortionCorrectionService extends AbstractServiceProcessor2<Workf
     private FijiMacroService fijiMacroService;
 
     @Override
-    public ServiceComputation<JacsServiceResult<WorkflowImage>> process(JacsServiceData sd) {
+    public ServiceComputation<JacsServiceResult<WorkflowImage>> createComputation(JacsServiceData sd) {
 
-        Path serviceFolder = getServiceFolder(sd);
+        Path serviceFolder = currentService.getServicePath();
 
         Map<String, Object> args = sd.getDictionaryArgs();
         WorkflowImage inputImage = (WorkflowImage)args.get("inputImage");

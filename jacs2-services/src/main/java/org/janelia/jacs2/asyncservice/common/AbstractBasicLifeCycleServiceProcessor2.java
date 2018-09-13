@@ -3,6 +3,8 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
+import org.janelia.model.service.JacsServiceState;
 
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -16,23 +18,33 @@ import java.util.stream.Stream;
 public abstract class AbstractBasicLifeCycleServiceProcessor2<R> extends AbstractServiceProcessor2<R> {
 
     @Override
-    public ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<R>> createComputation(JacsServiceData jacsServiceData) {
         try {
             return computationFactory.newCompletedComputation(jacsServiceData)
                     .thenApply(this::prepareProcessingUnchecked)
+                    .thenApply(this::submitServiceDependenciesUnchecked)
+                    .thenSuspendUntil(new WaitingForDependenciesContinuationCond<>(
+                            (JacsServiceResult<Void> pd) -> pd.getJacsServiceData(),
+                            (JacsServiceResult<Void> pd, JacsServiceData sd) -> new JacsServiceResult<>(sd, pd.getResult()),
+                            jacsServiceDataPersistence,
+                            logger).negate())
                     .thenCompose(this::processingUnchecked)
+                    .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, this.isResultReady(pd)))
                     .thenApply(this::createResultUnchecked)
-                    .whenComplete(this::doFinallyUnchecked);
+                    .whenComplete((sr, t) -> {
+                        JacsServiceData sd = jacsServiceDataPersistence.findById(jacsServiceData.getId());
+                        doFinallyUnchecked(sd, t);
+                    });
         }
         catch (Throwable t) {
             JacsServiceData sd = jacsServiceDataPersistence.findById(jacsServiceData.getId());
-            doFinallyUnchecked(new JacsServiceResult<>(sd), t);
+            doFinallyUnchecked(sd, t);
             throw t;
         }
     }
 
     @MdcContext
-    protected JacsServiceData prepareProcessingUnchecked(JacsServiceData sd) {
+    private JacsServiceData prepareProcessingUnchecked(JacsServiceData sd) {
         currentService.setJacsServiceData(sd);
         try {
             return prepareProcessing(sd);
@@ -42,13 +54,34 @@ public abstract class AbstractBasicLifeCycleServiceProcessor2<R> extends Abstrac
         }
     }
 
-    protected JacsServiceData prepareProcessing(JacsServiceData sd) throws Exception {
-        return sd;
-//        JacsServiceData jacsServiceDataHierarchy = jacsServiceDataPersistence.findServiceHierarchy(sd.getId());
-//        if (jacsServiceDataHierarchy == null) {
-//            jacsServiceDataHierarchy = sd;
-//        }
-//        return jacsServiceDataHierarchy;
+    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) throws Exception {
+        JacsServiceData jacsServiceDataHierarchy = jacsServiceDataPersistence.findServiceHierarchy(jacsServiceData.getId());
+        if (jacsServiceDataHierarchy == null) {
+            jacsServiceDataHierarchy = jacsServiceData;
+        }
+        return jacsServiceDataHierarchy;
+    }
+
+    private JacsServiceResult<Void> submitServiceDependenciesUnchecked(JacsServiceData jacsServiceData) {
+        try {
+            return submitServiceDependencies(jacsServiceData);
+        }
+        catch (Exception e) {
+            throw new UncheckedExecutionException(e);
+        }
+    }
+
+    /**
+     * This method submits all sub-services and returns a
+     * @param jacsServiceData current service data
+     * @return a JacsServiceResult with a result of type U
+     */
+    protected JacsServiceResult<Void> submitServiceDependencies(JacsServiceData jacsServiceData) throws Exception {
+        return new JacsServiceResult<>(jacsServiceData);
+    }
+
+    protected JacsServiceData submitDependencyIfNotFound(JacsServiceData dependency) {
+        return jacsServiceDataPersistence.createServiceIfNotFound(dependency);
     }
 
     @MdcContext
@@ -64,35 +97,68 @@ public abstract class AbstractBasicLifeCycleServiceProcessor2<R> extends Abstrac
     }
 
     @MdcContext
-    protected ServiceComputation<JacsServiceData> processingUnchecked(JacsServiceData sd) {
-        currentService.setJacsServiceData(sd);
+    private ServiceComputation<JacsServiceResult<Void>> processingUnchecked(JacsServiceResult<Void> depsResult) {
+        currentService.setJacsServiceData(depsResult.getJacsServiceData());
         try {
-            return processing(sd);
+            execute(currentService.getJacsServiceData());
+            return processing(depsResult);
         }
         catch (Exception e) {
             throw new UncheckedExecutionException(e);
         }
     }
 
-    protected ServiceComputation<JacsServiceData> processing(JacsServiceData sd) throws Exception {
-        execute(sd);
-        return computationFactory.newCompletedComputation(sd);
-    }
-
+    /**
+     * Synchronous execution method which is called before processing() to do the service work.
+     * @param sd
+     * @throws Exception
+     */
     protected void execute(JacsServiceData sd) throws Exception {
     }
 
+    /**
+     * Asynchronous execution method which is called after execute() to do the service work.
+     * @param depsResult
+     * @return
+     * @throws Exception
+     */
+    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) throws Exception {
+        return computationFactory.newCompletedComputation(depsResult);
+    }
+
     @MdcContext
-    private JacsServiceResult<R> createResultUnchecked(JacsServiceData sd) {
+    protected boolean isResultReady(JacsServiceResult<Void> depsResults) {
+        if (getResultHandler().isResultReady(depsResults)) {
+            return true;
+        }
+        verifyAndFailIfTimeOut(depsResults.getJacsServiceData());
+        return false;
+    }
+
+    void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
+        long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
+        if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
+            jacsServiceDataPersistence.updateServiceState(
+                    jacsServiceData,
+                    JacsServiceState.TIMEOUT,
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart)));
+            logger.warn("Service {} timed out after {}ms", jacsServiceData, timeSinceStart);
+            throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " timed out");
+        }
+    }
+
+    @MdcContext
+    private JacsServiceResult<R> createResultUnchecked(JacsServiceResult<Void> sr) {
+        JacsServiceData sd = sr.getJacsServiceData();
         currentService.setJacsServiceData(sd);
         try {
             R r = createResult();
             if (r == null) {
-                return new JacsServiceResult<R>(sd);
+                return new JacsServiceResult<>(sd);
             }
             sd.setSerializableResult(r);
             jacsServiceDataPersistence.updateServiceResult(sd);
-            return new JacsServiceResult<R>(sd, r);
+            return new JacsServiceResult<>(sd, r);
         }
         catch (Exception e) {
             throw new UncheckedExecutionException(e);
@@ -103,16 +169,15 @@ public abstract class AbstractBasicLifeCycleServiceProcessor2<R> extends Abstrac
         return null;
     }
 
-    private JacsServiceResult<R> doFinallyUnchecked(JacsServiceResult<R> sr, Throwable throwable) {
-        JacsServiceData sd = sr.getJacsServiceData();
+    private void doFinallyUnchecked(JacsServiceData sd, Throwable throwable) {
         currentService.setJacsServiceData(sd);
         try {
             doFinally(sd, throwable);
         }
-        catch (Exception e) {
-            throw new UncheckedExecutionException(e);
+        catch (Throwable e) {
+            // Handle this exception so that the real root cause is propagated
+            logger.error("Error encountered while executing finally callback", e);
         }
-        return sr;
     }
 
     /**

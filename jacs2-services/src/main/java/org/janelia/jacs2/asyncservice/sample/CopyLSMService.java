@@ -39,9 +39,8 @@ public class CopyLSMService extends AbstractServiceProcessor2<WorkflowImage> {
     private FileCopyProcessor fileCopyProcessor;
 
     @Override
-    public ServiceComputation<JacsServiceResult<WorkflowImage>> process(JacsServiceData sd) {
+    public ServiceComputation<JacsServiceResult<WorkflowImage>> createComputation(JacsServiceData sd) {
 
-        Path serviceFolder = getServiceFolder(sd);
         Map<String, Object> args = sd.getDictionaryArgs();
         LSMImage lsm = (LSMImage)args.get("lsm");
 
@@ -50,7 +49,7 @@ public class CopyLSMService extends AbstractServiceProcessor2<WorkflowImage> {
             throw new IllegalArgumentException("Source LSM has no lossless stack");
         }
 
-        Path targetFilepath = getTargetLocation(sourceFilepath, serviceFolder);
+        Path targetFilepath = getTargetLocation(sourceFilepath);
 
         return inline(fileCopyProcessor).process(getContext(sd,"Copy primary image"),
                 new ServiceArg("-src", sourceFilepath),
@@ -71,10 +70,10 @@ public class CopyLSMService extends AbstractServiceProcessor2<WorkflowImage> {
                 });
     }
 
-    private Path getTargetLocation(String sourceFile, Path targetFileNode) {
+    private Path getTargetLocation(String sourceFile) {
         if (sourceFile==null) return null;
         File file = new File(sourceFile);
         String filename = ArchiveUtils.getDecompressedFilepath(file.getName());
-        return targetFileNode.resolve("temp").resolve(filename);
+        return currentService.getServiceFolder().getServiceFolder("temp").resolve(filename);
     }
 }

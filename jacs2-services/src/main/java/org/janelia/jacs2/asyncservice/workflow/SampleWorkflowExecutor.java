@@ -16,7 +16,6 @@ import org.janelia.model.domain.workflow.WorkflowTask;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
@@ -41,10 +40,12 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
 
     @Inject
     private FileStore filestore;
+
     @Inject
     private DomainDAO domainDao;
+
     @Inject
-    private Instance<SampleHelper> sampleHelperInstance;
+    private SampleHelper sampleHelper;
 
     private List<SamplePipelineRun> pipelineRuns = new ArrayList<>();
 
@@ -72,18 +73,16 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
         FileStoreNode sampleNode = filestore.createNode(sd.getOwnerName(), "Sample", sd.getId().longValue());
         jacsServiceDataPersistence.updateField(sd,"workspace", sampleNode.toPath().toString());
 
-        String owner = sd.getOwnerKey();
-        Long taskId = sd.getId().longValue();
+        // Update service data
+        currentService.setJacsServiceData(sd);
+        logger.info("UPDATED SD to "+sd);
 
         // Lock the sample for the duration of the workflow
-        SampleLock lock = domainDao.lockSample(owner, sampleId, taskId, "Sample Workflow");
+        SampleLock lock = sampleHelper.lockSample(sampleId, "Sample Workflow");
         if (lock==null) {
             throw new IllegalStateException("Could not obtain lock on Sample#"+sampleId);
         }
         logger.info("Confirmed lock on Sample#"+sampleId);
-
-        SampleHelper sampleHelper = sampleHelperInstance.get();
-        sampleHelper.init(sd, logger);
 
         String pipelineName = "Sample Pipeline";
         String pipelineProcess = "samplePipeline";
@@ -151,7 +150,7 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
         String owner = sd.getOwnerKey();
         Long taskId = sd.getId().longValue();
 
-        logger.info("Sample pipeline completed for Sample#"+sampleId);
+        logger.info("Sample pipeline completed for Sample#" + sampleId);
 
         // Process errors
         if (throwable != null) {
@@ -162,7 +161,7 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
         // TODO: delete files marked deleteOnExit
 
         // Delete any temp/tmp directories in the workspace
-        if (sd.getWorkspace()!=null) {
+        if (sd.getWorkspace() != null) {
             logger.info("Looking for temp files to delete in {}", sd.getWorkspace());
             FileUtils.lookupFiles(Paths.get(sd.getWorkspace()), 10, "**/{temp,tmp.*}").forEach(tempPath -> {
                 logger.info("Deleting {}", tempPath);
@@ -175,11 +174,10 @@ public class SampleWorkflowExecutor extends WorkflowExecutor<Sample> {
         }
 
         // Unlock sample
-        if (domainDao.unlockSample(owner, sampleId, taskId)) {
-            logger.info("Unlocked Sample#"+sampleId);
-        }
-        else {
-            logger.warn("Could not unlock Sample#"+sampleId);
+        if (sampleHelper.unlockSample(sampleId)) {
+            logger.info("Unlocked Sample#" + sampleId);
+        } else {
+            logger.warn("Could not unlock Sample#" + sampleId);
         }
     }
 

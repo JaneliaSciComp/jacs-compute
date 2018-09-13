@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.sample.helpers;
 
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Ordering;
+import org.janelia.jacs2.utils.CurrentService;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.DomainObject;
@@ -10,35 +11,34 @@ import org.janelia.model.domain.sample.Image;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.*;
 
 /**
- * A helper class for dealing with common entities such as default images. 
- * 
+ * A helper class for dealing with domain objects. It know the current service state, but also keeps track of
+ * an overriding "run-as" user, which can be used to influence how objects are managed.
+ *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class DomainHelper {
 
+    private static final Logger log = LoggerFactory.getLogger(DomainHelper.class);
+
     public static final String TREENODE_CLASSNAME = TreeNode.class.getSimpleName();
     public static final String IMAGE_CLASSNAME = Image.class.getSimpleName();
 
-    protected Logger logger;
-    protected Logger contextLogger;
-    protected String ownerKey;
+    private String ownerKey;
+
+    @Inject
+    protected CurrentService currentService;
 
     @Inject
     protected DomainDAO domainDao;
 
-    public void init(String ownerKey, Logger logger) {
-        this.ownerKey = ownerKey;
-        this.logger = logger;
-        this.contextLogger = logger;
-    }
-
     public String getOwnerKey() {
-        return ownerKey;
+        return ownerKey!=null ? ownerKey : currentService.getOwnerKey();
     }
 
     public void setOwnerKey(String ownerKey) {
@@ -85,12 +85,12 @@ public class DomainHelper {
     public TreeNode createOrVerifyChildFolder(TreeNode parentFolder, String childName, boolean createIfNecessary) throws Exception {
         
         TreeNode folder = null;
-        for(DomainObject domainObject : domainDao.getDomainObjects(ownerKey, parentFolder.getChildren())) {
+        for(DomainObject domainObject : domainDao.getDomainObjects(getOwnerKey(), parentFolder.getChildren())) {
             if (domainObject instanceof TreeNode && domainObject.getName().equals(childName)) {
                 TreeNode child = (TreeNode)domainObject;
                 if (child.getName().equals(childName)) {
                     if (folder != null) {
-                        logger.warn("Unexpectedly found multiple child folders with name=" + childName+" for parent folder id="+parentFolder.getId());
+                        log.warn("Unexpectedly found multiple child folders with name=" + childName+" for parent folder id="+parentFolder.getId());
                     }
                     else {
                         folder = child;
@@ -102,11 +102,11 @@ public class DomainHelper {
         if (folder == null) {
             folder = new TreeNode();
             folder.setName(childName);
-            domainDao.save(ownerKey, folder);
-            domainDao.addChildren(ownerKey, parentFolder, Arrays.asList(Reference.createFor(folder)));
+            domainDao.save(getOwnerKey(), folder);
+            domainDao.addChildren(getOwnerKey(), parentFolder, Arrays.asList(Reference.createFor(folder)));
         }
 
-        logger.debug("Using childFolder with id=" + folder.getId());
+        log.debug("Using childFolder with id=" + folder.getId());
         return folder;
     }
     
@@ -124,26 +124,26 @@ public class DomainHelper {
         for(DomainObject domainObject : domainDao.getDomainObjects(ownerKey, workspace.getChildren())) {
             if (domainObject instanceof TreeNode && domainObject.getName().equals(topLevelFolderName)) {
                 topLevelFolder = (TreeNode)domainObject;
-                logger.debug("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
+                log.debug("Found existing topLevelFolder common root, name=" + topLevelFolder.getName());
                 break;
             }
         }
 
         if (topLevelFolder == null) {
             if (createIfNecessary) {
-                logger.debug("Creating new topLevelFolder with name=" + topLevelFolderName);
+                log.debug("Creating new topLevelFolder with name=" + topLevelFolderName);
                 topLevelFolder = new TreeNode();
                 topLevelFolder.setName(topLevelFolderName);
                 domainDao.save(ownerKey, topLevelFolder);
                 domainDao.addChildren(ownerKey, workspace, Arrays.asList(Reference.createFor(topLevelFolder)));
-                logger.debug("Saved top level folder as " + topLevelFolder.getId());
+                log.debug("Saved top level folder as " + topLevelFolder.getId());
             } 
             else {
                 throw new Exception("Could not find top-level folder by name=" + topLevelFolderName);
             }
         }
 
-        logger.debug("Using topLevelFolder with id=" + topLevelFolder.getId());
+        log.debug("Using topLevelFolder with id=" + topLevelFolder.getId());
         return topLevelFolder;
     }
 
@@ -154,7 +154,7 @@ public class DomainHelper {
      */
     public void sortChildrenByName(TreeNode treeNode) throws Exception {
         if (treeNode==null || !treeNode.hasChildren()) return;
-        final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDao.getChildren(ownerKey, treeNode));
+        final Map<Long,DomainObject> map = DomainUtils.getMapById(domainDao.getChildren(getOwnerKey(), treeNode));
         Collections.sort(treeNode.getChildren(), new Comparator<Reference>() {
             @Override
             public int compare(Reference o1, Reference o2) {
@@ -167,6 +167,6 @@ public class DomainHelper {
                         .result();
             }
         });
-        domainDao.save(ownerKey, treeNode);
+        domainDao.save(getOwnerKey(), treeNode);
     }
 }

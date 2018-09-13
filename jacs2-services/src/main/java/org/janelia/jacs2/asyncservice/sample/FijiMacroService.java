@@ -53,7 +53,7 @@ public class FijiMacroService extends AbstractExeBasedServiceProcessor2<Void> {
         JacsServiceData jacsServiceData = currentService.getJacsServiceData();
         FijiMacroArgs args = getArgs(jacsServiceData);
 
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+        JacsServiceFolder serviceWorkingFolder = currentService.getServiceFolder();
         scriptWriter.addWithArgs("cd").addArg(serviceWorkingFolder.toString());
 
         // Init virtual framebuffer
@@ -78,12 +78,9 @@ public class FijiMacroService extends AbstractExeBasedServiceProcessor2<Void> {
         // Monitor Fiji and take periodic screenshots, killing it eventually
         scriptWriter.setVar("fpid", "$!");
         scriptWriter.addWithArgs(". "+monitorXvfbPath).addArg("PORT").addArg("fpid").addArg(getTimeoutInSeconds(jacsServiceData)+"");
-
     }
 
     private FijiMacroArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new FijiMacroArgs());
     }
-
-
 }

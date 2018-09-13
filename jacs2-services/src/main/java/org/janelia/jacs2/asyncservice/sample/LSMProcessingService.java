@@ -2,7 +2,6 @@ package org.janelia.jacs2.asyncservice.sample;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor2;
-import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.exceptions.MissingGridResultException;
 import org.janelia.jacs2.asyncservice.sample.helpers.FileDiscoveryHelper;
 import org.janelia.jacs2.asyncservice.sample.helpers.SampleHelper;
@@ -12,7 +11,6 @@ import org.janelia.jacs2.asyncservice.utils.ScriptUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.asyncservice.utils.Task;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.utils.CurrentService;
 import org.janelia.model.access.domain.ChanSpecUtils;
 import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.access.domain.FijiColor;
@@ -22,12 +20,11 @@ import org.janelia.model.domain.sample.pipeline.SingleLSMSummaryResult;
 import org.janelia.model.domain.workflow.WorkflowImage;
 import org.janelia.model.service.JacsServiceData;
 
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringJoiner;
@@ -71,10 +68,10 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<Sing
     @Inject @PropertyValue(name = "FFMPEG.Bin.Path")
     private String ffmpegExecutable;
 
-    private final String options = "mips:movies:legends:bcomp";
-
     @Inject
-    private Instance<SampleHelper> sampleHelperInstance;
+    private SampleHelper sampleHelper;
+
+    private final String options = "mips:movies:legends:bcomp";
 
     @Override
     protected void createScript(ScriptWriter scriptWriter) {
@@ -83,13 +80,12 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<Sing
         String lsmFilepath = DomainUtils.getFilepath(lsm, FileType.LosslessStack);
 
         JacsServiceData sd = currentService.getJacsServiceData();
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(sd);
-        String workdir = serviceWorkingFolder.toString();
+        Path serviceWorkingFolder = currentService.getServicePath();
 
         // Set up variables
         scriptWriter.add("set -e")
                 .setVar("LSM_FILEPATH", lsmFilepath)
-                .setVar("OUTPUT_DIR", workdir)
+                .setVar("OUTPUT_DIR", serviceWorkingFolder.toString())
                 .addWithArgs("cd").endArgs("$OUTPUT_DIR");
 
         // Init virtual framebuffer
@@ -214,8 +210,7 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<Sing
         WorkflowImage lsm = (WorkflowImage)currentService.getInput("lsm");
         String prefix = SamplePipelineUtils.getLSMPrefix(lsm);
 
-        JacsServiceData sd = currentService.getJacsServiceData();
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(sd);
+        Path serviceWorkingFolder = currentService.getServicePath();
         File outputDir = serviceWorkingFolder.toFile();
 
         File[] files = outputDir.listFiles();
@@ -239,17 +234,14 @@ public class LSMProcessingService extends AbstractExeBasedServiceProcessor2<Sing
             throw new MissingGridResultException(outputDir.getAbsolutePath(), "No output files found for input "+prefix+" in "+outputDir);
         }
 
-        return discoverFiles(sd, outputDir);
+        return discoverFiles(outputDir);
     }
 
-    public SingleLSMSummaryResult discoverFiles(JacsServiceData jacsServiceData, File outputPath) throws Exception {
+    public SingleLSMSummaryResult discoverFiles(File outputPath) throws Exception {
 
         String rootPath = outputPath.getAbsolutePath();
-        WorkflowImage lsm = (WorkflowImage)jacsServiceData.getDictionaryArgs().get("lsm");
+        WorkflowImage lsm = getRequiredServiceInput("lsm");
         String prefix = SamplePipelineUtils.getLSMPrefix(lsm);
-
-        SampleHelper sampleHelper = sampleHelperInstance.get();
-        sampleHelper.init(jacsServiceData, logger);
 
         FileDiscoveryHelper helper = new FileDiscoveryHelper();
         List<String> filepaths = helper.getFilepaths(rootPath);

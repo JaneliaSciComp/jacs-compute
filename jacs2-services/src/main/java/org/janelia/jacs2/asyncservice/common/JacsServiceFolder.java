@@ -10,9 +10,10 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * Defines a service directory.
+ * Defines a service directory and its subdirectory structure used for keeping scripts, output, and error files.
  */
 public class JacsServiceFolder {
+
     public static final String SERVICE_CONFIG_DIR = "sge_config";
     public static final String SERVICE_OUTPUT_DIR = "sge_output";
     public static final String SERVICE_ERROR_DIR = "sge_error";
@@ -57,24 +58,34 @@ public class JacsServiceFolder {
     public String getServiceSuffix() {
         if (serviceData.hasId()) {
             return serviceData.getId().toString();
-        } else if (serviceData.hasParentServiceId()) {
+        }
+        else if (serviceData.hasParentServiceId()) {
             return serviceData.getParentServiceId().toString();
-        } else {
+        }
+        else {
             return null;
         }
     }
 
+    /**
+     * TODO: this method name is confusing and should be renamed to resolve() in the future.
+     * @param more
+     * @return
+     */
     public Path getServiceFolder(String ...more) {
         Optional<String> morePathComponents = Stream.of(more).filter(StringUtils::isNotBlank).reduce((pc1, pc2) -> pc1 + "/" + pc2);
         Path serviceFolder;
         if (serviceSpecificFolderName != null) {
             serviceFolder = serviceSpecificFolderName;
-        } else {
+        }
+        else {
             if (serviceData.getId() != null) {
                 serviceFolder = sharedFolderName.resolve(serviceData.getId().toString());
-            } else if (serviceData.getParentServiceId() != null) {
+            }
+            else if (serviceData.getParentServiceId() != null) {
                 serviceFolder = sharedFolderName.resolve(serviceData.getParentServiceId().toString());
-            } else {
+            }
+            else {
                 serviceFolder = sharedFolderName;
             }
         }

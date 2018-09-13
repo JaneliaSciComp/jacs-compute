@@ -1,10 +1,10 @@
 package org.janelia.jacs2.asyncservice.workflow;
 
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.janelia.dagobah.DAG;
 import org.janelia.dagobah.WorkflowProcessorKt;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.asyncservice.common.*;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.model.access.domain.WorkflowDAO;
 import org.janelia.model.domain.workflow.Workflow;
 import org.janelia.model.domain.workflow.WorkflowTask;
@@ -29,29 +29,38 @@ public abstract class WorkflowExecutor<T> extends AbstractBasicLifeCycleServiceP
     private WorkflowDAO workflowDao;
 
     @Override
-    protected ServiceComputation<JacsServiceData> processing(JacsServiceData sd) {
-        return computationFactory.newCompletedComputation(sd)
-                .thenApply(this::submitServiceDependencies)
-                .thenSuspendUntil(new WaitingForDependenciesContinuationCond<>(
-                        (JacsServiceData pd) -> pd,
-                        (JacsServiceData sd1, JacsServiceData sd2) -> sd1,
-                        jacsServiceDataPersistence,
-                        logger).negate());
+    public ServiceResultHandler<T> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<T>() {
+            @Override
+            public boolean isResultReady(JacsServiceResult<?> depResults) {
+                return areAllDependenciesDone(depResults.getJacsServiceData());
+            }
+
+            @Override
+            public T collectResult(JacsServiceResult<?> depResults) {
+                return null;
+            }
+
+            @Override
+            public T getServiceDataResult(JacsServiceData jacsServiceData) {
+                return null;
+            }
+        };
     }
 
-
-    protected JacsServiceData submitServiceDependencies(JacsServiceData sd) {
-        try {
-            DAG<WorkflowTask> dag = createDAG(sd);
-            submitDAG(sd, dag);
-            return sd;
-        }
-        catch (Exception e) {
-            throw new UncheckedExecutionException(e);
-        }
+    @Override
+    protected JacsServiceResult<Void> submitServiceDependencies(JacsServiceData sd) {
+        DAG<WorkflowTask> dag = createDAG(sd);
+        submitDAG(sd, dag);
+        return new JacsServiceResult<>(sd);
     }
 
     protected abstract DAG<WorkflowTask> createDAG(JacsServiceData sd);
+
+
+    protected Map<String, Object> getGlobals(JacsServiceData jacsServiceData) {
+        return new HashMap<>();
+    }
 
     private void submitDAG(JacsServiceData sd, DAG<WorkflowTask> dag) {
 
@@ -110,12 +119,12 @@ public abstract class WorkflowExecutor<T> extends AbstractBasicLifeCycleServiceP
         }
     }
 
-    protected JacsServiceData submitDependencyIfNotFound(JacsServiceData dependency) {
-        return jacsServiceDataPersistence.createServiceIfNotFound(dependency);
+    @Override
+    protected void doFinally(JacsServiceData sd, Throwable throwable) {
     }
 
-    protected Map<String, Object> getGlobals(JacsServiceData jacsServiceData) {
-        return new HashMap<>();
+    @Override
+    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
+        return computationFactory.newCompletedComputation(depResults);
     }
-
 }

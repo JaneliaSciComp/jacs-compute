@@ -1,21 +1,8 @@
 package org.janelia.jacs2.asyncservice.sample.helpers;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -38,37 +25,24 @@ import org.janelia.model.domain.interfaces.HasFiles;
 import org.janelia.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.model.domain.interfaces.HasResults;
 import org.janelia.model.domain.ontology.Annotation;
-import org.janelia.model.domain.sample.DataSet;
-import org.janelia.model.domain.sample.FileGroup;
-import org.janelia.model.domain.sample.LSMImage;
-import org.janelia.model.domain.sample.LSMSummaryResult;
-import org.janelia.model.domain.sample.NeuronFragment;
-import org.janelia.model.domain.sample.NeuronSeparation;
-import org.janelia.model.domain.sample.ObjectiveSample;
-import org.janelia.model.domain.sample.PipelineError;
-import org.janelia.model.domain.sample.PipelineResult;
-import org.janelia.model.domain.sample.Sample;
-import org.janelia.model.domain.sample.SampleAlignmentResult;
-import org.janelia.model.domain.sample.SampleLock;
-import org.janelia.model.domain.sample.SamplePipelineRun;
-import org.janelia.model.domain.sample.SamplePostProcessingResult;
-import org.janelia.model.domain.sample.SampleProcessingResult;
-import org.janelia.model.domain.sample.SampleTile;
+import org.janelia.model.domain.sample.*;
 import org.janelia.model.domain.support.ReprocessOnChange;
 import org.janelia.model.domain.support.SAGEAttribute;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.util.SampleResultComparator;
 import org.reflections.ReflectionUtils;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Field;
+import java.util.*;
 
 /**
  * Helper methods for dealing with Samples.
@@ -79,8 +53,9 @@ import javax.inject.Named;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Named("sampleHelper")
-@Default
 public class SampleHelper extends DomainHelper {
+
+    private static final Logger log = LoggerFactory.getLogger(SampleHelper.class);
 
     private static final String DEFAULT_SAMPLE_NAME_PATTERN = "{Line}-{Slide Code}";
 
@@ -118,16 +93,8 @@ public class SampleHelper extends DomainHelper {
     private int numSamplesCreated = 0;
     private int numSamplesUpdated = 0;
     private int numSamplesReprocessed = 0;
-    private JacsServiceData task;
     private boolean debug = false;
 
-    public SampleHelper() {
-    }
-
-    public void init(JacsServiceData task, Logger logger) {
-        super.init(task.getOwnerKey(), logger);
-        this.task = task;
-    }
 
     public void setDebugMode(boolean debug) {
         this.debug = debug;
@@ -138,22 +105,35 @@ public class SampleHelper extends DomainHelper {
     }
 
     public Sample getSample(Long sampleId) {
-        return domainDao.getDomainObject(ownerKey, Sample.class, sampleId);
+        return domainDao.getDomainObject(getOwnerKey(), Sample.class, sampleId);
     }
-    
+
+    private Long getRootServiceId() {
+        JacsServiceData sd = currentService.getJacsServiceData();
+        if (sd.getRootServiceId()!=null) return sd.getRootServiceId().longValue();
+        if (sd.getParentServiceId()!=null) return sd.getParentServiceId().longValue();
+        return sd.getId().longValue();
+    }
+
+    private Long getServiceId() {
+        JacsServiceData sd = currentService.getJacsServiceData();
+        return sd.getId().longValue();
+    }
+
     public SampleLock lockSample(Long sampleId, String description) {
-        Long lockingTaskId = task.getRootServiceId().longValue();
-        return domainDao.lockSample(ownerKey, sampleId, lockingTaskId, description);
+        log.info("GOT SD "+currentService.getJacsServiceData());
+        Long lockingTaskId = getRootServiceId().longValue();
+        return domainDao.lockSample(getOwnerKey(), sampleId, lockingTaskId, description);
     }
     
     public boolean unlockSample(Long sampleId) {
-        Long lockingTaskId = task.getRootServiceId().longValue();
-        return domainDao.unlockSample(ownerKey, sampleId, lockingTaskId);
+        Long lockingTaskId = getRootServiceId().longValue();
+        return domainDao.unlockSample(getOwnerKey(), sampleId, lockingTaskId);
     }
     
     public LSMImage createOrUpdateLSM(SlideImage slideImage) throws Exception {
         
-    	logger.debug("createOrUpdateLSM("+slideImage.getName()+")");
+    	log.debug("createOrUpdateLSM("+slideImage.getName()+")");
         boolean dirty = false;
 
         LSMImage lsm = findBestLsm(slideImage.getSageId(), slideImage.getDataSet());
@@ -162,13 +142,13 @@ public class SampleHelper extends DomainHelper {
             lsm.setFiles(new HashMap<FileType,String>());
             lsm.setSageSynced(true);
             reprocessLsmIds.add(lsm.getId());
-            logger.info("Created new LSM for SAGE image#"+slideImage.getSageId());
+            log.info("Created new LSM for SAGE image#"+slideImage.getSageId());
             dirty = true;
         }
         
         if (updateLsmAttributes(lsm, slideImage)) {
             lsm.setSageSynced(true);
-            logger.info("Updated LSM properties for "+slideImage.getName());
+            log.info("Updated LSM properties for "+slideImage.getName());
             dirty = true;
         }
         
@@ -176,8 +156,8 @@ public class SampleHelper extends DomainHelper {
             lsm = saveLsm(lsm);
         }
         else if (!lsm.getSageSynced()) {
-            logger.info("Resynchronizing lsm "+lsm.getId());
-            domainDao.updateProperty(ownerKey, LSMImage.class, lsm.getId(), "sageSynced", true);
+            log.info("Resynchronizing lsm "+lsm.getId());
+            domainDao.updateProperty(getOwnerKey(), LSMImage.class, lsm.getId(), "sageSynced", true);
         }
         
         lsmCache.put(lsm.getId(), lsm);
@@ -186,7 +166,7 @@ public class SampleHelper extends DomainHelper {
 
     private LSMImage findBestLsm(Integer sageId, String dataSetIdentifier) {
 
-        List<LSMImage> lsms = domainDao.getUserLsmsBySageId(ownerKey, sageId);
+        List<LSMImage> lsms = domainDao.getUserLsmsBySageId(getOwnerKey(), sageId);
         if (lsms.isEmpty()) {
             return null;
         }
@@ -219,13 +199,13 @@ public class SampleHelper extends DomainHelper {
         for(LSMImage lsm : lsms) {
             if (best==null || !lsm.getId().equals(best.getId())) {
                 try {
-                    logger.info("Desynchronized conflicting LSM "+lsm.getId());
-                    domainDao.updateProperty(ownerKey, LSMImage.class, lsm.getId(), "sageSynced", false);
-                    logger.info("Desynchronized conflicting LSM's Sample "+lsm.getSample().getTargetId());
-                    domainDao.updateProperty(ownerKey, Sample.class, lsm.getSample().getTargetId(), "sageSynced", false);
+                    log.info("Desynchronized conflicting LSM "+lsm.getId());
+                    domainDao.updateProperty(getOwnerKey(), LSMImage.class, lsm.getId(), "sageSynced", false);
+                    log.info("Desynchronized conflicting LSM's Sample "+lsm.getSample().getTargetId());
+                    domainDao.updateProperty(getOwnerKey(), Sample.class, lsm.getSample().getTargetId(), "sageSynced", false);
                 }
                 catch (Exception e) {
-                    logger.warn("Problem desynchrozing LSM "+lsm.getId(), e);
+                    log.warn("Problem desynchrozing LSM "+lsm.getId(), e);
                 }
             }
         }
@@ -236,7 +216,7 @@ public class SampleHelper extends DomainHelper {
 
     private boolean updateLsmAttributes(LSMImage lsm, SlideImage slideImage) throws Exception {
 
-    	logger.debug("updateLsmAttribute(lsmId="+lsm.getId()+",sageId="+slideImage.getSageId()+")");
+    	log.debug("updateLsmAttribute(lsmId="+lsm.getId()+",sageId="+slideImage.getSageId()+")");
         boolean changed = false;
         boolean dirty = false;
         
@@ -246,7 +226,7 @@ public class SampleHelper extends DomainHelper {
                 SageField sageField = lsmSageAttrs.get(key);
                 if (sageField==null) {
                 	if (!sageAttrsNotFound.contains(key)) {
-                		logger.trace("SAGE Attribute not found on LSMImage: "+key);
+                		log.trace("SAGE Attribute not found on LSMImage: "+key);
                 		sageAttrsNotFound.add(key);
                 	}
                 	continue;
@@ -323,7 +303,7 @@ public class SampleHelper extends DomainHelper {
                 }
             }
             catch (Exception e) {
-                logger.error("Error setting SAGE attribute value "+key+" for LSM#"+lsm.getId(),e);
+                log.error("Error setting SAGE attribute value "+key+" for LSM#"+lsm.getId(),e);
             }
         }
 
@@ -383,7 +363,7 @@ public class SampleHelper extends DomainHelper {
         
     public Sample createOrUpdateSample(String slideCode, DataSet dataSet, Collection<LSMImage> lsms) throws Exception {
 
-    	logger.info("Creating or updating sample: "+slideCode+" ("+(dataSet==null?"":"dataSet="+dataSet.getIdentifier())+")");
+    	log.info("Creating or updating sample: "+slideCode+" ("+(dataSet==null?"":"dataSet="+dataSet.getIdentifier())+")");
     	
         Multimap<String,SlideImageGroup> objectiveGroups = HashMultimap.create();
     	boolean lsmAdded = false;
@@ -424,7 +404,7 @@ public class SampleHelper extends DomainHelper {
             tileNum++;
         }
         
-        logger.debug("  Sample objectives: "+objectiveGroups.keySet());
+        log.debug("  Sample objectives: "+objectiveGroups.keySet());
 
         Sample sample = null;
         boolean sampleNew = false;
@@ -443,11 +423,11 @@ public class SampleHelper extends DomainHelper {
             boolean needsReprocessing = lsmAdded;
     
             if (lsmAdded && !sampleNew) {
-                logger.info("  LSMs modified significantly, will mark sample for reprocessing");
+                log.info("  LSMs modified significantly, will mark sample for reprocessing");
             }
     
             if (changedSampleIds.contains(sample.getId()) && !sampleNew) {
-                logger.info("  Sample attributes changed, will mark sample for reprocessing");
+                log.info("  Sample attributes changed, will mark sample for reprocessing");
             }
     
             // First, remove all tiles/LSMSs from objectives which are no longer found in SAGE
@@ -455,16 +435,16 @@ public class SampleHelper extends DomainHelper {
             	if (!objectiveGroups.containsKey(objectiveSample.getObjective())) {
     
                     if ("".equals(objectiveSample.getObjective()) && objectiveGroups.size()==1) {
-                        logger.warn("  Leaving empty objective alone, because it is the only one");
+                        log.warn("  Leaving empty objective alone, because it is the only one");
                         continue;
                     }
     
     	        	if (!objectiveSample.hasPipelineRuns()) {
-                        logger.warn("  Removing existing '"+objectiveSample.getObjective()+"' objective sample");
+                        log.warn("  Removing existing '"+objectiveSample.getObjective()+"' objective sample");
     	        		sample.removeObjectiveSample(objectiveSample);
     	        	}
     	        	else {
-                        logger.warn("  Resetting tiles for existing "+objectiveSample.getObjective()+" objective sample");
+                        log.warn("  Resetting tiles for existing "+objectiveSample.getObjective()+" objective sample");
     	        		objectiveSample.setTiles(new ArrayList<SampleTile>());
     	        	}
     	            sampleDirty = true;
@@ -476,7 +456,7 @@ public class SampleHelper extends DomainHelper {
             for(String objective : objectives) {
                 Collection<SlideImageGroup> subTileGroupList = objectiveGroups.get(objective);
     
-                logger.info("  Processing objective '"+objective+"', tiles="+subTileGroupList.size());
+                log.info("  Processing objective '"+objective+"', tiles="+subTileGroupList.size());
                 
                 // Find the sample, if it exists, or create a new one.
                 UpdateType ut = createOrUpdateObjectiveSample(sample, objective, subTileGroupList);
@@ -484,7 +464,7 @@ public class SampleHelper extends DomainHelper {
                     sampleDirty = true;
                 }
                 if (ut==UpdateType.CHANGE && !sampleNew) {
-                    logger.info("  Objective sample '"+objective+"' changed, will mark sample for reprocessing");
+                    log.info("  Objective sample '"+objective+"' changed, will mark sample for reprocessing");
                     needsReprocessing = true;
                 }
             }
@@ -500,7 +480,7 @@ public class SampleHelper extends DomainHelper {
             }
             
             if (sampleDirty) {
-                logger.info("  Saving sample: "+sample.getName()+" (id="+sample.getId()+")");
+                log.info("  Saving sample: "+sample.getName()+" (id="+sample.getId()+")");
                 sample = saveSample(sample);
                 if (!debug) {
                     domainDao.addSampleToOrder(orderNo, sample.getId());
@@ -508,8 +488,8 @@ public class SampleHelper extends DomainHelper {
                 numSamplesUpdated++;
             }
             else if (!sample.getSageSynced()) {
-                logger.info("Resynchronizing sample "+sample.getId());
-                domainDao.updateProperty(ownerKey, Sample.class, sample.getId(), "sageSynced", true);
+                log.info("Resynchronizing sample "+sample.getId());
+                domainDao.updateProperty(getOwnerKey(), Sample.class, sample.getId(), "sageSynced", true);
             }
     
             // Update all back-references from the sample's LSMs
@@ -520,21 +500,21 @@ public class SampleHelper extends DomainHelper {
                 includedLsmIds.add(lsmRef.getTargetId());
             	LSMImage lsm = lsmCache.get(lsmRef.getTargetId());
             	if (lsm==null) {
-            		logger.warn("LSM (id="+lsmRef.getTargetId()+") not found in cache. This should never happen and indicates a bug.");
+            		log.warn("LSM (id="+lsmRef.getTargetId()+") not found in cache. This should never happen and indicates a bug.");
             		continue;
             	}
             	if (!StringUtils.areEqual(lsm.getSample(),sampleRef)) {
             		lsm.setSample(sampleRef);
             		saveLsm(lsm);
-            		logger.info("  Updated sample reference for LSM#"+lsm.getId());
+            		log.info("  Updated sample reference for LSM#"+lsm.getId());
             	}
             }
     
             // Desync all other LSMs that point to this sample
             for(LSMImage lsm : domainDao.getActiveLsmsBySampleId(sample.getOwnerKey(), sample.getId())) {
                 if (!includedLsmIds.contains(lsm.getId())) {
-                    logger.info("Desynchronized obsolete LSM "+lsm.getId());
-                    domainDao.updateProperty(ownerKey, LSMImage.class, lsm.getId(), "sageSynced", false);
+                    log.info("Desynchronized obsolete LSM "+lsm.getId());
+                    domainDao.updateProperty(getOwnerKey(), LSMImage.class, lsm.getId(), "sageSynced", false);
                 }
             }
             
@@ -555,7 +535,7 @@ public class SampleHelper extends DomainHelper {
                 }
             }
             catch (Exception e) {
-                logger.error("Error unlocking sample", e);
+                log.error("Error unlocking sample", e);
             }
         }
         
@@ -566,7 +546,7 @@ public class SampleHelper extends DomainHelper {
         
         Sample sample = findBestSample(dataSet.getIdentifier(), slideCode);
         if (sample != null) {
-        	logger.info("  Found existing sample "+sample.getId()+" with status "+sample.getStatus());
+        	log.info("  Found existing sample "+sample.getId()+" with status "+sample.getStatus());
             lockSample(sample.getId(), "Sample rediscovery");
         	return sample;
         }
@@ -580,7 +560,7 @@ public class SampleHelper extends DomainHelper {
         sample.setAlignedCompressionType(dataSet.getAlignedCompressionType());
         sample.setSeparationCompressionType(dataSet.getSeparationCompressionType());
         
-    	logger.info("  Creating new sample for "+dataSet.getIdentifier()+"/"+slideCode);
+    	log.info("  Creating new sample for "+dataSet.getIdentifier()+"/"+slideCode);
         numSamplesCreated++;
 
         return sample;
@@ -588,7 +568,7 @@ public class SampleHelper extends DomainHelper {
 
     private Sample findBestSample(String dataSetIdentifier, String slideCode) {
 
-        List<Sample> samples = domainDao.getUserSamplesBySlideCode(ownerKey, dataSetIdentifier, slideCode);
+        List<Sample> samples = domainDao.getUserSamplesBySlideCode(getOwnerKey(), dataSetIdentifier, slideCode);
 
         if (samples.isEmpty()) {
             return null;
@@ -620,11 +600,11 @@ public class SampleHelper extends DomainHelper {
         for(Sample sample : samples) {
             if (best==null || !sample.getId().equals(best.getId())) {
                 try {
-                    logger.info("Desynchronizing conflicting sample "+sample.getId());
-                    domainDao.updateProperty(ownerKey, Sample.class, sample.getId(), "sageSynced", false);
+                    log.info("Desynchronizing conflicting sample "+sample.getId());
+                    domainDao.updateProperty(getOwnerKey(), Sample.class, sample.getId(), "sageSynced", false);
                 }
                 catch (Exception e) {
-                    logger.warn("Problem desynchronizing Sample"+sample.getId(), e);
+                    log.warn("Problem desynchronizing Sample"+sample.getId(), e);
                 }
             }
         }
@@ -653,7 +633,7 @@ public class SampleHelper extends DomainHelper {
                         value = org.janelia.model.util.ReflectionUtils.getFieldValue(lsm, lsmAttr.field);
                     }
                     catch (Exception e) {
-                        logger.error("  Problem getting value for LSMImage."+fieldName,e);
+                        log.error("  Problem getting value for LSMImage."+fieldName,e);
                     }
                     // Special consideration is given to the TMOG Date, so that the latest LSM TMOG date is recorded as the Sample TMOG date. 
                     if ("tmogDate".equals(fieldName)) {
@@ -680,12 +660,12 @@ public class SampleHelper extends DomainHelper {
             consensusValues.put("tmogDate", maxTmogDate);
         }
         
-        if (logger.isTraceEnabled()) {
-	        logger.trace("  Consensus values: ");
+        if (log.isTraceEnabled()) {
+	        log.trace("  Consensus values: ");
 	        for(String key : consensusValues.keySet()) {
 	            Object value = consensusValues.get(key);
 	            if (!DomainConstants.NO_CONSENSUS.equals(value) && value!=null) {
-	                logger.trace("    "+key+": "+value);
+	                log.trace("    "+key+": "+value);
 	            }
 	        }
         }
@@ -705,14 +685,14 @@ public class SampleHelper extends DomainHelper {
                     }
                 }
                 catch (Exception e) {
-                    logger.error("  Problem setting Sample."+fieldName,e);
+                    log.error("  Problem setting Sample."+fieldName,e);
                 }
             }
         }
         
         String newName = getSampleName(dataSet, sample);
         if (!StringUtils.areEqual(sample.getName(),newName)) {
-            logger.info("  Updating sample name to: "+newName);
+            log.info("  Updating sample name to: "+newName);
             sample.setName(newName);
             dirty = true;
             changed = true;
@@ -743,7 +723,7 @@ public class SampleHelper extends DomainHelper {
         		obj = attr.getGetter().invoke(sample);
         	}
         	catch (Exception e) {
-        		logger.error("Error getting sample attribute value for: "+key,e);
+        		log.error("Error getting sample attribute value for: "+key,e);
         	}
         	if (obj!=null) {
         		valueMap.put(key, obj.toString());
@@ -766,12 +746,12 @@ public class SampleHelper extends DomainHelper {
                 objectiveSample = new ObjectiveSample(objective);
                 sample.addObjectiveSample(objectiveSample);
                 synchronizeTiles(objectiveSample, tileGroupList);
-                logger.debug("  Created new objective '"+objective+"' for sample "+sample.getName());
+                log.debug("  Created new objective '"+objective+"' for sample "+sample.getName());
                 return UpdateType.ADD;
             }
             else {
                 objectiveSample.setObjective(objective);
-                logger.debug("  Updated objective to '"+objective+"' for legacy sample with empty objective");
+                log.debug("  Updated objective to '"+objective+"' for legacy sample with empty objective");
                 return UpdateType.ADD;
             }
         }
@@ -795,16 +775,16 @@ public class SampleHelper extends DomainHelper {
                 for(LSMImage lsm : tileGroup.getImages()) {
                     lsmReferences.add(Reference.createFor(lsm));
                     if (!lsm.getSageSynced()) {
-                        logger.info("  Resynchronizing LSM "+lsm.getId());
-                        domainDao.updateProperty(ownerKey, LSMImage.class, lsm.getId(), "sageSynced", true);
+                        log.info("  Resynchronizing LSM "+lsm.getId());
+                        domainDao.updateProperty(getOwnerKey(), LSMImage.class, lsm.getId(), "sageSynced", true);
                     }
                 }
                 sampleTile.setLsmReferences(lsmReferences);
                 tiles.add(sampleTile);
-                logger.debug("  Created tile "+sampleTile.getName()+" containing "+lsmReferences.size()+" LSMs");
+                log.debug("  Created tile "+sampleTile.getName()+" containing "+lsmReferences.size()+" LSMs");
             }
             objectiveSample.setTiles(tiles);
-            logger.info("  Updated "+tiles.size()+" tiles for objective '"+objectiveSample.getObjective()+"'");
+            log.info("  Updated "+tiles.size()+" tiles for objective '"+objectiveSample.getObjective()+"'");
             return true;
         }
 
@@ -817,7 +797,7 @@ public class SampleHelper extends DomainHelper {
             }
             if (!StringUtils.areEqual(tileGroup.getAnatomicalArea(),sampleTile.getAnatomicalArea())) {
                 sampleTile.setAnatomicalArea(tileGroup.getAnatomicalArea());
-                logger.info("  Updated anatomical area for tile "+sampleTile.getName()+" to "+sampleTile.getAnatomicalArea());
+                log.info("  Updated anatomical area for tile "+sampleTile.getName()+" to "+sampleTile.getAnatomicalArea());
                 dirty = true;
             }
         }
@@ -829,16 +809,16 @@ public class SampleHelper extends DomainHelper {
         
         Set<SampleTile> seenTiles = new HashSet<>();
         
-        logger.trace("  Checking if tiles match");
+        log.trace("  Checking if tiles match");
         
         for (SlideImageGroup tileGroup : tileGroupList) {
         	
-        	logger.trace("  Checking for "+tileGroup.getTag());
+        	log.trace("  Checking for "+tileGroup.getTag());
 
             // Ensure each tile is in the sample
             SampleTile sampleTile = objectiveSample.getTileByNameAndArea(tileGroup.getTag(), tileGroup.getAnatomicalArea());
             if (sampleTile==null) {
-            	logger.info("  Existing sample does not contain tile '"+tileGroup.getTag()+"' with anatomical area '"+tileGroup.getAnatomicalArea()+"'");
+            	log.info("  Existing sample does not contain tile '"+tileGroup.getTag()+"' with anatomical area '"+tileGroup.getAnatomicalArea()+"'");
                 return false;
             }
             seenTiles.add(sampleTile);
@@ -855,18 +835,18 @@ public class SampleHelper extends DomainHelper {
 
             // Ensure each tiles references the correct LSMs
             if (!lsmIds1.equals(lsmIds2)) {
-            	logger.info("  LSM sets are not the same ("+lsmIds1+"!="+lsmIds2+").");
+            	log.info("  LSM sets are not the same ("+lsmIds1+"!="+lsmIds2+").");
                 return false;
             }
         }
         
         if (objectiveSample.getTiles().size() != seenTiles.size()) {
             // Ensure that the sample has no extra tiles it doesn't need
-        	logger.info("  Tile set sizes are not the same ("+objectiveSample.getTiles().size()+"!="+seenTiles.size()+").");
+        	log.info("  Tile set sizes are not the same ("+objectiveSample.getTiles().size()+"!="+seenTiles.size()+").");
             return false;
         }
         
-        logger.trace("  Tiles match!");
+        log.trace("  Tiles match!");
         return true;
     }
 
@@ -885,10 +865,10 @@ public class SampleHelper extends DomainHelper {
             org.janelia.model.util.ReflectionUtils.setFieldValue(object, sageField.field, newValue);
 
             if (currValue != null) {
-                logger.debug("  Setting " + fieldName + "='" + newValue+"' (previously '"+currValue+"')");
+                log.debug("  Setting " + fieldName + "='" + newValue+"' (previously '"+currValue+"')");
             }
             else {
-                logger.debug("  Setting " + fieldName + "='" + newValue+"'");
+                log.debug("  Setting " + fieldName + "='" + newValue+"'");
             }
 
             if (currValue == null) return UpdateType.ADD;
@@ -896,7 +876,7 @@ public class SampleHelper extends DomainHelper {
             else return UpdateType.CHANGE;
         }
         else {
-            logger.trace("  Already set "+fieldName+"="+newValue);
+            log.trace("  Already set "+fieldName+"="+newValue);
             return UpdateType.SAME;
         }
     }
@@ -936,7 +916,7 @@ public class SampleHelper extends DomainHelper {
         String oldSlideCode = sample.getSlideCode();
         String oldOwnerKey = sample.getOwnerKey();
         String newOwnerKey = dataSet.getOwnerKey();
-        contextLogger.info("changePrimaryLogicalKey("+sample+
+        log.info("changePrimaryLogicalKey("+sample+
                 ",oldDataSet="+oldDataSet+",oldSlideCode="+oldSlideCode+
                 ",newDataSet="+dataSet.getIdentifier()+",newSlideCode="+newSlideCode+",dispatchIfNecessary="+dispatchIfNecessary+")");
                 
@@ -969,7 +949,7 @@ public class SampleHelper extends DomainHelper {
         
         if (!oldDataSet.equals(newDataSet)) {
             if (verifyCDMLocations(sample, oldDataSet, newDataSet)) {
-                contextLogger.info("Moved color depth MIPs to new data set location");
+                log.info("Moved color depth MIPs to new data set location");
             }
         }
 
@@ -982,8 +962,8 @@ public class SampleHelper extends DomainHelper {
             sampleDirty = true;
         }
 
-        String savedOwnerKey = this.ownerKey;
-        this.ownerKey = oldOwnerKey;
+        String savedOwnerKey = this.getOwnerKey();
+        setOwnerKey(oldOwnerKey);
         Sample savedSample = sample;
 
         // Save the sample changes
@@ -999,7 +979,7 @@ public class SampleHelper extends DomainHelper {
             }
         }
         
-        contextLogger.info("Moved "+savedSample+" from "+
+        log.info("Moved "+savedSample+" from "+
                 oldDataSet+"/"+oldSlideCode+" to "+
                 savedSample.getDataSet()+"/"+sample.getSlideCode());
 
@@ -1033,7 +1013,7 @@ public class SampleHelper extends DomainHelper {
                     lsm = domainDao.getDomainObject(newOwnerKey, lsm);
                 }
             }
-            contextLogger.info("Moved "+lsm+" from "+
+            log.info("Moved "+lsm+" from "+
                     oldLsmDataSet+"/"+oldLsmSlideCode+" to "+
                     lsm.getDataSet()+"/"+lsm.getSlideCode());
         }
@@ -1055,12 +1035,12 @@ public class SampleHelper extends DomainHelper {
                     neuronFragment = domainDao.getDomainObject(newOwnerKey, neuronFragment);
                 }
             }
-            contextLogger.info("Moved "+neuronFragment+" from "+
+            log.info("Moved "+neuronFragment+" from "+
                     oldNeuronOwnerKey+" to "+ newOwnerKey);
         }
         
         // The database has been updated, so now we need to use the new owner key to make further changes
-        this.ownerKey = newOwnerKey;
+        setOwnerKey(newOwnerKey);
 
         // Update disk usage information
         updateDiskSpaceUsage(sample);
@@ -1077,14 +1057,14 @@ public class SampleHelper extends DomainHelper {
             final Set<String> s1 = new HashSet<>(oldDS.getPipelineProcesses());
             final Set<String> s2 = new HashSet<>(newDS.getPipelineProcesses());
             if (!s1.equals(s2)) { 
-                contextLogger.info("Old data set used "+oldDS.getPipelineProcesses()+" but new data set uses "+newDS.getPipelineProcesses()+". Dispatching for rerun.");
+                log.info("Old data set used "+oldDS.getPipelineProcesses()+" but new data set uses "+newDS.getPipelineProcesses()+". Dispatching for rerun.");
                 dispatchForProcessing(savedSample, false, PipelineStatus.Scheduled);
             }        
         }
 
         // Return ownerKey to what it was, mainly so that sample lock can 
         // be removed by the caller, but also because it's good manners.
-        this.ownerKey = savedOwnerKey;
+        setOwnerKey(savedOwnerKey);
         
         return savedSample;
     }
@@ -1139,7 +1119,7 @@ public class SampleHelper extends DomainHelper {
     
     private Collection<FileStorePath> getFileStorePaths(HasFiles hasFiles, boolean recurse) {
 
-        contextLogger.trace("Finding file store paths in result: "+hasFiles.getClass().getSimpleName());
+        log.trace("Finding file store paths in result: "+hasFiles.getClass().getSimpleName());
         Set<FileStorePath> paths = new HashSet<>();
         
         // Add the root path, if any
@@ -1147,7 +1127,7 @@ public class SampleHelper extends DomainHelper {
             HasRelativeFiles hasRelativeFiles = (HasRelativeFiles)hasFiles;
             if (hasRelativeFiles.getFilepath()!=null) {
                 FileStorePath fsp = FileStorePath.parseFilepath(hasRelativeFiles.getFilepath());
-                contextLogger.trace("  Adding root path: "+fsp);
+                log.trace("  Adding root path: "+fsp);
                 paths.add(fsp);
             }
         }
@@ -1156,14 +1136,14 @@ public class SampleHelper extends DomainHelper {
         for(FileType key : hasFiles.getFiles().keySet()) {
             String path = DomainUtils.getFilepath(hasFiles, key);
             FileStorePath fsp = FileStorePath.parseFilepath(path);
-            contextLogger.trace("  Adding file path: "+fsp);
+            log.trace("  Adding file path: "+fsp);
             paths.add(fsp);
         }
 
         if (recurse) {
             if (hasFiles instanceof HasResults) {
                 for(PipelineResult result : ((HasResults)hasFiles).getResults()) {
-                    contextLogger.trace("  Recursing into result "+result.getName());
+                    log.trace("  Recursing into result "+result.getName());
                     getFileStorePaths(result, recurse);
                 }
             }
@@ -1231,10 +1211,10 @@ public class SampleHelper extends DomainHelper {
         }
         else {
             if (newFile.exists()) {
-                contextLogger.warn("File already exists at correct location: "+newFile);
+                log.warn("File already exists at correct location: "+newFile);
             }
             else {
-                contextLogger.warn("CDM does not exist in CDM store: "+oldFile);
+                log.warn("CDM does not exist in CDM store: "+oldFile);
                 // Try to get it from the alignment dir
                 File originalFile = new File(alignment.getFilepath(), filename);
                 if (originalFile.exists()) {
@@ -1244,7 +1224,7 @@ public class SampleHelper extends DomainHelper {
                     }
                 }
                 else {
-                    contextLogger.warn("CDM does not exist in alignment dir: "+originalFile);
+                    log.warn("CDM does not exist in alignment dir: "+originalFile);
                 }
             }
         }
@@ -1270,13 +1250,13 @@ public class SampleHelper extends DomainHelper {
             String oldPrefix = fileStorePath.getFilepath(true);
             String newPrefix = newPath.getFilepath(true);
             if (!oldPrefix.equals(newPrefix)) {
-                contextLogger.debug("Will change: "+oldPrefix+" -> "+newPrefix);
+                log.debug("Will change: "+oldPrefix+" -> "+newPrefix);
                 nodePaths.put(oldPrefix, newPrefix);   
             }
         }
         
         if (nodePaths.isEmpty()) {
-            contextLogger.info("  All files are in their correct locations, nothing to do.");
+            log.info("  All files are in their correct locations, nothing to do.");
             return false;
         }
 
@@ -1289,17 +1269,17 @@ public class SampleHelper extends DomainHelper {
     public boolean moveArtifacts(Sample sample, Collection<LSMImage> lsms, Collection<NeuronFragment> neurons, Map<String,String> nodePaths) throws Exception {
         Set<String> moved = new HashSet<String>();
         
-        contextLogger.debug("Moving sample artifacts");
+        log.debug("Moving sample artifacts");
         boolean updated = moveArtifacts(sample, nodePaths, moved);
         
-        contextLogger.debug("Updating LSMs");
+        log.debug("Updating LSMs");
         for(LSMImage lsm : lsms) {
             if (updateFilePaths(lsm, nodePaths)) {
                 updated = true;
             }
         }
 
-        contextLogger.debug("Updating neurons");
+        log.debug("Updating neurons");
         for(NeuronFragment neuron : neurons) {
             if (updateFilePaths(neuron, nodePaths)) {
                 updated = true;
@@ -1347,7 +1327,7 @@ public class SampleHelper extends DomainHelper {
                 HasFileGroups hasFileGroups = (HasFileGroups)result;
                 // Each file group has to be addressed separately
                 for (FileGroup fileGroup : hasFileGroups.getGroups()) {
-                    contextLogger.info("Updating file group "+fileGroup.getKey());
+                    log.info("Updating file group "+fileGroup.getKey());
                     if (moveFiles(fileGroup, pathPrefixChanges, moved)) {
                         updated = true;
                     }
@@ -1382,7 +1362,7 @@ public class SampleHelper extends DomainHelper {
                     // Update the sample
                     String updatedPath = path.replace(oldPrefix, newPrefix);
                     hasRelativeFiles.setFilepath(updatedPath);
-                    contextLogger.info("Updated root path: "+path+" -> "+updatedPath);
+                    log.info("Updated root path: "+path+" -> "+updatedPath);
                     updated = true;
                     
                     break INNER; // Only one path change can apply to a given result
@@ -1403,7 +1383,7 @@ public class SampleHelper extends DomainHelper {
                     
                     String updatedPath = filepath.replace(oldPath, newPath);
                     DomainUtils.setFilepath(hasFiles, fileType, updatedPath);
-                    contextLogger.info("Updated file path: "+filepath+" -> "+updatedPath);
+                    log.info("Updated file path: "+filepath+" -> "+updatedPath);
                     updated = true;
                     
                     break INNER; // Only one path change can apply to a given result
@@ -1416,14 +1396,14 @@ public class SampleHelper extends DomainHelper {
     
     private void moveFiles(String path, String oldPrefix, String newPrefix, Set<String> moved) throws IOException {
 
-        contextLogger.debug("Moving files from: "+oldPrefix+" -> "+newPrefix);
+        log.debug("Moving files from: "+oldPrefix+" -> "+newPrefix);
         
         if (moved.contains(oldPrefix)) {
-            contextLogger.trace("Already moved: "+path);
+            log.trace("Already moved: "+path);
         }
         else {
             if (!path.startsWith(centralDir)) {
-                contextLogger.warn("Ignoring foreign path: "+path);
+                log.warn("Ignoring foreign path: "+path);
             }
             else {
                 File oldFileNodeDir = new File(oldPrefix);
@@ -1434,7 +1414,7 @@ public class SampleHelper extends DomainHelper {
                     // Move the child dir
                     FileUtil.moveFileUsingSystemCall(oldFileNodeDir, newFileNodeDir.getParentFile());
                 }
-                contextLogger.info("Moved dir "+oldPrefix+" -> "+newPrefix);
+                log.info("Moved dir "+oldPrefix+" -> "+newPrefix);
             }
             
             // Keep track of what's been moved, so we don't attempt to move it more than once
@@ -1463,7 +1443,7 @@ public class SampleHelper extends DomainHelper {
                     String newPath = nodePaths.get(oldPath);
                     String updatedPath = rootPath.replace(oldPath, newPath);
                     hasFiles.setFilepath(updatedPath);
-                    contextLogger.info("Updated root path: "+rootPath+" -> "+updatedPath);
+                    log.info("Updated root path: "+rootPath+" -> "+updatedPath);
                     updated = true;
                     
                     break INNER; // Only one path change can apply
@@ -1484,7 +1464,7 @@ public class SampleHelper extends DomainHelper {
                         String newPath = nodePaths.get(oldPath);
                         String updatedPath = path.replace(oldPath, newPath);
                         DomainUtils.setFilepath(hasFiles, fileType, updatedPath);
-                        contextLogger.info("Updated relative path: "+path+" -> "+updatedPath);
+                        log.info("Updated relative path: "+path+" -> "+updatedPath);
                         updated = true;
                         
                         break INNER; // Only one path change can apply
@@ -1519,23 +1499,23 @@ public class SampleHelper extends DomainHelper {
         
         Long totalUsage = 0L;
         
-        logger.info("Updating disk usage statistics for "+sample);
+        log.info("Updating disk usage statistics for "+sample);
         
         for (ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
-            logger.trace("  Checking files for objective "+objectiveSample.getObjective());
+            log.trace("  Checking files for objective "+objectiveSample.getObjective());
             for (SamplePipelineRun samplePipelineRun : objectiveSample.getPipelineRuns()) {
 
                 Long cachedUsage = samplePipelineRun.getDiskSpaceUsage();
                 
                 if (cachedUsage==null || runFilter==null || runFilter.getId().equals(samplePipelineRun.getId())) {
-                    logger.trace("    Checking files for run "+samplePipelineRun.getName());
+                    log.trace("    Checking files for run "+samplePipelineRun.getName());
                     for (PipelineResult pipelineResult : samplePipelineRun.getResults()) {
                         totalUsage += updateDiskSpaceUsage(pipelineResult);
                     }
                 }
                 else {
-                    logger.trace("    Checking cached usage for run "+samplePipelineRun.getName());
-                    logger.trace("    "+cachedUsage+" bytes - cached usage for "+samplePipelineRun.getName());
+                    log.trace("    Checking cached usage for run "+samplePipelineRun.getName());
+                    log.trace("    "+cachedUsage+" bytes - cached usage for "+samplePipelineRun.getName());
                     continue;
                 }
                 
@@ -1543,7 +1523,7 @@ public class SampleHelper extends DomainHelper {
         }
         
         sample.setDiskSpaceUsage(totalUsage);
-        logger.debug("      "+totalUsage+" bytes - "+sample.getName()+" (id="+sample.getId()+")");
+        log.debug("      "+totalUsage+" bytes - "+sample.getName()+" (id="+sample.getId()+")");
         return saveSample(sample);
     }
 
@@ -1551,14 +1531,14 @@ public class SampleHelper extends DomainHelper {
 
         if (result.getFilepath()==null) return 0L;
         
-        logger.trace("      Checking files for result "+result.getName());
+        log.trace("      Checking files for result "+result.getName());
         Long totalUsage = 0L;
         
         File dir = new File(result.getFilepath());
         Long dirSize = getApparentSizeOfDirectory(dir);
         
         if (dirSize != null) {
-            logger.debug("      "+dirSize+" bytes - "+result.getFilepath());
+            log.debug("      "+dirSize+" bytes - "+result.getFilepath());
             totalUsage += dirSize;    
             result.setDiskSpaceUsage(totalUsage);
         }
@@ -1593,7 +1573,7 @@ public class SampleHelper extends DomainHelper {
                     size = new Long(line.split("\\s")[0]);
                 }
                 catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-                    logger.warn("Unexpected output from du: "+line);
+                    log.warn("Unexpected output from du: "+line);
                 }
             }
         }
@@ -1620,7 +1600,7 @@ public class SampleHelper extends DomainHelper {
 //            return;
 //        }
 //
-//        logger.info("User "+ownerKey+" dispatching "+sample+", owned by "+sample.getOwnerKey()+", with reuse="+reuse);
+//        log.info("User "+ownerKey+" dispatching "+sample+", owned by "+sample.getOwnerKey()+", with reuse="+reuse);
 //
 //        if (debug) return;
 //
@@ -1648,7 +1628,7 @@ public class SampleHelper extends DomainHelper {
 //
 //        // Log the activity
 //        ActivityLogHelper.getInstance().logReprocessing(sample.getOwnerKey(), sample.getName());
-//        contextLogger.info("Marked sample "+sample.getId() + " for reprocessing with dispatchId " + dispatchId);
+//        log.info("Marked sample "+sample.getId() + " for reprocessing with dispatchId " + dispatchId);
 //        numSamplesReprocessed++;
     }
     
@@ -1658,10 +1638,10 @@ public class SampleHelper extends DomainHelper {
     
     private Map<String,DomainObjectAttribute> getSampleAttrs() {
         if (sampleAttrs==null) {
-            logger.info("Building sample attribute map");
+            log.info("Building sample attribute map");
             this.sampleAttrs = new HashMap<>();
             for (DomainObjectAttribute attr : DomainUtils.getSearchAttributes(Sample.class)) {
-                logger.trace("  "+attr.getLabel()+" -> Sample."+attr.getName());
+                log.trace("  "+attr.getLabel()+" -> Sample."+attr.getName());
                 sampleAttrs.put(attr.getLabel(), attr);
             }
         }
@@ -1670,7 +1650,7 @@ public class SampleHelper extends DomainHelper {
     
     private Map<String,SageField> getLsmSageFields() {
         if (lsmSageFields==null) {
-            logger.info("Building LSM SAGE field map");
+            log.info("Building LSM SAGE field map");
             this.lsmSageFields = new HashMap<>();
             for (Field field : ReflectionUtils.getAllFields(LSMImage.class)) {
                 SAGEAttribute sageAttribute = field.getAnnotation(SAGEAttribute.class);
@@ -1679,7 +1659,7 @@ public class SampleHelper extends DomainHelper {
                     attr.cvName = sageAttribute.cvName();
                     attr.termName = sageAttribute.termName();
                     attr.field = field;
-                    logger.trace("  " + attr.getKey() + " -> LsmImage." + field.getName());
+                    log.trace("  " + attr.getKey() + " -> LsmImage." + field.getName());
                     lsmSageFields.put(attr.getKey(), attr);
                 }
             }
@@ -1689,7 +1669,7 @@ public class SampleHelper extends DomainHelper {
 
     private Map<String,SageField> getSampleSageFields() {
         if (sampleSageFields==null) {
-            logger.info("Building sample SAGE field map");
+            log.info("Building sample SAGE field map");
             this.sampleSageFields = new HashMap<>();
             for (Field field : ReflectionUtils.getAllFields(Sample.class)) {
                 SAGEAttribute sageAttribute = field.getAnnotation(SAGEAttribute.class);
@@ -1698,7 +1678,7 @@ public class SampleHelper extends DomainHelper {
                     attr.cvName = sageAttribute.cvName();
                     attr.termName = sageAttribute.termName();
                     attr.field = field;
-                    logger.trace("  "+field.getName()+" -> Sample."+field.getName());
+                    log.trace("  "+field.getName()+" -> Sample."+field.getName());
                     sampleSageFields.put(field.getName(), attr);
                 }
             }
@@ -1733,7 +1713,7 @@ public class SampleHelper extends DomainHelper {
             	return ChanSpecUtils.createChanSpec(numChannels, refIndex+1);    
             }
             catch (NumberFormatException e) {
-                logger.warn("Could not parse Num Channels ('"+numChannels+"') on LSM with id="+lsm.getId());
+                log.warn("Could not parse Num Channels ('"+numChannels+"') on LSM with id="+lsm.getId());
             }
         }
         
@@ -1764,9 +1744,9 @@ public class SampleHelper extends DomainHelper {
     public String getConsensusTileAttributeValue(List<AnatomicalArea> sampleAreas, String attrName, String delimiter) throws Exception {
         Sample sample = null;
         String consensus = null;
-        logger.trace("Determining consensus for " + attrName + " for sample areas: " + getSampleAreasCSV(sampleAreas));
+        log.trace("Determining consensus for " + attrName + " for sample areas: " + getSampleAreasCSV(sampleAreas));
         for(AnatomicalArea sampleArea : sampleAreas) {
-        	logger.trace("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
+        	log.trace("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
 		
         	if (sample==null) {
             	sample = domainDao.getDomainObject(null, Sample.class, sampleArea.getSampleId());
@@ -1777,7 +1757,7 @@ public class SampleHelper extends DomainHelper {
         	
         	ObjectiveSample objectiveSample = sample.getObjectiveSample(sampleArea.getObjective());
         	for(SampleTile sampleTile : getTilesForArea(objectiveSample, sampleArea)) {
-        	    logger.trace("    Determining consensus for "+attrName+" in "+sampleTile.getName()+" tile");
+        	    log.trace("    Determining consensus for "+attrName+" in "+sampleTile.getName()+" tile");
             	List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
 	        	
             	StringBuilder sb = new StringBuilder();
@@ -1789,7 +1769,7 @@ public class SampleHelper extends DomainHelper {
                 
                 String tileValue = sb.toString();
                 if (consensus!=null && !StringUtils.areEqual(consensus,tileValue)) {
-                    logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample area "+sampleArea.getName());
+                    log.warn("No consensus for attribute '"+attrName+"' can be reached for sample area "+sampleArea.getName());
                     return null;
                 }
                 else {
@@ -1824,9 +1804,9 @@ public class SampleHelper extends DomainHelper {
     public String getConsensusLsmAttributeValue(List<AnatomicalArea> sampleAreas, String attrName) throws Exception {
         Sample sample = null;
         String consensus = null;
-        logger.trace("Determining consensus for " + attrName + " for sample areas: " + getSampleAreasCSV(sampleAreas));
+        log.trace("Determining consensus for " + attrName + " for sample areas: " + getSampleAreasCSV(sampleAreas));
         for(AnatomicalArea sampleArea : sampleAreas) {
-        	logger.trace("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
+        	log.trace("  Determining consensus for "+attrName+" in "+sampleArea.getName()+" sample area");
 		
         	if (sample==null) {
             	sample = domainDao.getDomainObject(null, Sample.class, sampleArea.getSampleId());
@@ -1837,14 +1817,14 @@ public class SampleHelper extends DomainHelper {
         	
         	ObjectiveSample objectiveSample = sample.getObjectiveSample(sampleArea.getObjective());
             for(SampleTile sampleTile : getTilesForArea(objectiveSample, sampleArea)) {
-        	    logger.trace("    Determining consensus for "+attrName+" in "+sampleTile.getName()+" tile");
+        	    log.trace("    Determining consensus for "+attrName+" in "+sampleTile.getName()+" tile");
             	List<LSMImage> lsms = domainDao.getDomainObjectsAs(sampleTile.getLsmReferences(), LSMImage.class);
             	
                 for(LSMImage image : lsms) {
-    	        	logger.trace("      Determining consensus for "+attrName+" in "+image.getName()+" LSM");
+    	        	log.trace("      Determining consensus for "+attrName+" in "+image.getName()+" LSM");
                     Object value = DomainUtils.getAttributeValue(image, attrName);
                     if (consensus!=null && !StringUtils.areEqual(consensus,value)) {
-                        logger.warn("No consensus for attribute '"+attrName+"' can be reached for sample area "+sampleArea.getName());
+                        log.warn("No consensus for attribute '"+attrName+"' can be reached for sample area "+sampleArea.getName());
                         return null;
                     }
                     else {
@@ -1867,15 +1847,15 @@ public class SampleHelper extends DomainHelper {
     public String getFirstLsmAttributeValue(AnatomicalArea sampleArea, String attrName) throws Exception {
         Sample sample = domainDao.getDomainObject(null, Sample.class, sampleArea.getSampleId());
         if (sample == null) {
-            logger.warn("No sample found for sample area " + sampleArea);
+            log.warn("No sample found for sample area " + sampleArea);
             return null;
         }
         String rtnVal = null;
-        logger.trace("  Returning first instance of "+attrName+" in "+sampleArea.getName()+" sample area");
+        log.trace("  Returning first instance of "+attrName+" in "+sampleArea.getName()+" sample area");
 
         ObjectiveSample objectiveSample = sample.getObjectiveSample(sampleArea.getObjective());
         if (objectiveSample == null) {
-            logger.warn("No objectiveSample found for sample area " + sampleArea.getObjective());
+            log.warn("No objectiveSample found for sample area " + sampleArea.getObjective());
             return null;
         }
         for(SampleTile sampleTile : getTilesForArea(objectiveSample, sampleArea)) {
@@ -1931,17 +1911,17 @@ public class SampleHelper extends DomainHelper {
             throw new IllegalArgumentException("Empty data set identifier");
         }
         
-        DataSet dataSet = domainDao.getDataSetByIdentifier(ownerKey, nameOrIdentifier);
+        DataSet dataSet = domainDao.getDataSetByIdentifier(getOwnerKey(), nameOrIdentifier);
         if (dataSet != null) {
             return dataSet;
         }
         
-        List<DataSet> dataSets = domainDao.getUserDomainObjectsByName(ownerKey, DataSet.class, nameOrIdentifier);
+        List<DataSet> dataSets = domainDao.getUserDomainObjectsByName(getOwnerKey(), DataSet.class, nameOrIdentifier);
         if (dataSets.size() == 1) {
             return dataSets.get(0);
         } 
         else if (dataSets.size() > 1) {
-            throw new IllegalArgumentException("Found " + dataSets.size() + " objects for " + ownerKey
+            throw new IllegalArgumentException("Found " + dataSets.size() + " objects for " + getOwnerKey()
                 + " data set '" + nameOrIdentifier + "' when only one is expected");
         }
         return null;
@@ -1951,7 +1931,7 @@ public class SampleHelper extends DomainHelper {
 
         if (dataSets!=null) return;
 
-        this.dataSets = domainDao.getUserDomainObjects(ownerKey, DataSet.class);
+        this.dataSets = domainDao.getUserDomainObjects(getOwnerKey(), DataSet.class);
 
         if (dataSetNameFilter != null) {
             List<DataSet> filteredDataSets = new ArrayList<>();
@@ -1965,7 +1945,7 @@ public class SampleHelper extends DomainHelper {
         }
 
         if (dataSets.isEmpty()) {
-            logger.info("No data sets found for user: "+ownerKey);
+            log.info("No data sets found for user: "+getOwnerKey());
             return;
         }
 
@@ -1991,42 +1971,42 @@ public class SampleHelper extends DomainHelper {
 
     public LSMImage saveLsm(LSMImage lsm) throws Exception {
         if (debug) return lsm;
-        return domainDao.save(ownerKey, lsm);
+        return domainDao.save(getOwnerKey(), lsm);
     }
 
     public Sample saveSample(Sample sample) throws Exception {
         if (debug) return sample;
-        return domainDao.save(ownerKey, sample);
+        return domainDao.save(getOwnerKey(), sample);
     }
 
     public NeuronFragment saveNeuron(NeuronFragment neuron) throws Exception {
         if (debug) return neuron;
-        return domainDao.save(ownerKey, neuron);
+        return domainDao.save(getOwnerKey(), neuron);
     }
 
     /* --------------------------- */
 
     public <T extends DomainObject> T lockAndRetrieve(Class<T> clazz, Long id) {
 
-        Long lockingTaskId = task.getRootServiceId().longValue();
+        Long lockingTaskId = getServiceId();
         Reference ref = Reference.createFor(clazz, id);
-        DomainObjectLock lock = lockingDao.lockObject(ownerKey, ref, lockingTaskId, "SampleHelper", writeLockTimeoutMs);
+        DomainObjectLock lock = lockingDao.lockObject(getOwnerKey(), ref, lockingTaskId, "SampleHelper", writeLockTimeoutMs);
         if (lock==null) {
             throw new ComputationException("Could not obtain lock for "+ref);
         }
-        T object = domainDao.getDomainObject(ownerKey, clazz, id);
+        T object = domainDao.getDomainObject(getOwnerKey(), clazz, id);
         if (object==null) {
             throw new ComputationException("Locked object, but it disappeared: "+ref);
         }
-        logger.info("Locked {}", object);
+        log.info("Locked {}", object);
         return object;
     }
 
     public void unlock(DomainObject object) {
         Reference ref = Reference.createFor(object);
-        Long lockingTaskId = task.getRootServiceId().longValue();
-        lockingDao.unlockObject(ownerKey, ref, lockingTaskId);
-        logger.info("Unlocked {}", object);
+        Long lockingTaskId = getServiceId();
+        lockingDao.unlockObject(getOwnerKey(), ref, lockingTaskId);
+        log.info("Unlocked {}", object);
     }
 
     /* --------------------------- */
@@ -2182,7 +2162,7 @@ public class SampleHelper extends DomainHelper {
             else {
                 int u = name.lastIndexOf('_');
                 if (u<0) {
-                    contextLogger.debug("  Ignoring file with no underscores: "+name);
+                    log.debug("  Ignoring file with no underscores: "+name);
                     continue;
                 }
                 key = name.substring(0, u);
@@ -2230,7 +2210,7 @@ public class SampleHelper extends DomainHelper {
             }
             
             if (fileType==null) {
-                logger.debug("  Could not determine file type for: "+filename);
+                log.debug("  Could not determine file type for: "+filename);
                 continue;
             }
             
@@ -2259,7 +2239,7 @@ public class SampleHelper extends DomainHelper {
 
 //        Map<String,String> keyToCorrectedKeyMap = new HashMap<>();
 //        for(InputImage inputImage : inputImages) {
-//            contextLogger.debug("Will replace output prefix "+inputImage.getOutputPrefix()+" with key "+inputImage.getKey());
+//            log.debug("Will replace output prefix "+inputImage.getOutputPrefix()+" with key "+inputImage.getKey());
 //            keyToCorrectedKeyMap.put(inputImage.getOutputPrefix(), inputImage.getKey());
 //        }
 //
@@ -2268,7 +2248,7 @@ public class SampleHelper extends DomainHelper {
 //            String key = fileGroup.getKey();
 //            String correctedKey = keyToCorrectedKeyMap.get(key);
 //            if (correctedKey==null) {
-//                contextLogger.warn("Unrecognized output prefix: "+key);
+//                log.warn("Unrecognized output prefix: "+key);
 //                continue;
 //            }
 //            fileGroup.setKey(correctedKey);
@@ -2333,12 +2313,12 @@ public class SampleHelper extends DomainHelper {
         for(T domainObject : domainObjects) {
             
             if (!annotationMap.get(domainObject.getId()).isEmpty()) {
-                logger.trace(domainObject+" is annotated");
+                log.trace(domainObject+" is annotated");
                 continue;
             }
             
             if (referencedIds.contains(domainObject.getId())) {
-                logger.trace(domainObject+" is referenced by tree nodes");
+                log.trace(domainObject+" is referenced by tree nodes");
                 continue;
             }
             
@@ -2372,11 +2352,11 @@ public class SampleHelper extends DomainHelper {
 //            }
 //        }
 //
-//        contextLogger.info("Input file: "+filepath);
-//        contextLogger.info("  Area: "+area);
-//        contextLogger.info("  Channel specification: "+chanSpec);
-//        contextLogger.info("  Color specification: "+colorSpec);
-//        contextLogger.info("  Output prefix: "+prefix);
+//        log.info("Input file: "+filepath);
+//        log.info("  Area: "+area);
+//        log.info("  Channel specification: "+chanSpec);
+//        log.info("  Color specification: "+colorSpec);
+//        log.info("  Output prefix: "+prefix);
 //
 //        InputImage inputImage = new InputImage();
 //        inputImage.setFilepath(filepath);

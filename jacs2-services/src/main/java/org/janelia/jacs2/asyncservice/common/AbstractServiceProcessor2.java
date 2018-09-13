@@ -1,15 +1,11 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.X11Utils;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.utils.CurrentService;
-import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.janelia.model.service.ServiceMetaData;
@@ -18,8 +14,6 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.lang.annotation.Annotation;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -33,10 +27,6 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
 
     @Inject
     protected Logger logger;
-
-    @Inject
-    @PropertyValue(name = "service.DefaultWorkingDir")
-    protected String defaultWorkingDir;
 
     @Inject
     protected ServiceComputationFactory computationFactory;
@@ -107,6 +97,14 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
     }
 
     @Override
+    public ServiceComputation<JacsServiceResult<U>> process(JacsServiceData sd) {
+        currentService.setJacsServiceData(sd);
+        return createComputation(sd);
+    }
+
+    public abstract ServiceComputation<JacsServiceResult<U>> createComputation(JacsServiceData jacsServiceData);
+
+    @Override
     public ServiceResultHandler<U> getResultHandler() {
         return new EmptyServiceResultHandler<>();
     }
@@ -116,32 +114,6 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
         return new DefaultServiceErrorChecker(logger);
     }
 
-    protected Path getServiceFolder(JacsServiceData jacsServiceData) {
-        return getWorkingDirectory(jacsServiceData).getServiceFolder();
-    }
-
-    protected JacsServiceFolder getWorkingDirectory(JacsServiceData jacsServiceData) {
-        if (StringUtils.isNotBlank(jacsServiceData.getWorkspace())) {
-            return new JacsServiceFolder(null, Paths.get(jacsServiceData.getWorkspace()), jacsServiceData);
-        } else if (StringUtils.isNotBlank(defaultWorkingDir)) {
-            return new JacsServiceFolder(getServicePath(defaultWorkingDir, jacsServiceData), null, jacsServiceData);
-        } else {
-            return new JacsServiceFolder(getServicePath(System.getProperty("java.io.tmpdir"), jacsServiceData), null, jacsServiceData);
-        }
-    }
-
-    private Path getServicePath(String baseDir, JacsServiceData jacsServiceData) {
-        ImmutableList.Builder<String> pathElemsBuilder = ImmutableList.builder();
-        if (StringUtils.isNotBlank(jacsServiceData.getOwnerKey())) {
-            String name = SubjectUtils.getSubjectName(jacsServiceData.getOwnerKey());
-            pathElemsBuilder.add(name);
-        }
-        pathElemsBuilder.add(jacsServiceData.getName());
-        if (jacsServiceData.hasId()) {
-            pathElemsBuilder.addAll(FileUtils.getTreePathComponentsForId(jacsServiceData.getId()));
-        }
-        return Paths.get(baseDir, pathElemsBuilder.build().toArray(new String[0])).toAbsolutePath();
-    }
 
     protected JacsServiceResult<U> updateServiceResult(JacsServiceData jacsServiceData, U result) {
         jacsServiceData.setSerializableResult(result);

@@ -9,7 +9,6 @@ import org.janelia.model.domain.sample.*;
 import org.janelia.model.domain.sample.pipeline.SingleLSMSummaryResult;
 import org.janelia.model.service.JacsServiceData;
 
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Collection;
@@ -39,7 +38,7 @@ import java.util.Collection;
 public class LSMSummaryUpdateService extends AbstractBasicLifeCycleServiceProcessor2<Sample> {
 
     @Inject
-    private Instance<SampleHelper> sampleHelperInstance;
+    private SampleHelper sampleHelper;
 
     private final String resultName = "LSM Summary Result";
 
@@ -47,14 +46,10 @@ public class LSMSummaryUpdateService extends AbstractBasicLifeCycleServiceProces
     protected Sample createResult() throws Exception {
 
         JacsServiceData sd = currentService.getJacsServiceData();
-        SampleHelper sampleHelper = sampleHelperInstance.get();
-        sampleHelper.init(sd, logger);
 
         Collection<SingleLSMSummaryResult> lsmSummaryResults = getRequiredServiceInput("lsmSummary");
         Long sampleId = getRequiredServiceInput("sampleId");
         Long pipelineRunId = getRequiredServiceInput("pipelineRunId");
-
-        logger.info("Got lsmSummaryResults={}", lsmSummaryResults);
 
         // Update the Sample with the new result
         Sample sample = sampleHelper.lockAndRetrieve(Sample.class, sampleId);

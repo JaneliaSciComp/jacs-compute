@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.sample;
 
-import org.janelia.jacs2.asyncservice.sample.helpers.QuotaValidator;
 import org.janelia.jacs2.asyncservice.utils.ContainerizedServiceUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.model.access.domain.DomainDAO;
@@ -14,7 +13,11 @@ import java.io.FileNotFoundException;
 import java.util.List;
 
 /**
- * A reference to a versioned Singularity container.
+ * A versioned Singularity container which can be invoked on the command-line.
+ *
+ * This class should not be instantiated directly. Instead use SingularityAppFactory to create instances.
+ *
+ * @see org.janelia.jacs2.cdi.SingularityAppFactory
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */

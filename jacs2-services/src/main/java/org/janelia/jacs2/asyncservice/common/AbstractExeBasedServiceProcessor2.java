@@ -52,21 +52,25 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
     }
 
     private void updateOutputAndErrorPaths(JacsServiceData jacsServiceData) {
+
+        JacsServiceFolder serviceFolder = currentService.getServiceFolder();
+
         Map<String, EntityFieldValueHandler<?>> serviceUpdates = new LinkedHashMap<>();
-        JacsServiceFolder jacsServiceFolder = getWorkingDirectory(jacsServiceData);
+
         if (StringUtils.isBlank(jacsServiceData.getOutputPath())) {
-            jacsServiceData.setOutputPath(jacsServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString());
+            jacsServiceData.setOutputPath(serviceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString());
             serviceUpdates.put("outputPath", new SetFieldValueHandler<>(jacsServiceData.getOutputPath()));
         }
         if (StringUtils.isBlank(jacsServiceData.getErrorPath())) {
-            jacsServiceData.setErrorPath(jacsServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString());
+            jacsServiceData.setErrorPath(serviceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString());
             serviceUpdates.put("errorPath", new SetFieldValueHandler<>(jacsServiceData.getErrorPath()));
         }
         jacsServiceDataPersistence.update(jacsServiceData, serviceUpdates);
     }
 
     @Override
-    protected ServiceComputation<JacsServiceData> processing(JacsServiceData sd) {
+    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) {
+        JacsServiceData sd = depsResult.getJacsServiceData();
         ExeJobInfo jobInfo = runExternalProcess(sd);
         PeriodicallyCheckableState<JacsServiceData> periodicResultCheck = new PeriodicallyCheckableState<>(sd, jobIntervalCheck);
         return computationFactory.newCompletedComputation(periodicResultCheck)
@@ -100,7 +104,7 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
                                 JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, errorMessage));
                         throw new ComputationException(jacsServiceData, errorMessage);
                     }
-                    return sd;
+                    return depsResult;
                 });
     }
 
@@ -137,18 +141,6 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
 
     private JacsServiceData refreshServiceData(JacsServiceData jacsServiceData) {
         return jacsServiceData.hasId() ? jacsServiceDataPersistence.findById(jacsServiceData.getId()) : jacsServiceData;
-    }
-
-    private void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
-        long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
-        if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
-            jacsServiceDataPersistence.updateServiceState(
-                    jacsServiceData,
-                    JacsServiceState.TIMEOUT,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.TIMEOUT, String.format("Service timed out after %s ms", timeSinceStart)));
-            logger.warn("Service {} timed out after {}ms", jacsServiceData, timeSinceStart);
-            throw new ComputationException(jacsServiceData, "Service " + jacsServiceData.getId() + " timed out");
-        }
     }
 
     protected ExternalCodeBlock prepareExternalScript() {
@@ -209,10 +201,6 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
         }
     }
 
-    private Optional<String> getEnvVar(String varName) {
-        return Optional.ofNullable(System.getenv(varName));
-    }
-
     protected String getFullExecutableName(String... execPathComponents) {
         String baseDir;
         String[] pathComponents;
@@ -232,24 +220,6 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
         return cmdPath.toString();
     }
 
-    protected String getUpdatedEnvValue(String varName, String addedValue) {
-        if (StringUtils.isBlank(addedValue))  {
-            return "";
-        }
-        return getEnvVar(varName)
-                .map(currentValue -> addedValue + ":" + currentValue)
-                .orElse(addedValue)
-                ;
-    }
-
-    private JacsServiceFolder getScriptDirName(JacsServiceData jacsServiceData) {
-        return getWorkingDirectory(jacsServiceData);
-    }
-
-    protected Path getProcessDir(JacsServiceData jacsServiceData) {
-        return getWorkingDirectory(jacsServiceData).getServiceFolder();
-    }
-
     private ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
         List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles();
         ExternalCodeBlock script = prepareExternalScript();
@@ -264,8 +234,8 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
                 script,
                 externalConfigs,
                 runtimeEnv,
-                getScriptDirName(jacsServiceData),
-                getProcessDir(jacsServiceData),
+                currentService.getServiceFolder(),
+                currentService.getServiceFolder().getServiceFolder(),
                 jacsServiceData);
     }
 
