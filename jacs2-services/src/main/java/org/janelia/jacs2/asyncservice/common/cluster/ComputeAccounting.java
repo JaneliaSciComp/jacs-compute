@@ -43,7 +43,6 @@ public class ComputeAccounting {
     @Inject
     public ComputeAccounting(LegacyDomainDao dao,
                              @StrPropertyValue(name = "service.colorDepthSearch.filepath") String rootPath,
-                             ColorDepthFileSearch colorDepthFileSearch,
                              Logger logger) {
         this.log = logger;
         this.dao = dao;
@@ -114,15 +113,13 @@ public class ComputeAccounting {
      * @param subjectKey
      * @return
      */
-    public synchronized String getComputeGroup(String subjectKey) {
+    private synchronized String getComputeGroup(String subjectKey) {
         try {
             return computeAccounts.get(subjectKey);
-        }
-        catch (InvalidCacheLoadException e) {
+        } catch (InvalidCacheLoadException e) {
             log.error("Error getting compute group account for "+subjectKey, e);
             return null;
-        }
-        catch (ExecutionException e) {
+        } catch (ExecutionException e) {
             log.error("Error getting compute group account for "+subjectKey, e);
             return null;
         }
