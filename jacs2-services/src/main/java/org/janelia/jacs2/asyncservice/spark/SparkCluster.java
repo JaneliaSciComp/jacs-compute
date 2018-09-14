@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -151,13 +152,15 @@ public class SparkCluster {
                         "driver error: {}, " +
                         "sparkExecutorMemory: {}, " +
                         "sparkExecutorCores: {}, " +
-                        "parallelism: {}",
+                        "parallelism: {}, " +
+                        "appArgs: {}",
                 appResource, masterURI, jobId,
                 appOutputDir,
                 appErrorDir,
                 sparkExecutorMemory,
                 sparkExecutorCores,
-                parallelism);
+                parallelism,
+                Arrays.asList(appArgs));
         SparkLauncher sparkLauncher = new SparkLauncher();
 
         if (StringUtils.isNotBlank(appOutputDir)) {
