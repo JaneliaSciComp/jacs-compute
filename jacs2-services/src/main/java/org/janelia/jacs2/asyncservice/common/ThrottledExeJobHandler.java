@@ -5,20 +5,20 @@ import org.janelia.model.service.JacsServiceData;
 
 import java.util.Collection;
 
-public class ThrottledJobHandler implements JobHandler {
+public class ThrottledExeJobHandler implements ExeJobHandler {
 
     public interface JobDoneCallback {
-        void done(ThrottledJobHandler jobInfo);
+        void done(ThrottledExeJobHandler jobInfo);
     }
 
-    private final JobHandler throttledJobInfo;
+    private final ExeJobHandler throttledJobInfo;
     private final JacsServiceData jobServiceContext;
     private final ThrottledExeJobsQueue jobsQueue;
     private final int maxRunningProcesses;
     private volatile boolean terminated;
     private JobDoneCallback jobDoneCallback;
 
-    ThrottledJobHandler(JobHandler throttledJobInfo, JacsServiceData jobServiceContext, ThrottledExeJobsQueue jobsQueue, int maxRunningProcesses) {
+    ThrottledExeJobHandler(ExeJobHandler throttledJobInfo, JacsServiceData jobServiceContext, ThrottledExeJobsQueue jobsQueue, int maxRunningProcesses) {
         this.throttledJobInfo = throttledJobInfo;
         this.jobServiceContext = jobServiceContext;
         this.jobsQueue = jobsQueue;

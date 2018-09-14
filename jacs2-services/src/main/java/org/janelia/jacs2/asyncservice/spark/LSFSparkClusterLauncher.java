@@ -13,6 +13,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.common.cluster.LsfParseUtils;
+import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
 import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
@@ -68,7 +69,7 @@ public class LSFSparkClusterLauncher {
 
     @Inject
     public LSFSparkClusterLauncher(ServiceComputationFactory computationFactory,
-                                   JobManager jobMgr,
+                                   MonitoredJobManager monitoredJobManager,
                                    @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
                                    @IntPropertyValue(name = "service.spark.nodeSlots", defaultValue = 16) int nodeSlots,
                                    @StrPropertyValue(name = "service.spark.sparkVersion", defaultValue = "2") String sparkVersion,
@@ -84,7 +85,7 @@ public class LSFSparkClusterLauncher {
                                    ComputeAccounting accounting,
                                    Logger logger) {
         this.computationFactory = computationFactory;
-        this.jobMgr = jobMgr;
+        this.jobMgr = monitoredJobManager.getJobMgr();
         this.requiresAccountInfo = requiresAccountInfo;
         this.nodeSlots = nodeSlots;
         this.sparkVersion = sparkVersion;

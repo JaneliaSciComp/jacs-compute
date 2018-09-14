@@ -13,9 +13,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DrmaaJobHandler implements JobHandler {
+public class DrmaaExeJobHandler implements ExeJobHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DrmaaJobHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DrmaaExeJobHandler.class);
 
     private final String jobInfo;
     private final Session drmaaSession;
@@ -26,7 +26,7 @@ public class DrmaaJobHandler implements JobHandler {
     private volatile boolean failed;
     private volatile boolean terminated;
 
-    DrmaaJobHandler(String jobInfo, Session drmaaSession, int numJobs, JobTemplate jobTemplate) {
+    DrmaaExeJobHandler(String jobInfo, Session drmaaSession, int numJobs, JobTemplate jobTemplate) {
         this.drmaaSession = drmaaSession;
         this.jobInfo = jobInfo;
         this.numJobs = numJobs;

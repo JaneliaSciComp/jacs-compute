@@ -8,8 +8,6 @@ import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
-import org.janelia.model.jacs2.EntityFieldValueHandler;
-import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.service.JacsJobInstanceInfo;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
@@ -63,7 +61,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
 
     @Override
     protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) {
-        JobHandler jobHandler = runExternalProcess(depsResult.getJacsServiceData());
+        ExeJobHandler jobHandler = runExternalProcess(depsResult.getJacsServiceData());
         return computationFactory.newCompletedComputation(depsResult)
                 .thenSuspendUntil(previousStepsResult -> new ContinuationCond.Cond<>(previousStepsResult, hasJobFinished(previousStepsResult.getJacsServiceData(), jobHandler)),
                         (long) jobIntervalCheck,
@@ -99,7 +97,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                 });
     }
 
-    private boolean hasJobFinished(JacsServiceData jacsServiceData, JobHandler jobHandler) {
+    private boolean hasJobFinished(JacsServiceData jacsServiceData, ExeJobHandler jobHandler) {
         JacsServiceData updatedServiceData = refreshServiceData(jacsServiceData);
         // if the service has been canceled but the job hasn't finished terminate the job
         // if the service has been suspended let the job complete
@@ -189,7 +187,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
         return getWorkingDirectory(jacsServiceData).getServiceFolder();
     }
 
-    private JobHandler runExternalProcess(JacsServiceData jacsServiceData) {
+    private ExeJobHandler runExternalProcess(JacsServiceData jacsServiceData) {
         List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles(jacsServiceData);
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> runtimeEnv = new LinkedHashMap<>();

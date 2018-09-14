@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.service.JacsJobInstanceInfo;
 
 import java.io.IOException;
@@ -9,7 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
-public class LocalJobHandler implements JobHandler {
+public class LocalExeJobHandler implements ExeJobHandler {
     private final ProcessBuilder localProcessBuilder;
     private final String jobInfo;
     private Process localProcess;
@@ -18,7 +17,7 @@ public class LocalJobHandler implements JobHandler {
     private volatile boolean failed;
     private volatile boolean terminated;
 
-    LocalJobHandler(String jobInfo, ProcessBuilder localProcessBuilder) {
+    LocalExeJobHandler(String jobInfo, ProcessBuilder localProcessBuilder) {
         this.jobInfo = jobInfo;
         this.localProcessBuilder = localProcessBuilder;
     }

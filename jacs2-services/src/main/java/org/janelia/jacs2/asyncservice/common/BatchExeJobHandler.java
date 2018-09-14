@@ -6,11 +6,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class BatchJobHandler implements JobHandler {
+public class BatchExeJobHandler implements ExeJobHandler {
     private final String jobInfo;
-    private final List<JobHandler> jobBatch;
+    private final List<ExeJobHandler> jobBatch;
 
-    BatchJobHandler(String jobInfo, List<JobHandler> jobBatch) {
+    BatchExeJobHandler(String jobInfo, List<ExeJobHandler> jobBatch) {
         this.jobInfo = jobInfo;
         this.jobBatch = jobBatch;
     }
@@ -22,7 +22,7 @@ public class BatchJobHandler implements JobHandler {
 
     @Override
     public boolean start() {
-        return jobBatch.stream().map(JobHandler::start).reduce(true, (s1, s2) -> s1 && s2);
+        return jobBatch.stream().map(ExeJobHandler::start).reduce(true, (s1, s2) -> s1 && s2);
     }
 
     @Override

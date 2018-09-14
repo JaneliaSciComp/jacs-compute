@@ -4,7 +4,7 @@ import org.janelia.model.service.JacsJobInstanceInfo;
 
 import java.util.Collection;
 
-public interface JobHandler {
+public interface ExeJobHandler {
     String getJobInfo();
     boolean start();
     boolean isDone();

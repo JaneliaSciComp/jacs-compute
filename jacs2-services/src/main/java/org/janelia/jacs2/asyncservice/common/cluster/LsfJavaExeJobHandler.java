@@ -6,7 +6,7 @@ import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobMetadata;
 import org.janelia.cluster.JobStatus;
 import org.janelia.cluster.JobTemplate;
-import org.janelia.jacs2.asyncservice.common.JobHandler;
+import org.janelia.jacs2.asyncservice.common.ExeJobHandler;
 import org.janelia.model.service.JacsJobInstanceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +17,14 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Job info for a job running using the LSFJavaJob runner.
+ * Handler for a LSF job.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  * @see org.janelia.jacs2.asyncservice.qualifier.LSFJavaJob
  */
-public class LsfJavaJobHandler implements JobHandler {
+public class LsfJavaExeJobHandler implements ExeJobHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LsfJavaJobHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LsfJavaExeJobHandler.class);
 
     private final String jobInfo;
     private final JobManager jobMgr;
@@ -35,7 +35,7 @@ public class LsfJavaJobHandler implements JobHandler {
     private volatile boolean failed;
     private volatile boolean terminated;
 
-    public LsfJavaJobHandler(String jobInfo, JobManager jobMgr, JobTemplate jobTemplate, int numJobs) {
+    public LsfJavaExeJobHandler(String jobInfo, JobManager jobMgr, JobTemplate jobTemplate, int numJobs) {
         this.jobInfo = jobInfo;
         this.jobMgr = jobMgr;
         this.jobTemplate = jobTemplate;

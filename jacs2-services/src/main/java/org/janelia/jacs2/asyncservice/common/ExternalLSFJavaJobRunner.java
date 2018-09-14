@@ -5,13 +5,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobTemplate;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
-import org.janelia.jacs2.asyncservice.common.cluster.LsfJavaJobHandler;
+import org.janelia.jacs2.asyncservice.common.cluster.LsfJavaExeJobHandler;
 import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
 import org.janelia.jacs2.asyncservice.qualifier.LSFJavaJob;
 import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
-import org.janelia.jacs2.cdi.qualifier.GridExecutor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.service.JacsServiceEventTypes;
@@ -27,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 /**
  * External runner which uses the java-lsf library to submit and manage cluster jobs.
@@ -42,24 +39,24 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
     private final boolean requiresAccountInfo;
 
     @Inject
-    public ExternalLSFJavaJobRunner(JobManager jobMgr,
+    public ExternalLSFJavaJobRunner(MonitoredJobManager monitoredJobManager,
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
                                     ComputeAccounting accouting,
                                     @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
                                     Logger logger) {
         super(jacsServiceDataPersistence, logger);
-        this.jobMgr = jobMgr;
+        this.jobMgr = monitoredJobManager.getJobMgr();
         this.requiresAccountInfo = requiresAccountInfo;
         this.accouting = accouting;
     }
 
     @Override
-    public JobHandler runCmds(ExternalCodeBlock externalCode,
-                              List<ExternalCodeBlock> externalConfigs,
-                              Map<String, String> env,
-                              JacsServiceFolder scriptServiceFolder,
-                              Path processDir,
-                              JacsServiceData serviceContext) {
+    public ExeJobHandler runCmds(ExternalCodeBlock externalCode,
+                                 List<ExternalCodeBlock> externalConfigs,
+                                 Map<String, String> env,
+                                 JacsServiceFolder scriptServiceFolder,
+                                 Path processDir,
+                                 JacsServiceData serviceContext) {
         logger.debug("Begin bsub job invocation for {}", serviceContext);
         jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, JacsServiceEvent.NO_EVENT);
         try {
@@ -68,7 +65,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
 
             int numJobs = externalConfigs.isEmpty() ? 1 : externalConfigs.size();
             logger.info("Start {} for {} using  env {}", jt.getRemoteCommand(), serviceContext, env);
-            LsfJavaJobHandler lsfJobHandler = new LsfJavaJobHandler(processingScript, jobMgr, jt, numJobs);
+            LsfJavaExeJobHandler lsfJobHandler = new LsfJavaExeJobHandler(processingScript, jobMgr, jt, numJobs);
 
             lsfJobHandler.start();
             logger.info("Submitted job {} for {}", lsfJobHandler.getJobInfo(), serviceContext);

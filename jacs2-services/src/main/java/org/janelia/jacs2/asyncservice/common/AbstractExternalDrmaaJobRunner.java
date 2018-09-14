@@ -29,12 +29,12 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
     }
 
     @Override
-    public JobHandler runCmds(ExternalCodeBlock externalCode,
-                              List<ExternalCodeBlock> externalConfigs,
-                              Map<String, String> env,
-                              JacsServiceFolder scriptServiceFolder,
-                              Path processDir,
-                              JacsServiceData serviceContext) {
+    public ExeJobHandler runCmds(ExternalCodeBlock externalCode,
+                                 List<ExternalCodeBlock> externalConfigs,
+                                 Map<String, String> env,
+                                 JacsServiceFolder scriptServiceFolder,
+                                 Path processDir,
+                                 JacsServiceData serviceContext) {
         logger.debug("Begin DRMAA job invocation for {}", serviceContext);
         jacsServiceDataPersistence.updateServiceState(serviceContext, JacsServiceState.RUNNING, JacsServiceEvent.NO_EVENT);
         String processingScript = scriptServiceFolder.getServiceFolder("<unknown>").toString();
@@ -67,7 +67,7 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
                 jt.setNativeSpecification(nativeSpec);
             }
             logger.info("Start {} for {} using  env {}", processingScript, serviceContext, env);
-            JobHandler jobHandler = new DrmaaJobHandler(processingScript, drmaaSession, configFiles.size(), jt);
+            ExeJobHandler jobHandler = new DrmaaExeJobHandler(processingScript, drmaaSession, configFiles.size(), jt);
             String withConfigOption;
             if (configFiles.size() > 0) {
                 withConfigOption = " with " + configFiles + " ";
