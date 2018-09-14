@@ -1,4 +1,4 @@
-package org.janelia.jacs2.asyncservice.imagesearch;
+package org.janelia.jacs2.asyncservice.spark;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
@@ -6,12 +6,9 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.spark.LSFSparkClusterLauncher;
-import org.janelia.jacs2.asyncservice.spark.SparkApp;
-import org.janelia.jacs2.asyncservice.spark.SparkCluster;
+import org.janelia.jacs2.asyncservice.imagesearch.ColorDepthFileSearch;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.Before;
@@ -24,7 +21,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Instance;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,17 +33,16 @@ import java.util.stream.Stream;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
-        ColorDepthFileSearch.class,
+        SparkAppProcessor.class,
         FileUtils.class
 })
-public class ColorDepthFileSearchTest {
+public class SparkAppProcessorTest {
 
-    private static final String TEST_WORKSPACE = "testColorDepthLocalWorkspace";
+    private static final String TEST_WORKSPACE = "testSparkWorkspace";
     private static final String DEFAULT_WORKING_DIR = "testWorking";
     private static final int SEARCH_TIMEOUT_IN_SECONDS = 1200;
     private static final int SEARCH_INTERVAL_CHECK_IN_MILLIS = 5000;
@@ -58,9 +53,8 @@ public class ColorDepthFileSearchTest {
     private LSFSparkClusterLauncher clusterLauncher;
     private SparkCluster sparkCluster;
     private SparkApp sparkApp;
-    private String jarPath = "sparkColorDepthSearch.jar";
 
-    private ColorDepthFileSearch colorDepthFileSearch;
+    private SparkAppProcessor sparkAppProcessor;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -73,85 +67,69 @@ public class ColorDepthFileSearchTest {
         sparkApp = mock(SparkApp.class);
         Mockito.when(sparkApp.isDone()).thenReturn(true);
 
-        colorDepthFileSearch = new ColorDepthFileSearch(serviceComputationFactory,
+        sparkAppProcessor = new SparkAppProcessor(serviceComputationFactory,
                 jacsServiceDataPersistence,
                 DEFAULT_WORKING_DIR,
                 clusterLauncher,
-                SEARCH_TIMEOUT_IN_SECONDS,
-                SEARCH_INTERVAL_CHECK_IN_MILLIS,
                 DEFAULT_NUM_NODES,
-                jarPath,
                 logger);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void process() throws Exception {
-        JacsServiceData testService = createTestServiceData(1L, "test");
+        String testAppResource = "testApp";
+        List<String> testAppArgs = ImmutableList.of("a1", "a2", "a3");
+        int testNumNodes = 12;
+        String testDriverMemory = "driverMem";
+        String testExecutorMemory = "executorMem";
+
+        JacsServiceData testService = createTestServiceData(1L, testAppResource,
+                testAppArgs,
+                "test",
+                testNumNodes,
+                testDriverMemory,
+                testExecutorMemory);
         JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
 
         PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
-        Mockito.when(Files.find(any(Path.class), anyInt(), any(BiPredicate.class))).then(invocation -> {
-            Path root = invocation.getArgument(0);
-            return Stream.of(root.resolve("f1_results.txt"));
-        });
 
         Mockito.when(clusterLauncher.startCluster(
                 testService,
-                9,
+                testNumNodes,
                 serviceWorkingFolder.getServiceFolder(),
-                null,
-                null,
+                testDriverMemory,
+                testExecutorMemory,
                 0,
                 null))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
 
         Mockito.when(sparkCluster.runApp(
-                jarPath,
+                testAppResource,
                 null,
                 0,
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
-                ImmutableList.of(
-                        "-m", "f1", "f2", "f3", "-i", "s1,s2",
-                        "--maskThresholds", "100", "100", "100",
-                        "--dataThreshold", "100",
-                        "--pixColorFluctuation", "2.0",
-                        "--pctPositivePixels", "10.0",
-                        "-o",
-                        serviceWorkingFolder.getServiceFolder("f1_results.txt").toFile().getAbsolutePath(),
-                        serviceWorkingFolder.getServiceFolder("f2_results.txt").toFile().getAbsolutePath(),
-                        serviceWorkingFolder.getServiceFolder("f3_results.txt").toFile().getAbsolutePath()
-                )))
-                .thenReturn(serviceComputationFactory.newCompletedComputation(sparkApp));
+                testAppArgs)
+        ).thenReturn(serviceComputationFactory.newCompletedComputation(sparkApp));
 
-        ServiceComputation<JacsServiceResult<List<File>>> colorDepthFileSearchComputation = colorDepthFileSearch.process(testService);
+        ServiceComputation<JacsServiceResult<Void>> sparkServiceComputation = sparkAppProcessor.process(testService);
 
         @SuppressWarnings("unchecked")
-        Consumer<JacsServiceResult<List<File>>> successful = mock(Consumer.class);
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
         @SuppressWarnings("unchecked")
         Consumer<Throwable> failure = mock(Consumer.class);
-        colorDepthFileSearchComputation
+        sparkServiceComputation
                 .thenApply(r -> {
                     successful.accept(r);
                     Mockito.verify(sparkCluster).runApp(
-                            jarPath,
+                            testAppResource,
                             null,
                             0,
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
-                            ImmutableList.of(
-                                    "-m", "f1", "f2", "f3", "-i", "s1,s2",
-                                    "--maskThresholds", "100", "100", "100",
-                                    "--dataThreshold", "100",
-                                    "--pixColorFluctuation", "2.0",
-                                    "--pctPositivePixels", "10.0",
-                                    "-o",
-                                    serviceWorkingFolder.getServiceFolder("f1_results.txt").toFile().getAbsolutePath(),
-                                    serviceWorkingFolder.getServiceFolder("f2_results.txt").toFile().getAbsolutePath(),
-                                    serviceWorkingFolder.getServiceFolder("f3_results.txt").toFile().getAbsolutePath()
-                            ));
+                            testAppArgs);
                     Mockito.verify(sparkCluster).stopCluster();
                     return r;
                 })
@@ -162,23 +140,26 @@ public class ColorDepthFileSearchTest {
                 });
     }
 
-    private JacsServiceData createTestServiceData(Number serviceId, String owner) {
+    private JacsServiceData createTestServiceData(Number serviceId, String testApp,
+                                                  List<String> appArgs,
+                                                  String owner,
+                                                  int numNodes,
+                                                  String driverMemory,
+                                                  String executorMemory) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey(owner)
                 .setAuthKey(owner)
-                .addArgs("-inputFiles", "f1,f2,f3")
-                .addArgs("-searchDirs", "s1,s2")
-                .addArgs("-maskThresholds", "100").addArgs("100").addArgs("100")
-                .addArgs("-numNodes", "9")
-                .addArgs("-dataThreshold", "100")
-                .addArgs("-pixColorFluctuation", "2.0")
-                .addArgs("-pctPositivePixels", "10.0")
+                .addArgs("-appLocation", testApp)
+                .addArgs("-appArgs").addArgs(appArgs.stream().reduce((a1, a2) -> a1 + "," + a2).orElse(""))
+                .addResource("spark.numNodes", String.valueOf(numNodes))
+                .addResource("spark.driverMemory", driverMemory)
+                .addResource("spark.executorMemory", executorMemory)
                 ;
         JacsServiceData testServiceData = testServiceDataBuilder
                 .setWorkspace(TEST_WORKSPACE)
                 .build();
         testServiceData.setId(serviceId);
-        testServiceData.setName("colorDepthFileSearch");
+        testServiceData.setName("sparkProcessor");
         return testServiceData;
     }
 

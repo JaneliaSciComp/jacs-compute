@@ -5,20 +5,20 @@ import org.janelia.model.service.JacsServiceData;
 
 import java.util.Collection;
 
-public class ThrottledJobInfo implements ExeJobInfo {
+public class ThrottledJobHandler implements JobHandler {
 
     public interface JobDoneCallback {
-        void done(ThrottledJobInfo jobInfo);
+        void done(ThrottledJobHandler jobInfo);
     }
 
-    private final ExeJobInfo throttledJobInfo;
+    private final JobHandler throttledJobInfo;
     private final JacsServiceData jobServiceContext;
     private final ThrottledExeJobsQueue jobsQueue;
     private final int maxRunningProcesses;
     private volatile boolean terminated;
     private JobDoneCallback jobDoneCallback;
 
-    ThrottledJobInfo(ExeJobInfo throttledJobInfo, JacsServiceData jobServiceContext, ThrottledExeJobsQueue jobsQueue, int maxRunningProcesses) {
+    ThrottledJobHandler(JobHandler throttledJobInfo, JacsServiceData jobServiceContext, ThrottledExeJobsQueue jobsQueue, int maxRunningProcesses) {
         this.throttledJobInfo = throttledJobInfo;
         this.jobServiceContext = jobServiceContext;
         this.jobsQueue = jobsQueue;
@@ -26,16 +26,17 @@ public class ThrottledJobInfo implements ExeJobInfo {
     }
 
     @Override
-    public String getScriptName() {
-        return throttledJobInfo.getScriptName();
+    public String getJobInfo() {
+        return throttledJobInfo.getJobInfo();
     }
 
     @Override
-    public String start() {
+    public boolean start() {
         if (!terminated) {
-            return jobsQueue.add(this); // simply enqueue the job
+            jobsQueue.add(this); // simply enqueue the job
+            return true;
         } else
-            return null;
+            return false;
     }
 
     @Override
@@ -48,8 +49,8 @@ public class ThrottledJobInfo implements ExeJobInfo {
     }
 
     @Override
-    public Collection<JacsJobInstanceInfo> getJobInstanceInfos() {
-        return throttledJobInfo.getJobInstanceInfos();
+    public Collection<JacsJobInstanceInfo> getJobInstances() {
+        return throttledJobInfo.getJobInstances();
     }
 
     @Override
@@ -86,8 +87,8 @@ public class ThrottledJobInfo implements ExeJobInfo {
         this.jobDoneCallback = jobDoneCallback;
     }
 
-    String beginProcessing() {
-        return throttledJobInfo.start();
+    void beginProcessing() {
+        throttledJobInfo.start();
     }
 
 }

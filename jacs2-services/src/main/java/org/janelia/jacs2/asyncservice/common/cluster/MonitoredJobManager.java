@@ -22,13 +22,14 @@ public class MonitoredJobManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(MonitoredJobManager.class);
 
-    private JobManager jobMgr;
-    private JobMonitor monitor;
+    private final JobManager jobMgr;
+    private final JobMonitor monitor;
 
     @Inject
-    public MonitoredJobManager(@PropertyValue(name = "service.cluster.checkIntervalInSeconds") int checkIntervalInSeconds) {
+    public MonitoredJobManager(JobManagerProvider jobMgrProvider,
+                               @PropertyValue(name = "service.cluster.checkIntervalInSeconds") int checkIntervalInSeconds) {
         LOG.info("Creating monitored job manager");
-        this.jobMgr = new JobManager(new LsfSyncApi());
+        this.jobMgr = jobMgrProvider.get();
         this.monitor = new JobMonitor(jobMgr, checkIntervalInSeconds);
     }
 

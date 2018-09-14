@@ -3,9 +3,7 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.qualifier.LocalJob;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.domain.IndexedReference;
@@ -22,7 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @LocalJob
@@ -39,7 +36,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
     }
 
     @Override
-    public ExeJobInfo runCmds(ExternalCodeBlock externalCode,
+    public JobHandler runCmds(ExternalCodeBlock externalCode,
                               List<ExternalCodeBlock> externalConfigs,
                               Map<String, String> env,
                               JacsServiceFolder scriptServiceFolder,
@@ -62,9 +59,9 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                     "service." + serviceContext.getName() + ".maxRunningProcesses",
                     defaultMaxRunningProcesses);
 
-            ExeJobInfo jobInfo;
+            JobHandler jobHandler;
             if (CollectionUtils.size(externalConfigs) < 1) {
-                jobInfo = runSingleProcess(processingScript,
+                jobHandler = runSingleProcess(processingScript,
                         processDir,
                         null,
                         Paths.get(serviceContext.getOutputPath(), scriptServiceFolder.getServiceOutputPattern("")),
@@ -73,7 +70,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                         maxRunningProcesses,
                         scriptServiceFolder);
             } else {
-                jobInfo = runMultipleProcessess(processingScript,
+                jobHandler = runMultipleProcessess(processingScript,
                         processDir,
                         configFiles,
                         Paths.get(serviceContext.getOutputPath()),
@@ -82,13 +79,13 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                         maxRunningProcesses,
                         scriptServiceFolder);
             }
-            String jobId = jobInfo.start();
+            jobHandler.start();
             // start the job
             jacsServiceDataPersistence.addServiceEvent(
                     serviceContext,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.START_PROCESS, String.format("Start %s [%s] %s", processingScript, jobId, configFiles))
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.START_PROCESS, String.format("Start %s [%s] %s", processingScript, jobHandler.getJobInfo(), configFiles))
             );
-            return jobInfo;
+            return jobHandler;
         } catch (Exception e) {
             logger.error("Error starting the computation process {} for {}", processingScript, serviceContext, e);
             jacsServiceDataPersistence.updateServiceState(
@@ -100,7 +97,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
         }
     }
 
-    private ExeJobInfo runSingleProcess(String processingScript,
+    private JobHandler runSingleProcess(String processingScript,
                                         Path processDirectory,
                                         Path processInput,
                                         Path processOutput,
@@ -129,10 +126,10 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                 .redirectError(ProcessBuilder.Redirect.appendTo(processError.toFile()));
 
         logger.info("Start {} in {}{} for {} using env {}", processingScript, processDirectory, withConfigOption, scriptServiceFolder.getServiceData(), processBuilder.environment());
-        return new ThrottledJobInfo(new LocalExeJobInfo(processBuilder, processingScript), scriptServiceFolder.getServiceData(), jobsQueue, maxRunningProcesses);
+        return new ThrottledJobHandler(new LocalJobHandler(processingScript, processBuilder), scriptServiceFolder.getServiceData(), jobsQueue, maxRunningProcesses);
     }
 
-    private ExeJobInfo runMultipleProcessess(String processingScript,
+    private JobHandler runMultipleProcessess(String processingScript,
                                              Path processDirectory,
                                              List<File> processInputs,
                                              Path processOutput,
@@ -140,7 +137,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                                              Map<String, String> env,
                                              int maxRunningProcesses,
                                              JacsServiceFolder scriptServiceFolder) {
-        List<ExeJobInfo> jobList = IndexedReference.indexListContent(processInputs, (pos, processInputDir) -> new IndexedReference<>(processInputDir, pos + 1))
+        List<JobHandler> jobList = IndexedReference.indexListContent(processInputs, (pos, processInputDir) -> new IndexedReference<>(processInputDir, pos + 1))
             .map(indexedInputDir -> runSingleProcess(processingScript,
                     processDirectory,
                     indexedInputDir.getReference().toPath(),
@@ -150,6 +147,6 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
                     maxRunningProcesses,
                     scriptServiceFolder))
             .collect(Collectors.toList());
-        return new BatchJobInfo(jobList, processingScript);
+        return new BatchJobHandler(processingScript, jobList);
     }
 }

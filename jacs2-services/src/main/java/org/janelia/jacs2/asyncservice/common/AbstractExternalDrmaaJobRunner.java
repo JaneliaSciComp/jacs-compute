@@ -1,12 +1,10 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.io.Files;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
@@ -20,7 +18,6 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
 
@@ -32,7 +29,7 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
     }
 
     @Override
-    public ExeJobInfo runCmds(ExternalCodeBlock externalCode,
+    public JobHandler runCmds(ExternalCodeBlock externalCode,
                               List<ExternalCodeBlock> externalConfigs,
                               Map<String, String> env,
                               JacsServiceFolder scriptServiceFolder,
@@ -70,19 +67,20 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
                 jt.setNativeSpecification(nativeSpec);
             }
             logger.info("Start {} for {} using  env {}", processingScript, serviceContext, env);
-            ExeJobInfo jobInfo = new DrmaaJobInfo(drmaaSession, processingScript, configFiles.size(), jt);
+            JobHandler jobHandler = new DrmaaJobHandler(processingScript, drmaaSession, configFiles.size(), jt);
             String withConfigOption;
             if (configFiles.size() > 0) {
                 withConfigOption = " with " + configFiles + " ";
             } else {
                 withConfigOption = "";
             }
-            String jobId = jobInfo.start();
+            jobHandler.start();
             jacsServiceDataPersistence.addServiceEvent(
                     serviceContext,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT, String.format("Submitted job %s {%s} running: %s%s", serviceContext.getName(), jobId, processingScript, withConfigOption))
+                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
+                            String.format("Submitted job %s {%s} running: %s%s", serviceContext.getName(), jobHandler.getJobInfo(), processingScript, withConfigOption))
             );
-            return jobInfo;
+            return jobHandler;
         } catch (Exception e) {
             if (jt != null) {
                 try {

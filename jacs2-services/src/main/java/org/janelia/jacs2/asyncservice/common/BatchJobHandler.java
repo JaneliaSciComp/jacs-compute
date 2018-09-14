@@ -4,32 +4,25 @@ import org.janelia.model.service.JacsJobInstanceInfo;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class BatchJobInfo implements ExeJobInfo {
-    private final String scriptName;
-    private final List<ExeJobInfo> jobBatch;
+public class BatchJobHandler implements JobHandler {
+    private final String jobInfo;
+    private final List<JobHandler> jobBatch;
 
-    public BatchJobInfo(List<ExeJobInfo> jobBatch, String scriptName) {
+    BatchJobHandler(String jobInfo, List<JobHandler> jobBatch) {
+        this.jobInfo = jobInfo;
         this.jobBatch = jobBatch;
-        this.scriptName = scriptName;
     }
 
     @Override
-    public String getScriptName() {
-        return scriptName;
+    public String getJobInfo() {
+        return jobInfo;
     }
 
     @Override
-    public String start() {
-        return jobBatch
-                .stream()
-                .map(ExeJobInfo::start)
-                .filter(Objects::nonNull)
-                .reduce((j1, j2) -> j1 + "," + j2)
-                .orElse(null)
-                ;
+    public boolean start() {
+        return jobBatch.stream().map(JobHandler::start).reduce(true, (s1, s2) -> s1 && s2);
     }
 
     @Override
@@ -50,7 +43,7 @@ public class BatchJobInfo implements ExeJobInfo {
     }
 
     @Override
-    public Collection<JacsJobInstanceInfo> getJobInstanceInfos() {
-        return jobBatch.stream().flatMap(j -> j.getJobInstanceInfos().stream()).collect(Collectors.toList());
+    public Collection<JacsJobInstanceInfo> getJobInstances() {
+        return jobBatch.stream().flatMap(j -> j.getJobInstances().stream()).collect(Collectors.toList());
     }
 }

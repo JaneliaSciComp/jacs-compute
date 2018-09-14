@@ -6,16 +6,15 @@ import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobMetadata;
 import org.janelia.cluster.JobStatus;
 import org.janelia.cluster.JobTemplate;
-import org.janelia.jacs2.asyncservice.common.ExeJobInfo;
+import org.janelia.jacs2.asyncservice.common.JobHandler;
 import org.janelia.model.service.JacsJobInstanceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.ExecutorService;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 
 /**
  * Job info for a job running using the LSFJavaJob runner.
@@ -23,54 +22,86 @@ import java.util.function.BiConsumer;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  * @see org.janelia.jacs2.asyncservice.qualifier.LSFJavaJob
  */
-public class LsfJavaJobInfo implements ExeJobInfo {
+public class LsfJavaJobHandler implements JobHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LsfJavaJobInfo.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LsfJavaJobHandler.class);
 
+    private final String jobInfo;
     private final JobManager jobMgr;
     private final JobTemplate jobTemplate;
     private final int numJobs;
-    private final String scriptName;
-    private final ExecutorService executorService;
-    private JobFuture jobFuture;
-    private boolean done = false;
-    private boolean failed = false;
+    private Long jobId;
+    private volatile boolean done;
+    private volatile boolean failed;
+    private volatile boolean terminated;
 
-    public LsfJavaJobInfo(JobManager jobMgr, JobTemplate jobTemplate, int numJobs, String scriptName, ExecutorService executorService) {
+    public LsfJavaJobHandler(String jobInfo, JobManager jobMgr, JobTemplate jobTemplate, int numJobs) {
+        this.jobInfo = jobInfo;
         this.jobMgr = jobMgr;
         this.jobTemplate = jobTemplate;
         this.numJobs = numJobs;
-        this.scriptName = scriptName;
-        this.executorService = executorService;
     }
 
     @Override
-    public String getScriptName() {
-        return scriptName;
-    }
-
-    @Override
-    public String start() {
-        try {
-            jobFuture = jobMgr.submitJob(jobTemplate, 1, numJobs);
-        } catch (Exception e) {
-            done = true;
-            failed = true;
-            throw new IllegalStateException(e);
+    public String getJobInfo() {
+        StringBuilder jobInfoBuilder = new StringBuilder(jobInfo);
+        if (jobId != null) {
+            jobInfoBuilder.append('[').append(jobId).append(']');
         }
-        jobFuture.whenCompleteAsync((Collection<JobInfo> jobInfoList, Throwable e) -> {
-            if (e != null) {
+        return jobInfoBuilder.toString();
+    }
+
+    @Override
+    public boolean start() {
+        if (!terminated) {
+            try {
+                JobFuture jobFuture = jobMgr.submitJob(jobTemplate, 1, numJobs);
+                jobId = jobFuture.getJobId();
+                LOG.info("Submitted job {}", jobId);
+                return true;
+            } catch (Exception e) {
+                LOG.error("Error submitting {} of {} with {}", numJobs, jobInfo, jobTemplate, e);
+                done = true;
                 failed = true;
-                LOG.error("There was a problem during execution on LSF", e);
-            } else if (LOG.isInfoEnabled()) {
+                throw new IllegalStateException(e);
+            }
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean isDone() {
+        if (jobId == null) {
+            return false;
+        }
+        JobMetadata jobMetadata = jobMgr.getJobMetadata(jobId);
+
+        if (jobMetadata != null) {
+            // Check to see if any job in the job array failed
+            for (JobInfo jobInfo : jobMetadata.getLastInfos()) {
+                if (jobInfo.getStatus() == JobStatus.EXIT
+                        || (jobInfo.getExitCode() != null && jobInfo.getExitCode() != 0)) {
+                    this.failed = true;
+                    break;
+                }
+            }
+            this.done = jobMetadata.isDone();
+            if (LOG.isInfoEnabled()) {
                 logJobInfo();
             }
-        }, executorService);
-        return jobFuture.getJobId().toString();
+        } else {
+            // If there is no information about a job, assume it is done
+            this.done = true;
+            this.failed = true;
+            LOG.error("No job information found for {}. Assuming that it failed.", jobId);
+        }
+
+        return done;
     }
 
     private void logJobInfo() {
-        for (JacsJobInstanceInfo jobInfo : getJobInstanceInfos()) {
+        for (JacsJobInstanceInfo jobInfo : getJobInstances()) {
             Long queueTimeSeconds = jobInfo.getQueueSecs();
             Long runTimeSeconds = jobInfo.getRunSecs();
 
@@ -98,40 +129,12 @@ public class LsfJavaJobInfo implements ExeJobInfo {
     }
 
     @Override
-    public boolean isDone() {
-        if (done) return true;
-        if (jobFuture == null) {
-            return false;
+    public Collection<JacsJobInstanceInfo> getJobInstances() {
+        if (jobId == null) {
+            return Collections.emptyList();
         }
-        JobMetadata jobMetadata = jobMgr.getJobMetadata(jobFuture.getJobId());
-
-        if (jobMetadata!=null) {
-            // Check to see if any job in the job array failed
-            for (JobInfo jobInfo : jobMetadata.getLastInfos()) {
-                if (jobInfo.getStatus() == JobStatus.EXIT
-                        || (jobInfo.getExitCode() != null && jobInfo.getExitCode() != 0)) {
-                    this.failed = true;
-                    break;
-                }
-            }
-            this.done = jobMetadata.isDone();
-        } else {
-            // If there is no information about a job, assume it is done
-            this.done = true;
-            this.failed = true;
-            LOG.error("No job information found for {}. Assuming that it failed.", jobFuture.getJobId());
-        }
-
-        return done;
-    }
-
-    @Override
-    public Collection<JacsJobInstanceInfo> getJobInstanceInfos() {
         Collection<JacsJobInstanceInfo> infos = new ArrayList<>();
-        if (jobFuture == null) {
-            return infos;
-        }
-        JobMetadata jobMetadata = jobMgr.getJobMetadata(jobFuture.getJobId());
+        JobMetadata jobMetadata = jobMgr.getJobMetadata(jobId);
         if (jobMetadata != null) {
             for (JobInfo jobInfo : jobMetadata.getLastInfos()) {
                 JacsJobInstanceInfo jacsJobInstanceInfo = new JacsJobInstanceInfo();
@@ -167,9 +170,15 @@ public class LsfJavaJobInfo implements ExeJobInfo {
 
     @Override
     public void terminate() {
+        terminated = true;
         if (!done) {
-            // TODO: if we need this, first we'll need to implement bkill in java-lsf library
-            throw new UnsupportedOperationException();
+            try {
+                jobMgr.killJob(jobId);
+            } catch (Exception e) {
+                LOG.warn("Error while terminating job {}", jobId, e);
+            } finally {
+                done = true;
+            }
         }
     }
 

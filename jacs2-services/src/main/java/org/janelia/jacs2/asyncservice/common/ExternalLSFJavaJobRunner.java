@@ -5,10 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobTemplate;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
-import org.janelia.jacs2.asyncservice.common.cluster.LsfJavaJobInfo;
+import org.janelia.jacs2.asyncservice.common.cluster.LsfJavaJobHandler;
 import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
 import org.janelia.jacs2.asyncservice.qualifier.LSFJavaJob;
-import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.GridExecutor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -39,29 +38,23 @@ import java.util.concurrent.ExecutorService;
 public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
 
     private final JobManager jobMgr;
-    private final ExecutorService lsfJobExecutor;
-    private final LegacyDomainDao dao;
     private final ComputeAccounting accouting;
     private final boolean requiresAccountInfo;
 
     @Inject
-    public ExternalLSFJavaJobRunner(MonitoredJobManager jobMgr,
-                                    @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
+    public ExternalLSFJavaJobRunner(JobManager jobMgr,
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
-                                    @GridExecutor ExecutorService lsfJobExecutor,
-                                    LegacyDomainDao dao,
                                     ComputeAccounting accouting,
+                                    @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
                                     Logger logger) {
         super(jacsServiceDataPersistence, logger);
-        this.jobMgr = jobMgr.getJobMgr();
+        this.jobMgr = jobMgr;
         this.requiresAccountInfo = requiresAccountInfo;
-        this.lsfJobExecutor = lsfJobExecutor;
-        this.dao = dao;
         this.accouting = accouting;
     }
 
     @Override
-    public ExeJobInfo runCmds(ExternalCodeBlock externalCode,
+    public JobHandler runCmds(ExternalCodeBlock externalCode,
                               List<ExternalCodeBlock> externalConfigs,
                               Map<String, String> env,
                               JacsServiceFolder scriptServiceFolder,
@@ -75,17 +68,19 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
 
             int numJobs = externalConfigs.isEmpty() ? 1 : externalConfigs.size();
             logger.info("Start {} for {} using  env {}", jt.getRemoteCommand(), serviceContext, env);
-            LsfJavaJobInfo lsfJavaJobInfo = new LsfJavaJobInfo(jobMgr, jt, numJobs, processingScript, lsfJobExecutor);
+            LsfJavaJobHandler lsfJobHandler = new LsfJavaJobHandler(processingScript, jobMgr, jt, numJobs);
 
-            String jobId = lsfJavaJobInfo.start();
-            logger.info("Submitted job {} for {}", jobId, serviceContext);
+            lsfJobHandler.start();
+            logger.info("Submitted job {} for {}", lsfJobHandler.getJobInfo(), serviceContext);
 
             jacsServiceDataPersistence.addServiceEvent(
                     serviceContext,
-                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT, String.format("Submitted job %s {%s} running: %s", serviceContext.getName(), jobId, processingScript))
+                    JacsServiceData.createServiceEvent(
+                            JacsServiceEventTypes.CLUSTER_SUBMIT,
+                            String.format("Submitted job %s {%s} running: %s", serviceContext.getName(), lsfJobHandler.getJobInfo(), processingScript))
             );
 
-            return lsfJavaJobInfo;
+            return lsfJobHandler;
         } catch (Exception e) {
             jacsServiceDataPersistence.updateServiceState(
                     serviceContext,

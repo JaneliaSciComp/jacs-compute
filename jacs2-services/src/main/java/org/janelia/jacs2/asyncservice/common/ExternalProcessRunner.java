@@ -19,7 +19,7 @@ public interface ExternalProcessRunner {
      * @param serviceContext
      * @return
      */
-    ExeJobInfo runCmds(ExternalCodeBlock externalCode,
+    JobHandler runCmds(ExternalCodeBlock externalCode,
                        List<ExternalCodeBlock> externalConfig,
                        Map<String, String> env,
                        JacsServiceFolder scriptServiceFolder,

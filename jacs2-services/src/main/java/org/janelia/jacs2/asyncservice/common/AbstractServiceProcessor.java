@@ -6,6 +6,7 @@ import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.security.util.SubjectUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
@@ -14,9 +15,14 @@ import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -68,8 +74,8 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         if (executionContext.getServiceState() != null) {
             jacsServiceDataBuilder.setState(executionContext.getServiceState());
         }
-        jacsServiceDataBuilder.copyResourcesFrom(executionContext.getParentServiceData().getResources());
-        jacsServiceDataBuilder.copyResourcesFrom(executionContext.getResources());
+        jacsServiceDataBuilder.addResources(executionContext.getParentServiceData().getResources());
+        jacsServiceDataBuilder.addResources(executionContext.getResources());
         executionContext.getWaitFor().forEach(jacsServiceDataBuilder::addDependency);
         executionContext.getWaitForIds().forEach(jacsServiceDataBuilder::addDependencyId);
         jacsServiceDataBuilder.registerProcessingNotification(executionContext.getProcessingNotification());
@@ -99,6 +105,29 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         } else {
             return new JacsServiceFolder(getServicePath(System.getProperty("java.io.tmpdir"), jacsServiceData), null, jacsServiceData);
         }
+    }
+
+    protected void prepareDir(String dirName) {
+        if (StringUtils.isNotBlank(dirName)) {
+            Path dirPath = Paths.get(dirName);
+            try {
+                Files.createDirectories(dirPath);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+    }
+
+    protected void updateOutputAndErrorPaths(JacsServiceData jacsServiceData) {
+        Map<String, EntityFieldValueHandler<?>> serviceUpdates = new LinkedHashMap<>();
+        JacsServiceFolder jacsServiceFolder = getWorkingDirectory(jacsServiceData);
+        if (StringUtils.isBlank(jacsServiceData.getOutputPath())) {
+            serviceUpdates.putAll(jacsServiceData.updateOutputPath(jacsServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString()));
+        }
+        if (StringUtils.isBlank(jacsServiceData.getErrorPath())) {
+            serviceUpdates.putAll(jacsServiceData.updateErrorPath(jacsServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString()));
+        }
+        jacsServiceDataPersistence.update(jacsServiceData, serviceUpdates);
     }
 
     /**

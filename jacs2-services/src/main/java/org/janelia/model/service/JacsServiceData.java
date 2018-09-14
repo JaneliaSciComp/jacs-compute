@@ -3,6 +3,7 @@ package org.janelia.model.service;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.model.jacs2.AppendFieldValueHandler;
@@ -639,6 +640,16 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
             JacsServiceData sd = sdpEntry.getKey();
             sd.setPriority(sdpEntry.getValue());
         });
+    }
+
+    public Map<String, EntityFieldValueHandler<?>> updateOutputPath(String outputPath) {
+        this.outputPath = outputPath;
+        return ImmutableMap.of("outputPath", new SetFieldValueHandler<>(outputPath));
+    }
+
+    public Map<String, EntityFieldValueHandler<?>> updateErrorPath(String errorPath) {
+        this.errorPath = errorPath;
+        return ImmutableMap.of("errorPath", new SetFieldValueHandler<>(errorPath));
     }
 
     public Map<String, EntityFieldValueHandler<?>> updateState(JacsServiceState state) {

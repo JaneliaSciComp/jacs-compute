@@ -192,7 +192,7 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
                 .setProcessingLocation(serviceProcessingLocation)
                 .addArgs(serviceArgs)
                 .setDictionaryArgs(serviceDictionaryArgs)
-                .copyResourcesFrom(serviceResources)
+                .addResources(serviceResources)
                 .build();
         serviceData.setQueueId(serviceQueueId);
         serviceData.setPriority(servicePriority);

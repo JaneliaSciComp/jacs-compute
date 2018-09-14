@@ -94,7 +94,7 @@ public class AbstractExeBasedServiceProcessorTest {
         testServiceData.setId(TEST_SERVICE_ID);
         testServiceData.setName("test");
         testServiceData.setProcessingLocation(ProcessingLocation.LOCAL);
-        ExeJobInfo jobInfo = mock(ExeJobInfo.class);
+        JobHandler jobInfo = mock(JobHandler.class);
         when(jobInfo.isDone()).thenReturn(true);
         when(processRunner.runCmds(any(ExternalCodeBlock.class), anyList(), anyMap(), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class))).thenReturn(jobInfo);
         when(jacsServiceDataPersistence.findById(TEST_SERVICE_ID)).thenReturn(testServiceData);
@@ -121,7 +121,7 @@ public class AbstractExeBasedServiceProcessorTest {
         testServiceData.setName("test");
         testServiceData.setServiceTimeout(10L);
         testServiceData.setProcessingLocation(ProcessingLocation.LOCAL);
-        ExeJobInfo jobInfo = mock(ExeJobInfo.class);
+        JobHandler jobInfo = mock(JobHandler.class);
         when(jobInfo.isDone()).thenReturn(true);
         when(jobInfo.hasFailed()).thenReturn(true);
         when(processRunner.runCmds(any(ExternalCodeBlock.class), anyList(), anyMap(), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class))).thenReturn(jobInfo);
@@ -148,7 +148,7 @@ public class AbstractExeBasedServiceProcessorTest {
         testServiceData.setName("test");
         testServiceData.setServiceTimeout(10L);
         testServiceData.setProcessingLocation(ProcessingLocation.LOCAL);
-        ExeJobInfo jobInfo = mock(ExeJobInfo.class);
+        JobHandler jobInfo = mock(JobHandler.class);
         when(jobInfo.isDone()).thenReturn(false);
         when(processRunner.runCmds(any(ExternalCodeBlock.class), anyList(), anyMap(), any(JacsServiceFolder.class), any(Path.class), any(JacsServiceData.class)))
                 .thenReturn(jobInfo);
