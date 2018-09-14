@@ -81,7 +81,10 @@ public class SparkAppProcessor extends AbstractServiceProcessor<Void> {
                     runningClusterState.setData(sparkCluster);
                     jacsServiceDataPersistence.addServiceEvent(
                             jacsServiceData,
-                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT, String.format("Running app using spark job %s", sparkCluster.getJobId())));
+                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
+                                    String.format("Running app using spark job on %s (%s)",
+                                            sparkCluster.getMasterURI(),
+                                            sparkCluster.getJobId())));
                     return sparkCluster.runApp(
                             args.appLocation,
                             args.appEntryPoint,

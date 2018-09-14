@@ -127,7 +127,10 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
                     runningClusterState.setData(cluster);
                     jacsServiceDataPersistence.addServiceEvent(
                             jacsServiceData,
-                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT, String.format("Running app using spark job %s", cluster.getJobId())));
+                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
+                                    String.format("Running app using spark job on %s (%s)",
+                                            cluster.getMasterURI(),
+                                            cluster.getJobId())));
                     return runApp(jacsServiceData, args, cluster);
                 })
 

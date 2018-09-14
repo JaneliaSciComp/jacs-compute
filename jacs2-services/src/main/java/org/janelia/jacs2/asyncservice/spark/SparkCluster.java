@@ -84,6 +84,10 @@ public class SparkCluster {
         return jobId;
     }
 
+    public String getMasterURI() {
+        return masterURI;
+    }
+
     /**
      * Run the default main class in the specified jar file on the currently running cluster.
      * @param appResource absolute path to a jar file containing the app with dependencies or a python script
