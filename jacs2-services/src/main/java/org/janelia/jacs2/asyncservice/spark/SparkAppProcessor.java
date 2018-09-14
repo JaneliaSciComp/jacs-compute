@@ -31,7 +31,7 @@ public class SparkAppProcessor extends AbstractServiceProcessor<Void> {
         String appLocation;
         @Parameter(names = "-appEntryPoint", description = "Spark application entry point, i.e., java main class name")
         String appEntryPoint;
-        @Parameter(names = "-appArgs", description = "Spark application arguments")
+        @Parameter(names = "-appArgs", description = "Spark application arguments", splitter = ServiceArgSplitter.class)
         List<String> appArgs = new ArrayList<>();
 
         SparkAppArgs() {

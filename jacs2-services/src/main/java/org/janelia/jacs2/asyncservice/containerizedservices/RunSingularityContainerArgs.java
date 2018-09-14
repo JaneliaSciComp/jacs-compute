@@ -104,7 +104,7 @@ class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
     boolean enableNV;
     @Parameter(names = "-initialPwd", description = "Initial working directory inside the container")
     String initialPwd;
-    @Parameter(names = "-appArgs", description = "Containerized application arguments")
+    @Parameter(names = "-appArgs", description = "Containerized application arguments", splitter = ServiceArgSplitter.class)
     List<String> appArgs = new ArrayList<>();
 
     RunSingularityContainerArgs() {
