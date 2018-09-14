@@ -153,8 +153,7 @@ public class ComputeAccounting {
                 throw new ComputationException(serviceContext, "Admin access is required to override compute account");
             }
             log.info("Using provided billing account {}", billingAccount);
-        }
-        else {
+        } else {
             // Calculate billing account from job owner
             billingAccount = getComputeAccount(serviceContext.getOwnerKey());
             log.info("Using billing account {} for user {}", billingAccount, serviceContext.getOwnerKey());
