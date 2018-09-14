@@ -49,7 +49,6 @@ public class ServiceArgs {
                                 break;
                             case '\'':
                                 state = ArgSplitterState.ParsingQuotedArg;
-                                tokenBuilder.append(currentChar);
                                 break;
                             default:
                                 tokenBuilder.append(currentChar);
@@ -64,7 +63,6 @@ public class ServiceArgs {
                                 break;
                             case '\'':
                                 state = ArgSplitterState.ParsingArg;
-                                tokenBuilder.append(currentChar);
                                 break;
                             default:
                                 // fall through to append the char
