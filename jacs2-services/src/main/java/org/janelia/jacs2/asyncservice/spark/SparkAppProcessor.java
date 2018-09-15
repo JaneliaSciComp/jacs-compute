@@ -95,6 +95,9 @@ public class SparkAppProcessor extends AbstractServiceProcessor<Void> {
                             args.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs()))
                     );
                 })
+                .thenSuspendUntil((SparkApp app) -> continueWhenTrue(app.isDone(), app),
+                        getSparkAppIntervalCheckInMillis(jacsServiceData.getResources()),
+                        getSparkAppTimeoutInMillis(jacsServiceData.getResources()))
                 .whenComplete(((sparkApp, exc) -> {
                     if (runningClusterState.isPresent()) runningClusterState.getData().stopCluster();
                 }))
@@ -134,6 +137,24 @@ public class SparkAppProcessor extends AbstractServiceProcessor<Void> {
         String sparkExecutorCores = StringUtils.defaultIfBlank(serviceResources.get("spark.executorCores"), "0");
         int executorCores = Integer.parseInt(sparkExecutorCores);
         return executorCores <= 0 ? 0 : executorCores;
+    }
+
+    private Long getSparkAppIntervalCheckInMillis(Map<String, String> serviceResources) {
+        String intervalCheck = serviceResources.get("spark.appIntervalCheckInMillis");
+        if (StringUtils.isNotBlank(intervalCheck)) {
+            return Long.valueOf(intervalCheck.trim());
+        } else {
+            return null;
+        }
+    }
+
+    private Long getSparkAppTimeoutInMillis(Map<String, String> serviceResources) {
+        String timeout = serviceResources.get("spark.appTimeoutInMillis");
+        if (StringUtils.isNotBlank(timeout)) {
+            return Long.valueOf(timeout.trim());
+        } else {
+            return null;
+        }
     }
 
     private String getSparkLogConfigFile(Map<String, String> serviceResources) {
