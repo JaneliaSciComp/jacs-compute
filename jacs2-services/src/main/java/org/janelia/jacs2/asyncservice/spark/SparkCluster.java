@@ -167,7 +167,7 @@ public class SparkCluster {
             sparkLauncher.redirectOutput(new File(appOutputDir, DRIVER_OUTPUT_FILENAME));
         }
         if (StringUtils.isNotBlank(appErrorDir)) {
-            sparkLauncher.redirectOutput(new File(appErrorDir, DRIVER_ERROR_FILENAME));
+            sparkLauncher.redirectError(new File(appErrorDir, DRIVER_ERROR_FILENAME));
         }
 
         sparkLauncher.setAppResource(appResource)
