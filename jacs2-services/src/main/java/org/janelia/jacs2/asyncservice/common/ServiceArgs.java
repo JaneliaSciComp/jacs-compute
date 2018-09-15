@@ -24,14 +24,19 @@ public class ServiceArgs {
 
     public static class ServiceArgSplitter implements IParameterSplitter {
 
+        private static final char QUOTE = '\'';
+        private static final char ESCAPE = '\\';
+
         private final char separator;
+        private final boolean keepQuote;
 
         public ServiceArgSplitter() {
-            this(',');
+            this(',', true);
         }
 
-        public ServiceArgSplitter(char separator) {
+        private ServiceArgSplitter(char separator, boolean keepQuote) {
             this.separator = separator;
+            this.keepQuote = keepQuote;
         }
 
         private enum ArgSplitterState {
@@ -48,12 +53,15 @@ public class ServiceArgs {
                 switch (state) {
                     case ParsingArg:
                         switch (currentChar) {
-                            case '\\':
+                            case ESCAPE:
                                 escapedState = state;
                                 state = ArgSplitterState.EscapeChar;
                                 break;
-                            case '\'':
+                            case QUOTE:
                                 state = ArgSplitterState.ParsingQuotedArg;
+                                if (keepQuote) {
+                                    tokenBuilder.append(currentChar);
+                                }
                                 break;
                             default:
                                 if (currentChar == this.separator) {
@@ -68,12 +76,15 @@ public class ServiceArgs {
                         break;
                     case ParsingQuotedArg:
                         switch (currentChar) {
-                            case '\\':
+                            case ESCAPE:
                                 escapedState = state;
                                 state = ArgSplitterState.EscapeChar;
                                 break;
-                            case '\'':
+                            case QUOTE:
                                 state = ArgSplitterState.ParsingArg;
+                                if (keepQuote) {
+                                    tokenBuilder.append(currentChar);
+                                }
                                 break;
                             default:
                                 tokenBuilder.append(currentChar);
@@ -90,11 +101,14 @@ public class ServiceArgs {
                         } else if (currentChar == this.separator) {
                             args.add(tokenBuilder.toString().trim());
                             tokenBuilder.setLength(0);
-                        } else if (currentChar == '\\') {
+                        } else if (currentChar == ESCAPE) {
                             escapedState = ArgSplitterState.ParsingArg;
                             state = ArgSplitterState.EscapeChar;
-                        } else if (currentChar == '\'') {
+                        } else if (currentChar == QUOTE) {
                             state = ArgSplitterState.ParsingQuotedArg;
+                            if (keepQuote) {
+                                tokenBuilder.append(currentChar);
+                            }
                         } else {
                             state = ArgSplitterState.ParsingArg;
                             tokenBuilder.append(currentChar);
@@ -108,6 +122,14 @@ public class ServiceArgs {
             }
             return args;
         }
+    }
+
+    public static List<String> concatArgs(List<List<String>> listOfArgs) {
+        ServiceArgSplitter argSplitter = new ServiceArgSplitter(' ', false);
+        return listOfArgs.stream()
+                .flatMap(args -> args.stream())
+                .flatMap(arg -> argSplitter.split(arg).stream())
+                .collect(Collectors.toList());
     }
 
     public static <A extends ServiceArgs> A parse(String[] argsList, A args) {
@@ -170,14 +192,6 @@ public class ServiceArgs {
 
     public List<String> getRemainingArgs() {
         return remainingArgs;
-    }
-
-    public List<String> concatArgs(List<List<String>> listOfArgs) {
-        ServiceArgSplitter argSplitter = new ServiceArgSplitter(' ');
-        return listOfArgs.stream()
-                .flatMap(args -> args.stream())
-                .flatMap(arg -> argSplitter.split(arg).stream())
-                .collect(Collectors.toList());
     }
 
     @Override

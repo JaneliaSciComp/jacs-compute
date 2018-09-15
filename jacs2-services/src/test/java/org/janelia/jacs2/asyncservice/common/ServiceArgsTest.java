@@ -57,28 +57,28 @@ public class ServiceArgsTest {
                                 "-listArgsWithSplitter", "a1.2, 'a2.2, a3.2', a4.2",
                                 "-listArgsWithSplitter", "a5.2, 'a6.2, a7.2', \\'a8.2"
                         },
-                        ImmutableList.of("a1.2", "a2.2, a3.2", "a4.2", "a5.2", "a6.2, a7.2", "'a8.2"),
+                        ImmutableList.of("a1.2", "'a2.2, a3.2'", "a4.2", "a5.2", "'a6.2, a7.2'", "'a8.2"),
                         ImmutableList.of()
                 ),
                 new TestData(
                         new String[] {
                                 "-listArgsWithSplitter", "'a1.3, a2.3, a3.3, a4.3"
                         },
-                        ImmutableList.of("a1.3, a2.3, a3.3, a4.3"),
+                        ImmutableList.of("'a1.3, a2.3, a3.3, a4.3"),
                         ImmutableList.of()
                 ),
                 new TestData(
                         new String[] {
                                 "-listArgsWithSplitter", "a1.4, 'a2.4, \\'a3.4, a4.4'"
                         },
-                        ImmutableList.of("a1.4", "a2.4, 'a3.4, a4.4"),
+                        ImmutableList.of("a1.4", "'a2.4, 'a3.4, a4.4'"),
                         ImmutableList.of()
                 ),
                 new TestData(
                         new String[] {
                                 "-listArgsWithSplitter", "a1.5, 'a2.5', \"a3.5, a4.5"
                         },
-                        ImmutableList.of("a1.5", "a2.5", "\"a3.5", "a4.5"),
+                        ImmutableList.of("a1.5", "'a2.5'", "\"a3.5", "a4.5"),
                         ImmutableList.of()
                 ),
                 new TestData(
@@ -92,7 +92,7 @@ public class ServiceArgsTest {
                         new String[] {
                                 "-listArgsWithSplitter", "a1.7 'a2.7', a3.7, a4.7"
                         },
-                        ImmutableList.of("a1.7 a2.7", "a3.7", "a4.7"),
+                        ImmutableList.of("a1.7 'a2.7'", "a3.7", "a4.7"),
                         ImmutableList.of()
                 ),
                 new TestData(
@@ -100,7 +100,7 @@ public class ServiceArgsTest {
                                 "-listArgsWithSplitter", "a1.8 'a2.8, next_a2.8' next_a1.8, a3.8, a4.8",
                                 "a1", "'a2, a2.1'", "a3, a4"
                         },
-                        ImmutableList.of("a1.8 a2.8, next_a2.8 next_a1.8", "a3.8", "a4.8"),
+                        ImmutableList.of("a1.8 'a2.8, next_a2.8' next_a1.8", "a3.8", "a4.8"),
                         ImmutableList.of("a1", "'a2, a2.1'", "a3, a4")
                 )
         };
