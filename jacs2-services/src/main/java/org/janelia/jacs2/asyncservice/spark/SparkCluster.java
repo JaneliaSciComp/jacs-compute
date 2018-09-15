@@ -194,8 +194,6 @@ public class SparkCluster {
         }
 
         try {
-            ServiceComputation<SparkApp> sparkComputation = computationFactory.newComputation();
-
             Stopwatch sparkAppWatch = Stopwatch.createStarted();
 
             SparkApp sparkApp = new SparkApp(this, appOutputDir, appErrorDir);
@@ -209,12 +207,8 @@ public class SparkCluster {
                     if (sparkAppState.isFinal()) {
                         long seconds = sparkAppWatch.stop().elapsed().getSeconds();
                         logger.info("Spark application completed after {} seconds [{}]", seconds, sparkAppState);
-                        if (sparkAppState == SparkAppHandle.State.FINISHED) {
-                            sparkComputation.supply(() -> sparkApp);
-                        } else {
-                            sparkComputation.supply(() -> {
-                                throw new IllegalStateException("Spark application finished with an error state: " + sparkAppState);
-                            });
+                        if (sparkAppState != SparkAppHandle.State.FINISHED) {
+                            logger.warn("Spark application {} finished with an error state {}", sparkApp.getAppId(), sparkAppState);
                         }
                     }
 
@@ -231,7 +225,7 @@ public class SparkCluster {
 
             updateCurrentApp(sparkApp);
 
-            return sparkComputation;
+            return computationFactory.newCompletedComputation(sparkApp);
         } catch (Exception e) {
             logger.error("Error running application {} using {}", appResource, jobId, e);
             return computationFactory.newFailedComputation(e);
