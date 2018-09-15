@@ -86,18 +86,18 @@ public class SparkAppProcessor extends AbstractServiceProcessor<Void> {
                                     String.format("Running app using spark job on %s (%s)",
                                             sparkCluster.getMasterURI(),
                                             sparkCluster.getJobId())));
+                    // the computation completes when the app completes
                     return sparkCluster.runApp(
                             args.appLocation,
                             args.appEntryPoint,
                             getDefaultParallelism(jacsServiceData.getResources()),
                             jacsServiceData.getOutputPath(),
                             jacsServiceData.getErrorPath(),
+                            getSparkAppIntervalCheckInMillis(jacsServiceData.getResources()),
+                            getSparkAppTimeoutInMillis(jacsServiceData.getResources()),
                             args.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs()))
                     );
                 })
-                .thenSuspendUntil((SparkApp app) -> continueWhenTrue(app.isDone(), app),
-                        getSparkAppIntervalCheckInMillis(jacsServiceData.getResources()),
-                        getSparkAppTimeoutInMillis(jacsServiceData.getResources()))
                 .whenComplete(((sparkApp, exc) -> {
                     if (runningClusterState.isPresent()) runningClusterState.getData().stopCluster();
                 }))

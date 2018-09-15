@@ -131,12 +131,8 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
                                     String.format("Running app using spark job on %s (%s)",
                                             cluster.getMasterURI(),
                                             cluster.getJobId())));
-                    return runApp(jacsServiceData, args, cluster);
+                    return runApp(jacsServiceData, args, cluster); // the computation completes when the app completes
                 })
-
-                // Wait until the search has completed
-                .thenSuspendUntil((SparkApp app) -> continueWhenTrue(app.isDone(), app),
-                        searchIntervalCheckInMillis, searchTimeoutInMillis)
 
                 // This is the "finally" block. We must always kill the cluster no matter what happens above.
                 // We don't attempt to extract the cluster from cond, because that may be null if there's an exception.
@@ -245,7 +241,13 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         }
 
         logger.info("Starting Spark application {} with {}", jarPath, appArgs);
-        return cluster.runApp(jarPath, null, parallelism, jacsServiceData.getOutputPath(), jacsServiceData.getErrorPath(), appArgs);
+        return cluster.runApp(jarPath,
+                null,
+                parallelism,
+                jacsServiceData.getOutputPath(),
+                jacsServiceData.getErrorPath(),
+                searchIntervalCheckInMillis, searchTimeoutInMillis,
+                appArgs);
     }
 
 }

@@ -8,6 +8,7 @@ import org.janelia.cluster.JobInfo;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobStatus;
 import org.janelia.cluster.lsf.LsfJobInfo;
+import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
@@ -101,8 +102,10 @@ public class SparkCluster {
                                                int appParallelism,
                                                String appOutputDir,
                                                String appErrorDir,
+                                               Long appIntervalCheck,
+                                               Long appTimeout,
                                                String... appArgs) {
-        return runApp(appResource, null, appParallelism, appOutputDir, appErrorDir, appArgs);
+        return runApp(appResource, null, appParallelism, appOutputDir, appErrorDir, appIntervalCheck, appTimeout, appArgs);
     }
 
     /**
@@ -121,9 +124,11 @@ public class SparkCluster {
                                                int appParallelism,
                                                String appOutputDir,
                                                String appErrorDir,
+                                               Long appIntervalCheck,
+                                               Long appTimeout,
                                                List<String> appArgs) {
         String[] appArgsArr = appArgs.toArray(new String[0]);
-        return runApp(appResource, appEntryPoint, appParallelism, appOutputDir, appErrorDir, appArgsArr);
+        return runApp(appResource, appEntryPoint, appParallelism, appOutputDir, appErrorDir, appIntervalCheck, appTimeout, appArgsArr);
     }
 
     /**
@@ -144,6 +149,8 @@ public class SparkCluster {
                                                 int appParallelism,
                                                 String appOutputDir,
                                                 String appErrorDir,
+                                                Long appIntervalCheck,
+                                                Long appTimeout,
                                                 String... appArgs) {
 
         int parallelism = appParallelism > 0 ? appParallelism : defaultParallelism;
@@ -225,7 +232,10 @@ public class SparkCluster {
 
             updateCurrentApp(sparkApp);
 
-            return computationFactory.newCompletedComputation(sparkApp);
+            return computationFactory.newCompletedComputation(sparkApp)
+                    .thenSuspendUntil(app -> new ContinuationCond.Cond<>(app, app.isDone()),
+                            appIntervalCheck,
+                            appTimeout);
         } catch (Exception e) {
             logger.error("Error running application {} using {}", appResource, jobId, e);
             return computationFactory.newFailedComputation(e);

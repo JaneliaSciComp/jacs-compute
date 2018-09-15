@@ -83,6 +83,8 @@ public class SparkAppProcessorTest {
         int testNumNodes = 12;
         String testDriverMemory = "driverMem";
         String testExecutorMemory = "executorMem";
+        Long appIntervalCheckInMillis = null;
+        Long appTimeoutInMillis = null;
 
         JacsServiceData testService = createTestServiceData(1L, testAppResource,
                 testAppArgs,
@@ -111,6 +113,8 @@ public class SparkAppProcessorTest {
                 0,
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
+                appIntervalCheckInMillis,
+                appTimeoutInMillis,
                 testAppArgs)
         ).thenReturn(serviceComputationFactory.newCompletedComputation(sparkApp));
 
@@ -129,6 +133,8 @@ public class SparkAppProcessorTest {
                             0,
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
+                            appIntervalCheckInMillis,
+                            appTimeoutInMillis,
                             testAppArgs);
                     Mockito.verify(sparkCluster).stopCluster();
                     return r;
