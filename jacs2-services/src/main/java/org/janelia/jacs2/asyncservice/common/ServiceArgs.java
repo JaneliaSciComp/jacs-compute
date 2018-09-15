@@ -24,8 +24,18 @@ public class ServiceArgs {
 
     public static class ServiceArgSplitter implements IParameterSplitter {
 
+        private final char separator;
+
+        public ServiceArgSplitter() {
+            this(',');
+        }
+
+        public ServiceArgSplitter(char separator) {
+            this.separator = separator;
+        }
+
         private enum ArgSplitterState {
-            ParsingArg, ParsingQuotedArg, EscapeChar
+            ParsingArg, ParsingQuotedArg, EscapeChar, ConsumeWhitespace
         }
 
         @Override
@@ -38,11 +48,6 @@ public class ServiceArgs {
                 switch (state) {
                     case ParsingArg:
                         switch (currentChar) {
-                            case ',':
-                                // add the current token but state remains unchanged
-                                args.add(tokenBuilder.toString().trim());
-                                tokenBuilder.setLength(0);
-                                break;
                             case '\\':
                                 escapedState = state;
                                 state = ArgSplitterState.EscapeChar;
@@ -51,7 +56,13 @@ public class ServiceArgs {
                                 state = ArgSplitterState.ParsingQuotedArg;
                                 break;
                             default:
-                                tokenBuilder.append(currentChar);
+                                if (currentChar == this.separator) {
+                                    args.add(tokenBuilder.toString().trim());
+                                    tokenBuilder.setLength(0);
+                                    state = ArgSplitterState.ConsumeWhitespace;
+                                } else {
+                                    tokenBuilder.append(currentChar);
+                                }
                                 break;
                         }
                         break;
@@ -65,7 +76,6 @@ public class ServiceArgs {
                                 state = ArgSplitterState.ParsingArg;
                                 break;
                             default:
-                                // fall through to append the char
                                 tokenBuilder.append(currentChar);
                                 break;
                         }
@@ -73,6 +83,22 @@ public class ServiceArgs {
                     case EscapeChar:
                         tokenBuilder.append(currentChar);
                         state = escapedState;
+                        break;
+                    case ConsumeWhitespace:
+                        if (Character.isWhitespace(currentChar)) {
+                            break;
+                        } else if (currentChar == this.separator) {
+                            args.add(tokenBuilder.toString().trim());
+                            tokenBuilder.setLength(0);
+                        } else if (currentChar == '\\') {
+                            escapedState = ArgSplitterState.ParsingArg;
+                            state = ArgSplitterState.EscapeChar;
+                        } else if (currentChar == '\'') {
+                            state = ArgSplitterState.ParsingQuotedArg;
+                        } else {
+                            state = ArgSplitterState.ParsingArg;
+                            tokenBuilder.append(currentChar);
+                        }
                         break;
                 }
             }

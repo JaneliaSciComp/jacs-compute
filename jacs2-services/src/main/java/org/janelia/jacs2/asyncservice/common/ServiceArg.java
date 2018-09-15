@@ -74,7 +74,7 @@ public class ServiceArg {
         this.values = new String[] { String.valueOf(value) };
     }
 
-    public String[] toStringArray() {
+    String[] toStringArray() {
         if (flag == null) {
             return new String[]{};
         } else {
