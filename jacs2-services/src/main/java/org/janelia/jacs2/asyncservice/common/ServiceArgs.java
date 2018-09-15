@@ -172,6 +172,14 @@ public class ServiceArgs {
         return remainingArgs;
     }
 
+    public List<String> concatArgs(List<List<String>> listOfArgs) {
+        ServiceArgSplitter argSplitter = new ServiceArgSplitter(' ');
+        return listOfArgs.stream()
+                .flatMap(args -> args.stream())
+                .flatMap(arg -> argSplitter.split(arg).stream())
+                .collect(Collectors.toList());
+    }
+
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);

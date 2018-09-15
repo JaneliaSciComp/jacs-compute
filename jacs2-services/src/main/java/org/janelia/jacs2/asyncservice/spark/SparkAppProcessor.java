@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.spark;
 
 import com.beust.jcommander.Parameter;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
@@ -91,7 +92,8 @@ public class SparkAppProcessor extends AbstractServiceProcessor<Void> {
                             getDefaultParallelism(jacsServiceData.getResources()),
                             jacsServiceData.getOutputPath(),
                             jacsServiceData.getErrorPath(),
-                            args.appArgs);
+                            args.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs()))
+                    );
                 })
                 .whenComplete(((sparkApp, exc) -> {
                     if (runningClusterState.isPresent()) runningClusterState.getData().stopCluster();
