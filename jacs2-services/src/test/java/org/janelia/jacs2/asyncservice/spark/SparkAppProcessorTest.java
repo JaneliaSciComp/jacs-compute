@@ -6,6 +6,7 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.imagesearch.ColorDepthFileSearch;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -51,6 +52,7 @@ public class SparkAppProcessorTest {
     ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private LSFSparkClusterLauncher clusterLauncher;
+    private ComputeAccounting clusterAccounting;
     private SparkCluster sparkCluster;
     private SparkApp sparkApp;
 
@@ -63,6 +65,7 @@ public class SparkAppProcessorTest {
         serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         clusterLauncher = mock(LSFSparkClusterLauncher.class);
+        clusterAccounting = mock(ComputeAccounting.class);
         sparkCluster = mock(SparkCluster.class);
         sparkApp = mock(SparkApp.class);
         Mockito.when(sparkApp.isDone()).thenReturn(true);
@@ -71,6 +74,7 @@ public class SparkAppProcessorTest {
                 jacsServiceDataPersistence,
                 DEFAULT_WORKING_DIR,
                 clusterLauncher,
+                clusterAccounting,
                 DEFAULT_NUM_NODES,
                 logger);
     }
@@ -85,6 +89,7 @@ public class SparkAppProcessorTest {
         String testExecutorMemory = "executorMem";
         Long appIntervalCheckInMillis = null;
         Long appTimeoutInMillis = null;
+        String clusterBillingInfo = "clusterBillingInfo";
 
         JacsServiceData testService = createTestServiceData(1L, testAppResource,
                 testAppArgs,
@@ -96,11 +101,12 @@ public class SparkAppProcessorTest {
 
         PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
+        Mockito.when(clusterAccounting.getComputeAccount(testService)).thenReturn(clusterBillingInfo);
 
         Mockito.when(clusterLauncher.startCluster(
-                testService,
                 testNumNodes,
                 serviceWorkingFolder.getServiceFolder(),
+                clusterBillingInfo,
                 testDriverMemory,
                 testExecutorMemory,
                 0,

@@ -6,12 +6,12 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.spark.LSFSparkClusterLauncher;
 import org.janelia.jacs2.asyncservice.spark.SparkApp;
 import org.janelia.jacs2.asyncservice.spark.SparkCluster;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.Before;
@@ -24,7 +24,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Instance;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,7 +36,6 @@ import java.util.stream.Stream;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
@@ -56,6 +54,7 @@ public class ColorDepthFileSearchTest {
     ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private LSFSparkClusterLauncher clusterLauncher;
+    private ComputeAccounting clusterAccounting;
     private SparkCluster sparkCluster;
     private SparkApp sparkApp;
     private String jarPath = "sparkColorDepthSearch.jar";
@@ -69,6 +68,7 @@ public class ColorDepthFileSearchTest {
         serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         clusterLauncher = mock(LSFSparkClusterLauncher.class);
+        clusterAccounting = mock(ComputeAccounting.class);
         sparkCluster = mock(SparkCluster.class);
         sparkApp = mock(SparkApp.class);
         Mockito.when(sparkApp.isDone()).thenReturn(true);
@@ -77,6 +77,7 @@ public class ColorDepthFileSearchTest {
                 jacsServiceDataPersistence,
                 DEFAULT_WORKING_DIR,
                 clusterLauncher,
+                clusterAccounting,
                 SEARCH_TIMEOUT_IN_SECONDS,
                 SEARCH_INTERVAL_CHECK_IN_MILLIS,
                 DEFAULT_NUM_NODES,
@@ -89,6 +90,7 @@ public class ColorDepthFileSearchTest {
     public void process() throws Exception {
         JacsServiceData testService = createTestServiceData(1L, "test");
         JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
+        String clusterBillingInfo = "clusterBillingInfo";
 
         PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
@@ -96,11 +98,11 @@ public class ColorDepthFileSearchTest {
             Path root = invocation.getArgument(0);
             return Stream.of(root.resolve("f1_results.txt"));
         });
-
+        Mockito.when(clusterAccounting.getComputeAccount(testService)).thenReturn(clusterBillingInfo);
         Mockito.when(clusterLauncher.startCluster(
-                testService,
                 9,
                 serviceWorkingFolder.getServiceFolder(),
+                clusterBillingInfo,
                 null,
                 null,
                 0,

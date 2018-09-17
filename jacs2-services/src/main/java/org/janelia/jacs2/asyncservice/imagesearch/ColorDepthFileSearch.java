@@ -1,14 +1,15 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 import com.beust.jcommander.Parameter;
-import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
+import org.janelia.jacs2.asyncservice.spark.AbstractSparkProcessor;
 import org.janelia.jacs2.asyncservice.spark.LSFSparkClusterLauncher;
 import org.janelia.jacs2.asyncservice.spark.SparkApp;
 import org.janelia.jacs2.asyncservice.spark.SparkCluster;
@@ -47,14 +48,13 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Named("colorDepthFileSearch")
-public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
+public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
 
     private static final String RESULTS_FILENAME_SUFFIX = "_results.txt";
 
-    private final LSFSparkClusterLauncher clusterLauncher;
+    private final ComputeAccounting clusterAccounting;
     private final long searchTimeoutInMillis;
     private final long searchIntervalCheckInMillis;
-    private final int defaultNumNodes;
     private final String jarPath;
 
     static class ColorDepthSearchArgs extends ServiceArgs {
@@ -81,16 +81,16 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
                          JacsServiceDataPersistence jacsServiceDataPersistence,
                          @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                          LSFSparkClusterLauncher clusterLauncher,
+                         ComputeAccounting clusterAccounting,
                          @IntPropertyValue(name = "service.colorDepthSearch.searchTimeoutInSeconds", defaultValue = 1200) int searchTimeoutInSeconds,
                          @IntPropertyValue(name = "service.colorDepthSearch.searchIntervalCheckInMillis", defaultValue = 5000) int searchIntervalCheckInMillis,
                          @IntPropertyValue(name = "service.colorDepthSearch.numNodes", defaultValue = 6) Integer defaultNumNodes,
                          @StrPropertyValue(name = "service.colorDepthSearch.jarPath") String jarPath,
                          Logger log) {
-        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, log);
-        this.clusterLauncher = clusterLauncher;
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, log);
+        this.clusterAccounting = clusterAccounting;
         this.searchTimeoutInMillis = searchTimeoutInSeconds * 1000;
         this.searchIntervalCheckInMillis = searchIntervalCheckInMillis;
-        this.defaultNumNodes = defaultNumNodes;
         this.jarPath = jarPath;
     }
 
@@ -168,13 +168,13 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
             numNodes = this.defaultNumNodes;
         }
         return clusterLauncher.startCluster(
-                jacsServiceData,
                 numNodes,
                 serviceWorkingFolder.getServiceFolder(),
-                null,
-                null,
-                0,
-                null);
+                clusterAccounting.getComputeAccount(jacsServiceData),
+                getSparkDriverMemory(jacsServiceData.getResources()),
+                getSparkExecutorMemory(jacsServiceData.getResources()),
+                getSparkExecutorCores(jacsServiceData.getResources()),
+                getSparkLogConfigFile(jacsServiceData.getResources()));
     }
 
     private ServiceComputation<SparkApp> runApp(JacsServiceData jacsServiceData, ColorDepthSearchArgs args, SparkCluster cluster) {

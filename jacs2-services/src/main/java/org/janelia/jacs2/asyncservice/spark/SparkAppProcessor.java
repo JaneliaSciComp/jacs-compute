@@ -1,14 +1,12 @@
 package org.janelia.jacs2.asyncservice.spark;
 
-import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.utils.DataHolder;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
@@ -20,39 +18,22 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
-@Named("sparkProcessor")
-public class SparkAppProcessor extends AbstractServiceProcessor<Void> {
+@Named("sparkAppProcessor")
+public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
 
-    static class SparkAppArgs extends ServiceArgs {
-        @Parameter(names = "-appLocation", description = "Spark application location", required = true)
-        String appLocation;
-        @Parameter(names = "-appEntryPoint", description = "Spark application entry point, i.e., java main class name")
-        String appEntryPoint;
-        @Parameter(names = "-appArgs", description = "Spark application arguments", splitter = ServiceArgSplitter.class)
-        List<String> appArgs = new ArrayList<>();
-
-        SparkAppArgs() {
-            super("Spark application processor");
-        }
-    }
-
-    private final LSFSparkClusterLauncher clusterLauncher;
-    private final int defaultNumNodes;
+    private final ComputeAccounting accounting;
 
     @Inject
     SparkAppProcessor(ServiceComputationFactory computationFactory,
                       JacsServiceDataPersistence jacsServiceDataPersistence,
                       @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                       LSFSparkClusterLauncher clusterLauncher,
+                      ComputeAccounting accounting,
                       @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 2) Integer defaultNumNodes,
                       Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.clusterLauncher = clusterLauncher;
-        this.defaultNumNodes = defaultNumNodes <= 0 ? 1 : defaultNumNodes;
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, logger);
+        this.accounting = accounting;
     }
 
     @Override
@@ -106,58 +87,12 @@ public class SparkAppProcessor extends AbstractServiceProcessor<Void> {
     }
 
     private ServiceComputation<SparkCluster> startCluster(JacsServiceData jacsServiceData, JacsServiceFolder serviceWorkingFolder) {
-        return clusterLauncher.startCluster(jacsServiceData, getRequestedNodes(jacsServiceData.getResources()), serviceWorkingFolder.getServiceFolder(),
+        return clusterLauncher.startCluster(getRequestedNodes(jacsServiceData.getResources()), serviceWorkingFolder.getServiceFolder(),
+                accounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
                 getSparkExecutorCores(jacsServiceData.getResources()),
                 getSparkLogConfigFile(jacsServiceData.getResources()));
     }
 
-    private int getRequestedNodes(Map<String, String> serviceResources) {
-        String requestedNodes = StringUtils.defaultIfBlank(serviceResources.get("spark.numNodes"), "1");
-        int numNodes = Integer.parseInt(requestedNodes);
-        return numNodes <= 0 ? defaultNumNodes : numNodes;
-    }
-
-    private int getDefaultParallelism(Map<String, String> serviceResources) {
-        String defaultParallelism = StringUtils.defaultIfBlank(serviceResources.get("spark.defaultParallelism"), "0");
-        int parallelism = Integer.parseInt(defaultParallelism);
-        return parallelism <= 0 ? 0 : parallelism;
-    }
-
-    private String getSparkDriverMemory(Map<String, String> serviceResources) {
-        return serviceResources.get("spark.driverMemory");
-    }
-
-    private String getSparkExecutorMemory(Map<String, String> serviceResources) {
-        return serviceResources.get("spark.executorMemory");
-    }
-
-    private int getSparkExecutorCores(Map<String, String> serviceResources) {
-        String sparkExecutorCores = StringUtils.defaultIfBlank(serviceResources.get("spark.executorCores"), "0");
-        int executorCores = Integer.parseInt(sparkExecutorCores);
-        return executorCores <= 0 ? 0 : executorCores;
-    }
-
-    private Long getSparkAppIntervalCheckInMillis(Map<String, String> serviceResources) {
-        String intervalCheck = serviceResources.get("spark.appIntervalCheckInMillis");
-        if (StringUtils.isNotBlank(intervalCheck)) {
-            return Long.valueOf(intervalCheck.trim());
-        } else {
-            return null;
-        }
-    }
-
-    private Long getSparkAppTimeoutInMillis(Map<String, String> serviceResources) {
-        String timeout = serviceResources.get("spark.appTimeoutInMillis");
-        if (StringUtils.isNotBlank(timeout)) {
-            return Long.valueOf(timeout.trim());
-        } else {
-            return null;
-        }
-    }
-
-    private String getSparkLogConfigFile(Map<String, String> serviceResources) {
-        return serviceResources.get("spark.logConfigFile");
-    }
 }

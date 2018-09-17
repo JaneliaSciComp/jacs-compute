@@ -11,14 +11,12 @@ import org.janelia.cluster.lsf.LsfJobInfo;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.common.cluster.LsfParseUtils;
 import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
 import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.model.service.JacsJobInstanceInfo;
-import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -53,7 +51,6 @@ public class LSFSparkClusterLauncher {
     private final Logger logger;
     private final ServiceComputationFactory computationFactory;
     private final JobManager jobMgr;
-    private final ComputeAccounting accounting;
     private final boolean requiresAccountInfo;
     private final int nodeSlots;
     private final String sparkVersion;
@@ -82,7 +79,6 @@ public class LSFSparkClusterLauncher {
                                    @IntPropertyValue(name = "service.spark.cluster.startTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
                                    @IntPropertyValue(name = "service.spark.cluster.intervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
                                    @StrPropertyValue(name = "hadoop.homeDir") String hadoopHomeDir,
-                                   ComputeAccounting accounting,
                                    Logger logger) {
         this.computationFactory = computationFactory;
         this.jobMgr = monitoredJobManager.getJobMgr();
@@ -98,23 +94,22 @@ public class LSFSparkClusterLauncher {
         this.clusterStartTimeoutInMillis = clusterStartTimeoutInSeconds * 1000;
         this.clusterIntervalCheckInMillis = clusterIntervalCheckInMillis;
         this.hadoopHomeDir = hadoopHomeDir;
-        this.accounting = accounting;
         this.logger = logger;
     }
 
-    public ServiceComputation<SparkCluster> startCluster(JacsServiceData jacsServiceData,
-                                                         int numNodes,
+    public ServiceComputation<SparkCluster> startCluster(int numNodes,
                                                          Path jobWorkingPath,
+                                                         String billingInfo,
                                                          String sparkDriverMemory,
                                                          String sparkExecutorMemory,
                                                          int sparkExecutorCores,
                                                          String sparkLogConfigFile) {
-        return submitClusterJob(jacsServiceData, numNodes, jobWorkingPath)
+        return submitClusterJob(numNodes, jobWorkingPath, billingInfo)
                 .thenCompose(jobId -> createCluster(jobId, calculateDefaultParallelism(numNodes), sparkDriverMemory, sparkExecutorMemory, sparkExecutorCores, sparkLogConfigFile))
                 ;
     }
 
-    private ServiceComputation<Long> submitClusterJob(JacsServiceData jacsServiceData, int numNodes, Path jobWorkingPath) {
+    private ServiceComputation<Long> submitClusterJob(int numNodes, Path jobWorkingPath, String billingInfo) {
         int numSlots = nodeSlots + nodeSlots * numNodes; // master + workers
 
         logger.info("Starting Spark cluster with {} worker nodes ({} total slots)", numNodes, numSlots);
@@ -125,7 +120,7 @@ public class LSFSparkClusterLauncher {
         jt.setArgs(Collections.emptyList());
         jt.setWorkingDir(jobWorkingPath.toString());
         jt.setRemoteCommand("commandstring");
-        jt.setNativeSpecification(createNativeSpec(accounting.getComputeAccount(jacsServiceData), numSlots));
+        jt.setNativeSpecification(createNativeSpec(billingInfo, numSlots));
 
         Long jobId;
         try {
@@ -137,21 +132,21 @@ public class LSFSparkClusterLauncher {
             logger.info("Submitted cluster job {} ", jobId);
             return computationFactory.newCompletedComputation(jobId);
         } catch (Exception e) {
-            logger.error("Error starting a spark cluster  {}", jacsServiceData, e);
+            logger.error("Error starting a spark cluster with {} nodes ", numNodes, e);
             return computationFactory.newFailedComputation(e);
         }
     }
 
-    private int calculateDefaultParallelism(int numNodes) {
+    int calculateDefaultParallelism(int numNodes) {
         return 3 * (nodeSlots - 1) * numNodes;
     }
 
-    private ServiceComputation<SparkCluster> createCluster(Long clusterJobId,
-                                                           int defaultParallelism,
-                                                           String sparkDriverMemory,
-                                                           String sparkExecutorMemory,
-                                                           int sparkExecutorCores,
-                                                           String sparkLogConfigFile) {
+    ServiceComputation<SparkCluster> createCluster(Long clusterJobId,
+                                                   int defaultParallelism,
+                                                   String sparkDriverMemory,
+                                                   String sparkExecutorMemory,
+                                                   int sparkExecutorCores,
+                                                   String sparkLogConfigFile) {
         return computationFactory.newCompletedComputation(clusterJobId)
                 .thenSuspendUntil(
                         (Long aJobId) -> {

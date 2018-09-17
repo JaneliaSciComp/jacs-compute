@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -150,7 +151,9 @@ public class ComputeAccounting {
             // User provided a billing account
             Subject authenticatedUser = dao.getSubjectByKey(serviceContext.getAuthKey());
             if (!SubjectUtils.isAdmin(authenticatedUser)) {
-                throw new ComputationException(serviceContext, "Admin access is required to override compute account");
+                log.warn("User {} attempted to retrieve billing account {} on behalf of {} without admin privileges",
+                        serviceContext.getAuthKey(), billingAccount, serviceContext.getOwnerKey());
+                throw new SecurityException("Admin access is required to override compute account");
             }
             log.info("Using provided billing account {}", billingAccount);
         } else {
