@@ -9,6 +9,7 @@ import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -53,6 +54,13 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
                 getSparkExecutorCores(jacsServiceData.getResources()),
                 getSparkLogConfigFile(jacsServiceData.getResources()))
                 .thenApply(sparkCluster -> {
+                    jacsServiceDataPersistence.addServiceEvent(
+                            jacsServiceData,
+                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
+                                    String.format("Stop spark cluster on %s (%s)",
+                                            sparkCluster.getMasterURI(),
+                                            sparkCluster.getJobId())));
+
                     sparkCluster.stopCluster();
                     return new JacsServiceResult<>(jacsServiceData);
                 })

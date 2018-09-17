@@ -140,7 +140,15 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
                 // We don't attempt to extract the cluster from cond, because that may be null if there's an exception.
                 // Instead, we use the instance from the surrounding closure, which is guaranteed to work.
                 .whenComplete((app, exc) -> {
-                    if (runningClusterState.isPresent()) runningClusterState.getData().stopCluster();
+                    if (runningClusterState.isPresent()) {
+                        jacsServiceDataPersistence.addServiceEvent(
+                                jacsServiceData,
+                                JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
+                                        String.format("Stop spark cluster on %s (%s)",
+                                                runningClusterState.getData().getMasterURI(),
+                                                runningClusterState.getData().getJobId())));
+                        runningClusterState.getData().stopCluster();
+                    }
                 })
 
                 // Deal with the results

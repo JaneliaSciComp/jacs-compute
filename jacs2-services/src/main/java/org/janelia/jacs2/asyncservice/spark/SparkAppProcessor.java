@@ -85,7 +85,15 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                     );
                 })
                 .whenComplete(((sparkApp, exc) -> {
-                    if (runningClusterState.isPresent()) runningClusterState.getData().stopCluster();
+                    if (runningClusterState.isPresent()) {
+                        jacsServiceDataPersistence.addServiceEvent(
+                                jacsServiceData,
+                                JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
+                                        String.format("Stop spark cluster on %s (%s)",
+                                                runningClusterState.getData().getMasterURI(),
+                                                runningClusterState.getData().getJobId())));
+                        runningClusterState.getData().stopCluster();
+                    }
                 }))
                 .thenApply(sparkApp -> new JacsServiceResult<>(jacsServiceData))
                 ;

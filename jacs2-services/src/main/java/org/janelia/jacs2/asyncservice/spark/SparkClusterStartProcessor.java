@@ -69,7 +69,7 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                             jacsServiceDataPersistence.addServiceEvent(
                                     jacsServiceData,
                                     JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
-                                            String.format("Running app using spark job on %s (%s)",
+                                            String.format("Started spark cluster %s (%s)",
                                                     sparkCluster.getMasterURI(),
                                                     sparkCluster.getJobId())));
                             return new JacsServiceResult<>(jacsServiceData,
