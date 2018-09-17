@@ -4,31 +4,16 @@ import com.google.common.base.Stopwatch;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.launcher.SparkAppHandle;
 import org.apache.spark.launcher.SparkLauncher;
-import org.janelia.cluster.JobInfo;
 import org.janelia.cluster.JobManager;
-import org.janelia.cluster.JobStatus;
-import org.janelia.cluster.lsf.LsfJobInfo;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
-import org.janelia.jacs2.asyncservice.common.cluster.LsfParseUtils;
-import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
-import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
-import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
-import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
-import org.janelia.model.service.JacsJobInstanceInfo;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 
 /**
  * Manages a single Spark cluster with N nodes. Takes care of starting and stopping the master/worker nodes,
@@ -206,7 +191,6 @@ public class SparkCluster {
             SparkApp sparkApp = new SparkApp(this, appOutputDir, appErrorDir);
 
             SparkAppHandle.Listener completionListener = new SparkAppHandle.Listener() {
-
                 @Override
                 public void stateChanged(SparkAppHandle sparkAppHandle) {
                     SparkAppHandle.State sparkAppState = sparkAppHandle.getState();
@@ -218,7 +202,6 @@ public class SparkCluster {
                             logger.warn("Spark application {} finished with an error state {}", sparkApp.getAppId(), sparkAppState);
                         }
                     }
-
                 }
 
                 @Override
