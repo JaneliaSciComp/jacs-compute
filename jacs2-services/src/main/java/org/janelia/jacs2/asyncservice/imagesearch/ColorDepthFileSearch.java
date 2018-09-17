@@ -118,9 +118,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
         ColorDepthSearchArgs args = getArgs(jacsServiceData);
 
         // prepare service directories
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        updateOutputAndErrorPaths(jacsServiceData);
-        prepareDir(serviceWorkingFolder.getServiceFolder().toString());
+        JacsServiceFolder serviceWorkingFolder = prepareSparkJobDirs(jacsServiceData);
 
         // start the cluster
         DataHolder<SparkCluster> runningClusterState = new DataHolder<>();
@@ -167,7 +165,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
         } else {
             numNodes = this.defaultNumNodes;
         }
-        return clusterLauncher.startCluster(
+        return sparkClusterLauncher.startCluster(
                 numNodes,
                 serviceWorkingFolder.getServiceFolder(),
                 clusterAccounting.getComputeAccount(jacsServiceData),

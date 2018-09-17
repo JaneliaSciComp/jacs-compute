@@ -19,6 +19,9 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+/**
+ * Full cycle spark app processor that starts a spark cluster, runs the specified app and shuts down the cluster.
+ */
 @Named("sparkAppProcessor")
 public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
 
@@ -47,18 +50,20 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
 
     @Override
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
-
         SparkAppArgs args = getArgs(jacsServiceData);
 
-        // prepare service directories
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        updateOutputAndErrorPaths(jacsServiceData);
-        prepareDir(serviceWorkingFolder.getServiceFolder().toString());
-        prepareDir(jacsServiceData.getOutputPath());
-        prepareDir(jacsServiceData.getErrorPath());
+        // prepare spark job directories
+        JacsServiceFolder serviceWorkingFolder = prepareSparkJobDirs(jacsServiceData);
 
         DataHolder<SparkCluster> runningClusterState = new DataHolder<>();
-        return startCluster(jacsServiceData, serviceWorkingFolder)
+        return sparkClusterLauncher.startCluster(
+                getRequestedNodes(jacsServiceData.getResources()),
+                serviceWorkingFolder.getServiceFolder(),
+                accounting.getComputeAccount(jacsServiceData),
+                getSparkDriverMemory(jacsServiceData.getResources()),
+                getSparkExecutorMemory(jacsServiceData.getResources()),
+                getSparkExecutorCores(jacsServiceData.getResources()),
+                getSparkLogConfigFile(jacsServiceData.getResources()))
                 .thenCompose(sparkCluster -> {
                     runningClusterState.setData(sparkCluster);
                     jacsServiceDataPersistence.addServiceEvent(
@@ -85,14 +90,4 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                 .thenApply(sparkApp -> new JacsServiceResult<>(jacsServiceData))
                 ;
     }
-
-    private ServiceComputation<SparkCluster> startCluster(JacsServiceData jacsServiceData, JacsServiceFolder serviceWorkingFolder) {
-        return clusterLauncher.startCluster(getRequestedNodes(jacsServiceData.getResources()), serviceWorkingFolder.getServiceFolder(),
-                accounting.getComputeAccount(jacsServiceData),
-                getSparkDriverMemory(jacsServiceData.getResources()),
-                getSparkExecutorMemory(jacsServiceData.getResources()),
-                getSparkExecutorCores(jacsServiceData.getResources()),
-                getSparkLogConfigFile(jacsServiceData.getResources()));
-    }
-
 }

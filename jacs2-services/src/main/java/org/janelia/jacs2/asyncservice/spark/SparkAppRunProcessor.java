@@ -38,8 +38,8 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
 
         SparkAppArgs args = getArgs(jacsServiceData);
 
-        return clusterLauncher.createCluster(args.sparkJobId,
-                clusterLauncher.calculateDefaultParallelism(getRequestedNodes(jacsServiceData.getResources())),
+        return sparkClusterLauncher.createCluster(args.sparkJobId,
+                sparkClusterLauncher.calculateDefaultParallelism(getRequestedNodes(jacsServiceData.getResources())),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
                 getSparkExecutorCores(jacsServiceData.getResources()),

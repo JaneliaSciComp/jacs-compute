@@ -62,11 +62,7 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
     @Override
     public ServiceComputation<JacsServiceResult<SparkJobInfo>> process(JacsServiceData jacsServiceData) {
         // prepare service directories
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        updateOutputAndErrorPaths(jacsServiceData);
-        prepareDir(serviceWorkingFolder.getServiceFolder().toString());
-        prepareDir(jacsServiceData.getOutputPath());
-        prepareDir(jacsServiceData.getErrorPath());
+        JacsServiceFolder serviceWorkingFolder = prepareSparkJobDirs(jacsServiceData);
 
         return startCluster(jacsServiceData, serviceWorkingFolder)
                 .thenApply(sparkCluster -> {
@@ -84,7 +80,7 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
     }
 
     private ServiceComputation<SparkCluster> startCluster(JacsServiceData jacsServiceData, JacsServiceFolder serviceWorkingFolder) {
-        return clusterLauncher.startCluster(
+        return sparkClusterLauncher.startCluster(
                 getRequestedNodes(jacsServiceData.getResources()),
                 serviceWorkingFolder.getServiceFolder(),
                 accounting.getComputeAccount(jacsServiceData),
