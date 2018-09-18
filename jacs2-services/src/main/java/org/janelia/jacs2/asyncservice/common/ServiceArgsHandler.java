@@ -6,7 +6,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.utils.ExprEvalHelper;
@@ -129,15 +132,17 @@ class ServiceArgsHandler {
                 .map(v -> (String) v)
                 .anyMatch(isForwardedArg);
 
-        Map<String, Object> argExprEvalContext = new LinkedHashMap<>();
+        Map<String, List<Object>> argExprEvalContext;
         if (forwardedListArgsFound || forwardedDictArgsFound) {
             List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(jacsServiceData);
-            serviceDependencies.stream()
+            argExprEvalContext = serviceDependencies.stream()
                     .filter(sd -> sd.getSerializableResult() != null)
-                    .forEach(sd -> argExprEvalContext.putAll(convertServiceResultToMap(sd)));
+                    .flatMap(sd -> convertServiceResultToMap(sd).entrySet().stream())
+                    .collect(Collectors.groupingBy(e -> e.getKey(), Collectors.mapping(e -> e.getValue(), Collectors.toList())));
+        } else {
+            argExprEvalContext = ImmutableMap.of();
         }
         List<String> actualServiceListArgs;
-
         if (forwardedListArgsFound) {
             actualServiceListArgs = jacsServiceData.getArgs().stream()
                     .map(arg -> argExprExtractor.apply(arg)
@@ -151,7 +156,8 @@ class ServiceArgsHandler {
         Map<String, Object> actualServiceDictArgs;
         if (forwardedDictArgsFound) {
             actualServiceDictArgs = new LinkedHashMap<>();
-            jacsServiceData.getDictionaryArgs().forEach((k, v) -> actualServiceDictArgs.put(k, evalValExpr(v, argExprExtractor, argExprEvalContext)));
+            jacsServiceData.getDictionaryArgs()
+                    .forEach((k, v) -> actualServiceDictArgs.put(k, evalValExpr(v, argExprExtractor, argExprEvalContext)));
         } else {
             actualServiceDictArgs = jacsServiceData.getDictionaryArgs();
         }
@@ -159,10 +165,12 @@ class ServiceArgsHandler {
         return new JacsServiceArgs(actualServiceListArgs, actualServiceDictArgs);
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, Object> convertServiceResultToMap(JacsServiceData sd) {
         JsonNode serviceResultAsJson = objectMapper.valueToTree(sd.getSerializableResult());
         Map<String, Object> objectFields = new LinkedHashMap<>();
-        objectFields.put(sd.getName() + "_" + sd.getId().toString(), getNodeFields(serviceResultAsJson));
+        Object nodeFields = getNodeFields(serviceResultAsJson);
+        objectFields.put(sd.getName(), nodeFields);
         return objectFields;
     }
 
@@ -225,7 +233,7 @@ class ServiceArgsHandler {
         return objArray;
     }
 
-    private Object evalValExpr(Object val, Function<String, Optional<String>> argExprExtractor, Map<String, Object> evalContext) {
+    private Object evalValExpr(Object val, Function<String, Optional<String>> argExprExtractor, Map<String, List<Object>> evalContext) {
         if (val == null) {
             return null;
         } else if (val.getClass().isArray()) {
