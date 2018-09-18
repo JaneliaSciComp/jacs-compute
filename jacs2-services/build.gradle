@@ -12,7 +12,7 @@ project(":jacs2-services") {
                 JAX_RS_JERSEY_CLIENT_LIB,
                 JAX_RS_JERSEY_MEDIA_LIB,
                 JAX_RS_JERSEY_MEDIA_JSON_LIB,
-                JUEL_LIB,
+                JAVA_EXP_IMPL_LIB,
                 MONGODB_DRIVER_LIB,
                 REFLECTIONS_LIB,
                 JAVA_LSF_LIB,       
