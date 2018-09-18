@@ -33,14 +33,22 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
     }
 
     static class SparkJobInfo {
-        Long jobId;
-        String masterURI;
-        @JsonCreator
+        private final Long jobId;
+        private final String masterURI;
 
+        @JsonCreator
         SparkJobInfo(@JsonProperty("jobId") Long jobId,
                      @JsonProperty("masterURI") String masterURI) {
             this.jobId = jobId;
             this.masterURI = masterURI;
+        }
+
+        public Long getJobId() {
+            return jobId;
+        }
+
+        public String getMasterURI() {
+            return masterURI;
         }
     }
 
