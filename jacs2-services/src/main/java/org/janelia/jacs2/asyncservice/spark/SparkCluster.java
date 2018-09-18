@@ -10,6 +10,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.slf4j.Logger;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -78,25 +79,7 @@ public class SparkCluster {
     /**
      * Run the default main class in the specified jar file on the currently running cluster.
      * @param appResource absolute path to a jar file containing the app with dependencies or a python script
-     * @param appParallelism
-     * @param appArgs
-     * @return
-     * @throws Exception
-     */
-    public ServiceComputation<SparkApp> runApp(String appResource,
-                                               int appParallelism,
-                                               String appOutputDir,
-                                               String appErrorDir,
-                                               Long appIntervalCheck,
-                                               Long appTimeout,
-                                               String... appArgs) {
-        return runApp(appResource, null, appParallelism, appOutputDir, appErrorDir, appIntervalCheck, appTimeout, appArgs);
-    }
-
-    /**
-     * Run the default main class in the specified jar file on the currently running cluster.
-     * @param appResource absolute path to a jar file containing the app with dependencies or a python script
-     * @param appEntryPoint
+     * @param appEntryPoint nullable entry point - application main class
      * @param appParallelism
      * @param appOutputDir
      * @param appErrorDir
@@ -105,7 +88,7 @@ public class SparkCluster {
      * @throws Exception
      */
     public ServiceComputation<SparkApp> runApp(String appResource,
-                                               String appEntryPoint,
+                                               @Nullable String appEntryPoint,
                                                int appParallelism,
                                                String appOutputDir,
                                                String appErrorDir,

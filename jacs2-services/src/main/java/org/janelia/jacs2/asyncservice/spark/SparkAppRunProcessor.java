@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.spark;
 
 import com.google.common.collect.ImmutableList;
+import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -35,9 +36,10 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
 
     @Override
     public ServiceComputation<JacsServiceResult<String>> process(JacsServiceData jacsServiceData) {
-
         SparkAppArgs args = getArgs(jacsServiceData);
-
+        // prepare service directories
+        prepareSparkJobDirs(jacsServiceData);
+        // start a spark app on on existing cluster
         return sparkClusterLauncher.createCluster(getSparkClusterJobId(args),
                 sparkClusterLauncher.calculateDefaultParallelism(getRequestedNodes(jacsServiceData.getResources())),
                 getSparkDriverMemory(jacsServiceData.getResources()),
