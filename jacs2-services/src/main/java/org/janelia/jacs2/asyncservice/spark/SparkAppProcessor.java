@@ -69,7 +69,9 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                     jacsServiceDataPersistence.addServiceEvent(
                             jacsServiceData,
                             JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
-                                    String.format("Running app using spark job on %s (%s)",
+                                    String.format("Running app %s:%s using spark job on %s (%s)",
+                                            args.appLocation,
+                                            args.appEntryPoint,
                                             sparkCluster.getMasterURI(),
                                             sparkCluster.getJobId())));
                     // the computation completes when the app completes

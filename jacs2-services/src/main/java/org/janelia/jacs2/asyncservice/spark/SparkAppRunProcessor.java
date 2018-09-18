@@ -10,6 +10,7 @@ import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -47,6 +48,14 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
                 getSparkExecutorCores(jacsServiceData.getResources()),
                 getSparkLogConfigFile(jacsServiceData.getResources()))
                 .thenCompose(sparkCluster -> {
+                    jacsServiceDataPersistence.addServiceEvent(
+                            jacsServiceData,
+                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.START_PROCESS,
+                                    String.format("Running app %s:%s using spark job on %s (%s)",
+                                            args.appLocation,
+                                            args.appEntryPoint,
+                                            sparkCluster.getMasterURI(),
+                                            sparkCluster.getJobId())));
                     // the computation completes when the app completes
                     return sparkCluster.runApp(
                             args.appLocation,
