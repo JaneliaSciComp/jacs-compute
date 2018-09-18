@@ -345,7 +345,8 @@ public class AbstractServiceProcessorTest {
                         .addArgs()
                         .addDependencyId(predecessorId)
                         .build();
-        when(jacsServiceDataPersistence.findServiceDependencies(testServiceData)).thenReturn(ImmutableList.of(testServiceDataPredecessor));
+        when(jacsServiceDataPersistence.findServiceDependencies(testServiceData))
+                .thenReturn(ImmutableList.of(testServiceDataPredecessor));
 
         int tIndex = 0;
         for (TestData td : testData) {

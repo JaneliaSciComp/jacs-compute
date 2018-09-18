@@ -137,8 +137,8 @@ class ServiceArgsHandler {
             List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(jacsServiceData);
             argExprEvalContext = serviceDependencies.stream()
                     .filter(sd -> sd.getSerializableResult() != null)
-                    .flatMap(sd -> convertServiceResultToMap(sd).entrySet().stream())
-                    .collect(Collectors.groupingBy(e -> e.getKey(), Collectors.mapping(e -> e.getValue(), Collectors.toList())));
+                    .map(sd -> ImmutablePair.of(sd.getName(), convertServiceResultToMap(sd)))
+                    .collect(Collectors.groupingBy(e -> e.getLeft(), Collectors.mapping(e -> e.getRight(), Collectors.toList())));
         } else {
             argExprEvalContext = ImmutableMap.of();
         }
@@ -166,12 +166,9 @@ class ServiceArgsHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> convertServiceResultToMap(JacsServiceData sd) {
+    private Object convertServiceResultToMap(JacsServiceData sd) {
         JsonNode serviceResultAsJson = objectMapper.valueToTree(sd.getSerializableResult());
-        Map<String, Object> objectFields = new LinkedHashMap<>();
-        Object nodeFields = getNodeFields(serviceResultAsJson);
-        objectFields.put(sd.getName(), nodeFields);
-        return objectFields;
+        return getNodeFields(serviceResultAsJson);
     }
 
     private Object getNodeFields(JsonNode node) {
