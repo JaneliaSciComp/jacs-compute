@@ -72,7 +72,8 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                                             String.format("Started spark cluster %s (%s)",
                                                     sparkCluster.getMasterURI(),
                                                     sparkCluster.getJobId())));
-                            return new JacsServiceResult<>(jacsServiceData,
+                            return updateServiceResult(
+                                    jacsServiceData,
                                     new SparkJobInfo(sparkCluster.getJobId(), sparkCluster.getMasterURI())
                             );
                 })

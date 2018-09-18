@@ -21,7 +21,7 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
 
     static class StopSparkJobArgs extends SparkArgs {
         @Parameter(names = "-sparkJobId", description = "Spark cluster ID")
-        Long sparkJobId;
+        String sparkJobId;
 
         StopSparkJobArgs() {
             super("Stop spark cluster");
@@ -47,7 +47,7 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         StopSparkJobArgs args = getArgs(jacsServiceData);
 
-        return sparkClusterLauncher.createCluster(args.sparkJobId,
+        return sparkClusterLauncher.createCluster(getSparkClusterJobId(args),
                 sparkClusterLauncher.calculateDefaultParallelism(getRequestedNodes(jacsServiceData.getResources())),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
@@ -71,4 +71,7 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new StopSparkJobArgs());
     }
 
+    private Long getSparkClusterJobId(StopSparkJobArgs args) {
+        return Long.valueOf(args.sparkJobId);
+    }
 }

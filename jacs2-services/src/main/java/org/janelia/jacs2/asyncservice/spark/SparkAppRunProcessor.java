@@ -38,7 +38,7 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
 
         SparkAppArgs args = getArgs(jacsServiceData);
 
-        return sparkClusterLauncher.createCluster(args.sparkJobId,
+        return sparkClusterLauncher.createCluster(getSparkClusterJobId(args),
                 sparkClusterLauncher.calculateDefaultParallelism(getRequestedNodes(jacsServiceData.getResources())),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
@@ -57,7 +57,7 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
                             args.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs()))
                     );
                 })
-                .thenApply(sparkApp -> new JacsServiceResult<>(jacsServiceData, sparkApp.getAppId()))
+                .thenApply(sparkApp -> updateServiceResult(jacsServiceData, sparkApp.getAppId()))
                 ;
     }
 
@@ -65,4 +65,7 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SparkAppArgs());
     }
 
+    private Long getSparkClusterJobId(SparkAppArgs args) {
+        return Long.valueOf(args.sparkJobId);
+    }
 }

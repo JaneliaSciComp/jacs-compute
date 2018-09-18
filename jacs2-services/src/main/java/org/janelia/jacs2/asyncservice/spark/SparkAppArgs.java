@@ -7,7 +7,7 @@ import java.util.List;
 
 class SparkAppArgs extends SparkArgs {
     @Parameter(names = "-sparkJobId", description = "Spark cluster ID")
-    Long sparkJobId;
+    String sparkJobId;
     @Parameter(names = "-appLocation", description = "Spark application location", required = true)
     String appLocation;
     @Parameter(names = "-appEntryPoint", description = "Spark application entry point, i.e., java main class name")
