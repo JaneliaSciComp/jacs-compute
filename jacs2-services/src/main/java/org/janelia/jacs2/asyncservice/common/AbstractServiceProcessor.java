@@ -170,7 +170,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     protected Function<JacsServiceData, Stream<JacsServiceData>> dependenciesGetterFunc() {
-        return (JacsServiceData serviceData) -> jacsServiceDataPersistence.findServiceDependencies(serviceData).stream();
+        return (JacsServiceData serviceData) -> jacsServiceDataPersistence.findDirectServiceDependencies(serviceData).stream();
     }
 
     protected boolean areAllDependenciesDone(JacsServiceData jacsServiceData) {

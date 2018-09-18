@@ -343,10 +343,12 @@ public class AbstractServiceProcessorTest {
         JacsServiceData testServiceData =
                 new JacsServiceDataBuilder(null)
                         .addArgs()
+                        .addDependency(testServiceDataPredecessor)
                         .addDependencyId(predecessorId)
                         .build();
-        when(jacsServiceDataPersistence.findServiceDependencies(testServiceData))
-                .thenReturn(ImmutableList.of(testServiceDataPredecessor));
+
+        when(jacsServiceDataPersistence.findServiceHierarchy(testServiceData))
+                .thenReturn(testServiceData);
 
         int tIndex = 0;
         for (TestData td : testData) {

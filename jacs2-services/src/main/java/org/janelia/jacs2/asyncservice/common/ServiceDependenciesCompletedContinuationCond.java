@@ -24,7 +24,7 @@ public class ServiceDependenciesCompletedContinuationCond implements Continuatio
 
     ServiceDependenciesCompletedContinuationCond(JacsServiceDataPersistence jacsServiceDataPersistence,
                                                  Logger logger) {
-        this((JacsServiceData serviceData) -> jacsServiceDataPersistence.findServiceDependencies(serviceData).stream(),
+        this((JacsServiceData serviceData) -> jacsServiceDataPersistence.findDirectServiceDependencies(serviceData).stream(),
                 jacsServiceDataPersistence,
                 logger
         );

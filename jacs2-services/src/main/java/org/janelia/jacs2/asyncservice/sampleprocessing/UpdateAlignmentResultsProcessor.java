@@ -180,7 +180,7 @@ public class UpdateAlignmentResultsProcessor extends AbstractBasicLifeCycleServi
         return (JacsServiceData serviceData) -> {
             UpdateAlignmentResultsArgs args = getArgs(serviceData);
             return Stream.concat(
-                    jacsServiceDataPersistence.findServiceDependencies(serviceData).stream(),
+                    jacsServiceDataPersistence.findDirectServiceDependencies(serviceData).stream(),
                     Stream.of(jacsServiceDataPersistence.findById(args.alignmentServiceId))
             );
         };

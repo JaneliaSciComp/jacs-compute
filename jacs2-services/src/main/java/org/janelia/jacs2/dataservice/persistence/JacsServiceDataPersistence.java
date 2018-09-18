@@ -102,7 +102,7 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    public List<JacsServiceData> findServiceDependencies(JacsServiceData jacsServiceData) {
+    public List<JacsServiceData> findDirectServiceDependencies(JacsServiceData jacsServiceData) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
             List<JacsServiceData> dependencies = jacsServiceDataDao.findByIds(jacsServiceData.getDependenciesIds());
@@ -114,6 +114,14 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
                     .collect(Collectors.toList());
         } finally {
             daoSource.destroy(jacsServiceDataDao);
+        }
+    }
+
+    public JacsServiceData findServiceHierarchy(JacsServiceData jacsServiceData) {
+        if (jacsServiceData.hasId()) {
+            return findServiceHierarchy(jacsServiceData.getId());
+        } else {
+            return jacsServiceData;
         }
     }
 

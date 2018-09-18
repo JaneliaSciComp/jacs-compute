@@ -134,8 +134,7 @@ class ServiceArgsHandler {
 
         Map<String, List<Object>> argExprEvalContext;
         if (forwardedListArgsFound || forwardedDictArgsFound) {
-            List<JacsServiceData> serviceDependencies = jacsServiceDataPersistence.findServiceDependencies(jacsServiceData);
-            argExprEvalContext = serviceDependencies.stream()
+            argExprEvalContext = jacsServiceDataPersistence.findServiceHierarchy(jacsServiceData).serviceHierarchyStream()
                     .filter(sd -> sd.getSerializableResult() != null)
                     .map(sd -> ImmutablePair.of(sd.getName(), convertServiceResultToMap(sd)))
                     .collect(Collectors.groupingBy(e -> e.getLeft(), Collectors.mapping(e -> e.getRight(), Collectors.toList())));
