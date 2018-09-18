@@ -2,12 +2,16 @@ package org.janelia.jacs2.asyncservice.spark;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
+import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -57,6 +61,28 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
     @Override
     public ServiceMetaData getMetadata() {
         return ServiceArgs.getMetadata(SparkClusterStartProcessor.class, new StartSparkJobArgs());
+    }
+
+    @Override
+    public ServiceResultHandler<SparkJobInfo> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<SparkJobInfo>() {
+            @Override
+            public boolean isResultReady(JacsServiceResult<?> depResults) {
+                return areAllDependenciesDone(depResults.getJacsServiceData());
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public SparkJobInfo collectResult(JacsServiceResult<?> depResults) {
+                JacsServiceResult<SparkJobInfo> intermediateResult = (JacsServiceResult<SparkJobInfo>)depResults;
+                return intermediateResult.getResult();
+            }
+
+            @Override
+            public SparkJobInfo getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<SparkJobInfo>() {});
+            }
+        };
     }
 
     @Override
