@@ -90,14 +90,18 @@ public class JacsServiceDispatcher {
                             jacsServiceDataPersistence,
                             logger).negate())
                     .thenApply((JacsServiceData sd) -> {
-                        if (initialServiceState == JacsServiceState.QUEUED)
-                            sendNotification(sd, JacsServiceLifecycleStage.START_PROCESSING);
-                        else if (initialServiceState == JacsServiceState.RESUMED)
-                            sendNotification(sd, JacsServiceLifecycleStage.RESUME_PROCESSING);
-                        else
-                            sendNotification(sd, JacsServiceLifecycleStage.RETRY_PROCESSING);
+                        Map<String, EntityFieldValueHandler<?>> sdUpdates = null;
                         ServiceArgsHandler serviceArgsHandler = new ServiceArgsHandler(jacsServiceDataPersistence);
-                        Map<String, EntityFieldValueHandler<?>> sdUpdates = serviceArgsHandler.updateServiceArgs(serviceProcessor.getMetadata(), sd);
+                        if (initialServiceState == JacsServiceState.QUEUED) {
+                            sdUpdates = serviceArgsHandler.updateServiceArgs(serviceProcessor.getMetadata(), sd);
+                            sendNotification(sd, JacsServiceLifecycleStage.START_PROCESSING);
+                        } else if (initialServiceState == JacsServiceState.RESUMED) {
+                            sdUpdates = serviceArgsHandler.updateServiceArgs(serviceProcessor.getMetadata(), sd);
+                            sendNotification(sd, JacsServiceLifecycleStage.RESUME_PROCESSING);
+                        } else {
+                            // assume that since it was processed once the service args were handled already
+                            sendNotification(sd, JacsServiceLifecycleStage.RETRY_PROCESSING);
+                        }
                         logger.debug("Update service args for {} to {}", sd, sdUpdates);
                         jacsServiceDataPersistence.update(sd, sdUpdates);
                         return sd;

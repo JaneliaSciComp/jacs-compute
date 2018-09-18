@@ -21,10 +21,10 @@ public class WaitingForDependenciesContinuationCond<S> implements ContinuationCo
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
     private final Logger logger;
 
-    public WaitingForDependenciesContinuationCond(Function<S, JacsServiceData> stateToServiceDataMapper,
-                                                  BiFunction<S, JacsServiceData, S> serviceDataToStateMapper,
-                                                  JacsServiceDataPersistence jacsServiceDataPersistence,
-                                                  Logger logger) {
+    WaitingForDependenciesContinuationCond(Function<S, JacsServiceData> stateToServiceDataMapper,
+                                           BiFunction<S, JacsServiceData, S> serviceDataToStateMapper,
+                                           JacsServiceDataPersistence jacsServiceDataPersistence,
+                                           Logger logger) {
         this(new ServiceDependenciesCompletedContinuationCond(jacsServiceDataPersistence, logger),
                 stateToServiceDataMapper,
                 serviceDataToStateMapper,
@@ -33,11 +33,11 @@ public class WaitingForDependenciesContinuationCond<S> implements ContinuationCo
         );
     }
 
-    public WaitingForDependenciesContinuationCond(ContinuationCond<JacsServiceData> dependenciesCompletedCont,
-                                                  Function<S, JacsServiceData> stateToServiceDataMapper,
-                                                  BiFunction<S, JacsServiceData, S> serviceDataToStateMapper,
-                                                  JacsServiceDataPersistence jacsServiceDataPersistence,
-                                                  Logger logger) {
+    WaitingForDependenciesContinuationCond(ContinuationCond<JacsServiceData> dependenciesCompletedCont,
+                                           Function<S, JacsServiceData> stateToServiceDataMapper,
+                                           BiFunction<S, JacsServiceData, S> serviceDataToStateMapper,
+                                           JacsServiceDataPersistence jacsServiceDataPersistence,
+                                           Logger logger) {
         this.dependenciesCompletedCont = dependenciesCompletedCont;
         this.stateToServiceDataMapper = stateToServiceDataMapper;
         this.serviceDataToStateMapper = serviceDataToStateMapper;
