@@ -31,12 +31,6 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
     private final Logger logger;
     private final ServiceComputationTask<T> task;
 
-    FutureBasedServiceComputation(ServiceComputationQueue computationQueue, Logger logger, ServiceComputationTask<T> task) {
-        this.computationQueue = computationQueue;
-        this.logger = logger;
-        this.task = task;
-    }
-
     FutureBasedServiceComputation(ServiceComputationQueue computationQueue, Logger logger) {
         this(computationQueue, logger, new ServiceComputationTask<>(null));
     }
@@ -47,6 +41,12 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
 
     FutureBasedServiceComputation(ServiceComputationQueue computationQueue, Logger logger, Throwable exc) {
         this(computationQueue, logger, new ServiceComputationTask<>(null, exc));
+    }
+
+    private FutureBasedServiceComputation(ServiceComputationQueue computationQueue, Logger logger, ServiceComputationTask<T> task) {
+        this.computationQueue = computationQueue;
+        this.logger = logger;
+        this.task = task;
     }
 
     @Override
@@ -83,11 +83,11 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
         return task.isCompletedExceptionally();
     }
 
-    public void complete(T result) {
+    private void complete(T result) {
         task.complete(result);
     }
 
-    public void completeExceptionally(Throwable exc) {
+    private void completeExceptionally(Throwable exc) {
         task.completeExceptionally(exc);
     }
 
@@ -237,9 +237,8 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
     }
 
     public ServiceComputation<T> thenSuspendUntil(ContinuationCond<T> fn, Long intervalCheckInMillis, Long timeoutInMillis) {
-
         long startTime = System.currentTimeMillis();
-        PeriodicallyCheckableState<JacsServiceData> periodicCheck = intervalCheckInMillis == null ? null : new PeriodicallyCheckableState<>(null, intervalCheckInMillis);
+        PeriodicallyCheckableState<T> periodicCheck = intervalCheckInMillis == null ? null : new PeriodicallyCheckableState<>(null, intervalCheckInMillis);
 
         FutureBasedServiceComputation<T> next = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(this));
         next.submit(() -> {
@@ -261,6 +260,48 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
 
                 // Check the conditional value
                 ContinuationCond.Cond<T> condResult = fn.checkCond(r);
+                if (condResult.isNotCondValue()) {
+                    throw new SuspendedException();
+                } else {
+                    next.complete(condResult.getState());
+                }
+            } catch (SuspendedException e) {
+                throw e;
+            } catch (Exception e) {
+                next.completeExceptionally(e);
+            }
+            return next.get();
+        });
+        return next;
+    }
+
+    @Override
+    public <U> ServiceComputation<U> thenSuspendUntil(Function<? super T, ? extends U> fn, ContinuationCond<U> cond, Long intervalCheckInMillis, Long timeoutInMillis) {
+        long startTime = System.currentTimeMillis();
+        PeriodicallyCheckableState<T> periodicCheck = intervalCheckInMillis == null ? null : new PeriodicallyCheckableState<>(null, intervalCheckInMillis);
+
+        FutureBasedServiceComputation<U> next = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(this));
+        next.submit(() -> {
+            try {
+                T r = waitForResult(this);
+                if (this.isCompletedExceptionally()) {
+                    next.completeExceptionally(this.task.getException());
+                }
+
+                // Check for timeout
+                if (timeoutInMillis != null && (System.currentTimeMillis() - startTime > timeoutInMillis)) {
+                    throw new CondTimeoutException(timeoutInMillis);
+                }
+
+                // Check to see if it's time to test the value yet
+                if (periodicCheck != null && !periodicCheck.updateCheckTime()) {
+                    throw new SuspendedException(); // not yet
+                }
+
+                // Check the conditional value
+                U newState = fn.apply(r);
+
+                ContinuationCond.Cond<U> condResult = cond.checkCond(newState);
                 if (condResult.isNotCondValue()) {
                     throw new SuspendedException();
                 } else {

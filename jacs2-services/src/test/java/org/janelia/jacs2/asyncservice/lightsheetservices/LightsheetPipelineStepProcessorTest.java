@@ -68,6 +68,7 @@ public class LightsheetPipelineStepProcessorTest {
                     .put("dataType", 2)
                     .put("percentile", new int[]{2, 3, 4})
                     .put("outputType", 1)
+                    .put("timepoints", ImmutableMap.of("start", 10, "every", 5, "end", 100))
                     .build(),
             LightsheetPipelineStep.clusterFR, ImmutableMap.<String, Object>builder()
                     .put("filterMode", 1)
@@ -84,7 +85,6 @@ public class LightsheetPipelineStepProcessorTest {
             LightsheetPipelineStep.localEC, ImmutableMap.<String, Object>builder()
                     .put("filterMode", 1)
                     .put("rangeArray", new int[]{10, 20})
-                    .put("timepoints", ImmutableMap.of("start", 10, "every", 5, "end", 100))
                     .build()
     );
     private static final Long TEST_SERVICE_ID = 21L;
@@ -156,7 +156,7 @@ public class LightsheetPipelineStepProcessorTest {
         Mockito.when(testHttpClient.target(CONFIG_IP_ARG)).thenReturn(configEndpoint);
         LOCAL_STEP_CONFIGS.forEach((step, config) -> {
             int stepIndex = 1;
-            JacsServiceData testServiceData = createTestService(step, stepIndex, 100, 10, config);
+            JacsServiceData testServiceData = createTestService(step, stepIndex, 10, config);
             testServiceData.getDictionaryArgs().put("containerImage", "shub://otherregistry/imageprocessing/" + step.name().toLowerCase() + ":latest");
             prepareResultHandlers(step);
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
@@ -205,7 +205,7 @@ public class LightsheetPipelineStepProcessorTest {
         Mockito.when(testHttpClient.target(CONFIG_IP_ARG)).thenReturn(configEndpoint);
         LOCAL_STEP_CONFIGS.forEach((step, config) -> {
             int stepIndex = 1;
-            JacsServiceData testServiceData = createTestService(step, stepIndex, 100, 10, config);
+            JacsServiceData testServiceData = createTestService(step, stepIndex, 10, config);
             prepareResultHandlers(step);
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
             @SuppressWarnings("unchecked")
@@ -254,7 +254,7 @@ public class LightsheetPipelineStepProcessorTest {
         CLUSTER_STEP_CONFIGS.forEach((step, config) -> {
             int stepIndex = 1;
             int timePointsPerJob = 10;
-            JacsServiceData testServiceData = createTestService(step, stepIndex, 10, timePointsPerJob, config);
+            JacsServiceData testServiceData = createTestService(step, stepIndex, timePointsPerJob, config);
             prepareResultHandlers(step);
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
             @SuppressWarnings("unchecked")
@@ -302,9 +302,8 @@ public class LightsheetPipelineStepProcessorTest {
         Mockito.when(testHttpClient.target(CONFIG_IP_ARG)).thenReturn(configEndpoint);
         CLUSTER_STEP_CONFIGS.forEach((step, config) -> {
             int stepIndex = 1;
-            int timePoints = 95;
             int timePointsPerJob = 10;
-            JacsServiceData testServiceData = createTestService(step, stepIndex, timePoints, timePointsPerJob, config);
+            JacsServiceData testServiceData = createTestService(step, stepIndex, timePointsPerJob, config);
             prepareResultHandlers(step);
             ServiceComputation<JacsServiceResult<Void>> stepComputation = lightsheetPipelineStepProcessor.process(testServiceData);
             @SuppressWarnings("unchecked")
@@ -318,6 +317,9 @@ public class LightsheetPipelineStepProcessorTest {
                                 testDirectory,
                                 testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json");
                         assertTrue(stepConfigFile.exists());
+                        @SuppressWarnings("unchecked")
+                        Map<String, Integer> timepoints = (Map<String, Integer>) config.get("timepoints");
+                        int timePoints = (timepoints.get("end") - timepoints.get("start")) / timepoints.get("every");
                         int numJobs = (int) Math.ceil((double)timePoints / timePointsPerJob);
                         for (int j = 0; j < numJobs; j++) {
                             Mockito.verify(runContainerProcessor).createServiceData(
@@ -473,13 +475,12 @@ public class LightsheetPipelineStepProcessorTest {
         Mockito.when(runContainerProcessor.getResultHandler()).thenCallRealMethod();
     }
 
-    private JacsServiceData createTestService(LightsheetPipelineStep step, int stepIndex, int timePoints, int timePointsPerJob, Map<String, Object> dictionaryArgs) {
+    private JacsServiceData createTestService(LightsheetPipelineStep step, int stepIndex, int timePointsPerJob, Map<String, Object> dictionaryArgs) {
         JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
                 .setWorkspace(testDirectory.getAbsolutePath())
                 .addArgs("-step", step.name())
                 .addArgs("-stepIndex", String.valueOf(stepIndex))
                 .addArgs("-configAddress", CONFIG_IP_ARG)
-                .addArgs("-numTimePoints", String.valueOf(timePoints))
                 .addArgs("-timePointsPerJob", String.valueOf(timePointsPerJob))
                 .setDictionaryArgs(dictionaryArgs)
                 .build();

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -72,7 +73,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         @Parameter(names = "-containerImage", description = "Container image")
         String containerImage;
         @Parameter(names = "-numTimePoints", description = "Number of time points")
-        Integer numTimePoints = 1;
+        Integer numTimePoints = 0;
         @Parameter(names = "-timePointsPerJob", description = "Number of time points per job")
         Integer timePointsPerJob = 1;
         @Parameter(names = "-configAddress", description = "Address for accessing job's config json", required = true)
@@ -112,10 +113,13 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         try {
             LightsheetPipelineStepArgs args = getArgs(jacsServiceData);
             Pair<String, Map<String, Object>> stepConfig = getStepConfig(jacsServiceData, args);
+            int numTimePoints = args.numTimePoints <= 0
+                    ? getNumTimePointsFromJsonConfig(stepConfig.getRight())
+                    : args.numTimePoints;
             String stepConfigFile = stepConfig.getLeft();
             String stepConfigPath = Paths.get(stepConfigFile).getParent().toString();
             String containerLocation = getContainerLocation(stepConfig.getRight(), args);
-            List<List<String>> stepJobArgs = getStepJobArgs(stepConfigFile, args);
+            List<List<String>> stepJobArgs = getStepJobArgs(stepConfigFile, args, numTimePoints);
             Map<String, String> stepResources = prepareResources(args, jacsServiceData.getResources());
 
             Map<String, String> dataMountPoints = new LinkedHashMap<>();
@@ -374,6 +378,16 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private int getNumTimePointsFromJsonConfig(Map<String, Object> config) {
+        Map<String, Number> timePoints = objectMapper.convertValue(config.get("timepoints"), Map.class);
+        if (timePoints == null || !timePoints.keySet().containsAll(ImmutableSet.of("start", "end", "every"))) {
+            return 1;
+        } else {
+            return (int)(Math.ceil((timePoints.get("end").doubleValue() - timePoints.get("start").doubleValue()) / timePoints.get("every").doubleValue()) + 1);
+        }
+    }
+
     private void writeJsonConfig(Map<String, Object> config, File configFile) {
         try {
             Files.createDirectories(configFile.getParentFile().toPath());
@@ -383,13 +397,12 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         }
     }
 
-    private List<List<String>> getStepJobArgs(String jsonConfig, LightsheetPipelineStepArgs args) {
+    private List<List<String>> getStepJobArgs(String jsonConfig, LightsheetPipelineStepArgs args, int numTimePoints) {
         if (args.step.cannotSplitJob()) {
             return ImmutableList.of(
                     ImmutableList.of(jsonConfig)
             );
         } else {
-            int numTimePoints = args.numTimePoints;
             int timePointsPerJob;
             if (numTimePoints < 1) numTimePoints = 1;
             if (args.timePointsPerJob < 1) {

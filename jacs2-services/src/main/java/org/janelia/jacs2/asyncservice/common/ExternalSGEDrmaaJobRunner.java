@@ -17,7 +17,7 @@ public class ExternalSGEDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
         super(drmaaSession, jacsServiceDataPersistence, logger);
     }
 
-    protected String createNativeSpec(Map<String, String> jobResources) {
+    protected String createNativeSpec(Map<String, String> jobResources, String jobRunningDir) {
         StringBuilder nativeSpecBuilder = new StringBuilder();
         // append accountID for billing
         String billingAccount = ProcessorHelper.getGridBillingAccount(jobResources);

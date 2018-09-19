@@ -146,7 +146,7 @@ public class UpdateSampleProcessingResultsProcessor extends AbstractBasicLifeCyc
         return (JacsServiceData serviceData) -> {
             UpdateSampleResultsArgs args = getArgs(serviceData);
             return Stream.concat(
-                    jacsServiceDataPersistence.findServiceDependencies(serviceData).stream(),
+                    jacsServiceDataPersistence.findDirectServiceDependencies(serviceData).stream(),
                     Stream.of(jacsServiceDataPersistence.findById(args.sampleProcessingId))
             );
         };

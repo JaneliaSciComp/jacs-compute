@@ -1,43 +1,47 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import com.google.common.collect.ImmutableList;
 import org.janelia.model.service.JacsJobInstanceInfo;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 
-public class LocalExeJobInfo implements ExeJobInfo {
+public class LocalExeJobHandler implements ExeJobHandler {
     private final ProcessBuilder localProcessBuilder;
-    private final String scriptName;
+    private final String jobInfo;
     private Process localProcess;
+    private JacsJobInstanceInfo localProcessInfo;
     private volatile boolean done;
     private volatile boolean failed;
     private volatile boolean terminated;
 
-    public LocalExeJobInfo(ProcessBuilder localProcessBuilder, String scriptName) {
+    LocalExeJobHandler(String jobInfo, ProcessBuilder localProcessBuilder) {
+        this.jobInfo = jobInfo;
         this.localProcessBuilder = localProcessBuilder;
-        this.scriptName = scriptName;
     }
 
     @Override
-    public String getScriptName() {
-        return scriptName;
+    public String getJobInfo() {
+        return jobInfo;
     }
 
     @Override
-    public String start() {
+    public boolean start() {
         if (!terminated) {
             try {
                 localProcess = localProcessBuilder.start();
-                return localProcess.toString();
+                localProcessInfo = new JacsJobInstanceInfo();
+                localProcessInfo.setName(jobInfo);
+                localProcessInfo.setStartTime(new Date());
+                return true;
             } catch (IOException e) {
                 done = true;
                 failed = true;
                 throw new IllegalStateException(e);
             }
-        } else {
-            return null;
-        }
+        } else return false;
     }
 
     @Override
@@ -46,6 +50,7 @@ public class LocalExeJobInfo implements ExeJobInfo {
         if (localProcess != null) {
             done = !localProcess.isAlive();
             if (done) {
+                localProcessInfo.setExitCode(localProcess.exitValue());
                 failed = localProcess.exitValue() != 0;
             }
         }
@@ -53,8 +58,12 @@ public class LocalExeJobInfo implements ExeJobInfo {
     }
 
     @Override
-    public Collection<JacsJobInstanceInfo> getJobInstanceInfos() {
-        return Collections.emptyList();
+    public Collection<JacsJobInstanceInfo> getJobInstances() {
+        if (localProcessInfo == null) {
+            return Collections.emptyList();
+        } else {
+            return ImmutableList.of(localProcessInfo);
+        }
     }
 
     @Override

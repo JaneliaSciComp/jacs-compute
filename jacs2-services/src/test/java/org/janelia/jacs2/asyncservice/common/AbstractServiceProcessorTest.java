@@ -147,18 +147,18 @@ public class AbstractServiceProcessorTest {
                                 }
                         ),
                         new String[] {
-                                "arg1", "|>${predServiceName_1.t1F1}",
-                                "arg2", "|>${predServiceName_1.t1F2}",
-                                "arg3", "|>${predServiceName_1.t1ArrayField[0]}",
-                                "arg4", "|>${predServiceName_1.t1ArrayField[1]},${predServiceName_1.t1ObjectArrayField[0].t2ArrayField[1]}"
+                                "arg1", "|>${predServiceName.t1F1}",
+                                "arg2", "|>${predServiceName.t1F2}",
+                                "arg3", "|>${predServiceName.t1ArrayField[0]}",
+                                "arg4", "|>${predServiceName.t1ArrayField[1]},${predServiceName.t1ObjectArrayField[0].t2ArrayField[1]}"
                         },
                         ImmutableMap.of(
                                 "dictArg1", ImmutableMap.<String, String>of(
-                                        "t1F1", "|>${predServiceName_1.t1F1}",
-                                        "t1F2", "|>${predServiceName_1.t1F2}"),
+                                        "t1F1", "|>${predServiceName.t1F1}",
+                                        "t1F2", "|>${predServiceName.t1F2}"),
                                 "dictArg2", ImmutableMap.<String, String>of(
-                                        "t1ArrayField", "|>${predServiceName_1.t1ArrayField}",
-                                        "t1ObjectArray_1", "|>${predServiceName_1.t1ObjectArrayField[0].t2ArrayField[1]}")
+                                        "t1ArrayField", "|>${predServiceName.t1ArrayField}",
+                                        "t1ObjectArray_1", "|>${predServiceName.t1ObjectArrayField[0].t2ArrayField[1]}")
                         ),
                         new String[] {
                                 "arg1", "t1F1 value",
@@ -192,40 +192,40 @@ public class AbstractServiceProcessorTest {
                                 }
                         ),
                         new String[] {
-                                "arg1", "|>${predServiceName_1.t1F1}",
-                                "arg2", "|>${predServiceName_1.t1F2}",
-                                "arg3", "|>${predServiceName_1.t1ArrayField[0]}",
-                                "arg4", "|>${predServiceName_1.t1ArrayField[1]}",
-                                "|>${predServiceName_1.t1ObjectArrayField[1].t2F2}",
-                                "|>${predServiceName_1.t1ObjectArrayField[2].t2F2}",
-                                "|>${predServiceName_1.t1ObjectArrayField[0].t2Number}",
-                                "|>${predServiceName_1.t1ObjectArrayField[1].t2Number}"
+                                "arg1", "|>${predServiceName.t1F1}",
+                                "arg2", "|>${predServiceName.t1F2}",
+                                "arg3", "|>${predServiceName.t1ArrayField[0]}",
+                                "arg4", "|>${predServiceName.t1ArrayField[1]}",
+                                "|>${predServiceName.t1ObjectArrayField[1].t2F2}",
+                                "|>${predServiceName.t1ObjectArrayField[2].t2F2}",
+                                "|>${predServiceName.t1ObjectArrayField[0].t2Number}",
+                                "|>${predServiceName.t1ObjectArrayField[1].t2Number}"
                         },
                         ImmutableMap.of(
                                 "dictArg1", ImmutableMap.<String, String>of(
-                                        "t1F1", "|>${predServiceName_1.t1F1}",
-                                        "t1F2", "|>${predServiceName_1.t1F2}"),
+                                        "t1F1", "|>${predServiceName.t1F1}",
+                                        "t1F2", "|>${predServiceName.t1F2}"),
                                 "dictArg2", ImmutableMap.<String, String>of(
-                                        "t1ArrayField_1", "|>${predServiceName_1.t1ArrayField[1]}",
-                                        "t1ObjectArray_0", "|>${predServiceName_1.t1ObjectArrayField[0]}"),
+                                        "t1ArrayField_1", "|>${predServiceName.t1ArrayField[1]}",
+                                        "t1ObjectArray_0", "|>${predServiceName.t1ObjectArrayField[0]}"),
                                 "dictArg3", ImmutableMap.<String, String>of(
-                                        "t1ObjectArray_1", "|>${predServiceName_1.t1ObjectArrayField[1]}",
-                                        "t1ObjectArray_1_t2Number", "|>${predServiceName_1.t1ObjectArrayField[1].t2Number}")
+                                        "t1ObjectArray_1", "|>${predServiceName.t1ObjectArrayField[1]}",
+                                        "t1ObjectArray_1_t2Number", "|>${predServiceName.t1ObjectArrayField[1].t2Number}")
                         ),
                         new String[] {
                                 "arg1", "t1F1 value",
-                                "arg2", "${predServiceName_1.t1F2}",
+                                "arg2", "${predServiceName.t1F2}",
                                 "arg3", "t1vof_1",
                                 "arg4", "t1vof_2",
                                 "1 t2F2 value",
-                                "${predServiceName_1.t1ObjectArrayField[2].t2F2}",
+                                "${predServiceName.t1ObjectArrayField[2].t2F2}",
                                 "300",
                                 "400"
                         },
                         ImmutableMap.of(
                                 "dictArg1", ImmutableMap.of(
                                         "t1F1", "t1F1 value",
-                                        "t1F2", "${predServiceName_1.t1F2}"),
+                                        "t1F2", "${predServiceName.t1F2}"),
                                 "dictArg2", ImmutableMap.of(
                                         "t1ObjectArray_0", ImmutableMap.of(
                                                 "t2F1", "0 t2F1 value",
@@ -248,9 +248,9 @@ public class AbstractServiceProcessorTest {
                 // Test 2
                 new TestData(
                         "s1",
-                        new String[] {"arg1", "|>${predServiceName_1}"},
+                        new String[] {"arg1", "|>${predServiceName}"},
                         ImmutableMap.of(
-                                "result", "|>${predServiceName_1}",
+                                "result", "|>${predServiceName}",
                                 "nonResult", "|>${asIs}"
                         ),
                         new String[] {"arg1", "s1"},
@@ -262,9 +262,9 @@ public class AbstractServiceProcessorTest {
                 // Test 3
                 new TestData(
                         new BigInteger("123456789123456789123456789"),
-                        new String[] {"arg1", "|>${predServiceName_1}"},
+                        new String[] {"arg1", "|>${predServiceName}"},
                         ImmutableMap.of(
-                                "result", "|>${predServiceName_1}"
+                                "result", "|>${predServiceName}"
                         ),
                         new String[] {"arg1", "123456789123456789123456789"},
                         ImmutableMap.<String, Object>of(
@@ -274,9 +274,9 @@ public class AbstractServiceProcessorTest {
                 // Test 4
                 new TestData(
                         123456789123456789L,
-                        new String[] {"arg1", "|>${predServiceName_1}"},
+                        new String[] {"arg1", "|>${predServiceName}"},
                         ImmutableMap.of(
-                                "result", "|>${predServiceName_1}"
+                                "result", "|>${predServiceName}"
                         ),
                         new String[] {"arg1", "123456789123456789"},
                         ImmutableMap.of(
@@ -293,18 +293,18 @@ public class AbstractServiceProcessorTest {
                                 600L
                         },
                         new String[] {
-                                "arg1", "|>${predServiceName_1[0]}",
-                                "arg2", "|>${predServiceName_1[1]}",
-                                "arg3", "|>this is ${predServiceName_1[3].t2F1}",
-                                "arg4", "|>${predServiceName_1[3].t2ArrayField[1]}",
-                                "|>${predServiceName_1[4]}"
+                                "arg1", "|>${predServiceName[0]}",
+                                "arg2", "|>${predServiceName[1]}",
+                                "arg3", "|>this is ${predServiceName[3].t2F1}",
+                                "arg4", "|>${predServiceName[3].t2ArrayField[1]}",
+                                "|>${predServiceName[4]}"
                         },
                         ImmutableMap.of(
                                 "dictArg1", ImmutableMap.<String, String>of(
-                                        "wholeResult", "|>${predServiceName_1}",
-                                        "a1", "|>${predServiceName_1[0]}"),
+                                        "wholeResult", "|>${predServiceName}",
+                                        "a1", "|>${predServiceName[0]}"),
                                 "dictArg2", ImmutableMap.<String, String>of(
-                                        "a1", "|>${predServiceName_1[1]}")
+                                        "a1", "|>${predServiceName[1]}")
                         ),
                         new String[] {
                                 "arg1", "s1",
@@ -343,9 +343,12 @@ public class AbstractServiceProcessorTest {
         JacsServiceData testServiceData =
                 new JacsServiceDataBuilder(null)
                         .addArgs()
+                        .addDependency(testServiceDataPredecessor)
                         .addDependencyId(predecessorId)
                         .build();
-        when(jacsServiceDataPersistence.findServiceDependencies(testServiceData)).thenReturn(ImmutableList.of(testServiceDataPredecessor));
+
+        when(jacsServiceDataPersistence.findServiceHierarchy(testServiceData))
+                .thenReturn(testServiceData);
 
         int tIndex = 0;
         for (TestData td : testData) {

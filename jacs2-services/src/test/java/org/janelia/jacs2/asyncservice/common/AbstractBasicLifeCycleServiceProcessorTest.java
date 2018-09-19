@@ -161,7 +161,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
         testJacsServiceDataDependency.setId(TEST_ID.longValue() + 1);
 
         testJacsServiceData.addServiceDependency(testJacsServiceDataDependency);
-        when(jacsServiceDataPersistence.findServiceDependencies(testJacsServiceData))
+        when(jacsServiceDataPersistence.findDirectServiceDependencies(testJacsServiceData))
                 .thenAnswer(invocation -> {
                     testJacsServiceDataDependency.setState(JacsServiceState.CANCELED);
                     return ImmutableList.of(testJacsServiceDataDependency);
@@ -227,7 +227,7 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
         testJacsServiceData.setServiceTimeout(1L);
 
         when(jacsServiceDataPersistence.findById(TEST_ID)).thenReturn(testJacsServiceData);
-        when(jacsServiceDataPersistence.findServiceDependencies(testJacsServiceData))
+        when(jacsServiceDataPersistence.findDirectServiceDependencies(testJacsServiceData))
                 .thenReturn(ImmutableList.of(testJacsServiceDataDependency));
 
         testSuccessfullProcessor.process(testJacsServiceData)

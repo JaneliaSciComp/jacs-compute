@@ -27,4 +27,5 @@ public interface ServiceComputation<T> {
     <U> ServiceComputation<U> thenComposeAll(List<ServiceComputation<?>> otherComputations, BiFunction<? super T, List<?>, ? extends ServiceComputation<U>> fn);
     ServiceComputation<T> thenSuspendUntil(ContinuationCond<T> fn);
     ServiceComputation<T> thenSuspendUntil(ContinuationCond<T> fn, Long intervalCheckInMillis, Long timeoutInMillis);
+    <U> ServiceComputation<U> thenSuspendUntil(Function<? super T, ? extends U> fn, ContinuationCond<U> cond, Long intervalCheckInMillis, Long timeoutInMillis);
 }

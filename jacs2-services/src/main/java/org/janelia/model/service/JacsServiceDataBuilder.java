@@ -127,7 +127,12 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
-    public JacsServiceDataBuilder copyResourcesFrom(Map<String, String> resources) {
+    public JacsServiceDataBuilder addResource(String name, String value) {
+        serviceData.getResources().put(name, value);
+        return this;
+    }
+
+    public JacsServiceDataBuilder addResources(Map<String, String> resources) {
         serviceData.getResources().putAll(resources);
         return this;
     }

@@ -97,23 +97,26 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    public List<JacsServiceData> findChildServices(Number serviceId) {
+    public List<JacsServiceData> findDirectServiceDependencies(JacsServiceData jacsServiceData) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
-            return jacsServiceDataDao.findChildServices(serviceId);
+            List<JacsServiceData> dependencies = jacsServiceDataDao.findByIds(jacsServiceData.getDependenciesIds());
+            List<JacsServiceData> childServices = jacsServiceData.hasId() ? jacsServiceDataDao.findChildServices(jacsServiceData.getId()) : Collections.emptyList();
+            return Stream.concat(
+                    dependencies.stream(),
+                    childServices.stream()
+                    .filter(sd -> !jacsServiceData.getDependenciesIds().contains(sd.getId())))
+                    .collect(Collectors.toList());
         } finally {
             daoSource.destroy(jacsServiceDataDao);
         }
     }
 
-    public List<JacsServiceData> findServiceDependencies(JacsServiceData jacsServiceData) {
-        JacsServiceDataDao jacsServiceDataDao = daoSource.get();
-        try {
-            List<JacsServiceData> dependencies = jacsServiceDataDao.findByIds(jacsServiceData.getDependenciesIds());
-            List<JacsServiceData> childServices = jacsServiceData.hasId() ? jacsServiceDataDao.findChildServices(jacsServiceData.getId()) : Collections.emptyList();
-            return Stream.concat(dependencies.stream(), childServices.stream()).collect(Collectors.toList());
-        } finally {
-            daoSource.destroy(jacsServiceDataDao);
+    public JacsServiceData findServiceHierarchy(JacsServiceData jacsServiceData) {
+        if (jacsServiceData.hasId()) {
+            return findServiceHierarchy(jacsServiceData.getId());
+        } else {
+            return jacsServiceData;
         }
     }
 

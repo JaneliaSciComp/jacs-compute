@@ -23,17 +23,17 @@ public class ServiceDependenciesCompletedContinuationCond implements Continuatio
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
     private final Logger logger;
 
-    public ServiceDependenciesCompletedContinuationCond(JacsServiceDataPersistence jacsServiceDataPersistence,
-                                                        Logger logger) {
-        this((JacsServiceData serviceData) -> jacsServiceDataPersistence.findServiceDependencies(serviceData).stream(),
+    ServiceDependenciesCompletedContinuationCond(JacsServiceDataPersistence jacsServiceDataPersistence,
+                                                 Logger logger) {
+        this((JacsServiceData serviceData) -> jacsServiceDataPersistence.findDirectServiceDependencies(serviceData).stream(),
                 jacsServiceDataPersistence,
                 logger
         );
     }
 
-    public ServiceDependenciesCompletedContinuationCond(Function<JacsServiceData, Stream<JacsServiceData>> dependenciesGetter,
-                                                        JacsServiceDataPersistence jacsServiceDataPersistence,
-                                                        Logger logger) {
+    ServiceDependenciesCompletedContinuationCond(Function<JacsServiceData, Stream<JacsServiceData>> dependenciesGetter,
+                                                 JacsServiceDataPersistence jacsServiceDataPersistence,
+                                                 Logger logger) {
         this.dependenciesGetter = dependenciesGetter;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.logger = logger;

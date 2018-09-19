@@ -17,12 +17,16 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
         super(drmaaSession, jacsServiceDataPersistence, logger);
     }
 
-    protected String createNativeSpec(Map<String, String> jobResources) {
+    protected String createNativeSpec(Map<String, String> jobResources, String jobRunningDir) {
         StringBuilder nativeSpecBuilder = new StringBuilder();
         // append accountID for billing
         String billingAccount = ProcessorHelper.getGridBillingAccount(jobResources);
         if (StringUtils.isNotBlank(billingAccount)) {
-            nativeSpecBuilder.append("-P ").append(billingAccount).append(' ');
+            nativeSpecBuilder.append("-P ")
+                    .append('"')
+                    .append(billingAccount)
+                    .append('"')
+                    .append(' ');
         }
         int nProcessingSlots = ProcessorHelper.getProcessingSlots(jobResources);
         StringBuilder resourceBuffer = new StringBuilder();
@@ -78,6 +82,13 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
                     .append('"')
                     .append(' ')
                     ;
+        }
+        if (StringUtils.isNotBlank(jobRunningDir)) {
+            nativeSpecBuilder.append("-cwd ")
+                    .append('"')
+                    .append(jobRunningDir)
+                    .append('"')
+                    .append(' ');
         }
         return nativeSpecBuilder.toString();
     }

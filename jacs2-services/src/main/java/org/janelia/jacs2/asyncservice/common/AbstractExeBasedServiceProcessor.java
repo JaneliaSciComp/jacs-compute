@@ -8,8 +8,6 @@ import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
-import org.janelia.model.jacs2.EntityFieldValueHandler;
-import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.service.JacsJobInstanceInfo;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
@@ -39,7 +37,6 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
     private final ApplicationConfig applicationConfig;
     private final int jobIntervalCheck;
 
-
     public AbstractExeBasedServiceProcessor(ServiceComputationFactory computationFactory,
                                             JacsServiceDataPersistence jacsServiceDataPersistence,
                                             Instance<ExternalProcessRunner> serviceRunners,
@@ -62,34 +59,18 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
         return jacsServiceDataHierarchy;
     }
 
-    private void updateOutputAndErrorPaths(JacsServiceData jacsServiceData) {
-        Map<String, EntityFieldValueHandler<?>> serviceUpdates = new LinkedHashMap<>();
-        JacsServiceFolder jacsServiceFolder = getWorkingDirectory(jacsServiceData);
-        if (StringUtils.isBlank(jacsServiceData.getOutputPath())) {
-            jacsServiceData.setOutputPath(jacsServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString());
-            serviceUpdates.put("outputPath", new SetFieldValueHandler<>(jacsServiceData.getOutputPath()));
-        }
-        if (StringUtils.isBlank(jacsServiceData.getErrorPath())) {
-            jacsServiceData.setErrorPath(jacsServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString());
-            serviceUpdates.put("errorPath", new SetFieldValueHandler<>(jacsServiceData.getErrorPath()));
-        }
-        jacsServiceDataPersistence.update(jacsServiceData, serviceUpdates);
-    }
-
     @Override
     protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) {
-        ExeJobInfo jobInfo = runExternalProcess(depsResult.getJacsServiceData());
-        PeriodicallyCheckableState<JacsServiceResult<Void>> periodicResultCheck = new PeriodicallyCheckableState<>(depsResult, jobIntervalCheck);
-        return computationFactory.newCompletedComputation(periodicResultCheck)
-                .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceResult<Void>> state) -> new ContinuationCond.Cond<>(state,
-                        periodicResultCheck.updateCheckTime() && hasJobFinished(periodicResultCheck.getState().getJacsServiceData(), jobInfo)))
-                .thenApply(pdCond -> {
-
-                    JacsServiceResult<Void> pd = pdCond.getState();
+        ExeJobHandler jobHandler = runExternalProcess(depsResult.getJacsServiceData());
+        return computationFactory.newCompletedComputation(depsResult)
+                .thenSuspendUntil(previousStepsResult -> new ContinuationCond.Cond<>(previousStepsResult, hasJobFinished(previousStepsResult.getJacsServiceData(), jobHandler)),
+                        (long) jobIntervalCheck,
+                        null)
+                .thenApply(pd -> {
                     JacsServiceData jacsServiceData = pd.getJacsServiceData();
 
                     // Persist all final job instance metadata
-                    Collection<JacsJobInstanceInfo> completedJobInfos = jobInfo.getJobInstanceInfos();
+                    Collection<JacsJobInstanceInfo> completedJobInfos = jobHandler.getJobInstances();
                     if (!completedJobInfos.isEmpty()) {
                         for (JacsJobInstanceInfo jacsJobInstanceInfo : completedJobInfos) {
                             jacsJobInstanceInfo.setServiceDataId(jacsServiceData.getId());
@@ -101,9 +82,9 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                     List<String> errors = getErrors(jacsServiceData);
                     String errorMessage = null;
                     if (CollectionUtils.isNotEmpty(errors)) {
-                        errorMessage = String.format("Process %s failed; errors found: %s", jobInfo.getScriptName(), String.join(";", errors));
-                    } else if (jobInfo.hasFailed()) {
-                        errorMessage = String.format("Process %s failed", jobInfo.getScriptName());
+                        errorMessage = String.format("Process %s failed; errors found: %s", jobHandler.getJobInfo(), String.join(";", errors));
+                    } else if (jobHandler.hasFailed()) {
+                        errorMessage = String.format("Process %s failed", jobHandler.getJobInfo());
                     }
                     if (errorMessage != null) {
                         jacsServiceDataPersistence.updateServiceState(
@@ -116,23 +97,23 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                 });
     }
 
-    private boolean hasJobFinished(JacsServiceData jacsServiceData, ExeJobInfo jobInfo) {
+    private boolean hasJobFinished(JacsServiceData jacsServiceData, ExeJobHandler jobHandler) {
         JacsServiceData updatedServiceData = refreshServiceData(jacsServiceData);
         // if the service has been canceled but the job hasn't finished terminate the job
         // if the service has been suspended let the job complete
         // so there's no need to do anything here
         if (updatedServiceData.hasBeenCanceled()) {
-            if (!jobInfo.isDone()) {
-                jobInfo.terminate();
+            if (!jobHandler.isDone()) {
+                jobHandler.terminate();
             }
             throw new ComputationException(jacsServiceData, "Terminate service " + jacsServiceData.getId());
-        } else if (jobInfo.isDone()) {
+        } else if (jobHandler.isDone()) {
             return true;
         }
         try {
             verifyAndFailIfTimeOut(jacsServiceData);
         } catch (ComputationException e) {
-            jobInfo.terminate();
+            jobHandler.terminate();
             throw e;
         }
         return false;
@@ -206,7 +187,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
         return getWorkingDirectory(jacsServiceData).getServiceFolder();
     }
 
-    private ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
+    private ExeJobHandler runExternalProcess(JacsServiceData jacsServiceData) {
         List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles(jacsServiceData);
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
         Map<String, String> runtimeEnv = new LinkedHashMap<>();

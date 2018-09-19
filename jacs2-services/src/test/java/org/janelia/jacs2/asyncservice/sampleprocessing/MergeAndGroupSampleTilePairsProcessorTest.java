@@ -71,7 +71,7 @@ public class MergeAndGroupSampleTilePairsProcessorTest {
             return sd;
         });
 
-        when(jacsServiceDataPersistence.findServiceDependencies(any(JacsServiceData.class))).then(invocation -> ImmutableList.of());
+        when(jacsServiceDataPersistence.findDirectServiceDependencies(any(JacsServiceData.class))).then(invocation -> ImmutableList.of());
 
 
         when(jacsServiceDataPersistence.createServiceIfNotFound(any(JacsServiceData.class))).then(invocation -> {

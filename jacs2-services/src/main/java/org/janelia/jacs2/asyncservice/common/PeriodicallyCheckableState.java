@@ -1,6 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
-public class PeriodicallyCheckableState<S> {
+class PeriodicallyCheckableState<S> {
     private final S state;
     private long checkTime;
     private final long intervalCheckInMillis;

@@ -19,12 +19,12 @@ public interface ExternalProcessRunner {
      * @param serviceContext
      * @return
      */
-    ExeJobInfo runCmds(ExternalCodeBlock externalCode,
-                       List<ExternalCodeBlock> externalConfig,
-                       Map<String, String> env,
-                       JacsServiceFolder scriptServiceFolder,
-                       Path processDir,
-                       JacsServiceData serviceContext);
+    ExeJobHandler runCmds(ExternalCodeBlock externalCode,
+                          List<ExternalCodeBlock> externalConfig,
+                          Map<String, String> env,
+                          JacsServiceFolder scriptServiceFolder,
+                          Path processDir,
+                          JacsServiceData serviceContext);
 
     default boolean supports(ProcessingLocation processingLocation) {
         return getClass().isAnnotationPresent(processingLocation.getProcessingAnnotationClass()) ||

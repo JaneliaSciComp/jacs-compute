@@ -70,10 +70,10 @@ dependencies {
         JACKSON_JAXRS_JSON_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${JACKSON_VERSION}"
 
         // Spark
-        SPARK_LAUNCHER = "org.apache.spark:spark-launcher_2.11:2.1.0"
+        SPARK_LAUNCHER = "org.apache.spark:spark-launcher_2.11:2.3.1"
 
         // expressions
-        JUEL_LIB = "de.odysseus.juel:juel-impl:2.2.7"
+        JAVA_EXP_IMPL_LIB = "org.glassfish:javax.el:3.0.0"
 
         // drmaa
         DRMAA1_LIB = "us.levk:drmaa-gridengine:6.2u5"

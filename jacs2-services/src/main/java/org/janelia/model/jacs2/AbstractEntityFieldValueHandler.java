@@ -7,7 +7,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 public abstract class AbstractEntityFieldValueHandler<T> implements EntityFieldValueHandler<T> {
     private final T fieldValue;
 
-    public AbstractEntityFieldValueHandler(T fieldValue) {
+    AbstractEntityFieldValueHandler(T fieldValue) {
         this.fieldValue = fieldValue;
     }
 

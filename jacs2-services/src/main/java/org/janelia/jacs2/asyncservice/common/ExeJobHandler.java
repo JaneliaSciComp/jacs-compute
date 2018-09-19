@@ -4,11 +4,11 @@ import org.janelia.model.service.JacsJobInstanceInfo;
 
 import java.util.Collection;
 
-public interface ExeJobInfo {
-    String getScriptName();
-    String start();
+public interface ExeJobHandler {
+    String getJobInfo();
+    boolean start();
     boolean isDone();
     boolean hasFailed();
     void terminate();
-    Collection<JacsJobInstanceInfo> getJobInstanceInfos();
+    Collection<JacsJobInstanceInfo> getJobInstances();
 }

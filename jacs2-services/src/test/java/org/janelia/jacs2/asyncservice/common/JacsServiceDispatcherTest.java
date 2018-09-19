@@ -234,7 +234,7 @@ public class JacsServiceDispatcherTest {
         ServiceProcessor<?> testProcessor = mock(ServiceProcessor.class);
 
         when(jacsServiceDataPersistence.findById(any(Number.class))).then(invocation -> testServiceData);
-        when(jacsServiceDataPersistence.findServiceDependencies(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
+        when(jacsServiceDataPersistence.findDirectServiceDependencies(any(JacsServiceData.class))).thenReturn(ImmutableList.of());
         when(serviceRegistry.lookupService(testServiceData.getName())).then(invocation -> testProcessor);
 
         when(testProcessor.getMetadata()).then((Answer<ServiceMetaData>) invocation -> {

@@ -1,10 +1,19 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 import com.beust.jcommander.Parameter;
-import org.janelia.jacs2.asyncservice.common.*;
+import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
+import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceComputation;
+import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.spark.SparkApp;
-import org.janelia.jacs2.asyncservice.common.spark.SparkCluster;
+import org.janelia.jacs2.asyncservice.spark.AbstractSparkProcessor;
+import org.janelia.jacs2.asyncservice.spark.LSFSparkClusterLauncher;
+import org.janelia.jacs2.asyncservice.spark.SparkApp;
+import org.janelia.jacs2.asyncservice.spark.SparkCluster;
+import org.janelia.jacs2.asyncservice.utils.DataHolder;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
@@ -14,14 +23,14 @@ import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -39,16 +48,13 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Named("colorDepthFileSearch")
-public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
+public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
 
     private static final String RESULTS_FILENAME_SUFFIX = "_results.txt";
 
-    private final Instance<SparkCluster> clusterSource;
-    private final long clusterStartTimeoutInMillis;
+    private final ComputeAccounting clusterAccounting;
     private final long searchTimeoutInMillis;
-    private final long clusterIntervalCheckInMillis;
     private final long searchIntervalCheckInMillis;
-    private final int numNodes;
     private final String jarPath;
 
     static class ColorDepthSearchArgs extends ServiceArgs {
@@ -57,38 +63,34 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         @Parameter(names = {"-searchDirs"}, description = "Comma-delimited list of directories containing the color depth projects to search", required = true)
         String searchDirs;
         @Parameter(names = {"-dataThreshold"}, description = "Data threshold")
-        private Integer dataThreshold;
+        Integer dataThreshold;
         @Parameter(names = {"-maskThresholds"}, description = "Mask thresholds", variableArity = true)
-        private List<Integer> maskThresholds;
+        List<Integer> maskThresholds;
         @Parameter(names = {"-pixColorFluctuation"}, description = "Pix Color Fluctuation, 1.18 per slice")
-        private Double pixColorFluctuation;
+        Double pixColorFluctuation;
         @Parameter(names = {"-pctPositivePixels"}, description = "% of Positive PX Threshold (0-100%)")
-        private Double pctPositivePixels;
+        Double pctPositivePixels;
         @Parameter(names = {"-numNodes"}, description = "Number of worker nodes")
-        private Integer numNodes;
+        Integer numNodes;
         @Parameter(names = {"-parallelism"}, description = "Parallelism")
-        private Integer parallelism;
+        Integer parallelism;
     }
 
     @Inject
     ColorDepthFileSearch(ServiceComputationFactory computationFactory,
                          JacsServiceDataPersistence jacsServiceDataPersistence,
                          @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                         Instance<SparkCluster> clusterSource,
-                         @IntPropertyValue(name = "service.colorDepthSearch.clusterStartTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
+                         LSFSparkClusterLauncher clusterLauncher,
+                         ComputeAccounting clusterAccounting,
                          @IntPropertyValue(name = "service.colorDepthSearch.searchTimeoutInSeconds", defaultValue = 1200) int searchTimeoutInSeconds,
-                         @IntPropertyValue(name = "service.colorDepthSearch.clusterIntervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
                          @IntPropertyValue(name = "service.colorDepthSearch.searchIntervalCheckInMillis", defaultValue = 5000) int searchIntervalCheckInMillis,
-                         @IntPropertyValue(name = "service.colorDepthSearch.numNodes", defaultValue = 6) Integer numNodes,
+                         @IntPropertyValue(name = "service.colorDepthSearch.numNodes", defaultValue = 6) Integer defaultNumNodes,
                          @StrPropertyValue(name = "service.colorDepthSearch.jarPath") String jarPath,
                          Logger log) {
-        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, log);
-        this.clusterSource = clusterSource;
-        this.clusterStartTimeoutInMillis = clusterStartTimeoutInSeconds * 1000;
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, log);
+        this.clusterAccounting = clusterAccounting;
         this.searchTimeoutInMillis = searchTimeoutInSeconds * 1000;
-        this.clusterIntervalCheckInMillis = clusterIntervalCheckInMillis;
         this.searchIntervalCheckInMillis = searchIntervalCheckInMillis;
-        this.numNodes = numNodes;
         this.jarPath = jarPath;
     }
 
@@ -111,34 +113,82 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         };
     }
 
-    private SparkCluster startCluster(JacsServiceData jacsServiceData) {
+    @Override
+    public ServiceComputation<JacsServiceResult<List<File>>> process(JacsServiceData jacsServiceData) {
         ColorDepthSearchArgs args = getArgs(jacsServiceData);
-        // TODO: Should cache this somehow so it doesn't need to get recomputed each time
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        try {
-            SparkCluster cluster = clusterSource.get();
-            int numNodes = this.numNodes;
-            if (args.numNodes != null) {
-                numNodes = args.numNodes;
-            }
-            cluster.startCluster(jacsServiceData, serviceWorkingFolder.getServiceFolder(), numNodes);
-            // Allow user to override parallelism
-            if (args.parallelism != null) {
-                cluster.setDefaultParallelism(args.parallelism);
-            }
-            logger.info("Waiting until Spark cluster is ready...");
-            return cluster;
-        }
-        catch (Exception e) {
-            throw new ComputationException(jacsServiceData, e);
-        }
+
+        // prepare service directories
+        JacsServiceFolder serviceWorkingFolder = prepareSparkJobDirs(jacsServiceData);
+
+        // start the cluster
+        DataHolder<SparkCluster> runningClusterState = new DataHolder<>();
+        return startCluster(jacsServiceData, args, serviceWorkingFolder)
+
+                // Now run the search
+                .thenCompose((SparkCluster cluster) -> {
+                    runningClusterState.setData(cluster);
+                    jacsServiceDataPersistence.addServiceEvent(
+                            jacsServiceData,
+                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
+                                    String.format("Running app using spark job on %s (%s)",
+                                            cluster.getMasterURI(),
+                                            cluster.getJobId())));
+                    return runApp(jacsServiceData, args, cluster); // the computation completes when the app completes
+                })
+
+                // This is the "finally" block. We must always kill the cluster no matter what happens above.
+                // We don't attempt to extract the cluster from cond, because that may be null if there's an exception.
+                // Instead, we use the instance from the surrounding closure, which is guaranteed to work.
+                .whenComplete((app, exc) -> {
+                    if (runningClusterState.isPresent()) {
+                        jacsServiceDataPersistence.addServiceEvent(
+                                jacsServiceData,
+                                JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
+                                        String.format("Stop spark cluster on %s (%s)",
+                                                runningClusterState.getData().getMasterURI(),
+                                                runningClusterState.getData().getJobId())));
+                        runningClusterState.getData().stopCluster();
+                    }
+                })
+
+                // Deal with the results
+                .thenApply((app) -> {
+                    List<File> resultsFiles = FileUtils.lookupFiles(
+                                serviceWorkingFolder.getServiceFolder(), 1, "glob:**/*"+RESULTS_FILENAME_SUFFIX)
+                            .map(Path::toFile)
+                            .collect(Collectors.toList());
+
+                    return updateServiceResult(jacsServiceData, resultsFiles);
+                });
     }
 
-    private SparkApp runApp(JacsServiceData jacsServiceData, SparkCluster cluster) {
-        ColorDepthSearchArgs args = getArgs(jacsServiceData);
-        logger.info("Using args="+args);
+    private ColorDepthSearchArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ColorDepthSearchArgs());
+    }
+
+    private ServiceComputation<SparkCluster> startCluster(JacsServiceData jacsServiceData, ColorDepthSearchArgs args, JacsServiceFolder serviceWorkingFolder) {
+        int numNodes;
+        if (args.numNodes != null) {
+            numNodes = args.numNodes;
+        } else {
+            numNodes = this.defaultNumNodes;
+        }
+        return sparkClusterLauncher.startCluster(
+                numNodes,
+                serviceWorkingFolder.getServiceFolder(),
+                clusterAccounting.getComputeAccount(jacsServiceData),
+                getSparkDriverMemory(jacsServiceData.getResources()),
+                getSparkExecutorMemory(jacsServiceData.getResources()),
+                getSparkExecutorCores(jacsServiceData.getResources()),
+                getSparkLogConfigFile(jacsServiceData.getResources()));
+    }
+
+    private ServiceComputation<SparkApp> runApp(JacsServiceData jacsServiceData, ColorDepthSearchArgs args, SparkCluster cluster) {
+        logger.info("Run color depth with {}", args);
 
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
+        prepareDir(jacsServiceData.getOutputPath());
+        prepareDir(jacsServiceData.getErrorPath());
 
         List<String> inputFiles = new ArrayList<>();
         List<String> outputFiles = new ArrayList<>();
@@ -193,68 +243,21 @@ public class ColorDepthFileSearch extends AbstractServiceProcessor<List<File>> {
         appArgs.add("-o");
         appArgs.addAll(outputFiles);
 
-        String[] appArgsArr = appArgs.toArray(new String[appArgs.size()]);
-
-        try {
-            logger.info("Starting Spark application");
-            return cluster.runDefaultApp(null, jarPath, appArgsArr);
-        }
-        catch (Exception e) {
-            throw new ComputationException(jacsServiceData, e);
-        }
-    }
-
-    @Override
-    public ServiceComputation<JacsServiceResult<List<File>>> process(JacsServiceData jacsServiceData) {
-        // Create the working directory
-        // TODO: this should be managed by a FileNode interface, which has not yet been ported from JACSv1
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        try {
-            Files.createDirectories(serviceWorkingFolder.getServiceFolder());
-        } catch (IOException e) {
-            throw new ComputationException(jacsServiceData, e);
+        int parallelism;
+        if (args.parallelism != null) {
+            parallelism = args.parallelism;
+        } else {
+            parallelism = 0;
         }
 
-        SparkCluster sparkCluster = startCluster(jacsServiceData);
-
-        return computationFactory.newCompletedComputation(sparkCluster)
-
-                // Wait until the cluster has started
-                .thenSuspendUntil((SparkCluster cluster) -> continueWhenTrue(cluster.isReady(), cluster),
-                        clusterIntervalCheckInMillis, clusterStartTimeoutInMillis)
-
-                // Now run the search
-                .thenApply((SparkCluster cluster) -> {
-                    jacsServiceDataPersistence.addServiceEvent(
-                            jacsServiceData,
-                            JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT, String.format("Running app using spark job %s", cluster.getJobId())));
-                    return runApp(jacsServiceData, cluster);
-                })
-
-                // Wait until the search has completed
-                .thenSuspendUntil((SparkApp app) -> continueWhenTrue(app.isDone(), app),
-                        searchIntervalCheckInMillis, searchTimeoutInMillis)
-
-                // This is the "finally" block. We must always kill the cluster no matter what happens above.
-                // We don't attempt to extract the cluster from cond, because that may be null if there's an exception.
-                // Instead, we use the instance from the surrounding closure, which is guaranteed to work.
-                .whenComplete((app, exc) -> {
-                    sparkCluster.stopCluster();
-                })
-
-                // Deal with the results
-                .thenApply((app) -> {
-
-                    List<File> resultsFiles = FileUtils.lookupFiles(
-                                serviceWorkingFolder.getServiceFolder(), 1, "glob:**/*"+RESULTS_FILENAME_SUFFIX)
-                            .map(Path::toFile)
-                            .collect(Collectors.toList());
-
-                    return updateServiceResult(jacsServiceData, resultsFiles);
-                });
+        logger.info("Starting Spark application {} with {}", jarPath, appArgs);
+        return cluster.runApp(jarPath,
+                null,
+                parallelism,
+                jacsServiceData.getOutputPath(),
+                jacsServiceData.getErrorPath(),
+                searchIntervalCheckInMillis, searchTimeoutInMillis,
+                appArgs);
     }
 
-    private ColorDepthSearchArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ColorDepthSearchArgs());
-    }
 }

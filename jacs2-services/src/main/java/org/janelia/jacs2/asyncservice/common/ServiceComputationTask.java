@@ -17,7 +17,7 @@ class ServiceComputationTask<T> implements Runnable {
         final T result;
         final Throwable exc;
 
-        public ComputeResult(T result, Throwable exc) {
+        ComputeResult(T result, Throwable exc) {
             this.result = result;
             this.exc = exc;
         }
@@ -153,6 +153,10 @@ class ServiceComputationTask<T> implements Runnable {
 
     boolean isCompletedExceptionally() {
         return isDone() && result.exc != null;
+    }
+
+    Throwable getException() {
+        return result.exc;
     }
 
     void complete(T result) {

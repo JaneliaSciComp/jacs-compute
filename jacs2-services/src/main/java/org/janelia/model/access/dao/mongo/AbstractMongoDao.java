@@ -15,6 +15,7 @@ import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.DomainModelUtils;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
+import org.janelia.model.jacs2.NoOpFieldValueHandler;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
 import org.janelia.model.jacs2.page.PageRequest;
@@ -27,6 +28,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -133,6 +135,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     protected Bson getUpdates(Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         List<Bson> fieldUpdates = fieldsToUpdate.entrySet().stream()
                 .map(e -> getFieldUpdate(e.getKey(), e.getValue()))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         return Updates.combine(fieldUpdates);
     }
@@ -150,6 +153,8 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     private Bson getFieldUpdate(String fieldName, EntityFieldValueHandler<?> valueHandler) {
         if (valueHandler == null || valueHandler.getFieldValue() == null) {
             return Updates.unset(fieldName);
+        } else if (valueHandler instanceof NoOpFieldValueHandler) {
+            return null; // do nothing
         } else if (valueHandler instanceof AppendFieldValueHandler) {
             Object value = valueHandler.getFieldValue();
             if (value instanceof Iterable) {
