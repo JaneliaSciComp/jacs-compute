@@ -234,18 +234,18 @@ public class StorageService {
 
     private StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storageEntryUrl, String storagePath, JsonNode jsonNode) {
         JsonNode storageIdNode = jsonNode.get("storageId");
-        JsonNode storageRootLocation = jsonNode.get("storageRootLocation");
-        JsonNode storageRootPathURI = jsonNode.get("storageRootPathURI");
-        JsonNode nodeAccessURL = jsonNode.get("nodeAccessURL");
-        JsonNode nodeRelativePath = jsonNode.get("nodeRelativePath");
-        JsonNode collectionFlag = jsonNode.get("collectionFlag");
+        JsonNode storageRootLocationNode = jsonNode.get("storageRootLocation");
+        JsonNode storageRootPathURINode = jsonNode.get("storageRootPathURI");
+        JsonNode nodeAccessURLNode = jsonNode.get("nodeAccessURL");
+        JsonNode nodeRelativePathNode = jsonNode.get("nodeRelativePath");
+        JsonNode collectionFlagNode = jsonNode.get("collectionFlag");
         String storageId = null;
         if (storageIdNode != null && !storageIdNode.isNull()) {
             storageId = storageIdNode.asText();
         }
         String actualEntryURL;
-        if (nodeAccessURL != null && StringUtils.isNotBlank(nodeAccessURL.asText())) {
-            actualEntryURL = nodeAccessURL.asText();
+        if (nodeAccessURLNode != null && StringUtils.isNotBlank(nodeAccessURLNode.asText())) {
+            actualEntryURL = nodeAccessURLNode.asText();
         } else if (StringUtils.isNotBlank(storageEntryUrl)) {
             actualEntryURL = storageEntryUrl;
         } else {
@@ -259,9 +259,9 @@ public class StorageService {
                 storageId,
                 storageUrl,
                 actualEntryURL,
-                storageRootLocation.asText(),
-                new StoragePathURI(storageRootPathURI.asText()),
-                nodeRelativePath.asText(),
-                collectionFlag.asBoolean());
+                storageRootLocationNode.asText(),
+                new StoragePathURI(storageRootPathURINode.asText()),
+                nodeRelativePathNode.asText(),
+                collectionFlagNode.asBoolean());
     }
 }
