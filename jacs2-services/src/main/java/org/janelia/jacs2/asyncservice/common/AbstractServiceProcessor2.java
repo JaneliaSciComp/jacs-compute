@@ -87,8 +87,8 @@ public abstract class AbstractServiceProcessor2<U> implements ServiceProcessor<U
         if (executionContext.getServiceState() != null) {
             jacsServiceDataBuilder.setState(executionContext.getServiceState());
         }
-        jacsServiceDataBuilder.copyResourcesFrom(executionContext.getParentServiceData().getResources());
-        jacsServiceDataBuilder.copyResourcesFrom(executionContext.getResources());
+        jacsServiceDataBuilder.addResources(executionContext.getParentServiceData().getResources());
+        jacsServiceDataBuilder.addResources(executionContext.getResources());
         executionContext.getWaitFor().forEach(jacsServiceDataBuilder::addDependency);
         executionContext.getWaitForIds().forEach(jacsServiceDataBuilder::addDependencyId);
         jacsServiceDataBuilder.registerProcessingNotification(executionContext.getProcessingNotification());

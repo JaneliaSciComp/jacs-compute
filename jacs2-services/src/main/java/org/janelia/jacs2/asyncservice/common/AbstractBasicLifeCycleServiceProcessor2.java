@@ -93,7 +93,7 @@ public abstract class AbstractBasicLifeCycleServiceProcessor2<R> extends Abstrac
     }
 
     protected Function<JacsServiceData, Stream<JacsServiceData>> dependenciesGetterFunc() {
-        return (JacsServiceData serviceData) -> jacsServiceDataPersistence.findServiceDependencies(serviceData).stream();
+        return (JacsServiceData serviceData) -> jacsServiceDataPersistence.findDirectServiceDependencies(serviceData).stream();
     }
 
     @MdcContext

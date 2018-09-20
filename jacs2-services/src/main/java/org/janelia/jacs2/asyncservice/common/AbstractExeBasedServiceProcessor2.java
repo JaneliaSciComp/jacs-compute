@@ -72,7 +72,7 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
     @Override
     protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) {
         JacsServiceData sd = depsResult.getJacsServiceData();
-        ExeJobInfo jobInfo = runExternalProcess(sd);
+        ExeJobHandler jobInfo = runExternalProcess(sd);
         PeriodicallyCheckableState<JacsServiceData> periodicResultCheck = new PeriodicallyCheckableState<>(sd, jobIntervalCheck);
         return computationFactory.newCompletedComputation(periodicResultCheck)
                 .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceData> state) -> new ContinuationCond.Cond<>(state,
@@ -82,7 +82,7 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
                     JacsServiceData jacsServiceData = pdCond.getState();
 
                     // Persist all final job instance metadata
-                    Collection<JacsJobInstanceInfo> completedJobInfos = jobInfo.getJobInstanceInfos();
+                    Collection<JacsJobInstanceInfo> completedJobInfos = jobInfo.getJobInstances();
                     if (!completedJobInfos.isEmpty()) {
                         for (JacsJobInstanceInfo jacsJobInstanceInfo : completedJobInfos) {
                             jacsJobInstanceInfo.setServiceDataId(jacsServiceData.getId());
@@ -94,9 +94,9 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
                     List<String> errors = getErrors(jacsServiceData);
                     String errorMessage = null;
                     if (CollectionUtils.isNotEmpty(errors)) {
-                        errorMessage = String.format("Process %s failed; errors found: %s", jobInfo.getScriptName(), String.join(";", errors));
+                        errorMessage = String.format("Process %s failed; errors found: %s", jobInfo.getJobInfo(), String.join(";", errors));
                     } else if (jobInfo.hasFailed()) {
-                        errorMessage = String.format("Process %s failed", jobInfo.getScriptName());
+                        errorMessage = String.format("Process %s failed", jobInfo.getJobInfo());
                     }
                     if (errorMessage != null) {
                         jacsServiceDataPersistence.updateServiceState(
@@ -125,7 +125,7 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
         };
     }
 
-    private boolean hasJobFinished(JacsServiceData jacsServiceData, ExeJobInfo jobInfo) {
+    private boolean hasJobFinished(JacsServiceData jacsServiceData, ExeJobHandler jobInfo) {
         JacsServiceData updatedServiceData = refreshServiceData(jacsServiceData);
         // if the service has been canceled but the job hasn't finished terminate the job
         // if the service has been suspended let the job complete
@@ -228,7 +228,7 @@ public abstract class AbstractExeBasedServiceProcessor2<R> extends AbstractBasic
         return cmdPath.toString();
     }
 
-    private ExeJobInfo runExternalProcess(JacsServiceData jacsServiceData) {
+    private ExeJobHandler runExternalProcess(JacsServiceData jacsServiceData) {
         List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles();
         ExternalCodeBlock script = prepareExternalScript();
         Map<String, String> runtimeEnv = new LinkedHashMap<>();
