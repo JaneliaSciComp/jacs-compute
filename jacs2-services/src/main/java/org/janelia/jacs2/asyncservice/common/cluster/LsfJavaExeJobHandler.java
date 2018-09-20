@@ -86,8 +86,8 @@ public class LsfJavaExeJobHandler implements ExeJobHandler {
                     break;
                 }
             }
-            this.done = jobMetadata.isDone();
-            if (LOG.isInfoEnabled()) {
+            done = jobMetadata.isDone();
+            if (done && LOG.isInfoEnabled()) {
                 logJobInfo();
             }
         } else {
@@ -122,7 +122,7 @@ public class LsfJavaExeJobHandler implements ExeJobHandler {
             }
 
             LOG.info("Job {} was queued for {}, ran for {}, and used "+maxMem+" of memory.", jobIdStr, queueTime, runTime);
-            if (jobInfo.getExitCode()!=0) {
+            if (jobInfo.getExitCode() != 0) {
                 LOG.error("Job {} exited with code {} and reason {}", jobIdStr, jobInfo.getExitCode(), jobInfo.getExitReason());
             }
         }
