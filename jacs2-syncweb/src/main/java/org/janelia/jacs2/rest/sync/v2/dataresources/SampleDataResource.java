@@ -1,4 +1,4 @@
-package org.janelia.jacs2.rest.sync.v2;
+package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
 import org.janelia.model.jacs2.domain.sample.Sample;

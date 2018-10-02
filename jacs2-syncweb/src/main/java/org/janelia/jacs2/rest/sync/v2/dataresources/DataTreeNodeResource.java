@@ -1,16 +1,4 @@
-package org.janelia.jacs2.rest.sync.v2;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
+package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import com.google.common.collect.ImmutableList;
 import org.glassfish.jersey.server.ContainerRequest;
@@ -21,6 +9,14 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.slf4j.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+
 @RequireAuthentication
 @ApplicationScoped
 @Produces("application/json")
@@ -30,7 +26,7 @@ public class DataTreeNodeResource {
     @Inject private LegacyDomainDao folderDao;
     @Inject private Logger logger;
 
-    @PUT
+    @GET
     @Path("{node-id}")
     public Response getDataNode(@PathParam("node-id") Long dataNodeId,
                                 @Context ContainerRequest containerRequestContext) {
