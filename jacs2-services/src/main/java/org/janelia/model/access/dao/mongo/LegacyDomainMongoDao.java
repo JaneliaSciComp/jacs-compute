@@ -33,12 +33,11 @@ import java.util.*;
  */
 public class LegacyDomainMongoDao implements LegacyDomainDao {
 
-    private DomainDAO dao;
+    private final DomainDAO dao;
 
     @Inject
-    public LegacyDomainMongoDao(MongoClient mongoClient,
-                                @PropertyValue(name = "MongoDB.Database") String databaseName) {
-        this.dao = new DomainDAO(mongoClient, databaseName);
+    public LegacyDomainMongoDao(DomainDAO dao) {
+        this.dao = dao;
     }
 
     @Override
