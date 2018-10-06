@@ -2,10 +2,13 @@ package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
 
@@ -20,10 +23,11 @@ import java.util.List;
 @RequireAuthentication
 @ApplicationScoped
 @Produces("application/json")
-@Path("/data")
+@Path("/mouselight/data")
 public class WorkspaceResource {
 
     @Inject private LegacyDomainDao legacyWorkspaceDao;
+    @Inject private TmWorkspaceDao tmWorkspaceDao;
     @Inject private Logger logger;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
@@ -48,6 +52,27 @@ public class WorkspaceResource {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             logger.trace("Finished getAllWorkspace({})", subjectKey);
+        }
+    }
+
+    @ApiOperation(value = "Gets a list of TM Workspaces",
+            notes = "Returns a list of all the TM Workspaces that are accessible by the current user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully fetched the list of workspaces",  response = TmWorkspace.class,
+                    responseContainer = "List" ),
+            @ApiResponse( code = 500, message = "Error occurred while fetching the workspaces" )
+    })
+    @GET
+    @Path("/workspace")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<TmWorkspace> getTmWorkspaces(@ApiParam @QueryParam("subjectKey") String subjectKey,
+                                             @ApiParam @QueryParam("sampleId") Long sampleId) {
+        logger.trace("getTmWorkspaces({}, sampleId={})", subjectKey, sampleId);
+        if (sampleId == null) {
+            return tmWorkspaceDao.findByOwnerKey(subjectKey);
+        } else {
+            return tmWorkspaceDao.getTmWorkspacesForSample(subjectKey, sampleId);
         }
     }
 

@@ -8,6 +8,7 @@ import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.mongo.TmSampleMongoDao;
 import org.janelia.model.domain.DomainConstants;
+import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
@@ -151,12 +152,12 @@ public class TmSampleResource {
         // this is intended to be a one-time process and data returned will be stored in TmSample upon creation
         java.nio.file.Path sampleTransformPath = Paths.get(samplePath, "transform.txt");
         try {
-            Map<String,Object> constants = new HashMap<>();
-            Map<String,Integer> origin = new HashMap<>();
-            Map<String,Double> scaling = new HashMap<>();
+            Map<String, Object> constants = new HashMap<>();
+            Map<String, Integer> origin = new HashMap<>();
+            Map<String, Double> scaling = new HashMap<>();
             BufferedReader reader = Files.newBufferedReader(sampleTransformPath);
             String line;
-            Map<String, Double> values = new HashMap();
+            Map<String, Double> values = new HashMap<>();
             while ((line = reader.readLine()) != null) {
                 String[] keyVals = line.split(":");
                 if (keyVals.length == 2) {
@@ -182,6 +183,53 @@ public class TmSampleResource {
                     .entity(new ErrorResponse("Error reading " + sampleTransformPath))
                     .build();
         }
+    }
+
+    @ApiOperation(value = "Creates a new TmSample",
+            notes = "Creates a TmSample using the DomainObject parameter of the DomainQuery"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully created a TmSample", response = TmSample.class),
+            @ApiResponse( code = 500, message = "Error occurred while creating a TmSample" )
+    })
+    @PUT
+    @Path("/sample")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public TmSample createTmSample(DomainQuery query) {
+        logger.trace("createTmSample({})", query);
+        return tmSampleDao.createTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
+    }
+
+    @ApiOperation(value = "Updates an existing TmSample",
+            notes = "Updates a TmSample using the DomainObject parameter of the DomainQuery"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully updated a TmSample", response = TmSample.class),
+            @ApiResponse( code = 500, message = "Error occurred while updating a TmSample" )
+    })
+    @POST
+    @Path("/sample")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public TmSample updateTmSample(@ApiParam DomainQuery query) {
+        logger.debug("updateTmSample({})", query);
+        return tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
+    }
+
+    @ApiOperation(value = "Removes a TmSample",
+            notes = "Removes the TmSample using the TmSample Id"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully removed a TmSample"),
+            @ApiResponse( code = 500, message = "Error occurred while removing a TmSample" )
+    })
+    @DELETE
+    @Path("/sample")
+    public void removeTmSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                               @ApiParam @QueryParam("sampleId") final Long sampleId) {
+        logger.debug("removeTmSample(subjectKey: {}, sampleId: {})", subjectKey, sampleId);
+        tmSampleDao.removeTmSample(subjectKey, sampleId);
     }
 
 }
