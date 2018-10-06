@@ -1,5 +1,6 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -15,14 +16,14 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
+@Api(value = "Workspace Data Service")
 @RequireAuthentication
 @ApplicationScoped
 @Produces("application/json")
 @Path("/data")
 public class WorkspaceResource {
 
-    @Inject
-    private LegacyDomainDao workspaceDao;
+    @Inject private LegacyDomainDao legacyWorkspaceDao;
     @Inject private Logger logger;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
@@ -41,7 +42,7 @@ public class WorkspaceResource {
     public List<Workspace> getAllWorkspaces(@QueryParam("subjectKey") String subjectKey) {
         logger.trace("Start getAllWorkspace({})",subjectKey);
         try {
-            return workspaceDao.getWorkspaces(subjectKey);
+            return legacyWorkspaceDao.getWorkspaces(subjectKey);
         } catch (Exception e) {
             logger.error("Error occurred getting default workspace for {}", subjectKey, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

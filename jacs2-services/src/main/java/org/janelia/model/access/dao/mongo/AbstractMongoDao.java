@@ -12,6 +12,7 @@ import org.janelia.model.access.dao.AbstractDao;
 import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.ReadWriteDao;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.DomainModelUtils;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
@@ -54,9 +55,15 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     }
 
     private String getDomainObjectCollectionName(Class<T> entityClass) {
-        MongoMapping mongoMapping = DomainModelUtils.getMapping(entityClass);
-        Preconditions.checkArgument(mongoMapping != null, "Entity class " + entityClass.getName() + " is not annotated with MongoMapping");
-        return mongoMapping.collectionName();
+        MongoMapping mongoMapping = DomainModelUtils.getObjectAnnotation(entityClass, MongoMapping.class);
+        if (mongoMapping != null) {
+            return mongoMapping.collectionName();
+        }
+        MongoMapped mongoMapped = DomainModelUtils.getObjectAnnotation(entityClass, MongoMapped.class);
+        if (mongoMapped != null) {
+            return mongoMapped.collectionName();
+        }
+        throw new IllegalArgumentException("Entity class " + entityClass + " is not annotated with any Mongo persistence");
     }
 
     @Override

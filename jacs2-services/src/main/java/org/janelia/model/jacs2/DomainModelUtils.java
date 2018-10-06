@@ -17,6 +17,7 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -113,15 +114,15 @@ public class DomainModelUtils {
         return entityClass;
     }
 
-    public static MongoMapping getMapping(Class<?> objectClass) {
-        MongoMapping mongoMapping = null;
+    public static <A extends Annotation> A getObjectAnnotation(Class<?> objectClass, Class<A> annotationClass) {
+        A annotation = null;
         for(Class<?> clazz = objectClass; clazz != null; clazz = clazz.getSuperclass()) {
-            if (clazz.isAnnotationPresent(MongoMapping.class)) {
-                mongoMapping = clazz.getAnnotation(MongoMapping.class);
+            if (clazz.isAnnotationPresent(annotationClass)) {
+                annotation = clazz.getAnnotation(annotationClass);
                 break;
             }
         }
-        return mongoMapping;
+        return annotation;
     }
 
     public static Map<String, EntityFieldValueHandler<?>> setFullPathForFileType(HasFiles objWithFiles, FileType fileType, String fileName) {
