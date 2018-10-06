@@ -9,7 +9,7 @@ dependencies {
 
         // dependency injection
         JAVAX_ENTERPRISE_VERSION = "2.0"
-        WELD_VERSION = "3.0.2.Final"
+        WELD_VERSION = "3.0.5.Final"
         CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
         CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
         CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-core:${WELD_VERSION}"
@@ -35,7 +35,7 @@ dependencies {
 
         // JAX-RS API
         JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.1"
-        JERSEY_VERSION = "2.26"
+        JERSEY_VERSION = "2.27"
         JAX_RS_JERSEY_CORE_LIB = "org.glassfish.jersey.core:jersey-common:${JERSEY_VERSION}"
         JAX_RS_JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
         JAX_RS_JERSEY_SERVER_LIB = "org.glassfish.jersey.core:jersey-server:${JERSEY_VERSION}"

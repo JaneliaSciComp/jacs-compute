@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.rendering.RenderingType;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -25,18 +26,35 @@ import java.util.stream.Stream;
 
 @ApplicationScoped
 @Produces("application/json")
-@Path("/tiled_images")
-public class TiledImageResource {
+@Path("/mouselight")
+public class TmSampleStreamingResource {
 
     @Inject
     private Logger logger;
+
+    @GET
+    @Path("sample2DTile")
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    public Response streamTileFromCoord(
+            @QueryParam("baseDir") String baseDirParam,
+            @QueryParam("x") String xParam,
+            @QueryParam("y") String yParam,
+            @QueryParam("z") String zParam,
+            @QueryParam("zoom") String zoomParam,
+            @QueryParam("maxZoom") String maxZoomParam,
+            @QueryParam("rendering_type") RenderingType renderingType,
+            @QueryParam("axis") String axisParam) {
+        // TODO
+        return Response.ok()
+                .build(); // !!!!! FIXME
+    }
 
     @ApiOperation(value = "Tiff Stream", notes = "Streams the requested tile stored as a TIFF file")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
     @GET
-    @Path("tileAsTiffStream")
+    @Path("mouseLightTiffStream")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public Response streamTIFFTile(@QueryParam("path_hint") String pathHint) {
         return getTileTIFFFile(pathHint)

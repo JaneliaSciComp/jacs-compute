@@ -1,41 +1,16 @@
 package org.janelia.model.access.dao.mongo;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.model.Updates;
-import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.janelia.model.access.dao.AbstractDao;
-import org.janelia.model.access.dao.ReadWriteDao;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
-import org.janelia.model.jacs2.AppendFieldValueHandler;
-import org.janelia.model.jacs2.DomainModelUtils;
-import org.janelia.model.jacs2.EntityFieldValueHandler;
-import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
-import org.janelia.model.jacs2.domain.support.MongoMapping;
-import org.janelia.model.jacs2.page.PageRequest;
-import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.jacs2.page.SortCriteria;
 import org.janelia.model.jacs2.page.SortDirection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.eq;
