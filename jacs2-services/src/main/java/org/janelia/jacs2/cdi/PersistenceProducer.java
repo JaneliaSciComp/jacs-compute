@@ -109,12 +109,24 @@ public class PersistenceProducer {
         return mongoClient.getDatabase(mongoFutureDatabase);
     }
 
+    @ApplicationScoped
+    @Produces
+    public DataSource createDatasource(@PropertyValue(name = "mouselight.db.url") String dbUrl,
+                                       @PropertyValue(name = "mouselight.db.user") String dbUser,
+                                       @PropertyValue(name = "mouselight.db.password") String dbPassword) {
+        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(dbUrl, dbUser, dbPassword);
+        PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
+        ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
+        poolableConnectionFactory.setPool(connectionPool);
+        return new PoolingDataSource<>(connectionPool);
+    }
+
     @Sage
     @ApplicationScoped
     @Produces
     public DataSource createSageDatasource(@PropertyValue(name = "sage.db.url") String dbUrl,
                                            @PropertyValue(name = "sage.db.user") String dbUser,
-                                           @PropertyValue(name = "sage.db.password") String dbPassword) throws SQLException {
+                                           @PropertyValue(name = "sage.db.password") String dbPassword) {
         ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(dbUrl, dbUser, dbPassword);
         PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
         ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
