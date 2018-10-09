@@ -136,7 +136,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
         return new DaoUpdateResult(result.getMatchedCount(), result.getModifiedCount());
     }
 
-    protected Bson getUpdates(Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+    private Bson getUpdates(Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         List<Bson> fieldUpdates = fieldsToUpdate.entrySet().stream()
                 .map(e -> getFieldUpdate(e.getKey(), e.getValue()))
                 .filter(Objects::nonNull)
