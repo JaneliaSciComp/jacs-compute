@@ -16,7 +16,6 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.DomainUtils;
-import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.dto.BulkNeuronStyleUpdate;
@@ -51,7 +50,7 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data")
-public class TmWorkspaceResource {
+public class TmResource {
 
     @Inject private LegacyDomainDao legacyWorkspaceDao;
     @Inject private TmWorkspaceDao tmWorkspaceDao;
