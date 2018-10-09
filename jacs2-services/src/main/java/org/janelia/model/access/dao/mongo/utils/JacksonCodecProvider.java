@@ -26,10 +26,6 @@ public class JacksonCodecProvider implements CodecProvider {
 
     @Override
     public <T> Codec<T> get(Class<T> clazz, CodecRegistry registry) {
-//        if (Enum.class.isAssignableFrom(clazz)) {
-//            Class<? extends Enum> enumClass = (Class<? extends Enum>) clazz;
-//            return new EnumCodec(clazz);
-//        } else
         if (checkCodecApplicability(clazz)) {
             final Codec<RawBsonDocument> rawBsonDocumentCodec = registry.get(RawBsonDocument.class);
             return new Codec<T>() {
