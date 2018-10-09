@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.glassfish.jersey.media.multipart.BodyPart;
 import org.glassfish.jersey.media.multipart.BodyPartEntity;
@@ -14,8 +15,11 @@ import org.glassfish.jersey.media.multipart.MultiPartMediaTypes;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.dto.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
@@ -38,6 +42,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -293,6 +298,90 @@ public class TmWorkspaceResource {
                     subjectKey, list.get(0).getId(), list.get(0).getWorkspaceId());
         }
         return list;
+    }
+
+    @ApiOperation(value = "Gets neuron metadata given a neuronId",
+            notes = "Returns a list of neurons given their ids"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully fetched neuron metadata", response = List.class),
+            @ApiResponse( code = 500, message = "Error occurred while occurred while fetching the neurons" )
+    })
+    @GET
+    @Path("/neuron/metadata")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                                      @ApiParam @QueryParam("neuronIds") final List<Long> neuronIds) {
+        logger.info("getNeuronMetadata({}, neuronIds={})", subjectKey, neuronIds);
+        return tmNeuronMetadataDao.findByIdsAndSubjectKey(neuronIds, subjectKey);
+    }
+
+    @ApiOperation(value = "Bulk update neuron styles",
+            notes = "Update style for a list of neurons"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully bulk updated styles" ),
+            @ApiResponse( code = 500, message = "Error occurred while bulk updating styles" )
+    })
+    @POST
+    @Path("/workspace/neuronStyle")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateNeuronStyles(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                     @ApiParam final BulkNeuronStyleUpdate bulkNeuronStyleUpdate) {
+        logger.debug("updateNeuronStyles({}, {})", subjectKey, bulkNeuronStyleUpdate);
+        if (bulkNeuronStyleUpdate.getVisible() == null && StringUtils.isNotBlank(bulkNeuronStyleUpdate.getColorHex())) {
+            logger.warn("Cannot have both visible and colorhex unset");
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        } else {
+            tmNeuronMetadataDao.updateNeuronStyles(bulkNeuronStyleUpdate, subjectKey);
+            return Response.ok("DONE").build();
+        }
+    }
+
+    @ApiOperation(value = "Removes an existing neuron",
+            notes = "Removes the neuron by its id"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully removed a TmNeuron"),
+            @ApiResponse( code = 500, message = "Error occurred while removing a TmNeuron" )
+    })
+    @DELETE
+    @Path("/workspace/neuron")
+    public void removeTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                               @ApiParam @QueryParam("neuronId") final Long neuronId) {
+        logger.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
+        tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey);
+    }
+
+    @POST
+    @Path("/workspace/neuronTags")
+    @ApiOperation(value = "Add or remove tags",
+            notes = "Add or remove the given tags to a list of neurons"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully bulk updated tags" ),
+            @ApiResponse( code = 500, message = "Error occurred while bulk updating tags" )
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addNeuronTags(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                @ApiParam @QueryParam("tags") final String tags,
+                                @ApiParam @QueryParam("tagState") final boolean tagState,
+                                @ApiParam final List<Long> neuronIds) {
+        List<String> tagList = Arrays.asList(StringUtils.split(tags, ","));
+        logger.debug("addNeuronTag({}, neuronIds={}, tag={}, tagState={})",
+                subjectKey, DomainUtils.abbr(neuronIds), DomainUtils.abbr(tagList), tagState);
+        if (neuronIds.isEmpty()) {
+            logger.warn("Neuron IDs cannot be empty");
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        if (tags.isEmpty()) {
+            logger.warn("Tag list cannot be empty");
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        tmNeuronMetadataDao.updateNeuronTagsTagsForNeurons(neuronIds, tagList, tagState, subjectKey);
+        return Response.ok("DONE").build();
     }
 
 }
