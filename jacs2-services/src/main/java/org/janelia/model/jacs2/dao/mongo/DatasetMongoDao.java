@@ -5,7 +5,6 @@ import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
-import org.janelia.model.access.dao.mongo.MongoDaoHelper;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.domain.sample.DataSet;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;

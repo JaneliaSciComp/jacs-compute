@@ -7,10 +7,12 @@ import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.mongo.TmSampleMongoDao;
+import org.janelia.model.cdi.WithCache;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.workspace.Workspace;
+import org.janelia.model.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -39,6 +41,7 @@ public class TmSampleResource {
 
     @Inject private LegacyDomainDao legacyDomainDao;
     @Inject private TmSampleDao tmSampleDao;
+    @WithCache @Inject private RenderedVolumeLoader renderedVolumeLoader;
     @Inject private Logger logger;
 
     @ApiOperation(value = "Gets a list of sample root paths",
@@ -50,7 +53,7 @@ public class TmSampleResource {
             @ApiResponse( code = 500, message = "Error occurred while fetching sample paths" )
     })
     @GET
-    @Path("/sampleRootPaths")
+    @Path("sampleRootPaths")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getSampleRootPreferences(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         String updatedSubjectKey = StringUtils.defaultIfBlank(subjectKey, DomainConstants.MOUSELIGHT_GROUP_KEY);
@@ -78,7 +81,7 @@ public class TmSampleResource {
             @ApiResponse( code = 500, message = "Error occurred while updating sample paths" )
     })
     @POST
-    @Path("/sampleRootPaths")
+    @Path("sampleRootPaths")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateSampleRootPreferences(@ApiParam @QueryParam("subjectKey") final String subjectKey,
@@ -111,7 +114,7 @@ public class TmSampleResource {
             @ApiResponse( code = 500, message = "Error occurred while fetching the samples" )
     })
     @GET
-    @Path("/sample")
+    @Path("sample")
     @Produces(MediaType.APPLICATION_JSON)
     public List<TmSample> getTmSamples(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         String sampleOwnerKey = StringUtils.defaultIfBlank(subjectKey, DomainConstants.MOUSELIGHT_GROUP_KEY);
@@ -127,12 +130,42 @@ public class TmSampleResource {
             @ApiResponse( code = 500, message = "Error occurred while fetching the sample" )
     })
     @GET
-    @Path("/sample/{sampleId}")
+    @Path("sample/{sampleId}")
     @Produces(MediaType.APPLICATION_JSON)
     public TmSample getTmSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                 @ApiParam @PathParam("sampleId") final Long sampleId) {
         return tmSampleDao.findByIdAndSubjectKey(sampleId, subjectKey);
     }
+
+    @ApiOperation(value = "Get sample rendering info", notes = "Retrieve volume rendering info for the specified sample")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Sample not found or no rendering"),
+            @ApiResponse(code = 500, message = "Error occurred") })
+    @GET
+    @Path("sample/{sampleId}/sampleRenderingInfo")
+    @Produces({MediaType.APPLICATION_JSON})
+    public Response streamTileFromCoord(@PathParam("sampleId") Long sampleId) {
+        TmSample tmSample = tmSampleDao.findById(sampleId);
+        if (tmSample == null) {
+            logger.warn("No sample found for {}", sampleId);
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No sample found for " + sampleId))
+                    .build();
+        } else if (StringUtils.isBlank(tmSample.getFilepath())) {
+            logger.warn("Sample {} found but it has not rendering path", tmSample);
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No rendering path set for " + sampleId))
+                    .build();
+        }
+        return renderedVolumeLoader.loadVolume(Paths.get(tmSample.getFilepath()))
+                .map(rv -> Response.ok(rv).build())
+                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("Error getting rendering info for " + sampleId))
+                        .build())
+                ;
+    }
+
 
     @ApiOperation(value = "Gets a calculated origin by Sample path",
             notes = "Returns a map of useful constants when creating a sample (origin, scaling)"
@@ -142,7 +175,7 @@ public class TmSampleResource {
             @ApiResponse( code = 500, message = "Error occurred while fetching the sample constants" )
     })
     @GET
-    @Path("/sample/constants")
+    @Path("sample/constants")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTmSampleConstants(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                          @ApiParam @QueryParam("samplePath") final String samplePath) {
@@ -193,7 +226,7 @@ public class TmSampleResource {
             @ApiResponse( code = 500, message = "Error occurred while creating a TmSample" )
     })
     @PUT
-    @Path("/sample")
+    @Path("sample")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TmSample createTmSample(DomainQuery query) {
@@ -209,7 +242,7 @@ public class TmSampleResource {
             @ApiResponse( code = 500, message = "Error occurred while updating a TmSample" )
     })
     @POST
-    @Path("/sample")
+    @Path("sample")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TmSample updateTmSample(@ApiParam DomainQuery query) {
@@ -225,7 +258,7 @@ public class TmSampleResource {
             @ApiResponse( code = 500, message = "Error occurred while removing a TmSample" )
     })
     @DELETE
-    @Path("/sample")
+    @Path("sample")
     public void removeTmSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("sampleId") final Long sampleId) {
         logger.debug("removeTmSample(subjectKey: {}, sampleId: {})", subjectKey, sampleId);
