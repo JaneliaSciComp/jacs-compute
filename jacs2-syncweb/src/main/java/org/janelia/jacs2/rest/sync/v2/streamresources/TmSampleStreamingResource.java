@@ -6,13 +6,22 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.domain.dao.TmSampleDao;
+import org.janelia.model.cdi.WithCache;
+import org.janelia.model.domain.tiledMicroscope.TmSample;
+import org.janelia.model.rendering.CoordinateAxis;
+import org.janelia.model.rendering.RenderedVolume;
+import org.janelia.model.rendering.RenderedVolumeLoader;
 import org.janelia.model.rendering.RenderingType;
+import org.janelia.model.rendering.TileIndex;
+import org.janelia.model.rendering.TileInfo;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -20,6 +29,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -29,24 +39,63 @@ import java.util.stream.Stream;
 @Path("/mouselight")
 public class TmSampleStreamingResource {
 
-    @Inject
-    private Logger logger;
+    @Inject private TmSampleDao tmSampleDao;
+    @WithCache @Inject private RenderedVolumeLoader renderedVolumeLoader;
+    @Inject private Logger logger;
 
+    @ApiOperation(value = "Get sample tile", notes = "Returns the requested TM sample tile at the specified zoom level")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
     @GET
     @Path("sample2DTile")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public Response streamTileFromCoord(
-            @QueryParam("baseDir") String baseDirParam,
-            @QueryParam("x") String xParam,
-            @QueryParam("y") String yParam,
-            @QueryParam("z") String zParam,
-            @QueryParam("zoom") String zoomParam,
-            @QueryParam("maxZoom") String maxZoomParam,
+            @QueryParam("sampleId") Long sampleId,
+            @QueryParam("x") Integer xParam,
+            @QueryParam("y") Integer yParam,
+            @QueryParam("z") Integer zParam,
+            @QueryParam("zoom") Integer zoomParam,
+            @QueryParam("maxZoom") Integer maxZoomParam,
             @QueryParam("rendering_type") RenderingType renderingType,
-            @QueryParam("axis") String axisParam) {
-        // TODO
-        return Response.ok()
-                .build(); // !!!!! FIXME
+            @QueryParam("axis") CoordinateAxis axisParam) {
+        TmSample tmSample = tmSampleDao.findById(sampleId);
+        return streamTileFromCoord(
+                tmSample.getFilepath(),
+                xParam,
+                yParam,
+                zParam,
+                zoomParam,
+                axisParam);
+    }
+
+    private Response streamTileFromCoord(
+            String baseDir,
+            Integer xParam,
+            Integer yParam,
+            Integer zParam,
+            Integer zoomParam,
+            CoordinateAxis axisParam) {
+        return renderedVolumeLoader.loadVolume(Paths.get(baseDir))
+                .flatMap(rv -> rv.getTileInfo(axisParam)
+                        .map(tileInfo -> TileIndex.fromRavelerTileCoord(
+                                xParam,
+                                yParam,
+                                zParam,
+                                zoomParam,
+                                axisParam,
+                                tileInfo))
+                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(rv, tileIndex)))
+                .map(sliceImageBytes -> {
+                    StreamingOutput sliceImageStream = output -> {
+                        output.write(sliceImageBytes);
+                    };
+                    return sliceImageStream;
+                })
+                .map(sliceImageStream -> Response
+                        .ok(sliceImageStream, MediaType.APPLICATION_OCTET_STREAM)
+                        .build())
+                .orElseGet(() -> Response.status(Response.Status.NO_CONTENT).build());
     }
 
     @ApiOperation(value = "Tiff Stream", notes = "Streams the requested tile stored as a TIFF file")
@@ -56,7 +105,7 @@ public class TmSampleStreamingResource {
     @GET
     @Path("mouseLightTiffStream")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    public Response streamTIFFTile(@QueryParam("path_hint") String pathHint) {
+    public Response streamTIFFTile(@QueryParam("suggestedPath") String pathHint) {
         return getTileTIFFFile(pathHint)
                 .map(tileFile -> {
                     StreamingOutput tileStream = output -> {
