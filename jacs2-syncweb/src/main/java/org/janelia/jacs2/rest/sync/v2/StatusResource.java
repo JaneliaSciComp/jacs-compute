@@ -11,7 +11,6 @@ import javax.ws.rs.core.Response;
 @Path("/")
 public class StatusResource {
     @GET
-    @Path("{node-id}")
     public Response getStatus() {
         return Response
                 .ok("OK")
