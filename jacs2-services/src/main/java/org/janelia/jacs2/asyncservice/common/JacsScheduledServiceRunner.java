@@ -2,18 +2,14 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.cronservice.CronScheduledServiceManager;
-import org.janelia.model.service.JacsScheduledServiceData;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.time.Duration;
-import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

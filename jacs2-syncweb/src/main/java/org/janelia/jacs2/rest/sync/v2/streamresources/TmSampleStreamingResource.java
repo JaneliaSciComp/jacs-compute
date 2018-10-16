@@ -60,7 +60,7 @@ public class TmSampleStreamingResource {
             @QueryParam("rendering_type") RenderingType renderingType,
             @QueryParam("axis") CoordinateAxis axisParam) {
         TmSample tmSample = tmSampleDao.findById(sampleId);
-        return streamTileFromCoord(
+        return streamTileFromDirAndCoord(
                 tmSample.getFilepath(),
                 xParam,
                 yParam,
@@ -69,13 +69,20 @@ public class TmSampleStreamingResource {
                 axisParam);
     }
 
-    private Response streamTileFromCoord(
-            String baseDir,
-            Integer xParam,
-            Integer yParam,
-            Integer zParam,
-            Integer zoomParam,
-            CoordinateAxis axisParam) {
+    @ApiOperation(value = "Get sample tile", notes = "Returns the requested TM sample tile at the specified zoom level")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
+    @GET
+    @Path("2dTileFromFolder")
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    public Response streamTileFromDirAndCoord(
+            @QueryParam("folder") String baseDir,
+            @QueryParam("x") Integer xParam,
+            @QueryParam("y") Integer yParam,
+            @QueryParam("z") Integer zParam,
+            @QueryParam("zoom") Integer zoomParam,
+            @QueryParam("axis") CoordinateAxis axisParam) {
         return renderedVolumeLoader.loadVolume(Paths.get(baseDir))
                 .flatMap(rv -> rv.getTileInfo(axisParam)
                         .map(tileInfo -> TileIndex.fromRavelerTileCoord(
