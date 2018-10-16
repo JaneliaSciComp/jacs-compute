@@ -112,7 +112,7 @@ public class LSFSparkClusterLauncher {
     private ServiceComputation<Long> submitClusterJob(int numNodes, Path jobWorkingPath, String billingInfo) {
         int numSlots = nodeSlots + nodeSlots * numNodes; // master + workers
 
-        logger.info("Starting Spark cluster with {} worker nodes ({} total slots)", numNodes, numSlots);
+        logger.info("Starting Spark-{} cluster with one master + {} worker nodes ({} total slots)", sparkVersion, numNodes, numSlots);
         logger.info("Working directory: {}", jobWorkingPath);
 
         JobTemplate jt = new JobTemplate();
@@ -182,7 +182,7 @@ public class LSFSparkClusterLauncher {
                     List<String> clusterExecHosts = lsfJobInfo.getExecHosts();
                     String masterURI = clusterExecHosts
                             .stream()
-                            .filter(execHost -> StringUtils.isNotBlank(execHost))
+                            .filter(StringUtils::isNotBlank)
                             .map(execHost -> {
                                 int coreSeparatorIndex = execHost.indexOf('*');
                                 if (coreSeparatorIndex == -1) {
@@ -191,7 +191,7 @@ public class LSFSparkClusterLauncher {
                                     return execHost.substring(coreSeparatorIndex + 1);
                                 }
                             })
-                            .filter(execHost -> StringUtils.isNotBlank(execHost))
+                            .filter(StringUtils::isNotBlank)
                             .findFirst()
                             .map(execHost -> DEFAULT_SPARK_URI_SCHEME + "://" + execHost + ":" + DEFAULT_SPARK_MASTER_PORT)
                             .orElseThrow(() -> {
