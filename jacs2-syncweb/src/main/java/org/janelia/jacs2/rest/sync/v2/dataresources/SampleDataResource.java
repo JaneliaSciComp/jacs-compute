@@ -1,13 +1,13 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import org.janelia.jacs2.dataservice.sample.SageDataService;
+import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
 import org.janelia.model.jacs2.domain.sample.Sample;
-import org.janelia.jacs2.dataservice.sample.SageDataService;
-import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.page.ListResult;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
-import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.model.jacs2.sage.SlideImage;
 
 import javax.enterprise.context.ApplicationScoped;

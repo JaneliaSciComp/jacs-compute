@@ -52,10 +52,14 @@ import java.util.stream.Collectors;
 @Path("/mouselight/data")
 public class TmResource {
 
-    @Inject private LegacyDomainDao legacyWorkspaceDao;
-    @Inject private TmWorkspaceDao tmWorkspaceDao;
-    @Inject private TmNeuronMetadataDao tmNeuronMetadataDao;
-    @Inject private Logger logger;
+    @Inject
+    private LegacyDomainDao legacyWorkspaceDao;
+    @Inject
+    private TmWorkspaceDao tmWorkspaceDao;
+    @Inject
+    private TmNeuronMetadataDao tmNeuronMetadataDao;
+    @Inject
+    private Logger logger;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
@@ -64,14 +68,14 @@ public class TmResource {
             @ApiResponse(
                     code = 200, message = "Successfully got all workspaces",
                     response = Workspace.class,
-                    responseContainer =  "List"),
-            @ApiResponse( code = 500, message = "Internal Server Error getting workspaces" )
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal Server Error getting workspaces")
     })
     @GET
     @Path("/workspaces")
     @Produces(MediaType.APPLICATION_JSON)
     public List<Workspace> getAllWorkspaces(@QueryParam("subjectKey") String subjectKey) {
-        logger.trace("Start getAllWorkspace({})",subjectKey);
+        logger.trace("Start getAllWorkspace({})", subjectKey);
         try {
             return legacyWorkspaceDao.getWorkspaces(subjectKey);
         } catch (Exception e) {
@@ -86,9 +90,9 @@ public class TmResource {
             notes = "Returns a list of all the TM Workspaces that are accessible by the current user"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched the list of workspaces",  response = TmWorkspace.class,
-                    responseContainer = "List" ),
-            @ApiResponse( code = 500, message = "Error occurred while fetching the workspaces" )
+            @ApiResponse(code = 200, message = "Successfully fetched the list of workspaces", response = TmWorkspace.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Error occurred while fetching the workspaces")
     })
     @GET
     @Path("/workspace")
@@ -107,8 +111,8 @@ public class TmResource {
             notes = "Returns the TM Workspace identified by the given id"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched the workspace",  response = TmWorkspace.class),
-            @ApiResponse( code = 500, message = "Error occurred while fetching the workspace" )
+            @ApiResponse(code = 200, message = "Successfully fetched the workspace", response = TmWorkspace.class),
+            @ApiResponse(code = 500, message = "Error occurred while fetching the workspace")
     })
     @GET
     @Path("/workspace/{workspaceId}")
@@ -123,8 +127,8 @@ public class TmResource {
             notes = "Creates a TmWorkspace using the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully created a TmWorkspace", response = TmWorkspace.class),
-            @ApiResponse( code = 500, message = "Error occurred while creating a TmWorkspace" )
+            @ApiResponse(code = 200, message = "Successfully created a TmWorkspace", response = TmWorkspace.class),
+            @ApiResponse(code = 500, message = "Error occurred while creating a TmWorkspace")
     })
     @PUT
     @Path("/workspace")
@@ -141,22 +145,22 @@ public class TmResource {
             notes = "Creates a copy of the given TmWorkspace with a new name given by the parameter value of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully copies a TmWorkspace", response = TmWorkspace.class),
-            @ApiResponse( code = 500, message = "Error occurred while copying a TmWorkspace" )
+            @ApiResponse(code = 200, message = "Successfully copies a TmWorkspace", response = TmWorkspace.class),
+            @ApiResponse(code = 500, message = "Error occurred while copying a TmWorkspace")
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
         logger.debug("copyTmWorkspace({})", query);
-        return tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), (String)query.getObjectType());
+        return tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), (String) query.getObjectType());
     }
 
     @ApiOperation(value = "Updates an existing TmWorkspace",
             notes = "Updates a TmWorkspace using the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully updated a TmWorkspace", response = TmWorkspace.class),
-            @ApiResponse( code = 500, message = "Error occurred while updating a TmWorkspace" )
+            @ApiResponse(code = 200, message = "Successfully updated a TmWorkspace", response = TmWorkspace.class),
+            @ApiResponse(code = 500, message = "Error occurred while updating a TmWorkspace")
     })
     @POST
     @Path("/workspace")
@@ -171,8 +175,8 @@ public class TmResource {
             notes = "Removes the TmWorkspace using the TmWorkspace Id"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully removed a TmWorkspace"),
-            @ApiResponse( code = 500, message = "Error occurred while removing a TmWorkspace" )
+            @ApiResponse(code = 200, message = "Successfully removed a TmWorkspace"),
+            @ApiResponse(code = 500, message = "Error occurred while removing a TmWorkspace")
     })
     @DELETE
     @Path("/workspace")
@@ -186,8 +190,8 @@ public class TmResource {
             notes = "Returns a list of neurons contained in a given workspace"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched neurons", response = List.class),
-            @ApiResponse( code = 500, message = "Error occurred while occurred while fetching the neurons" )
+            @ApiResponse(code = 200, message = "Successfully fetched neurons", response = List.class),
+            @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
     @GET
     @Path("/workspace/neuron/metadata")
@@ -204,8 +208,8 @@ public class TmResource {
             notes = "Returns a list of neurons contained in a given workspace"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched neurons"),
-            @ApiResponse( code = 500, message = "Error occurred while occurred while fetching the neurons" )
+            @ApiResponse(code = 200, message = "Successfully fetched neurons"),
+            @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
     @Produces(MultiPartMediaTypes.MULTIPART_MIXED)
     public Response getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
@@ -234,8 +238,8 @@ public class TmResource {
             notes = "Creates a neuron in the given workspace"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully created a TmNeuron", response = TmNeuronMetadata.class),
-            @ApiResponse( code = 500, message = "Error occurred while creating a TmNeuron" )
+            @ApiResponse(code = 200, message = "Successfully created a TmNeuron", response = TmNeuronMetadata.class),
+            @ApiResponse(code = 500, message = "Error occurred while creating a TmNeuron")
     })
     @PUT
     @Path("/workspace/neuron")
@@ -261,8 +265,8 @@ public class TmResource {
             notes = "Updates a list of neurons' metadata and ProtoBuf-serialized annotations"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully updated TmNeurons", response = List.class),
-            @ApiResponse( code = 500, message = "Error occurred while updating TmNeurons" )
+            @ApiResponse(code = 200, message = "Successfully updated TmNeurons", response = List.class),
+            @ApiResponse(code = 500, message = "Error occurred while updating TmNeurons")
     })
     @POST
     @Path("/workspace/neuron")
@@ -274,7 +278,7 @@ public class TmResource {
         if (numParts % 2 != 0) {
             throw new IllegalArgumentException("Number of body parts is " + multiPart.getBodyParts().size() + " instead of a multiple of 2");
         }
-        logger.trace("updateTmNeurons({}, numNeurons={})",subjectKey,numParts/2);
+        logger.trace("updateTmNeurons({}, numNeurons={})", subjectKey, numParts / 2);
         List<TmNeuronMetadata> list = new ArrayList<>();
         for (int i = 0; i < numParts; i += 2) {
             BodyPart part0 = multiPart.getBodyParts().get(i);
@@ -303,8 +307,8 @@ public class TmResource {
             notes = "Returns a list of neurons given their ids"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched neuron metadata", response = List.class),
-            @ApiResponse( code = 500, message = "Error occurred while occurred while fetching the neurons" )
+            @ApiResponse(code = 200, message = "Successfully fetched neuron metadata", response = List.class),
+            @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
     @GET
     @Path("/neuron/metadata")
@@ -319,15 +323,15 @@ public class TmResource {
             notes = "Update style for a list of neurons"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully bulk updated styles" ),
-            @ApiResponse( code = 500, message = "Error occurred while bulk updating styles" )
+            @ApiResponse(code = 200, message = "Successfully bulk updated styles"),
+            @ApiResponse(code = 500, message = "Error occurred while bulk updating styles")
     })
     @POST
     @Path("/workspace/neuronStyle")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateNeuronStyles(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                     @ApiParam final BulkNeuronStyleUpdate bulkNeuronStyleUpdate) {
+                                       @ApiParam final BulkNeuronStyleUpdate bulkNeuronStyleUpdate) {
         logger.debug("updateNeuronStyles({}, {})", subjectKey, bulkNeuronStyleUpdate);
         if (bulkNeuronStyleUpdate.getVisible() == null && StringUtils.isNotBlank(bulkNeuronStyleUpdate.getColorHex())) {
             logger.warn("Cannot have both visible and colorhex unset");
@@ -342,8 +346,8 @@ public class TmResource {
             notes = "Removes the neuron by its id"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully removed a TmNeuron"),
-            @ApiResponse( code = 500, message = "Error occurred while removing a TmNeuron" )
+            @ApiResponse(code = 200, message = "Successfully removed a TmNeuron"),
+            @ApiResponse(code = 500, message = "Error occurred while removing a TmNeuron")
     })
     @DELETE
     @Path("/workspace/neuron")
@@ -359,15 +363,15 @@ public class TmResource {
             notes = "Add or remove the given tags to a list of neurons"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully bulk updated tags" ),
-            @ApiResponse( code = 500, message = "Error occurred while bulk updating tags" )
+            @ApiResponse(code = 200, message = "Successfully bulk updated tags"),
+            @ApiResponse(code = 500, message = "Error occurred while bulk updating tags")
     })
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response addNeuronTags(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                @ApiParam @QueryParam("tags") final String tags,
-                                @ApiParam @QueryParam("tagState") final boolean tagState,
-                                @ApiParam final List<Long> neuronIds) {
+                                  @ApiParam @QueryParam("tags") final String tags,
+                                  @ApiParam @QueryParam("tagState") final boolean tagState,
+                                  @ApiParam final List<Long> neuronIds) {
         List<String> tagList = Arrays.asList(StringUtils.split(tags, ","));
         logger.debug("addNeuronTag({}, neuronIds={}, tag={}, tagState={})",
                 subjectKey, DomainUtils.abbr(neuronIds), DomainUtils.abbr(tagList), tagState);
