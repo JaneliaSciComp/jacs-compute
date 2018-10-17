@@ -158,7 +158,11 @@ public class TmSampleStreamingResource {
                                 zoomParam,
                                 axisParam,
                                 tileInfo))
-                        .flatMap(tileIndex -> renderedVolumeLoader.loadSlice(rv, tileIndex)))
+                        .flatMap(tileIndex -> {
+                            logger.debug("Load tile {} ({}, {}, {}, {}, {}) from {}",
+                                    tileIndex, zoomParam, axisParam, xParam, yParam, zParam, baseFolderName);
+                            return renderedVolumeLoader.loadSlice(rv, tileIndex);
+                        }))
                 .map(sliceImageBytes -> {
                     StreamingOutput sliceImageStream = output -> {
                         output.write(sliceImageBytes);
