@@ -111,6 +111,7 @@ public class TmSampleStreamingResource {
             @QueryParam("x") Integer xParam,
             @QueryParam("y") Integer yParam,
             @QueryParam("z") Integer zParam) {
+        logger.debug("Stream tile ({}, {}, {}, {}, {}) for {}", zoom, axis, x, y, z, sampleId);
         TmSample tmSample = tmSampleDao.findById(sampleId);
         if (tmSample == null) {
             logger.warn("No sample found for {}", sampleId);
@@ -140,6 +141,7 @@ public class TmSampleStreamingResource {
             @QueryParam("x") Integer xParam,
             @QueryParam("y") Integer yParam,
             @QueryParam("z") Integer zParam) {
+        logger.debug("Stream tile ({}, {}, {}, {}, {}) from {}", zoom, axis, x, y, z, baseFolderParam);
         if (StringUtils.isBlank(baseFolderParam)) {
             logger.warn("No base folder has been specified: {}", baseFolderParam);
             return Response.status(Response.Status.BAD_REQUEST)
@@ -186,6 +188,7 @@ public class TmSampleStreamingResource {
             @QueryParam("maxZoom") Integer maxZoomParam,
             @QueryParam("rendering_type") RenderingType renderingType,
             @QueryParam("axis") CoordinateAxis axisParam) {
+        logger.debug("Stream 2D tile ({}, {}, {}, {}, {}) for {}", zoom, axis, x, y, z, sampleId);
         TmSample tmSample = tmSampleDao.findById(sampleId);
         if (tmSample == null) {
             logger.warn("No sample found for {}", sampleId);
