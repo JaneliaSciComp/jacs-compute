@@ -109,7 +109,6 @@ public class SparkAppProcessorTest {
                 clusterBillingInfo,
                 testDriverMemory,
                 testExecutorMemory,
-                0,
                 null))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
 

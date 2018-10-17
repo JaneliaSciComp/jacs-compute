@@ -62,7 +62,6 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                 accounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
-                getSparkExecutorCores(jacsServiceData.getResources()),
                 getSparkLogConfigFile(jacsServiceData.getResources()))
                 .thenCompose(sparkCluster -> {
                     runningClusterState.setData(sparkCluster);

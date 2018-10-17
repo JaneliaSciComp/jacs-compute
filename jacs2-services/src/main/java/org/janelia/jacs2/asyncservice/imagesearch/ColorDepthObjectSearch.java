@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
+import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -40,9 +41,9 @@ import java.util.stream.Collectors;
 @Named("colorDepthObjectSearch")
 public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
-    private static final int MIN_NODES = 2;
-    private static final int MAX_NODES = 16;
-    private static final int MAX_RESULTS_PER_MASK = 500;
+    private final int minNodes;
+    private final int maxNodes;
+    private final int maxResultsPerMask;
 
     static class IntegratedColorDepthSearchArgs extends ServiceArgs {
         @Parameter(names = "-searchId", description = "GUID of the ColorDepthSearch object to use", required = true)
@@ -59,10 +60,16 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                            LegacyDomainDao dao,
                            @StrPropertyValue(name = "service.colorDepthSearch.filepath") String rootPath,
+                           @IntPropertyValue(name = "service.colorDepthSearch.minNodes", defaultValue = 1) Integer minNodes,
+                           @IntPropertyValue(name = "service.colorDepthSearch.maxNodes", defaultValue = 8) Integer maxNodes,
+                           @IntPropertyValue(name = "service.colorDepthSearch.maxResultsPerMask", defaultValue = 500) Integer maxResultsPerMask,
                            ColorDepthFileSearch colorDepthFileSearch,
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.dao = dao;
+        this.minNodes = minNodes;
+        this.maxNodes = maxNodes;
+        this.maxResultsPerMask = maxResultsPerMask;
         this.colorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, colorDepthFileSearch);
         this.rootPath = rootPath;
     }
@@ -126,7 +133,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
         List<String> maskThresholds = masks.stream()
                 .map(ColorDepthMask::getMaskThreshold)
-                .map(i -> i.toString())
+                .map(Object::toString)
                 .collect(Collectors.toList());
 
         int totalFileCount = 0;
@@ -146,10 +153,11 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         }
         logger.info("Searching {} directories with {} total images", search.getDataSets().size(), totalFileCount);
 
-        // Approximate increasing nodes, with logarithmic drop-off so that we don't take the whole cluster.
-        // At worse, this will take 16 nodes, no matter the number of files needing to be searched.
-        int desiredNodes = (int)Math.ceil(Math.log10((double)totalFileCount)*2);
-        int numNodes = Math.max(Math.min(desiredNodes, MAX_NODES), MIN_NODES);
+        // Curve fitting using https://www.desmos.com/calculator
+        // This equation was found using https://mycurvefit.com
+        int desiredNodes = (int)Math.round(0.2 * Math.pow(totalFileCount, 0.32));
+
+        int numNodes = Math.max(Math.min(desiredNodes, maxNodes), minNodes);
         int filesPerNode = (int)Math.round((double)totalFileCount/(double)numNodes);
         logger.info("Using {} worker nodes, with {} files per node", numNodes, filesPerNode);
 
@@ -213,7 +221,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                 int c = 0;
                                 int score = Integer.parseInt(s[c++].trim());
                                 double scorePct = Double.parseDouble(s[c++].trim());
-                                String filepath = s[c++].trim();
+                                String filepath = s[c].trim();
 
                                 ColorDepthMatch match = new ColorDepthMatch();
                                 match.setMaskRef(maskRef);
@@ -222,8 +230,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                 match.setScorePercent(scorePct);
                                 colorDepthResult.addMatch(match);
 
-                                if (++i>=MAX_RESULTS_PER_MASK) {
-                                    logger.warn("Too many results returned, truncating at "+MAX_RESULTS_PER_MASK);
+                                if (++i>=maxResultsPerMask) {
+                                    logger.warn("Too many results returned, truncating at {}", maxResultsPerMask);
                                     break;
                                 }
                             }

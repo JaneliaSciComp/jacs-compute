@@ -51,7 +51,6 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
                 sparkClusterLauncher.calculateDefaultParallelism(getRequestedNodes(jacsServiceData.getResources())),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
-                getSparkExecutorCores(jacsServiceData.getResources()),
                 getSparkLogConfigFile(jacsServiceData.getResources()))
                 .thenApply(sparkCluster -> {
                     jacsServiceDataPersistence.addServiceEvent(

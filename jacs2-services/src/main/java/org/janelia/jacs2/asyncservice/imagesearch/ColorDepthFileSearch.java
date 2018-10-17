@@ -179,7 +179,6 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
                 clusterAccounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
-                getSparkExecutorCores(jacsServiceData.getResources()),
                 getSparkLogConfigFile(jacsServiceData.getResources()));
     }
 

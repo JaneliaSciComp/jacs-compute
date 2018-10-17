@@ -45,7 +45,6 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
                 sparkClusterLauncher.calculateDefaultParallelism(getRequestedNodes(jacsServiceData.getResources())),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
-                getSparkExecutorCores(jacsServiceData.getResources()),
                 getSparkLogConfigFile(jacsServiceData.getResources()))
                 .thenCompose(sparkCluster -> {
                     jacsServiceDataPersistence.addServiceEvent(

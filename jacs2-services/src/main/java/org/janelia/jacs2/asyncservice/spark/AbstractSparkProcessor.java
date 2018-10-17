@@ -23,7 +23,7 @@ abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor
                                      JacsServiceDataPersistence jacsServiceDataPersistence,
                                      @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                      LSFSparkClusterLauncher sparkClusterLauncher,
-                                     @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 2) Integer defaultNumNodes,
+                                     @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 1) Integer defaultNumNodes,
                                      Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sparkClusterLauncher = sparkClusterLauncher;
@@ -58,12 +58,6 @@ abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor
 
     protected String getSparkExecutorMemory(Map<String, String> serviceResources) {
         return serviceResources.get("spark.executorMemory");
-    }
-
-    protected int getSparkExecutorCores(Map<String, String> serviceResources) {
-        String sparkExecutorCores = StringUtils.defaultIfBlank(serviceResources.get("spark.executorCores"), "0");
-        int executorCores = Integer.parseInt(sparkExecutorCores);
-        return executorCores <= 0 ? 0 : executorCores;
     }
 
     Long getSparkAppIntervalCheckInMillis(Map<String, String> serviceResources) {

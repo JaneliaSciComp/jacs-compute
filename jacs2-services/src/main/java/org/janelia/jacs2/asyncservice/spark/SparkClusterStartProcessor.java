@@ -121,7 +121,6 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                 accounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
-                getSparkExecutorCores(jacsServiceData.getResources()),
                 getSparkLogConfigFile(jacsServiceData.getResources()));
     }
 }

@@ -105,7 +105,6 @@ public class ColorDepthFileSearchTest {
                 clusterBillingInfo,
                 null,
                 null,
-                0,
                 null))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
 
