@@ -1,28 +1,34 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
-import org.janelia.model.access.domain.dao.mongo.TmSampleMongoDao;
-import org.janelia.model.cdi.WithCache;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
-import org.janelia.model.domain.workspace.Workspace;
-import org.janelia.model.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -39,18 +45,20 @@ import java.util.Map;
 @Path("/mouselight/data")
 public class TmSampleResource {
 
-    @Inject private LegacyDomainDao legacyDomainDao;
-    @Inject private TmSampleDao tmSampleDao;
-    @WithCache @Inject private RenderedVolumeLoader renderedVolumeLoader;
-    @Inject private Logger logger;
+    @Inject
+    private LegacyDomainDao legacyDomainDao;
+    @Inject
+    private TmSampleDao tmSampleDao;
+    @Inject
+    private Logger logger;
 
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched the list of sample paths",  response = String.class,
-                    responseContainer = "List" ),
-            @ApiResponse( code = 500, message = "Error occurred while fetching sample paths" )
+            @ApiResponse(code = 200, message = "Successfully fetched the list of sample paths", response = String.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Error occurred while fetching sample paths")
     })
     @GET
     @Path("sampleRootPaths")
@@ -77,8 +85,8 @@ public class TmSampleResource {
             notes = "Updates the sample root paths used for LVV sample discovery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully updated sample paths", response = TmSample.class),
-            @ApiResponse( code = 500, message = "Error occurred while updating sample paths" )
+            @ApiResponse(code = 200, message = "Successfully updated sample paths", response = TmSample.class),
+            @ApiResponse(code = 500, message = "Error occurred while updating sample paths")
     })
     @POST
     @Path("sampleRootPaths")
@@ -109,9 +117,9 @@ public class TmSampleResource {
             notes = "Returns a list of all the TM Samples that are accessible by the current user"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched the list of samples",  response = TmSample.class,
-                    responseContainer = "List" ),
-            @ApiResponse( code = 500, message = "Error occurred while fetching the samples" )
+            @ApiResponse(code = 200, message = "Successfully fetched the list of samples", response = TmSample.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Error occurred while fetching the samples")
     })
     @GET
     @Path("sample")
@@ -126,8 +134,8 @@ public class TmSampleResource {
             notes = "Returns the TM Sample identified by the given id"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched the sample",  response = TmSample.class),
-            @ApiResponse( code = 500, message = "Error occurred while fetching the sample" )
+            @ApiResponse(code = 200, message = "Successfully fetched the sample", response = TmSample.class),
+            @ApiResponse(code = 500, message = "Error occurred while fetching the sample")
     })
     @GET
     @Path("sample/{sampleId}")
@@ -137,42 +145,12 @@ public class TmSampleResource {
         return tmSampleDao.findByIdAndSubjectKey(sampleId, subjectKey);
     }
 
-    @ApiOperation(value = "Get sample rendering info", notes = "Retrieve volume rendering info for the specified sample")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 404, message = "Sample not found or no rendering"),
-            @ApiResponse(code = 500, message = "Error occurred") })
-    @GET
-    @Path("sample/{sampleId}/sampleRenderingInfo")
-    @Produces({MediaType.APPLICATION_JSON})
-    public Response streamTileFromCoord(@PathParam("sampleId") Long sampleId) {
-        TmSample tmSample = tmSampleDao.findById(sampleId);
-        if (tmSample == null) {
-            logger.warn("No sample found for {}", sampleId);
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No sample found for " + sampleId))
-                    .build();
-        } else if (StringUtils.isBlank(tmSample.getFilepath())) {
-            logger.warn("Sample {} found but it has not rendering path", tmSample);
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No rendering path set for " + sampleId))
-                    .build();
-        }
-        return renderedVolumeLoader.loadVolume(Paths.get(tmSample.getFilepath()))
-                .map(rv -> Response.ok(rv).build())
-                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("Error getting rendering info for " + sampleId))
-                        .build())
-                ;
-    }
-
-
     @ApiOperation(value = "Gets a calculated origin by Sample path",
             notes = "Returns a map of useful constants when creating a sample (origin, scaling)"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched the sample path constants",  response = Map.class),
-            @ApiResponse( code = 500, message = "Error occurred while fetching the sample constants" )
+            @ApiResponse(code = 200, message = "Successfully fetched the sample path constants", response = Map.class),
+            @ApiResponse(code = 500, message = "Error occurred while fetching the sample constants")
     })
     @GET
     @Path("sample/constants")
@@ -222,8 +200,8 @@ public class TmSampleResource {
             notes = "Creates a TmSample using the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully created a TmSample", response = TmSample.class),
-            @ApiResponse( code = 500, message = "Error occurred while creating a TmSample" )
+            @ApiResponse(code = 200, message = "Successfully created a TmSample", response = TmSample.class),
+            @ApiResponse(code = 500, message = "Error occurred while creating a TmSample")
     })
     @PUT
     @Path("sample")
@@ -238,8 +216,8 @@ public class TmSampleResource {
             notes = "Updates a TmSample using the DomainObject parameter of the DomainQuery"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully updated a TmSample", response = TmSample.class),
-            @ApiResponse( code = 500, message = "Error occurred while updating a TmSample" )
+            @ApiResponse(code = 200, message = "Successfully updated a TmSample", response = TmSample.class),
+            @ApiResponse(code = 500, message = "Error occurred while updating a TmSample")
     })
     @POST
     @Path("sample")
@@ -254,8 +232,8 @@ public class TmSampleResource {
             notes = "Removes the TmSample using the TmSample Id"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully removed a TmSample"),
-            @ApiResponse( code = 500, message = "Error occurred while removing a TmSample" )
+            @ApiResponse(code = 200, message = "Successfully removed a TmSample"),
+            @ApiResponse(code = 500, message = "Error occurred while removing a TmSample")
     })
     @DELETE
     @Path("sample")
