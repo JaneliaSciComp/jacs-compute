@@ -50,7 +50,7 @@ public class TmSampleStreamingResource {
             @ApiResponse(code = 404, message = "Sample not found or no rendering"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("samples/{sampleId}/rendering/metadata")
+    @Path("samples/{sampleId}/volume_info")
     @Produces({MediaType.APPLICATION_JSON})
     public Response getSampleVolumeInfo(@PathParam("sampleId") Long sampleId) {
         TmSample tmSample = tmSampleDao.findById(sampleId);
@@ -79,7 +79,7 @@ public class TmSampleStreamingResource {
             @ApiResponse(code = 404, message = "Sample not found or no rendering"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("rendering/metadata/{baseFolder:.*}")
+    @Path("volume_info/{baseFolder:.*}")
     @Produces({MediaType.APPLICATION_JSON})
     public Response getVolumeInfoFromBaseFolder(@PathParam("baseFolder") String baseFolderParam) {
         if (StringUtils.isBlank(baseFolderParam)) {
