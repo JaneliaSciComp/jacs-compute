@@ -72,7 +72,7 @@ public class GenericAsyncServiceProcessor extends AbstractServiceProcessor<Void>
     @Override
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         JacsServiceData submittedService = submit(jacsServiceData);
-        PeriodicallyCheckableState<JacsServiceData> submittedServiceStateCheck = new PeriodicallyCheckableState<>(submittedService, ProcessorHelper.getSoftJobDurationLimitInSeconds(jacsServiceData.getResources()) / 100);
+        PeriodicallyCheckableState<JacsServiceData> submittedServiceStateCheck = new PeriodicallyCheckableState<>(submittedService, ProcessorHelper.getSoftJobDurationLimitInSeconds(submittedService.getResources()) / 100);
         return computationFactory.newCompletedComputation(submittedServiceStateCheck)
                 .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceData> sdState) -> new ContinuationCond.Cond<>(sdState, sdState.updateCheckTime() && isDone(sdState)))
                 .thenApply((PeriodicallyCheckableState<JacsServiceData> sdState) -> getResult(sdState))
