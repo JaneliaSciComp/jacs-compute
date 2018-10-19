@@ -1,10 +1,12 @@
-package org.janelia.jacs2.asyncservice.common;
+package org.janelia.jacs2.asyncservice.impl;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
+import org.janelia.jacs2.asyncservice.common.JacsServiceQueue;
+import org.janelia.jacs2.asyncservice.common.ServiceProcessor;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;

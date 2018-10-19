@@ -20,10 +20,13 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @MdcContext
@@ -51,30 +54,23 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     @Override
     public JacsServiceData createServiceData(ServiceExecutionContext executionContext, List<ServiceArg> args) {
         ServiceMetaData smd = getMetadata();
+        List<String> serviceArgs = args.stream().flatMap(arg -> Stream.of(arg.toStringArray())).collect(Collectors.toList());
+        return createServiceData(smd.getServiceName(), executionContext, serviceArgs);
+    }
+
+    JacsServiceData createServiceData(String defaultService, ServiceExecutionContext executionContext, List<String> serviceArgs) {
         JacsServiceDataBuilder jacsServiceDataBuilder =
-                new JacsServiceDataBuilder(executionContext.getParentServiceData())
+                new JacsServiceDataBuilder(executionContext.getParentService())
                         .setDescription(executionContext.getDescription());
-        if (executionContext.getServiceName() != null) {
-            jacsServiceDataBuilder.setName(executionContext.getServiceName());
-        } else {
-            jacsServiceDataBuilder.setName(smd.getServiceName());
-        }
-        if (executionContext.getProcessingLocation() != null) {
-            jacsServiceDataBuilder.setProcessingLocation(executionContext.getProcessingLocation());
-        } else {
-            jacsServiceDataBuilder.setProcessingLocation(executionContext.getParentServiceData().getProcessingLocation());
-        }
-        if (StringUtils.isNotBlank(executionContext.getWorkspace())) {
-            jacsServiceDataBuilder.setWorkspace(executionContext.getWorkspace());
-        } else if (StringUtils.isNotBlank(executionContext.getParentWorkspace())) {
-            jacsServiceDataBuilder.setWorkspace(executionContext.getParentWorkspace());
-        }
-        jacsServiceDataBuilder.addArgs(args.stream().flatMap(arg -> Stream.of(arg.toStringArray())).toArray(String[]::new));
+        jacsServiceDataBuilder.setName(executionContext.getServiceName(defaultService));
+        jacsServiceDataBuilder.setProcessingLocation(executionContext.getProcessingLocation());
+        jacsServiceDataBuilder.setWorkspace(executionContext.getWorkspace());
+        jacsServiceDataBuilder.addArgs(serviceArgs);
         jacsServiceDataBuilder.setDictionaryArgs(executionContext.getDictionaryArgs());
         if (executionContext.getServiceState() != null) {
             jacsServiceDataBuilder.setState(executionContext.getServiceState());
         }
-        jacsServiceDataBuilder.addResources(executionContext.getParentServiceData().getResources());
+        jacsServiceDataBuilder.addResources(executionContext.getResourcesFromParent());
         jacsServiceDataBuilder.addResources(executionContext.getResources());
         executionContext.getWaitFor().forEach(jacsServiceDataBuilder::addDependency);
         executionContext.getWaitForIds().forEach(jacsServiceDataBuilder::addDependencyId);

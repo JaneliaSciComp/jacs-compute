@@ -263,8 +263,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         } else {
             Map<String, Object> actualDictionaryArgs = new LinkedHashMap<>();
             dictionaryArgs.forEach((k, v) -> {
-                Object actualValue = serviceArgs.get(k);
-                actualDictionaryArgs.put(k, actualValue != null ? actualValue : v);
+                actualDictionaryArgs.put(k, serviceArgs.containsKey(k) ? serviceArgs.get(k) : v);
             });
             return actualDictionaryArgs;
         }

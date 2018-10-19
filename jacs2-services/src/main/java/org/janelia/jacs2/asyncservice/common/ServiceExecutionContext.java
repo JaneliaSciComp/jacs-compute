@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ProcessingLocation;
@@ -18,9 +19,8 @@ public class ServiceExecutionContext {
     public static class Builder {
         private final ServiceExecutionContext serviceExecutionContext;
 
-        public Builder(JacsServiceData parentServiceData) {
-            Preconditions.checkArgument(parentServiceData != null);
-            serviceExecutionContext = new ServiceExecutionContext(parentServiceData);
+        public Builder(JacsServiceData parentService) {
+            serviceExecutionContext = new ServiceExecutionContext(parentService);
         }
 
         public Builder processingLocation(ProcessingLocation processingLocation) {
@@ -109,7 +109,7 @@ public class ServiceExecutionContext {
         }
     }
 
-    private final JacsServiceData parentServiceData;
+    private final JacsServiceData parentService;
     private ProcessingLocation processingLocation;
     private String serviceName;
     private String workspace;
@@ -122,17 +122,25 @@ public class ServiceExecutionContext {
     private RegisteredJacsNotification processingNotification;
     private final Map<String, RegisteredJacsNotification> processingStageNotifications = new HashMap<>();
 
-    private ServiceExecutionContext(JacsServiceData parentServiceData) {
-        this.parentServiceData = parentServiceData;
-        ResourceHelper.setAuthToken(resources, ResourceHelper.getAuthToken(parentServiceData.getResources()));
+    private ServiceExecutionContext(JacsServiceData parentService) {
+        this.parentService = parentService;
+        if (parentService != null) {
+            ResourceHelper.setAuthToken(resources, ResourceHelper.getAuthToken(parentService.getResources()));
+        }
     }
 
-    JacsServiceData getParentServiceData() {
-        return parentServiceData;
+    JacsServiceData getParentService() {
+        return parentService;
     }
 
     ProcessingLocation getProcessingLocation() {
-        return processingLocation;
+        if (processingLocation != null) {
+            return processingLocation;
+        } else if (parentService != null) {
+            return parentService.getProcessingLocation();
+        } else {
+            return null;
+        }
     }
 
     List<JacsServiceData> getWaitFor() {
@@ -147,22 +155,27 @@ public class ServiceExecutionContext {
         return serviceState;
     }
 
-    String getServiceName() {
-        return serviceName;
+    String getServiceName(String defaultServiceName) {
+        return StringUtils.defaultIfBlank(serviceName, defaultServiceName);
     }
 
     String getWorkspace() {
-        return workspace;
-    }
-
-    String getParentWorkspace() {
-        return parentServiceData != null ? parentServiceData.getWorkspace() : null;
+        if (StringUtils.isNotBlank(workspace)) {
+            return workspace;
+        } else if (parentService != null) {
+            return parentService.getWorkspace();
+        } else {
+            return null;
+        }
     }
 
     String getDescription() {
         return description;
     }
 
+    Map<String, String> getResourcesFromParent() {
+        return parentService != null ? ImmutableMap.copyOf(parentService.getResources()) : ImmutableMap.of();
+    }
     Map<String, String> getResources() {
         return resources;
     }

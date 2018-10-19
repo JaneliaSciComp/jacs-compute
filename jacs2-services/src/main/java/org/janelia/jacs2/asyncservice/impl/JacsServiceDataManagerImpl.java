@@ -1,4 +1,4 @@
-package org.janelia.jacs2.asyncservice.common;
+package org.janelia.jacs2.asyncservice.impl;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;

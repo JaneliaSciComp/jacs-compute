@@ -339,9 +339,8 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
 
     // Creates json file from http call
     private InputStream getJsonConfig(String configAddress, String stepName) {
-        Client httpclient = null;
+        Client httpclient = HttpUtils.createHttpClient();
         try {
-            httpclient = HttpUtils.createHttpClient();
             WebTarget target;
             if ("generateMiniStacks".equals(stepName)) {
                 // the address must already contain the desired step but I want to check that is present

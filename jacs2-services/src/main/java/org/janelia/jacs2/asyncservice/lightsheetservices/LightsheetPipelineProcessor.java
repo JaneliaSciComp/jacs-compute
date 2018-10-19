@@ -79,7 +79,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
         String configOutputPath =  argumentsToRunJob.get("configOutputPath");
         ServiceComputation<JacsServiceResult<Void>> stage = lightsheetPipelineStepProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
-                        .description("Step 0: " + currentJobStepNames[0])
+                        .description("Step 1: " + currentJobStepNames[0])
                         .addDictionaryArgs(getStepDictionaryArgs(jacsServiceData.getDictionaryArgs(), currentJobStepNames[0]))
                         .addDictionaryArgs(getStepDictionaryArgs(jacsServiceData.getDictionaryArgs(), currentJobStepNames[0] + ".0"))
                         .build(),
@@ -89,20 +89,20 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                 new ServiceArg("-configOutputPath", configOutputPath)
         );
         int nSteps = currentJobStepNames.length;
-        for (int i = 1; i < nSteps; i++) {
+        for (int i = 2; i < nSteps; i++) {
             final int stepIndex=i;
-            stage = stage.thenCompose(previousStageResult -> lightsheetPipelineStepProcessor.process(
-                        new ServiceExecutionContext.Builder(jacsServiceData)
-                                .description("Step " + String.valueOf(stepIndex) + ": " +currentJobStepNames[stepIndex])
-                                .addDictionaryArgs(getStepDictionaryArgs(jacsServiceData.getDictionaryArgs(), currentJobStepNames[stepIndex]))
-                                .addDictionaryArgs(getStepDictionaryArgs(jacsServiceData.getDictionaryArgs(), currentJobStepNames[stepIndex] + "." + stepIndex))
-                                .waitFor(previousStageResult.getJacsServiceData()) // for dependency based on previous step
-                                .build(),
-                        new ServiceArg("-step", currentJobStepNames[stepIndex]),
-                        new ServiceArg("-stepIndex", stepIndex),
-                        new ServiceArg("-configAddress", args.configAddress),
-                        new ServiceArg("-configOutputPath", configOutputPath)
-                ))
+            stage.thenCompose(previousStageResult -> lightsheetPipelineStepProcessor.process(
+                    new ServiceExecutionContext.Builder(jacsServiceData)
+                            .description("Step " + String.valueOf(stepIndex) + ": " + currentJobStepNames[stepIndex])
+                            .addDictionaryArgs(getStepDictionaryArgs(jacsServiceData.getDictionaryArgs(), currentJobStepNames[stepIndex]))
+                            .addDictionaryArgs(getStepDictionaryArgs(jacsServiceData.getDictionaryArgs(), currentJobStepNames[stepIndex] + "." + stepIndex))
+                            .waitFor(previousStageResult.getJacsServiceData()) // for dependency based on previous step
+                            .build(),
+                    new ServiceArg("-step", currentJobStepNames[stepIndex]),
+                    new ServiceArg("-stepIndex", stepIndex),
+                    new ServiceArg("-configAddress", args.configAddress),
+                    new ServiceArg("-configOutputPath", configOutputPath)
+            ))
             ;
         }
         return stage.thenApply((JacsServiceResult<Void> lastStepResult) -> new JacsServiceResult<>(jacsServiceData, lastStepResult.getResult()));

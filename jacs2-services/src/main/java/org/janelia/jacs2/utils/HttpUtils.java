@@ -18,28 +18,8 @@ import java.security.cert.X509Certificate;
 
 public class HttpUtils {
 
-    public static Client createHttpClient() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance("TLSv1");
-        TrustManager[] trustManagers = {
-                new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
-                        // Everyone is trusted
-                    }
-
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
-                        // Everyone is trusted
-                    }
-
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                }
-        };
-        sslContext.init(null, trustManagers, new SecureRandom());
-
+    public static Client createHttpClient() {
+        SSLContext sslContext = createSSLContext();
         ObjectMapper objectMapper = ObjectMapperFactory.instance().newObjectMapper();
         JacksonJaxbJsonProvider jacksonProvider = new JacksonJaxbJsonProvider();
         jacksonProvider.setMapper(objectMapper);
@@ -51,5 +31,33 @@ public class HttpUtils {
                 .hostnameVerifier((s, sslSession) -> true)
                 .register(MultiPartFeature.class)
                 .build();
+    }
+
+    private static SSLContext createSSLContext() {
+        try {
+            SSLContext sslContext = SSLContext.getInstance("TLSv1");
+            TrustManager[] trustManagers = {
+                    new X509TrustManager() {
+                        @Override
+                        public void checkClientTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
+                            // Everyone is trusted
+                        }
+
+                        @Override
+                        public void checkServerTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
+                            // Everyone is trusted
+                        }
+
+                        @Override
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return new X509Certificate[0];
+                        }
+                    }
+            };
+            sslContext.init(null, trustManagers, new SecureRandom());
+            return sslContext;
+        } catch (Exception e) {
+            throw new IllegalStateException("Error initilizing SSL context", e);
+        }
     }
 }
