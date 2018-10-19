@@ -87,7 +87,7 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
             String stepServiceName = getServiceName(serviceConfig);
             if (shouldIdRunStep.test(stepServiceName)) {
                 int stepIndex = index;
-                stage.thenCompose(previousStageResult -> genericAsyncServiceProcessor.process(
+                stage = stage.thenCompose(previousStageResult -> genericAsyncServiceProcessor.process(
                         new ServiceExecutionContext.Builder(jacsServiceData)
                                 .description("Step " + stepIndex + ":" + stepServiceName)
                                 .waitFor(previousStageResult.getJacsServiceData())
@@ -103,7 +103,7 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
             }
         }
         // wait until all steps are done and then return the last result
-        return  stage.thenSuspendUntil((JacsServiceResult<Void> lastStepResult) -> new ContinuationCond.Cond<>(lastStepResult, areAllDependenciesDone(jacsServiceData)))
+        return stage.thenSuspendUntil((JacsServiceResult<Void> lastStepResult) -> new ContinuationCond.Cond<>(lastStepResult, areAllDependenciesDone(jacsServiceData)))
                 .thenApply((JacsServiceResult<Void> lastStepResult) -> new JacsServiceResult<>(jacsServiceData, lastStepResult.getResult()));
     }
 
