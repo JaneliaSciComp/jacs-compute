@@ -24,7 +24,7 @@ public class ServiceExecutionContext {
         }
 
         public Builder processingLocation(ProcessingLocation processingLocation) {
-            serviceExecutionContext.processingLocation = processingLocation;
+            if (processingLocation != null) serviceExecutionContext.processingLocation = processingLocation;
             return this;
         }
 

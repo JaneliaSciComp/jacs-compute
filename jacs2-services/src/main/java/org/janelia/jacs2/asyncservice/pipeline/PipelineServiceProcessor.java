@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.GenericAsyncServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -15,6 +16,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.utils.HttpUtils;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.ProcessingLocation;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -89,6 +91,7 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
                         new ServiceExecutionContext.Builder(jacsServiceData)
                                 .description("Step " + stepIndex + ":" + stepServiceName)
                                 .waitFor(previousStageResult.getJacsServiceData())
+                                .processingLocation(getServiceProcessingLocation(serviceConfig))
                                 .addResources(jacsServiceData.getResources())
                                 .addResources(getServiceResources(serviceConfig))
                                 .addDictionaryArgs(getServiceDictionaryArgs(serviceConfig))
@@ -99,7 +102,9 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
                 index++;
             }
         }
-        return stage.thenApply((JacsServiceResult<Void> lastStepResult) -> new JacsServiceResult<>(jacsServiceData, lastStepResult.getResult()));
+        // wait until all steps are done and then return the last result
+        return  stage.thenSuspendUntil((JacsServiceResult<Void> lastStepResult) -> new ContinuationCond.Cond<>(lastStepResult, areAllDependenciesDone(jacsServiceData)))
+                .thenApply((JacsServiceResult<Void> lastStepResult) -> new JacsServiceResult<>(jacsServiceData, lastStepResult.getResult()));
     }
 
     private PipelineProcessingArgs getArgs(JacsServiceData jacsServiceData) {
@@ -158,4 +163,12 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
         return serviceKeyArgs != null ? serviceKeyArgs : Collections.emptyMap();
     }
 
+    private ProcessingLocation getServiceProcessingLocation(Map<String, Object> serviceConfig) {
+        String serviceProcessingLocation = (String) serviceConfig.get("serviceProcessingLocation");
+        if (StringUtils.isNotBlank(serviceProcessingLocation)) {
+            return ProcessingLocation.valueOf(serviceProcessingLocation);
+        } else {
+            return null;
+        }
+    }
 }

@@ -230,6 +230,7 @@ public class PipelineServiceProcessorTest {
                 "  \"pipelineServices\": [\n" +
                 "    {\n" +
                 "      \"serviceName\": \"s1\",\n" +
+                "      \"serviceProcessingLocation\": \"LSF_JAVA\",\n" +
                 "      \"serviceArgs\": [\"-s1.f1\", \"s1.v1\", \"-s1.f2\", \"s1.v2\"],\n" +
                 "      \"serviceResources\": {\n" +
                 "        \"r1\": \"r1\",\n" +
