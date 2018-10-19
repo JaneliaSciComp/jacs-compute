@@ -211,10 +211,6 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
     }
 
     private Map<String, String> prepareResources(LightsheetPipelineStepArgs args, Map<String, String> jobResources) {
-        String cpuType = ProcessorHelper.getCPUType(jobResources);
-        if (StringUtils.isBlank(cpuType)) {
-            ProcessorHelper.setCPUType(jobResources, "broadwell");
-        }
         ProcessorHelper.setRequiredSlots(jobResources, args.step.getRecommendedSlots());
         ProcessorHelper.setSoftJobDurationLimitInSeconds(jobResources, 5*60); // 5 minutes
         ProcessorHelper.setHardJobDurationLimitInSeconds(jobResources, 12*60*60); // 12 hours
