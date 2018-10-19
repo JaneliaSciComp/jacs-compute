@@ -4,11 +4,7 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.model.service.JacsServiceData;
 
-public class EmptyServiceResultHandler<T> implements ServiceResultHandler<T> {
-    @Override
-    public boolean isResultReady(JacsServiceResult<?> depResults) {
-        return true;
-    }
+public abstract class AbstractEmptyServiceResultHandler<T> implements ServiceResultHandler<T> {
 
     @Override
     public T collectResult(JacsServiceResult<?> depResults) {

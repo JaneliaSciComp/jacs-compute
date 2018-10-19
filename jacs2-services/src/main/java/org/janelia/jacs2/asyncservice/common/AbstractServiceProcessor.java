@@ -3,7 +3,7 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractEmptyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
@@ -79,7 +79,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
 
     @Override
     public ServiceResultHandler<R> getResultHandler() {
-        return new EmptyServiceResultHandler<R>() {
+        return new AbstractEmptyServiceResultHandler<R>() {
             @Override
             public boolean isResultReady(JacsServiceResult depResults) {
                 return areAllDependenciesDone(depResults.getJacsServiceData());
