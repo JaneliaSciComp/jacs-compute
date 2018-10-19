@@ -20,12 +20,10 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -81,7 +79,12 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
 
     @Override
     public ServiceResultHandler<R> getResultHandler() {
-        return new EmptyServiceResultHandler<>();
+        return new EmptyServiceResultHandler<R>() {
+            @Override
+            public boolean isResultReady(JacsServiceResult depResults) {
+                return areAllDependenciesDone(depResults.getJacsServiceData());
+            }
+        };
     }
 
     @Override

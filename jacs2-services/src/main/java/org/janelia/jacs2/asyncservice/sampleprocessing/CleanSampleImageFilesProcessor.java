@@ -1,16 +1,14 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
-import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -41,16 +39,6 @@ public class CleanSampleImageFilesProcessor extends AbstractServiceProcessor<Voi
     @Override
     public ServiceMetaData getMetadata() {
         return ServiceArgs.getMetadata(CleanSampleImageFilesProcessor.class, new SampleServiceArgs());
-    }
-
-    @Override
-    public ServiceResultHandler<Void> getResultHandler() {
-        return new VoidServiceResultHandler() {
-            @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
-            }
-        };
     }
 
     @Override

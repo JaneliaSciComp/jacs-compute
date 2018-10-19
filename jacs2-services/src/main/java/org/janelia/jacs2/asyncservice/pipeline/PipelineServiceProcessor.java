@@ -11,8 +11,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
-import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.utils.HttpUtils;
@@ -63,11 +61,6 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
     @Override
     public ServiceMetaData getMetadata() {
         return ServiceArgs.getMetadata(PipelineServiceProcessor.class, new PipelineProcessingArgs());
-    }
-
-    @Override
-    public ServiceResultHandler<Void> getResultHandler() {
-        return new VoidServiceResultHandler();
     }
 
     @SuppressWarnings("unchecked")

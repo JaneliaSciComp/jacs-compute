@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
@@ -42,11 +41,6 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
         }
 
         @Override
-        public ServiceResultHandler<Void> getResultHandler() {
-            return new VoidServiceResultHandler();
-        }
-
-        @Override
         protected JacsServiceResult<Void> submitServiceDependencies(JacsServiceData jacsServiceData) {
             return new JacsServiceResult<>(jacsServiceData);
         }
@@ -69,11 +63,6 @@ public class AbstractBasicLifeCycleServiceProcessorTest {
         @Override
         public ServiceMetaData getMetadata() {
             return new ServiceMetaData();
-        }
-
-        @Override
-        public ServiceResultHandler<Void> getResultHandler() {
-            return new VoidServiceResultHandler();
         }
 
         @Override
