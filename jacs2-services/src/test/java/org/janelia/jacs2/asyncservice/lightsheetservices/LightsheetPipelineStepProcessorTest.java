@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.lightsheetservices;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
@@ -36,6 +37,7 @@ import org.slf4j.Logger;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -453,6 +455,7 @@ public class LightsheetPipelineStepProcessorTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
     private WebTarget prepareConfigEnpointTestTarget() {
         WebTarget configEndpoint = Mockito.mock(WebTarget.class);
         Invocation.Builder configRequestBuilder = Mockito.mock(Invocation.Builder.class);
@@ -462,7 +465,8 @@ public class LightsheetPipelineStepProcessorTest {
         Mockito.when(configRequestBuilder.get()).thenReturn(configResponse);
         Mockito.when(configResponse.getStatus()).thenReturn(200);
         String testData = "{\"key\": \"val\"}";
-        Mockito.when(configResponse.readEntity(InputStream.class)).then(invocation -> new ByteArrayInputStream(testData.getBytes()));
+        Mockito.when(configResponse.readEntity(any(GenericType.class)))
+                .then(invocation -> ObjectMapperFactory.instance().newObjectMapper().readValue(testData, new TypeReference<Map<String, Object>>(){}));
         return configEndpoint;
     }
 

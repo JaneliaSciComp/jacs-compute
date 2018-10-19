@@ -2,7 +2,6 @@ package org.janelia.jacs2.asyncservice.pipeline;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.GenericAsyncServiceProcessor;
@@ -27,6 +26,8 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -134,7 +135,7 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> getPipelineServices(Map<String, Object> pipelineConfig) {
         List<Map<String, Object>> pipelineServices = (List<Map<String, Object>>) pipelineConfig.get("pipelineServices");
-        return pipelineServices == null ? ImmutableList.of() : pipelineServices;
+        return pipelineServices == null ? Arrays.asList() : pipelineServices;
     }
 
     @SuppressWarnings("unchecked")
@@ -148,17 +149,20 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
 
     @SuppressWarnings("unchecked")
     private List<String> getServiceArgs(Map<String, Object> serviceConfig) {
-        return (List<String>)serviceConfig.get("serviceArgs");
+        List<String> serviceArgs = (List<String>)serviceConfig.get("serviceArgs");
+        return serviceArgs != null ? serviceArgs : Collections.emptyList();
     }
 
     @SuppressWarnings("unchecked")
     private Map<String, String> getServiceResources(Map<String, Object> serviceConfig) {
-        return (Map<String, String>)serviceConfig.get("serviceResources");
+        Map<String, String> serviceResources = (Map<String, String>)serviceConfig.get("serviceResources");
+        return serviceResources != null ? serviceResources : Collections.emptyMap();
     }
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> getServiceDictionaryArgs(Map<String, Object> serviceConfig) {
-        return (Map<String, Object>)serviceConfig.get("serviceKeyArgs");
+        Map<String, Object> serviceKeyArgs = (Map<String, Object>)serviceConfig.get("serviceKeyArgs");
+        return serviceKeyArgs != null ? serviceKeyArgs : Collections.emptyMap();
     }
 
 }

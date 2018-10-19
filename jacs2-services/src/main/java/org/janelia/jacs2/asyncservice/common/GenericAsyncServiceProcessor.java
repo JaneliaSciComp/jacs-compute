@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -49,7 +48,7 @@ public class GenericAsyncServiceProcessor extends AbstractServiceProcessor<Void>
     @Override
     public JacsServiceData createServiceData(ServiceExecutionContext executionContext, List<ServiceArg> args) {
         Pair<String, List<String>> serviceWithArgs = args.stream()
-                .reduce(ImmutablePair.of(null, ImmutableList.of()),
+                .reduce(ImmutablePair.of(null, Arrays.asList()),
                         (Pair<String, List<String>> sa, ServiceArg a) -> {
                             if ("-serviceName".equals(a.getFlag())) {
                                 return ImmutablePair.of(a.getValues().stream().findFirst().orElse(sa.getLeft()), sa.getRight());
