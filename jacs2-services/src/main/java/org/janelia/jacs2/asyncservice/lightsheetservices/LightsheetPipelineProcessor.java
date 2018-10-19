@@ -87,7 +87,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
         int nSteps = currentJobStepNames.length;
         for (int i = 2; i < nSteps; i++) {
             final int stepIndex=i;
-            stage.thenCompose(previousStageResult -> lightsheetPipelineStepProcessor.process(
+            stage = stage.thenCompose(previousStageResult -> lightsheetPipelineStepProcessor.process(
                     new ServiceExecutionContext.Builder(jacsServiceData)
                             .description("Step " + String.valueOf(stepIndex) + ": " + currentJobStepNames[stepIndex])
                             .addDictionaryArgs(getStepDictionaryArgs(jacsServiceData.getDictionaryArgs(), currentJobStepNames[stepIndex]))
