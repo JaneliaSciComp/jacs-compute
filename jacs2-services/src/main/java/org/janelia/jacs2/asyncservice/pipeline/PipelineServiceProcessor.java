@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 /**
@@ -79,17 +80,37 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
         }
         List<Map<String, Object>> servicesConfigs = getPipelineServices(pipelineConfig);
         List<String> runningSteps = getRunningSteps(pipelineConfig);
-        Predicate<String> shouldIdRunStep = stepName -> runningSteps == null || runningSteps.contains(stepName);
-
+        BiPredicate<String, String> shouldIdRunStep = (stepName, serviceName) -> {
+            if (runningSteps == null) {
+                return true;
+            } else if (StringUtils.isNotBlank(stepName)) {
+                return runningSteps.stream()
+                        .filter(Predicate.isEqual(stepName).or(Predicate.isEqual(serviceName)))
+                        .findFirst()
+                        .map(s -> true).orElse(false);
+            } else {
+                return runningSteps.stream()
+                        .filter(Predicate.isEqual(serviceName))
+                        .findFirst()
+                        .map(s -> true).orElse(false);
+            }
+        };
         ServiceComputation<JacsServiceResult<Void>> stage = computationFactory.newCompletedComputation(new JacsServiceResult<>(null));
         int index = 1;
         for (Map<String, Object> serviceConfig : servicesConfigs) {
             String stepServiceName = getServiceName(serviceConfig);
-            if (shouldIdRunStep.test(stepServiceName)) {
+            String stepName = getStepName(serviceConfig);
+            if (shouldIdRunStep.test(stepName, stepServiceName)) {
                 int stepIndex = index;
+                String description;
+                if (StringUtils.isNotBlank(stepName)) {
+                    description = String.format("Step %d: %s - running %s", stepIndex, stepName, stepServiceName);
+                } else {
+                    description = String.format("Step %d - running %s", stepIndex, stepServiceName);
+                }
                 stage = stage.thenCompose(previousStageResult -> genericAsyncServiceProcessor.process(
                         new ServiceExecutionContext.Builder(jacsServiceData)
-                                .description("Step " + stepIndex + ":" + stepServiceName)
+                                .description(description)
                                 .waitFor(previousStageResult.getJacsServiceData())
                                 .processingLocation(getServiceProcessingLocation(serviceConfig))
                                 .addResources(jacsServiceData.getResources())
@@ -143,6 +164,10 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
 
     private String getServiceName(Map<String, Object> serviceConfig) {
         return (String)serviceConfig.get("serviceName");
+    }
+
+    private String getStepName(Map<String, Object> serviceConfig) {
+        return (String)serviceConfig.get("stepName");
     }
 
     @SuppressWarnings("unchecked")
