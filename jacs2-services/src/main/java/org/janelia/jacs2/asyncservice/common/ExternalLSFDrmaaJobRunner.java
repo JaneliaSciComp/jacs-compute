@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ggf.drmaa.Session;
+import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.qualifier.LSFDrmaaJob;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.slf4j.Logger;
@@ -13,14 +14,14 @@ import java.util.Map;
 public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
 
     @Inject
-    public ExternalLSFDrmaaJobRunner(Session drmaaSession, JacsServiceDataPersistence jacsServiceDataPersistence, Logger logger) {
-        super(drmaaSession, jacsServiceDataPersistence, logger);
+    public ExternalLSFDrmaaJobRunner(Session drmaaSession, JacsServiceDataPersistence jacsServiceDataPersistence,
+                                     ComputeAccounting accounting,
+                                     Logger logger) {
+        super(drmaaSession, jacsServiceDataPersistence, accounting, logger);
     }
 
-    protected String createNativeSpec(Map<String, String> jobResources, String jobRunningDir) {
+    protected String createNativeSpec(Map<String, String> jobResources, String billingAccount, String jobRunningDir) {
         StringBuilder nativeSpecBuilder = new StringBuilder();
-        // append accountID for billing
-        String billingAccount = ProcessorHelper.getGridBillingAccount(jobResources);
         if (StringUtils.isNotBlank(billingAccount)) {
             nativeSpecBuilder.append("-P ")
                     .append('"')

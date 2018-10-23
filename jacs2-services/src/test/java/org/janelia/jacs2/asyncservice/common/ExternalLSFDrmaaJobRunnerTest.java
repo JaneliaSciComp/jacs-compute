@@ -19,7 +19,8 @@ public class ExternalLSFDrmaaJobRunnerTest {
     public void setUp() {
         lsfDrmaaJobRunner = new ExternalLSFDrmaaJobRunner(
                 null, // drmaaSession
-                null, //jacsServiceDataPersistence
+                null, // jacsServiceDataPersistence
+                null, // accounting
                 null // logger
         );
     }
@@ -28,34 +29,36 @@ public class ExternalLSFDrmaaJobRunnerTest {
     public void nativeSpec() {
         class TestData {
             private final Map<String, String> jobResources;
+            private final String billingAccount;
             private final String expectedResult;
 
-            public TestData(Map<String, String> jobResources, String expectedResult) {
+            public TestData(Map<String, String> jobResources, String billingAccount, String expectedResult) {
                 this.jobResources = jobResources;
+                this.billingAccount = billingAccount;
                 this.expectedResult = expectedResult;
             }
         }
         List<TestData> testData = ImmutableList.of(
-                new TestData(ImmutableMap.of(), ""),
+                new TestData(ImmutableMap.of(), "", ""),
                 new TestData(ImmutableMap.of(
                         "nSlots", "4"
-                ), "-n 4 -R \"affinity[core(1)]\" "),
+                ), "", "-n 4 -R \"affinity[core(1)]\" "),
                 new TestData(ImmutableMap.of(
                         "nSlots", "4",
                         "cpuType", "haswell"
-                ), "-n 4 -R \"affinity[core(1)] select[haswell]\" "),
+                ), "billing", "-n 4 -R \"affinity[core(1)] select[haswell]\" "),
                 new TestData(ImmutableMap.of(
                         "cpuType", "haswell",
                         "gridResourceLimits", "ssd_scratch,avx2"
-                ), "-R \"select[haswell,ssd_scratch,avx2]\" "),
+                ), "billing", "-R \"select[haswell,ssd_scratch,avx2]\" "),
                 new TestData(ImmutableMap.of(
                         "nSlots", "4",
                         "cpuType", "haswell",
                         "gridResourceLimits", "ssd_scratch,avx2"
-                ), "-n 4 -R \"affinity[core(1)] select[haswell,ssd_scratch,avx2]\" ")
+                ), "", "-n 4 -R \"affinity[core(1)] select[haswell,ssd_scratch,avx2]\" ")
         );
         for (TestData td : testData) {
-            assertThat(lsfDrmaaJobRunner.createNativeSpec(td.jobResources, ""), equalTo(td.expectedResult));
+            assertThat(lsfDrmaaJobRunner.createNativeSpec(td.jobResources, "", ""), equalTo(td.expectedResult));
         }
     }
 }
