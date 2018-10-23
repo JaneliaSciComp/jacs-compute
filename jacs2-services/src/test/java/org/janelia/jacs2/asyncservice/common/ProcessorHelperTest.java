@@ -30,7 +30,7 @@ public class ProcessorHelperTest {
                 new TestData("broadwell", "96", "1", 7),
                 new TestData("broadwell", "96", "8", 8),
                 new TestData(null, "96", "1", 7),
-                new TestData("haswell", "96", "16", 16)
+                new TestData("skylake", "96", "16", 16)
         };
         for (TestData tdEntry : testData) {
             jobResources.put("cpuType", tdEntry.configuredCpuType);
