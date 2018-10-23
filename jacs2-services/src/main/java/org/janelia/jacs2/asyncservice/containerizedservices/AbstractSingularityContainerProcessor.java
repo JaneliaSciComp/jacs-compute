@@ -62,7 +62,7 @@ abstract class AbstractSingularityContainerProcessor<R> extends AbstractExeBased
         return SingularityContainerHelper.getLocalImagesDir(args, localSingularityImagesPath);
     }
 
-    Path getLocalContainerImage(AbstractSingularityContainerArgs args) {
+    ContainerImage getLocalContainerImage(AbstractSingularityContainerArgs args) {
         return SingularityContainerHelper.getLocalContainerImageMapper().apply(args, localSingularityImagesPath);
     }
 

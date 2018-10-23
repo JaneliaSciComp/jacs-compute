@@ -114,8 +114,8 @@ public class AbstractSingularityContainerProcessorTest {
                 )
         };
         for (TestData td : testData) {
-            Path containerImage = testContainerProcessor.getLocalContainerImage(testContainerProcessor.getArgs(createTestService(td.inputArgs)));
-            assertEquals("Expected result for " + td.inputArgs + " - " + td.expectedResult, td.expectedResult, containerImage);
+            ContainerImage containerImage = testContainerProcessor.getLocalContainerImage(testContainerProcessor.getArgs(createTestService(td.inputArgs)));
+            assertEquals("Expected result for " + td.inputArgs + " - " + td.expectedResult, td.expectedResult, containerImage.getLocalImagePath());
         }
     }
 
