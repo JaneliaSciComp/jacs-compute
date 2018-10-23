@@ -64,7 +64,8 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
         if (StringUtils.isNotBlank(runArgs.initialPwd)) {
             scriptWriter.addArgs("--pwd", runArgs.initialPwd);
         }
-        scriptWriter.addArg(getLocalContainerImage(runArgs).toString());
+        ContainerImage containerImage = getLocalContainerImage(runArgs);
+        scriptWriter.addArg(containerImage.getLocalImagePath().toString());
         if (CollectionUtils.isNotEmpty(runArgs.appArgs)) {
             runArgs.appArgs.forEach(scriptWriter::addArg);
         }
