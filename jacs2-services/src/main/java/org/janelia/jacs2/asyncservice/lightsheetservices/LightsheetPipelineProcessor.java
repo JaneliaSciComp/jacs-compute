@@ -85,7 +85,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                 new ServiceArg("-configOutputPath", configOutputPath)
         );
         int nSteps = currentJobStepNames.length;
-        for (int i = 2; i < nSteps; i++) {
+        for (int i = 1; i < nSteps; i++) {
             final int stepIndex=i;
             stage = stage.thenCompose(previousStageResult -> lightsheetPipelineStepProcessor.process(
                     new ServiceExecutionContext.Builder(jacsServiceData)
