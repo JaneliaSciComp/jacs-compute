@@ -11,7 +11,7 @@ import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.rendering.CoordinateAxis;
 import org.janelia.model.rendering.RenderedVolumeLoader;
 import org.janelia.model.rendering.RenderingType;
-import org.janelia.model.rendering.TileIndex;
+import org.janelia.model.rendering.TileKey;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -151,17 +151,17 @@ public class TmSampleStreamingResource {
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
         return renderedVolumeLoader.loadVolume(Paths.get(baseFolderName))
                 .flatMap(rv -> rv.getTileInfo(axisParam)
-                        .map(tileInfo -> TileIndex.fromRavelerTileCoord(
+                        .map(tileInfo -> TileKey.fromRavelerTileCoord(
                                 xParam,
                                 yParam,
                                 zParam,
                                 zoomParam,
                                 axisParam,
                                 tileInfo))
-                        .flatMap(tileIndex -> {
+                        .flatMap(tileKey -> {
                             logger.debug("Load tile {} ({}, {}, {}, {}, {}) from {}",
-                                    tileIndex, zoomParam, axisParam, xParam, yParam, zParam, baseFolderName);
-                            return renderedVolumeLoader.loadSlice(rv, tileIndex);
+                                    tileKey, zoomParam, axisParam, xParam, yParam, zParam, baseFolderName);
+                            return renderedVolumeLoader.loadSlice(rv, tileKey);
                         }))
                 .map(sliceImageBytes -> {
                     StreamingOutput sliceImageStream = output -> {
