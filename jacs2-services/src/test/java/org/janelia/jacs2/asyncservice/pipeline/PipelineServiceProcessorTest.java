@@ -231,7 +231,7 @@ public class PipelineServiceProcessorTest {
                 "    {\n" +
                 "      \"serviceName\": \"s1\",\n" +
                 "      \"serviceProcessingLocation\": \"LSF_JAVA\",\n" +
-                "      \"serviceArgs\": [\"-s1.f1\", \"s1.v1\", \"-s1.f2\", \"s1.v2\"],\n" +
+                "      \"serviceListArgs\": [\"-s1.f1\", \"s1.v1\", \"-s1.f2\", \"s1.v2\"],\n" +
                 "      \"serviceResources\": {\n" +
                 "        \"r1\": \"r1\",\n" +
                 "        \"r2\": \"r2\"\n" +
@@ -248,11 +248,11 @@ public class PipelineServiceProcessorTest {
                 "    },\n" +
                 "    {\n" +
                 "      \"serviceName\": \"s2\",\n" +
-                "      \"serviceArgs\": [\"-s2.f1\", \"s2.v1\", \"-s2.f2\", \"s2.v2\"]\n" +
+                "      \"serviceListArgs\": [\"-s2.f1\", \"s2.v1\", \"-s2.f2\", \"s2.v2\"]\n" +
                 "    },\n" +
                 "    {\n" +
                 "      \"serviceName\": \"s3\",\n" +
-                "      \"serviceArgs\": [\"-s3.f1\", \"s3.v1\", \"-s3.f2\", \"s3.v2\"],\n" +
+                "      \"serviceListArgs\": [\"-s3.f1\", \"s3.v1\", \"-s3.f2\", \"s3.v2\"],\n" +
                 "      \"serviceResources\": {\n" +
                 "        \"r1\": \"r1\",\n" +
                 "        \"r2\": \"r2\"\n" +
@@ -299,7 +299,7 @@ public class PipelineServiceProcessorTest {
     private Map<String, Object> createServiceConfig(String serviceName) {
         return ImmutableMap.<String, Object>builder()
                 .put("serviceName", serviceName)
-                .put("serviceArgs", Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))
+                .put("serviceListArgs", Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))
                 .put("serviceResources", ImmutableMap.of("r1", "rv1", "r2", "rv2", "r3", "rv3"))
                 .put("serviceKeyArgs", ImmutableMap.of("k1", "kv1", "k2", "kv2", "k3", "kv3"))
                 .build();
