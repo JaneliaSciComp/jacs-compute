@@ -30,15 +30,14 @@ abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor
         this.defaultNumNodes = defaultNumNodes <= 0 ? 1 : defaultNumNodes;
     }
 
-
     int getRequestedNodes(Map<String, String> serviceResources) {
-        String requestedNodes = StringUtils.defaultIfBlank(serviceResources.get("spark.numNodes"), "1");
+        String requestedNodes = StringUtils.defaultIfBlank(serviceResources.get("sparkNumNodes"), "1");
         int numNodes = Integer.parseInt(requestedNodes);
         return numNodes <= 0 ? defaultNumNodes : numNodes;
     }
 
     int getDefaultParallelism(Map<String, String> serviceResources) {
-        String defaultParallelism = StringUtils.defaultIfBlank(serviceResources.get("spark.defaultParallelism"), "0");
+        String defaultParallelism = StringUtils.defaultIfBlank(serviceResources.get("sparkDefaultParallelism"), "0");
         int parallelism = Integer.parseInt(defaultParallelism);
         return parallelism <= 0 ? 0 : parallelism;
     }
@@ -53,15 +52,15 @@ abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor
     }
 
     protected String getSparkDriverMemory(Map<String, String> serviceResources) {
-        return serviceResources.get("spark.driverMemory");
+        return serviceResources.get("sparkDriverMemory");
     }
 
     protected String getSparkExecutorMemory(Map<String, String> serviceResources) {
-        return serviceResources.get("spark.executorMemory");
+        return serviceResources.get("sparkExecutorMemory");
     }
 
     Long getSparkAppIntervalCheckInMillis(Map<String, String> serviceResources) {
-        String intervalCheck = serviceResources.get("spark.appIntervalCheckInMillis");
+        String intervalCheck = serviceResources.get("sparkAppIntervalCheckInMillis");
         if (StringUtils.isNotBlank(intervalCheck)) {
             return Long.valueOf(intervalCheck.trim());
         } else {
@@ -70,7 +69,7 @@ abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor
     }
 
     Long getSparkAppTimeoutInMillis(Map<String, String> serviceResources) {
-        String timeout = serviceResources.get("spark.appTimeoutInMillis");
+        String timeout = serviceResources.get("sparkAppTimeoutInMillis");
         if (StringUtils.isNotBlank(timeout)) {
             return Long.valueOf(timeout.trim());
         } else {
@@ -79,6 +78,6 @@ abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor
     }
 
     protected String getSparkLogConfigFile(Map<String, String> serviceResources) {
-        return serviceResources.get("spark.logConfigFile");
+        return serviceResources.get("sparkLogConfigFile");
     }
 }

@@ -172,7 +172,7 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
 
     @SuppressWarnings("unchecked")
     private List<String> getServiceArgs(Map<String, Object> serviceConfig) {
-        List<String> serviceArgs = (List<String>)serviceConfig.get("serviceListArgs");
+        List<String> serviceArgs = (List<String>)serviceConfig.get("serviceArgs");
         return serviceArgs != null ? serviceArgs : Collections.emptyList();
     }
 

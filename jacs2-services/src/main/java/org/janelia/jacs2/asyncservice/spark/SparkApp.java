@@ -2,8 +2,6 @@ package org.janelia.jacs2.asyncservice.spark;
 
 import org.apache.spark.launcher.SparkAppHandle;
 
-import java.io.File;
-
 public class SparkApp {
 
     private final SparkCluster cluster;
