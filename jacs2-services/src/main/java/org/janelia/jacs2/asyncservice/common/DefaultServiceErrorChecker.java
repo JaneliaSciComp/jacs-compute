@@ -87,7 +87,6 @@ public class DefaultServiceErrorChecker implements ServiceErrorChecker {
                                 logger.warn("Output stream {} close error", outputFile, e);
                             }
                         }
-
                     }
                 });
     }
