@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.spark;
 
 import com.google.common.collect.ImmutableList;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -13,6 +14,7 @@ import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
+import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -96,7 +98,18 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                         runningClusterState.getData().stopCluster();
                     }
                 }))
-                .thenApply(sparkApp -> new JacsServiceResult<>(jacsServiceData))
+                .thenApply(sparkApp -> {
+                    if (sparkApp.isError()) {
+                        logger.error("Spark application error");
+                        jacsServiceDataPersistence.updateServiceState(
+                                jacsServiceData,
+                                JacsServiceState.ERROR,
+                                JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, sparkApp.getErrorMessage()));
+                        throw new ComputationException(jacsServiceData, sparkApp.getErrorMessage());
+                    } else {
+                        return new JacsServiceResult<>(jacsServiceData);
+                    }
+                })
                 ;
     }
 }
