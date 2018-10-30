@@ -30,34 +30,34 @@ public class SparkApp {
         return cluster;
     }
 
-    public void updateHandle(SparkAppHandle handle) {
-        if (this.handle == null) this.handle = handle;
-    }
-
-    public String getAppId() {
-        return handle != null ? handle.getAppId() : null;
-    }
-
     public boolean isDone() {
         return handle != null && handle.getState().isFinal();
     }
 
     public boolean isError() {
-        if (isDone() && handle.getState() == SparkAppHandle.State.FINISHED) {
-            return checkForErrors();
-        } else {
-            if (!checkForErrors()) {
-                errorMessage = "Spark application final state: " + handle.getState();
-            }
+        if (checkForErrors()) {
             return true;
+        } else if (handle.getState() == SparkAppHandle.State.KILLED) {
+            errorMessage = "Spark Application was terminated by the user";
+            return true;
+        } else {
+            return false;
         }
+    }
+
+    void updateHandle(SparkAppHandle handle) {
+        if (this.handle == null) this.handle = handle;
+    }
+
+    String getAppId() {
+        return handle != null ? handle.getAppId() : null;
     }
 
     String getErrorMessage() {
         return errorMessage;
     }
 
-    public void kill() {
+    void kill() {
         if (handle != null) {
             handle.kill();
         }
