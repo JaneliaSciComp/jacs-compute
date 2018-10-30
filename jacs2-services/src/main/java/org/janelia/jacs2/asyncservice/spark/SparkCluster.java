@@ -138,11 +138,19 @@ public class SparkCluster {
                 Arrays.asList(appArgs));
         SparkLauncher sparkLauncher = new SparkLauncher();
 
+        File sparkOutputFile;
         if (StringUtils.isNotBlank(appOutputDir)) {
-            sparkLauncher.redirectOutput(new File(appOutputDir, DRIVER_OUTPUT_FILENAME));
+            sparkOutputFile = new File(appOutputDir, DRIVER_OUTPUT_FILENAME);
+            sparkLauncher.redirectOutput(sparkOutputFile);
+        } else {
+            sparkOutputFile = null;
         }
+        File sparkErrorFile;
         if (StringUtils.isNotBlank(appErrorDir)) {
-            sparkLauncher.redirectError(new File(appErrorDir, DRIVER_ERROR_FILENAME));
+            sparkErrorFile = new File(appErrorDir, DRIVER_ERROR_FILENAME);
+            sparkLauncher.redirectError(sparkErrorFile);
+        } else {
+            sparkErrorFile = null;
         }
 
         sparkLauncher.setAppResource(appResource)
@@ -171,7 +179,7 @@ public class SparkCluster {
         try {
             Stopwatch sparkAppWatch = Stopwatch.createStarted();
 
-            SparkApp sparkApp = new SparkApp(this, appOutputDir, appErrorDir);
+            SparkApp sparkApp = new SparkApp(this, sparkOutputFile, sparkErrorFile);
 
             SparkAppHandle.Listener completionListener = new SparkAppHandle.Listener() {
                 @Override

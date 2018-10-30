@@ -80,11 +80,13 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                     }
 
                     List<String> errors = getErrors(jacsServiceData);
-                    String errorMessage = null;
+                    String errorMessage;
                     if (CollectionUtils.isNotEmpty(errors)) {
                         errorMessage = String.format("Process %s failed; errors found: %s", jobHandler.getJobInfo(), String.join(";", errors));
                     } else if (jobHandler.hasFailed()) {
                         errorMessage = String.format("Process %s failed", jobHandler.getJobInfo());
+                    } else {
+                        errorMessage = null;
                     }
                     if (errorMessage != null) {
                         jacsServiceDataPersistence.updateServiceState(
