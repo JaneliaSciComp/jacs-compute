@@ -44,7 +44,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.assertFalse;
@@ -54,6 +58,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -359,15 +364,17 @@ public class LightsheetPipelineStepProcessorTest {
         LOCAL_STEP_CONFIGS.forEach((step, config) -> {
             int stepIndex = 1;
             Mockito.when(testHttpClient.target(CONFIG_IP_ARG + "?stepName=" + step)).thenReturn(configEndpoint);
+            PowerMockito.mockStatic(Paths.class);
+            prepareMockPathsThatExists("/in", "/inRoot/in");
             JacsServiceData testServiceData = createMinistacksTestService(step, stepIndex, config);
             testServiceData.getDictionaryArgs().putAll(ImmutableMap.<String, Object>builder()
-                    .put("inputFolder", "/in")
-                    .put("inputString", "/in")
+                    .put("inputFolder", "/in/folder")
+                    .put("inputString", "/in/string")
                     .put("outputString", "/tmp/sub")
                     .put("configRoot", "//tmp/config")
                     .put("sourceString", "/tmp/sub")
                     .put("lookUpTable", "/tmp/ltFile")
-                    .put("inputRoot", "/inRoot/in")
+                    .put("inputRoot", "/inRoot/in/folder")
                     .put("outputRoot", "/tmp/out")
                     .put("inputDir", "/inDir/in")
                     .put("outputDir", "/var/tmp/out")
@@ -398,6 +405,7 @@ public class LightsheetPipelineStepProcessorTest {
                                                                 "d1/d1.1:d1/d1.1" + "," +
                                                                 "d2" + "," +
                                                                 "/in:/in" + "," +
+                                                                "/in/string:/in/string" + "," +
                                                                 "/tmp:/tmp" + "," +
                                                                 "/inRoot/in:/inRoot/in" + "," +
                                                                 "/inDir/in:/inDir/in" + "," +
@@ -416,6 +424,26 @@ public class LightsheetPipelineStepProcessorTest {
                     })
             ;
             Mockito.verify(successful).accept(any());
+        });
+    }
+
+    private void prepareMockPathsThatExists(String... pnames) {
+        Map<String, Path> pathStringMap = new HashMap<>();
+        for (String pname : pnames) {
+            Path mockPath = Mockito.mock(Path.class);
+            File mockFile = Mockito.mock(File.class);
+            Mockito.when(mockPath.toFile()).thenReturn(mockFile);
+            Mockito.when(mockFile.exists()).thenReturn(true);
+            pathStringMap.put(pname, mockPath);
+            Mockito.when(mockPath.toString()).thenReturn(pname);
+        }
+        Mockito.when(Paths.get(anyString())).then(invocation -> {
+            String pname = invocation.getArgument(0);
+            if (pathStringMap.keySet().contains(pname)) {
+                return pathStringMap.get(pname);
+            } else {
+                return invocation.callRealMethod();
+            }
         });
     }
 
