@@ -80,18 +80,9 @@ public class AuthFilter implements ContainerRequestFilter {
         Subject authorizedSubject;
 
         if (StringUtils.isNotBlank(runAsUserName)) {
-            // Attempt to "run as" another user or group
-            if (!SubjectUtils.isAdmin(authenticatedUser)) {
-                logger.warn("User {} is not authorized to act as subject {}", authUserName, runAsUserName);
-                requestContext.abortWith(
-                        Response.status(Response.Status.FORBIDDEN)
-                                .entity(new ErrorResponse("Unauthorized access"))
-                                .build()
-                );
-                return;
-            }
             authorizedSubject = dao.getSubjectByNameOrKey(runAsUserName);
             if (authorizedSubject == null) {
+                // if "run as" is specified it must be a valid user
                 logger.warn("Invalid run-as user specified in header {}: {}", HEADER_RUNASUSER, runAsUserName);
                 requestContext.abortWith(
                         Response.status(Response.Status.FORBIDDEN)
@@ -99,6 +90,19 @@ public class AuthFilter implements ContainerRequestFilter {
                                 .build()
                 );
                 return;
+            }
+            if (!authorizedSubject.getId().equals(authenticatedUser.getId())) {
+                // if the user it's trying to run the job as somebody else it must have admin privileges
+                // otherwise if they are the same we should not care
+                if (!SubjectUtils.isAdmin(authenticatedUser)) {
+                    logger.warn("User {} is not authorized to act as subject {}", authUserName, runAsUserName);
+                    requestContext.abortWith(
+                            Response.status(Response.Status.FORBIDDEN)
+                                    .entity(new ErrorResponse("Unauthorized access"))
+                                    .build()
+                    );
+                    return;
+                }
             }
         } else {
             authorizedSubject = authenticatedUser;
