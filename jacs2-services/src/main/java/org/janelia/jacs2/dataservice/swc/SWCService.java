@@ -1,8 +1,10 @@
-package org.janelia.jacs2.asyncservice.neuronservices;
+package org.janelia.jacs2.dataservice.swc;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.rendering.RenderedVolumeLoader;
@@ -20,16 +22,20 @@ public class SWCService {
 
     private final TmSampleDao tmSampleDao;
     private final TmWorkspaceDao tmWorkspaceDao;
-    @Inject
-    private RenderedVolumeLoader renderedVolumeLoader;
+    private final RenderedVolumeLoader renderedVolumeLoader;
+    private final SWCReader swcReader;
     private final Path defaultSWCLocation;
 
     @Inject
     public SWCService(TmSampleDao tmSampleDao,
                       TmWorkspaceDao tmWorkspaceDao,
+                      RenderedVolumeLoader renderedVolumeLoader,
+                      SWCReader swcReader,
                       @PropertyValue(name = "service.swcImport.DefaultLocation") String defaultSWCLocation) {
         this.tmSampleDao = tmSampleDao;
         this.tmWorkspaceDao = tmWorkspaceDao;
+        this.renderedVolumeLoader = renderedVolumeLoader;
+        this.swcReader = swcReader;
         this.defaultSWCLocation = Paths.get(defaultSWCLocation);
     }
 
@@ -40,12 +46,12 @@ public class SWCService {
             throw new IllegalArgumentException("Sample " + sampleId + " either does not exist or is not accessible");
         }
         TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(workspaceOwnerKey, createWorkspace(swcFolderName, sampleId, workspaceName, accessUsers));
-        renderedVolumeLoader.loadVolume(Paths.get(tmSample.getFilepath()));
+//!!!        renderedVolumeLoader.loadVolume(Paths.get(tmSample.getFilepath()));
         // TODO !!!!
         return tmWorkspace;
     }
 
-    private TmWorkspace createWorkspace(String swcFolderName, Long sampleId, String workspaceName, List<String> accessUsers) {
+    private TmWorkspace createWorkspace(String swcFolderName, Long sampleId, String workspaceNameParam, List<String> accessUsers) {
         Path swcPath = Paths.get(swcFolderName);
         Path swcBasePath;
         if (swcPath.isAbsolute()) {
@@ -53,10 +59,22 @@ public class SWCService {
         } else {
             swcBasePath = defaultSWCLocation.resolve(swcPath);
         }
-        TmWorkspace tmWorkspace = new TmWorkspace(workspaceName, sampleId);
+        String workspaceName = StringUtils.defaultIfBlank(workspaceNameParam, swcPath.getFileName().toString());
+        TmWorkspace tmWorkspace = new TmWorkspace(workspaceName.trim(), sampleId);
         tmWorkspace.setOriginalSWCPath(swcBasePath.toString());
         tmWorkspace.getReaders().addAll(accessUsers);
         tmWorkspace.getWriters().addAll(accessUsers);
         return tmWorkspace;
     }
+
+    private TmNeuronMetadata importSWCFile(Path swcFile, TmWorkspace tmWorkspace) {
+        SWCData swcData = swcReader.readSWCFile(swcFile);
+
+        // externalOffset is because Vaa3d cannot handle large coordinates in swc
+        // se we added an OFFSET header and recentered on zero when exporting
+        double[] externalOffset = swcData.extractOffset();
+        String neuronName = swcData.extractName();
+        return null; // !!!!!!!!!!
+    }
+
 }

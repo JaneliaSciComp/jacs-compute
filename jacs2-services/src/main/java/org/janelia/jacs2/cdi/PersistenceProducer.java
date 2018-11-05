@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
@@ -31,7 +32,7 @@ public class PersistenceProducer {
     private Logger log;
 
     @Inject
-    @PropertyValue(name = "MongoDB.ServerURL")
+    @PropertyValue(name = "MongoDB.ServerName")
     private String mongoServer;
 
     @Inject
@@ -56,6 +57,9 @@ public class PersistenceProducer {
             @PropertyValue(name = "MongoDB.ThreadsAllowedToBlockForConnectionMultiplier") int threadsAllowedToBlockMultiplier,
             @PropertyValue(name = "MongoDB.ConnectionsPerHost") int connectionsPerHost,
             @PropertyValue(name = "MongoDB.ConnectTimeout") int connectTimeout,
+            @IntPropertyValue(name = "MongoDB.MaxWaitTimeInSecs", defaultValue = 120) int maxWaitTimeInSecs,
+            @IntPropertyValue(name = "MongoDB.MaxConnectionIdleTimeInSecs") int maxConnectionIdleTimeInSecs,
+            @IntPropertyValue(name = "MongoDB.MaxConnLifeTime") int maxConnLifeTimeInSecs,
             @PropertyValue(name = "MongoDB.Username") String username,
             @PropertyValue(name = "MongoDB.Password") String password,
             ObjectMapperFactory objectMapperFactory) {
@@ -64,6 +68,9 @@ public class PersistenceProducer {
         MongoClientOptions.Builder optionsBuilder =
                 MongoClientOptions.builder()
                         .threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockMultiplier)
+                        .maxWaitTime(maxWaitTimeInSecs * 1000)
+                        .maxConnectionIdleTime(maxConnectionIdleTimeInSecs * 1000)
+                        .maxConnectionLifeTime(maxConnLifeTimeInSecs)
                         .connectionsPerHost(connectionsPerHost)
                         .connectTimeout(connectTimeout)
                         .codecRegistry(codecRegistry);
