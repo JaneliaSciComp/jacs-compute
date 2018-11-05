@@ -1,9 +1,17 @@
 package org.janelia.jacs2.cdi;
 
 import com.google.common.base.Splitter;
-import com.mongodb.*;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoClientURI;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoDatabase;
-import org.apache.commons.dbcp2.*;
+import org.apache.commons.dbcp2.ConnectionFactory;
+import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp2.PoolableConnection;
+import org.apache.commons.dbcp2.PoolableConnectionFactory;
+import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
@@ -20,8 +28,6 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -70,7 +76,7 @@ public class PersistenceProducer {
                         .threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockMultiplier)
                         .maxWaitTime(maxWaitTimeInSecs * 1000)
                         .maxConnectionIdleTime(maxConnectionIdleTimeInSecs * 1000)
-                        .maxConnectionLifeTime(maxConnLifeTimeInSecs)
+                        .maxConnectionLifeTime(maxConnLifeTimeInSecs * 1000)
                         .connectionsPerHost(connectionsPerHost)
                         .connectTimeout(connectTimeout)
                         .codecRegistry(codecRegistry);
