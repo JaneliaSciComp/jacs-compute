@@ -58,7 +58,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
 
     @Before
     public void setUp() {
-        testDao = new JacsServiceDataMongoDao(testMongoDatabase, idGenerator);
+        testDao = new JacsServiceDataMongoDao(testMongoDatabase, idGenerator, true);
     }
 
     @After
@@ -370,7 +370,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         String testQueueId = "testQueueId";
         PageRequest pageRequest = new PageRequest();
 
-        JacsServiceDataMongoDao spiedTestDao = new JacsServiceDataMongoDao(testMongoDatabase, idGenerator) {
+        JacsServiceDataMongoDao spiedTestDao = new JacsServiceDataMongoDao(testMongoDatabase, idGenerator, true) {
             @Override
             protected Class<JacsServiceData> getEntityType() {
                 return JacsServiceData.class;
