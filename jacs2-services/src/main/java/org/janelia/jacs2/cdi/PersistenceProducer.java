@@ -1,13 +1,22 @@
 package org.janelia.jacs2.cdi;
 
 import com.google.common.base.Splitter;
-import com.mongodb.*;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoClientURI;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoDatabase;
-import org.apache.commons.dbcp2.*;
+import org.apache.commons.dbcp2.ConnectionFactory;
+import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp2.PoolableConnection;
+import org.apache.commons.dbcp2.PoolableConnectionFactory;
+import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
@@ -19,8 +28,6 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.sql.DataSource;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,6 +63,9 @@ public class PersistenceProducer {
             @PropertyValue(name = "MongoDB.ThreadsAllowedToBlockForConnectionMultiplier") int threadsAllowedToBlockMultiplier,
             @PropertyValue(name = "MongoDB.ConnectionsPerHost") int connectionsPerHost,
             @PropertyValue(name = "MongoDB.ConnectTimeout") int connectTimeout,
+            @IntPropertyValue(name = "MongoDB.MaxWaitTimeInSecs", defaultValue = 120) int maxWaitTimeInSecs,
+            @IntPropertyValue(name = "MongoDB.MaxConnectionIdleTimeInSecs") int maxConnectionIdleTimeInSecs,
+            @IntPropertyValue(name = "MongoDB.MaxConnLifeTime") int maxConnLifeTimeInSecs,
             @PropertyValue(name = "MongoDB.Username") String username,
             @PropertyValue(name = "MongoDB.Password") String password,
             ObjectMapperFactory objectMapperFactory) {
@@ -64,6 +74,9 @@ public class PersistenceProducer {
         MongoClientOptions.Builder optionsBuilder =
                 MongoClientOptions.builder()
                         .threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockMultiplier)
+                        .maxWaitTime(maxWaitTimeInSecs * 1000)
+                        .maxConnectionIdleTime(maxConnectionIdleTimeInSecs * 1000)
+                        .maxConnectionLifeTime(maxConnLifeTimeInSecs * 1000)
                         .connectionsPerHost(connectionsPerHost)
                         .connectTimeout(connectTimeout)
                         .codecRegistry(codecRegistry);
@@ -114,7 +127,7 @@ public class PersistenceProducer {
     @Produces
     public DataSource createSageDatasource(@PropertyValue(name = "sage.db.url") String dbUrl,
                                            @PropertyValue(name = "sage.db.user") String dbUser,
-                                           @PropertyValue(name = "sage.db.password") String dbPassword) throws SQLException {
+                                           @PropertyValue(name = "sage.db.password") String dbPassword) {
         ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(dbUrl, dbUser, dbPassword);
         PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
         ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
