@@ -3,6 +3,7 @@ package org.janelia.model.access.dao.mongo;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexModel;
@@ -12,6 +13,7 @@ import com.mongodb.client.model.Updates;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
+import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.JacsServiceDataDao;
@@ -50,19 +52,23 @@ import static com.mongodb.client.model.Filters.lt;
 public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> implements JacsServiceDataDao {
 
     @Inject
-    public JacsServiceDataMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
+    public JacsServiceDataMongoDao(MongoDatabase mongoDatabase,
+                                   @JacsDefault TimebasedIdentifierGenerator idGenerator,
+                                   @BoolPropertyValue(name = "MongoDB.createCollectionIndexes") boolean createCollectionIndexes) {
         super(mongoDatabase, idGenerator);
-        mongoCollection.createIndexes(
-                ImmutableList.of(
-                        new IndexModel(Indexes.ascending("name")),
-                        new IndexModel(Indexes.ascending("ownerKey")),
-                        new IndexModel(Indexes.ascending("parentServiceId")),
-                        new IndexModel(Indexes.ascending("rootServiceId")),
-                        new IndexModel(Indexes.ascending("queueId")),
-                        new IndexModel(Indexes.ascending("state")),
-                        new IndexModel(Indexes.ascending("creationDate"))
-                )
-        );
+        if (createCollectionIndexes) {
+            mongoCollection.createIndexes(
+                    ImmutableList.of(
+                            new IndexModel(Indexes.ascending("name")),
+                            new IndexModel(Indexes.ascending("ownerKey")),
+                            new IndexModel(Indexes.ascending("parentServiceId")),
+                            new IndexModel(Indexes.ascending("rootServiceId")),
+                            new IndexModel(Indexes.ascending("queueId")),
+                            new IndexModel(Indexes.ascending("state")),
+                            new IndexModel(Indexes.ascending("creationDate"))
+                    )
+            );
+        }
     }
 
     @Override
