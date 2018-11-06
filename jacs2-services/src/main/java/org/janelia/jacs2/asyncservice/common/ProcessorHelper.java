@@ -55,16 +55,7 @@ public class ProcessorHelper {
         if (mem <= 0) {
             return 0;
         }
-        String cpuType = StringUtils.defaultIfBlank(getCPUType(serviceResources), DEFAULT_CPU_TYPE);
-        double memPerSlotInGB;
-        switch (cpuType) {
-            case "broadwell":
-                memPerSlotInGB = 15.5;
-                break;
-            default:
-                memPerSlotInGB = 7.5;
-                break;
-        }
+        double memPerSlotInGB = 15.5; // all nodes (irrespective of the architecture now have 15G per slot)
         return (int) Math.ceil(mem / memPerSlotInGB);
     }
 

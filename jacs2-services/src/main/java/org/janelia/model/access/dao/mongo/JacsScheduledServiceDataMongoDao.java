@@ -12,6 +12,7 @@ import com.mongodb.client.model.Updates;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
+import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.access.dao.JacsScheduledServiceDataDao;
 import org.janelia.model.access.dao.JacsServiceDataDao;
@@ -48,13 +49,17 @@ import static com.mongodb.client.model.Filters.in;
 public class JacsScheduledServiceDataMongoDao extends AbstractMongoDao<JacsScheduledServiceData> implements JacsScheduledServiceDataDao {
 
     @Inject
-    public JacsScheduledServiceDataMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
+    public JacsScheduledServiceDataMongoDao(MongoDatabase mongoDatabase,
+                                            @JacsDefault TimebasedIdentifierGenerator idGenerator,
+                                            @BoolPropertyValue(name = "MongoDB.createCollectionIndexes") boolean createCollectionIndexes) {
         super(mongoDatabase, idGenerator);
-        mongoCollection.createIndexes(
-                ImmutableList.of(
-                        new IndexModel(Indexes.ascending("nextStartTime"))
-                )
-        );
+        if (createCollectionIndexes) {
+            mongoCollection.createIndexes(
+                    ImmutableList.of(
+                            new IndexModel(Indexes.ascending("nextStartTime"))
+                    )
+            );
+        }
     }
 
     @Override

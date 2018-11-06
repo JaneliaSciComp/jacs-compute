@@ -3,7 +3,7 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.EmptyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractEmptyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @MdcContext
@@ -51,30 +52,23 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     @Override
     public JacsServiceData createServiceData(ServiceExecutionContext executionContext, List<ServiceArg> args) {
         ServiceMetaData smd = getMetadata();
+        List<String> serviceArgs = args.stream().flatMap(arg -> Stream.of(arg.toStringArray())).collect(Collectors.toList());
+        return createServiceData(smd.getServiceName(), executionContext, serviceArgs);
+    }
+
+    JacsServiceData createServiceData(String defaultService, ServiceExecutionContext executionContext, List<String> serviceArgs) {
         JacsServiceDataBuilder jacsServiceDataBuilder =
-                new JacsServiceDataBuilder(executionContext.getParentServiceData())
+                new JacsServiceDataBuilder(executionContext.getParentService())
                         .setDescription(executionContext.getDescription());
-        if (executionContext.getServiceName() != null) {
-            jacsServiceDataBuilder.setName(executionContext.getServiceName());
-        } else {
-            jacsServiceDataBuilder.setName(smd.getServiceName());
-        }
-        if (executionContext.getProcessingLocation() != null) {
-            jacsServiceDataBuilder.setProcessingLocation(executionContext.getProcessingLocation());
-        } else {
-            jacsServiceDataBuilder.setProcessingLocation(executionContext.getParentServiceData().getProcessingLocation());
-        }
-        if (StringUtils.isNotBlank(executionContext.getWorkspace())) {
-            jacsServiceDataBuilder.setWorkspace(executionContext.getWorkspace());
-        } else if (StringUtils.isNotBlank(executionContext.getParentWorkspace())) {
-            jacsServiceDataBuilder.setWorkspace(executionContext.getParentWorkspace());
-        }
-        jacsServiceDataBuilder.addArgs(args.stream().flatMap(arg -> Stream.of(arg.toStringArray())).toArray(String[]::new));
+        jacsServiceDataBuilder.setName(executionContext.getServiceName(defaultService));
+        jacsServiceDataBuilder.setProcessingLocation(executionContext.getProcessingLocation());
+        jacsServiceDataBuilder.setWorkspace(executionContext.getWorkspace());
+        jacsServiceDataBuilder.addArgs(serviceArgs);
         jacsServiceDataBuilder.setDictionaryArgs(executionContext.getDictionaryArgs());
         if (executionContext.getServiceState() != null) {
             jacsServiceDataBuilder.setState(executionContext.getServiceState());
         }
-        jacsServiceDataBuilder.addResources(executionContext.getParentServiceData().getResources());
+        jacsServiceDataBuilder.addResources(executionContext.getResourcesFromParent());
         jacsServiceDataBuilder.addResources(executionContext.getResources());
         executionContext.getWaitFor().forEach(jacsServiceDataBuilder::addDependency);
         executionContext.getWaitForIds().forEach(jacsServiceDataBuilder::addDependencyId);
@@ -85,7 +79,12 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
 
     @Override
     public ServiceResultHandler<R> getResultHandler() {
-        return new EmptyServiceResultHandler<>();
+        return new AbstractEmptyServiceResultHandler<R>() {
+            @Override
+            public boolean isResultReady(JacsServiceResult depResults) {
+                return areAllDependenciesDone(depResults.getJacsServiceData());
+            }
+        };
     }
 
     @Override

@@ -58,7 +58,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
 
     @Before
     public void setUp() {
-        testDao = new JacsServiceDataMongoDao(testMongoDatabase, idGenerator);
+        testDao = new JacsServiceDataMongoDao(testMongoDatabase, idGenerator, true);
     }
 
     @After
@@ -370,7 +370,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         String testQueueId = "testQueueId";
         PageRequest pageRequest = new PageRequest();
 
-        JacsServiceDataMongoDao spiedTestDao = new JacsServiceDataMongoDao(testMongoDatabase, idGenerator) {
+        JacsServiceDataMongoDao spiedTestDao = new JacsServiceDataMongoDao(testMongoDatabase, idGenerator, true) {
             @Override
             protected Class<JacsServiceData> getEntityType() {
                 return JacsServiceData.class;
@@ -436,13 +436,20 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
     @Test
     public void searchServicesByServiceArgs() {
         List<JacsServiceData> slist = ImmutableList.of(
-                createTestService("s1", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.1", "arg2", "v2.1")),
-                createTestService("s2", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.2", "arg2", "v2.2")),
-                createTestService("s3", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.1", "arg2", "v2.2")),
-                createTestService("s4", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.1", "arg2", "v2.3")),
-                createTestService("s5", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.3", "arg3", 5)),
-                createTestService("s6", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.3", "arg3", 6)),
-                createTestService("s7", ProcessingLocation.LOCAL, ImmutableMap.of("arg1", "v1.3", "arg3", 7))
+                createTestService("s1", ProcessingLocation.LOCAL,
+                        ImmutableMap.of("arg1", "v1.1", "arg2", "v2.1"), ImmutableMap.of("k1.sk1", "v1")),
+                createTestService("s2", ProcessingLocation.LOCAL,
+                        ImmutableMap.of("arg1", "v1.2", "arg2", "v2.2"), ImmutableMap.of("k1.sk1", "v1")),
+                createTestService("s3", ProcessingLocation.LOCAL,
+                        ImmutableMap.of("arg1", "v1.1", "arg2", "v2.2"), ImmutableMap.of("k1.sk1", "v1")),
+                createTestService("s4", ProcessingLocation.LOCAL,
+                        ImmutableMap.of("arg1", "v1.1", "arg2", "v2.3"), ImmutableMap.of("k1.sk1", "v1")),
+                createTestService("s5", ProcessingLocation.LOCAL,
+                        ImmutableMap.of("arg1", "v1.3", "arg3", 5), ImmutableMap.of("k1.sk1", "v1")),
+                createTestService("s6", ProcessingLocation.LOCAL,
+                        ImmutableMap.of("arg1", "v1.3", "arg3", 6), ImmutableMap.of("k1.sk1", "v1")),
+                createTestService("s7", ProcessingLocation.LOCAL,
+                        ImmutableMap.of("arg1", "v1.3", "arg3", 7), ImmutableMap.of("k1.sk1", "v1"))
         );
         slist.forEach(testDao::save);
 
@@ -590,10 +597,13 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
     }
 
     private JacsServiceData createTestService(String serviceName, ProcessingLocation processingLocation) {
-        return createTestService(serviceName, processingLocation, ImmutableMap.of("a1", "I1", "a2", "I2"));
+        return createTestService(serviceName, processingLocation, ImmutableMap.of("a1", "I1", "a2", "I2"), ImmutableMap.of("key.subKey1.subKey2", "val1"));
     }
 
-    private JacsServiceData createTestService(String serviceName, ProcessingLocation processingLocation, Map<String, Object> serviceArgs) {
+    private JacsServiceData createTestService(String serviceName,
+                                              ProcessingLocation processingLocation,
+                                              Map<String, Object> serviceArgs,
+                                              Map<String, String> serviceResources) {
         JacsServiceData si = new JacsServiceData();
         si.setName(serviceName);
         si.setProcessingLocation(processingLocation);
@@ -602,6 +612,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
             si.addArg(v.toString());
             si.addServiceArg(n, v);
         });
+        serviceResources.forEach((k, v) -> si.addToResources(k, v));
         testData.add(si);
         return si;
     }

@@ -47,7 +47,7 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(PullAndRunSingularityContainerProcessor.class, new RunSingularityContainerArgs());
+        return ServiceArgs.getMetadata(PullAndRunSingularityContainerProcessor.class, new ExpandedRunSingularityContainerArgs());
     }
 
     @Override

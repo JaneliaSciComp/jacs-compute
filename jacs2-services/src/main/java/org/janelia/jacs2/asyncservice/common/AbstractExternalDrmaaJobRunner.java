@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.ggf.drmaa.DrmaaException;
 import org.ggf.drmaa.JobTemplate;
 import org.ggf.drmaa.Session;
+import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEvent;
@@ -22,10 +23,14 @@ import java.util.Map;
 public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalProcessRunner {
 
     private final Session drmaaSession;
+    private final ComputeAccounting accounting;
 
-    AbstractExternalDrmaaJobRunner(Session drmaaSession, JacsServiceDataPersistence jacsServiceDataPersistence, Logger logger) {
+    AbstractExternalDrmaaJobRunner(Session drmaaSession, JacsServiceDataPersistence jacsServiceDataPersistence,
+                                   ComputeAccounting accounting,
+                                   Logger logger) {
         super(jacsServiceDataPersistence, logger);
         this.drmaaSession = drmaaSession;
+        this.accounting = accounting;
     }
 
     @Override
@@ -62,7 +67,7 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
                 jt.setOutputPath(":" + Paths.get(serviceContext.getOutputPath(), scriptServiceFolder.getServiceOutputPattern(".%J.%I")));
                 jt.setErrorPath(":" + Paths.get(serviceContext.getErrorPath(), scriptServiceFolder.getServiceErrorPattern(".%J.%I")));
             }
-            String nativeSpec = createNativeSpec(serviceContext.getResources(), processDirectory.getAbsolutePath());
+            String nativeSpec = createNativeSpec(serviceContext.getResources(), getBillingAccount(serviceContext), processDirectory.getAbsolutePath());
             if (StringUtils.isNotBlank(nativeSpec)) {
                 jt.setNativeSpecification(nativeSpec);
             }
@@ -99,6 +104,9 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
         }
     }
 
-    protected abstract String createNativeSpec(Map<String, String> jobResources, String jobRunningDir);
+    protected abstract String createNativeSpec(Map<String, String> jobResources, String billingAccount, String jobRunningDir);
 
+    private String getBillingAccount(JacsServiceData jacsServiceData) {
+        return accounting.getComputeAccount(jacsServiceData);
+    }
 }

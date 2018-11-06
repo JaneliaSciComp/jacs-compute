@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
+import org.janelia.jacs2.asyncservice.impl.JacsServiceDataManagerImpl;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;

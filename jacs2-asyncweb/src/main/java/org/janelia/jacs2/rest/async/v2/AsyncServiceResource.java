@@ -73,10 +73,10 @@ public class AsyncServiceResource {
             @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
     public Response createAsyncService(@PathParam("service-name") String serviceName, JacsServiceData si, @Context ContainerRequestContext containerRequestContext) {
-        String authenticatedSubject = JacsSecurityContextHelper.getAuthenticatedSubjectKey(containerRequestContext);
-        String authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        si.setAuthKey(authenticatedSubject);
-        si.setOwnerKey(authorizedSubject);
+        String authenticatedSubjectKey = JacsSecurityContextHelper.getAuthenticatedSubjectKey(containerRequestContext);
+        String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
+        si.setAuthKey(authenticatedSubjectKey);
+        si.setOwnerKey(authorizedSubjectKey);
         si.setName(serviceName);
         JacsServiceData newJacsServiceData = jacsServiceEngine.submitSingleService(si);
         UriBuilder locationURIBuilder = UriBuilder.fromResource(ServiceInfoResource.class);

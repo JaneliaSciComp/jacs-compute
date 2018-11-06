@@ -35,19 +35,19 @@ import java.util.Map;
 public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
 
     private final JobManager jobMgr;
-    private final ComputeAccounting accouting;
+    private final ComputeAccounting accounting;
     private final boolean requiresAccountInfo;
 
     @Inject
     public ExternalLSFJavaJobRunner(MonitoredJobManager monitoredJobManager,
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
-                                    ComputeAccounting accouting,
+                                    ComputeAccounting accounting,
                                     @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
                                     Logger logger) {
         super(jacsServiceDataPersistence, logger);
         this.jobMgr = monitoredJobManager.getJobMgr();
         this.requiresAccountInfo = requiresAccountInfo;
-        this.accouting = accouting;
+        this.accounting = accounting;
     }
 
     @Override
@@ -121,7 +121,7 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         }
 
         // Figure out who is going to get the bill
-        String billingAccount = accouting.getComputeAccount(serviceContext);
+        String billingAccount = accounting.getComputeAccount(serviceContext);
 
         // Apply a RegEx to replace any non-alphanumeric character with "_".
         jt.setJobName(billingAccount.replaceAll("\\W", "_") + "_" + serviceContext.getName());

@@ -149,7 +149,7 @@ public class ComputeAccounting {
         String billingAccount = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());
         if (!StringUtils.isBlank(billingAccount)) {
             // User provided a billing account
-            Subject authenticatedUser = dao.getSubjectByKey(serviceContext.getAuthKey());
+            Subject authenticatedUser = dao.getSubjectByNameOrKey(serviceContext.getAuthKey());
             if (!SubjectUtils.isAdmin(authenticatedUser)) {
                 log.warn("User {} attempted to retrieve billing account {} on behalf of {} without admin privileges",
                         serviceContext.getAuthKey(), billingAccount, serviceContext.getOwnerKey());

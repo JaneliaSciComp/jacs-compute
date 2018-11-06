@@ -109,7 +109,6 @@ public class SparkAppProcessorTest {
                 clusterBillingInfo,
                 testDriverMemory,
                 testExecutorMemory,
-                0,
                 null))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
 
@@ -163,9 +162,9 @@ public class SparkAppProcessorTest {
                 .setAuthKey(owner)
                 .addArgs("-appLocation", testApp)
                 .addArgs("-appArgs").addArgs(appArgs.stream().reduce((a1, a2) -> a1 + "," + a2).orElse(""))
-                .addResource("spark.numNodes", String.valueOf(numNodes))
-                .addResource("spark.driverMemory", driverMemory)
-                .addResource("spark.executorMemory", executorMemory)
+                .addResource("sparkNumNodes", String.valueOf(numNodes))
+                .addResource("sparkDriverMemory", driverMemory)
+                .addResource("sparkExecutorMemory", executorMemory)
                 ;
         JacsServiceData testServiceData = testServiceDataBuilder
                 .setWorkspace(TEST_WORKSPACE)

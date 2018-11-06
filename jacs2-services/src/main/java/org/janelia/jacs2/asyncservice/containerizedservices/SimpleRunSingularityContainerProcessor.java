@@ -5,8 +5,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -45,11 +43,6 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
     }
 
     @Override
-    public ServiceResultHandler<Void> getResultHandler() {
-        return new VoidServiceResultHandler();
-    }
-
-    @Override
     void createScript(AbstractSingularityContainerArgs args, ScriptWriter scriptWriter) {
         RunSingularityContainerArgs runArgs = (RunSingularityContainerArgs) args;
         scriptWriter
@@ -71,7 +64,8 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
         if (StringUtils.isNotBlank(runArgs.initialPwd)) {
             scriptWriter.addArgs("--pwd", runArgs.initialPwd);
         }
-        scriptWriter.addArg(getLocalContainerImage(runArgs).toString());
+        ContainerImage containerImage = getLocalContainerImage(runArgs);
+        scriptWriter.addArg(containerImage.getLocalImagePath().toString());
         if (CollectionUtils.isNotEmpty(runArgs.appArgs)) {
             runArgs.appArgs.forEach(scriptWriter::addArg);
         }

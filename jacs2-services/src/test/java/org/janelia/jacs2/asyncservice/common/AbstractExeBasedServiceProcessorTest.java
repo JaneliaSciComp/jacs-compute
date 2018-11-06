@@ -2,7 +2,6 @@ package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -47,11 +46,6 @@ public class AbstractExeBasedServiceProcessorTest {
         @Override
         public ServiceMetaData getMetadata() {
             return new ServiceMetaData();
-        }
-
-        @Override
-        public ServiceResultHandler<Void> getResultHandler() {
-            return new VoidServiceResultHandler();
         }
 
         @Override

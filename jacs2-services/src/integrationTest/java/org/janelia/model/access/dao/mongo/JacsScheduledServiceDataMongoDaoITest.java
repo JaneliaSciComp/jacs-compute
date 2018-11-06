@@ -27,7 +27,7 @@ public class JacsScheduledServiceDataMongoDaoITest extends AbstractMongoDaoITest
 
     @Before
     public void setUp() {
-        testDao = new JacsScheduledServiceDataMongoDao(testMongoDatabase, idGenerator);
+        testDao = new JacsScheduledServiceDataMongoDao(testMongoDatabase, idGenerator, true);
     }
 
     @After

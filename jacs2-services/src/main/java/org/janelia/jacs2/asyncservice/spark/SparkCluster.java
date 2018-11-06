@@ -36,7 +36,7 @@ public class SparkCluster {
     private final String hadoopHomeDir;
     private final String sparkDriverMemory;
     private final String sparkExecutorMemory;
-    private final int sparkExecutorCores;
+    private final int coresPerSparkExecutor;
     private final int defaultParallelism;
     private final String sparkLogConfigFile;
 
@@ -50,7 +50,7 @@ public class SparkCluster {
                  String hadoopHomeDir,
                  String sparkDriverMemory,
                  String sparkExecutorMemory,
-                 int sparkExecutorCores,
+                 int coresPerSparkExecutor,
                  int defaultParallelism,
                  String sparkLogConfigFile,
                  Logger logger) {
@@ -60,7 +60,7 @@ public class SparkCluster {
         this.hadoopHomeDir = hadoopHomeDir;
         this.sparkDriverMemory = sparkDriverMemory;
         this.sparkExecutorMemory = sparkExecutorMemory;
-        this.sparkExecutorCores = sparkExecutorCores;
+        this.coresPerSparkExecutor = coresPerSparkExecutor;
         this.defaultParallelism = defaultParallelism;
         this.sparkLogConfigFile = sparkLogConfigFile;
         this.computationFactory = computationFactory;
@@ -133,16 +133,24 @@ public class SparkCluster {
                 appOutputDir,
                 appErrorDir,
                 sparkExecutorMemory,
-                sparkExecutorCores,
+                coresPerSparkExecutor,
                 parallelism,
                 Arrays.asList(appArgs));
         SparkLauncher sparkLauncher = new SparkLauncher();
 
+        File sparkOutputFile;
         if (StringUtils.isNotBlank(appOutputDir)) {
-            sparkLauncher.redirectOutput(new File(appOutputDir, DRIVER_OUTPUT_FILENAME));
+            sparkOutputFile = new File(appOutputDir, DRIVER_OUTPUT_FILENAME);
+            sparkLauncher.redirectOutput(sparkOutputFile);
+        } else {
+            sparkOutputFile = null;
         }
+        File sparkErrorFile;
         if (StringUtils.isNotBlank(appErrorDir)) {
-            sparkLauncher.redirectError(new File(appErrorDir, DRIVER_ERROR_FILENAME));
+            sparkErrorFile = new File(appErrorDir, DRIVER_ERROR_FILENAME);
+            sparkLauncher.redirectError(sparkErrorFile);
+        } else {
+            sparkErrorFile = null;
         }
 
         sparkLauncher.setAppResource(appResource)
@@ -151,7 +159,7 @@ public class SparkCluster {
                 .setConf("spark.ui.showConsoleProgress", "false") // The console progress bar screws up the STDOUT stream
                 .setConf(SparkLauncher.DRIVER_MEMORY, sparkDriverMemory)
                 .setConf(SparkLauncher.EXECUTOR_MEMORY, sparkExecutorMemory)
-                .setConf(SparkLauncher.EXECUTOR_CORES, "" + sparkExecutorCores)
+                .setConf(SparkLauncher.EXECUTOR_CORES, "" + coresPerSparkExecutor)
                 // The default (4MB) open cost consolidates files into tiny partitions regardless of number of cores.
                 // By forcing this parameter to zero, we can specify the exact parallelism we want.
                 .setConf("spark.files.openCostInBytes", "0")
@@ -171,7 +179,7 @@ public class SparkCluster {
         try {
             Stopwatch sparkAppWatch = Stopwatch.createStarted();
 
-            SparkApp sparkApp = new SparkApp(this, appOutputDir, appErrorDir);
+            SparkApp sparkApp = new SparkApp(this, sparkOutputFile, sparkErrorFile);
 
             SparkAppHandle.Listener completionListener = new SparkAppHandle.Listener() {
                 @Override

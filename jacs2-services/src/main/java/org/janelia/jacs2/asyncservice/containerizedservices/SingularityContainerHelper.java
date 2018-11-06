@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.File;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -14,24 +16,22 @@ class SingularityContainerHelper {
 
     private static final String DEFAULT_IMAGE_EXT = ".simg";
 
-    static <A extends AbstractSingularityContainerArgs> BiFunction<A, String, Path> getLocalContainerImageMapper() {
+    static <A extends AbstractSingularityContainerArgs> BiFunction<A, String, ContainerImage> getLocalContainerImageMapper() {
         return (A args, String defaultContainerImagesDirPath) -> {
-            Pair<Path, String> containerImageWithPath = getLocalContainerImage(args.containerLocation);
-            if (containerImageWithPath.getLeft() != null) {
-                // the configured container location is a local path so in this case simply take the given location.
-                return containerImageWithPath.getLeft().resolve(containerImageWithPath.getRight());
+            ContainerImage containerImage = getLocalContainerImage(args.containerLocation);
+            if (containerImage.isLocalImage()) {
+                // the configured container location is a local path so just return the container image
+                return containerImage;
             } else {
-                String containerName = getContainerNameFromArgs(args).orElse(containerImageWithPath.getRight());
-                Function<String, Path> containerImageDirMapper = containerImagesPath -> {
-                    if (StringUtils.isNotBlank(containerImagesPath)) {
-                        return Paths.get(containerImagesPath, containerName);
-                    } else {
-                        return Paths.get(containerName);
-                    }
-                };
+                String containerName = getContainerNameFromArgs(args).orElse(containerImage.imageName);
                 return getLocalImagesDir(args, defaultContainerImagesDirPath)
-                        .map(containerImageDirMapper::apply)
-                        .orElse(containerImageDirMapper.apply(""));
+                        .filter(containerImagePath -> StringUtils.isNotBlank(containerImagePath))
+                        .map(containerImagePath -> new ContainerImage(containerImage.protocol,
+                                Paths.get(containerImagePath),
+                                containerName))
+                        .orElseGet(() -> new ContainerImage(containerImage.protocol,
+                                Paths.get(""),
+                                containerName));
             }
         };
     }
@@ -59,18 +59,42 @@ class SingularityContainerHelper {
      * @return a pair of the container directory and the parsed out container name. Container directory is only set if
      * the container location is a local path
      */
-    private static Pair<Path, String> getLocalContainerImage(String containerLocation) {
+    private static ContainerImage getLocalContainerImage(String containerLocation) {
         if (StringUtils.isBlank(containerLocation)) {
             throw new IllegalArgumentException("Container location cannot be empty");
         }
         if (StringUtils.startsWithIgnoreCase(containerLocation, "shub://")) {
-            return ImmutablePair.of(null, parseDockerHubOrSHubName(containerLocation.substring("shub://".length())));
+            return new ContainerImage("shub",
+                    null,
+                    parseDockerHubOrSHubName(containerLocation.substring("shub://".length())));
         } else if (StringUtils.startsWithIgnoreCase(containerLocation, "docker://")) {
-            return ImmutablePair.of(null, parseDockerHubOrSHubName(containerLocation.substring("docker://".length())));
+            return new ContainerImage("docker",
+                    null,
+                    parseDockerHubOrSHubName(containerLocation.substring("docker://".length())));
+        } else if (StringUtils.startsWithIgnoreCase(containerLocation, "http://") ||
+                StringUtils.startsWithIgnoreCase(containerLocation, "https://")) {
+            URI containerLocationURI = URI.create(containerLocation);
+            String containerURIPath;
+            if (StringUtils.isNotBlank(containerLocationURI.getPath())) {
+                containerURIPath = containerLocationURI.getPath();
+            } else {
+                containerURIPath = containerLocationURI.getHost() +
+                        (containerLocationURI.getPort() > 0 ? "-" + containerLocationURI.getPort() : "");
+            }
+            return new ContainerImage("http",
+                    null,
+                    Paths.get(containerURIPath).getFileName().toString());
+        } else if (StringUtils.startsWithIgnoreCase(containerLocation, "file:/")) {
+            Path containerImagePath = new File(URI.create(containerLocation)).toPath();
+            return new ContainerImage("file",
+                    containerImagePath.getParent(),
+                    containerImagePath.getFileName().toString());
         } else {
             // assume a path
-            Path p = Paths.get(containerLocation);
-            return ImmutablePair.of(p.getParent(), p.getFileName().toString());
+            Path containerImagePath = Paths.get(containerLocation);
+            return new ContainerImage("file",
+                    containerImagePath.getParent(),
+                    containerImagePath.getFileName().toString());
         }
     }
 
@@ -103,7 +127,8 @@ class SingularityContainerHelper {
      * @param missingComponentHandler - tells how to advance the position when the separator is not found.
      * @return a pair of the extracted component and the remaining string; the component always starts after the separator.
      */
-    private static Pair<String, String> extractComponent(String s, char separator, Function<String, Pair<String, String>> missingComponentHandler) {
+    private static Pair<String, String> extractComponent(String s, char separator,
+                                                         Function<String, Pair<String, String>> missingComponentHandler) {
         if (StringUtils.isEmpty(s)) {
             return ImmutablePair.of("", "");
         }

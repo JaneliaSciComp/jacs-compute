@@ -6,8 +6,6 @@ import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.VoidServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -49,11 +47,6 @@ public class SleepTestProcessor extends AbstractExeBasedServiceProcessor<Void> {
     @Override
     public ServiceMetaData getMetadata() {
         return ServiceArgs.getMetadata(SleepTestProcessor.class, new SleepArgs());
-    }
-
-    @Override
-    public ServiceResultHandler<Void> getResultHandler() {
-        return new VoidServiceResultHandler();
     }
 
     @Override

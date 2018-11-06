@@ -27,6 +27,7 @@ import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.utils.HttpUtils;
 import org.janelia.model.jacs2.domain.IndexedReference;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
@@ -34,9 +35,12 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,12 +52,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import org.janelia.jacs2.utils.HttpUtils;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
 
 /**
  * Service for running a single lightsheet pipeline step.
@@ -211,10 +209,6 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
     }
 
     private Map<String, String> prepareResources(LightsheetPipelineStepArgs args, Map<String, String> jobResources) {
-        String cpuType = ProcessorHelper.getCPUType(jobResources);
-        if (StringUtils.isBlank(cpuType)) {
-            ProcessorHelper.setCPUType(jobResources, "skylake");
-        }
         ProcessorHelper.setRequiredSlots(jobResources, args.step.getRecommendedSlots());
         ProcessorHelper.setSoftJobDurationLimitInSeconds(jobResources, 5*60); // 5 minutes
         ProcessorHelper.setHardJobDurationLimitInSeconds(jobResources, 12*60*60); // 12 hours
@@ -247,9 +241,13 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
 
         // clusterPT
         dataMountPoints.putAll(addMountPointFromStepConfig("inputFolder", stepConfig,
+<<<<<<< HEAD
                 idMapping));
 	dataMountPoints.putAll(addMountPointFromStepConfig("outputFolder", stepConfig,
                 existingPathOrParentMapping));
+=======
+                parentPath.andThen(existingPathOrParentMapping)));
+>>>>>>> upstream/master
         // clusterMF
         dataMountPoints.putAll(addMountPointFromStepConfig("inputString", stepConfig,
                 idMapping));
@@ -265,7 +263,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                 parentPath.andThen(existingPathOrParentMapping)));
         // localEC
         dataMountPoints.putAll(addMountPointFromStepConfig("inputRoot", stepConfig,
-                idMapping));
+                parentPath.andThen(existingPathOrParentMapping)));
         // clusterCS
         dataMountPoints.putAll(addMountPointFromStepConfig("outputRoot", stepConfig,
                 existingPathOrParentMapping));
@@ -316,7 +314,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
     }
 
     private Pair<String, Map<String, Object>> getStepConfig(JacsServiceData jacsServiceData, LightsheetPipelineStepArgs args) {
-        Map<String, Object> stepConfig = readJsonConfig(getJsonConfig(args.configAddress, args.step.name()));
+        Map<String, Object> stepConfig = getJsonConfig(args.configAddress, args.step.name());
         stepConfig.putAll(jacsServiceData.getActualDictionaryArgs()); // overwrite arguments that were explicitly passed by the user in the dictionary args
         // write the final config file
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
@@ -340,10 +338,9 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
     }
 
     // Creates json file from http call
-    private InputStream getJsonConfig(String configAddress, String stepName) {
-        Client httpclient = null;
+    private Map<String, Object> getJsonConfig(String configAddress, String stepName) {
+        Client httpclient = HttpUtils.createHttpClient();
         try {
-            httpclient = HttpUtils.createHttpClient();
             WebTarget target;
             if ("generateMiniStacks".equals(stepName)) {
                 // the address must already contain the desired step but I want to check that is present
@@ -360,23 +357,13 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(configAddress + " returned with " + response.getStatus());
             }
-            return response.readEntity(InputStream.class);
+            return response.readEntity(new GenericType<>(new TypeReference<Map<String, Object>>(){}.getType()));
         } catch (IllegalStateException | IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            if (httpclient != null) {
-                httpclient.close();
-            }
-        }
-    }
-
-    private Map<String, Object> readJsonConfig(InputStream inputStream) {
-        try {
-            return objectMapper.readValue(inputStream, new TypeReference<Map<String, Object>>() {});
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            httpclient.close();
         }
     }
 

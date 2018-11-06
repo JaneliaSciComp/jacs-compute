@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.lightsheetservices;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
@@ -36,13 +37,18 @@ import org.slf4j.Logger;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.assertFalse;
@@ -52,6 +58,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -357,15 +364,17 @@ public class LightsheetPipelineStepProcessorTest {
         LOCAL_STEP_CONFIGS.forEach((step, config) -> {
             int stepIndex = 1;
             Mockito.when(testHttpClient.target(CONFIG_IP_ARG + "?stepName=" + step)).thenReturn(configEndpoint);
+            PowerMockito.mockStatic(Paths.class);
+            prepareMockPathsThatExists("/in", "/inRoot/in");
             JacsServiceData testServiceData = createMinistacksTestService(step, stepIndex, config);
             testServiceData.getDictionaryArgs().putAll(ImmutableMap.<String, Object>builder()
-                    .put("inputFolder", "/in")
-                    .put("inputString", "/in")
+                    .put("inputFolder", "/in/folder")
+                    .put("inputString", "/in/string")
                     .put("outputString", "/tmp/sub")
                     .put("configRoot", "//tmp/config")
                     .put("sourceString", "/tmp/sub")
                     .put("lookUpTable", "/tmp/ltFile")
-                    .put("inputRoot", "/inRoot/in")
+                    .put("inputRoot", "/inRoot/in/folder")
                     .put("outputRoot", "/tmp/out")
                     .put("inputDir", "/inDir/in")
                     .put("outputDir", "/var/tmp/out")
@@ -396,6 +405,7 @@ public class LightsheetPipelineStepProcessorTest {
                                                                 "d1/d1.1:d1/d1.1" + "," +
                                                                 "d2" + "," +
                                                                 "/in:/in" + "," +
+                                                                "/in/string:/in/string" + "," +
                                                                 "/tmp:/tmp" + "," +
                                                                 "/inRoot/in:/inRoot/in" + "," +
                                                                 "/inDir/in:/inDir/in" + "," +
@@ -414,6 +424,26 @@ public class LightsheetPipelineStepProcessorTest {
                     })
             ;
             Mockito.verify(successful).accept(any());
+        });
+    }
+
+    private void prepareMockPathsThatExists(String... pnames) {
+        Map<String, Path> pathStringMap = new HashMap<>();
+        for (String pname : pnames) {
+            Path mockPath = Mockito.mock(Path.class);
+            File mockFile = Mockito.mock(File.class);
+            Mockito.when(mockPath.toFile()).thenReturn(mockFile);
+            Mockito.when(mockFile.exists()).thenReturn(true);
+            pathStringMap.put(pname, mockPath);
+            Mockito.when(mockPath.toString()).thenReturn(pname);
+        }
+        Mockito.when(Paths.get(anyString())).then(invocation -> {
+            String pname = invocation.getArgument(0);
+            if (pathStringMap.keySet().contains(pname)) {
+                return pathStringMap.get(pname);
+            } else {
+                return invocation.callRealMethod();
+            }
         });
     }
 
@@ -453,6 +483,7 @@ public class LightsheetPipelineStepProcessorTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
     private WebTarget prepareConfigEnpointTestTarget() {
         WebTarget configEndpoint = Mockito.mock(WebTarget.class);
         Invocation.Builder configRequestBuilder = Mockito.mock(Invocation.Builder.class);
@@ -462,7 +493,8 @@ public class LightsheetPipelineStepProcessorTest {
         Mockito.when(configRequestBuilder.get()).thenReturn(configResponse);
         Mockito.when(configResponse.getStatus()).thenReturn(200);
         String testData = "{\"key\": \"val\"}";
-        Mockito.when(configResponse.readEntity(InputStream.class)).then(invocation -> new ByteArrayInputStream(testData.getBytes()));
+        Mockito.when(configResponse.readEntity(any(GenericType.class)))
+                .then(invocation -> ObjectMapperFactory.instance().newObjectMapper().readValue(testData, new TypeReference<Map<String, Object>>(){}));
         return configEndpoint;
     }
 
