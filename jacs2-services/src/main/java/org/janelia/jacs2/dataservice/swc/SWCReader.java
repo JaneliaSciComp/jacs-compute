@@ -11,8 +11,8 @@ public class SWCReader {
 
     private static final Logger LOG = LoggerFactory.getLogger(SWCReader.class);
 
-    public SWCData readSWCFile(Path swcFile) {
-        SWCData swcData = new SWCData();
+    SWCData readSWCFile(Path swcFile) {
+        SWCData swcData = new SWCData(swcFile);
         try {
             Files.readAllLines(swcFile, Charset.defaultCharset())
                     .stream()

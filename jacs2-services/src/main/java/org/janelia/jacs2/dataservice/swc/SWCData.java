@@ -52,8 +52,11 @@ import java.util.stream.Stream;
 public class SWCData {
 
     private static final Logger LOG = LoggerFactory.getLogger(SWCData.class);
+    private static final String STD_SWC_EXTENSION = ".swc";
     private static final String NAME_HEADER_PREFIX = "NAME";
+    private static final String COLOR_HEADER_PREFIX = "COLOR";
 
+    private Path swcFile;
     private List<SWCNode> nodeList = new ArrayList<>();
     private List<String> headerList = new ArrayList<>();
 
@@ -61,7 +64,8 @@ public class SWCData {
     // some routines want it in original form
     private double[] neuronCenter = {0.0, 0.0, 0.0};
 
-    SWCData() {
+    SWCData(Path swcFile) {
+        this.swcFile = swcFile;
     }
 
     void addHeader(String header) {
@@ -76,7 +80,7 @@ public class SWCData {
      * Check the swcFile;
      * @return null if the SWC structure is valid
      */
-    public List<String> validate() {
+    List<String> validate() {
 
         List<String> validationErrors = new ArrayList<>();
 
@@ -117,19 +121,19 @@ public class SWCData {
         return validationErrors;
     }
 
-    public List<SWCNode> getNodeList() {
+    Iterable<SWCNode> getNodeList() {
         return nodeList;
     }
 
-    public List<String> getHeaderList() {
+    Iterable<String> getHeaderList() {
         return headerList;
     }
 
-    public double[] getNeuronCenter() {
+    double[] getNeuronCenter() {
         return neuronCenter;
     }
 
-    public double[] extractOffset() {
+    double[] extractOffset() {
         return findHeaderLine("OFFSET")
                 .map(offsetHeader -> {
                     try {
@@ -148,13 +152,47 @@ public class SWCData {
                 .orElseGet(() -> new double[] {0, 0, 0});
     }
 
-    public String extractName() {
+    String extractName() {
         return findHeaderLine(NAME_HEADER_PREFIX)
                 .map(nameHeader -> {
                     int hdrPos = nameHeader.indexOf(NAME_HEADER_PREFIX);
                     return nameHeader.substring(hdrPos + NAME_HEADER_PREFIX.length()).trim();
                 })
+                .orElseGet(() -> {
+                    if (swcFile != null) {
+                        String swcFileName = swcFile.getFileName().toString();
+                        if (swcFileName.endsWith(STD_SWC_EXTENSION)) {
+                            return swcFileName.substring(0, swcFileName.length() - STD_SWC_EXTENSION.length());
+                        } else {
+                            return swcFileName;
+                        }
+                    } else {
+                        return null;
+                    }
+                });
+    }
+
+    float[] extractColors() {
+        return findHeaderLine(COLOR_HEADER_PREFIX)
+                .map(colorHeader -> {
+                    float[] rgb = new float[3];
+                    // NOTE: if fewer colors are in header than 3, remainder
+                    // are just filled with 0f.
+                    int colorHdrOffs = colorHeader.indexOf(COLOR_HEADER_PREFIX);
+                    String rgbHeader = colorHeader.substring(colorHdrOffs + COLOR_HEADER_PREFIX.length()).trim();
+                    String[] colors = rgbHeader.split("[, ]");
+                    for (int i = 0; i < colors.length  &&  i < rgb.length; i++) {
+                        try {
+                            rgb[i] = Float.parseFloat(colors[i]);
+                        } catch (NumberFormatException nfe) {
+                            // Ignore what we cannot parse.
+                            LOG.warn("Failed to parse color value {} of header {}.", i, colorHeader);
+                        }
+                    }
+                    return rgb;
+                })
                 .orElse(null);
+
     }
 
     private Optional<String> findHeaderLine(String key) {
@@ -166,4 +204,5 @@ public class SWCData {
         }
         return Optional.empty();
     }
+
 }

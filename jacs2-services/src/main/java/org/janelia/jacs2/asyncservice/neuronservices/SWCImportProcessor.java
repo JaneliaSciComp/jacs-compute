@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Named("swcImport")
@@ -32,12 +34,14 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
         String workspace;
         @Parameter(names = "-swcDirName", description = "SWC directory name", required = true)
         String swcDirName;
-        @Parameter(names = "-accessUsers", description = "Users with access to the new workspace", required = true)
-        List<String> accessUsers = new ArrayList<>();
+        @Parameter(names = "-withSystemOwner", description = "If set mouselight group user is the owner of the imported neurons")
+        boolean withSystemOwner;
         SWCImportArgs() {
             super("Service that imports an SWC file into a workspace");
         }
     }
+
+    private static final String SYSTEM_OWNER_KEY = "group:mouselight";
 
     private final SWCService swcService;
 
@@ -82,9 +86,18 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
     @Override
     public ServiceComputation<JacsServiceResult<Long>> process(JacsServiceData jacsServiceData) {
         SWCImportArgs args = getArgs(jacsServiceData);
+        String neuronOwnerKey;
+        List<String> accessUsers;
+        if (args.withSystemOwner) {
+            neuronOwnerKey = SYSTEM_OWNER_KEY;
+            accessUsers = Arrays.asList(SYSTEM_OWNER_KEY);
+        } else {
+            neuronOwnerKey = jacsServiceData.getOwnerKey();
+            accessUsers = Collections.emptyList();
+        }
         return computationFactory
-                .newCompletedComputation(swcService.importSWVFolder(args.swcDirName,
-                        args.sampleId, args.workspace, jacsServiceData.getOwnerKey(), args.accessUsers))
+                .newCompletedComputation(swcService.importSWCFolder(args.swcDirName,
+                        args.sampleId, neuronOwnerKey, args.workspace, jacsServiceData.getOwnerKey(), accessUsers))
                 .thenApply(tmWorkspace -> updateServiceResult(jacsServiceData, tmWorkspace.getId()));
     }
 
