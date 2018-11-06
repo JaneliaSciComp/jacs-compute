@@ -242,7 +242,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         // clusterPT
         dataMountPoints.putAll(addMountPointFromStepConfig("inputFolder", stepConfig,
                 parentPath.andThen(existingPathOrParentMapping)));
-	dataMountPoints.putAll(addMountPointFromStepConfig("outputFolder", stepConfig,
+        dataMountPoints.putAll(addMountPointFromStepConfig("outputFolder", stepConfig,
                 existingPathOrParentMapping));
         // clusterMF
         dataMountPoints.putAll(addMountPointFromStepConfig("inputString", stepConfig,
