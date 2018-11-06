@@ -213,7 +213,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
     private Map<String, String> prepareResources(LightsheetPipelineStepArgs args, Map<String, String> jobResources) {
         String cpuType = ProcessorHelper.getCPUType(jobResources);
         if (StringUtils.isBlank(cpuType)) {
-            ProcessorHelper.setCPUType(jobResources, "broadwell");
+            ProcessorHelper.setCPUType(jobResources, "skylake");
         }
         ProcessorHelper.setRequiredSlots(jobResources, args.step.getRecommendedSlots());
         ProcessorHelper.setSoftJobDurationLimitInSeconds(jobResources, 5*60); // 5 minutes
@@ -248,6 +248,8 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         // clusterPT
         dataMountPoints.putAll(addMountPointFromStepConfig("inputFolder", stepConfig,
                 idMapping));
+	dataMountPoints.putAll(addMountPointFromStepConfig("outputFolder", stepConfig,
+                existingPathOrParentMapping));
         // clusterMF
         dataMountPoints.putAll(addMountPointFromStepConfig("inputString", stepConfig,
                 idMapping));

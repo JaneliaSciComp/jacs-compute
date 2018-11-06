@@ -6,8 +6,8 @@ public enum LightsheetPipelineStep {
     clusterMF(true, 2),
     clusterPT(true, 2),
     clusterTF(true, 2),
-    localAP(false, 32),
-    localEC(false, 32),
+    localAP(false, 6),
+    localEC(false, 6),
     generateMiniStacks(false, 32);
 
     private boolean canSplitJob;
