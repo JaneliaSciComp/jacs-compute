@@ -17,7 +17,7 @@ public class SWCReader {
             Files.readAllLines(swcFile, Charset.defaultCharset())
                     .stream()
                     .map(l -> l.trim())
-                    .filter(l -> l.length() == 0)
+                    .filter(l -> l.length() > 0)
                     .forEach(l -> {
                         if (l.startsWith("#")) {
                             swcData.addHeader(l);
