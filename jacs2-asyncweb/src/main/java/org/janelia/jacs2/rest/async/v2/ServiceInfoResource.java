@@ -9,6 +9,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
+import org.janelia.jacs2.auth.JacsServiceAccessDataUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.domain.enums.SubjectRole;
 import org.janelia.model.jacs2.DataInterval;
@@ -37,7 +38,6 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RequestScoped
@@ -228,7 +228,7 @@ public class ServiceInfoResource {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
-        } else if (securityContext.isUserInRole(SubjectRole.Admin.getRole()) || serviceData.canBeAccessedBy(securityContext.getUserPrincipal().getName())) {
+        } else if (JacsServiceAccessDataUtils.canServiceBeAccessedBy(serviceData, securityContext)) {
             return Response
                     .status(Response.Status.OK)
                     .entity(serviceData)
@@ -257,11 +257,11 @@ public class ServiceInfoResource {
                     .status(Response.Status.NOT_FOUND)
                     .build();
         }
-        if (serviceData.canBeModifiedBy(securityContext.getUserPrincipal().getName())) {
-            serviceData = jacsServiceDataManager.updateService(instanceId, si);
+        if (JacsServiceAccessDataUtils.canServiceBeModifiedBy(serviceData, securityContext)) {
+            JacsServiceData updatedServiceData = jacsServiceDataManager.updateService(instanceId, si);
             return Response
                     .status(Response.Status.OK)
-                    .entity(serviceData)
+                    .entity(updatedServiceData)
                     .build();
         } else {
             logger.warn("Service {} cannot be modified by {}", serviceData, securityContext.getUserPrincipal().getName());
