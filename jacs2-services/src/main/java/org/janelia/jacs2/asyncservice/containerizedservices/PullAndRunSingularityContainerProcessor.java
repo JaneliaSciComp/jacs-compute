@@ -106,7 +106,7 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
                         new ServiceArg("-enableNV", args.enableNV),
                         new ServiceArg("-initialPwd", args.initialPwd),
                         new ServiceArg("-appArgs", args.appArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
-                        new ServiceArg("-batchJobArgs", args.batchJobArgs),
+                        new ServiceArg("-batchJobArgs", args.batchJobArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
                         new ServiceArg("", args.getRemainingArgs().stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
                 );
         } else {
