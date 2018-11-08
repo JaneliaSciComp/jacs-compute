@@ -92,9 +92,9 @@ public class MongoDaoHelper {
 
     public static <T> long count(Bson queryFilter, MongoCollection<T> mongoCollection) {
         if (queryFilter == null) {
-            return mongoCollection.count();
+            return mongoCollection.countDocuments();
         } else {
-            return mongoCollection.count(queryFilter);
+            return mongoCollection.countDocuments(queryFilter);
         }
     }
 
