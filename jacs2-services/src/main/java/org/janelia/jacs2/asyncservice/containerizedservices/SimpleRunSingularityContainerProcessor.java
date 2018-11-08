@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.containerizedservices;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
@@ -19,7 +20,9 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Named("simpleRunSingularityContainer")
 public class SimpleRunSingularityContainerProcessor extends AbstractSingularityContainerProcessor<Void> {
@@ -74,6 +77,19 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
             remainingArgs.stream().filter(StringUtils::isNotBlank).forEach(scriptWriter::addArg);
         }
         scriptWriter.endArgs();
+    }
+
+    @Override
+    protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
+        RunSingularityContainerArgs args = getArgs(jacsServiceData);
+        return args.batchJobArgs.stream()
+                .map(instanceArgs -> {
+                    ExternalCodeBlock instanceConfig = new ExternalCodeBlock();
+                    ScriptWriter configWriter = instanceConfig.getCodeWriter();
+                    configWriter.add(instanceArgs);
+                    return instanceConfig;
+                })
+                .collect(Collectors.toList());
     }
 
     RunSingularityContainerArgs getArgs(JacsServiceData jacsServiceData) {

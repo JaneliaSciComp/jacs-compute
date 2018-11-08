@@ -106,6 +106,8 @@ class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
     String initialPwd;
     @Parameter(names = "-appArgs", description = "Containerized application arguments", splitter = ServiceArgSplitter.class)
     List<String> appArgs = new ArrayList<>();
+    @Parameter(names = "-batchJobArgs", description = "Containerized application arguments when running a batch", splitter = ServiceArgSplitter.class)
+    List<String> batchJobArgs = new ArrayList<>();
 
     RunSingularityContainerArgs() {
         this("Service that runs a singularity container");
