@@ -82,9 +82,11 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
         if (jacsServiceData == null) {
             return null;
         }
-        Number rootServiceId = jacsServiceData.getRootServiceId();
-        if (rootServiceId == null) {
+        Number rootServiceId;
+        if (jacsServiceData.getRootServiceId() == null) {
             rootServiceId = jacsServiceData.getId();
+        } else {
+            rootServiceId = jacsServiceData.getRootServiceId();
         }
         Map<Number, JacsServiceData> fullServiceHierachy = new LinkedHashMap<>();
         MongoDaoHelper.find(
@@ -109,7 +111,6 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
                     .filter(fullServiceHierachy::containsKey)
                     .forEach(id -> sd.addServiceDependency(fullServiceHierachy.get(id)));
         });
-
         return fullServiceHierachy.get(jacsServiceData.getId());
     }
 
