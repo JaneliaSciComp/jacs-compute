@@ -6,6 +6,7 @@ import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.dataservice.cronservice.CronScheduledServiceManager;
+import org.janelia.jacs2.filter.JwtDecoder;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.slf4j.Logger;
 
@@ -28,5 +29,6 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getObjectMapperFactory()).to(ObjectMapperFactory.class);
         bind(dependenciesProducer.getJacsScheduledServiceDataManager()).to(CronScheduledServiceManager.class);
         bind(dependenciesProducer.getJacsServiceEngine()).to(JacsServiceEngine.class);
+        bind(dependenciesProducer.getJwtDecoder()).to(JwtDecoder.class);
     }
 }

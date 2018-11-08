@@ -1,8 +1,5 @@
 package org.janelia.jacs2.filter;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContext;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
@@ -21,9 +18,6 @@ import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.lang.reflect.Method;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**

@@ -3,6 +3,7 @@ package org.janelia.jacs2.app;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.janelia.jacs2.filter.AuthFilter;
 import org.janelia.jacs2.filter.CORSResponseFilter;
+import org.janelia.jacs2.filter.JwtDecoder;
 import org.janelia.jacs2.provider.ObjectMapperResolver;
 import org.janelia.jacs2.rest.InvalidArgumentRequestHandler;
 import org.janelia.jacs2.rest.InvalidJsonRequestHandler;
