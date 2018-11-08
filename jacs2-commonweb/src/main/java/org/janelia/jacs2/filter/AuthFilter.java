@@ -1,5 +1,8 @@
 package org.janelia.jacs2.filter;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContext;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
@@ -18,6 +21,10 @@ import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.lang.reflect.Method;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Authorization filter for async and sync web services.
@@ -36,11 +43,14 @@ import java.lang.reflect.Method;
  */
 @Priority(Priorities.AUTHENTICATION)
 public class AuthFilter implements ContainerRequestFilter {
+    private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String HEADER_USERNAME = "username";
     private static final String HEADER_RUNASUSER = "runasuser";
 
     @Inject
     private LegacyDomainDao dao;
+    @Inject
+    private JwtDecoder jwtDecoder;
     @Inject
     private Logger logger;
     @Context
@@ -55,7 +65,8 @@ public class AuthFilter implements ContainerRequestFilter {
             // everybody is allowed to access the method
             return;
         }
-        String authUserName = requestContext.getHeaderString(HEADER_USERNAME);
+        String authUserName = getSingleHeaderValue(requestContext, HEADER_USERNAME)
+                .orElseGet(() -> getUserNameFromAuthorizationHeader(requestContext).orElse(""));
         if (StringUtils.isBlank(authUserName)) {
             logger.warn("Null or empty username parameter passed in header {} for authentication", HEADER_USERNAME);
             requestContext.abortWith(
@@ -112,5 +123,25 @@ public class AuthFilter implements ContainerRequestFilter {
                 "https".equals(requestContext.getUriInfo().getRequestUri().getScheme()),
                 "");
         requestContext.setSecurityContext(securityContext);
+    }
+
+    private Optional<String> getSingleHeaderValue(ContainerRequestContext requestContext, String headerName) {
+        String headerValue = requestContext.getHeaderString(headerName);
+        return StringUtils.isNotBlank(headerValue) ? Optional.of(headerValue) : Optional.empty();
+    }
+
+    private Optional<String> getUserNameFromAuthorizationHeader(ContainerRequestContext requestContext) {
+        return getSingleHeaderValue(requestContext, AUTHORIZATION_HEADER)
+                .flatMap(authHeader -> {
+                    if (StringUtils.startsWithIgnoreCase(authHeader, "Bearer ")) {
+                        return Optional.of(authHeader.substring("Bearer ".length()).trim());
+                    } else {
+                        return Optional.empty();
+                    }
+                })
+                .filter(StringUtils::isNotBlank)
+                .map(token -> jwtDecoder.decode(token))
+                .filter(jwt -> jwt.isValid())
+                .map(jwt -> jwt.userName);
     }
 }
