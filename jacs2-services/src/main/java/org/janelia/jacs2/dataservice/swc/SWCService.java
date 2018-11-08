@@ -63,7 +63,9 @@ public class SWCService {
         this.swcReader = swcReader;
         this.neuronIdGenerator = neuronIdGenerator;
         this.protobufExchanger = protobufExchanger;
-        this.defaultSWCLocation = Paths.get(defaultSWCLocation);
+        this.defaultSWCLocation = StringUtils.isNotBlank(defaultSWCLocation)
+            ? Paths.get(defaultSWCLocation)
+            : Paths.get("");
         this.neuronManipulator = new TmModelManipulator(null, neuronIdGenerator);
     }
 
