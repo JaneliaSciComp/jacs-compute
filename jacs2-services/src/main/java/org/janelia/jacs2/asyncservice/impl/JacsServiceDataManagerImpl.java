@@ -65,7 +65,7 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
     }
 
     private long getServiceOutputSize(String outputDir) {
-        if (StringUtils.isBlank(outputDir)) {
+        if (StringUtils.isBlank(outputDir) || Files.notExists(Paths.get(outputDir))) {
             return 0L;
         } else {
             return FileUtils.lookupFiles(Paths.get(outputDir), 1, "glob:**/*")
@@ -93,7 +93,7 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
     }
 
     private Stream<InputStream> streamServiceOutputFiles(String outputDir) {
-        if (StringUtils.isBlank(outputDir)) {
+        if (StringUtils.isBlank(outputDir) || Files.notExists(Paths.get(outputDir))) {
             return Stream.of();
         } else {
             return FileUtils.lookupFiles(Paths.get(outputDir), 1, "glob:**/*")
