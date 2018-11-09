@@ -237,35 +237,4 @@ public class ServiceInfoResource {
         }
     }
 
-    @RequireAuthentication
-    @PUT
-    @Path("/{service-instance-id}")
-    @ApiOperation(value = "Update service info", notes = "Updates the info about the given service")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
-    public Response updateServiceInfo(@PathParam("service-instance-id") Long instanceId,
-                                      JacsServiceData si,
-                                      @Context SecurityContext securityContext) {
-        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(instanceId);
-        if (serviceData == null) {
-            logger.warn("No service found for {}", instanceId);
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .build();
-        }
-        if (JacsServiceAccessDataUtils.canServiceBeModifiedBy(serviceData, securityContext)) {
-            JacsServiceData updatedServiceData = jacsServiceDataManager.updateService(instanceId, si);
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(updatedServiceData)
-                    .build();
-        } else {
-            logger.warn("Service {} cannot be modified by {}", serviceData, securityContext.getUserPrincipal().getName());
-            return Response
-                    .status(Response.Status.FORBIDDEN)
-                    .build();
-        }
-    }
-
 }

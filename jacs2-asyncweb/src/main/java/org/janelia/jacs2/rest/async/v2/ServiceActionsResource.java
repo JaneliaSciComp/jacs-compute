@@ -24,7 +24,7 @@ import javax.ws.rs.core.SecurityContext;
 
 @RequestScoped
 @Produces("application/json")
-@Path("/service-actions")
+@Path("/services")
 @Api(value = "JACS Service Info")
 public class ServiceActionsResource {
 
@@ -34,7 +34,7 @@ public class ServiceActionsResource {
 
     @RequireAuthentication
     @PUT
-    @Path("/{service-instance-id}/update")
+    @Path("/{service-instance-id}")
     @ApiOperation(value = "Update service data", notes = "Updates the specified service data")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
@@ -65,7 +65,7 @@ public class ServiceActionsResource {
 
     @RequireAuthentication
     @PUT
-    @Path("/{service-instance-id}/state-update/{service-state}")
+    @Path("/{service-instance-id}/state/{service-state}")
     @ApiOperation(
             value = "Update service state",
             notes = "Updates the state of the given service. " +
