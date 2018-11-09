@@ -1,6 +1,7 @@
 package org.janelia.jacs2.rest.async.v2;
 
 import com.google.common.base.Splitter;
+import com.google.common.io.ByteStreams;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -27,10 +28,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
@@ -213,7 +218,7 @@ public class ServiceInfoResource {
     @RequireAuthentication
     @GET
     @Path("/{service-instance-id}")
-    @ApiOperation(value = "Get service info", notes = "Returns service about a given service")
+    @ApiOperation(value = "Get service info", notes = "Returns data about a given service")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
@@ -229,6 +234,106 @@ public class ServiceInfoResource {
                     .status(Response.Status.OK)
                     .entity(serviceData)
                     .build();
+        } else {
+            return Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .build();
+        }
+    }
+
+    @RequireAuthentication
+    @GET
+    @Produces({"application/json", "application/octet-stream"})
+    @Path("/{service-instance-id}/job-output")
+    @ApiOperation(value = "Get service info", notes = "Returns service standard output")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
+    public Response getServiceStandardOutput(@PathParam("service-instance-id") Long instanceId,
+                                             @Context SecurityContext securityContext) {
+        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
+        if (serviceData == null) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .build();
+        } else if (JacsServiceAccessDataUtils.canServiceBeAccessedBy(serviceData, securityContext)) {
+            long fileSize = jacsServiceDataManager.getServiceStdOutputSize(serviceData);
+            StreamingOutput fileStream = output -> {
+                try {
+                    jacsServiceDataManager.streamServiceStdOutput(serviceData)
+                            .forEach(is -> {
+                                try {
+                                    ByteStreams.copy(is, output);
+                                } catch (IOException ioex) {
+                                    logger.error("Error while streaming service {} standard output", serviceData, ioex);
+                                } finally {
+                                    try {
+                                        is.close();
+                                    } catch (IOException ignore) {
+                                    }
+                                }
+                            });
+                } catch (Exception e) {
+                    logger.error("Error streaming job output content from {} for {}", serviceData.getOutputPath(), serviceData, e);
+                    throw new WebApplicationException(e);
+                }
+            };
+            return Response
+                    .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Length", fileSize)
+                    .header("Content-Disposition", "attachment; filename = " + serviceData.getName() + "-" + serviceData.getId() + "-stdout")
+                    .build()
+                    ;
+        } else {
+            return Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .build();
+        }
+    }
+
+    @RequireAuthentication
+    @GET
+    @Produces({"application/json", "application/octet-stream"})
+    @Path("/{service-instance-id}/job-errors")
+    @ApiOperation(value = "Get service info", notes = "Returns service standard error")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 500, message = "Error occurred") })
+    public Response getServiceStandardError(@PathParam("service-instance-id") Long instanceId,
+                                             @Context SecurityContext securityContext) {
+        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
+        if (serviceData == null) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .build();
+        } else if (JacsServiceAccessDataUtils.canServiceBeAccessedBy(serviceData, securityContext)) {
+            long fileSize = jacsServiceDataManager.getServiceStdErrorSize(serviceData);
+            StreamingOutput fileStream = output -> {
+                try {
+                    jacsServiceDataManager.streamServiceStdError(serviceData)
+                            .forEach(is -> {
+                                try {
+                                    ByteStreams.copy(is, output);
+                                } catch (IOException ioex) {
+                                    logger.error("Error while streaming service {} standard error", serviceData, ioex);
+                                } finally {
+                                    try {
+                                        is.close();
+                                    } catch (IOException ignore) {
+                                    }
+                                }
+                            });
+                } catch (Exception e) {
+                    logger.error("Error streaming job error content from {} for {}", serviceData.getErrorPath(), serviceData, e);
+                    throw new WebApplicationException(e);
+                }
+            };
+            return Response
+                    .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Length", fileSize)
+                    .header("Content-Disposition", "attachment; filename = " + serviceData.getName() + "-" + serviceData.getId() + "-stderr")
+                    .build()
+                    ;
         } else {
             return Response
                     .status(Response.Status.UNAUTHORIZED)
