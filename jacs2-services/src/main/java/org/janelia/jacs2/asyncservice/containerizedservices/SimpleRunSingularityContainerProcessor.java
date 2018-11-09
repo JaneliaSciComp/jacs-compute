@@ -48,6 +48,9 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
     @Override
     void createScript(AbstractSingularityContainerArgs args, ScriptWriter scriptWriter) {
         RunSingularityContainerArgs runArgs = (RunSingularityContainerArgs) args;
+        if (CollectionUtils.isNotEmpty(runArgs.batchJobArgs)) {
+            scriptWriter.add("read INSTANCE_ARGS");
+        }
         scriptWriter
                 .addWithArgs(getRuntime((runArgs)))
                 .addArg(runArgs.operation.name());
@@ -71,6 +74,9 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
         scriptWriter.addArg(containerImage.getLocalImagePath().toString());
         if (CollectionUtils.isNotEmpty(runArgs.appArgs)) {
             runArgs.appArgs.forEach(scriptWriter::addArg);
+        }
+        if (CollectionUtils.isNotEmpty(runArgs.batchJobArgs)) {
+            scriptWriter.addArg("${INSTANCE_ARGS}");
         }
         List<String> remainingArgs = runArgs.getRemainingArgs();
         if (CollectionUtils.isNotEmpty(remainingArgs)) {
