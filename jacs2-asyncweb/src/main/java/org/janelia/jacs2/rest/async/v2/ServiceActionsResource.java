@@ -18,6 +18,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
@@ -78,6 +79,7 @@ public class ServiceActionsResource {
             @ApiResponse(code = 500, message = "Error occurred") })
     public Response updateServiceState(@PathParam("service-instance-id") Long instanceId,
                                        @PathParam("service-state") JacsServiceState serviceState,
+                                       @QueryParam("force") Boolean force,
                                        @Context SecurityContext securityContext) {
         JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(instanceId);
         if (serviceData == null) {
@@ -87,7 +89,8 @@ public class ServiceActionsResource {
                     .build();
         }
         if (JacsServiceAccessDataUtils.canServiceBeModifiedBy(serviceData, securityContext)) {
-            JacsServiceData updatedServiceData = jacsServiceEngine.updateServiceState(serviceData, serviceState);
+            boolean forceFlag = force != null && force;
+            JacsServiceData updatedServiceData = jacsServiceEngine.updateServiceState(serviceData, serviceState, forceFlag);
             return Response
                     .status(Response.Status.OK)
                     .entity(updatedServiceData)

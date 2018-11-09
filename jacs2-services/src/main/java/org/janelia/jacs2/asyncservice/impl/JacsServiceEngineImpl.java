@@ -199,24 +199,13 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
     }
 
     @Override
-    public JacsServiceData updateServiceState(JacsServiceData serviceData, JacsServiceState serviceState) {
-        if (isTransitionInvalid(serviceData.getState(), serviceState)) {
-            logger.info("Invalid state transition from {} to {} for {}", serviceData.getState(), serviceState, serviceData);
-            return serviceData;
-        }
-        switch (serviceState) {
-            case SUSPENDED:
-                return suspendService(serviceData);
-            case RESUMED:
-                return resumeService(serviceData);
-            default:
-                return singleServiceStateUpdate(serviceData, serviceState);
-        }
+    public JacsServiceData updateServiceState(JacsServiceData serviceData, JacsServiceState serviceState, boolean forceFlag) {
+        return serviceHierarchyStateUpdate(serviceData, serviceState, forceFlag);
     }
 
-    private JacsServiceData serviceHierarchyStateUpdate(JacsServiceData serviceData, JacsServiceState serviceState) {
+    private JacsServiceData serviceHierarchyStateUpdate(JacsServiceData serviceData, JacsServiceState serviceState, boolean forceFlag) {
         serviceData.serviceHierarchyStream()
-                .filter(sd -> isTransitionValid(sd.getState(), serviceState))
+                .filter(sd -> isTransitionValid(sd.getState(), serviceState, forceFlag))
                 .sorted((s1, s2) -> {
                     // order them so that the ones that don't have any dependencies are first
                     if (!s1.getDependenciesIds().contains(s2.getId())) {
@@ -228,12 +217,16 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
                     }
                 })
                 .forEach(sd -> {
-                    singleServiceStateUpdate(sd, serviceState);
+                    singleServiceStateUpdate(sd, serviceState, forceFlag);
                 });
         return jacsServiceDataPersistence.findServiceHierarchy(serviceData.getId());
     }
 
-    private JacsServiceData singleServiceStateUpdate(JacsServiceData serviceData, JacsServiceState serviceState) {
+    private JacsServiceData singleServiceStateUpdate(JacsServiceData serviceData, JacsServiceState serviceState, boolean forceFlag) {
+        if (sameState(serviceData.getState(), serviceState) || isTransitionInvalid(serviceData.getState(), serviceState, forceFlag)) {
+            logger.info("State unchanged or invalid transition from {} to {} for {} without forcing it", serviceData.getState(), serviceState, serviceData);
+            return serviceData;
+        }
         return jacsServiceDataPersistence.updateServiceState(serviceData, serviceState, JacsServiceEvent.NO_EVENT)
                 .map(updateResult -> {
                     if (updateResult) {
@@ -245,21 +238,19 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid service data"));
     }
 
-    private boolean isTransitionValid(JacsServiceState from, JacsServiceState to) {
-        return from != null && to != null && VALID_TRANSITIONS.get(from) != null &&
-                (from == to || VALID_TRANSITIONS.get(from).contains(to));
+    private boolean sameState(JacsServiceState s1, JacsServiceState s2) {
+        return s1 != null && s1 == s2;
     }
 
-    private boolean isTransitionInvalid(JacsServiceState from, JacsServiceState to) {
-        return !isTransitionValid(from, to);
+    private boolean isTransitionValid(JacsServiceState from, JacsServiceState to, boolean forceFlag) {
+        return to != null &&
+                (from == to ||
+                        forceFlag ||
+                        VALID_TRANSITIONS.get(from) != null && VALID_TRANSITIONS.get(from).contains(to));
     }
 
-    private JacsServiceData suspendService(JacsServiceData serviceData) {
-        return serviceHierarchyStateUpdate(serviceData, JacsServiceState.SUSPENDED);
-    }
-
-    private JacsServiceData resumeService(JacsServiceData serviceData) {
-        return serviceHierarchyStateUpdate(serviceData, JacsServiceState.RESUMED);
+    private boolean isTransitionInvalid(JacsServiceState from, JacsServiceState to, boolean forceFlag) {
+        return !isTransitionValid(from, to, forceFlag);
     }
 
 }

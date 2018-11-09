@@ -15,5 +15,5 @@ public interface JacsServiceEngine {
     List<JacsServiceData> submitMultipleServices(List<JacsServiceData> listOfServices);
     boolean acquireSlot();
     void releaseSlot();
-    JacsServiceData updateServiceState(JacsServiceData serviceData, JacsServiceState serviceState);
+    JacsServiceData updateServiceState(JacsServiceData serviceData, JacsServiceState serviceState, boolean forceFlag);
 }
