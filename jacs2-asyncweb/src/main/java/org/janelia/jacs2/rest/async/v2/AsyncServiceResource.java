@@ -40,9 +40,7 @@ import java.util.List;
 @Api(value = "Asynchronous JACS Service API")
 public class AsyncServiceResource {
 
-    @Inject private Logger logger;
     @Inject private JacsServiceEngine jacsServiceEngine;
-    @Inject private JacsServiceDataManager jacsServiceDataManager;
 
     @RequireAuthentication
     @POST
@@ -87,43 +85,6 @@ public class AsyncServiceResource {
                 .entity(newJacsServiceData)
                 .contentLocation(locationURIBuilder.build())
                 .build();
-    }
-
-    @RequireAuthentication
-    @PUT
-    @Path("/{service-instance-id}/state/{service-state}")
-    @ApiOperation(
-            value = "Update service state",
-            notes = "Updates the state of the given service. " +
-                    "This endpoint can be used for terminating, suspending or resuming a service. " +
-                    "The respective values for terminating, suspending, and resuming a service are: " +
-                    "CANCELED, SUSPENDED, and RESUMED.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 404, message = "If the service state or the transition is invalid"),
-            @ApiResponse(code = 500, message = "Error occurred") })
-    public Response updateServiceState(@PathParam("service-instance-id") Long instanceId,
-                                       @PathParam("service-state") JacsServiceState serviceState,
-                                       @Context SecurityContext securityContext) {
-        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(instanceId);
-        if (serviceData == null) {
-            logger.warn("No service found for {}", instanceId);
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .build();
-        }
-        if (JacsServiceAccessDataUtils.canServiceBeModifiedBy(serviceData, securityContext)) {
-            JacsServiceData updatedServiceData = jacsServiceEngine.updateServiceState(serviceData, serviceState);
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(updatedServiceData)
-                    .build();
-        } else {
-            logger.warn("Service state {} cannot be modified by {}", serviceData, securityContext.getUserPrincipal().getName());
-            return Response
-                    .status(Response.Status.FORBIDDEN)
-                    .build();
-        }
     }
 
     @RequireAuthentication

@@ -8,7 +8,6 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
-import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.auth.JacsServiceAccessDataUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.domain.enums.SubjectRole;
@@ -19,7 +18,6 @@ import org.janelia.model.jacs2.page.SortCriteria;
 import org.janelia.model.jacs2.page.SortDirection;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
-import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.RequestScoped;
@@ -49,7 +47,6 @@ public class ServiceInfoResource {
 
     @Inject private Logger logger;
     @Inject private JacsServiceDataManager jacsServiceDataManager;
-    @Inject private ServiceRegistry serviceRegistry;
 
     @RequireAuthentication
     @GET
@@ -269,40 +266,6 @@ public class ServiceInfoResource {
                     .status(Response.Status.FORBIDDEN)
                     .build();
         }
-    }
-
-    @GET
-    @Path("/metadata")
-    @ApiOperation(value = "Get metadata about all services", notes = "")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 500, message = "Error occurred") })
-    public Response getAllServicesMetadata() {
-        List<ServiceMetaData> services = serviceRegistry.getAllServicesMetadata();
-        return Response
-                .status(Response.Status.OK)
-                .entity(services)
-                .build();
-    }
-
-    @GET
-    @Path("/metadata/{service-name}")
-    @ApiOperation(value = "Get metadata about a given service", notes = "")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 404, message = "If the service name is invalid"),
-            @ApiResponse(code = 500, message = "Error occurred") })
-    public Response getServiceMetadata(@PathParam("service-name") String serviceName) {
-        ServiceMetaData smd = serviceRegistry.getServiceMetadata(serviceName);
-        if (smd == null) {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .build();
-        }
-        return Response
-                .status(Response.Status.OK)
-                .entity(smd)
-                .build();
     }
 
 }
