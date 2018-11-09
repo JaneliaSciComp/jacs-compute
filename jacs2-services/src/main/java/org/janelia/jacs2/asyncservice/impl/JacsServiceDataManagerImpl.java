@@ -64,22 +64,28 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
         return getServiceOutputSize(serviceData.getErrorPath());
     }
 
-    private long getServiceOutputSize(String outputDir) {
+    private Stream<Path> streamOutputDir(String outputDir) {
         if (StringUtils.isBlank(outputDir) || Files.notExists(Paths.get(outputDir))) {
-            return 0L;
+            return Stream.of();
         } else {
             return FileUtils.lookupFiles(Paths.get(outputDir), 1, "glob:**/*")
-                    .map(outputPath -> {
-                        try {
-                            return Files.size(outputPath);
-                        } catch (IOException e) {
-                            LOG.error("Error get the size of {}", outputPath, e);
-                            throw new UncheckedIOException(e);
-                        }
-                    })
-                    .reduce((s1, s2) -> s1 + s2)
-                    .orElse(0L);
+                    .filter(outputPath -> Files.isRegularFile(outputPath))
+                    ;
         }
+    }
+
+    private long getServiceOutputSize(String outputDir) {
+        return streamOutputDir(outputDir)
+                .map(outputPath -> {
+                    try {
+                        return Files.size(outputPath);
+                    } catch (IOException e) {
+                        LOG.error("Error get the size of {}", outputPath, e);
+                        throw new UncheckedIOException(e);
+                    }
+                })
+                .reduce((s1, s2) -> s1 + s2)
+                .orElse(0L);
     }
 
     @Override
@@ -93,19 +99,15 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
     }
 
     private Stream<InputStream> streamServiceOutputFiles(String outputDir) {
-        if (StringUtils.isBlank(outputDir) || Files.notExists(Paths.get(outputDir))) {
-            return Stream.of();
-        } else {
-            return FileUtils.lookupFiles(Paths.get(outputDir), 1, "glob:**/*")
-                    .map(outputPath -> {
-                        try {
-                            return new ReaderInputStream(Files.newBufferedReader(outputPath));
-                        } catch (IOException e) {
-                            LOG.error("Error streaming {}", outputPath, e);
-                            throw new UncheckedIOException(e);
-                        }
-                    });
-        }
+        return streamOutputDir(outputDir)
+                .map(outputPath -> {
+                    try {
+                        return new ReaderInputStream(Files.newBufferedReader(outputPath));
+                    } catch (IOException e) {
+                        LOG.error("Error streaming {}", outputPath, e);
+                        throw new UncheckedIOException(e);
+                    }
+                });
     }
 
     @Override
