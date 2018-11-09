@@ -70,6 +70,14 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
         } else {
             return FileUtils.lookupFiles(Paths.get(outputDir), 1, "glob:**/*")
                     .filter(outputPath -> Files.isRegularFile(outputPath))
+                    .filter(outputPath -> {
+                        try {
+                            return !Files.isHidden(outputPath);
+                        } catch (IOException e) {
+                            LOG.error("Error reading hidden attribute for {}", outputPath);
+                            return false;
+                        }
+                    })
                     ;
         }
     }
