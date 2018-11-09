@@ -9,6 +9,7 @@ import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
 import org.janelia.jacs2.asyncservice.common.ResourceHelper;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
+import org.janelia.jacs2.auth.JacsServiceAccessDataUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.domain.enums.SubjectRole;
 import org.janelia.model.service.JacsServiceData;
@@ -111,11 +112,11 @@ public class AsyncServiceResource {
                     .status(Response.Status.NOT_FOUND)
                     .build();
         }
-        if (serviceData.canBeModifiedBy(securityContext.getUserPrincipal().getName())) {
-            serviceData = jacsServiceEngine.updateServiceState(serviceData, serviceState);
+        if (JacsServiceAccessDataUtils.canServiceBeModifiedBy(serviceData, securityContext)) {
+            JacsServiceData updatedServiceData = jacsServiceEngine.updateServiceState(serviceData, serviceState);
             return Response
                     .status(Response.Status.OK)
-                    .entity(serviceData)
+                    .entity(updatedServiceData)
                     .build();
         } else {
             logger.warn("Service state {} cannot be modified by {}", serviceData, securityContext.getUserPrincipal().getName());

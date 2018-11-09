@@ -172,14 +172,6 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.ownerKey = ownerKey;
     }
 
-    public boolean canBeAccessedBy(String userKey) {
-        return StringUtils.isBlank(this.ownerKey) || this.ownerKey.equals(userKey);
-    }
-
-    public boolean canBeModifiedBy(String userKey) {
-        return (StringUtils.isBlank(this.ownerKey) || this.ownerKey.equals(userKey));
-    }
-
     public String getOutputPath() {
         return outputPath;
     }

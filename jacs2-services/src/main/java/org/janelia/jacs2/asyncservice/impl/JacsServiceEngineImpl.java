@@ -201,7 +201,8 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
     @Override
     public JacsServiceData updateServiceState(JacsServiceData serviceData, JacsServiceState serviceState) {
         if (isTransitionInvalid(serviceData.getState(), serviceState)) {
-            throw new IllegalArgumentException("Invalid state transition from " + serviceData.getState() + " to " + serviceState);
+            logger.info("Invalid state transition from {} to {} for {}", serviceData.getState(), serviceState, serviceData);
+            return serviceData;
         }
         switch (serviceState) {
             case SUSPENDED:
