@@ -281,7 +281,7 @@ public class ServiceInfoResource {
             return Response
                     .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
                     .header("Content-Length", fileSize)
-//                    .header("Content-Disposition", "attachment; filename = " + serviceData.getName() + "-" + serviceData.getId() + "-stdout")
+                    .header("Content-Disposition", "attachment; filename = " + serviceData.getName() + "-" + serviceData.getId() + "-stdout")
                     .build()
                     ;
         } else {
