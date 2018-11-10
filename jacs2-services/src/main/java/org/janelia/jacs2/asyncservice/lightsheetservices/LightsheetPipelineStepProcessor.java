@@ -148,6 +148,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                                 stepJobArgs.commonBatchArgs,
                                 stepJobArgs.instanceArgs,
                                 jacsServiceData))
+                    .thenApply(r -> new JacsServiceResult<>(jacsServiceData))
                     ;
         } catch (Exception e) {
             logger.warn("Failed to read step config for {}", jacsServiceData, e);
