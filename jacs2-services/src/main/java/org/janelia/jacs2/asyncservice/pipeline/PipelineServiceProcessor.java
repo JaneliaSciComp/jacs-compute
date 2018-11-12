@@ -80,7 +80,7 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
         }
         List<Map<String, Object>> servicesConfigs = getPipelineServices(pipelineConfig);
         List<String> runningSteps = getRunningSteps(pipelineConfig);
-        BiPredicate<String, String> shouldIdRunStep = (stepName, serviceName) -> {
+        BiPredicate<String, String> shouldItRunStep = (stepName, serviceName) -> {
             if (runningSteps == null) {
                 return true;
             } else if (StringUtils.isNotBlank(stepName)) {
@@ -100,7 +100,7 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
         for (Map<String, Object> serviceConfig : servicesConfigs) {
             String stepServiceName = getServiceName(serviceConfig);
             String stepName = getStepName(serviceConfig);
-            if (shouldIdRunStep.test(stepName, stepServiceName)) {
+            if (shouldItRunStep.test(stepName, stepServiceName)) {
                 int stepIndex = index;
                 String description;
                 if (StringUtils.isNotBlank(stepName)) {

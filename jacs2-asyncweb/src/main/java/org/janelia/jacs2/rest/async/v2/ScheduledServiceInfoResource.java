@@ -33,7 +33,6 @@ import javax.ws.rs.core.UriBuilder;
 public class ScheduledServiceInfoResource {
     private static final int DEFAULT_PAGE_SIZE = 100;
 
-    @Inject private Logger logger;
     @Inject private CronScheduledServiceManager jacsScheduledServiceDataManager;
 
     @RequireAuthentication

@@ -28,7 +28,6 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.utils.HttpUtils;
-import org.janelia.model.jacs2.domain.IndexedReference;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -45,12 +44,12 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -78,6 +77,15 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         String configAddress;
         @Parameter(names = "-configOutputPath", description = "Path for outputting json configs")
         String configOutputPath = DEFAULT_CONFIG_OUTPUT_PATH;
+    }
+
+    private static class StepJobArgs {
+        private final List<String> commonBatchArgs; // common arguments for all instances
+        private final List<String> instanceArgs = new ArrayList<>(); // arguments specific to each member instance of the batch
+
+        private StepJobArgs(List<String> commonBatchArgs) {
+            this.commonBatchArgs = commonBatchArgs;
+        }
     }
 
     private final WrappedServiceProcessor<PullSingularityContainerProcessor, File> pullContainerProcessor;
@@ -117,7 +125,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
             String stepConfigFile = stepConfig.getLeft();
             String stepConfigPath = Paths.get(stepConfigFile).getParent().toString();
             String containerLocation = getContainerLocation(stepConfig.getRight(), args);
-            List<List<String>> stepJobArgs = getStepJobArgs(stepConfigFile, args, numTimePoints);
+            StepJobArgs stepJobArgs = getStepJobArgs(stepConfigFile, args, numTimePoints);
             Map<String, String> stepResources = prepareResources(args, jacsServiceData.getResources());
 
             Map<String, String> dataMountPoints = new LinkedHashMap<>();
@@ -131,22 +139,16 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                             .description("Pull container image " + containerLocation)
                             .build(),
                     new ServiceArg("-containerLocation", containerLocation))
-                    .thenCompose(containerImageResult -> {
-                        List<ServiceComputation<?>> stepJobs = IndexedReference.indexListContent(stepJobArgs, (i, jobArgs) -> new IndexedReference<>(jobArgs, i))
-                                .map(indexedJobArgs -> createStepJobComputation(
-                                        containerImageResult,
-                                        dataMountPoints,
-                                        args.step,
-                                        args.stepIndex,
-                                        indexedJobArgs.getPos(),
-                                        stepResources,
-                                        indexedJobArgs.getReference(),
-                                        jacsServiceData))
-                                .collect(Collectors.toList());
-                        return computationFactory.newCompletedComputation(containerImageResult)
-                                .thenCombineAll(stepJobs, (ignored, stepResults) -> new JacsServiceResult<>(jacsServiceData))
-                                ;
-                    })
+                    .thenCompose(containerImageResult -> createStepJobComputation(
+                                containerImageResult,
+                                dataMountPoints,
+                                args.step,
+                                args.stepIndex,
+                                stepResources,
+                                stepJobArgs.commonBatchArgs,
+                                stepJobArgs.instanceArgs,
+                                jacsServiceData))
+                    .thenApply(r -> new JacsServiceResult<>(jacsServiceData))
                     ;
         } catch (Exception e) {
             logger.warn("Failed to read step config for {}", jacsServiceData, e);
@@ -158,9 +160,9 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                                                                                  Map<String, String> mountPoints,
                                                                                  LightsheetPipelineStep step,
                                                                                  int stepIndex,
-                                                                                 int jobIndex,
                                                                                  Map<String, String> jobResources,
-                                                                                 List<String> jobArgs,
+                                                                                 List<String> stepArgs,
+                                                                                 List<String> jobInstanceArgs,
                                                                                  JacsServiceData jacsServiceData) {
         String bindPath = mountPoints.entrySet().stream()
                 .map(en -> {
@@ -174,13 +176,15 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                 .orElse("");
         return runContainerProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
-                        .description("Step " + stepIndex + ": " + step + " - job " + jobIndex)
+                        .description("Step " + stepIndex + ": " + step +
+                                (jobInstanceArgs.isEmpty() ? "" : " - " + jobInstanceArgs.size() + " timepoint jobs"))
                         .waitFor(containerImageResult.getJacsServiceData())
                         .addResources(jobResources)
                         .build(),
                 new ServiceArg("-containerLocation", containerImageResult.getResult().getAbsolutePath()),
                 new ServiceArg("-bindPaths", bindPath),
-                new ServiceArg("-appArgs", jobArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
+                new ServiceArg("-appArgs", stepArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
+                new ServiceArg("-batchJobArgs", jobInstanceArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
         );
     }
 
@@ -382,24 +386,28 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         }
     }
 
-    private List<List<String>> getStepJobArgs(String jsonConfig, LightsheetPipelineStepArgs args, int numTimePoints) {
+    private StepJobArgs getStepJobArgs(String jsonConfig, LightsheetPipelineStepArgs args, int numTimePointsArg) {
         if (args.step.cannotSplitJob()) {
-            return ImmutableList.of(
-                    ImmutableList.of(jsonConfig)
-            );
+            return new StepJobArgs(ImmutableList.of(jsonConfig));
         } else {
+            int numTimePoints;
+            if (numTimePointsArg < 1) {
+                numTimePoints = 1;
+            } else {
+                numTimePoints = numTimePointsArg;
+            }
             int timePointsPerJob;
-            if (numTimePoints < 1) numTimePoints = 1;
             if (args.timePointsPerJob < 1) {
                 timePointsPerJob = 1;
             } else {
                 timePointsPerJob = args.timePointsPerJob;
             }
             int numJobs = (int) Math.ceil((double)numTimePoints / timePointsPerJob);
-            return IntStream.range(0, numJobs)
-                    .mapToObj(jobIndex -> ImmutableList.of(jsonConfig, String.valueOf(timePointsPerJob), String.valueOf(jobIndex + 1)))
-                    .collect(Collectors.toList())
+            StepJobArgs stepJobArgs = new StepJobArgs(ImmutableList.of(jsonConfig, String.valueOf(timePointsPerJob)));
+            IntStream.range(0, numJobs)
+                    .forEach(jobIndex -> stepJobArgs.instanceArgs.add(String.valueOf(jobIndex + 1)))
                     ;
+            return stepJobArgs;
         }
     }
 

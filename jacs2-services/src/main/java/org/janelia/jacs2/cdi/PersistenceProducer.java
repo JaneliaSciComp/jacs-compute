@@ -90,7 +90,7 @@ public class PersistenceProducer {
             if (StringUtils.isNotBlank(username)) {
                 String credentialsDb = StringUtils.defaultIfBlank(authMongoDatabase, mongoDatabase);
                 char[] passwordChars = StringUtils.isBlank(password) ? null : password.toCharArray();
-                MongoCredential credential = MongoCredential.createMongoCRCredential(username, credentialsDb, passwordChars);
+                MongoCredential credential = MongoCredential.createCredential(username, credentialsDb, passwordChars);
                 MongoClient m = new MongoClient(members, credential, optionsBuilder.build());
                 log.info("Connected to MongoDB ({}@{}) as user {}", mongoDatabase, mongoServer, username);
                 return m;

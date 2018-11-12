@@ -1,6 +1,7 @@
 package org.janelia.jacs2.rest.async.v2;
 
 import com.google.common.base.Splitter;
+import com.google.common.io.ByteStreams;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -8,7 +9,6 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
-import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.auth.JacsServiceAccessDataUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.domain.enums.SubjectRole;
@@ -19,21 +19,23 @@ import org.janelia.model.jacs2.page.SortCriteria;
 import org.janelia.model.jacs2.page.SortDirection;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
-import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
@@ -49,7 +51,6 @@ public class ServiceInfoResource {
 
     @Inject private Logger logger;
     @Inject private JacsServiceDataManager jacsServiceDataManager;
-    @Inject private ServiceRegistry serviceRegistry;
 
     @RequireAuthentication
     @GET
@@ -217,7 +218,7 @@ public class ServiceInfoResource {
     @RequireAuthentication
     @GET
     @Path("/{service-instance-id}")
-    @ApiOperation(value = "Get service info", notes = "Returns service about a given service")
+    @ApiOperation(value = "Get service info", notes = "Returns data about a given service")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
@@ -241,68 +242,103 @@ public class ServiceInfoResource {
     }
 
     @RequireAuthentication
-    @PUT
-    @Path("/{service-instance-id}")
-    @ApiOperation(value = "Update service info", notes = "Updates the info about the given service")
+    @GET
+    @Produces({"application/json", "application/octet-stream"})
+    @Path("/{service-instance-id}/job-output")
+    @ApiOperation(value = "Get service info", notes = "Returns service standard output")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
-    public Response updateServiceInfo(@PathParam("service-instance-id") Long instanceId,
-                                      JacsServiceData si,
-                                      @Context SecurityContext securityContext) {
-        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(instanceId);
+    public Response getServiceStandardOutput(@PathParam("service-instance-id") Long instanceId,
+                                             @Context SecurityContext securityContext) {
+        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
         if (serviceData == null) {
-            logger.warn("No service found for {}", instanceId);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
-        }
-        if (JacsServiceAccessDataUtils.canServiceBeModifiedBy(serviceData, securityContext)) {
-            JacsServiceData updatedServiceData = jacsServiceDataManager.updateService(instanceId, si);
+        } else if (JacsServiceAccessDataUtils.canServiceBeAccessedBy(serviceData, securityContext)) {
+            long fileSize = jacsServiceDataManager.getServiceStdOutputSize(serviceData);
+            StreamingOutput fileStream = output -> {
+                try {
+                    jacsServiceDataManager.streamServiceStdOutput(serviceData)
+                            .forEach(is -> {
+                                try {
+                                    ByteStreams.copy(is, output);
+                                } catch (IOException ioex) {
+                                    logger.error("Error while streaming service {} standard output", serviceData, ioex);
+                                } finally {
+                                    try {
+                                        is.close();
+                                    } catch (IOException ignore) {
+                                    }
+                                }
+                            });
+                } catch (Exception e) {
+                    logger.error("Error streaming job output content from {} for {}", serviceData.getOutputPath(), serviceData, e);
+                    throw new WebApplicationException(e);
+                }
+            };
             return Response
-                    .status(Response.Status.OK)
-                    .entity(updatedServiceData)
-                    .build();
+                    .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Length", fileSize)
+                    .header("Content-Disposition", "attachment; filename = " + serviceData.getName() + "-" + serviceData.getId() + "-stdout")
+                    .build()
+                    ;
         } else {
-            logger.warn("Service {} cannot be modified by {}", serviceData, securityContext.getUserPrincipal().getName());
             return Response
-                    .status(Response.Status.FORBIDDEN)
+                    .status(Response.Status.UNAUTHORIZED)
                     .build();
         }
     }
 
+    @RequireAuthentication
     @GET
-    @Path("/metadata")
-    @ApiOperation(value = "Get metadata about all services", notes = "")
+    @Produces({"application/json", "application/octet-stream"})
+    @Path("/{service-instance-id}/job-errors")
+    @ApiOperation(value = "Get service info", notes = "Returns service standard error")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
-    public Response getAllServicesMetadata() {
-        List<ServiceMetaData> services = serviceRegistry.getAllServicesMetadata();
-        return Response
-                .status(Response.Status.OK)
-                .entity(services)
-                .build();
-    }
-
-    @GET
-    @Path("/metadata/{service-name}")
-    @ApiOperation(value = "Get metadata about a given service", notes = "")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 404, message = "If the service name is invalid"),
-            @ApiResponse(code = 500, message = "Error occurred") })
-    public Response getServiceMetadata(@PathParam("service-name") String serviceName) {
-        ServiceMetaData smd = serviceRegistry.getServiceMetadata(serviceName);
-        if (smd == null) {
+    public Response getServiceStandardError(@PathParam("service-instance-id") Long instanceId,
+                                             @Context SecurityContext securityContext) {
+        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
+        if (serviceData == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
+        } else if (JacsServiceAccessDataUtils.canServiceBeAccessedBy(serviceData, securityContext)) {
+            long fileSize = jacsServiceDataManager.getServiceStdErrorSize(serviceData);
+            StreamingOutput fileStream = output -> {
+                try {
+                    jacsServiceDataManager.streamServiceStdError(serviceData)
+                            .forEach(is -> {
+                                try {
+                                    ByteStreams.copy(is, output);
+                                } catch (IOException ioex) {
+                                    logger.error("Error while streaming service {} standard error", serviceData, ioex);
+                                } finally {
+                                    try {
+                                        is.close();
+                                    } catch (IOException ignore) {
+                                    }
+                                }
+                            });
+                } catch (Exception e) {
+                    logger.error("Error streaming job error content from {} for {}", serviceData.getErrorPath(), serviceData, e);
+                    throw new WebApplicationException(e);
+                }
+            };
+            return Response
+                    .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Length", fileSize)
+                    .header("Content-Disposition", "attachment; filename = " + serviceData.getName() + "-" + serviceData.getId() + "-stderr")
+                    .build()
+                    ;
+        } else {
+            return Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .build();
         }
-        return Response
-                .status(Response.Status.OK)
-                .entity(smd)
-                .build();
     }
 
 }

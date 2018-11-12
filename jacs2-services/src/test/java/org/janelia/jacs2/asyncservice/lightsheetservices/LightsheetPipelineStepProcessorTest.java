@@ -190,7 +190,8 @@ public class LightsheetPipelineStepProcessorTest {
                                                                 "d1/d1.1:d1/d1.1" + "," +
                                                                 "d2"
                                                 )),
-                                                new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath()))
+                                                new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath())),
+                                                new ServiceArgMatcher(new ServiceArg("-batchJobArgs", ""))
                                         )
                                 ))
                         );
@@ -238,7 +239,8 @@ public class LightsheetPipelineStepProcessorTest {
                                                                 "d1/d1.1:d1/d1.1" + "," +
                                                                 "d2"
                                                 )),
-                                                new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath()))
+                                                new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath())),
+                                                new ServiceArgMatcher(new ServiceArg("-batchJobArgs", ""))
                                         )
                                 ))
                         );
@@ -287,7 +289,8 @@ public class LightsheetPipelineStepProcessorTest {
                                                                 "d1/d1.1:d1/d1.1" + "," +
                                                                 "d2"
                                                 )),
-                                                new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath() + "," + String.valueOf(timePointsPerJob) + "," + "1"))
+                                                new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath() + "," + String.valueOf(timePointsPerJob))),
+                                                new ServiceArgMatcher(new ServiceArg("-batchJobArgs", "1,2"))
                                         )
                                 ))
                         );
@@ -341,7 +344,8 @@ public class LightsheetPipelineStepProcessorTest {
                                                                     "d1/d1.1:d1/d1.1" + "," +
                                                                     "d2"
                                                     )),
-                                                    new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath() + "," + String.valueOf(timePointsPerJob) + "," + String.valueOf(j + 1)))
+                                                    new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath() + "," + String.valueOf(timePointsPerJob))),
+                                                    new ServiceArgMatcher(new ServiceArg("-batchJobArgs", "1,2"))
                                             )
                                     ))
                             );
@@ -411,7 +415,8 @@ public class LightsheetPipelineStepProcessorTest {
                                                                 "/inDir/in:/inDir/in" + "," +
                                                                 "/var/tmp:/var/tmp"
                                                 )),
-                                                new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath()))
+                                                new ServiceArgMatcher(new ServiceArg("-appArgs", stepConfigFile.getAbsolutePath())),
+                                                new ServiceArgMatcher(new ServiceArg("-batchJobArgs", ""))
                                         )
                                 ))
                         );

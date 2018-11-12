@@ -93,7 +93,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
 
     @Override
     public long countAll() {
-        return mongoCollection.count();
+        return mongoCollection.countDocuments();
     }
 
     @Override

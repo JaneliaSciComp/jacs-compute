@@ -20,8 +20,8 @@ dependencies {
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // database
-        MONGODB_VERSION = "3.6.3"
-        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:${MONGODB_VERSION}"
+        MONGODB_VERSION = "3.9.0"
+        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver-legacy:${MONGODB_VERSION}"
         MYSQL_DRIVER_LIB = "mysql:mysql-connector-java:5.1.42"
         DBCP_LIB = "org.apache.commons:commons-dbcp2:2.1.1"
         JONGO_LIB = "org.jongo:jongo:1.3.0"
