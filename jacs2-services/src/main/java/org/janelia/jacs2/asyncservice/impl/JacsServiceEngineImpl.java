@@ -59,9 +59,9 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
                             JacsServiceState.SUSPENDED,
                             JacsServiceState.CANCELED, JacsServiceState.TIMEOUT
                     ))
-                    .put(JacsServiceState.CANCELED, Collections.emptySet())
-                    .put(JacsServiceState.TIMEOUT, Collections.emptySet())
-                    .put(JacsServiceState.ERROR, Collections.emptySet())
+                    .put(JacsServiceState.CANCELED, EnumSet.of(JacsServiceState.RETRY)) // for retry
+                    .put(JacsServiceState.TIMEOUT, EnumSet.of(JacsServiceState.RETRY)) // for retry
+                    .put(JacsServiceState.ERROR, EnumSet.of(JacsServiceState.RETRY)) // for retry
                     .put(JacsServiceState.SUCCESSFUL, Collections.emptySet())
                     .put(JacsServiceState.SUSPENDED, EnumSet.of(JacsServiceState.RESUMED))
                     .put(JacsServiceState.RESUMED, EnumSet.of(
