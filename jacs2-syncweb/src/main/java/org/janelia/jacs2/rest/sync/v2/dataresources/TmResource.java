@@ -218,6 +218,7 @@ public class TmResource {
         MultiPart multiPartEntity = new MultiPart();
         TmWorkspace workspace = tmWorkspaceDao.findByIdAndSubjectKey(workspaceId, subjectKey);
         if (workspace == null) {
+            logger.error("No workspace found for {} accessible by {}", workspaceId, subjectKey);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Error getting the workspace " + workspaceId + " for " + subjectKey))
                     .build();
@@ -251,6 +252,7 @@ public class TmResource {
         logger.debug("createTmNeuron({}, {})", subjectKey, neuron);
         TmWorkspace workspace = tmWorkspaceDao.findByIdAndSubjectKey(neuron.getWorkspaceId(), subjectKey);
         if (workspace != null) {
+            logger.error("No workspace found for {} accessible by {}", neuron.getWorkspaceId(), subjectKey);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Error getting the workspace for neuron " + neuron.toString()))
                     .build();
