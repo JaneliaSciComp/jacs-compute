@@ -251,7 +251,7 @@ public class TmResource {
                                    @ApiParam @FormDataParam("protobufBytes") InputStream neuronPointsStream) {
         logger.debug("createTmNeuron({}, {})", subjectKey, neuron);
         TmWorkspace workspace = tmWorkspaceDao.findByIdAndSubjectKey(neuron.getWorkspaceId(), subjectKey);
-        if (workspace != null) {
+        if (workspace == null) {
             logger.error("No workspace found for {} accessible by {}", neuron.getWorkspaceId(), subjectKey);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Error getting the workspace for neuron " + neuron.toString()))
