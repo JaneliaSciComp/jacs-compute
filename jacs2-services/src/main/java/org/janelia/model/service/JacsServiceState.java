@@ -11,5 +11,6 @@ public enum JacsServiceState {
     ERROR,
     SUCCESSFUL,
     SUSPENDED,
-    RESUMED;
+    RESUMED,
+    RETRY;
 }

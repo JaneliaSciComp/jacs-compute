@@ -286,10 +286,13 @@ public class TmResource {
             BodyPart part0 = multiPart.getBodyParts().get(i);
             BodyPart part1 = multiPart.getBodyParts().get(i + 1);
             TmNeuronMetadata neuron = part0.getEntityAs(TmNeuronMetadata.class);
-            InputStream protoBufStream = null;
+            InputStream protoBufStream;
             if (part1.getMediaType().equals(MediaType.APPLICATION_OCTET_STREAM_TYPE)) {
-                BodyPartEntity bpe = (BodyPartEntity) part1.getEntity();
-                protoBufStream = bpe.getInputStream();
+                protoBufStream = ((BodyPartEntity) part1.getEntity()).getInputStream();
+            } else if (part1.getMediaType().equals(MediaType.TEXT_PLAIN_TYPE)) {
+                protoBufStream = ((BodyPartEntity) part1.getEntity()).getInputStream();
+            } else {
+                protoBufStream = null;
             }
             TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveWithSubjectKey(neuron, subjectKey);
             tmNeuronMetadataDao.updateNeuronPoints(updatedNeuron, protoBufStream);

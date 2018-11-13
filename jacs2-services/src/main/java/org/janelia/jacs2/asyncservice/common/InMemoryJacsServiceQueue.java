@@ -82,7 +82,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
         synchronized (ACCESS_LOCK) {
             JacsServiceData queuedService = getWaitingService();
             if (queuedService == null && enqueueAvailableServices(EnumSet.of(
-                    JacsServiceState.CREATED, JacsServiceState.QUEUED, JacsServiceState.RESUMED))) {
+                    JacsServiceState.CREATED, JacsServiceState.QUEUED, JacsServiceState.RESUMED, JacsServiceState.RETRY))) {
                 queuedService = getWaitingService();
             }
             return queuedService;
@@ -216,7 +216,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
             logger.debug("Service {} already waiting in the queue {}", jacsServiceData, this);
             return true;
         } else if (submittedServicesSet.contains(jacsServiceId)) {
-            if (EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED, JacsServiceState.RESUMED).contains(jacsServiceData.getState())) {
+            if (EnumSet.of(JacsServiceState.CREATED, JacsServiceState.QUEUED, JacsServiceState.RESUMED, JacsServiceState.RETRY).contains(jacsServiceData.getState())) {
                 if (jacsServiceData.getModificationDate() != null && System.currentTimeMillis() - jacsServiceData.getModificationDate().getTime() > MAX_WAIT_IN_SUBMIT_STATE_MILLIS) {
                     // something is not quite right since the service hasn't been picked up yet
                     // so abandon the service
