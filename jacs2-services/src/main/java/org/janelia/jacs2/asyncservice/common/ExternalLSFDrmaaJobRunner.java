@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.ggf.drmaa.Session;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.qualifier.LSFDrmaaJob;
+import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.slf4j.Logger;
 
@@ -16,13 +17,14 @@ public class ExternalLSFDrmaaJobRunner extends AbstractExternalDrmaaJobRunner {
     @Inject
     public ExternalLSFDrmaaJobRunner(Session drmaaSession, JacsServiceDataPersistence jacsServiceDataPersistence,
                                      ComputeAccounting accounting,
+                                     @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
                                      Logger logger) {
-        super(drmaaSession, jacsServiceDataPersistence, accounting, logger);
+        super(drmaaSession, jacsServiceDataPersistence, accounting, requiresAccountInfo, logger);
     }
 
     protected String createNativeSpec(Map<String, String> jobResources, String billingAccount, String jobRunningDir) {
         StringBuilder nativeSpecBuilder = new StringBuilder();
-        if (StringUtils.isNotBlank(billingAccount)) {
+        if (isRequiresAccountInfo()) {
             nativeSpecBuilder.append("-P ")
                     .append('"')
                     .append(billingAccount)

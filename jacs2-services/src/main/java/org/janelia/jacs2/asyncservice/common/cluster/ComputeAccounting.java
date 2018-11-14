@@ -145,22 +145,23 @@ public class ComputeAccounting {
      * @return
      */
     public String getComputeAccount(JacsServiceData serviceContext) {
-        String serviceBillingAccount = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());;
+        String serviceBillingAccount = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());
         String billingAccount;
         if (StringUtils.isNotBlank(serviceBillingAccount)) {
+            String ownerComputeGroup = getComputeGroup(serviceContext.getOwnerKey());
             // User provided a billing account
-            Subject billedSubject = dao.getSubjectByNameOrKey(serviceContext.getAuthKey());
-            String computeGroup;
+            Subject billedSubject = dao.getSubjectByNameOrKey(serviceBillingAccount);
+            String billedComputeGroup;
             if (billedSubject != null) {
-                computeGroup = getComputeGroup(billedSubject.getKey());
+                billedComputeGroup = getComputeGroup(billedSubject.getKey());
             } else {
                 // no subject entry found for the given billing account
-                computeGroup = getComputeGroup(serviceContext.getAuthKey());
+                billedComputeGroup = serviceBillingAccount;
             }
-            if (serviceBillingAccount.equals(computeGroup)) {
+            if (billedComputeGroup.equals(ownerComputeGroup)) {
                 // the provided billing account matches the user's compute group so let it go
                 log.info("Using provided billing account {}", serviceBillingAccount);
-                billingAccount = computeGroup; // no
+                billingAccount = billedComputeGroup;
             } else {
                 // no match - check if the user has admin privileges
                 Subject authenticatedUser = dao.getSubjectByNameOrKey(serviceContext.getAuthKey());

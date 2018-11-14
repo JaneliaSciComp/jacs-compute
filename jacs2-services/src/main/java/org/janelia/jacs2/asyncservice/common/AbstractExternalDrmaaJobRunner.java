@@ -24,13 +24,16 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
 
     private final Session drmaaSession;
     private final ComputeAccounting accounting;
+    private final boolean requiresAccountInfo;
 
     AbstractExternalDrmaaJobRunner(Session drmaaSession, JacsServiceDataPersistence jacsServiceDataPersistence,
                                    ComputeAccounting accounting,
+                                   boolean requiresAccountInfo,
                                    Logger logger) {
         super(jacsServiceDataPersistence, logger);
         this.drmaaSession = drmaaSession;
         this.accounting = accounting;
+        this.requiresAccountInfo = requiresAccountInfo;
     }
 
     @Override
@@ -105,6 +108,10 @@ public abstract class AbstractExternalDrmaaJobRunner extends AbstractExternalPro
     }
 
     protected abstract String createNativeSpec(Map<String, String> jobResources, String billingAccount, String jobRunningDir);
+
+    boolean isRequiresAccountInfo() {
+        return requiresAccountInfo;
+    }
 
     private String getBillingAccount(JacsServiceData jacsServiceData) {
         return accounting.getComputeAccount(jacsServiceData);
