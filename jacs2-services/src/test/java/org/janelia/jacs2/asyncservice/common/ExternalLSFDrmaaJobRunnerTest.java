@@ -21,6 +21,7 @@ public class ExternalLSFDrmaaJobRunnerTest {
                 null, // drmaaSession
                 null, // jacsServiceDataPersistence
                 null, // accounting
+                true,
                 null // logger
         );
     }
@@ -39,26 +40,26 @@ public class ExternalLSFDrmaaJobRunnerTest {
             }
         }
         List<TestData> testData = ImmutableList.of(
-                new TestData(ImmutableMap.of(), "", ""),
+                new TestData(ImmutableMap.of(), "", "-P \"\" "),
                 new TestData(ImmutableMap.of(
                         "nSlots", "4"
-                ), "", "-n 4 -R \"affinity[core(1)]\" "),
+                ), "", "-P \"\" -n 4 -R \"affinity[core(1)]\" "),
                 new TestData(ImmutableMap.of(
-                        "nSlots", "4",
+                        "nSlots", "5",
                         "cpuType", "haswell"
-                ), "billing", "-n 4 -R \"affinity[core(1)] select[haswell]\" "),
+                ), "billing", "-P \"billing\" -n 5 -R \"affinity[core(1)] select[haswell]\" "),
                 new TestData(ImmutableMap.of(
                         "cpuType", "haswell",
                         "gridResourceLimits", "ssd_scratch,avx2"
-                ), "billing", "-R \"select[haswell,ssd_scratch,avx2]\" "),
+                ), "billing", "-P \"billing\" -R \"select[haswell,ssd_scratch,avx2]\" "),
                 new TestData(ImmutableMap.of(
                         "nSlots", "4",
                         "cpuType", "haswell",
                         "gridResourceLimits", "ssd_scratch,avx2"
-                ), "", "-n 4 -R \"affinity[core(1)] select[haswell,ssd_scratch,avx2]\" ")
+                ), "", "-P \"\" -n 4 -R \"affinity[core(1)] select[haswell,ssd_scratch,avx2]\" ")
         );
         for (TestData td : testData) {
-            assertThat(lsfDrmaaJobRunner.createNativeSpec(td.jobResources, "", ""), equalTo(td.expectedResult));
+            assertThat(lsfDrmaaJobRunner.createNativeSpec(td.jobResources, td.billingAccount, ""), equalTo(td.expectedResult));
         }
     }
 }
