@@ -64,8 +64,7 @@ public class ComputeAccounting {
                           String ldapGroup = group==null?null:group.getLdapGroupName();
                           log.debug("Got LDAP group "+ldapGroup+" for subject "+subjectKey);
                           return ldapGroup;
-                      }
-                      else {
+                      } else {
                           String username = SubjectUtils.getSubjectName(subjectKey);
                           String lsfGroup = runLsfGroup(username);
                           if (!StringUtils.isBlank(lsfGroup)) {
@@ -130,14 +129,14 @@ public class ComputeAccounting {
      * @param subjectKey
      * @return
      */
-    private synchronized String getComputeAccount(String subjectKey) {
+    private synchronized String getDiscountedComputeAccount(String subjectKey) {
         String group = getComputeGroup(subjectKey);
         if (StringUtils.isBlank(group)) {
             log.warn("Defaulting to compute account '"+DEFAULT_GROUP_NAME+"' for subject '"+subjectKey+"'");
             group = DEFAULT_GROUP_NAME;
         }
         String subjectName = SubjectUtils.getSubjectName(subjectKey);
-        return group+"-"+subjectName;
+        return group+"-"+subjectName; // group-subject is only for discounted users
     }
 
     /**
@@ -146,19 +145,38 @@ public class ComputeAccounting {
      * @return
      */
     public String getComputeAccount(JacsServiceData serviceContext) {
-        String billingAccount = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());
-        if (!StringUtils.isBlank(billingAccount)) {
+        String serviceBillingAccount = ProcessorHelper.getGridBillingAccount(serviceContext.getResources());;
+        String billingAccount;
+        if (StringUtils.isNotBlank(serviceBillingAccount)) {
             // User provided a billing account
-            Subject authenticatedUser = dao.getSubjectByNameOrKey(serviceContext.getAuthKey());
-            if (!SubjectUtils.isAdmin(authenticatedUser)) {
-                log.warn("User {} attempted to retrieve billing account {} on behalf of {} without admin privileges",
-                        serviceContext.getAuthKey(), billingAccount, serviceContext.getOwnerKey());
-                throw new SecurityException("Admin access is required to override compute account");
+            Subject billedSubject = dao.getSubjectByNameOrKey(serviceContext.getAuthKey());
+            String computeGroup;
+            if (billedSubject != null) {
+                computeGroup = getComputeGroup(billedSubject.getKey());
+            } else {
+                // no subject entry found for the given billing account
+                computeGroup = getComputeGroup(serviceContext.getAuthKey());
+            }
+            if (serviceBillingAccount.equals(computeGroup)) {
+                // the provided billing account matches the user's compute group so let it go
+                log.info("Using provided billing account {}", serviceBillingAccount);
+                billingAccount = computeGroup; // no
+            } else {
+                // no match - check if the user has admin privileges
+                Subject authenticatedUser = dao.getSubjectByNameOrKey(serviceContext.getAuthKey());
+                if (SubjectUtils.isAdmin(authenticatedUser)) {
+                    log.info("Admin user {} can use the provided billing account {}", serviceContext.getAuthKey(), serviceBillingAccount);
+                    billingAccount = serviceBillingAccount;
+                } else {
+                    log.warn("User {} attempted to use billing account {} on behalf of {} without admin privileges",
+                            serviceContext.getAuthKey(), serviceBillingAccount, serviceContext.getOwnerKey());
+                    throw new SecurityException("Admin access is required to override compute account");
+                }
             }
             log.info("Using provided billing account {}", billingAccount);
         } else {
-            // Calculate billing account from job owner
-            billingAccount = getComputeAccount(serviceContext.getOwnerKey());
+            // Calculate billing account from job owner - for now assume that is the discounted billing
+            billingAccount = getDiscountedComputeAccount(serviceContext.getOwnerKey());
             log.info("Using billing account {} for user {}", billingAccount, serviceContext.getOwnerKey());
         }
         return billingAccount;
