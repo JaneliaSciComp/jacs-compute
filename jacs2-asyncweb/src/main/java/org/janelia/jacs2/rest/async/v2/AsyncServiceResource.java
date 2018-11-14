@@ -7,8 +7,10 @@ import io.swagger.annotations.ApiResponses;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
+import org.janelia.jacs2.auth.JacsServiceAccessDataUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.domain.enums.SubjectRole;
+import org.janelia.model.security.Subject;
 import org.janelia.model.service.JacsServiceData;
 
 import javax.enterprise.context.RequestScoped;
@@ -44,11 +46,11 @@ public class AsyncServiceResource {
             @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
     public Response createAsyncServices(List<JacsServiceData> services, @Context ContainerRequestContext containerRequestContext) {
-        String authenticatedSubject = JacsSecurityContextHelper.getAuthenticatedSubjectKey(containerRequestContext);
-        String authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
+        String authenticatedSubjectKey = JacsSecurityContextHelper.getAuthenticatedSubjectKey(containerRequestContext);
+        String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         services.forEach((service) -> {
-            service.setAuthKey(authenticatedSubject);
-            service.setOwnerKey(authorizedSubject);
+            service.setAuthKey(authenticatedSubjectKey);
+            service.setOwnerKey(authorizedSubjectKey);
         }); // update the owner for all submitted services
         List<JacsServiceData> newServices = jacsServiceEngine.submitMultipleServices(services);
         return Response
