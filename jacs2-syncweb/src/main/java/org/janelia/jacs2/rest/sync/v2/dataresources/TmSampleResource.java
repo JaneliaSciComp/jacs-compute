@@ -77,7 +77,6 @@ public class TmSampleResource {
                     .build();
         } finally {
             logger.trace("Finished getTmSamplePaths({})", updatedSubjectKey);
-
         }
     }
 
