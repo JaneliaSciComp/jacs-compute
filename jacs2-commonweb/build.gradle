@@ -9,6 +9,7 @@ project(":jacs2-commonweb") {
                 JAX_RS_JERSEY_CONTAINERS_LIB,
                 JAX_RS_JERSEY_CORE_LIB,
                 JAX_RS_JERSEY_SERVER_LIB,
+                LDAP_CLIENT_LIB,
                 SWAGGER_LIB,
                 UNDERTOW_CORE_LIB,
                 UNDERTOW_SERVLET_LIB

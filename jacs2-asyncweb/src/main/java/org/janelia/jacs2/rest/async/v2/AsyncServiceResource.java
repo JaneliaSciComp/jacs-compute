@@ -28,6 +28,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
 @RequestScoped
@@ -74,12 +75,9 @@ public class AsyncServiceResource {
         si.setOwnerKey(authorizedSubjectKey);
         si.setName(serviceName);
         JacsServiceData newJacsServiceData = jacsServiceEngine.submitSingleService(si);
-        UriBuilder locationURIBuilder = UriBuilder.fromResource(ServiceInfoResource.class);
-        locationURIBuilder.path(newJacsServiceData.getId().toString());
         return Response
-                .status(Response.Status.CREATED)
+                .created(UriBuilder.fromMethod(ServiceInfoResource.class, "getServiceInfo").build(newJacsServiceData.getId()))
                 .entity(newJacsServiceData)
-                .contentLocation(locationURIBuilder.build())
                 .build();
     }
 

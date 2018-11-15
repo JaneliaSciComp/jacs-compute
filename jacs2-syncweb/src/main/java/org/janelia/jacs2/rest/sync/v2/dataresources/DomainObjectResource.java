@@ -39,8 +39,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-@Path("/data")
 @Api(value = "Janelia Workstation Domain Data")
+@Path("/data")
 public class DomainObjectResource {
     private static final Logger LOG = LoggerFactory.getLogger(DomainObjectResource.class);
 
