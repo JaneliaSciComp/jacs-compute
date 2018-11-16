@@ -43,7 +43,7 @@ public class StorageService {
                     .path("storage/quota")
                     .path(volumeName)
                     .path("report")
-                    .path(userKey);
+                    .queryParam("subjectName", userKey);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), userKey, null);
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
