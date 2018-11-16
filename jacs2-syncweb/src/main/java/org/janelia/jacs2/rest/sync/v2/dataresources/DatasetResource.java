@@ -8,12 +8,8 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.storage.StorageService;
-import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.domain.report.DiskUsageSummary;
-import org.janelia.model.domain.report.QuotaUsage;
-import org.janelia.model.security.util.SubjectUtils;
-import org.jongo.Aggregate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
