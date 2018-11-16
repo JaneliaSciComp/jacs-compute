@@ -25,7 +25,7 @@ import java.util.List;
 @ApplicationScoped
 @Produces("application/json")
 @Path("/samples")
-public class SampleDataResource {
+public class Jacs2SampleDataResource {
     private static final int DEFAULT_PAGE_SIZE = 100;
 
     @Inject private SampleDataService sampleDataService;
