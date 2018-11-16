@@ -14,7 +14,6 @@ import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
@@ -27,11 +26,11 @@ public abstract class AbstractMongoDaoITest<T extends HasIdentifier> extends Abs
     protected Random dataGenerator = new Random();
 
     @BeforeClass
-    public static void setUpMongoClient() throws IOException {
+    public static void setUpMongoClient() {
         CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(testObjectMapperFactory);
         MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder().codecRegistry(codecRegistry).maxConnectionIdleTime(60000);
-        MongoClientURI mongoConnectionString = new MongoClientURI(integrationTestsConfig.getProperty("MongoDB.ConnectionURL"), optionsBuilder);
-        testMongoClient = new MongoClient(mongoConnectionString);
+        MongoClientURI mongoConnectionURI = new MongoClientURI(integrationTestsConfig.getProperty("MongoDB.ConnectionURL"), optionsBuilder);
+        testMongoClient = new MongoClient(mongoConnectionURI);
     }
 
     @Before

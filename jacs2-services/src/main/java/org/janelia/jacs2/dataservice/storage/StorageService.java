@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
+import org.janelia.model.domain.report.QuotaUsage;
 import org.janelia.model.jacs2.page.PageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,19 +26,48 @@ public class StorageService {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageService.class);
 
+    private final String masterStorageServiceURL;
     private final String storageServiceApiKey;
 
     @Inject
-    public StorageService(@PropertyValue(name = "StorageService.ApiKey") String storageServiceApiKey) {
+    public StorageService(@PropertyValue(name = "StorageService.URL") String masterStorageServiceURL,
+                          @PropertyValue(name = "StorageService.ApiKey") String storageServiceApiKey) {
+        this.masterStorageServiceURL = masterStorageServiceURL;
         this.storageServiceApiKey = storageServiceApiKey;
     }
 
-    public Optional<DataStorageInfo> lookupStorage(String storageServiceURL, String storageId, String storageName, String subject, String authToken) {
-        Client httpclient = null;
+    public Optional<QuotaUsage> fetchQuotaForUser(String volumeName, String userKey) {
+        Client httpclient = HttpUtils.createHttpClient();
         try {
-            httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageServiceURL);
-            if (!StringUtils.endsWith(storageServiceURL, "/storage")) {
+            WebTarget target = httpclient.target(masterStorageServiceURL)
+                    .path("storage/quota")
+                    .path(volumeName)
+                    .path("report")
+                    .path(userKey);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), userKey, null);
+            Response response = requestBuilder.get();
+            int responseStatus = response.getStatus();
+            if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
+                LOG.warn("Request {} returned status {}", target, responseStatus);
+                return Optional.empty();
+            } else {
+                List<QuotaUsage> quotaReport = response.readEntity(new GenericType<List<QuotaUsage>>(){});
+                return quotaReport.stream().findFirst();
+            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            httpclient.close();
+        }
+    }
+
+    public Optional<DataStorageInfo> lookupStorage(String storageURI, String storageId, String storageName, String subject, String authToken) {
+        Client httpclient = HttpUtils.createHttpClient();
+        try {
+            WebTarget target = httpclient.target(storageURI);
+            if (!StringUtils.endsWith(storageURI, "/storage")) {
                 target = target.path("storage");
             }
             if (StringUtils.isNotBlank(storageId)) {
@@ -69,16 +99,13 @@ public class StorageService {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            if (httpclient != null) {
-                httpclient.close();
-            }
+            httpclient.close();
         }
     }
 
     public DataStorageInfo createStorage(String storageServiceURL, String storageName, List<String> storageTags, String subject, String authToken) {
-        Client httpclient = null;
+        Client httpclient = HttpUtils.createHttpClient();
         try {
-            httpclient = HttpUtils.createHttpClient();
             WebTarget target = httpclient.target(storageServiceURL);
             if (!StringUtils.endsWith(storageServiceURL, "/storage")) {
                 target = target.path("storage");
@@ -101,21 +128,18 @@ public class StorageService {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            if (httpclient != null) {
-                httpclient.close();
-            }
+            httpclient.close();
         }
     }
 
-    public InputStream getStorageContent(String storageEntryURL, String entryName, String subject, String authToken) {
-        Client httpclient = null;
+    public InputStream getStorageContent(String storageURI, String entryName, String subject, String authToken) {
+        Client httpclient = HttpUtils.createHttpClient();
         try {
-            httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageEntryURL);
+            WebTarget target = httpclient.target(storageURI);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new IllegalStateException(storageEntryURL + "for " + entryName + " returned with " + response.getStatus());
+                throw new IllegalStateException(storageURI + "for " + entryName + " returned with " + response.getStatus());
             }
             return response.readEntity(InputStream.class);
         } catch (IllegalStateException e) {
@@ -123,24 +147,21 @@ public class StorageService {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            if (httpclient != null) {
-                httpclient.close();
-            }
+            httpclient.close();
         }
     }
 
-    public StorageEntryInfo putStorageContent(String storageURL, String entryName, String subject, String authToken, InputStream dataStream) {
-        Client httpclient = null;
+    public StorageEntryInfo putStorageContent(String storageURI, String entryName, String subject, String authToken, InputStream dataStream) {
+        Client httpclient = HttpUtils.createHttpClient();
         try {
-            httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageURL).path("file").path(entryName);
+            WebTarget target = httpclient.target(storageURI).path("file").path(entryName);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.put(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
             String entryLocationUrl;
             if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
                 entryLocationUrl = response.getHeaderString("Location");
                 JsonNode storageNode = response.readEntity(new GenericType<JsonNode>(){});
-                return extractStorageNodeFromJson(storageURL, entryLocationUrl, null, storageNode);
+                return extractStorageNodeFromJson(storageURI, entryLocationUrl, null, storageNode);
             } else {
                 LOG.warn("Put content using {} return status {}", target, response.getStatus());
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
@@ -150,20 +171,17 @@ public class StorageService {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            if (httpclient != null) {
-                httpclient.close();
-            }
+            httpclient.close();
         }
     }
 
-    public List<StorageEntryInfo> listStorageContent(String storageLocationURL,
+    public List<StorageEntryInfo> listStorageContent(String storageURI,
                                                      String storagePath,
                                                      String subject,
                                                      String authToken) {
-        Client httpclient = null;
+        Client httpclient = HttpUtils.createHttpClient();
         try {
-            httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageLocationURL).path("list");
+            WebTarget target = httpclient.target(storageURI).path("list");
             if (StringUtils.isNotBlank(storagePath)) {
                 target = target.path(storagePath);
             }
@@ -175,24 +193,21 @@ public class StorageService {
             }
             List<JsonNode> storageCotent = response.readEntity(new GenericType<List<JsonNode>>(){});
             return storageCotent.stream()
-                    .map(content -> extractStorageNodeFromJson(storageLocationURL, null, storagePath, content))
+                    .map(content -> extractStorageNodeFromJson(storageURI, null, storagePath, content))
                     .collect(Collectors.toList());
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            if (httpclient != null) {
-                httpclient.close();
-            }
+            httpclient.close();
         }
     }
 
-    public void removeStorageContent(String storageLocationURL, String storagePath, String subject, String authToken) {
-        Client httpclient = null;
+    public void removeStorageContent(String storageURI, String storagePath, String subject, String authToken) {
+        Client httpclient = HttpUtils.createHttpClient();
         try {
-            httpclient = HttpUtils.createHttpClient();
-            WebTarget target = httpclient.target(storageLocationURL);
+            WebTarget target = httpclient.target(storageURI);
             if (StringUtils.isNotBlank(storagePath)) {
                 target = target.path(storagePath);
             }
@@ -207,9 +222,7 @@ public class StorageService {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            if (httpclient != null) {
-                httpclient.close();
-            }
+            httpclient.close();
         }
     }
 
