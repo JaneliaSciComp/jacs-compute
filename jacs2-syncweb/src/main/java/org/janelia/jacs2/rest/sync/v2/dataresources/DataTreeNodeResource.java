@@ -42,7 +42,6 @@ import java.util.List;
 @RequireAuthentication
 @Api(value = "Data TreeNode and Workspace Service")
 @ApplicationScoped
-@Produces("application/json")
 @Path("/data")
 public class DataTreeNodeResource {
 
@@ -55,6 +54,7 @@ public class DataTreeNodeResource {
 
     @GET
     @Path("{node-id}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getDataNode(@PathParam("node-id") Long dataNodeId,
                                 @Context ContainerRequest containerRequestContext) {
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
@@ -73,6 +73,7 @@ public class DataTreeNodeResource {
     @PUT
     @Path("/node/{node-id}/children/{folder}")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response addChildrenNodes(@PathParam("node-id") Long dataNodeId,
                                      @PathParam("folder") String folderName,
                                      @Context ContainerRequest containerRequestContext) {
@@ -113,6 +114,7 @@ public class DataTreeNodeResource {
     @PUT
     @Path("treenode")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
     public <T extends TreeNode> Response createTreeNode(@ApiParam DomainQuery query) {
         LOG.trace("Start createTreeNode({})", query);
@@ -141,6 +143,7 @@ public class DataTreeNodeResource {
     })
     @GET
     @Path("workspace")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getDefaultWorkspaceBySubjectKey(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDefaultWorkspaceBySubjectKey({})", subjectKey);
         try {
@@ -177,6 +180,7 @@ public class DataTreeNodeResource {
     })
     @GET
     @Path("workspaces")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getAllWorkspacesBySubjectKey(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getAllWorkspacesBySubjectKey({})", subjectKey);
         try {

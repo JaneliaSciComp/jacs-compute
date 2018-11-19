@@ -16,7 +16,7 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
 
     @Inject
     public ObjectMapperResolver(ObjectMapperFactory mapperFactory) {
-        this.mapper = mapperFactory.newObjectMapper()
+        this.mapper = mapperFactory.newMongoCompatibleObjectMapper()
                 .registerModule(new NumberSerializerModule());
     }
 
