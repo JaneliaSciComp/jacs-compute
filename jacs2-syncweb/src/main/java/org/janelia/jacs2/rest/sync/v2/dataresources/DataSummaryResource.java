@@ -8,7 +8,10 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.domain.dao.DatasetDao;
+import org.janelia.model.access.domain.dao.SummaryDao;
+import org.janelia.model.domain.report.DatabaseSummary;
 import org.janelia.model.domain.report.DiskUsageSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,17 +22,18 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-@Api(value = "Janelia Workstation Quota Service")
+@Api(value = "Janelia Workstation Data Summary Service")
 @Path("/data")
-public class StorageQuotaResource {
-    private static final Logger LOG = LoggerFactory.getLogger(StorageQuotaResource.class);
+public class DataSummaryResource {
+    private static final Logger LOG = LoggerFactory.getLogger(DataSummaryResource.class);
     private static final BigDecimal TERRA_BYTES = new BigDecimal(1024).pow(4);
 
     @Inject
-    private DatasetDao datasetDao;
+    private SummaryDao summaryDao;
     @Inject
     private StorageService storageService;
     @Inject
@@ -49,7 +53,7 @@ public class StorageQuotaResource {
         LOG.trace("Start getDataSummary({})", subjectKey);
         try {
             DiskUsageSummary summary = new DiskUsageSummary();
-            BigDecimal totalSpace = datasetDao.getDiskSpaceUsageByOwnerKey(subjectKey);
+            BigDecimal totalSpace = summaryDao.getDiskSpaceUsageByOwnerKey(subjectKey);
             Double tb = totalSpace.divide(TERRA_BYTES, 2, RoundingMode.HALF_UP).doubleValue();
             summary.setUserDataSetsTB(tb);
 
@@ -67,4 +71,27 @@ public class StorageQuotaResource {
         }
     }
 
+    @ApiOperation(value = "Returns a database summary for a given user")
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got data summary", response=DatabaseSummary.class),
+            @ApiResponse( code = 500, message = "Internal Server Error getting data summary" )
+    })
+    @GET
+    @Path("/summary/database")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDatabaseSummary(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+        LOG.trace("Start getDatabaseSummary({})", subjectKey);
+        try {
+            if (StringUtils.isBlank(subjectKey)) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("Invalid subjectKey"))
+                        .build();
+            }
+            DatabaseSummary summary = summaryDao.getDataSummaryBySubjectKey(subjectKey);
+            return Response.ok(summary)
+                    .build();
+        } finally {
+            LOG.trace("Finished getDatabaseSummary({})", subjectKey);
+        }
+    }
 }
