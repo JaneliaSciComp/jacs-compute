@@ -26,6 +26,7 @@ import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -53,11 +54,10 @@ import java.util.stream.Collectors;
 @Produces("application/json")
 @Path("/mouselight/data")
 public class TmReviewsResource {
+    private static final Logger LOG = LoggerFactory.getLogger(TmReviewsResource.class);
 
     @Inject
     private TmReviewTaskDao tmReviewTaskDao;
-    @Inject
-    private Logger logger;
 
     @GET
     @Path("/reviewtask")
@@ -71,7 +71,7 @@ public class TmReviewsResource {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public List<TmReviewTask> getTmReviewTasks(@ApiParam @QueryParam("subjectKey") String subjectKey) {
-        logger.debug("getTmReviewTasks()");
+        LOG.trace("Start getTmReviewTasks()");
         return tmReviewTaskDao.getReviewTasksForSubject(subjectKey);
     }
 
@@ -87,7 +87,7 @@ public class TmReviewsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TmReviewTask createTmReviewTask(DomainQuery query) {
-        logger.debug("createTmReviewTask({})", query);
+        LOG.trace("Start createTmReviewTask({})", query);
         return tmReviewTaskDao.createTmReviewTask(query.getSubjectKey(), (TmReviewTask) query.getDomainObject());
     }
 
@@ -103,7 +103,7 @@ public class TmReviewsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TmReviewTask updateTmReviewTask(@ApiParam DomainQuery query) {
-        logger.debug("updateTmReviewTask({})", query);
+        LOG.trace("Start updateTmReviewTask({})", query);
         return tmReviewTaskDao.updateTmReviewTask(query.getSubjectKey(), (TmReviewTask) query.getDomainObject());
     }
 
@@ -118,7 +118,7 @@ public class TmReviewsResource {
     })
     public void removeTmReviewTask(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                    @ApiParam @QueryParam("taskReviewId") final Long taskReviewId) {
-        logger.debug("removeTmReviewTask({}, taskReviewId={})", subjectKey, taskReviewId);
+        LOG.trace("Start removeTmReviewTask({}, taskReviewId={})", subjectKey, taskReviewId);
         tmReviewTaskDao.deleteByIdAndSubjectKey(taskReviewId, subjectKey);
     }
 

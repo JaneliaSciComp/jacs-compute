@@ -24,6 +24,7 @@ import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -52,14 +53,14 @@ import java.util.stream.Collectors;
 @Path("/mouselight/data")
 public class TmResource {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TmResource.class);
+
     @Inject
     private LegacyDomainDao legacyWorkspaceDao;
     @Inject
     private TmWorkspaceDao tmWorkspaceDao;
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
-    @Inject
-    private Logger logger;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
@@ -75,14 +76,14 @@ public class TmResource {
     @Path("/workspaces")
     @Produces(MediaType.APPLICATION_JSON)
     public List<Workspace> getAllWorkspaces(@QueryParam("subjectKey") String subjectKey) {
-        logger.trace("Start getAllWorkspace({})", subjectKey);
+        LOG.trace("Start getAllWorkspace({})", subjectKey);
         try {
             return legacyWorkspaceDao.getWorkspaces(subjectKey);
         } catch (Exception e) {
-            logger.error("Error occurred getting default workspace for {}", subjectKey, e);
+            LOG.error("Error occurred getting default workspace for {}", subjectKey, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
-            logger.trace("Finished getAllWorkspace({})", subjectKey);
+            LOG.trace("Finished getAllWorkspace({})", subjectKey);
         }
     }
 
@@ -99,7 +100,7 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     public List<TmWorkspace> getTmWorkspaces(@ApiParam @QueryParam("subjectKey") String subjectKey,
                                              @ApiParam @QueryParam("sampleId") Long sampleId) {
-        logger.trace("getTmWorkspaces({}, sampleId={})", subjectKey, sampleId);
+        LOG.trace("getTmWorkspaces({}, sampleId={})", subjectKey, sampleId);
         if (sampleId == null) {
             return tmWorkspaceDao.findByOwnerKey(subjectKey);
         } else {
@@ -119,7 +120,7 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     public TmWorkspace getTmWorkspace(@ApiParam @QueryParam("subjectKey") String subjectKey,
                                       @ApiParam @PathParam("workspaceId") Long workspaceId) {
-        logger.debug("getTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
+        LOG.debug("getTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
         return tmWorkspaceDao.findByIdAndSubjectKey(workspaceId, subjectKey);
     }
 
@@ -135,7 +136,7 @@ public class TmResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TmWorkspace createTmWorkspace(DomainQuery query) {
-        logger.trace("createTmWorkspace({})", query);
+        LOG.trace("createTmWorkspace({})", query);
         return tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
     }
 
@@ -151,7 +152,7 @@ public class TmResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
-        logger.debug("copyTmWorkspace({})", query);
+        LOG.debug("copyTmWorkspace({})", query);
         return tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), (String) query.getObjectType());
     }
 
@@ -167,7 +168,7 @@ public class TmResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TmWorkspace updateTmWorkspace(@ApiParam DomainQuery query) {
-        logger.debug("updateTmWorkspace({})", query);
+        LOG.debug("updateTmWorkspace({})", query);
         return tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
     }
 
@@ -182,7 +183,7 @@ public class TmResource {
     @Path("/workspace")
     public void removeTmWorkspace(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
-        logger.debug("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
+        LOG.debug("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
         tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
     }
 
@@ -198,7 +199,7 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     public List<TmNeuronMetadata> getWorkspaceNeuronMetadata(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                              @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
-        logger.info("getWorkspaceNeuronMetadata({})", workspaceId);
+        LOG.info("getWorkspaceNeuronMetadata({})", workspaceId);
         return tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(subjectKey, workspaceId);
     }
 
@@ -214,11 +215,11 @@ public class TmResource {
     @Produces(MultiPartMediaTypes.MULTIPART_MIXED)
     public Response getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
-        logger.info("getWorkspaceNeurons({}, workspaceId={})", subjectKey, workspaceId);
+        LOG.info("getWorkspaceNeurons({}, workspaceId={})", subjectKey, workspaceId);
         MultiPart multiPartEntity = new MultiPart();
         TmWorkspace workspace = tmWorkspaceDao.findByIdAndSubjectKey(workspaceId, subjectKey);
         if (workspace == null) {
-            logger.error("No workspace found for {} accessible by {}", workspaceId, subjectKey);
+            LOG.error("No workspace found for {} accessible by {}", workspaceId, subjectKey);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Error getting the workspace " + workspaceId + " for " + subjectKey))
                     .build();
@@ -249,10 +250,10 @@ public class TmResource {
     public Response createTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                    @ApiParam @FormDataParam("neuronMetadata") TmNeuronMetadata neuron,
                                    @ApiParam @FormDataParam("protobufBytes") InputStream neuronPointsStream) {
-        logger.debug("createTmNeuron({}, {})", subjectKey, neuron);
+        LOG.debug("createTmNeuron({}, {})", subjectKey, neuron);
         TmWorkspace workspace = tmWorkspaceDao.findByIdAndSubjectKey(neuron.getWorkspaceId(), subjectKey);
         if (workspace == null) {
-            logger.error("No workspace found for {} accessible by {}", neuron.getWorkspaceId(), subjectKey);
+            LOG.error("No workspace found for {} accessible by {}", neuron.getWorkspaceId(), subjectKey);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Error getting the workspace for neuron " + neuron.toString()))
                     .build();
@@ -280,7 +281,7 @@ public class TmResource {
         if (numParts % 2 != 0) {
             throw new IllegalArgumentException("Number of body parts is " + multiPart.getBodyParts().size() + " instead of a multiple of 2");
         }
-        logger.trace("updateTmNeurons({}, numNeurons={})", subjectKey, numParts / 2);
+        LOG.trace("updateTmNeurons({}, numNeurons={})", subjectKey, numParts / 2);
         List<TmNeuronMetadata> list = new ArrayList<>();
         for (int i = 0; i < numParts; i += 2) {
             BodyPart part0 = multiPart.getBodyParts().get(i);
@@ -299,10 +300,10 @@ public class TmResource {
             list.add(updatedNeuron);
         }
         if (list.size() > 1) {
-            logger.trace("{} updated {} neurons in workspace {}",
+            LOG.trace("{} updated {} neurons in workspace {}",
                     subjectKey, list.size(), list.stream().map(TmNeuronMetadata::getWorkspaceId).collect(Collectors.toSet()));
         } else if (list.size() == 1) {
-            logger.trace("{} updated neuron {} in workspace {}",
+            LOG.trace("{} updated neuron {} in workspace {}",
                     subjectKey, list.get(0).getId(), list.get(0).getWorkspaceId());
         }
         return list;
@@ -320,7 +321,7 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                       @ApiParam @QueryParam("neuronIds") final List<Long> neuronIds) {
-        logger.info("getNeuronMetadata({}, neuronIds={})", subjectKey, neuronIds);
+        LOG.info("getNeuronMetadata({}, neuronIds={})", subjectKey, neuronIds);
         return tmNeuronMetadataDao.findByIdsAndSubjectKey(neuronIds, subjectKey);
     }
 
@@ -337,9 +338,9 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateNeuronStyles(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                        @ApiParam final BulkNeuronStyleUpdate bulkNeuronStyleUpdate) {
-        logger.debug("updateNeuronStyles({}, {})", subjectKey, bulkNeuronStyleUpdate);
+        LOG.debug("updateNeuronStyles({}, {})", subjectKey, bulkNeuronStyleUpdate);
         if (bulkNeuronStyleUpdate.getVisible() == null && StringUtils.isNotBlank(bulkNeuronStyleUpdate.getColorHex())) {
-            logger.warn("Cannot have both visible and colorhex unset");
+            LOG.warn("Cannot have both visible and colorhex unset");
             return Response.status(Response.Status.BAD_REQUEST).build();
         } else {
             tmNeuronMetadataDao.updateNeuronStyles(bulkNeuronStyleUpdate, subjectKey);
@@ -358,7 +359,7 @@ public class TmResource {
     @Path("/workspace/neuron")
     public void removeTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("neuronId") final Long neuronId) {
-        logger.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
+        LOG.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
         tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey);
     }
 
@@ -378,14 +379,14 @@ public class TmResource {
                                   @ApiParam @QueryParam("tagState") final boolean tagState,
                                   @ApiParam final List<Long> neuronIds) {
         List<String> tagList = Arrays.asList(StringUtils.split(tags, ","));
-        logger.debug("addNeuronTag({}, neuronIds={}, tag={}, tagState={})",
+        LOG.debug("addNeuronTag({}, neuronIds={}, tag={}, tagState={})",
                 subjectKey, DomainUtils.abbr(neuronIds), DomainUtils.abbr(tagList), tagState);
         if (neuronIds.isEmpty()) {
-            logger.warn("Neuron IDs cannot be empty");
+            LOG.warn("Neuron IDs cannot be empty");
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
         if (tags.isEmpty()) {
-            logger.warn("Tag list cannot be empty");
+            LOG.warn("Tag list cannot be empty");
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
         tmNeuronMetadataDao.updateNeuronTagsTagsForNeurons(neuronIds, tagList, tagState, subjectKey);

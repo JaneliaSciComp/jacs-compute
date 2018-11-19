@@ -14,6 +14,7 @@ import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -45,12 +46,12 @@ import java.util.Map;
 @Path("/mouselight/data")
 public class TmSampleResource {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TmSampleResource.class);
+
     @Inject
     private LegacyDomainDao legacyDomainDao;
     @Inject
     private TmSampleDao tmSampleDao;
-    @Inject
-    private Logger logger;
 
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
@@ -65,7 +66,7 @@ public class TmSampleResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getSampleRootPreferences(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         String updatedSubjectKey = StringUtils.defaultIfBlank(subjectKey, DomainConstants.MOUSELIGHT_GROUP_KEY);
-        logger.trace("Start getTmSamplePaths({})", updatedSubjectKey);
+        LOG.trace("Start getTmSamplePaths({})", updatedSubjectKey);
         try {
             @SuppressWarnings("unchecked")
             List<String> sampleRootPreferences = (List<String>) legacyDomainDao.getPreferenceValue(
@@ -76,7 +77,7 @@ public class TmSampleResource {
                     .entity(sampleRootPreferences)
                     .build();
         } finally {
-            logger.trace("Finished getTmSamplePaths({})", updatedSubjectKey);
+            LOG.trace("Finished getTmSamplePaths({})", updatedSubjectKey);
         }
     }
 
@@ -94,7 +95,7 @@ public class TmSampleResource {
     public Response updateSampleRootPreferences(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                 @ApiParam List<String> samplePaths) {
         String updatedSubjectKey = StringUtils.defaultIfBlank(subjectKey, DomainConstants.MOUSELIGHT_GROUP_KEY);
-        logger.trace("Start updateTmSamplePaths({}, {})", updatedSubjectKey, samplePaths);
+        LOG.trace("Start updateTmSamplePaths({}, {})", updatedSubjectKey, samplePaths);
         try {
             legacyDomainDao.setPreferenceValue(
                     updatedSubjectKey,
@@ -103,12 +104,12 @@ public class TmSampleResource {
                     samplePaths);
             return Response.ok().build();
         } catch (Exception e) {
-            logger.error("Error updating sample root paths for {} to {}", updatedSubjectKey, samplePaths, e);
+            LOG.error("Error updating sample root paths for {} to {}", updatedSubjectKey, samplePaths, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error while setting sample root paths for " + subjectKey + " to " + samplePaths))
                     .build();
         } finally {
-            logger.trace("Finish updateTmSamplePaths({}, {})", updatedSubjectKey, samplePaths);
+            LOG.trace("Finish updateTmSamplePaths({}, {})", updatedSubjectKey, samplePaths);
         }
     }
 
@@ -156,7 +157,7 @@ public class TmSampleResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTmSampleConstants(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                          @ApiParam @QueryParam("samplePath") final String samplePath) {
-        logger.trace("getTmSampleConstants(subjectKey: {}, samplePath: {})", subjectKey, samplePath);
+        LOG.trace("getTmSampleConstants(subjectKey: {}, samplePath: {})", subjectKey, samplePath);
 
         // read and process transform.txt file in Sample path
         // this is intended to be a one-time process and data returned will be stored in TmSample upon creation
@@ -188,7 +189,7 @@ public class TmSampleResource {
                     .entity(constants)
                     .build();
         } catch (Exception e) {
-            logger.error("Error reading transform constants for {} from {}", subjectKey, samplePath, e);
+            LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath, e);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Error reading " + sampleTransformPath))
                     .build();
@@ -207,7 +208,7 @@ public class TmSampleResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TmSample createTmSample(DomainQuery query) {
-        logger.trace("createTmSample({})", query);
+        LOG.trace("createTmSample({})", query);
         return tmSampleDao.createTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
     }
 
@@ -223,7 +224,7 @@ public class TmSampleResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TmSample updateTmSample(@ApiParam DomainQuery query) {
-        logger.debug("updateTmSample({})", query);
+        LOG.debug("updateTmSample({})", query);
         return tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
     }
 
@@ -238,7 +239,7 @@ public class TmSampleResource {
     @Path("sample")
     public void removeTmSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("sampleId") final Long sampleId) {
-        logger.debug("removeTmSample(subjectKey: {}, sampleId: {})", subjectKey, sampleId);
+        LOG.debug("removeTmSample(subjectKey: {}, sampleId: {})", subjectKey, sampleId);
         tmSampleDao.removeTmSample(subjectKey, sampleId);
     }
 

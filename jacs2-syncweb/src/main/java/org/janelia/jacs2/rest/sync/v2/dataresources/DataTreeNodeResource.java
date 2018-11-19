@@ -1,13 +1,25 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import com.google.common.collect.ImmutableList;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.TreeNodeDao;
+import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.workspace.TreeNode;
+import org.janelia.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -17,28 +29,38 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import java.util.List;
 
+/**
+ * Web service for handling Workspace and TreeNode entities.
+ */
 @RequireAuthentication
+@Api(value = "Data TreeNode and Workspace Service")
 @ApplicationScoped
 @Produces("application/json")
 @Path("/data")
 public class DataTreeNodeResource {
 
-    @Inject private LegacyDomainDao folderDao;
-    @Inject private Logger logger;
+    private static final Logger LOG = LoggerFactory.getLogger(DataTreeNodeResource.class);
+
+    @Inject
+    private LegacyDomainDao legacyFolderDao;
+    @Inject
+    private WorkspaceNodeDao workspaceNodeDao;
 
     @GET
     @Path("{node-id}")
     public Response getDataNode(@PathParam("node-id") Long dataNodeId,
                                 @Context ContainerRequest containerRequestContext) {
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        TreeNode dataNode = folderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
+        TreeNode dataNode = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
         if (dataNode == null) {
-            logger.warn("No folder found for {} owned by {}", dataNodeId, authorizedSubjectKey);
+            LOG.warn("No folder found for {} owned by {}", dataNodeId, authorizedSubjectKey);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
@@ -55,9 +77,9 @@ public class DataTreeNodeResource {
                                      @PathParam("folder") String folderName,
                                      @Context ContainerRequest containerRequestContext) {
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        TreeNode parentFolder = folderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
+        TreeNode parentFolder = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
         if (parentFolder == null) {
-            logger.warn("No folder found for {} owned by {}", dataNodeId, authorizedSubjectKey);
+            LOG.warn("No folder found for {} owned by {}", dataNodeId, authorizedSubjectKey);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
@@ -65,8 +87,8 @@ public class DataTreeNodeResource {
         try {
             TreeNode folder = new TreeNode();
             folder.setName(folderName);
-            TreeNode newFolder = folderDao.save(authorizedSubjectKey, folder);
-            folderDao.addChildren(authorizedSubjectKey, parentFolder, ImmutableList.of(Reference.createFor(newFolder)));
+            TreeNode newFolder = legacyFolderDao.save(authorizedSubjectKey, folder);
+            legacyFolderDao.addChildren(authorizedSubjectKey, parentFolder, ImmutableList.of(Reference.createFor(newFolder)));
 
             return Response
                     .status(Response.Status.CREATED)
@@ -74,10 +96,101 @@ public class DataTreeNodeResource {
                     .contentLocation(UriBuilder.fromMethod(DataTreeNodeResource.class, "getDataNode").build(newFolder.getId()))
                     .build();
         } catch (Exception e) {
-            logger.error("Error while trying to add child folder {} to {}", folderName, parentFolder, e);
+            LOG.error("Error while trying to add child folder {} to {}", folderName, parentFolder, e);
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
                     .build();
+        }
+    }
+
+    @ApiOperation(value = "Creates a folder",
+            notes = "Uses the DomainObject parameter of the DomainQuery to create a new TreeNode (folder) object."
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully creating TreeNode", response=TreeNode.class),
+            @ApiResponse( code = 500, message = "Internal Server Error creating TreeNode" )
+    })
+    @PUT
+    @Path("treenode")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @SuppressWarnings("unchecked")
+    public <T extends TreeNode> Response createTreeNode(@ApiParam DomainQuery query) {
+        LOG.trace("Start createTreeNode({})", query);
+        try {
+            T dn = (T) query.getDomainObjectAs(TreeNode.class);
+            T savedNode = ((TreeNodeDao<T>)workspaceNodeDao).saveWithSubjectKey(dn, query.getSubjectKey());
+            return Response.created(UriBuilder.fromMethod(DataTreeNodeResource.class, "getDataNode").build(savedNode.getId()))
+                    .entity(savedNode)
+                    .build();
+        } catch (Exception e) {
+            LOG.error("Error occurred creating tree node for {}", query, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error while trying to create a treeNode from " + query))
+                    .build();
+        } finally {
+            LOG.trace("Finished createTreeNode({})", query);
+        }
+    }
+
+    @ApiOperation(value = "Gets the user's default Workspace",
+            notes = "Returns the user's default Workspace object."
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got default workspace", response= Workspace.class),
+            @ApiResponse( code = 500, message = "Internal Server Error getting default workspace" )
+    })
+    @GET
+    @Path("workspace")
+    public Response getDefaultWorkspaceBySubjectKey(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+        LOG.trace("Start getDefaultWorkspaceBySubjectKey({})", subjectKey);
+        try {
+            if (StringUtils.isBlank(subjectKey)) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("Invalid subject key"))
+                        .build();
+            }
+            Workspace defaultSubjectWorkspace = workspaceNodeDao.getDefaultWorkspaceNodeByOwnerKey(subjectKey);
+            if (defaultSubjectWorkspace == null) {
+                LOG.warn("No workspace found for {}", subjectKey);
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("No workspace found for " + subjectKey))
+                        .build();
+
+            } else {
+                LOG.debug("Found default workspace {} for {}", defaultSubjectWorkspace.getId(), subjectKey);
+                return Response
+                        .ok(defaultSubjectWorkspace)
+                        .build();
+            }
+        } finally {
+            LOG.trace("Finished getDefaultWorkspaceBySubjectKey({})", subjectKey);
+        }
+    }
+
+    @ApiOperation(value = "Gets all the Workspaces a user can read",
+            notes = "Returns all the Workspaces which are visible to the current user."
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got all workspaces", response=Workspace.class,
+                    responseContainer =  "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting workspaces" )
+    })
+    @GET
+    @Path("workspaces")
+    public Response getAllWorkspacesBySubjectKey(@ApiParam @QueryParam("subjectKey") String subjectKey) {
+        LOG.trace("Start getAllWorkspacesBySubjectKey({})", subjectKey);
+        try {
+            if (StringUtils.isBlank(subjectKey)) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("Invalid subject key"))
+                        .build();
+            }
+            List<Workspace> allAccessibleWorkspaces = workspaceNodeDao.getAllWorkspaceNodesByOwnerKey(subjectKey, 0L, -1);
+            LOG.debug("Found {} accessible workspaces by {}", allAccessibleWorkspaces.size(), subjectKey);
+            return Response.ok(allAccessibleWorkspaces)
+                    .build();
+        } finally {
+            LOG.trace("Finished getAllWorkspacesBySubjectKey({})", subjectKey);
         }
     }
 }
