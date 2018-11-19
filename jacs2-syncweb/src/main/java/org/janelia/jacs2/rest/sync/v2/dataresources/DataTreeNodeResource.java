@@ -161,8 +161,7 @@ public class DataTreeNodeResource {
 
             } else {
                 LOG.debug("Found default workspace {} for {}", defaultSubjectWorkspace.getId(), subjectKey);
-                return Response
-                        .ok(defaultSubjectWorkspace)
+                return Response.ok(defaultSubjectWorkspace, MediaType.APPLICATION_JSON_TYPE)
                         .build();
             }
         } finally {
@@ -191,7 +190,8 @@ public class DataTreeNodeResource {
             }
             List<Workspace> allAccessibleWorkspaces = workspaceNodeDao.getAllWorkspaceNodesByOwnerKey(subjectKey, 0L, -1);
             LOG.debug("Found {} accessible workspaces by {}", allAccessibleWorkspaces.size(), subjectKey);
-            return Response.ok(allAccessibleWorkspaces)
+            return Response.ok(allAccessibleWorkspaces, MediaType.APPLICATION_JSON_TYPE)
+                    .encoding(MediaType.APPLICATION_JSON)
                     .build();
         } finally {
             LOG.trace("Finished getAllWorkspacesBySubjectKey({})", subjectKey);
