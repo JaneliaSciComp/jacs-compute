@@ -13,12 +13,12 @@ public class JAXAppConfig extends ResourceConfig {
     JAXAppConfig(String... packageNames) {
         packages(true, packageNames);
         registerClasses(
-                com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider.class,
+//                com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider.class,
                 InvalidArgumentRequestHandler.class,
                 InvalidJsonRequestHandler.class,
+                ObjectMapperResolver.class,
                 // Putting the multipart package in the param above does not work. We need to be explicit with the classname.
                 org.glassfish.jersey.media.multipart.MultiPartFeature.class,
-                ObjectMapperResolver.class,
                 AppVersionResource.class,
                 CORSResponseFilter.class,
                 AuthFilter.class);
