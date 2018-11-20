@@ -27,6 +27,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.BufferedReader;
@@ -186,7 +187,7 @@ public class TmSampleResource {
             constants.put("scaling", scaling);
             constants.put("numberLevels", values.get("nl").longValue());
             return Response.ok()
-                    .entity(constants)
+                    .entity(new GenericEntity<Map<String, Object>>(constants){})
                     .build();
         } catch (Exception e) {
             LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath, e);

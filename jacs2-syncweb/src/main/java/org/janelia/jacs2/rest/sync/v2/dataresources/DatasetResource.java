@@ -25,6 +25,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
@@ -59,7 +60,7 @@ public class DatasetResource {
         try {
             List<DataSet> dataSets = datasetDao.findByOwnerKey(subjectKey);
             return Response
-                    .ok(dataSets)
+                    .ok(new GenericEntity<List<DataSet>>(dataSets){})
                     .build();
         } finally {
             LOG.trace("Finished getDataSets({})", subjectKey);

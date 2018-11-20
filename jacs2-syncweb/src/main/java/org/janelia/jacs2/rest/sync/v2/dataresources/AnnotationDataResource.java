@@ -27,6 +27,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
@@ -55,7 +56,8 @@ public class AnnotationDataResource {
         LOG.trace("Start getSubjectOntologies({})", subjectKey);
         try {
             List<Ontology> subjectOntologies = ontologyDao.getAllOntologiesByOwnerKey(subjectKey, 0, -1);
-            return Response.ok(subjectOntologies)
+            return Response.ok()
+                    .entity(new GenericEntity<List<Ontology>>(subjectOntologies){})
                     .build();
         } finally {
             LOG.trace("Finished getSubjectOntologies({})", subjectKey);

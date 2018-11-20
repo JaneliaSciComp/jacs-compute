@@ -31,6 +31,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -161,7 +162,7 @@ public class DataTreeNodeResource {
 
             } else {
                 LOG.debug("Found default workspace {} for {}", defaultSubjectWorkspace.getId(), subjectKey);
-                return Response.ok(defaultSubjectWorkspace, MediaType.APPLICATION_JSON_TYPE)
+                return Response.ok(defaultSubjectWorkspace)
                         .build();
             }
         } finally {
@@ -190,8 +191,9 @@ public class DataTreeNodeResource {
             }
             List<Workspace> allAccessibleWorkspaces = workspaceNodeDao.getAllWorkspaceNodesByOwnerKey(subjectKey, 0L, -1);
             LOG.debug("Found {} accessible workspaces by {}", allAccessibleWorkspaces.size(), subjectKey);
-            return Response.ok(allAccessibleWorkspaces, MediaType.APPLICATION_JSON_TYPE)
-                    .encoding(MediaType.APPLICATION_JSON)
+            return Response.ok()
+                    .type(MediaType.APPLICATION_JSON)
+                    .entity(new GenericEntity<List<Workspace>>(allAccessibleWorkspaces){})
                     .build();
         } finally {
             LOG.trace("Finished getAllWorkspacesBySubjectKey({})", subjectKey);

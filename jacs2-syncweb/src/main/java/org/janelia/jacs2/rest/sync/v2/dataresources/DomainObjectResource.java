@@ -32,6 +32,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -129,7 +130,7 @@ public class DomainObjectResource {
                 detailObjects = Collections.emptyList();
             }
             return Response.ok()
-                    .entity(detailObjects)
+                    .entity(new GenericEntity<List<DomainObject>>(detailObjects){})
                     .build();
         } finally {
             LOG.trace("Finished getObjectDetails(({})", query);
@@ -161,7 +162,7 @@ public class DomainObjectResource {
         try {
             List<? extends DomainObject> domainObjects = legacyDomainDao.getDomainObjects(subjectKey, domainObjectClass);
             return Response.ok()
-                    .entity(domainObjects)
+                    .entity(new GenericEntity<List<? extends DomainObject>>(domainObjects){})
                     .build();
         } finally {
             LOG.trace("Finished getObjectsByClass({}, domainClass={})", subjectKey, domainClass);
@@ -186,7 +187,7 @@ public class DomainObjectResource {
         try {
             List<? extends DomainObject> domainObjects = legacyDomainDao.getDomainObjectsByName(subjectKey, clazz, name);
             return Response.ok()
-                    .entity(domainObjects)
+                    .entity(new GenericEntity<List<? extends DomainObject>>(domainObjects){})
                     .build();
         } finally {
             LOG.trace("Finished getObjectsByName({}, name={}, domainClass={})", subjectKey, name, domainClass);
@@ -279,9 +280,9 @@ public class DomainObjectResource {
         reverseRef.setReferenceId(referenceId);
         reverseRef.setReferringClassName(referenceClass);
         try {
-            List<DomainObject> domainObjects = legacyDomainDao.getDomainObjects(subjectKey, reverseRef);
+            List<? extends DomainObject> domainObjects = legacyDomainDao.getDomainObjects(subjectKey, reverseRef);
             return Response.ok()
-                    .entity(domainObjects)
+                    .entity(new GenericEntity<List<? extends DomainObject>>(domainObjects){})
                     .build();
         } finally {
             LOG.trace("Finished getObjectsByReverseRef({}, referenceId={}, count={}, referenceAttr={}, referenceClass={})", subjectKey, referenceId, count, referenceAttr, referenceClass);

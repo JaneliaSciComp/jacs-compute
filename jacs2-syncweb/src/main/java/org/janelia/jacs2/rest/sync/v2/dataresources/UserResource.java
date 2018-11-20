@@ -27,6 +27,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -106,7 +107,7 @@ public class UserResource {
             int length = lengthParam != null ? lengthParam : -1;
             List<Subject> subjects = subjectDao.findAll(offset, length);
             return Response
-                    .ok(subjects)
+                    .ok(new GenericEntity<List<Subject>>(subjects){})
                     .build();
         } finally {
             LOG.trace("Finished getSubjects()");
@@ -182,7 +183,7 @@ public class UserResource {
         try {
             List<Preference> subjectPreferences = legacyDomainDao.getPreferences(subjectKey);
             return Response
-                    .ok(subjectPreferences)
+                    .ok(new GenericEntity<List<Preference>>(subjectPreferences){})
                     .build();
         } finally {
             LOG.trace("Finished getPreferences({})",subjectKey);

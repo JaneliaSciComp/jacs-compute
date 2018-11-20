@@ -48,8 +48,8 @@ public class DataSummaryResource {
             @ApiResponse( code = 500, message = "Internal Server Error getting disk usage summary" )
     })
     @Produces(MediaType.APPLICATION_JSON)
-    public DiskUsageSummary getDiskUsageSummary(@ApiParam @QueryParam("volumeName") String volumeNameParam,
-                                                @ApiParam @QueryParam("subjectKey") String subjectKey) {
+    public Response getDiskUsageSummary(@ApiParam @QueryParam("volumeName") String volumeNameParam,
+                                        @ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDataSummary({})", subjectKey);
         try {
             DiskUsageSummary summary = new DiskUsageSummary();
@@ -65,7 +65,8 @@ public class DataSummaryResource {
             }
             storageService.fetchQuotaForUser(volumeName, subjectKey)
                     .ifPresent(quotaUsage -> summary.setQuotaUsage(quotaUsage));
-            return summary;
+            return Response.ok(summary)
+                    .build();
         } finally {
             LOG.trace("Finished getDataSummary({})", subjectKey);
         }
