@@ -99,10 +99,14 @@ public class TmResource {
     @Path("/workspace")
     @Produces(MediaType.APPLICATION_JSON)
     public List<TmWorkspace> getTmWorkspaces(@ApiParam @QueryParam("subjectKey") String subjectKey,
-                                             @ApiParam @QueryParam("sampleId") Long sampleId) {
+                                             @ApiParam @QueryParam("sampleId") Long sampleId,
+                                             @ApiParam @QueryParam("offset") Long offsetParam,
+                                             @ApiParam @QueryParam("length") Integer lengthParam) {
         LOG.trace("getTmWorkspaces({}, sampleId={})", subjectKey, sampleId);
         if (sampleId == null) {
-            return tmWorkspaceDao.findByOwnerKey(subjectKey);
+            long offset = offsetParam != null ? offsetParam : 0;
+            int length = lengthParam != null ? lengthParam : -1;
+            return tmWorkspaceDao.findOwnedEntitiesBySubjectKey(subjectKey, offset, length);
         } else {
             return tmWorkspaceDao.getTmWorkspacesForSample(subjectKey, sampleId);
         }
@@ -121,7 +125,7 @@ public class TmResource {
     public TmWorkspace getTmWorkspace(@ApiParam @QueryParam("subjectKey") String subjectKey,
                                       @ApiParam @PathParam("workspaceId") Long workspaceId) {
         LOG.debug("getTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
-        return tmWorkspaceDao.findByIdAndSubjectKey(workspaceId, subjectKey);
+        return tmWorkspaceDao.findEntityByIdAccessibleBySubjectKey(workspaceId, subjectKey);
     }
 
     @ApiOperation(value = "Creates a new TmWorkspace",
@@ -217,7 +221,7 @@ public class TmResource {
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.info("getWorkspaceNeurons({}, workspaceId={})", subjectKey, workspaceId);
         MultiPart multiPartEntity = new MultiPart();
-        TmWorkspace workspace = tmWorkspaceDao.findByIdAndSubjectKey(workspaceId, subjectKey);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdAccessibleBySubjectKey(workspaceId, subjectKey);
         if (workspace == null) {
             LOG.error("No workspace found for {} accessible by {}", workspaceId, subjectKey);
             return Response.status(Response.Status.NOT_FOUND)
@@ -251,7 +255,7 @@ public class TmResource {
                                    @ApiParam @FormDataParam("neuronMetadata") TmNeuronMetadata neuron,
                                    @ApiParam @FormDataParam("protobufBytes") InputStream neuronPointsStream) {
         LOG.debug("createTmNeuron({}, {})", subjectKey, neuron);
-        TmWorkspace workspace = tmWorkspaceDao.findByIdAndSubjectKey(neuron.getWorkspaceId(), subjectKey);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdAccessibleBySubjectKey(neuron.getWorkspaceId(), subjectKey);
         if (workspace == null) {
             LOG.error("No workspace found for {} accessible by {}", neuron.getWorkspaceId(), subjectKey);
             return Response.status(Response.Status.NOT_FOUND)
@@ -322,7 +326,7 @@ public class TmResource {
     public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                       @ApiParam @QueryParam("neuronIds") final List<Long> neuronIds) {
         LOG.info("getNeuronMetadata({}, neuronIds={})", subjectKey, neuronIds);
-        return tmNeuronMetadataDao.findByIdsAndSubjectKey(neuronIds, subjectKey);
+        return tmNeuronMetadataDao.findEntitiesByIdsAccessibleBySubjectKey(neuronIds, subjectKey);
     }
 
     @ApiOperation(value = "Bulk update neuron styles",

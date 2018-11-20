@@ -153,18 +153,22 @@ public class DataTreeNodeResource {
                         .entity(new ErrorResponse("Invalid subject key"))
                         .build();
             }
-            Workspace defaultSubjectWorkspace = workspaceNodeDao.getDefaultWorkspaceNodeByOwnerKey(subjectKey);
-            if (defaultSubjectWorkspace == null) {
-                LOG.warn("No workspace found for {}", subjectKey);
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(new ErrorResponse("No workspace found for " + subjectKey))
-                        .build();
+            List<Workspace> subjectOwnedWorkspaces = workspaceNodeDao.getWorkspaceNodesOwnedBySubjectKey(subjectKey);
+            return subjectOwnedWorkspaces.stream()
+                    .findFirst()
+                    .map(ws -> {
+                        LOG.debug("First workspace found owned by {} is {}", subjectKey, ws.getId());
+                        return Response.ok()
+                                .entity(ws)
+                                .build();
 
-            } else {
-                LOG.debug("Found default workspace {} for {}", defaultSubjectWorkspace.getId(), subjectKey);
-                return Response.ok(defaultSubjectWorkspace)
-                        .build();
-            }
+                    })
+                    .orElseGet(() -> {
+                        LOG.warn("No workspace found for {}", subjectKey);
+                        return Response.status(Response.Status.BAD_REQUEST)
+                                .entity(new ErrorResponse("No workspace found for " + subjectKey))
+                                .build();
+                    });
         } finally {
             LOG.trace("Finished getDefaultWorkspaceBySubjectKey({})", subjectKey);
         }
@@ -189,7 +193,7 @@ public class DataTreeNodeResource {
                         .entity(new ErrorResponse("Invalid subject key"))
                         .build();
             }
-            List<Workspace> allAccessibleWorkspaces = workspaceNodeDao.getAllWorkspaceNodesByOwnerKey(subjectKey, 0L, -1);
+            List<Workspace> allAccessibleWorkspaces = workspaceNodeDao.getAllWorkspaceNodesAccessibleBySubjectKey(subjectKey, 0L, -1);
             LOG.debug("Found {} accessible workspaces by {}", allAccessibleWorkspaces.size(), subjectKey);
             return Response.ok()
                     .type(MediaType.APPLICATION_JSON)

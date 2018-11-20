@@ -70,7 +70,7 @@ public class SWCService {
     }
 
     public TmWorkspace importSWCFolder(String swcFolderName, Long sampleId, String neuronOwnerKey, String workspaceName, String workspaceOwnerKey, List<String> accessUsers) {
-        TmSample tmSample = tmSampleDao.findByIdAndSubjectKey(sampleId, workspaceOwnerKey);
+        TmSample tmSample = tmSampleDao.findEntityByIdAccessibleBySubjectKey(sampleId, workspaceOwnerKey);
         if (tmSample == null) {
             LOG.error("Sample {} either does not exist or user {} has no access to it", sampleId, workspaceOwnerKey);
             throw new IllegalArgumentException("Sample " + sampleId + " either does not exist or is not accessible");

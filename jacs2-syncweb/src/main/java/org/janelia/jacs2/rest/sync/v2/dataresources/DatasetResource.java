@@ -58,7 +58,7 @@ public class DatasetResource {
     public Response getDatasets(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDataSets({})", subjectKey);
         try {
-            List<DataSet> dataSets = datasetDao.findByOwnerKey(subjectKey);
+            List<DataSet> dataSets = datasetDao.findOwnedEntitiesBySubjectKey(subjectKey, 0, -1);
             return Response
                     .ok(new GenericEntity<List<DataSet>>(dataSets){})
                     .build();
@@ -83,7 +83,7 @@ public class DatasetResource {
                                    @Context SecurityContext securityContext) {
         LOG.trace("Start getDatasetById({}) by {}", id, securityContext.getUserPrincipal());
         try {
-            DataSet dataset = datasetDao.findByIdAndSubjectKey(id, securityContext.getUserPrincipal().getName());
+            DataSet dataset = datasetDao.findEntityByIdAccessibleBySubjectKey(id, securityContext.getUserPrincipal().getName());
             if (dataset != null) {
                 return Response
                         .ok(dataset)

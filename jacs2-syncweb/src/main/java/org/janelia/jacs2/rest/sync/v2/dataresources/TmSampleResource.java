@@ -127,7 +127,7 @@ public class TmSampleResource {
     @Produces(MediaType.APPLICATION_JSON)
     public List<TmSample> getTmSamples(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         String sampleOwnerKey = StringUtils.defaultIfBlank(subjectKey, DomainConstants.MOUSELIGHT_GROUP_KEY);
-        return tmSampleDao.findByOwnerKey(sampleOwnerKey);
+        return tmSampleDao.findOwnedEntitiesBySubjectKey(sampleOwnerKey, 0, -1);
     }
 
     @ApiOperation(
@@ -143,8 +143,8 @@ public class TmSampleResource {
     @Produces(MediaType.APPLICATION_JSON)
     public TmSample getTmSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                 @ApiParam @PathParam("sampleId") final Long sampleId) {
-        return tmSampleDao.findByIdAndSubjectKey(sampleId, subjectKey);
-    }
+        return tmSampleDao.findEntityByIdAccessibleBySubjectKey(sampleId, subjectKey);
+   }
 
     @ApiOperation(value = "Gets a calculated origin by Sample path",
             notes = "Returns a map of useful constants when creating a sample (origin, scaling)"

@@ -43,7 +43,7 @@ public class AnnotationDataResource {
     @Inject
     private OntologyDao ontologyDao;
 
-    @ApiOperation(value = "Gets all the ontologies for a user")
+    @ApiOperation(value = "Gets all the ontologies available to a user")
     @ApiResponses(value = {
             @ApiResponse( code = 200, message = "Successfully returned Ontologies", response=Ontology.class,
                     responseContainer = "List"),
@@ -55,9 +55,9 @@ public class AnnotationDataResource {
     public Response getSubjectOntologies(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         LOG.trace("Start getSubjectOntologies({})", subjectKey);
         try {
-            List<Ontology> subjectOntologies = ontologyDao.getAllOntologiesByOwnerKey(subjectKey, 0, -1);
+            List<Ontology> accessibleOntologies = ontologyDao.getAllOntologiesByAccessibleBySubjectKey(subjectKey, 0, -1);
             return Response.ok()
-                    .entity(new GenericEntity<List<Ontology>>(subjectOntologies){})
+                    .entity(new GenericEntity<List<Ontology>>(accessibleOntologies){})
                     .build();
         } finally {
             LOG.trace("Finished getSubjectOntologies({})", subjectKey);

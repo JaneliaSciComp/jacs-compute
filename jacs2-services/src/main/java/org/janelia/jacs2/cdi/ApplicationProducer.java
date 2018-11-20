@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.jacs2.cdi.qualifier.*;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.cdi.DaoObjectMapper;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -16,6 +17,11 @@ public class ApplicationProducer {
     @Produces
     public ObjectMapper objectMapper(ObjectMapperFactory objectMapperFactory) {
         return objectMapperFactory.getDefaultObjectMapper();
+    }
+
+    @Produces @DaoObjectMapper
+    public ObjectMapper mongoObjectMapper(ObjectMapperFactory objectMapperFactory) {
+        return objectMapperFactory.newMongoCompatibleObjectMapper();
     }
 
     @JacsDefault
