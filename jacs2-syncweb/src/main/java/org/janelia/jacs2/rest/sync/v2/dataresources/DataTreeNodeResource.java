@@ -193,7 +193,7 @@ public class DataTreeNodeResource {
                         .entity(new ErrorResponse("Invalid subject key"))
                         .build();
             }
-            List<Workspace> allAccessibleWorkspaces = workspaceNodeDao.getAllWorkspaceNodesAccessibleBySubjectKey(subjectKey, 0L, -1);
+            List<Workspace> allAccessibleWorkspaces = workspaceNodeDao.getWorkspaceNodesAccessibleBySubjectGroups(subjectKey, 0L, -1);
             LOG.debug("Found {} accessible workspaces by {}", allAccessibleWorkspaces.size(), subjectKey);
             return Response.ok()
                     .type(MediaType.APPLICATION_JSON)
