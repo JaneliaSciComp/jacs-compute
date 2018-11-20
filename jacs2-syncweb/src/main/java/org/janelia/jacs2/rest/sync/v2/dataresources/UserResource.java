@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.LDAPProvider;
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 @Api(value = "Janelia Workstation Domain Data")
+@RequireAuthentication
 @Path("/data")
 public class UserResource {
     private static final Logger LOG = LoggerFactory.getLogger(UserResource.class);

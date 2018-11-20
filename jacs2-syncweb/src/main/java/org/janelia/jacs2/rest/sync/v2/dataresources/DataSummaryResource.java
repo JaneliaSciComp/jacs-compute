@@ -6,10 +6,10 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.SummaryDao;
 import org.janelia.model.domain.report.DatabaseSummary;
 import org.janelia.model.domain.report.DiskUsageSummary;
@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 @Api(value = "Janelia Workstation Data Summary Service")
+@RequireAuthentication
 @Path("/data")
 public class DataSummaryResource {
     private static final Logger LOG = LoggerFactory.getLogger(DataSummaryResource.class);

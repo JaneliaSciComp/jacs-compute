@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.collections4.CollectionUtils;
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.DomainUtils;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Set;
 
 @Api(value = "Janelia Workstation Domain Data")
+@RequireAuthentication
 @Path("/data")
 public class DomainObjectResource {
     private static final Logger LOG = LoggerFactory.getLogger(DomainObjectResource.class);

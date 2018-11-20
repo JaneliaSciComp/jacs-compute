@@ -40,8 +40,8 @@ import java.util.List;
 /**
  * Web service for handling Workspace and TreeNode entities.
  */
-@RequireAuthentication
 @Api(value = "Data TreeNode and Workspace Service")
+@RequireAuthentication
 @ApplicationScoped
 @Path("/data")
 public class DataTreeNodeResource {

@@ -34,6 +34,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Api(value = "Janelia Workstation Domain Data")
+@RequireAuthentication
 @Path("/data")
 public class DatasetResource {
     private static final Logger LOG = LoggerFactory.getLogger(DatasetResource.class);

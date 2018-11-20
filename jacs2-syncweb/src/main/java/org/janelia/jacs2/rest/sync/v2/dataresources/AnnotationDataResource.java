@@ -36,6 +36,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Api(value = "Janelia Workstation Ontology Data")
+@RequireAuthentication
 @Path("/data")
 public class AnnotationDataResource {
     private static final Logger LOG = LoggerFactory.getLogger(AnnotationDataResource.class);
@@ -55,7 +56,7 @@ public class AnnotationDataResource {
     public Response getSubjectOntologies(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         LOG.trace("Start getSubjectOntologies({})", subjectKey);
         try {
-            List<Ontology> accessibleOntologies = ontologyDao.getAllOntologiesByAccessibleBySubjectKey(subjectKey, 0, -1);
+            List<Ontology> accessibleOntologies = ontologyDao.getOntologiesAccessibleBySubjectGroups(subjectKey, 0, -1);
             return Response.ok()
                     .entity(new GenericEntity<List<Ontology>>(accessibleOntologies){})
                     .build();

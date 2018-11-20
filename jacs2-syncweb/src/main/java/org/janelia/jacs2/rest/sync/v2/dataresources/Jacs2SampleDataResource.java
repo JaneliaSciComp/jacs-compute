@@ -1,5 +1,6 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.model.jacs2.DataInterval;
@@ -23,9 +24,10 @@ import javax.ws.rs.core.Response;
 import java.util.Date;
 import java.util.List;
 
+@RequireAuthentication
 @ApplicationScoped
-@Produces("application/json")
 @Path("/samples")
+@Produces("application/json")
 public class Jacs2SampleDataResource {
     private static final int DEFAULT_PAGE_SIZE = 100;
 
