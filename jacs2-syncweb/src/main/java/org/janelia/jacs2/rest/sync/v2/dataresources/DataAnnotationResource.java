@@ -58,7 +58,7 @@ public class DataAnnotationResource {
             @ApiResponse(code = 500, message = "Internal Server Error creating Annotation")
     })
     @PUT
-    @Path("/annotation")
+    @Path("annotation")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Annotation createAnnotation(@ApiParam DomainQuery query) {
@@ -74,7 +74,7 @@ public class DataAnnotationResource {
     }
 
     @POST
-    @Path("/annotation")
+    @Path("annotation")
     @ApiOperation(value = "Updates an annotation",
             notes = "updates an existing annotation using the DomainObject parameter"
     )
@@ -97,7 +97,7 @@ public class DataAnnotationResource {
     }
 
     @POST
-    @Path("/annotation/details")
+    @Path("annotation/details")
     @ApiOperation(value = "gets a list of Annotations",
             notes = "Gets a list of Annotations using the references paramter of the DomainQuery object"
     )
@@ -128,7 +128,7 @@ public class DataAnnotationResource {
             @ApiResponse(code = 500, message = "Internal Server Error removing the annotation")
     })
     @DELETE
-    @Path("/annotation")
+    @Path("annotation")
     public Response removeAnnotations(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("annotationId") final String annotationIdParam) {
         LOG.trace("Start removeAnnotations({},{})", subjectKey, annotationIdParam);
@@ -148,6 +148,5 @@ public class DataAnnotationResource {
             LOG.trace("Finished removeAnnotations({},{})", subjectKey, annotationIdParam);
         }
     }
-
 
 }

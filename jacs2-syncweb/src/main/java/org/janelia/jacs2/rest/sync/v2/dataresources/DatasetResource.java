@@ -195,7 +195,7 @@ public class DatasetResource {
     }
 
     @GET
-    @Path("/dataset/all")
+    @Path("dataset/all")
     @ApiOperation(value = "Gets a distinct list of all datasets",
             notes = "")
     public List<String> getAllDatasetNames() {
