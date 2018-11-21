@@ -121,7 +121,7 @@ public class DataTreeNodeResource {
         LOG.trace("Start createTreeNode({})", query);
         try {
             T dn = (T) query.getDomainObjectAs(TreeNode.class);
-            T savedNode = ((TreeNodeDao<T>)workspaceNodeDao).saveWithSubjectKey(dn, query.getSubjectKey());
+            T savedNode = ((TreeNodeDao<T>)workspaceNodeDao).saveBySubjectKey(dn, query.getSubjectKey());
             return Response.created(UriBuilder.fromMethod(DataTreeNodeResource.class, "getDataNode").build(savedNode.getId()))
                     .entity(savedNode)
                     .build();

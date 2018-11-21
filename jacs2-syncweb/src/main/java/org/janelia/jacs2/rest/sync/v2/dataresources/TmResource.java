@@ -299,7 +299,7 @@ public class TmResource {
             } else {
                 protoBufStream = null;
             }
-            TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveWithSubjectKey(neuron, subjectKey);
+            TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
             tmNeuronMetadataDao.updateNeuronPoints(updatedNeuron, protoBufStream);
             list.add(updatedNeuron);
         }

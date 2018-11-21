@@ -151,7 +151,7 @@ public class DatasetResource {
     public Response updateDataSet(DomainQuery query) {
         LOG.debug("Start updateDataSet({})", query);
         try {
-            DataSet dataset = datasetDao.saveWithSubjectKey(query.getDomainObjectAs(DataSet.class), query.getSubjectKey());
+            DataSet dataset = datasetDao.saveBySubjectKey(query.getDomainObjectAs(DataSet.class), query.getSubjectKey());
             return Response
                     .ok(dataset)
                     .build();
