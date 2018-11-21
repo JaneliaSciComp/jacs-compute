@@ -46,7 +46,7 @@ public class DataAnnotationResource {
     private static final Logger LOG = LoggerFactory.getLogger(DataAnnotationResource.class);
 
     @Inject
-    private AnnotationDao<Annotation> annotationDao;
+    private AnnotationDao annotationDao;
     @Inject
     private LegacyDomainDao legacyDomainDao;
 
