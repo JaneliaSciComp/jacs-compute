@@ -194,10 +194,10 @@ public class DatasetResource {
         }
     }
 
+    @ApiOperation(value = "Gets a distinct list of all datasets")
     @GET
     @Path("dataset/all")
-    @ApiOperation(value = "Gets a distinct list of all datasets",
-            notes = "")
+    @Produces(MediaType.APPLICATION_JSON)
     public List<String> getAllDatasetNames() {
         LOG.trace("Start getAllDatasetNames()");
         try {
