@@ -10,6 +10,7 @@ import org.janelia.jacs2.auth.LDAPProvider;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.dto.DomainQuery;
@@ -32,6 +33,7 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +45,8 @@ public class UserResource {
 
     @Inject
     private LegacyDomainDao legacyDomainDao;
+    @Inject
+    private DatasetDao datasetDao;
     @Inject
     private SubjectDao subjectDao;
     @Inject
@@ -109,7 +113,8 @@ public class UserResource {
             int length = lengthParam != null ? lengthParam : -1;
             List<Subject> subjects = subjectDao.findAll(offset, length);
             return Response
-                    .ok(new GenericEntity<List<Subject>>(subjects){})
+                    .ok(new GenericEntity<List<Subject>>(subjects) {
+                    })
                     .build();
         } finally {
             LOG.trace("Finished getSubjects()");
@@ -181,14 +186,15 @@ public class UserResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPreferences(@ApiParam @QueryParam("subjectKey") String subjectKey) {
-        LOG.trace("Start getPreferences({})",subjectKey);
+        LOG.trace("Start getPreferences({})", subjectKey);
         try {
             List<Preference> subjectPreferences = legacyDomainDao.getPreferences(subjectKey);
             return Response
-                    .ok(new GenericEntity<List<Preference>>(subjectPreferences){})
+                    .ok(new GenericEntity<List<Preference>>(subjectPreferences) {
+                    })
                     .build();
         } finally {
-            LOG.trace("Finished getPreferences({})",subjectKey);
+            LOG.trace("Finished getPreferences({})", subjectKey);
         }
     }
 
@@ -204,14 +210,14 @@ public class UserResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Preference setPreferences(DomainQuery query) {
-        LOG.debug("Start setPreferences({})",query);
+        LOG.trace("Start setPreferences({})", query);
         try {
             return legacyDomainDao.save(query.getSubjectKey(), query.getPreference());
         } catch (Exception e) {
             LOG.error("Error occurred setting preferences with {}", query, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
-            LOG.debug("Start setPreferences({})",query);
+            LOG.trace("Start setPreferences({})", query);
         }
     }
 
@@ -227,7 +233,7 @@ public class UserResource {
     @Path("/user/permissions")
     @Consumes(MediaType.APPLICATION_JSON)
     public void setPermissions(@ApiParam Map<String, Object> params) {
-        LOG.debug("Start setPermissions({})", params);
+        LOG.trace("Start setPermissions({})", params);
         try {
             String subjectKey = (String) params.get("subjectKey");
             String targetClass = (String) params.get("targetClass");
@@ -243,7 +249,70 @@ public class UserResource {
             LOG.error("Error occurred setting permissions: {}", params, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
-            LOG.debug("Finished setPermissions({})", params);
+            LOG.trace("Finished setPermissions({})", params);
+        }
+    }
+
+    @ApiOperation(value = "Gets a List of Members",
+            notes = "Uses the group key to retrieve a list of members"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully fetched the list of members", response = Subject.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal Server Error fetching the members")
+    })
+    @GET
+    @Path("/group/{groupKey:.*}/members")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Subject> getMembers(@ApiParam @PathParam("groupKey") final String groupKey) {
+        LOG.trace("Start getMembers({})", groupKey);
+        try {
+            return subjectDao.getGroupMembers(groupKey);
+        } finally {
+            LOG.trace("Finished getMembers({})", groupKey);
+        }
+    }
+
+    @ApiOperation(value = "Get a list of groups and number of users in each group")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully got list of groups", response = Map.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal Server Error getting list of groups")
+    })
+    @GET
+    @Path("/groups")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<Subject, Number> getGroups() {
+        LOG.trace("Start getGroups()");
+        try {
+            return subjectDao.getGroupMembersCount();
+        } catch (Exception e) {
+            LOG.error("Error occurred getting groups", e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            LOG.trace("Finished getGroups()");
+        }
+    }
+
+    @ApiOperation(value = "Get a list of data sets a given group has access to read")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully got list of datasets", response = HashMap.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal Server Error getting list of datasets")
+    })
+    @GET
+    @Path("/group/{groupName:.*}/data_sets")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, String> getDataSets(@ApiParam @PathParam("groupName") final String groupName) {
+        LOG.trace("Start getDataSets({})", groupName);
+        try {
+            return datasetDao.getDatasetsByGroupName(groupName);
+        } catch (Exception e) {
+            LOG.error("Error occurred getting group {}", groupName, e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            LOG.trace("Finished getDataSets({})", groupName);
         }
     }
 
