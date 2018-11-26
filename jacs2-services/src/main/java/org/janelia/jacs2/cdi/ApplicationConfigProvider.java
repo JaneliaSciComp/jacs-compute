@@ -6,13 +6,8 @@ import org.janelia.jacs2.config.ApplicationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -99,7 +94,7 @@ public class ApplicationConfigProvider {
         return this;
     }
 
-    public ApplicationConfigProvider injectEnvProps() {
+    private ApplicationConfigProvider injectEnvProps() {
 
         String prefix = "env.jacs_";
         for (Object o : Sets.newLinkedHashSet(applicationConfig.keySet())) {
