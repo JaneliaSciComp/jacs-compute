@@ -1,33 +1,18 @@
 package org.janelia.jacs2.config;
 
-import org.apache.commons.lang3.StringUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 
-public class ApplicationConfig extends XProperties {
-    public String getStringPropertyValue(String name) {
-        return getProperty(name);
-    }
-
-    public String getStringPropertyValue(String name, String defaultValue) {
-        return getProperty(name, defaultValue);
-    }
-
-    public Boolean getBooleanPropertyValue(String name) {
-        return getBooleanPropertyValue(name, false);
-    }
-
-    public Boolean getBooleanPropertyValue(String name, boolean defaultValue) {
-        String stringValue = getStringPropertyValue(name);
-        return StringUtils.isBlank(stringValue) ? defaultValue : Boolean.valueOf(stringValue);
-    }
-
-    public Integer getIntegerPropertyValue(String name) {
-        String stringValue = getStringPropertyValue(name);
-        return StringUtils.isBlank(stringValue) ? null : Integer.valueOf(stringValue);
-    }
-
-    public Integer getIntegerPropertyValue(String name, Integer defaultValue) {
-        String stringValue = getStringPropertyValue(name);
-        return StringUtils.isBlank(stringValue) ? defaultValue : Integer.valueOf(stringValue);
-    }
-
+public interface ApplicationConfig {
+    String getStringPropertyValue(String name);
+    String getStringPropertyValue(String name, String defaultValue);
+    Boolean getBooleanPropertyValue(String name);
+    Boolean getBooleanPropertyValue(String name, boolean defaultValue);
+    Integer getIntegerPropertyValue(String name);
+    Integer getIntegerPropertyValue(String name, Integer defaultValue);
+    void load(InputStream stream) throws IOException;
+    void put(String key, String value);
+    void putAll(Map<String, String> properties);
+    Map<String, String> asMap();
 }

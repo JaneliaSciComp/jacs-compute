@@ -29,13 +29,13 @@ public abstract class AbstractMongoDaoITest<T extends HasIdentifier> extends Abs
     public static void setUpMongoClient() {
         CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(testObjectMapperFactory);
         MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder().codecRegistry(codecRegistry).maxConnectionIdleTime(60000);
-        MongoClientURI mongoConnectionURI = new MongoClientURI(integrationTestsConfig.getProperty("MongoDB.ConnectionURL"), optionsBuilder);
+        MongoClientURI mongoConnectionURI = new MongoClientURI(integrationTestsConfig.getStringPropertyValue("MongoDB.ConnectionURL"), optionsBuilder);
         testMongoClient = new MongoClient(mongoConnectionURI);
     }
 
     @Before
     public final void setUpMongoDatabase() {
-        testMongoDatabase = testMongoClient.getDatabase(integrationTestsConfig.getProperty("MongoDB.Database"));
+        testMongoDatabase = testMongoClient.getDatabase(integrationTestsConfig.getStringPropertyValue("MongoDB.Database"));
     }
 
     protected void deleteAll(ReadWriteDao<T, Number> dao, List<T> es) {

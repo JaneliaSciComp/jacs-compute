@@ -3,6 +3,7 @@ package org.janelia.jacs2.cdi;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.config.ApplicationConfig;
+import org.janelia.jacs2.config.ApplicationConfigImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class ApplicationConfigProvider {
 
-    private static final Logger log = LoggerFactory.getLogger(ApplicationConfigProvider.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ApplicationConfigProvider.class);
 
     private static final String DEFAULT_APPLICATION_CONFIG_RESOURCES = "/jacs.properties";
 
@@ -29,7 +30,7 @@ public class ApplicationConfigProvider {
         return APPLICATION_ARGS;
     }
 
-    private ApplicationConfig applicationConfig = new ApplicationConfig();
+    private ApplicationConfig applicationConfig = new ApplicationConfigImpl();
 
     public ApplicationConfigProvider fromDefaultResources() {
         return fromProperties(System.getProperties())
@@ -42,7 +43,7 @@ public class ApplicationConfigProvider {
             return this;
         }
         try (InputStream configStream = this.getClass().getResourceAsStream(resourceName)) {
-            log.info("Reading application config from resource {}", resourceName);
+            LOG.info("Reading application config from resource {}", resourceName);
             return fromInputStream(configStream);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -57,7 +58,7 @@ public class ApplicationConfigProvider {
         if (StringUtils.isBlank(envVarValue)) {
             return this;
         }
-        log.info("Reading application config from environment {} -> {}", envVarName, envVarValue);
+        LOG.info("Reading application config from environment {} -> {}", envVarName, envVarValue);
         return fromFile(envVarValue);
     }
 
@@ -68,14 +69,14 @@ public class ApplicationConfigProvider {
         File file = new File(fileName);
         if (file.exists() && file.isFile()) {
             try (InputStream fileInputStream = new FileInputStream(file)) {
-                log.info("Reading application config from file {}", file);
+                LOG.info("Reading application config from file {}", file);
                 return fromInputStream(fileInputStream);
             } catch (IOException e) {
-                log.error("Error reading configuration file {}", fileName, e);
+                LOG.error("Error reading configuration file {}", fileName, e);
                 throw new UncheckedIOException(e);
             }
         } else {
-            log.warn("Configuration file {} not found", fileName);
+            LOG.warn("Configuration file {} not found", fileName);
         }
         return this;
     }
@@ -86,7 +87,7 @@ public class ApplicationConfigProvider {
     }
 
     public ApplicationConfigProvider fromProperties(Properties properties) {
-        applicationConfig.putAll(properties);
+        properties.stringPropertyNames().forEach(k -> applicationConfig.put(k, properties.getProperty(k)));
         return this;
     }
 
@@ -99,19 +100,15 @@ public class ApplicationConfigProvider {
         return this;
     }
 
-    public ApplicationConfigProvider injectEnvProps() {
-
-        String prefix = "env.jacs_";
-        for (Object o : Sets.newLinkedHashSet(applicationConfig.keySet())) {
-            String key = o.toString();
-            if (key.toLowerCase().startsWith(prefix)) {
-                String newKey = key.substring(prefix.length()).replaceAll("_", ".");
-                log.debug("Overriding {} with value from env", newKey);
-                applicationConfig.put(newKey, applicationConfig.get(key));
-            }
-        }
-
-        return this;
+    private void injectEnvProps() {
+        final String envPrefix = "env.jacs_";
+        applicationConfig.asMap().entrySet().stream()
+                .filter(entry -> entry.getKey().toLowerCase().startsWith(envPrefix))
+                .forEach(entry -> {
+                    String newKey = entry.getKey().substring(envPrefix.length()).replaceAll("_", ".");
+                    LOG.debug("Overriding env entry {} with {} -> {}", entry, newKey, entry.getValue());
+                    applicationConfig.put(newKey, entry.getValue());
+                });
     }
 
     public ApplicationConfig build() {

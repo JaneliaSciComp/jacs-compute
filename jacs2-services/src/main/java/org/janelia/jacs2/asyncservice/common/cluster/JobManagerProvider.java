@@ -4,7 +4,6 @@ import org.janelia.cluster.JobManager;
 import org.janelia.cluster.lsf.LsfSyncApi;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 
 /**
  * Attaches a monitoring thread to a JobManager.

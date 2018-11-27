@@ -2,7 +2,6 @@ package org.janelia.jacs2.asyncservice.common.cluster;
 
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobMonitor;
-import org.janelia.cluster.lsf.LsfSyncApi;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
