@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.configutils.ConfigValueResolver;
-import scala.App;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +18,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     @Override
     public String getStringPropertyValue(String name) {
         String value = configProperties.get(name);
-        return configValueResolver.resolve(value, configProperties);
+        return configValueResolver.resolve(value, configProperties::get);
     }
 
     public String getStringPropertyValue(String name, String defaultValue) {
