@@ -153,7 +153,7 @@ public class LightsheetPipelineStepProcessorTest {
                         successful.accept(r);
                         File stepConfigFile = new File(
                                 testDirectory,
-                                testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json");
+                                testServiceData.getId() + "/" + "stepConfig_" + CONFIG_REFERENCE + "_" + stepIndex + "_" + step + ".json");
                         assertTrue(stepConfigFile.exists());
                         Mockito.verify(runContainerProcessor).createServiceData(
                                 any(ServiceExecutionContext.class),
@@ -200,7 +200,7 @@ public class LightsheetPipelineStepProcessorTest {
                         successful.accept(r);
                         File stepConfigFile = new File(
                                 testDirectory,
-                                testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json");
+                                testServiceData.getId() + "/" + "stepConfig_" + CONFIG_REFERENCE + "_" + stepIndex + "_" + step + ".json");
                         assertTrue(stepConfigFile.exists());
                         Mockito.verify(runContainerProcessor).createServiceData(
                                 any(ServiceExecutionContext.class),
@@ -248,7 +248,7 @@ public class LightsheetPipelineStepProcessorTest {
                         successful.accept(r);
                         File stepConfigFile = new File(
                                 testDirectory,
-                                testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json");
+                                testServiceData.getId() + "/" + "stepConfig_" + CONFIG_REFERENCE + "_" + stepIndex + "_" + step + ".json");
                         assertTrue(stepConfigFile.exists());
                         Mockito.verify(runContainerProcessor).createServiceData(
                                 any(ServiceExecutionContext.class),
@@ -296,7 +296,7 @@ public class LightsheetPipelineStepProcessorTest {
                         successful.accept(r);
                         File stepConfigFile = new File(
                                 testDirectory,
-                                testServiceData.getId() + "/" + "stepConfig_" + stepIndex + "_" + step + ".json");
+                                testServiceData.getId() + "/" + "stepConfig_" + CONFIG_REFERENCE + "_" + stepIndex + "_" + step + ".json");
                         assertTrue(stepConfigFile.exists());
                         @SuppressWarnings("unchecked")
                         Map<String, Integer> timepoints = (Map<String, Integer>) config.get("timepoints");

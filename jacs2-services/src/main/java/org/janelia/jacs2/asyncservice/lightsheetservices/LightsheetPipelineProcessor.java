@@ -78,7 +78,6 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
             lightsheetPipelineConfig.putAll(getJsonConfig(args.pipelineConfigURL));
         }
         List<Map<String, Object>> lightsheetStepsConfigs = getLightsheetSteps(lightsheetPipelineConfig);
-        String configOutputPath =  getConfigOutputPath(lightsheetPipelineConfig);
 
         ServiceComputation<JacsServiceResult<Void>> stage = computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
         int index = 0;
@@ -96,8 +95,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                             .build(),
                     new ServiceArg("-step", stepName),
                     new ServiceArg("-stepIndex", stepIndex),
-                    new ServiceArg("-configReference", args.pipelineConfigReference),
-                    new ServiceArg("-configOutputPath", configOutputPath)
+                    new ServiceArg("-configReference", args.pipelineConfigReference)
             ));
             index++;
         }
@@ -133,10 +131,6 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
     private List<Map<String, Object>> getLightsheetSteps(Map<String, Object> lightsheetPipelineConfig) {
         List<Map<String, Object>> lightsheetSteps = (List<Map<String, Object>>) lightsheetPipelineConfig.get("steps");
         return lightsheetSteps == null ? Collections.emptyList() : lightsheetSteps;
-    }
-
-    private String getConfigOutputPath(Map<String, Object> lightsheetPipelineConfig) {
-        return (String) lightsheetPipelineConfig.get("configOutputPath");
     }
 
     @SuppressWarnings("unchecked")

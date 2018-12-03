@@ -1,11 +1,9 @@
 package org.janelia.jacs2.asyncservice.lightsheetservices;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
-import org.janelia.jacs2.asyncservice.common.GenericAsyncServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
@@ -13,9 +11,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceProcessorTestHelper;
-import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.pipeline.PipelineServiceProcessor;
-import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.testhelpers.ListArgMatcher;
 import org.janelia.jacs2.utils.HttpUtils;
@@ -33,13 +29,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +41,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 
 @RunWith(PowerMockRunner.class)
@@ -103,12 +92,11 @@ public class LightsheetPipelineProcessorTest {
     @Test
     public void processLightsheetPipeline() {
         String pipelineConfigReference = "pipelineTestConfigID";
-        String configOutputPath = "/test/configout";
         List<String> testSteps = Arrays.asList("clusterCS", "clusterFM", "localAC");
         JacsServiceData testServiceData = createTestService(
                 null,
                 pipelineConfigReference,
-                createPipelineConfig(configOutputPath, testSteps));
+                createPipelineConfig(testSteps));
 
         Mockito.when(lightsheetPipelineStepProcessor.getResultHandler()).thenCallRealMethod();
 
@@ -126,8 +114,7 @@ public class LightsheetPipelineProcessorTest {
                             .map(indexedStep -> new ListArgMatcher<>(ImmutableList.of(
                                     new ServiceArgMatcher(new ServiceArg("-step", indexedStep.getReference())),
                                     new ServiceArgMatcher(new ServiceArg("-stepIndex", indexedStep.getPos())),
-                                    new ServiceArgMatcher(new ServiceArg("-configReference", pipelineConfigReference)),
-                                    new ServiceArgMatcher(new ServiceArg("-configOutputPath", configOutputPath))
+                                    new ServiceArgMatcher(new ServiceArg("-configReference", pipelineConfigReference))
                             )))
                             .forEach(argMatcher -> Mockito.verify(lightsheetPipelineStepProcessor).createServiceData(
                                     any(ServiceExecutionContext.class),
@@ -156,13 +143,10 @@ public class LightsheetPipelineProcessorTest {
         return testServiceData;
     }
 
-    private Map<String, Object> createPipelineConfig(String configOutputPath, List<String> steps) {
+    private Map<String, Object> createPipelineConfig(List<String> steps) {
         ImmutableMap.Builder<String, Object> pipelineConfigBuilder = ImmutableMap.<String, Object>builder();
         pipelineConfigBuilder.put("steps",
                 steps.stream().map(stepName -> createServiceConfig(stepName)).collect(Collectors.toList()));
-        if (StringUtils.isNotBlank(configOutputPath)) {
-            pipelineConfigBuilder.put("configOutputPath", configOutputPath);
-        }
         return ImmutableMap.of("pipelineConfig", pipelineConfigBuilder.build());
     }
 
