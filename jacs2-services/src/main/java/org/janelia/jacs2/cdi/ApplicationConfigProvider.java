@@ -1,6 +1,5 @@
 package org.janelia.jacs2.cdi;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.config.ApplicationConfigImpl;
@@ -13,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
