@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.lightsheetservices;
 
 import com.beust.jcommander.Parameter;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -27,17 +26,12 @@ import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.utils.HttpUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -73,8 +67,8 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         Integer numTimePoints = 0;
         @Parameter(names = "-timePointsPerJob", description = "Number of time points per job")
         Integer timePointsPerJob = 1;
-        @Parameter(names = "-configAddress", description = "Address for accessing job's config json", required = true)
-        String configAddress;
+        @Parameter(names = "-configReference", description = "Job's configuration reference")
+        String pipelineConfigReference;
         @Parameter(names = "-configOutputPath", description = "Path for outputting json configs")
         String configOutputPath = DEFAULT_CONFIG_OUTPUT_PATH;
     }
@@ -118,13 +112,13 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         try {
             LightsheetPipelineStepArgs args = getArgs(jacsServiceData);
-            Pair<String, Map<String, Object>> stepConfig = getStepConfig(jacsServiceData, args);
+            Map<String, Object> stepConfigFromServiceArgs = jacsServiceData.getActualDictionaryArgs();
+            String stepConfigFile = getSavedStepConfigFile(jacsServiceData, args, stepConfigFromServiceArgs);
             int numTimePoints = args.numTimePoints <= 0
-                    ? getNumTimePointsFromJsonConfig(stepConfig.getRight())
+                    ? getNumTimePointsFromJsonConfig(stepConfigFromServiceArgs)
                     : args.numTimePoints;
-            String stepConfigFile = stepConfig.getLeft();
             String stepConfigPath = Paths.get(stepConfigFile).getParent().toString();
-            String containerLocation = getContainerLocation(stepConfig.getRight(), args);
+            String containerLocation = getContainerLocation(stepConfigFromServiceArgs, args);
             StepJobArgs stepJobArgs = getStepJobArgs(stepConfigFile, args, numTimePoints);
             Map<String, String> stepResources = prepareResources(args, jacsServiceData.getResources());
 
@@ -132,7 +126,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
             dataMountPoints.put(stepConfigPath, stepConfigPath);
             dataMountPoints.putAll(getDataMountPointsFromAppConfig());
             dataMountPoints.putAll(getDataMountPointsFromDictionaryArgs(jacsServiceData.getActualDictionaryArgs()));
-            dataMountPoints.putAll(getDataMountPointsFromStepConfig(stepConfig.getRight()));
+            dataMountPoints.putAll(getDataMountPointsFromStepConfig(stepConfigFromServiceArgs));
 
             return pullContainerProcessor.process(
                     new ServiceExecutionContext.Builder(jacsServiceData)
@@ -246,7 +240,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         // clusterPT
         dataMountPoints.putAll(addMountPointFromStepConfig("inputFolder", stepConfig,
                 parentPath.andThen(existingPathOrParentMapping)));
-	dataMountPoints.putAll(addMountPointFromStepConfig("outputFolder", stepConfig,
+	    dataMountPoints.putAll(addMountPointFromStepConfig("outputFolder", stepConfig,
                 existingPathOrParentMapping));
         // clusterMF
         dataMountPoints.putAll(addMountPointFromStepConfig("inputString", stepConfig,
@@ -290,7 +284,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                             return ImmutablePair.of(kv, "");
                         }
                     })
-                    .collect(LinkedHashMap::new, (m, p) -> m.put(p.getLeft(), p.getRight()), (m1, m2) -> m1.putAll(m2));
+                    .collect(LinkedHashMap::new, (m, p) -> m.put(p.getLeft(), p.getRight()), Map::putAll);
         }
     }
 
@@ -308,63 +302,18 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                 .orElse(ImmutableMap.of());
     }
 
-    private String extractStepFromConfigUrl(String configUrl) {
-        String[] parts = configUrl.split("\\?stepName=");
-        return parts.length > 1 ? parts[1] : null;
-    }
-
-    private Pair<String, Map<String, Object>> getStepConfig(JacsServiceData jacsServiceData, LightsheetPipelineStepArgs args) {
-        Map<String, Object> stepConfig = getJsonConfig(args.configAddress, args.step.name());
-        stepConfig.putAll(jacsServiceData.getActualDictionaryArgs()); // overwrite arguments that were explicitly passed by the user in the dictionary args
+    private String getSavedStepConfigFile(JacsServiceData jacsServiceData, LightsheetPipelineStepArgs args, Map<String, Object> stepConfig) {
         // write the final config file
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
-        String fileName = "";
-        if ("generateMiniStacks".equals(args.step.name())) { // Use previous step name for file name
-            fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + extractStepFromConfigUrl(args.configAddress) + ".json";
-        }
-        else{
-            fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json";
-        }
+        String fileName = "stepConfig_" + String.valueOf(args.stepIndex) + "_" + args.step.name() + ".json";
         File jsonConfigFile = serviceWorkingFolder.getServiceFolder(fileName).toFile();
         writeJsonConfig(stepConfig, jsonConfigFile);
-        if (StringUtils.isNotBlank(args.configOutputPath) && !"generateMiniStacks".equals(args.step.name())) {
-            String[] addressParts = args.configAddress.split("/");
-            String lightsheetJobID = addressParts[addressParts.length -1];
-            Path configOutputPath = Paths.get(args.configOutputPath + "/" + lightsheetJobID + "/" + fileName);
+        if (StringUtils.isNotBlank(args.configOutputPath) && StringUtils.isNotBlank(args.pipelineConfigReference)) {
+            Path configOutputPath = Paths.get(args.configOutputPath + "/" + args.pipelineConfigReference + "/" + fileName);
             File configOutputPathFile = configOutputPath.toFile();
             writeJsonConfig(stepConfig, configOutputPathFile);
         }
-        return ImmutablePair.of(jsonConfigFile.getAbsolutePath(), stepConfig);
-    }
-
-    // Creates json file from http call
-    private Map<String, Object> getJsonConfig(String configAddress, String stepName) {
-        Client httpclient = HttpUtils.createHttpClient();
-        try {
-            WebTarget target;
-            if ("generateMiniStacks".equals(stepName)) {
-                // the address must already contain the desired step but I want to check that is present
-                String stepFromConfigUrl = extractStepFromConfigUrl(configAddress);
-                if (StringUtils.isBlank(stepFromConfigUrl)) {
-                    throw new IllegalArgumentException("Step name missing from the config url for generateMiniStacks");
-                }
-                target = httpclient.target(configAddress);
-            } else {
-                // If the step name is not generateMiniStack then the address to the required step is provided
-                target = httpclient.target(configAddress).queryParam("stepName", stepName);
-            }
-            Response response = target.request().get();
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new IllegalStateException(configAddress + " returned with " + response.getStatus());
-            }
-            return response.readEntity(new GenericType<>(new TypeReference<Map<String, Object>>(){}.getType()));
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            httpclient.close();
-        }
+        return jsonConfigFile.getAbsolutePath();
     }
 
     @SuppressWarnings("unchecked")
