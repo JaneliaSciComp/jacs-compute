@@ -73,6 +73,34 @@ public class TmSampleStreamingResource {
                 ;
     }
 
+    @ApiOperation(value = "Get closest tile info", notes = "Retrieve info about the closest tile")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Sample not found or no rendering"),
+            @ApiResponse(code = 500, message = "Error occurred")})
+    @GET
+    @Path("closest_tile_info/{baseFolder:.*}")
+    @Produces({MediaType.APPLICATION_JSON})
+    public Response getClosestTileInfo(@PathParam("baseFolder") String baseFolderParam,
+                                       @QueryParam("x") Integer xParam,
+                                       @QueryParam("y") Integer yParam,
+                                       @QueryParam("z") Integer zParam) {
+        if (StringUtils.isBlank(baseFolderParam)) {
+            logger.warn("No base folder has been specified: {}", baseFolderParam);
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("No base path has been specified"))
+                    .build();
+        }
+        String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
+        return renderedVolumeLoader.getClosestTileFile(Paths.get(baseFolderName), xParam, yParam, zParam)
+                .map(tileFile -> Response.ok(tileFile).build())
+                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("Error retrieving tile file info from " + baseFolderName + " with ("
+                                + xParam + "," + yParam + "," + zParam + ")"))
+                        .build())
+                ;
+    }
+
     @ApiOperation(value = "Get sample rendering info", notes = "Retrieve volume rendering info for the specified base folder")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
