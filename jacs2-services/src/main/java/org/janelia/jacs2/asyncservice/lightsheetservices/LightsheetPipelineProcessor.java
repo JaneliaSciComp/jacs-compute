@@ -2,6 +2,8 @@ package org.janelia.jacs2.asyncservice.lightsheetservices;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
@@ -117,7 +119,12 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                 logger.error("Request for json config to {} returned with {}", target, response.getStatus());
                 throw new IllegalStateException(configURL + " returned with " + response.getStatus());
             }
-            return response.readEntity(new GenericType<>(new TypeReference<Map<String, Object>>(){}.getType()));
+            List<Map<String, Object>> configs = response.readEntity(new GenericType<>(new TypeReference<List<Map<String, Object>>>(){}.getType()));
+            if (CollectionUtils.isNotEmpty(configs)) {
+                return configs.get(0);
+            } else {
+                return ImmutableMap.of();
+            }
         } catch (IllegalStateException | IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
