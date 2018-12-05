@@ -51,6 +51,7 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
         if (CollectionUtils.isNotEmpty(runArgs.batchJobArgs)) {
             scriptWriter.add("read INSTANCE_ARGS");
         }
+        scriptWriter.add("ulimit -c 0");
         scriptWriter
                 .addWithArgs(getRuntime((runArgs)))
                 .addArg(runArgs.operation.name());
