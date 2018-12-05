@@ -2,6 +2,7 @@ package org.janelia.model.access.dao.mongo;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.UpdateOptions;
@@ -120,13 +121,23 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
     }
 
     private DaoUpdateResult update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate, UpdateOptions updateOptions) {
-        return update(getUpdateMatchCriteria(entity), getUpdates(fieldsToUpdate), updateOptions);
+        try {
+            return update(getUpdateMatchCriteria(entity), getUpdates(fieldsToUpdate), updateOptions);
+        } catch (MongoException e) {
+            LOG.error("Error while updating entity {} with {}", entity, fieldsToUpdate);
+            throw e;
+        }
     }
 
     protected DaoUpdateResult update(Bson query, Bson toUpdate, UpdateOptions updateOptions) {
-        LOG.trace("Update: {} -> {}", query, toUpdate);
-        UpdateResult result = mongoCollection.updateOne(query, toUpdate, updateOptions);
-        return new DaoUpdateResult(result.getMatchedCount(), result.getModifiedCount());
+        try {
+             LOG.trace("Update: {} -> {}", query, toUpdate);
+             UpdateResult result = mongoCollection.updateOne(query, toUpdate, updateOptions);
+             return new DaoUpdateResult(result.getMatchedCount(), result.getModifiedCount());
+        } catch (MongoException e) {
+            LOG.error("Error while updating: {} -> {}", query, toUpdate);
+            throw e;
+        }
     }
 
     protected Bson getUpdates(Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
