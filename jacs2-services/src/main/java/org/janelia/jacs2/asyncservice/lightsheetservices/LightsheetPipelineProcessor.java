@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.lightsheetservices;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
@@ -31,6 +32,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Complete lightsheet pipeline processing service which invokes multiple LightsheetPipelineProcessor steps.
@@ -39,6 +41,8 @@ import java.util.Map;
  */
 @Named("lightsheetPipeline")
 public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> {
+
+    private static final Set<String> NON_EXECUTABLE_STEPS = ImmutableSet.of("globalParameters");
 
     static class LightsheetProcessingArgs extends ServiceArgs {
         @Parameter(names = "-configAddress", description = "Address for accessing job's config json.")
@@ -85,21 +89,23 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
         int index = 0;
         for (Map<String, Object> lightsheetStepConfig : lightsheetStepsConfigs) {
             String stepName = getStepName(lightsheetStepConfig);
-            final int stepIndex=index;
-            String description = String.format("Step %d - running %s", stepIndex + 1, stepName);
-            stage = stage.thenCompose(previousStageResult -> lightsheetPipelineStepProcessor.process(
-                    new ServiceExecutionContext.Builder(jacsServiceData)
-                            .description(description)
-                            .waitFor(previousStageResult.getJacsServiceData())
-                            .addDictionaryArgs(lightsheetStepConfig)
-                            .addResources(jacsServiceData.getResources())
-                            .addResources(getStepResources(lightsheetStepConfig))
-                            .build(),
-                    new ServiceArg("-step", stepName),
-                    new ServiceArg("-stepIndex", stepIndex),
-                    new ServiceArg("-configReference", args.pipelineConfigReference)
-            ));
-            index++;
+            if (!NON_EXECUTABLE_STEPS.contains(stepName)) {
+                final int stepIndex = index;
+                String description = String.format("Step %d - running %s", stepIndex + 1, stepName);
+                stage = stage.thenCompose(previousStageResult -> lightsheetPipelineStepProcessor.process(
+                        new ServiceExecutionContext.Builder(jacsServiceData)
+                                .description(description)
+                                .waitFor(previousStageResult.getJacsServiceData())
+                                .addDictionaryArgs(lightsheetStepConfig)
+                                .addResources(jacsServiceData.getResources())
+                                .addResources(getStepResources(lightsheetStepConfig))
+                                .build(),
+                        new ServiceArg("-step", stepName),
+                        new ServiceArg("-stepIndex", stepIndex),
+                        new ServiceArg("-configReference", args.pipelineConfigReference)
+                ));
+                index++;
+            }
         }
         // wait until all steps are done and then return the last result
         return stage.thenSuspendUntil((JacsServiceResult<Void> lastStepResult) -> new ContinuationCond.Cond<>(lastStepResult, areAllDependenciesDone(jacsServiceData)))
