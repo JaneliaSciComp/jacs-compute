@@ -377,14 +377,14 @@ public class LightsheetPipelineStepProcessorTest {
         Mockito.when(runContainerProcessor.getResultHandler()).thenCallRealMethod();
     }
 
-    private JacsServiceData createTestService(LightsheetPipelineStep step, int stepIndex, int timePointsPerJob, Map<String, Object> dictionaryArgs) {
+    private JacsServiceData createTestService(LightsheetPipelineStep step, int stepIndex, int timePointsPerJob, Map<String, Object> stepParameters) {
         JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
                 .setWorkspace(testDirectory.getAbsolutePath())
                 .addArgs("-step", step.name())
                 .addArgs("-stepIndex", String.valueOf(stepIndex))
                 .addArgs("-configReference", CONFIG_REFERENCE)
                 .addArgs("-timePointsPerJob", String.valueOf(timePointsPerJob))
-                .setDictionaryArgs(dictionaryArgs)
+                .setDictionaryArgs(ImmutableMap.of("parameters", stepParameters))
                 .build();
         testServiceData.setId(TEST_SERVICE_ID);
         return testServiceData;
