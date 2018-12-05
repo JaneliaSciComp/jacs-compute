@@ -58,7 +58,6 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
     @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
-        PipelineProcessingArgs args = getArgs(jacsServiceData);
         Map<String, Object> serviceArgs = jacsServiceData.getActualDictionaryArgs();
         Map<String, Object> pipelineConfig = serviceArgs.containsKey("pipelineConfig")
                 ? (Map<String, Object>) serviceArgs.get("pipelineConfig")
@@ -80,7 +79,7 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
                         .map(s -> true).orElse(false);
             }
         };
-        ServiceComputation<JacsServiceResult<Void>> stage = computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
+        ServiceComputation<JacsServiceResult<Void>> stage = computationFactory.newCompletedComputation(new JacsServiceResult<>(null));
         int index = 1;
         for (Map<String, Object> serviceConfig : servicesConfigs) {
             String stepServiceName = getServiceName(serviceConfig);

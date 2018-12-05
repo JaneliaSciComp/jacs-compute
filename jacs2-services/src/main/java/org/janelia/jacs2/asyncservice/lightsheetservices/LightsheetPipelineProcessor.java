@@ -81,7 +81,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
         }
         List<Map<String, Object>> lightsheetStepsConfigs = getLightsheetSteps(lightsheetPipelineConfig);
 
-        ServiceComputation<JacsServiceResult<Void>> stage = computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
+        ServiceComputation<JacsServiceResult<Void>> stage = computationFactory.newCompletedComputation(new JacsServiceResult<>(null));
         int index = 0;
         for (Map<String, Object> lightsheetStepConfig : lightsheetStepsConfigs) {
             String stepName = getStepName(lightsheetStepConfig);
