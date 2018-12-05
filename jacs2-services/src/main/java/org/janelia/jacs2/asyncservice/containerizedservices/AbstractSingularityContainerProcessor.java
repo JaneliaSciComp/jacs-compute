@@ -40,11 +40,11 @@ abstract class AbstractSingularityContainerProcessor<R> extends AbstractExeBased
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
         AbstractSingularityContainerArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
-        createScript(args, externalScriptCode.getCodeWriter());
+        createScript(jacsServiceData, args, externalScriptCode.getCodeWriter());
         return externalScriptCode;
     }
 
-    abstract void createScript(AbstractSingularityContainerArgs args, ScriptWriter scriptWriter);
+    abstract void createScript(JacsServiceData jacsServiceData, AbstractSingularityContainerArgs args, ScriptWriter scriptWriter);
 
     @Override
     protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {

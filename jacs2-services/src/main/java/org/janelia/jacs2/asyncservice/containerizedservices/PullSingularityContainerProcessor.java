@@ -128,7 +128,7 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
     }
 
     @Override
-    void createScript(AbstractSingularityContainerArgs args, ScriptWriter scriptWriter) {
+    void createScript(JacsServiceData jacsServiceData, AbstractSingularityContainerArgs args, ScriptWriter scriptWriter) {
         scriptWriter
                 .addWithArgs(getRuntime((args)))
                 .addArg("pull")
