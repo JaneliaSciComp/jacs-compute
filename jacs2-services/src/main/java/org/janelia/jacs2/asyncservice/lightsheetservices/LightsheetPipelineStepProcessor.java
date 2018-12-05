@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,13 +109,13 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         try {
             LightsheetPipelineStepArgs args = getArgs(jacsServiceData);
-            Map<String, Object> stepConfigFromServiceArgs = jacsServiceData.getActualDictionaryArgs();
-            String stepConfigFile = getSavedStepConfigFile(jacsServiceData, args, stepConfigFromServiceArgs);
+            Map<String, Object> stepParameters = getStepParameters(jacsServiceData.getActualDictionaryArgs());
+            String stepConfigFile = getSavedStepConfigFile(jacsServiceData, args, stepParameters);
             int numTimePoints = args.numTimePoints <= 0
-                    ? getNumTimePointsFromJsonConfig(stepConfigFromServiceArgs)
+                    ? getNumTimePointsFromJsonConfig(stepParameters)
                     : args.numTimePoints;
             String stepConfigPath = Paths.get(stepConfigFile).getParent().toString();
-            String containerLocation = getContainerLocation(stepConfigFromServiceArgs, args);
+            String containerLocation = getContainerLocation(stepParameters, args);
             StepJobArgs stepJobArgs = getStepJobArgs(stepConfigFile, args, numTimePoints);
             Map<String, String> stepResources = prepareResources(args, jacsServiceData.getResources());
 
@@ -122,7 +123,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
             dataMountPoints.put(stepConfigPath, stepConfigPath);
             dataMountPoints.putAll(getDataMountPointsFromAppConfig());
             dataMountPoints.putAll(getDataMountPointsFromDictionaryArgs(jacsServiceData.getActualDictionaryArgs()));
-            dataMountPoints.putAll(getDataMountPointsFromStepConfig(stepConfigFromServiceArgs));
+            dataMountPoints.putAll(getDataMountPointsFromStepConfig(stepParameters));
 
             return pullContainerProcessor.process(
                     new ServiceExecutionContext.Builder(jacsServiceData)
@@ -306,6 +307,11 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         File jsonConfigFile = serviceWorkingFolder.getServiceFolder(fileName).toFile();
         writeJsonConfig(stepConfig, jsonConfigFile);
         return jsonConfigFile.getAbsolutePath();
+    }
+
+    private Map<String, Object> getStepParameters(Map<String, Object> stepServiceArgs) {
+        Map<String, Object> parameters = (Map<String, Object>) stepServiceArgs.get("parameters");
+        return parameters == null ? Collections.emptyMap() : parameters;
     }
 
     @SuppressWarnings("unchecked")
