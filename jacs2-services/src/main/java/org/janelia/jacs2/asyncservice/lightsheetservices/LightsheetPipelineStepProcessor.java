@@ -309,6 +309,7 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
         return jsonConfigFile.getAbsolutePath();
     }
 
+    @SuppressWarnings("unchecked")
     private Map<String, Object> getStepParameters(Map<String, Object> stepServiceArgs) {
         Map<String, Object> parameters = (Map<String, Object>) stepServiceArgs.get("parameters");
         return parameters == null ? Collections.emptyMap() : parameters;

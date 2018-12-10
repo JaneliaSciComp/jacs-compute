@@ -13,6 +13,7 @@ import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.ProcessingLocation;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -20,7 +21,9 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Collections;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,11 +49,12 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
     }
 
     @Override
-    void createScript(AbstractSingularityContainerArgs args, ScriptWriter scriptWriter) {
+    void createScript(JacsServiceData jacsServiceData, AbstractSingularityContainerArgs args, ScriptWriter scriptWriter) {
         RunSingularityContainerArgs runArgs = (RunSingularityContainerArgs) args;
         if (CollectionUtils.isNotEmpty(runArgs.batchJobArgs)) {
             scriptWriter.add("read INSTANCE_ARGS");
         }
+        scriptWriter.add("ulimit -c 0");
         scriptWriter
                 .addWithArgs(getRuntime((runArgs)))
                 .addArg(runArgs.operation.name());
@@ -60,6 +64,10 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
         String bindPaths = runArgs.bindPathsAsString();
         if (StringUtils.isNotBlank(bindPaths)) {
             scriptWriter.addArgs("--bind", bindPaths);
+        }
+        String scratchDir = serviceScratchDir(jacsServiceData);
+        if (StringUtils.isNotBlank(scratchDir)) {
+            scriptWriter.addArgs("--bind", scratchDir);
         }
         if (StringUtils.isNotBlank(runArgs.overlay)) {
             scriptWriter.addArgs("--overlay", runArgs.overlay);
@@ -83,6 +91,16 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
             remainingArgs.stream().filter(StringUtils::isNotBlank).forEach(scriptWriter::addArg);
         }
         scriptWriter.endArgs();
+    }
+
+    private String serviceScratchDir(JacsServiceData jacsServiceData) {
+        String scratchDir = getApplicationConfig().getStringPropertyValue("service.DefaultScratchDir", "/scratch");
+        if (EnumSet.of(ProcessingLocation.LSF_DRMAA, ProcessingLocation.LSF_JAVA).contains(jacsServiceData.getProcessingLocation())
+                || Files.exists(Paths.get(scratchDir))) {
+            return scratchDir;
+        } else {
+            return null;
+        }
     }
 
     @Override
