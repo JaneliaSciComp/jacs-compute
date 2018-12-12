@@ -58,8 +58,13 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
         JacsServiceFolder serviceWorkingFolder = prepareSparkJobDirs(jacsServiceData);
 
         DataHolder<SparkCluster> runningClusterState = new DataHolder<>();
+        int requestedSparkNodes = getRequestedNodes(jacsServiceData.getResources());
+        jacsServiceDataPersistence.addServiceEvent(
+                jacsServiceData,
+                JacsServiceData.createServiceEvent(JacsServiceEventTypes.START_PROCESS,
+                        String.format("Starting a spark cluster with %d nodes", requestedSparkNodes)));
         return sparkClusterLauncher.startCluster(
-                getRequestedNodes(jacsServiceData.getResources()),
+                requestedSparkNodes,
                 serviceWorkingFolder.getServiceFolder(),
                 accounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),

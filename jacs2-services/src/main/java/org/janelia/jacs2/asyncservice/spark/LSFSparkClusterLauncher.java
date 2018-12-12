@@ -221,6 +221,16 @@ public class LSFSparkClusterLauncher {
                             logger
                     );
                 })
+                .exceptionally(exc -> {
+                    try {
+                        // this may happen if starting the cluster timed out
+                        logger.error("Killing job cluster {} because of an exception", clusterJobId, exc);
+                        jobMgr.killJob(clusterJobId);
+                    } catch (Exception ignore) {
+                        logger.warn("Exception trying to kill {}", clusterJobId, ignore);
+                    }
+                    throw new IllegalStateException(exc);
+                })
                 ;
     }
 
