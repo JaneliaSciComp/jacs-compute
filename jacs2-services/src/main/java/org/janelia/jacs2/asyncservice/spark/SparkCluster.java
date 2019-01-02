@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.spark;
 
 import com.google.common.base.Stopwatch;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.spark.launcher.SparkAppHandle;
 import org.apache.spark.launcher.SparkLauncher;
 import org.janelia.cluster.JobManager;
@@ -13,8 +14,11 @@ import org.slf4j.Logger;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 /**
  * Manages a single Spark cluster with N nodes. Takes care of starting and stopping the master/worker nodes,
@@ -30,7 +34,9 @@ public class SparkCluster {
     private final ServiceComputationFactory computationFactory;
     private final JobManager jobMgr;
     private final Logger logger;
-    private final Long jobId;
+    private final Long masterJobId;
+    private final Collection<Long> workerJobIds;
+    private final int minRequiredWorkers;
     private final String masterURI;
     private final String sparkHomeDir;
     private final String hadoopHomeDir;
@@ -44,7 +50,9 @@ public class SparkCluster {
 
     SparkCluster(ServiceComputationFactory computationFactory,
                  JobManager jobMgr,
-                 Long jobId,
+                 Long masterJobId,
+                 Collection<Long> workerJobIds,
+                 int minRequiredWorkers,
                  String masterURI,
                  String sparkHomeDir,
                  String hadoopHomeDir,
@@ -54,8 +62,10 @@ public class SparkCluster {
                  int defaultParallelism,
                  String sparkLogConfigFile,
                  Logger logger) {
-        this.jobId = jobId;
+        this.masterJobId = masterJobId;
+        this.workerJobIds = workerJobIds;
         this.masterURI = masterURI;
+        this.minRequiredWorkers = minRequiredWorkers;
         this.sparkHomeDir = sparkHomeDir;
         this.hadoopHomeDir = hadoopHomeDir;
         this.sparkDriverMemory = sparkDriverMemory;
@@ -68,12 +78,36 @@ public class SparkCluster {
         this.logger = logger;
     }
 
-    public Long getJobId() {
-        return jobId;
+    public Long getMasterJobId() {
+        return masterJobId;
+    }
+
+    Collection<Long> getWorkerJobIds() {
+        return workerJobIds;
     }
 
     public String getMasterURI() {
         return masterURI;
+    }
+
+    int getMinRequiredWorkers() {
+        return minRequiredWorkers;
+    }
+
+    String getSparkDriverMemory() {
+        return sparkDriverMemory;
+    }
+
+    String getSparkExecutorMemory() {
+        return sparkExecutorMemory;
+    }
+
+    int getDefaultParallelism() {
+        return defaultParallelism;
+    }
+
+    String getSparkLogConfigFile() {
+        return sparkLogConfigFile;
     }
 
     /**
@@ -129,7 +163,7 @@ public class SparkCluster {
                         "sparkExecutorCores: {}, " +
                         "parallelism: {}, " +
                         "appArgs: {}",
-                appResource, masterURI, jobId,
+                appResource, masterURI, masterJobId,
                 appOutputDir,
                 appErrorDir,
                 sparkExecutorMemory,
@@ -211,7 +245,7 @@ public class SparkCluster {
                             appIntervalCheck,
                             appTimeout);
         } catch (Exception e) {
-            logger.error("Error running application {} using {}", appResource, jobId, e);
+            logger.error("Error running application {} using {}", appResource, masterJobId, e);
             return computationFactory.newFailedComputation(e);
         }
     }
@@ -224,17 +258,31 @@ public class SparkCluster {
      * Stop the cluster by killing the job. This must always be called before this job is completed.
      */
     public void stopCluster() {
-        logger.info("Stopping Spark cluster {}", jobId);
+        logger.info("Stopping Spark cluster {}", masterJobId);
         try {
             SparkApp sparkApp = updateCurrentApp(null);
             if (sparkApp != null && !sparkApp.isDone()) {
-                logger.warn("Force killing Spark application {} running on cluster {}", sparkApp.getAppId(), jobId);
+                logger.warn("Force killing Spark application {} running on cluster {}", sparkApp.getAppId(), masterJobId);
                 sparkApp.kill();
             }
-            jobMgr.killJob(jobId);
         } catch (Exception e) {
-            logger.error("Error stopping Spark cluster {}", jobId, e);
+            logger.error("Error stopping Spark cluster {}", masterJobId, e);
         }
+        Stream.concat(workerJobIds.stream(), Stream.of(masterJobId))
+                .forEach(jobId -> {
+                    try {
+                        jobMgr.killJob(jobId);
+                    } catch (Exception e) {
+                        logger.error("Error stopping spark job {} part of {} cluster", jobId, masterJobId, e);
+                    }
+                });
     }
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("masterJobId", masterJobId)
+                .append("workerJobIds", workerJobIds)
+                .toString();
+    }
 }

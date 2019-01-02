@@ -32,7 +32,7 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
     SparkClusterStopProcessor(ServiceComputationFactory computationFactory,
                               JacsServiceDataPersistence jacsServiceDataPersistence,
                               @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                              LSFSparkClusterLauncher clusterLauncher,
+                              BatchLSFSparkClusterLauncher clusterLauncher,
                               @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 2) Integer defaultNumNodes,
                               Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, logger);
@@ -58,7 +58,7 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
                             JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
                                     String.format("Stop spark cluster on %s (%s)",
                                             sparkCluster.getMasterURI(),
-                                            sparkCluster.getJobId())));
+                                            sparkCluster.getMasterJobId())));
 
                     sparkCluster.stopCluster();
                     return new JacsServiceResult<>(jacsServiceData);

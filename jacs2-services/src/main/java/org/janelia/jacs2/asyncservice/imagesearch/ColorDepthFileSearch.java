@@ -10,7 +10,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
 import org.janelia.jacs2.asyncservice.spark.AbstractSparkProcessor;
-import org.janelia.jacs2.asyncservice.spark.LSFSparkClusterLauncher;
+import org.janelia.jacs2.asyncservice.spark.BatchLSFSparkClusterLauncher;
 import org.janelia.jacs2.asyncservice.spark.SparkApp;
 import org.janelia.jacs2.asyncservice.spark.SparkCluster;
 import org.janelia.jacs2.asyncservice.utils.DataHolder;
@@ -80,7 +80,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
     ColorDepthFileSearch(ServiceComputationFactory computationFactory,
                          JacsServiceDataPersistence jacsServiceDataPersistence,
                          @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                         LSFSparkClusterLauncher clusterLauncher,
+                         BatchLSFSparkClusterLauncher clusterLauncher,
                          ComputeAccounting clusterAccounting,
                          @IntPropertyValue(name = "service.colorDepthSearch.searchTimeoutInSeconds", defaultValue = 1200) int searchTimeoutInSeconds,
                          @IntPropertyValue(name = "service.colorDepthSearch.searchIntervalCheckInMillis", defaultValue = 5000) int searchIntervalCheckInMillis,
@@ -132,7 +132,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
                             JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
                                     String.format("Running app using spark job on %s (%s)",
                                             cluster.getMasterURI(),
-                                            cluster.getJobId())));
+                                            cluster.getMasterJobId())));
                     return runApp(jacsServiceData, args, cluster); // the computation completes when the app completes
                 })
 
@@ -146,7 +146,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
                                 JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
                                         String.format("Stop spark cluster on %s (%s)",
                                                 runningClusterState.getData().getMasterURI(),
-                                                runningClusterState.getData().getJobId())));
+                                                runningClusterState.getData().getMasterJobId())));
                         runningClusterState.getData().stopCluster();
                     }
                 })

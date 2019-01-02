@@ -2,7 +2,6 @@ package org.janelia.jacs2.asyncservice.spark;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
-import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -26,7 +25,7 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
     SparkAppRunProcessor(ServiceComputationFactory computationFactory,
                          JacsServiceDataPersistence jacsServiceDataPersistence,
                          @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                         LSFSparkClusterLauncher clusterLauncher,
+                         BatchLSFSparkClusterLauncher clusterLauncher,
                          @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 2) Integer defaultNumNodes,
                          Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, logger);
@@ -56,7 +55,7 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
                                             args.appLocation,
                                             args.appEntryPoint,
                                             sparkCluster.getMasterURI(),
-                                            sparkCluster.getJobId())));
+                                            sparkCluster.getMasterJobId())));
                     // the computation completes when the app completes
                     return sparkCluster.runApp(
                             args.appLocation,

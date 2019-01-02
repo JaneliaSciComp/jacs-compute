@@ -33,7 +33,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
     SparkAppProcessor(ServiceComputationFactory computationFactory,
                       JacsServiceDataPersistence jacsServiceDataPersistence,
                       @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                      LSFSparkClusterLauncher clusterLauncher,
+                      BatchLSFSparkClusterLauncher clusterLauncher,
                       ComputeAccounting accounting,
                       @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 2) Integer defaultNumNodes,
                       Logger logger) {
@@ -79,7 +79,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                             args.appLocation,
                                             args.appEntryPoint,
                                             sparkCluster.getMasterURI(),
-                                            sparkCluster.getJobId())));
+                                            sparkCluster.getMasterJobId())));
                     // the computation completes when the app completes
                     return sparkCluster.runApp(
                             args.appLocation,
@@ -99,7 +99,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                 JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
                                         String.format("Stop spark cluster on %s (%s)",
                                                 runningClusterState.getData().getMasterURI(),
-                                                runningClusterState.getData().getJobId())));
+                                                runningClusterState.getData().getMasterJobId())));
                         runningClusterState.getData().stopCluster();
                     }
                 }))

@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobFuture;
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class LSFSparkClusterLauncher {
+public class BatchLSFSparkClusterLauncher {
 
     private final static String DEFAULT_SPARK_URI_SCHEME = "spark";
     private final static int DEFAULT_SPARK_MASTER_PORT = 7077;
@@ -63,29 +64,28 @@ public class LSFSparkClusterLauncher {
     private final long clusterStartTimeoutInMillis;
     private final long clusterIntervalCheckInMillis;
     private final String hadoopHomeDir;
-    private final String lsfJobNamePrefix;
+    private final String lsfApplication;
     private final String lsfRemoteCommand;
 
     @Inject
-    public LSFSparkClusterLauncher(ServiceComputationFactory computationFactory,
-                                   MonitoredJobManager monitoredJobManager,
-                                   @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
-                                   @IntPropertyValue(name = "service.spark.nodeSlots", defaultValue = 32) int nodeSlots,
-                                   @IntPropertyValue(name = "service.spark.workerCores", defaultValue = 30) int sparkWorkerCores,
-                                   @StrPropertyValue(name = "service.spark.sparkVersion", defaultValue = "2.3.1") String sparkVersion,
-                                   @StrPropertyValue(name = "service.spark.sparkHomeDir", defaultValue = "/misc/local/spark-2.3.1") String sparkHomeDir,
-                                   @StrPropertyValue(name = "service.spark.driver.memory", defaultValue = "1g") String defaultSparkDriverMemory,
-                                   @StrPropertyValue(name = "service.spark.executor.memory", defaultValue = "75g") String defaultSparkExecutorMemory,
-                                   @IntPropertyValue(name = "service.spark.executor.cores", defaultValue = 5) int defaultCoresPerSparkExecutor,
-                                   @IntPropertyValue(name = "service.spark.cluster.hard.duration.mins", defaultValue = 30) int sparkClusterHardDurationMins,
-                                   @StrPropertyValue(name = "service.spark.log4jconfig.filepath", defaultValue = "") String defaultSparkLogConfigFile,
-                                   @IntPropertyValue(name = "service.spark.cluster.startTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
-                                   @IntPropertyValue(name = "service.spark.cluster.intervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
-                                   @StrPropertyValue(name = "hadoop.homeDir") String hadoopHomeDir,
-                                   @StrPropertyValue(name = "service.spark.lsf.application", defaultValue="sparkbatch(2.3.1)") String lsfApplication,
-                                   @StrPropertyValue(name = "service.spark.lsf.remoteCommand", defaultValue="commandstring") String lsfRemoteCommand,
-
-                                   Logger logger) {
+    public BatchLSFSparkClusterLauncher(ServiceComputationFactory computationFactory,
+                                        MonitoredJobManager monitoredJobManager,
+                                        @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
+                                        @IntPropertyValue(name = "service.spark.nodeSlots", defaultValue = 32) int nodeSlots,
+                                        @IntPropertyValue(name = "service.spark.workerCores", defaultValue = 30) int sparkWorkerCores,
+                                        @StrPropertyValue(name = "service.spark.sparkVersion", defaultValue = "2.3.1") String sparkVersion,
+                                        @StrPropertyValue(name = "service.spark.sparkHomeDir", defaultValue = "/misc/local/spark-2.3.1") String sparkHomeDir,
+                                        @StrPropertyValue(name = "service.spark.driver.memory", defaultValue = "1g") String defaultSparkDriverMemory,
+                                        @StrPropertyValue(name = "service.spark.executor.memory", defaultValue = "75g") String defaultSparkExecutorMemory,
+                                        @IntPropertyValue(name = "service.spark.executor.cores", defaultValue = 5) int defaultCoresPerSparkExecutor,
+                                        @IntPropertyValue(name = "service.spark.cluster.hard.duration.mins", defaultValue = 30) int sparkClusterHardDurationMins,
+                                        @StrPropertyValue(name = "service.spark.log4jconfig.filepath", defaultValue = "") String defaultSparkLogConfigFile,
+                                        @IntPropertyValue(name = "service.spark.cluster.startTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
+                                        @IntPropertyValue(name = "service.spark.cluster.intervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
+                                        @StrPropertyValue(name = "hadoop.homeDir") String hadoopHomeDir,
+                                        @StrPropertyValue(name = "service.spark.lsf.batchApplication", defaultValue="sparkbatch32") String lsfApplication,
+                                        @StrPropertyValue(name = "service.spark.lsf.remoteCommand", defaultValue="commandstring") String lsfRemoteCommand,
+                                        Logger logger) {
         this.computationFactory = computationFactory;
         this.jobMgr = monitoredJobManager.getJobMgr();
         this.requiresAccountInfo = requiresAccountInfo;
@@ -100,7 +100,7 @@ public class LSFSparkClusterLauncher {
         this.clusterStartTimeoutInMillis = clusterStartTimeoutInSeconds * 1000;
         this.clusterIntervalCheckInMillis = clusterIntervalCheckInMillis;
         this.hadoopHomeDir = hadoopHomeDir;
-        this.lsfJobNamePrefix = lsfApplication;
+        this.lsfApplication = lsfApplication;
         this.lsfRemoteCommand = lsfRemoteCommand;
         this.logger = logger;
     }
@@ -210,6 +210,8 @@ public class LSFSparkClusterLauncher {
                             computationFactory,
                             jobMgr,
                             clusterJobId,
+                            ImmutableSet.of(clusterJobId),
+                            1,
                             masterURI,
                             sparkHomeDir,
                             hadoopHomeDir,
@@ -236,7 +238,7 @@ public class LSFSparkClusterLauncher {
 
     private List<String> createNativeSpec(String billingAccount, int slots) {
         List<String> spec = new ArrayList<>();
-        spec.add("-a "+lsfJobNamePrefix);
+        spec.add("-a " + String.format("%s(%s)", lsfApplication, sparkVersion));
         spec.add("-n "+slots);
         spec.add("-W  "+ sparkClusterHardDurationMins);
 

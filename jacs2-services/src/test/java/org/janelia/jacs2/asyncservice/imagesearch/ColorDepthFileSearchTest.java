@@ -7,7 +7,7 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
-import org.janelia.jacs2.asyncservice.spark.LSFSparkClusterLauncher;
+import org.janelia.jacs2.asyncservice.spark.BatchLSFSparkClusterLauncher;
 import org.janelia.jacs2.asyncservice.spark.SparkApp;
 import org.janelia.jacs2.asyncservice.spark.SparkCluster;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -53,7 +53,7 @@ public class ColorDepthFileSearchTest {
 
     ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
-    private LSFSparkClusterLauncher clusterLauncher;
+    private BatchLSFSparkClusterLauncher clusterLauncher;
     private ComputeAccounting clusterAccounting;
     private SparkCluster sparkCluster;
     private SparkApp sparkApp;
@@ -67,7 +67,7 @@ public class ColorDepthFileSearchTest {
         Logger logger = mock(Logger.class);
         serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
-        clusterLauncher = mock(LSFSparkClusterLauncher.class);
+        clusterLauncher = mock(BatchLSFSparkClusterLauncher.class);
         clusterAccounting = mock(ComputeAccounting.class);
         sparkCluster = mock(SparkCluster.class);
         sparkApp = mock(SparkApp.class);

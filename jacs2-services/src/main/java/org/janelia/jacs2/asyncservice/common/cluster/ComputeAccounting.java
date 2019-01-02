@@ -48,7 +48,7 @@ public class ComputeAccounting {
         this.log = logger;
         this.dao = dao;
     }
-    
+
     /**
      * A cache which keeps track of group information so we don't need to make system calls 
      * and database lookups for every grid submission. 

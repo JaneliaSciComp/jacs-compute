@@ -15,14 +15,14 @@ import java.util.Map;
 
 abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor<R> {
 
-    protected final LSFSparkClusterLauncher sparkClusterLauncher;
+    protected final BatchLSFSparkClusterLauncher sparkClusterLauncher;
     protected final int defaultNumNodes;
 
     @Inject
     protected AbstractSparkProcessor(ServiceComputationFactory computationFactory,
                                      JacsServiceDataPersistence jacsServiceDataPersistence,
                                      @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                     LSFSparkClusterLauncher sparkClusterLauncher,
+                                     BatchLSFSparkClusterLauncher sparkClusterLauncher,
                                      @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 1) Integer defaultNumNodes,
                                      Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);

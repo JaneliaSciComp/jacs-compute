@@ -58,7 +58,7 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
     SparkClusterStartProcessor(ServiceComputationFactory computationFactory,
                                JacsServiceDataPersistence jacsServiceDataPersistence,
                                @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                               LSFSparkClusterLauncher clusterLauncher,
+                               BatchLSFSparkClusterLauncher clusterLauncher,
                                ComputeAccounting accounting,
                                @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 2) Integer defaultNumNodes,
                                Logger logger) {
@@ -105,10 +105,10 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                                     JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
                                             String.format("Started spark cluster %s (%s)",
                                                     sparkCluster.getMasterURI(),
-                                                    sparkCluster.getJobId())));
+                                                    sparkCluster.getMasterJobId())));
                             return updateServiceResult(
                                     jacsServiceData,
-                                    new SparkJobInfo(sparkCluster.getJobId(), sparkCluster.getMasterURI())
+                                    new SparkJobInfo(sparkCluster.getMasterJobId(), sparkCluster.getMasterURI())
                             );
                 })
                 ;
