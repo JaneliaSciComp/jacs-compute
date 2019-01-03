@@ -35,7 +35,7 @@ public class SparkCluster {
     private final JobManager jobMgr;
     private final Logger logger;
     private final Long masterJobId;
-    private final Collection<Long> workerJobIds;
+    private final List<Long> workerJobIds;
     private final int minRequiredWorkers;
     private final String masterURI;
     private final String sparkHomeDir;
@@ -51,7 +51,7 @@ public class SparkCluster {
     SparkCluster(ServiceComputationFactory computationFactory,
                  JobManager jobMgr,
                  Long masterJobId,
-                 Collection<Long> workerJobIds,
+                 List<Long> workerJobIds,
                  int minRequiredWorkers,
                  String masterURI,
                  String sparkHomeDir,
@@ -82,7 +82,7 @@ public class SparkCluster {
         return masterJobId;
     }
 
-    Collection<Long> getWorkerJobIds() {
+    List<Long> getWorkerJobIds() {
         return workerJobIds;
     }
 

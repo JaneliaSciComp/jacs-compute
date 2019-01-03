@@ -43,10 +43,11 @@ public class SparkAppProcessorTest {
     private static final int SEARCH_TIMEOUT_IN_SECONDS = 1200;
     private static final int SEARCH_INTERVAL_CHECK_IN_MILLIS = 5000;
     private static final int DEFAULT_NUM_NODES = 6;
+    private static final int DEFAULT_MIN_REQUIRED_WORKERS = 2;
 
     ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
-    private BatchLSFSparkClusterLauncher clusterLauncher;
+    private LSFSparkClusterLauncher clusterLauncher;
     private ComputeAccounting clusterAccounting;
     private SparkCluster sparkCluster;
     private SparkApp sparkApp;
@@ -59,7 +60,7 @@ public class SparkAppProcessorTest {
         Logger logger = mock(Logger.class);
         serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
-        clusterLauncher = mock(BatchLSFSparkClusterLauncher.class);
+        clusterLauncher = mock(LSFSparkClusterLauncher.class);
         clusterAccounting = mock(ComputeAccounting.class);
         sparkCluster = mock(SparkCluster.class);
         sparkApp = mock(SparkApp.class);
@@ -71,6 +72,7 @@ public class SparkAppProcessorTest {
                 clusterLauncher,
                 clusterAccounting,
                 DEFAULT_NUM_NODES,
+                DEFAULT_MIN_REQUIRED_WORKERS,
                 logger);
     }
 
@@ -80,6 +82,7 @@ public class SparkAppProcessorTest {
         String testAppResource = "testApp";
         List<String> testAppArgs = ImmutableList.of("a1", "a2", "a3");
         int testNumNodes = 12;
+        int testMinRequiredWorkers = 4;
         String testDriverMemory = "driverMem";
         String testExecutorMemory = "executorMem";
         Long appIntervalCheckInMillis = null;
@@ -90,6 +93,7 @@ public class SparkAppProcessorTest {
                 testAppArgs,
                 "test",
                 testNumNodes,
+                testMinRequiredWorkers,
                 testDriverMemory,
                 testExecutorMemory);
         JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
@@ -100,6 +104,7 @@ public class SparkAppProcessorTest {
 
         Mockito.when(clusterLauncher.startCluster(
                 testNumNodes,
+                testMinRequiredWorkers,
                 serviceWorkingFolder.getServiceFolder(),
                 clusterBillingInfo,
                 testDriverMemory,
@@ -150,6 +155,7 @@ public class SparkAppProcessorTest {
                                                   List<String> appArgs,
                                                   String owner,
                                                   int numNodes,
+                                                  int minRequiredWorkers,
                                                   String driverMemory,
                                                   String executorMemory) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
@@ -158,6 +164,7 @@ public class SparkAppProcessorTest {
                 .addArgs("-appLocation", testApp)
                 .addArgs("-appArgs").addArgs(appArgs.stream().reduce((a1, a2) -> a1 + "," + a2).orElse(""))
                 .addResource("sparkNumNodes", String.valueOf(numNodes))
+                .addResource("minSparkWorkers", String.valueOf(minRequiredWorkers))
                 .addResource("sparkDriverMemory", driverMemory)
                 .addResource("sparkExecutorMemory", executorMemory)
                 ;

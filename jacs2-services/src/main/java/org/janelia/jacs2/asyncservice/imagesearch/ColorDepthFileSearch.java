@@ -10,7 +10,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
 import org.janelia.jacs2.asyncservice.spark.AbstractSparkProcessor;
-import org.janelia.jacs2.asyncservice.spark.BatchLSFSparkClusterLauncher;
+import org.janelia.jacs2.asyncservice.spark.LSFSparkClusterLauncher;
 import org.janelia.jacs2.asyncservice.spark.SparkApp;
 import org.janelia.jacs2.asyncservice.spark.SparkCluster;
 import org.janelia.jacs2.asyncservice.utils.DataHolder;
@@ -72,6 +72,8 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
         Double pctPositivePixels;
         @Parameter(names = {"-numNodes"}, description = "Number of worker nodes")
         Integer numNodes;
+        @Parameter(names = {"-minWorkerNodes"}, description = "Minimum number of required worker nodes")
+        Integer minWorkerNodes;
         @Parameter(names = {"-parallelism"}, description = "Parallelism")
         Integer parallelism;
     }
@@ -80,14 +82,15 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
     ColorDepthFileSearch(ServiceComputationFactory computationFactory,
                          JacsServiceDataPersistence jacsServiceDataPersistence,
                          @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                         BatchLSFSparkClusterLauncher clusterLauncher,
+                         LSFSparkClusterLauncher clusterLauncher,
                          ComputeAccounting clusterAccounting,
                          @IntPropertyValue(name = "service.colorDepthSearch.searchTimeoutInSeconds", defaultValue = 1200) int searchTimeoutInSeconds,
                          @IntPropertyValue(name = "service.colorDepthSearch.searchIntervalCheckInMillis", defaultValue = 5000) int searchIntervalCheckInMillis,
                          @IntPropertyValue(name = "service.colorDepthSearch.numNodes", defaultValue = 6) Integer defaultNumNodes,
+                         @IntPropertyValue(name = "service.colorDepthSearch.minRequiredWorkers", defaultValue = 1) Integer defaultMinRequiredWorkers,
                          @StrPropertyValue(name = "service.colorDepthSearch.jarPath") String jarPath,
                          Logger log) {
-        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, log);
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, defaultMinRequiredWorkers, log);
         this.clusterAccounting = clusterAccounting;
         this.searchTimeoutInMillis = searchTimeoutInSeconds * 1000;
         this.searchIntervalCheckInMillis = searchIntervalCheckInMillis;
@@ -171,10 +174,27 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
         if (args.numNodes != null) {
             numNodes = args.numNodes;
         } else {
-            numNodes = this.defaultNumNodes;
+            numNodes = defaultNumNodes;
+        }
+        int minRequiredWorkers;
+        if (args.minWorkerNodes != null) {
+            if (args.minWorkerNodes >= 0 && args.minWorkerNodes <= numNodes) {
+                minRequiredWorkers = args.minWorkerNodes;
+            } else if (args.minWorkerNodes < 0) {
+                minRequiredWorkers = 0;
+            } else {
+                minRequiredWorkers = numNodes;
+            }
+        } else {
+            if (defaultMinRequiredWorkers <= numNodes) {
+                minRequiredWorkers = defaultMinRequiredWorkers;
+            } else {
+                minRequiredWorkers = numNodes;
+            }
         }
         return sparkClusterLauncher.startCluster(
                 numNodes,
+                minRequiredWorkers,
                 serviceWorkingFolder.getServiceFolder(),
                 clusterAccounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),

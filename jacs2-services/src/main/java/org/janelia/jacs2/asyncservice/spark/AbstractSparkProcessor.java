@@ -15,25 +15,33 @@ import java.util.Map;
 
 abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor<R> {
 
-    protected final BatchLSFSparkClusterLauncher sparkClusterLauncher;
+    protected final LSFSparkClusterLauncher sparkClusterLauncher;
     protected final int defaultNumNodes;
+    protected final int defaultMinRequiredWorkers;
 
-    @Inject
     protected AbstractSparkProcessor(ServiceComputationFactory computationFactory,
                                      JacsServiceDataPersistence jacsServiceDataPersistence,
-                                     @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                     BatchLSFSparkClusterLauncher sparkClusterLauncher,
-                                     @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 1) Integer defaultNumNodes,
+                                     String defaultWorkingDir,
+                                     LSFSparkClusterLauncher sparkClusterLauncher,
+                                     Integer defaultNumNodes,
+                                     Integer defaultMinRequiredWorkers,
                                      Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sparkClusterLauncher = sparkClusterLauncher;
-        this.defaultNumNodes = defaultNumNodes <= 0 ? 1 : defaultNumNodes;
+        this.defaultNumNodes = defaultNumNodes == null || defaultNumNodes <= 0 ? 1 : defaultNumNodes;
+        this.defaultMinRequiredWorkers = defaultMinRequiredWorkers == null || defaultMinRequiredWorkers < 0 ? 0 : defaultMinRequiredWorkers;
     }
 
     int getRequestedNodes(Map<String, String> serviceResources) {
         String requestedNodes = StringUtils.defaultIfBlank(serviceResources.get("sparkNumNodes"), "1");
         int numNodes = Integer.parseInt(requestedNodes);
         return numNodes <= 0 ? defaultNumNodes : numNodes;
+    }
+
+    int getMinRequiredWorkers(Map<String, String> serviceResources) {
+        String minSparkWorkersValue = StringUtils.defaultIfBlank(serviceResources.get("minSparkWorkers"), "0");
+        int minSparkWorkers = Integer.parseInt(minSparkWorkersValue);
+        return minSparkWorkers <= 0 ? defaultMinRequiredWorkers : minSparkWorkers;
     }
 
     int getDefaultParallelism(Map<String, String> serviceResources) {

@@ -1,17 +1,13 @@
 package org.janelia.jacs2.asyncservice.spark;
 
-import javafx.print.PrinterJob;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.cluster.JobFuture;
 import org.janelia.cluster.JobInfo;
 import org.janelia.cluster.JobInfoBuilder;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobStatus;
 import org.janelia.cluster.JobTemplate;
-import org.janelia.cluster.lsf.LsfJobInfo;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
@@ -41,7 +37,7 @@ import java.util.stream.IntStream;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class FlexLSFSparkClusterLauncher {
+public class LSFSparkClusterLauncher {
 
     private final static String DEFAULT_SPARK_URI_SCHEME = "spark";
     private final static int DEFAULT_SPARK_MASTER_PORT = 7077;
@@ -74,24 +70,24 @@ public class FlexLSFSparkClusterLauncher {
     private final String lsfRemoteCommand;
 
     @Inject
-    public FlexLSFSparkClusterLauncher(ServiceComputationFactory computationFactory,
-                                       MonitoredJobManager monitoredJobManager,
-                                       @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
-                                       @IntPropertyValue(name = "service.spark.nodeSlots", defaultValue = 32) int nodeSlots,
-                                       @IntPropertyValue(name = "service.spark.workerCores", defaultValue = 30) int sparkWorkerCores,
-                                       @StrPropertyValue(name = "service.spark.sparkVersion", defaultValue = "2.3.1") String sparkVersion,
-                                       @StrPropertyValue(name = "service.spark.sparkHomeDir", defaultValue = "/misc/local/spark-2.3.1") String sparkHomeDir,
-                                       @StrPropertyValue(name = "service.spark.driver.memory", defaultValue = "1g") String defaultSparkDriverMemory,
-                                       @StrPropertyValue(name = "service.spark.executor.memory", defaultValue = "75g") String defaultSparkExecutorMemory,
-                                       @IntPropertyValue(name = "service.spark.executor.cores", defaultValue = 5) int defaultCoresPerSparkExecutor,
-                                       @IntPropertyValue(name = "service.spark.cluster.hard.duration.mins", defaultValue = 30) int sparkClusterHardDurationMins,
-                                       @StrPropertyValue(name = "service.spark.log4jconfig.filepath", defaultValue = "") String defaultSparkLogConfigFile,
-                                       @IntPropertyValue(name = "service.spark.cluster.startTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
-                                       @IntPropertyValue(name = "service.spark.cluster.intervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
-                                       @StrPropertyValue(name = "hadoop.homeDir") String hadoopHomeDir,
-                                       @StrPropertyValue(name = "service.spark.lsf.flexApplication", defaultValue="spark32") String lsfApplication,
-                                       @StrPropertyValue(name = "service.spark.lsf.remoteCommand", defaultValue="commandstring") String lsfRemoteCommand,
-                                       Logger logger) {
+    public LSFSparkClusterLauncher(ServiceComputationFactory computationFactory,
+                                   MonitoredJobManager monitoredJobManager,
+                                   @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
+                                   @IntPropertyValue(name = "service.spark.nodeSlots", defaultValue = 32) int nodeSlots,
+                                   @IntPropertyValue(name = "service.spark.workerCores", defaultValue = 30) int sparkWorkerCores,
+                                   @StrPropertyValue(name = "service.spark.sparkVersion", defaultValue = "2.3.1") String sparkVersion,
+                                   @StrPropertyValue(name = "service.spark.sparkHomeDir", defaultValue = "/misc/local/spark-2.3.1") String sparkHomeDir,
+                                   @StrPropertyValue(name = "service.spark.driver.memory", defaultValue = "1g") String defaultSparkDriverMemory,
+                                   @StrPropertyValue(name = "service.spark.executor.memory", defaultValue = "75g") String defaultSparkExecutorMemory,
+                                   @IntPropertyValue(name = "service.spark.executor.cores", defaultValue = 5) int defaultCoresPerSparkExecutor,
+                                   @IntPropertyValue(name = "service.spark.cluster.hard.duration.mins", defaultValue = 30) int sparkClusterHardDurationMins,
+                                   @StrPropertyValue(name = "service.spark.log4jconfig.filepath", defaultValue = "") String defaultSparkLogConfigFile,
+                                   @IntPropertyValue(name = "service.spark.cluster.startTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
+                                   @IntPropertyValue(name = "service.spark.cluster.intervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
+                                   @StrPropertyValue(name = "hadoop.homeDir") String hadoopHomeDir,
+                                   @StrPropertyValue(name = "service.spark.lsf.application", defaultValue="spark32") String lsfApplication,
+                                   @StrPropertyValue(name = "service.spark.lsf.remoteCommand", defaultValue="commandstring") String lsfRemoteCommand,
+                                   Logger logger) {
         this.computationFactory = computationFactory;
         this.jobMgr = monitoredJobManager.getJobMgr();
         this.requiresAccountInfo = requiresAccountInfo;
@@ -209,7 +205,33 @@ public class FlexLSFSparkClusterLauncher {
         return 3 * (nodeSlots / defaultCoresPerSparkExecutor) * numNodes;
     }
 
-    ServiceComputation<SparkCluster> waitForSparkCluster(SparkCluster sparkCluster) {
+    ServiceComputation<SparkCluster> createCluster(Long masterJobId,
+                                                   List<Long> workerJobIds,
+                                                   int minRequiredWorkers,
+                                                   int defaultParallelism,
+                                                   String sparkDriverMemory,
+                                                   String sparkExecutorMemory,
+                                                   String sparkLogConfigFile) {
+        return computationFactory.newCompletedComputation(new SparkCluster(
+                computationFactory,
+                jobMgr,
+                masterJobId,
+                workerJobIds,
+                minRequiredWorkers,
+                null, // no master URI yet because the master job may still be waiting
+                sparkHomeDir,
+                hadoopHomeDir,
+                StringUtils.defaultIfBlank(sparkDriverMemory, defaultSparkDriverMemory),
+                StringUtils.defaultIfBlank(sparkExecutorMemory, defaultSparkExecutorMemory),
+                defaultCoresPerSparkExecutor,
+                defaultParallelism,
+                StringUtils.defaultIfBlank(sparkLogConfigFile, defaultSparkLogConfigFile),
+                logger))
+                .thenCompose(sparkCluster -> waitForSparkCluster(sparkCluster))
+                ;
+    }
+
+    private ServiceComputation<SparkCluster> waitForSparkCluster(SparkCluster sparkCluster) {
         return computationFactory.newCompletedComputation(sparkCluster)
                 .thenSuspendUntil( // wait for the master job info to start
                         (SparkCluster aSparkCluster) -> {

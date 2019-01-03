@@ -7,7 +7,7 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
-import org.janelia.jacs2.asyncservice.spark.BatchLSFSparkClusterLauncher;
+import org.janelia.jacs2.asyncservice.spark.LSFSparkClusterLauncher;
 import org.janelia.jacs2.asyncservice.spark.SparkApp;
 import org.janelia.jacs2.asyncservice.spark.SparkCluster;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -50,10 +50,11 @@ public class ColorDepthFileSearchTest {
     private static final int SEARCH_TIMEOUT_IN_SECONDS = 1200;
     private static final int SEARCH_INTERVAL_CHECK_IN_MILLIS = 5000;
     private static final int DEFAULT_NUM_NODES = 6;
+    private static final int DEFAULT_MIN_REQUIRED_WORKERS = 2;
 
     ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
-    private BatchLSFSparkClusterLauncher clusterLauncher;
+    private LSFSparkClusterLauncher clusterLauncher;
     private ComputeAccounting clusterAccounting;
     private SparkCluster sparkCluster;
     private SparkApp sparkApp;
@@ -67,7 +68,7 @@ public class ColorDepthFileSearchTest {
         Logger logger = mock(Logger.class);
         serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
-        clusterLauncher = mock(BatchLSFSparkClusterLauncher.class);
+        clusterLauncher = mock(LSFSparkClusterLauncher.class);
         clusterAccounting = mock(ComputeAccounting.class);
         sparkCluster = mock(SparkCluster.class);
         sparkApp = mock(SparkApp.class);
@@ -81,6 +82,7 @@ public class ColorDepthFileSearchTest {
                 SEARCH_TIMEOUT_IN_SECONDS,
                 SEARCH_INTERVAL_CHECK_IN_MILLIS,
                 DEFAULT_NUM_NODES,
+                DEFAULT_MIN_REQUIRED_WORKERS,
                 jarPath,
                 logger);
     }
@@ -101,6 +103,7 @@ public class ColorDepthFileSearchTest {
         Mockito.when(clusterAccounting.getComputeAccount(testService)).thenReturn(clusterBillingInfo);
         Mockito.when(clusterLauncher.startCluster(
                 9,
+                3,
                 serviceWorkingFolder.getServiceFolder(),
                 clusterBillingInfo,
                 null,
@@ -175,6 +178,7 @@ public class ColorDepthFileSearchTest {
                 .addArgs("-searchDirs", "s1,s2")
                 .addArgs("-maskThresholds", "100").addArgs("100").addArgs("100")
                 .addArgs("-numNodes", "9")
+                .addArgs("-minWorkerNodes", "3")
                 .addArgs("-dataThreshold", "100")
                 .addArgs("-pixColorFluctuation", "2.0")
                 .addArgs("-pctPositivePixels", "10.0")
