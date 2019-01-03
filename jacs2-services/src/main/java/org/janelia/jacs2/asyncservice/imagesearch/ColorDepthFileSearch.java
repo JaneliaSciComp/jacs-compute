@@ -27,6 +27,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -196,6 +197,8 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
                 numNodes,
                 minRequiredWorkers,
                 serviceWorkingFolder.getServiceFolder(),
+                Paths.get(jacsServiceData.getOutputPath()),
+                Paths.get(jacsServiceData.getErrorPath()),
                 clusterAccounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),

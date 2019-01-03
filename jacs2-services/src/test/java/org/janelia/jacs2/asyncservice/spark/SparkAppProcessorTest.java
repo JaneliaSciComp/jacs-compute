@@ -97,6 +97,8 @@ public class SparkAppProcessorTest {
                 testDriverMemory,
                 testExecutorMemory);
         JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
+        Path serviceOutputPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR);
+        Path serviceErrorPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR);
 
         PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
@@ -106,6 +108,8 @@ public class SparkAppProcessorTest {
                 testNumNodes,
                 testMinRequiredWorkers,
                 serviceWorkingFolder.getServiceFolder(),
+                serviceOutputPath,
+                serviceErrorPath,
                 clusterBillingInfo,
                 testDriverMemory,
                 testExecutorMemory,

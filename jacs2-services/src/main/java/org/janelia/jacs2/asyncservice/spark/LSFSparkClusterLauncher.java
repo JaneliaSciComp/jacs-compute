@@ -110,6 +110,8 @@ public class LSFSparkClusterLauncher {
     public ServiceComputation<SparkCluster> startCluster(int numNodes,
                                                          int minRequiredWorkersParam,
                                                          Path jobWorkingPath,
+                                                         Path jobOutputPath,
+                                                         Path jobErrorPath,
                                                          String billingInfo,
                                                          String sparkDriverMemory,
                                                          String sparkExecutorMemory,
@@ -122,16 +124,24 @@ public class LSFSparkClusterLauncher {
         } else {
             minRequiredWorkers = minRequiredWorkersParam;
         }
-        return startSparkMasterJob(jobWorkingPath, billingInfo)
-                .thenCompose(masterJobInfo -> startSparkWorkerJobs(masterJobInfo, numNodes, minRequiredWorkers, jobWorkingPath, billingInfo, sparkDriverMemory, sparkExecutorMemory, sparkLogConfigFile))
+        return startSparkMasterJob(jobWorkingPath, jobOutputPath, jobErrorPath, billingInfo)
+                .thenCompose(masterJobInfo -> startSparkWorkerJobs(masterJobInfo, numNodes, minRequiredWorkers, jobWorkingPath, jobOutputPath, jobErrorPath, billingInfo, sparkDriverMemory, sparkExecutorMemory, sparkLogConfigFile))
                 .thenCompose(sparkCluster -> waitForSparkCluster(sparkCluster))
                 ;
     }
 
-    private ServiceComputation<JobInfo> startSparkMasterJob(Path jobWorkingPath, String billingInfo) {
+    private ServiceComputation<JobInfo> startSparkMasterJob(Path jobWorkingPath,
+                                                            Path jobOutputPath,
+                                                            Path jobErrorPath,
+                                                            String billingInfo) {
         logger.info("Starting spark {} master job with working directory", sparkVersion, jobWorkingPath);
         try {
-            JobTemplate masterJobTemplate = createSparkJobTemplate("sparkjacs", jobWorkingPath.toString(), createNativeSpec(billingInfo, "master"));
+            JobTemplate masterJobTemplate = createSparkJobTemplate(
+                    "sparkjacs",
+                    jobWorkingPath,
+                    jobOutputPath,
+                    jobErrorPath,
+                    createNativeSpec(billingInfo, "master"));
             // Submit master job
             JobFuture masterJobFuture = jobMgr.submitJob(masterJobTemplate);
             logger.info("Submitted master spark job {} ", masterJobFuture.getJobId());
@@ -153,13 +163,20 @@ public class LSFSparkClusterLauncher {
                                                                   int numNodes,
                                                                   int minRequiredWorkers,
                                                                   Path jobWorkingPath,
+                                                                  Path jobOutputPath,
+                                                                  Path jobErrorPath,
                                                                   String billingInfo,
                                                                   String sparkDriverMemory,
                                                                   String sparkExecutorMemory,
                                                                   String sparkLogConfigFile) {
         logger.info("Starting Spark-{} cluster with master {} + {} worker nodes and working directory {}", sparkVersion, masterJobInfo, numNodes, jobWorkingPath);
         List<JobFuture> workerJobs = IntStream.range(0, numNodes)
-                .mapToObj(ni -> createSparkJobTemplate("W" + masterJobInfo.getJobId(), jobWorkingPath.toString(), createNativeSpec(billingInfo, "worker")))
+                .mapToObj(ni -> createSparkJobTemplate(
+                        "W" + masterJobInfo.getJobId(),
+                        jobWorkingPath,
+                        jobOutputPath,
+                        jobErrorPath,
+                        createNativeSpec(billingInfo, "worker")))
                 .map(jt -> {
                     try {
                         JobFuture workerJob = jobMgr.submitJob(jt);
@@ -189,11 +206,17 @@ public class LSFSparkClusterLauncher {
         );
     }
 
-    private JobTemplate createSparkJobTemplate(String jobName, String jobWorkingPath, List<String> nativeSpec) {
+    private JobTemplate createSparkJobTemplate(String jobName,
+                                               Path jobWorkingPath,
+                                               Path jobOutputPath,
+                                               Path jobErrorPath,
+                                               List<String> nativeSpec) {
         JobTemplate jt = new JobTemplate();
         jt.setJobName(jobName);
         jt.setArgs(Collections.emptyList());
-        jt.setWorkingDir(jobWorkingPath);
+        jt.setWorkingDir(jobWorkingPath.toString());
+        jt.setOutputPath(jobOutputPath.toString());
+        jt.setErrorPath(jobErrorPath.toString());
         jt.setRemoteCommand(lsfRemoteCommand);
         jt.setNativeSpecification(nativeSpec);
         return jt;
@@ -236,7 +259,7 @@ public class LSFSparkClusterLauncher {
                         (SparkCluster aSparkCluster) -> {
                             logger.trace("Check if spark cluster {} is ready", aSparkCluster);
                             Collection<JobInfo> jobInfos = jobMgr.getJobInfo(sparkCluster.getMasterJobId());
-                            return jobInfos.stream().findFirst().orElseThrow(() -> new IllegalStateException(new IllegalStateException("Error checking spark master node for " + sparkCluster)));
+                            return jobInfos.stream().findFirst().orElse(null);
                         },
                         (JobInfo masterJobInfo) -> {
                             if (masterJobInfo != null) {

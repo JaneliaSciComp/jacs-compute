@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Named("startSparkCluster")
@@ -128,6 +129,8 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                 getRequestedNodes(jacsServiceData.getResources()),
                 getMinRequiredWorkers(jacsServiceData.getResources()),
                 serviceWorkingFolder.getServiceFolder(),
+                Paths.get(jacsServiceData.getOutputPath()),
+                Paths.get(jacsServiceData.getErrorPath()),
                 accounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),

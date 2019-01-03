@@ -92,6 +92,8 @@ public class ColorDepthFileSearchTest {
     public void process() throws Exception {
         JacsServiceData testService = createTestServiceData(1L, "test");
         JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
+        Path serviceOutputPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR);
+        Path serviceErrorPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR);
         String clusterBillingInfo = "clusterBillingInfo";
 
         PowerMockito.mockStatic(Files.class);
@@ -105,6 +107,8 @@ public class ColorDepthFileSearchTest {
                 9,
                 3,
                 serviceWorkingFolder.getServiceFolder(),
+                serviceOutputPath,
+                serviceErrorPath,
                 clusterBillingInfo,
                 null,
                 null,

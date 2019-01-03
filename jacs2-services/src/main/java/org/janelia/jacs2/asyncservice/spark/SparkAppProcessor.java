@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,6 +85,8 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                 requestedSparkNodes,
                 getMinRequiredWorkers(jacsServiceData.getResources()),
                 serviceWorkingFolder.getServiceFolder(),
+                Paths.get(jacsServiceData.getOutputPath()),
+                Paths.get(jacsServiceData.getErrorPath()),
                 accounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
