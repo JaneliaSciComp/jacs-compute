@@ -131,7 +131,7 @@ public class LSFSparkClusterLauncher {
     private ServiceComputation<JobInfo> startSparkMasterJob(Path jobWorkingPath, String billingInfo) {
         logger.info("Starting spark {} master job with working directory", sparkVersion, jobWorkingPath);
         try {
-            JobTemplate masterJobTemplate = createSparkJobTemplate(jobWorkingPath.toString(), createNativeSpec(null, billingInfo, "master"));
+            JobTemplate masterJobTemplate = createSparkJobTemplate("sparkjacs", jobWorkingPath.toString(), createNativeSpec(billingInfo, "master"));
             // Submit master job
             JobFuture masterJobFuture = jobMgr.submitJob(masterJobTemplate);
             logger.info("Submitted master spark job {} ", masterJobFuture.getJobId());
@@ -158,9 +158,8 @@ public class LSFSparkClusterLauncher {
                                                                   String sparkExecutorMemory,
                                                                   String sparkLogConfigFile) {
         logger.info("Starting Spark-{} cluster with master {} + {} worker nodes and working directory {}", sparkVersion, masterJobInfo, numNodes, jobWorkingPath);
-
         List<JobFuture> workerJobs = IntStream.range(0, numNodes)
-                .mapToObj(ni -> createSparkJobTemplate(jobWorkingPath.toString(), createNativeSpec(masterJobInfo.getJobId(), billingInfo, "worker")))
+                .mapToObj(ni -> createSparkJobTemplate("W" + masterJobInfo.getJobId(), jobWorkingPath.toString(), createNativeSpec(billingInfo, "worker")))
                 .map(jt -> {
                     try {
                         JobFuture workerJob = jobMgr.submitJob(jt);
@@ -190,9 +189,9 @@ public class LSFSparkClusterLauncher {
         );
     }
 
-    private JobTemplate createSparkJobTemplate(String jobWorkingPath, List<String> nativeSpec) {
+    private JobTemplate createSparkJobTemplate(String jobName, String jobWorkingPath, List<String> nativeSpec) {
         JobTemplate jt = new JobTemplate();
-        jt.setJobName("sparkjacs");
+        jt.setJobName(jobName);
         jt.setArgs(Collections.emptyList());
         jt.setWorkingDir(jobWorkingPath);
         jt.setRemoteCommand(lsfRemoteCommand);
@@ -292,13 +291,10 @@ public class LSFSparkClusterLauncher {
                 ;
     }
 
-    private List<String> createNativeSpec(Long masterJobId, String billingAccount, String nodeType) {
+    private List<String> createNativeSpec(String billingAccount, String nodeType) {
         List<String> spec = new ArrayList<>();
-        spec.add("-a " + String.format("%s(%s,%s)", lsfApplication, nodeType, sparkVersion)); // spark32(master,2.3.1) or spark32(worker,2.31.
+        spec.add("-a " + String.format("%s(%s,%s)", lsfApplication, nodeType, sparkVersion)); // spark32(master,2.3.1) or spark32(worker,2.3.1)
         spec.add("-W "+ sparkClusterHardDurationMins);
-        if (masterJobId != null && masterJobId > 0L) {
-            spec.add("-J W" + masterJobId);
-        }
         if (requiresAccountInfo)
             spec.add("-P "+billingAccount);
 
