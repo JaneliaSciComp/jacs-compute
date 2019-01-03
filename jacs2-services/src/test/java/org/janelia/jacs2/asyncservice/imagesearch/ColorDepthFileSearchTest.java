@@ -50,6 +50,7 @@ public class ColorDepthFileSearchTest {
     private static final int SEARCH_TIMEOUT_IN_SECONDS = 1200;
     private static final int SEARCH_INTERVAL_CHECK_IN_MILLIS = 5000;
     private static final int DEFAULT_NUM_NODES = 6;
+    private static final int DEFAULT_MIN_REQUIRED_WORKERS = 2;
 
     ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
@@ -81,6 +82,7 @@ public class ColorDepthFileSearchTest {
                 SEARCH_TIMEOUT_IN_SECONDS,
                 SEARCH_INTERVAL_CHECK_IN_MILLIS,
                 DEFAULT_NUM_NODES,
+                DEFAULT_MIN_REQUIRED_WORKERS,
                 jarPath,
                 logger);
     }
@@ -90,6 +92,8 @@ public class ColorDepthFileSearchTest {
     public void process() throws Exception {
         JacsServiceData testService = createTestServiceData(1L, "test");
         JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
+        Path serviceOutputPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR);
+        Path serviceErrorPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR);
         String clusterBillingInfo = "clusterBillingInfo";
 
         PowerMockito.mockStatic(Files.class);
@@ -101,7 +105,10 @@ public class ColorDepthFileSearchTest {
         Mockito.when(clusterAccounting.getComputeAccount(testService)).thenReturn(clusterBillingInfo);
         Mockito.when(clusterLauncher.startCluster(
                 9,
+                3,
                 serviceWorkingFolder.getServiceFolder(),
+                serviceOutputPath,
+                serviceErrorPath,
                 clusterBillingInfo,
                 null,
                 null,
@@ -175,6 +182,7 @@ public class ColorDepthFileSearchTest {
                 .addArgs("-searchDirs", "s1,s2")
                 .addArgs("-maskThresholds", "100").addArgs("100").addArgs("100")
                 .addArgs("-numNodes", "9")
+                .addArgs("-minWorkerNodes", "3")
                 .addArgs("-dataThreshold", "100")
                 .addArgs("-pixColorFluctuation", "2.0")
                 .addArgs("-pctPositivePixels", "10.0")

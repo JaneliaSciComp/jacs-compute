@@ -7,7 +7,6 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
-import org.janelia.jacs2.asyncservice.imagesearch.ColorDepthFileSearch;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
@@ -22,18 +21,14 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
@@ -48,6 +43,7 @@ public class SparkAppProcessorTest {
     private static final int SEARCH_TIMEOUT_IN_SECONDS = 1200;
     private static final int SEARCH_INTERVAL_CHECK_IN_MILLIS = 5000;
     private static final int DEFAULT_NUM_NODES = 6;
+    private static final int DEFAULT_MIN_REQUIRED_WORKERS = 2;
 
     ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
@@ -76,6 +72,7 @@ public class SparkAppProcessorTest {
                 clusterLauncher,
                 clusterAccounting,
                 DEFAULT_NUM_NODES,
+                DEFAULT_MIN_REQUIRED_WORKERS,
                 logger);
     }
 
@@ -85,6 +82,7 @@ public class SparkAppProcessorTest {
         String testAppResource = "testApp";
         List<String> testAppArgs = ImmutableList.of("a1", "a2", "a3");
         int testNumNodes = 12;
+        int testMinRequiredWorkers = 4;
         String testDriverMemory = "driverMem";
         String testExecutorMemory = "executorMem";
         Long appIntervalCheckInMillis = null;
@@ -95,9 +93,12 @@ public class SparkAppProcessorTest {
                 testAppArgs,
                 "test",
                 testNumNodes,
+                testMinRequiredWorkers,
                 testDriverMemory,
                 testExecutorMemory);
         JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
+        Path serviceOutputPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR);
+        Path serviceErrorPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR);
 
         PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
@@ -105,7 +106,10 @@ public class SparkAppProcessorTest {
 
         Mockito.when(clusterLauncher.startCluster(
                 testNumNodes,
+                testMinRequiredWorkers,
                 serviceWorkingFolder.getServiceFolder(),
+                serviceOutputPath,
+                serviceErrorPath,
                 clusterBillingInfo,
                 testDriverMemory,
                 testExecutorMemory,
@@ -155,6 +159,7 @@ public class SparkAppProcessorTest {
                                                   List<String> appArgs,
                                                   String owner,
                                                   int numNodes,
+                                                  int minRequiredWorkers,
                                                   String driverMemory,
                                                   String executorMemory) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
@@ -163,6 +168,7 @@ public class SparkAppProcessorTest {
                 .addArgs("-appLocation", testApp)
                 .addArgs("-appArgs").addArgs(appArgs.stream().reduce((a1, a2) -> a1 + "," + a2).orElse(""))
                 .addResource("sparkNumNodes", String.valueOf(numNodes))
+                .addResource("minSparkWorkers", String.valueOf(minRequiredWorkers))
                 .addResource("sparkDriverMemory", driverMemory)
                 .addResource("sparkExecutorMemory", executorMemory)
                 ;

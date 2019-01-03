@@ -22,6 +22,8 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.nio.file.Paths;
+import java.util.List;
 
 @Named("startSparkCluster")
 public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClusterStartProcessor.SparkJobInfo> {
@@ -33,18 +35,25 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
     }
 
     static class SparkJobInfo {
-        private final Long jobId;
+        private final Long masterJobId;
+        private final List<Long> workerJobIds;
         private final String masterURI;
 
         @JsonCreator
-        SparkJobInfo(@JsonProperty("jobId") Long jobId,
+        SparkJobInfo(@JsonProperty("masterJobId") Long masterJobId,
+                     @JsonProperty("workerJobIds") List<Long> workerJobIds,
                      @JsonProperty("masterURI") String masterURI) {
-            this.jobId = jobId;
+            this.masterJobId = masterJobId;
+            this.workerJobIds = workerJobIds;
             this.masterURI = masterURI;
         }
 
-        public Long getJobId() {
-            return jobId;
+        public Long getMasterJobId() {
+            return masterJobId;
+        }
+
+        public List<Long> getWorkerJobIds() {
+            return workerJobIds;
         }
 
         public String getMasterURI() {
@@ -61,8 +70,9 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                                LSFSparkClusterLauncher clusterLauncher,
                                ComputeAccounting accounting,
                                @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 2) Integer defaultNumNodes,
+                               @IntPropertyValue(name = "service.spark.defaultMinRequiredWorkers", defaultValue = 1) Integer defaultMinRequiredWorkers,
                                Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, logger);
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, defaultMinRequiredWorkers, logger);
         this.accounting = accounting;
     }
 
@@ -105,10 +115,10 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                                     JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
                                             String.format("Started spark cluster %s (%s)",
                                                     sparkCluster.getMasterURI(),
-                                                    sparkCluster.getJobId())));
+                                                    sparkCluster.getMasterJobId())));
                             return updateServiceResult(
                                     jacsServiceData,
-                                    new SparkJobInfo(sparkCluster.getJobId(), sparkCluster.getMasterURI())
+                                    new SparkJobInfo(sparkCluster.getMasterJobId(), sparkCluster.getWorkerJobIds(), sparkCluster.getMasterURI())
                             );
                 })
                 ;
@@ -117,7 +127,10 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
     private ServiceComputation<SparkCluster> startCluster(JacsServiceData jacsServiceData, JacsServiceFolder serviceWorkingFolder) {
         return sparkClusterLauncher.startCluster(
                 getRequestedNodes(jacsServiceData.getResources()),
+                getMinRequiredWorkers(jacsServiceData.getResources()),
                 serviceWorkingFolder.getServiceFolder(),
+                Paths.get(jacsServiceData.getOutputPath()),
+                Paths.get(jacsServiceData.getErrorPath()),
                 accounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),

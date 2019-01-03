@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
@@ -20,12 +21,28 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Full cycle spark app processor that starts a spark cluster, runs the specified app and shuts down the cluster.
  */
 @Named("sparkAppProcessor")
 public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
+
+    static class SparkAppArgs extends SparkArgs {
+        @Parameter(names = "-appLocation", description = "Spark application location", required = true)
+        String appLocation;
+        @Parameter(names = "-appEntryPoint", description = "Spark application entry point, i.e., java main class name")
+        String appEntryPoint;
+        @Parameter(names = "-appArgs", description = "Spark application arguments", splitter = ServiceArgSplitter.class)
+        List<String> appArgs = new ArrayList<>();
+
+        SparkAppArgs() {
+            super("Spark application processor");
+        }
+    }
 
     private final ComputeAccounting accounting;
 
@@ -36,8 +53,9 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                       LSFSparkClusterLauncher clusterLauncher,
                       ComputeAccounting accounting,
                       @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 2) Integer defaultNumNodes,
+                      @IntPropertyValue(name = "service.spark.defaultMinRequiredWorkers", defaultValue = 1) Integer defaultMinRequiredWorkers,
                       Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, logger);
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, defaultMinRequiredWorkers, logger);
         this.accounting = accounting;
     }
 
@@ -65,7 +83,10 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                         String.format("Starting a spark cluster with %d nodes", requestedSparkNodes)));
         return sparkClusterLauncher.startCluster(
                 requestedSparkNodes,
+                getMinRequiredWorkers(jacsServiceData.getResources()),
                 serviceWorkingFolder.getServiceFolder(),
+                Paths.get(jacsServiceData.getOutputPath()),
+                Paths.get(jacsServiceData.getErrorPath()),
                 accounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
@@ -79,7 +100,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                             args.appLocation,
                                             args.appEntryPoint,
                                             sparkCluster.getMasterURI(),
-                                            sparkCluster.getJobId())));
+                                            sparkCluster.getMasterJobId())));
                     // the computation completes when the app completes
                     return sparkCluster.runApp(
                             args.appLocation,
@@ -99,7 +120,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                 JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
                                         String.format("Stop spark cluster on %s (%s)",
                                                 runningClusterState.getData().getMasterURI(),
-                                                runningClusterState.getData().getJobId())));
+                                                runningClusterState.getData().getMasterJobId())));
                         runningClusterState.getData().stopCluster();
                     }
                 }))

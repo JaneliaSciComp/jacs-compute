@@ -1,13 +1,14 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobFuture;
 import org.janelia.cluster.JobInfo;
+import org.janelia.cluster.JobInfoBuilder;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobStatus;
 import org.janelia.cluster.JobTemplate;
-import org.janelia.cluster.lsf.LsfJobInfo;
 import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
@@ -22,12 +23,15 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Start an LSF Spark cluster.
@@ -63,7 +67,7 @@ public class LSFSparkClusterLauncher {
     private final long clusterStartTimeoutInMillis;
     private final long clusterIntervalCheckInMillis;
     private final String hadoopHomeDir;
-    private final String lsfJobNamePrefix;
+    private final String lsfApplication;
     private final String lsfRemoteCommand;
 
     @Inject
@@ -82,9 +86,8 @@ public class LSFSparkClusterLauncher {
                                    @IntPropertyValue(name = "service.spark.cluster.startTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
                                    @IntPropertyValue(name = "service.spark.cluster.intervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
                                    @StrPropertyValue(name = "hadoop.homeDir") String hadoopHomeDir,
-                                   @StrPropertyValue(name = "service.spark.lsf.application", defaultValue="sparkbatch(2.3.1)") String lsfApplication,
+                                   @StrPropertyValue(name = "service.spark.lsf.application", defaultValue="spark32") String lsfApplication,
                                    @StrPropertyValue(name = "service.spark.lsf.remoteCommand", defaultValue="commandstring") String lsfRemoteCommand,
-
                                    Logger logger) {
         this.computationFactory = computationFactory;
         this.jobMgr = monitoredJobManager.getJobMgr();
@@ -100,48 +103,125 @@ public class LSFSparkClusterLauncher {
         this.clusterStartTimeoutInMillis = clusterStartTimeoutInSeconds * 1000;
         this.clusterIntervalCheckInMillis = clusterIntervalCheckInMillis;
         this.hadoopHomeDir = hadoopHomeDir;
-        this.lsfJobNamePrefix = lsfApplication;
+        this.lsfApplication = lsfApplication;
         this.lsfRemoteCommand = lsfRemoteCommand;
         this.logger = logger;
     }
 
     public ServiceComputation<SparkCluster> startCluster(int numNodes,
+                                                         int minRequiredWorkersParam,
                                                          Path jobWorkingPath,
+                                                         Path jobOutputPath,
+                                                         Path jobErrorPath,
                                                          String billingInfo,
                                                          String sparkDriverMemory,
                                                          String sparkExecutorMemory,
                                                          String sparkLogConfigFile) {
-        return submitClusterJob(numNodes, jobWorkingPath, billingInfo)
-                .thenCompose(jobId -> createCluster(jobId, calculateDefaultParallelism(numNodes), sparkDriverMemory, sparkExecutorMemory, sparkLogConfigFile))
+        int minRequiredWorkers;
+        if (minRequiredWorkersParam <= 0) {
+            minRequiredWorkers = 0;
+        } else if (minRequiredWorkersParam > numNodes) {
+            minRequiredWorkers = numNodes;
+        } else {
+            minRequiredWorkers = minRequiredWorkersParam;
+        }
+        return startSparkMasterJob(jobWorkingPath, jobOutputPath, jobErrorPath, billingInfo)
+                .thenCompose(masterJobInfo -> startSparkWorkerJobs(masterJobInfo, numNodes, minRequiredWorkers, jobWorkingPath, jobOutputPath, jobErrorPath, billingInfo, sparkDriverMemory, sparkExecutorMemory, sparkLogConfigFile))
+                .thenCompose(sparkCluster -> waitForSparkCluster(sparkCluster))
                 ;
     }
 
-    private ServiceComputation<Long> submitClusterJob(int numNodes, Path jobWorkingPath, String billingInfo) {
-        int numSlots = nodeSlots + nodeSlots * numNodes; // master + workers
-
-        logger.info("Starting Spark-{} cluster with one master + {} worker nodes ({} total slots)", sparkVersion, numNodes, numSlots);
-        logger.info("Working directory: {}", jobWorkingPath);
-
-        JobTemplate jt = new JobTemplate();
-        jt.setJobName("sparkjacs");
-        jt.setArgs(Collections.emptyList());
-        jt.setWorkingDir(jobWorkingPath.toString());
-        jt.setRemoteCommand(lsfRemoteCommand);
-        jt.setNativeSpecification(createNativeSpec(billingInfo, numSlots));
-
-        Long jobId;
+    private ServiceComputation<JobInfo> startSparkMasterJob(Path jobWorkingPath,
+                                                            Path jobOutputPath,
+                                                            Path jobErrorPath,
+                                                            String billingInfo) {
+        logger.info("Starting spark {} master job with working directory", sparkVersion, jobWorkingPath);
         try {
-            JobFuture future = jobMgr.submitJob(jt);
-            jobId = future.getJobId();
-            future.whenCompleteAsync((jobInfos, exc) -> {
-                logJobInfo(jobInfos);
-            }, COMPLETION_MESSAGE_EXECUTOR);
-            logger.info("Submitted cluster job {} ", jobId);
-            return computationFactory.newCompletedComputation(jobId);
-        } catch (Exception e) {
-            logger.error("Error starting a spark cluster with {} nodes ", numNodes, e);
+            JobTemplate masterJobTemplate = createSparkJobTemplate(
+                    "sparkjacs",
+                    jobWorkingPath,
+                    jobOutputPath,
+                    jobErrorPath,
+                    createNativeSpec(billingInfo, "master"));
+            // Submit master job
+            JobFuture masterJobFuture = jobMgr.submitJob(masterJobTemplate);
+            logger.info("Submitted master spark job {} ", masterJobFuture.getJobId());
+            return computationFactory.newCompletedComputation(masterJobFuture.getJobId())
+                    .thenApply(jobId -> {
+                        Collection<JobInfo> jobInfos = jobMgr.retrieveJobInfo(jobId);
+                        if (CollectionUtils.size(jobInfos) > 1) {
+                            logger.warn("More than one job found for master Spark job {} - {} ", jobId, jobInfos);
+                        }
+                        return jobInfos.stream().findFirst().orElseThrow(() -> new IllegalStateException(new IllegalStateException("Error starting master spark node for " + jobWorkingPath)));
+                    });
+        } catch(Exception e) {
+            logger.error("Error starting spark master node for {}", jobWorkingPath, e);
             return computationFactory.newFailedComputation(e);
         }
+    }
+
+    private ServiceComputation<SparkCluster> startSparkWorkerJobs(JobInfo masterJobInfo,
+                                                                  int numNodes,
+                                                                  int minRequiredWorkers,
+                                                                  Path jobWorkingPath,
+                                                                  Path jobOutputPath,
+                                                                  Path jobErrorPath,
+                                                                  String billingInfo,
+                                                                  String sparkDriverMemory,
+                                                                  String sparkExecutorMemory,
+                                                                  String sparkLogConfigFile) {
+        logger.info("Starting Spark-{} cluster with master {} + {} worker nodes and working directory {}", sparkVersion, masterJobInfo, numNodes, jobWorkingPath);
+        List<JobFuture> workerJobs = IntStream.range(0, numNodes)
+                .mapToObj(ni -> createSparkJobTemplate(
+                        "W" + masterJobInfo.getJobId(),
+                        jobWorkingPath,
+                        jobOutputPath,
+                        jobErrorPath,
+                        createNativeSpec(billingInfo, "worker")))
+                .map(jt -> {
+                    try {
+                        JobFuture workerJob = jobMgr.submitJob(jt);
+                        logger.info("Submitted worker spark job {} part of {} cluster", workerJob.getJobId(), masterJobInfo.getJobId());
+                        return workerJob;
+                    } catch(Exception e) {
+                        logger.error("Error starting one spark worker out of {} for cluster {}", numNodes, masterJobInfo, e);
+                        return JobFuture.withException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+        return computationFactory.newCompletedComputation(new SparkCluster(
+                computationFactory,
+                jobMgr,
+                masterJobInfo.getJobId(),
+                workerJobs.stream().filter(jf -> !jf.isCompletedExceptionally()).map(jf -> jf.getJobId()).collect(Collectors.toList()),
+                minRequiredWorkers,
+                null, // no master URI yet because the master job may still be waiting
+                sparkHomeDir,
+                hadoopHomeDir,
+                StringUtils.defaultIfBlank(sparkDriverMemory, defaultSparkDriverMemory),
+                StringUtils.defaultIfBlank(sparkExecutorMemory, defaultSparkExecutorMemory),
+                defaultCoresPerSparkExecutor,
+                calculateDefaultParallelism(numNodes),
+                StringUtils.defaultIfBlank(sparkLogConfigFile, defaultSparkLogConfigFile),
+                logger)
+        );
+    }
+
+    private JobTemplate createSparkJobTemplate(String jobName,
+                                               Path jobWorkingPath,
+                                               Path jobOutputPath,
+                                               Path jobErrorPath,
+                                               List<String> nativeSpec) {
+        JobTemplate jt = new JobTemplate();
+        jt.setJobName(jobName);
+        jt.setArgs(Collections.emptyList());
+        jt.setWorkingDir(jobWorkingPath.toString());
+        jt.setOutputPath(jobOutputPath.toString());
+        jt.setErrorPath(jobErrorPath.toString());
+        jt.setRemoteCommand(lsfRemoteCommand);
+        jt.setNativeSpecification(nativeSpec);
+        jt.setJobEnvironment(ImmutableMap.of("SPARK_LOG_DIR", jobOutputPath.toString())); // the startup script uses this to set the logdir path
+        return jt;
     }
 
     int calculateDefaultParallelism(int numNodes) {
@@ -149,35 +229,50 @@ public class LSFSparkClusterLauncher {
         return 3 * (nodeSlots / defaultCoresPerSparkExecutor) * numNodes;
     }
 
-    ServiceComputation<SparkCluster> createCluster(Long clusterJobId,
+    ServiceComputation<SparkCluster> createCluster(Long masterJobId,
+                                                   List<Long> workerJobIds,
+                                                   int minRequiredWorkers,
                                                    int defaultParallelism,
                                                    String sparkDriverMemory,
                                                    String sparkExecutorMemory,
                                                    String sparkLogConfigFile) {
-        return computationFactory.newCompletedComputation(clusterJobId)
-                .thenSuspendUntil(
-                        (Long aJobId) -> {
-                            logger.trace("Check if spark cluster {} is ready", clusterJobId);
-                            Collection<JobInfo> jobInfos = jobMgr.getJobInfo(aJobId);
-                            if (CollectionUtils.isEmpty(jobInfos)) {
-                                return null;
-                            } else {
-                                if (CollectionUtils.size(jobInfos) > 1) {
-                                    logger.warn("More than one job found for Spark cluster {} - {} ", clusterJobId, jobInfos);
-                                }
-                                return (LsfJobInfo) jobInfos.stream().findFirst().orElse(null);
-                            }
+        return computationFactory.newCompletedComputation(new SparkCluster(
+                computationFactory,
+                jobMgr,
+                masterJobId,
+                workerJobIds,
+                minRequiredWorkers,
+                null, // no master URI yet because the master job may still be waiting
+                sparkHomeDir,
+                hadoopHomeDir,
+                StringUtils.defaultIfBlank(sparkDriverMemory, defaultSparkDriverMemory),
+                StringUtils.defaultIfBlank(sparkExecutorMemory, defaultSparkExecutorMemory),
+                defaultCoresPerSparkExecutor,
+                defaultParallelism,
+                StringUtils.defaultIfBlank(sparkLogConfigFile, defaultSparkLogConfigFile),
+                logger))
+                .thenCompose(sparkCluster -> waitForSparkCluster(sparkCluster))
+                ;
+    }
+
+    private ServiceComputation<SparkCluster> waitForSparkCluster(SparkCluster sparkCluster) {
+        return computationFactory.newCompletedComputation(sparkCluster)
+                .thenSuspendUntil( // wait for the master job info to start
+                        (SparkCluster aSparkCluster) -> {
+                            logger.trace("Check if spark cluster {} is ready", aSparkCluster);
+                            Collection<JobInfo> jobInfos = jobMgr.getJobInfo(sparkCluster.getMasterJobId());
+                            return jobInfos.stream().findFirst().orElse(null);
                         },
-                        (LsfJobInfo jobInfo) -> {
-                            if (jobInfo != null) {
-                                if (jobInfo.isComplete()) {
-                                    logger.error("Job {} for starting the spark cluster has already completed so nothing can be submitted to the cluster", jobInfo);
-                                    throw new IllegalStateException("Spark cluster job " + jobInfo.getJobId() + " has already completed before starting the application");
+                        (JobInfo masterJobInfo) -> {
+                            if (masterJobInfo != null) {
+                                if (masterJobInfo.isComplete()) {
+                                    logger.error("Spark master job {} has already completed so nothing can be submitted to the cluster", masterJobInfo);
+                                    throw new IllegalStateException("Spark master job " + masterJobInfo.getJobId() + " has already completed before starting the application");
                                 }
-                                if (jobInfo.getStatus() == JobStatus.RUNNING) {
-                                    return new ContinuationCond.Cond<>(jobInfo, true);
+                                if (masterJobInfo.getStatus() == JobStatus.RUNNING) {
+                                    return new ContinuationCond.Cond<>(masterJobInfo, true);
                                 } else {
-                                    return new ContinuationCond.Cond<>(jobInfo, false);
+                                    return new ContinuationCond.Cond<>(masterJobInfo, false);
                                 }
                             } else {
                                 return new ContinuationCond.Cond<>(null, false);
@@ -185,65 +280,100 @@ public class LSFSparkClusterLauncher {
                         },
                         clusterIntervalCheckInMillis,
                         clusterStartTimeoutInMillis)
-                .thenApply(lsfJobInfo -> {
-                    List<String> clusterExecHosts = lsfJobInfo.getExecHosts();
-                    String masterURI = clusterExecHosts
-                            .stream()
-                            .filter(StringUtils::isNotBlank)
-                            .map(execHost -> {
-                                int coreSeparatorIndex = execHost.indexOf('*');
-                                if (coreSeparatorIndex == -1) {
-                                    return execHost;
-                                } else {
-                                    return execHost.substring(coreSeparatorIndex + 1);
-                                }
-                            })
-                            .filter(StringUtils::isNotBlank)
-                            .findFirst()
-                            .map(execHost -> DEFAULT_SPARK_URI_SCHEME + "://" + execHost + ":" + DEFAULT_SPARK_MASTER_PORT)
-                            .orElseThrow(() -> {
-                                logger.error("No exec hosts has been set for {}", lsfJobInfo);
-                                return new IllegalStateException("No exec host found for " + lsfJobInfo.toString());
-                            });
-                    logger.info("Spark cluster {} with master {} is running on the following hosts {}", clusterJobId, masterURI, clusterExecHosts);
+                .thenApply(masterJobInfo -> {
+                    String sparkMasterURI = getSparkURIFromJobInfo(masterJobInfo);
+                    logger.info("Spark master job {} ({}) is running on {}", masterJobInfo.getJobId(), sparkMasterURI, masterJobInfo.getExecHost());
                     return new SparkCluster(
                             computationFactory,
                             jobMgr,
-                            clusterJobId,
-                            masterURI,
+                            masterJobInfo.getJobId(),
+                            sparkCluster.getWorkerJobIds(),
+                            sparkCluster.getMinRequiredWorkers(),
+                            sparkMasterURI,
                             sparkHomeDir,
                             hadoopHomeDir,
-                            StringUtils.defaultIfBlank(sparkDriverMemory, defaultSparkDriverMemory),
-                            StringUtils.defaultIfBlank(sparkExecutorMemory, defaultSparkExecutorMemory),
+                            sparkCluster.getSparkDriverMemory(),
+                            sparkCluster.getSparkExecutorMemory(),
                             defaultCoresPerSparkExecutor,
-                            defaultParallelism,
-                            StringUtils.defaultIfBlank(sparkLogConfigFile, defaultSparkLogConfigFile),
-                            logger
-                    );
+                            sparkCluster.getDefaultParallelism(),
+                            sparkCluster.getSparkLogConfigFile(),
+                            logger);
                 })
+                // wait for a minimum number of workers to be running
+                .thenSuspendUntil(updatedSparkCluster -> new ContinuationCond.Cond<>(updatedSparkCluster, checkMininimumWorkerRequirement(updatedSparkCluster)),
+                        clusterIntervalCheckInMillis,
+                        clusterStartTimeoutInMillis)
                 .exceptionally(exc -> {
                     try {
                         // this may happen if starting the cluster timed out
-                        logger.error("Killing job cluster {} because of an exception", clusterJobId, exc);
-                        jobMgr.killJob(clusterJobId);
+                        logger.error("Killing spark cluster {} because of an exception", sparkCluster, exc);
+                        sparkCluster.stopCluster();
                     } catch (Exception ignore) {
-                        logger.warn("Exception trying to kill {}", clusterJobId, ignore);
+                        logger.warn("Exception trying to kill {}", sparkCluster, ignore);
                     }
                     throw new IllegalStateException(exc);
                 })
                 ;
     }
 
-    private List<String> createNativeSpec(String billingAccount, int slots) {
+    private List<String> createNativeSpec(String billingAccount, String nodeType) {
         List<String> spec = new ArrayList<>();
-        spec.add("-a "+lsfJobNamePrefix);
-        spec.add("-n "+slots);
-        spec.add("-W  "+ sparkClusterHardDurationMins);
-
+        spec.add("-a " + String.format("%s(%s,%s)", lsfApplication, nodeType, sparkVersion)); // spark32(master,2.3.1) or spark32(worker,2.3.1)
+        spec.add("-W "+ sparkClusterHardDurationMins);
         if (requiresAccountInfo)
             spec.add("-P "+billingAccount);
 
         return spec;
+    }
+
+    private String getSparkURIFromJobInfo(JobInfo jobInfo) {
+        String jobExecHost = jobInfo.getExecHost();
+        if (StringUtils.isBlank(jobExecHost)) {
+            throw new IllegalStateException("No exec host found for " + jobInfo);
+        } else {
+            return Arrays.asList(jobExecHost.split("\\:"))
+                    .stream()
+                    .filter(StringUtils::isNotBlank)
+                    .map(execHost -> {
+                        int coreSeparatorIndex = execHost.indexOf('*');
+                        if (coreSeparatorIndex == -1) {
+                            return execHost;
+                        } else {
+                            return execHost.substring(coreSeparatorIndex + 1);
+                        }
+                    })
+                    .filter(StringUtils::isNotBlank)
+                    .findFirst()
+                    .map(execHost -> DEFAULT_SPARK_URI_SCHEME + "://" + execHost + ":" + DEFAULT_SPARK_MASTER_PORT)
+                    .orElseThrow(() -> {
+                        logger.error("No proper exec hosts has been set for {} even though exec host field is set to {}", jobInfo, jobExecHost);
+                        return new IllegalStateException("No proper exec hosts has been set for " + jobInfo + " even though exec host field is set to " + jobExecHost);
+                    });
+        }
+    }
+
+    private boolean checkMininimumWorkerRequirement(SparkCluster sparkCluster) {
+        List<JobInfo> workerJobs =
+                sparkCluster.getWorkerJobIds().stream()
+                        .map(jobId -> {
+                            Collection<JobInfo> jobInfos = jobMgr.getJobInfo(sparkCluster.getMasterJobId());
+                            return jobInfos.stream().findFirst()
+                                    .orElseGet(() -> new JobInfoBuilder().setJobId(jobId).setStatus(JobStatus.PENDING).build());
+                        })
+                        .filter(jobInfo -> !jobInfo.isComplete()) // filter out completed jobs
+                        .collect(Collectors.toList());
+        if (workerJobs.size() == 0) {
+            logger.error("No worker available on spark cluster {}", sparkCluster.getMasterJobId());
+            throw new IllegalStateException("No worker available on spark cluster" + sparkCluster.getMasterJobId());
+        } else if (workerJobs.size() < sparkCluster.getMinRequiredWorkers()) {
+            logger.error("Not enough workers available on spark cluster {}, requested {} but only {} could be potentially become available",
+                    sparkCluster.getMasterJobId(),
+                    sparkCluster.getMinRequiredWorkers(),
+                    workerJobs);
+            throw new IllegalStateException("The minimum worker requirement for " + sparkCluster.getMasterJobId() + " cannot be met; " +
+                    "requested " + sparkCluster.getMinRequiredWorkers() + " but only " + workerJobs.size() + " could become available");
+        }
+        return workerJobs.stream().filter(jobInfo -> jobInfo.getStatus() == JobStatus.RUNNING).count() >= sparkCluster.getMinRequiredWorkers();
     }
 
     private void logJobInfo(Collection<JobInfo> jobInfos) {

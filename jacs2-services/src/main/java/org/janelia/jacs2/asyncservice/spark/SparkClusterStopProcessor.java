@@ -19,10 +19,7 @@ import javax.inject.Named;
 @Named("stopSparkCluster")
 public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
 
-    static class StopSparkJobArgs extends SparkArgs {
-        @Parameter(names = "-sparkJobId", description = "Spark cluster ID")
-        String sparkJobId;
-
+    static class StopSparkJobArgs extends SparkClusterArgs {
         StopSparkJobArgs() {
             super("Stop spark cluster");
         }
@@ -33,9 +30,8 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
                               JacsServiceDataPersistence jacsServiceDataPersistence,
                               @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                               LSFSparkClusterLauncher clusterLauncher,
-                              @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 2) Integer defaultNumNodes,
                               Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, logger);
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, 1, 0, logger);
     }
 
     @Override
@@ -47,7 +43,9 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         StopSparkJobArgs args = getArgs(jacsServiceData);
 
-        return sparkClusterLauncher.createCluster(getSparkClusterJobId(args),
+        return sparkClusterLauncher.createCluster(args.getSparkClusterJobId(),
+                args.getSparkWorkerJobIds(),
+                args.minSparkWorkers,
                 sparkClusterLauncher.calculateDefaultParallelism(getRequestedNodes(jacsServiceData.getResources())),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
@@ -58,7 +56,7 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
                             JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
                                     String.format("Stop spark cluster on %s (%s)",
                                             sparkCluster.getMasterURI(),
-                                            sparkCluster.getJobId())));
+                                            sparkCluster.getMasterJobId())));
 
                     sparkCluster.stopCluster();
                     return new JacsServiceResult<>(jacsServiceData);
@@ -68,9 +66,5 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
 
     private StopSparkJobArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new StopSparkJobArgs());
-    }
-
-    private Long getSparkClusterJobId(StopSparkJobArgs args) {
-        return Long.valueOf(args.sparkJobId);
     }
 }
