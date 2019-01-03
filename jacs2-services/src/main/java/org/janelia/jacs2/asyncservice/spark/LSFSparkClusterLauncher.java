@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobFuture;
@@ -219,6 +220,7 @@ public class LSFSparkClusterLauncher {
         jt.setErrorPath(jobErrorPath.toString());
         jt.setRemoteCommand(lsfRemoteCommand);
         jt.setNativeSpecification(nativeSpec);
+        jt.setJobEnvironment(ImmutableMap.of("SPARK_LOG_DIR", jobOutputPath.toString())); // the startup script uses this to set the logdir path
         return jt;
     }
 
