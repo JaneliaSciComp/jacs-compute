@@ -16,7 +16,7 @@ dependencies {
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
         // ldap
-	LDAP_CLIENT_LIB = "org.apache.directory.api:api-ldap-client-all:2.0.0.AM2"
+        LDAP_CLIENT_LIB = "org.apache.directory.api:api-ldap-client-all:2.0.0.AM2"
 
         // utilities
         GUAVA_LIB = "com.google.guava:guava:23.0"
