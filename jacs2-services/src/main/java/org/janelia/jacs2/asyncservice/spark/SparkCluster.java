@@ -268,9 +268,16 @@ public class SparkCluster {
         } catch (Exception e) {
             logger.error("Error stopping Spark cluster {}", masterJobId, e);
         }
-        Stream.concat(workerJobIds.stream(), Stream.of(masterJobId))
+        try {
+            logger.info("Kill master spark job {}", masterJobId);
+            jobMgr.killJob(masterJobId);
+        } catch (Exception e) {
+            logger.error("Error stopping master spark job {}", masterJobId, e);
+        }
+        workerJobIds.stream()
                 .forEach(jobId -> {
                     try {
+                        logger.info("Kill spark worker job {} part of spark cluster {}", jobId, masterJobId);
                         jobMgr.killJob(jobId);
                     } catch (Exception e) {
                         logger.error("Error stopping spark job {} part of {} cluster", jobId, masterJobId, e);
