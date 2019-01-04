@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.spark;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobFuture;
 import org.janelia.cluster.JobInfo;
@@ -126,15 +125,15 @@ public class LSFSparkClusterLauncher {
             minRequiredWorkers = minRequiredWorkersParam;
         }
         return startSparkMasterJob(jobWorkingPath, jobOutputPath, jobErrorPath, billingInfo)
-                .thenCompose(masterJobInfo -> startSparkWorkerJobs(masterJobInfo, numNodes, minRequiredWorkers, jobWorkingPath, jobOutputPath, jobErrorPath, billingInfo, sparkDriverMemory, sparkExecutorMemory, sparkLogConfigFile))
+                .thenCompose(masterJobId -> startSparkWorkerJobs(masterJobId, numNodes, minRequiredWorkers, jobWorkingPath, jobOutputPath, jobErrorPath, billingInfo, sparkDriverMemory, sparkExecutorMemory, sparkLogConfigFile))
                 .thenCompose(sparkCluster -> waitForSparkCluster(sparkCluster))
                 ;
     }
 
-    private ServiceComputation<JobInfo> startSparkMasterJob(Path jobWorkingPath,
-                                                            Path jobOutputPath,
-                                                            Path jobErrorPath,
-                                                            String billingInfo) {
+    private ServiceComputation<Long> startSparkMasterJob(Path jobWorkingPath,
+                                                         Path jobOutputPath,
+                                                         Path jobErrorPath,
+                                                         String billingInfo) {
         logger.info("Starting spark {} master job with working directory", sparkVersion, jobWorkingPath);
         try {
             JobTemplate masterJobTemplate = createSparkJobTemplate(
@@ -146,21 +145,15 @@ public class LSFSparkClusterLauncher {
             // Submit master job
             JobFuture masterJobFuture = jobMgr.submitJob(masterJobTemplate);
             logger.info("Submitted master spark job {} ", masterJobFuture.getJobId());
-            return computationFactory.newCompletedComputation(masterJobFuture.getJobId())
-                    .thenApply(jobId -> {
-                        Collection<JobInfo> jobInfos = jobMgr.retrieveJobInfo(jobId);
-                        if (CollectionUtils.size(jobInfos) > 1) {
-                            logger.warn("More than one job found for master Spark job {} - {} ", jobId, jobInfos);
-                        }
-                        return jobInfos.stream().findFirst().orElseThrow(() -> new IllegalStateException(new IllegalStateException("Error starting master spark node for " + jobWorkingPath)));
-                    });
-        } catch(Exception e) {
+            masterJobFuture.whenCompleteAsync((jobInfos, exc) -> logJobInfo(jobInfos), COMPLETION_MESSAGE_EXECUTOR);
+            return computationFactory.newCompletedComputation(masterJobFuture.getJobId());
+        } catch (Exception e) {
             logger.error("Error starting spark master node for {}", jobWorkingPath, e);
             return computationFactory.newFailedComputation(e);
         }
     }
 
-    private ServiceComputation<SparkCluster> startSparkWorkerJobs(JobInfo masterJobInfo,
+    private ServiceComputation<SparkCluster> startSparkWorkerJobs(Long masterJobId,
                                                                   int numNodes,
                                                                   int minRequiredWorkers,
                                                                   Path jobWorkingPath,
@@ -170,10 +163,10 @@ public class LSFSparkClusterLauncher {
                                                                   String sparkDriverMemory,
                                                                   String sparkExecutorMemory,
                                                                   String sparkLogConfigFile) {
-        logger.info("Starting Spark-{} cluster with master {} + {} worker nodes and working directory {}", sparkVersion, masterJobInfo, numNodes, jobWorkingPath);
+        logger.info("Starting Spark-{} cluster with master {} + {} worker nodes and working directory {}", sparkVersion, masterJobId, numNodes, jobWorkingPath);
         List<JobFuture> workerJobs = IntStream.range(0, numNodes)
                 .mapToObj(ni -> createSparkJobTemplate(
-                        "W" + masterJobInfo.getJobId(),
+                        "W" + masterJobId,
                         jobWorkingPath,
                         jobOutputPath,
                         jobErrorPath,
@@ -181,10 +174,11 @@ public class LSFSparkClusterLauncher {
                 .map(jt -> {
                     try {
                         JobFuture workerJob = jobMgr.submitJob(jt);
-                        logger.info("Submitted worker spark job {} part of {} cluster", workerJob.getJobId(), masterJobInfo.getJobId());
+                        logger.info("Submitted worker spark job {} part of {} cluster", workerJob.getJobId(), masterJobId);
+                        workerJob.whenCompleteAsync((jobInfos, exc) -> logJobInfo(jobInfos), COMPLETION_MESSAGE_EXECUTOR);
                         return workerJob;
                     } catch(Exception e) {
-                        logger.error("Error starting one spark worker out of {} for cluster {}", numNodes, masterJobInfo, e);
+                        logger.error("Error starting one spark worker out of {} for cluster {}", numNodes, masterJobId, e);
                         return JobFuture.withException(e);
                     }
                 })
@@ -192,7 +186,7 @@ public class LSFSparkClusterLauncher {
         return computationFactory.newCompletedComputation(new SparkCluster(
                 computationFactory,
                 jobMgr,
-                masterJobInfo.getJobId(),
+                masterJobId,
                 workerJobs.stream().filter(jf -> !jf.isCompletedExceptionally()).map(jf -> jf.getJobId()).collect(Collectors.toList()),
                 minRequiredWorkers,
                 null, // no master URI yet because the master job may still be waiting
