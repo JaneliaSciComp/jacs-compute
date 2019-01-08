@@ -376,7 +376,9 @@ public class TmResource {
     public void removeTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("neuronId") final Long neuronId) {
         LOG.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
-        tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey);
+        if (tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey) && neuronId != null) {
+            domainObjectIndexer.removeFromIndexById(neuronId.toString());
+        }
     }
 
     @POST
