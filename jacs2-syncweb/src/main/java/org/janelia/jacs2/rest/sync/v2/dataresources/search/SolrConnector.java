@@ -43,5 +43,4 @@ public class SolrConnector {
 			throw new IllegalStateException(e);
 		}
 	}
-
 }
