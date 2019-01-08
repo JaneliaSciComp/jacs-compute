@@ -81,6 +81,10 @@ dependencies {
         // cron utils
         CRON_UTILS_LIB = "com.cronutils:cron-utils:7.0.1"
 
+        // search
+        SOLR_VERSION = "3.6.2"
+        SOLR_SEARCH_LIB = "org.apache.solr:solr-solrj:${SOLR_VERSION}"
+
         // janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.0.0"
         JACS_MODEL_LIB = "org.janelia:jacs-model:1.1.1"
