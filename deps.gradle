@@ -84,7 +84,9 @@ dependencies {
         // search
         SOLR_VERSION = "3.6.2"
         SOLR_SEARCH_LIB = "org.apache.solr:solr-solrj:${SOLR_VERSION}"
-	HTTP_CLIENT_LIB = "org.apache.httpcomponents:httpclient:4.5.6"
+        HTTP_COMPONENTS_VERSION = "4.5.6"
+        HTTP_CLIENT_LIB = "org.apache.httpcomponents:httpclient:${HTTP_COMPONENTS_VERSION}"
+        HTTP_MIME_LIB = "org.apache.httpcomponents:httpmime:${HTTP_COMPONENTS_VERSION}"
 
         // janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.0.0"
