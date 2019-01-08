@@ -248,7 +248,9 @@ public class TmSampleResource {
     public void removeTmSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("sampleId") final Long sampleId) {
         LOG.debug("removeTmSample(subjectKey: {}, sampleId: {})", subjectKey, sampleId);
-        tmSampleDao.removeTmSample(subjectKey, sampleId);
+        if (tmSampleDao.removeTmSample(subjectKey, sampleId) && sampleId != null) {
+            domainObjectIndexer.removeFromIndexById(sampleId.toString());
+        }
     }
 
 }
