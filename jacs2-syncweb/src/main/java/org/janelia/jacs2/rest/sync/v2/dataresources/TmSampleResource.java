@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.dataservice.search.SolrConnector;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
@@ -53,6 +54,8 @@ public class TmSampleResource {
     private LegacyDomainDao legacyDomainDao;
     @Inject
     private TmSampleDao tmSampleDao;
+    @Inject
+    private SolrConnector domainObjectIndexer;
 
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
@@ -210,7 +213,9 @@ public class TmSampleResource {
     @Produces(MediaType.APPLICATION_JSON)
     public TmSample createTmSample(DomainQuery query) {
         LOG.trace("createTmSample({})", query);
-        return tmSampleDao.createTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
+        TmSample tmSample = tmSampleDao.createTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
+        domainObjectIndexer.addToIndex(tmSample);
+        return tmSample;
     }
 
     @ApiOperation(value = "Updates an existing TmSample",
@@ -226,7 +231,9 @@ public class TmSampleResource {
     @Produces(MediaType.APPLICATION_JSON)
     public TmSample updateTmSample(@ApiParam DomainQuery query) {
         LOG.debug("updateTmSample({})", query);
-        return tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
+        TmSample updatedTmSample = tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
+        domainObjectIndexer.addToIndex(updatedTmSample);
+        return updatedTmSample;
     }
 
     @ApiOperation(value = "Removes a TmSample",
