@@ -65,6 +65,7 @@ public class SolrConnector {
     public boolean addToIndex(DomainObject domainObject) {
         try {
             solr.add(createSolrDoc(domainObject), solrCommitDelayInMillis);
+            solr.commit(false, false);
             return true;
         } catch (Exception e) {
             LOG.error("Error while updating solr index for {}", domainObject, e);
@@ -75,6 +76,7 @@ public class SolrConnector {
     public boolean removeFromIndexById(String id) {
         try {
             solr.deleteById(id, solrCommitDelayInMillis);
+            solr.commit(false, false);
             return true;
         } catch (Exception e) {
             LOG.error("Error while removing {} from solr index", id, e);
