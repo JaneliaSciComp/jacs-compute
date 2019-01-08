@@ -13,6 +13,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartMediaTypes;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.dataservice.search.SolrConnector;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.DomainUtils;
@@ -61,6 +62,8 @@ public class TmResource {
     private TmWorkspaceDao tmWorkspaceDao;
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
+    @Inject
+    private SolrConnector domainObjectIndexer;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
@@ -141,7 +144,9 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     public TmWorkspace createTmWorkspace(DomainQuery query) {
         LOG.trace("createTmWorkspace({})", query);
-        return tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
+        TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
+        domainObjectIndexer.addToIndex(tmWorkspace);
+        return tmWorkspace;
     }
 
     @POST
@@ -157,7 +162,9 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("copyTmWorkspace({})", query);
-        return tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), (String) query.getObjectType());
+        TmWorkspace tmWorkspace = tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), (String) query.getObjectType());
+        domainObjectIndexer.addToIndex(tmWorkspace);
+        return tmWorkspace;
     }
 
     @ApiOperation(value = "Updates an existing TmWorkspace",
@@ -173,7 +180,9 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     public TmWorkspace updateTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("updateTmWorkspace({})", query);
-        return tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
+        TmWorkspace tmWorkspace = tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
+        domainObjectIndexer.addToIndex(tmWorkspace);
+        return tmWorkspace;
     }
 
     @ApiOperation(value = "Removes a TmWorkspace",
@@ -188,7 +197,8 @@ public class TmResource {
     public void removeTmWorkspace(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.debug("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
-        tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
+        long nDeletedItems = tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
+        if (nDeletedItems > 0 && workspaceId != null) domainObjectIndexer.removeFromIndexById(workspaceId.toString());
     }
 
     @ApiOperation(value = "Gets the neurons for a workspace",
@@ -263,6 +273,7 @@ public class TmResource {
                     .build();
         } else {
             TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace, neuronPointsStream);
+            domainObjectIndexer.addToIndex(newNeuron);
             return Response.ok(newNeuron)
                     .build();
         }
@@ -300,6 +311,7 @@ public class TmResource {
                 protoBufStream = null;
             }
             TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
+            domainObjectIndexer.addToIndex(updatedNeuron);
             tmNeuronMetadataDao.updateNeuronPoints(updatedNeuron, protoBufStream);
             list.add(updatedNeuron);
         }

@@ -3,6 +3,7 @@ package org.janelia.jacs2.rest.sync.v2.dataresources.search;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
+import org.janelia.jacs2.dataservice.search.SolrDocType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

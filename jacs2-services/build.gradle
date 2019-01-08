@@ -5,6 +5,8 @@ project(":jacs2-services") {
                 CRON_UTILS_LIB,
                 DRMAA1_LIB,
                 DBCP_LIB,
+                HTTP_CLIENT_LIB,
+                HTTP_MIME_LIB,
                 JACKSON_ANNOTATIONS_LIB,
                 JACKSON_CORE_LIB,
                 JACKSON_DATABIND_LIB,
@@ -15,7 +17,8 @@ project(":jacs2-services") {
                 JAVA_EXP_IMPL_LIB,
                 MONGODB_DRIVER_LIB,
                 REFLECTIONS_LIB,
-                JAVA_LSF_LIB,       
+                JAVA_LSF_LIB,
+                SOLR_SEARCH_LIB,
                 SPARK_LAUNCHER
 
         compile (JONGO_LIB) {

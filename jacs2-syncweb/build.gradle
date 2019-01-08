@@ -6,10 +6,7 @@ project(":jacs2-syncweb") {
     dependencies {
         compile project(":jacs2-commonweb"),
                 CDI_SE_CORE_LIB,
-                HTTP_CLIENT_LIB,
-                HTTP_MIME_LIB,
                 JAX_RS_JERSEY_CDI_SERVLET_LIB,
-                JAX_RS_JERSEY_INJECT_LIB,
-                SOLR_SEARCH_LIB
+                JAX_RS_JERSEY_INJECT_LIB
     }
 }

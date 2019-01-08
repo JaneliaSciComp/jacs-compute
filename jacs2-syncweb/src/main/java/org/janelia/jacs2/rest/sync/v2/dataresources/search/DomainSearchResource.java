@@ -9,6 +9,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.dataservice.search.SolrConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ import java.util.Map;
 public class DomainSearchResource {
     private static final Logger LOG = LoggerFactory.getLogger(DomainSearchResource.class);
 
-    @Inject private SolrConnector solr;
+    @Inject private SolrConnector domainObjectIndexer;
 
     @POST
     @Path("/search")
@@ -62,7 +63,7 @@ public class DomainSearchResource {
         SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);
         query.setFacetMinCount(1);
         query.setFacetLimit(500);
-        QueryResponse response = solr.search(query);
+        QueryResponse response = domainObjectIndexer.search(query);
         Map<String,List<FacetValue>> facetValues = new HashMap<>();
         if (response.getFacetFields()!=null) {
             for (final FacetField ff : response.getFacetFields()) {
