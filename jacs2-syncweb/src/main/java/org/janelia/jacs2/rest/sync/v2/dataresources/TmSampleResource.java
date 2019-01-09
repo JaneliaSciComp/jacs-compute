@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
@@ -52,7 +53,13 @@ import java.util.Map;
                 }
         )
 )
-@Api(value = "MouseLight Data Service")
+@Api(
+        value = "Janelia Mouselight Data Service",
+        authorizations = {
+                @Authorization("user"),
+                @Authorization("runAs")
+        }
+)
 @RequireAuthentication
 @ApplicationScoped
 @Produces("application/json")

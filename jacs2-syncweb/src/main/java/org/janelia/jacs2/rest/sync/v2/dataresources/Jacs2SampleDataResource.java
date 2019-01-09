@@ -1,6 +1,8 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
+import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
@@ -34,6 +36,13 @@ import java.util.List;
                         @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
                 }
         )
+)
+@Api(
+        value = "JACS2 Sample data resource",
+        authorizations = {
+                @Authorization("user"),
+                @Authorization("runAs")
+        }
 )
 @RequireAuthentication
 @ApplicationScoped

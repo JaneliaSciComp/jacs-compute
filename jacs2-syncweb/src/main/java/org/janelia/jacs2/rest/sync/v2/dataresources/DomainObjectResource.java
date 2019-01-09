@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.collections4.CollectionUtils;
@@ -52,7 +53,13 @@ import java.util.Set;
                 }
         )
 )
-@Api(value = "Janelia Workstation Domain Data")
+@Api(
+        value = "Janelia Workstation Domain Data",
+        authorizations = {
+                @Authorization("user"),
+                @Authorization("runAs")
+        }
+)
 @RequireAuthentication
 @Path("/data")
 public class DomainObjectResource {

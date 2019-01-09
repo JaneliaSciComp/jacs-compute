@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
@@ -51,7 +52,13 @@ import java.util.List;
                 }
         )
 )
-@Api(value = "Data TreeNode and Workspace Service")
+@Api(
+        value = "Data TreeNode and Workspace Service",
+        authorizations = {
+                @Authorization("user"),
+                @Authorization("runAs")
+        }
+)
 @RequireAuthentication
 @ApplicationScoped
 @Path("/data")
