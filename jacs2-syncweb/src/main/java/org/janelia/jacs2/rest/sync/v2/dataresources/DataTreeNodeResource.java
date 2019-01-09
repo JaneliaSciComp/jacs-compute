@@ -2,10 +2,13 @@ package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import com.google.common.collect.ImmutableList;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.SecurityDefinition;
+import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
@@ -40,6 +43,14 @@ import java.util.List;
 /**
  * Web service for handling Workspace and TreeNode entities.
  */
+@SwaggerDefinition(
+        securityDefinition = @SecurityDefinition(
+                apiKeyAuthDefinitions = {
+                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
+                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
+                }
+        )
+)
 @Api(value = "Data TreeNode and Workspace Service")
 @RequireAuthentication
 @ApplicationScoped

@@ -1,5 +1,8 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import io.swagger.annotations.ApiKeyAuthDefinition;
+import io.swagger.annotations.SecurityDefinition;
+import io.swagger.annotations.SwaggerDefinition;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
@@ -24,6 +27,14 @@ import javax.ws.rs.core.Response;
 import java.util.Date;
 import java.util.List;
 
+@SwaggerDefinition(
+        securityDefinition = @SecurityDefinition(
+                apiKeyAuthDefinitions = {
+                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
+                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
+                }
+        )
+)
 @RequireAuthentication
 @ApplicationScoped
 @Path("/samples")

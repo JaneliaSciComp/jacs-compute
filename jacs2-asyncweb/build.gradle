@@ -1,4 +1,8 @@
-apply plugin: 'application'
+plugins {
+    id 'application'
+    id 'distribution'
+    id 'nebula.rpm' version '4.8.0'
+}
 
 mainClassName = 'org.janelia.jacs2.app.AsyncServicesApp'
 
@@ -11,5 +15,20 @@ project(":jacs2-asyncweb") {
 
         testCompile JAX_RS_JERSEY_TEST_LIB,
                     JAX_RS_JERSEY_TEST_PROVIDER_LIB
+    }
+
+    distributions {
+        main {
+           contents {
+                into('swagger-webapp') {
+                    from(new File(project(':jacs2-commonweb').projectDir, 'src/main/swagger-webapp')) {
+                        include '**'
+                    }
+                    from(new File(projectDir, 'src/main/swagger-webapp')) {
+                        include 'index.html'
+                    }
+                }
+            }
+        }
     }
 }

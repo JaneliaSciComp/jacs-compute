@@ -1,26 +1,24 @@
 package org.janelia.jacs2.app;
 
-import com.beust.jcommander.JCommander;
-import io.undertow.servlet.api.ListenerInfo;
-import org.jboss.weld.environment.servlet.Listener;
-
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 import javax.servlet.ServletException;
-
-import static io.undertow.servlet.Servlets.listener;
+import javax.ws.rs.core.Application;
+import java.util.Collections;
+import java.util.EventListener;
+import java.util.List;
 
 /**
  * This is the bootstrap application for synchronous services.
  */
 public class SyncServicesApp extends AbstractServicesApp {
 
-    public static void main(String[] args) throws ServletException {
-        final AppArgs appArgs = new AppArgs();
-        JCommander cmdline = new JCommander(appArgs);
-        cmdline.parse(args);
+    private static final String DEFAULT_APP_ID = "JacsSyncServices";
+
+    public static void main(String[] args) {
+        final AppArgs appArgs = parseAppArgs(args, new AppArgs());
         if (appArgs.displayUsage) {
-            cmdline.usage();
+            displayAppUsage(appArgs);
             return;
         }
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
@@ -30,13 +28,18 @@ public class SyncServicesApp extends AbstractServicesApp {
     }
 
     @Override
-    protected String getV2ConfigName() {
-        return JAXSyncAppConfig.class.getName();
+    String getApplicationId() {
+        return DEFAULT_APP_ID;
     }
 
     @Override
-    protected ListenerInfo[] getAppListeners() {
-        return new ListenerInfo[] {
-        };
+    Application getJaxApplication() {
+        return new JAXSyncAppConfig();
     }
+
+    @Override
+    List<Class<? extends EventListener>> getAppListeners() {
+        return Collections.emptyList();
+    }
+
 }

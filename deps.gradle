@@ -8,7 +8,7 @@ dependencies {
         LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
 
         // dependency injection
-        JAVAX_ENTERPRISE_VERSION = "2.0"
+        JAVAX_ENTERPRISE_VERSION = "2.0.SP1"
         WELD_VERSION = "3.0.5.Final"
         CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
         CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
@@ -19,7 +19,7 @@ dependencies {
         LDAP_CLIENT_LIB = "org.apache.directory.api:api-ldap-client-all:2.0.0.AM2"
 
         // utilities
-        GUAVA_LIB = "com.google.guava:guava:23.0"
+        GUAVA_LIB = "com.google.guava:guava:27.0.1-jre"
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // database
@@ -31,9 +31,9 @@ dependencies {
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
         // apache commons
-        COMMONS_LANG_VERSION = "3.7"
+        COMMONS_LANG_VERSION = "3.8.1"
         COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:${COMMONS_LANG_VERSION}"
-        COMMONS_COLLECTIONS_VERSION = "4.1"
+        COMMONS_COLLECTIONS_VERSION = "4.2"
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:${COMMONS_COLLECTIONS_VERSION}"
 
         // JAX-RS API
@@ -54,12 +54,15 @@ dependencies {
         CMDLINE_ARG_LIB = "com.beust:jcommander:1.72"
 
         // servlet engine
-        JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:3.1.0"
-        UNDERTOW_VERSION = "1.4.22.Final"
+        JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:4.0.1"
+        UNDERTOW_VERSION = "2.0.16.Final"
         UNDERTOW_CORE_LIB = "io.undertow:undertow-core:${UNDERTOW_VERSION}"
         UNDERTOW_SERVLET_LIB = "io.undertow:undertow-servlet:${UNDERTOW_VERSION}"
 
-        SWAGGER_LIB = "io.swagger:swagger-jersey2-jaxrs:1.5.16"
+	// REST API documentation
+        SWAGGER_VERSION = "1.5.16"
+        SWAGGER_ANNOTATIONS_LIB = "io.swagger:swagger-annotations:${SWAGGER_VERSION}"
+        SWAGGER_JAXRS_LIB = "io.swagger:swagger-jersey2-jaxrs:${SWAGGER_VERSION}"
 
         // JSON
         JACKSON_VERSION = "2.8.8"

@@ -1,26 +1,26 @@
 package org.janelia.jacs2.app;
 
-import com.beust.jcommander.JCommander;
-import io.undertow.servlet.api.ListenerInfo;
 import org.janelia.jacs2.cdi.SeContainerFactory;
 import org.janelia.jacs2.job.BackgroundJobs;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.servlet.ServletException;
-
-import static io.undertow.servlet.Servlets.listener;
+import javax.ws.rs.core.Application;
+import java.util.Collections;
+import java.util.EventListener;
+import java.util.List;
 
 /**
  * This is the bootstrap application for asynchronous services.
  */
 public class AsyncServicesApp extends AbstractServicesApp {
 
-    public static void main(String[] args) throws ServletException {
-        final AppArgs appArgs = new AppArgs();
-        JCommander cmdline = new JCommander(appArgs);
-        cmdline.parse(args);
+    private static final String DEFAULT_APP_ID = "JacsAsyncServices";
+
+    public static void main(String[] args) {
+        final AppArgs appArgs = parseAppArgs(args, new AppArgs());
         if (appArgs.displayUsage) {
-            cmdline.usage();
+            displayAppUsage(appArgs);
             return;
         }
         SeContainer container = SeContainerFactory.getSeContainer();
@@ -29,15 +29,18 @@ public class AsyncServicesApp extends AbstractServicesApp {
     }
 
     @Override
-    protected String getV2ConfigName() {
-        return JAXAsyncAppConfig.class.getName();
+    String getApplicationId() {
+        return DEFAULT_APP_ID;
     }
 
     @Override
-    protected ListenerInfo[] getAppListeners() {
-        return new ListenerInfo[] {
-                listener(BackgroundJobs.class)
-        };
+    Application getJaxApplication() {
+        return new JAXAsyncAppConfig();
+    }
+
+    @Override
+    List<Class<? extends EventListener>> getAppListeners() {
+        return Collections.singletonList(BackgroundJobs.class);
     }
 
 }

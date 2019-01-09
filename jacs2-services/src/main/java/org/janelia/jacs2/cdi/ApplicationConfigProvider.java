@@ -22,10 +22,14 @@ public class ApplicationConfigProvider {
 
     private static final String DEFAULT_APPLICATION_CONFIG_RESOURCES = "/jacs.properties";
 
-    private static final Map<String, String> APPLICATION_ARGS = new HashMap<>();
+    private static final Map<String, String> APP_DYNAMIC_ARGS = new HashMap<>();
 
-    public static Map<String, String> applicationArgs() {
-        return APPLICATION_ARGS;
+    static Map<String, String> getAppDynamicArgs() {
+        return APP_DYNAMIC_ARGS;
+    }
+
+    public static void setAppDynamicArgs(Map<String, String> appDynamicArgs) {
+        if (appDynamicArgs != null) APP_DYNAMIC_ARGS.putAll(appDynamicArgs);
     }
 
     private ApplicationConfig applicationConfig = new ApplicationConfigImpl();

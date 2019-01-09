@@ -1,10 +1,13 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.SecurityDefinition;
+import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
@@ -39,6 +42,14 @@ import javax.ws.rs.core.UriBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
+@SwaggerDefinition(
+        securityDefinition = @SecurityDefinition(
+                apiKeyAuthDefinitions = {
+                        @ApiKeyAuthDefinition(key = "user", name = "username", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER),
+                        @ApiKeyAuthDefinition(key = "runAs", name = "runasuser", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
+                }
+        )
+)
 @Api(value = "Janelia Workstation Domain Data")
 @RequireAuthentication
 @Path("/data")
