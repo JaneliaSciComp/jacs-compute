@@ -69,7 +69,7 @@ public class DataSummaryResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDiskUsageSummary(@ApiParam @QueryParam("volumeName") String volumeNameParam,
                                         @ApiParam @QueryParam("subjectKey") String subjectKey) {
-        LOG.trace("Start getDataSummary({})", subjectKey);
+        LOG.trace("Start getDiskUsageSummary({}, {})", volumeNameParam, subjectKey);
         try {
             DiskUsageSummary summary = new DiskUsageSummary();
             BigDecimal totalSpace = summaryDao.getDiskSpaceUsageByOwnerKey(subjectKey);
