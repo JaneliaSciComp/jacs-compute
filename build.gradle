@@ -1,3 +1,7 @@
+plugins {
+    id "com.github.hierynomus.license" version "0.15.0"
+}
+
 allprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
@@ -93,6 +97,11 @@ subprojects {
                     configurations.integrationTestRuntime
                 ]
             }
+        }
+
+        downloadLicenses {
+            includeProjectDependencies = true
+            dependencyConfiguration = 'compile'
         }
 
         task integrationTest(type: Test) {
