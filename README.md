@@ -131,5 +131,7 @@ curl --request POST --url http://goinac-ws1:8080/api/v2/async-services/fijiMacro
 curl --request POST --url http://goinac-ws1:8080/api/v2/async-services/align --header 'acc: application/json' --header 'cache-control: no-cache' --header 'content-type: application/json' --data '{"processingLocation": "LOCAL", "args": ["-i1File", "/nrs/scicompsoft/yuy/flylight/brains/issue/A4_ZB4_T1_CEN_20160318_24_40X_R1.v3draw", "-i1Channels", "4", "-i1Ref", "4", "-i1Res", "0.4413x0.4413x0.44", "-config", "/nrs/scicompsoft/yuy/brainaligner/systemvars.apconf", "-templateDir", "/nrs/scicompsoft/yuy/configured_templates", "-toolsDir", "/nrs/scicompsoft/yuy/Toolkits", "-mountingProtocol", "DPX PBS Mounting", "-gender", "f", "-resultsDir", "/home/goinac/Work/jacs-2/tt/missing/align"]}'
 `
 
+## License 
 
+[Janelia Open Source License](https://www.janelia.org/open-science/software-licensing)
 
