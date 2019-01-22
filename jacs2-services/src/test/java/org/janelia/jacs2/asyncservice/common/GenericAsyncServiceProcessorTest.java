@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -120,6 +121,24 @@ public class GenericAsyncServiceProcessorTest {
                         new JacsServiceDataBuilder(null)
                                 .setName("s1")
                                 .addArgs("-f1", "f1.1,f1.2,f1.3", "-f1", "f1val", "-f2", "f2Val", "-f3", "'f3.1.val,f3.2.val'", "-bool", "-numeric", "11")
+                                .build()
+                ),
+                new TestData(
+                        ImmutableList.of(
+                                new ServiceArg("-serviceArgs", "-f1, f1val, -f2, f2Val, -f3, 'f3.1.val,f3.2.val'"),
+                                new ServiceArg("-serviceName", "s1")),
+                        new JacsServiceDataBuilder(null)
+                                .setName("s1")
+                                .addArgs("-f1", "f1val", "-f2", "f2Val", "-f3", "'f3.1.val,f3.2.val'")
+                                .build()
+                ),
+                new TestData(
+                        ImmutableList.of(
+                                new ServiceArg("", Arrays.asList("-f1", "f1val", "-f2" ,"f2Val", "-f3", "f3.1.val,f3.2.val")),
+                                new ServiceArg("-serviceName", "s1")),
+                        new JacsServiceDataBuilder(null)
+                                .setName("s1")
+                                .addArgs("-f1", "f1val", "-f2", "f2Val", "-f3", "f3.1.val,f3.2.val")
                                 .build()
                 )
         };

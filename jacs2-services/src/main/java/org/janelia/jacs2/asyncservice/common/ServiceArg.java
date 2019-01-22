@@ -1,14 +1,11 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 public class ServiceArg {
     private final String flag;

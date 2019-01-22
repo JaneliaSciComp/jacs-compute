@@ -1,5 +1,6 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import com.google.common.io.ByteStreams;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -9,9 +10,13 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.server.ContainerRequest;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.search.SolrConnector;
+import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
@@ -32,10 +37,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -72,6 +80,8 @@ public class TmSampleResource {
     private LegacyDomainDao legacyDomainDao;
     @Inject
     private TmSampleDao tmSampleDao;
+    @Inject
+    private StorageService storageService;
     @Inject
     private SolrConnector domainObjectIndexer;
 
@@ -178,17 +188,18 @@ public class TmSampleResource {
     @Path("sample/constants")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTmSampleConstants(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                         @ApiParam @QueryParam("samplePath") final String samplePath) {
+                                         @ApiParam @QueryParam("samplePath") final String samplePath,
+                                         @Context ContainerRequest containerRequestContext) {
         LOG.trace("getTmSampleConstants(subjectKey: {}, samplePath: {})", subjectKey, samplePath);
-
         // read and process transform.txt file in Sample path
         // this is intended to be a one-time process and data returned will be stored in TmSample upon creation
-        java.nio.file.Path sampleTransformPath = Paths.get(samplePath, "transform.txt");
+        String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
+        InputStream transformContentStream = storageService.getStorageContent(samplePath, "transform.txt", StringUtils.defaultIfBlank(subjectKey, authorizedSubjectKey), null);;
         try {
             Map<String, Object> constants = new HashMap<>();
             Map<String, Integer> origin = new HashMap<>();
             Map<String, Double> scaling = new HashMap<>();
-            BufferedReader reader = Files.newBufferedReader(sampleTransformPath);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(transformContentStream));
             String line;
             Map<String, Double> values = new HashMap<>();
             while ((line = reader.readLine()) != null) {
@@ -213,8 +224,10 @@ public class TmSampleResource {
         } catch (Exception e) {
             LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath, e);
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("Error reading " + sampleTransformPath))
+                    .entity(new ErrorResponse("Error reading transform.txt from " + samplePath))
                     .build();
+        } finally {
+            IOUtils.closeQuietly(transformContentStream);
         }
     }
 

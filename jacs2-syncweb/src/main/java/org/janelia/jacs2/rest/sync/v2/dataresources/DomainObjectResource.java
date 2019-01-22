@@ -130,9 +130,8 @@ public class DomainObjectResource {
 
     @ApiOperation(value = "Gets an Domain Object's Details using either the references parameters or the objectType & objectIds")
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully got a list of DomainObjectst", response=DomainObject.class,
-                    responseContainer = "List"),
-            @ApiResponse( code = 500, message = "Internal Server Error getting list of DomainObjects" )
+            @ApiResponse(code = 200, message = "Successfully got a list of DomainObjectst", response=DomainObject.class, responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal Server Error getting list of DomainObjects" )
     })
     @POST
     @Path("/domainobject/details")

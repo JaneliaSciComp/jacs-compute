@@ -100,9 +100,6 @@ subprojects {
             classpath = sourceSets.integrationTest.runtimeClasspath
         }
     
-        check.dependsOn integrationTest
-        integrationTest.mustRunAfter test
-
     }
     
     sourceCompatibility = 1.8
