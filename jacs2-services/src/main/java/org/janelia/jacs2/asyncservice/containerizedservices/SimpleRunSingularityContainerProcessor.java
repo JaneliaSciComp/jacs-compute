@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
@@ -61,13 +62,14 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
         if (StringUtils.isNotBlank(runArgs.appName)) {
             scriptWriter.addArgs("--app", runArgs.appName);
         }
-        String bindPaths = runArgs.bindPathsAsString();
+        String scratchDir = serviceScratchDir(jacsServiceData);
+        String bindPaths = runArgs.bindPathsAsString(
+                ImmutableSet.<RunSingularityContainerArgs.BindPath>builder()
+                        .addAll(runArgs.bindPaths)
+                        .add(new RunSingularityContainerArgs.BindPath().setSrcPath(scratchDir))
+                        .build());
         if (StringUtils.isNotBlank(bindPaths)) {
             scriptWriter.addArgs("--bind", bindPaths);
-        }
-        String scratchDir = serviceScratchDir(jacsServiceData);
-        if (StringUtils.isNotBlank(scratchDir)) {
-            scriptWriter.addArgs("--bind", scratchDir);
         }
         if (StringUtils.isNotBlank(runArgs.overlay)) {
             scriptWriter.addArgs("--overlay", runArgs.overlay);

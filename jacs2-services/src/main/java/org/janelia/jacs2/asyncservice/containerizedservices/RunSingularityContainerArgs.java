@@ -8,10 +8,14 @@ import com.beust.jcommander.converters.DefaultListConverter;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,6 +41,11 @@ class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
             return StringUtils.isNotEmpty(srcPath);
         }
 
+        BindPath setSrcPath(String srcPath) {
+            this.srcPath = srcPath;
+            return this;
+        }
+
         String asString() {
             StringBuilder specBuilder = new StringBuilder();
             specBuilder.append(srcPath);
@@ -49,6 +58,30 @@ class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
                 }
             }
             return specBuilder.toString();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+
+            if (o == null || getClass() != o.getClass()) return false;
+
+            BindPath bindPath = (BindPath) o;
+
+            return new EqualsBuilder()
+                    .append(srcPath, bindPath.srcPath)
+                    .append(targetPath, bindPath.targetPath)
+                    .append(mountOpts, bindPath.mountOpts)
+                    .isEquals();
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder(17, 37)
+                    .append(srcPath)
+                    .append(targetPath)
+                    .append(mountOpts)
+                    .toHashCode();
         }
 
         @Override
@@ -117,8 +150,8 @@ class RunSingularityContainerArgs extends AbstractSingularityContainerArgs {
         super(description);
     }
 
-    String bindPathsAsString() {
-        return bindPaths.stream()
+    String bindPathsAsString(Set<BindPath> bindPathSet) {
+        return bindPathSet.stream()
                 .filter(RunSingularityContainerArgs.BindPath::isNotEmpty)
                 .map(RunSingularityContainerArgs.BindPath::asString)
                 .reduce((s1, s2) -> s1.trim() + "," + s2.trim())

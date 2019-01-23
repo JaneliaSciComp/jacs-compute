@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -101,7 +102,7 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
                         new ServiceArg("-enableHttps", args.enableHttps),
                         new ServiceArg("-op", args.operation.toString()),
                         new ServiceArg("-appName", args.appName),
-                        new ServiceArg("-bindPaths", args.bindPathsAsString()),
+                        new ServiceArg("-bindPaths", args.bindPathsAsString(ImmutableSet.copyOf(args.bindPaths))),
                         new ServiceArg("-overlay", args.overlay),
                         new ServiceArg("-enableNV", args.enableNV),
                         new ServiceArg("-initialPwd", args.initialPwd),
@@ -123,7 +124,7 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
                                 .add(new ServiceArg("-enableHttps", args.enableHttps))
                                 .add(new ServiceArg("-op", args.operation.toString()))
                                 .add(new ServiceArg("-appName", args.appName))
-                                .add(new ServiceArg("-bindPaths", args.bindPathsAsString()))
+                                .add(new ServiceArg("-bindPaths", args.bindPathsAsString(ImmutableSet.copyOf(args.bindPaths))))
                                 .add(new ServiceArg("-overlay", args.overlay))
                                 .add(new ServiceArg("-enableNV", args.enableNV))
                                 .add(new ServiceArg("-initialPwd", args.initialPwd))
