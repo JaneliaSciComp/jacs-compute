@@ -108,8 +108,8 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
                         new ServiceArg("-initialPwd", args.initialPwd),
                         new ServiceArg("-appArgs", args.appArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
                         new ServiceArg("-batchJobArgs", args.batchJobArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
-                        new ServiceArg("", args.getRemainingArgs().stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
-                );
+                        new ServiceArg("", args.getRemainingArgs().stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")))
+                        .thenApply(r -> new JacsServiceResult<>(jacsServiceData));
         } else {
             List<ServiceComputation<?>> expandedItemJobs = expandedArgs.stream()
                     .map(expandedArg -> {
