@@ -6,9 +6,7 @@ import java.lang.annotation.Annotation;
 
 public enum ProcessingLocation {
     LOCAL(LocalJob.class),
-    SGE_DRMAA(SGEDrmaaJob.class),
     LSF_JAVA(LSFJavaJob.class),
-    LSF_DRMAA(LSFDrmaaJob.class),
     ;
 
     private final Class<? extends Annotation> processingAnnotationClass;

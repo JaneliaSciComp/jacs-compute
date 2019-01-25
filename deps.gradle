@@ -25,7 +25,7 @@ dependencies {
         // database
         MONGODB_VERSION = "3.9.0"
         MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver-legacy:${MONGODB_VERSION}"
-        MYSQL_DRIVER_LIB = "mysql:mysql-connector-java:5.1.42"
+        MARIADB_DRIVER_LIB = "org.mariadb.jdbc:mariadb-java-client:2.3.0"
         DBCP_LIB = "org.apache.commons:commons-dbcp2:2.1.1"
         JONGO_LIB = "org.jongo:jongo:1.3.0"
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
@@ -77,9 +77,6 @@ dependencies {
 
         // expressions
         JAVA_EXP_IMPL_LIB = "org.glassfish:javax.el:3.0.0"
-
-        // drmaa
-        DRMAA1_LIB = "us.levk:drmaa-gridengine:6.2u5"
 
         // cron utils
         CRON_UTILS_LIB = "com.cronutils:cron-utils:7.0.1"

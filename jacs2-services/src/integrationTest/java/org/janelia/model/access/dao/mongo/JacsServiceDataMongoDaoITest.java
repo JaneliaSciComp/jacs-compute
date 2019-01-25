@@ -246,9 +246,9 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestService("s1.4", ProcessingLocation.LOCAL)
         );
         List<JacsServiceData> servicesInRunningState = ImmutableList.of(
-                createTestService("s2.4", ProcessingLocation.LSF_DRMAA),
-                createTestService("s2.5", ProcessingLocation.LSF_DRMAA),
-                createTestService("s2.6", ProcessingLocation.LSF_DRMAA)
+                createTestService("s2.4", ProcessingLocation.LSF_JAVA),
+                createTestService("s2.5", ProcessingLocation.LSF_JAVA),
+                createTestService("s2.6", ProcessingLocation.LSF_JAVA)
         );
         List<JacsServiceData> servicesInCanceledState = ImmutableList.of(
                 createTestService("s7", null),
@@ -293,9 +293,9 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestService("s1.4", ProcessingLocation.LOCAL)
         );
         List<JacsServiceData> servicesInRunningState = ImmutableList.of(
-                createTestService("s2.4", ProcessingLocation.SGE_DRMAA),
-                createTestService("s2.5", ProcessingLocation.SGE_DRMAA),
-                createTestService("s2.6", ProcessingLocation.SGE_DRMAA)
+                createTestService("s2.4", ProcessingLocation.LSF_JAVA),
+                createTestService("s2.5", ProcessingLocation.LSF_JAVA),
+                createTestService("s2.6", ProcessingLocation.LSF_JAVA)
         );
         List<JacsServiceData> servicesInCanceledState = ImmutableList.of(
                 createTestService("s7", null),
@@ -346,9 +346,9 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestService("s1.4", ProcessingLocation.LOCAL)
         );
         List<JacsServiceData> servicesInRunningState = ImmutableList.of(
-                createTestService("s2.4", ProcessingLocation.SGE_DRMAA),
-                createTestService("s2.5", ProcessingLocation.SGE_DRMAA),
-                createTestService("s2.6", ProcessingLocation.SGE_DRMAA)
+                createTestService("s2.4", ProcessingLocation.LSF_JAVA),
+                createTestService("s2.5", ProcessingLocation.LSF_JAVA),
+                createTestService("s2.6", ProcessingLocation.LSF_JAVA)
         );
         List<JacsServiceData> servicesInCanceledState = ImmutableList.of(
                 createTestService("s7", null),
@@ -555,9 +555,9 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestService("s1.4", ProcessingLocation.LOCAL)
         );
         List<JacsServiceData> u2Services = ImmutableList.of(
-                createTestService("s2.1", ProcessingLocation.SGE_DRMAA),
-                createTestService("s2.2", ProcessingLocation.SGE_DRMAA),
-                createTestService("s2.3", ProcessingLocation.SGE_DRMAA)
+                createTestService("s2.1", ProcessingLocation.LSF_JAVA),
+                createTestService("s2.2", ProcessingLocation.LSF_JAVA),
+                createTestService("s2.3", ProcessingLocation.LSF_JAVA)
         );
         u1Services.forEach(s -> {
             s.setOwnerKey("user:u1");
@@ -591,7 +591,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
     protected List<JacsServiceData> createMultipleTestItems(int nItems) {
         List<JacsServiceData> testItems = new ArrayList<>();
         for (int i = 0; i < nItems; i++) {
-            testItems.add(createTestService("s" + (i + 1), i % 2 == 0 ? ProcessingLocation.LOCAL : ProcessingLocation.SGE_DRMAA));
+            testItems.add(createTestService("s" + (i + 1), i % 2 == 0 ? ProcessingLocation.LOCAL : ProcessingLocation.LSF_JAVA));
         }
         return testItems;
     }

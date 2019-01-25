@@ -3,7 +3,6 @@ project(":jacs2-services") {
         compile CDI_API_LIB,
                 CMDLINE_ARG_LIB,
                 CRON_UTILS_LIB,
-                DRMAA1_LIB,
                 DBCP_LIB,
                 HTTP_CLIENT_LIB,
                 HTTP_MIME_LIB,
@@ -33,6 +32,6 @@ project(":jacs2-services") {
             exclude group: 'javax.transaction'
         }
 
-        runtime MYSQL_DRIVER_LIB
+        runtime MARIADB_DRIVER_LIB
     }
 }

@@ -97,7 +97,7 @@ public class SimpleRunSingularityContainerProcessor extends AbstractSingularityC
 
     private String serviceScratchDir(JacsServiceData jacsServiceData) {
         String scratchDir = getApplicationConfig().getStringPropertyValue("service.DefaultScratchDir", "/scratch");
-        if (EnumSet.of(ProcessingLocation.LSF_DRMAA, ProcessingLocation.LSF_JAVA).contains(jacsServiceData.getProcessingLocation())
+        if (EnumSet.of(ProcessingLocation.LSF_JAVA).contains(jacsServiceData.getProcessingLocation())
                 || Files.exists(Paths.get(scratchDir))) {
             return scratchDir;
         } else {
