@@ -15,6 +15,7 @@ import org.glassfish.jersey.server.ContainerRequest;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.search.SolrConnector;
+import org.janelia.jacs2.dataservice.storage.DataStorageInfo;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -196,7 +197,14 @@ public class TmSampleResource {
                     .build();
         }
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        InputStream transformContentStream = storageService.getStorageContent(samplePath, "transform.txt", StringUtils.defaultIfBlank(subjectKey, authorizedSubjectKey), null);;
+        DataStorageInfo dsInfo = storageService.lookupStorage(samplePath, null, null, StringUtils.defaultIfBlank(subjectKey, authorizedSubjectKey), null)
+                .orElse(null);
+        if (dsInfo == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Invalid sample sample path - no storage found for " + samplePath))
+                    .build();
+        }
+        InputStream transformContentStream = storageService.getStorageContent(samplePath, "transform.txt", StringUtils.defaultIfBlank(subjectKey, authorizedSubjectKey), null);
         try {
             Map<String, Object> constants = new HashMap<>();
             Map<String, Integer> origin = new HashMap<>();
