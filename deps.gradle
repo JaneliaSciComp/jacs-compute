@@ -59,7 +59,7 @@ dependencies {
         UNDERTOW_CORE_LIB = "io.undertow:undertow-core:${UNDERTOW_VERSION}"
         UNDERTOW_SERVLET_LIB = "io.undertow:undertow-servlet:${UNDERTOW_VERSION}"
 
-	// REST API documentation
+        // REST API documentation
         SWAGGER_VERSION = "1.5.16"
         SWAGGER_ANNOTATIONS_LIB = "io.swagger:swagger-annotations:${SWAGGER_VERSION}"
         SWAGGER_JAXRS_LIB = "io.swagger:swagger-jersey2-jaxrs:${SWAGGER_VERSION}"
@@ -90,7 +90,15 @@ dependencies {
 
         // janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.0.0"
-        JACS_MODEL_LIB = "org.janelia:jacs-model:1.1.1"
+        JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:1.1.1"
+        JACS_MODEL_UTILS_LIB = "org.janelia.jacs-model:jacs-model-utils:1.1.1"
+
+        // scientific computing
+        JAMA_LIB = "gov.nist.math:jama:1.0.3"
+
+        // codecs
+        JAI_CORE_LIB = "javax.media:jai-core:1.1.3"
+        JAI_CODEC_LIB = "com.sun.media:jai-codec:1.1.3"
 
         // testing
         JUNIT_VERSION = "4.12"
