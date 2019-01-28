@@ -190,7 +190,7 @@ public class TmSampleResource {
         LOG.trace("getTmSampleConstants(subjectKey: {}, samplePath: {})", subjectKey, samplePath);
         // read and process transform.txt file in Sample path
         // this is intended to be a one-time process and data returned will be stored in TmSample upon creation
-        if (StringUtils.isNotBlank(samplePath)) {
+        if (StringUtils.isBlank(samplePath)) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResponse("Invalid sample sample path - the sample path cannot be empty"))
                     .build();
