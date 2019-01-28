@@ -1,6 +1,5 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import com.google.common.io.ByteStreams;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -44,8 +43,6 @@ import javax.ws.rs.core.Response;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -193,6 +190,11 @@ public class TmSampleResource {
         LOG.trace("getTmSampleConstants(subjectKey: {}, samplePath: {})", subjectKey, samplePath);
         // read and process transform.txt file in Sample path
         // this is intended to be a one-time process and data returned will be stored in TmSample upon creation
+        if (StringUtils.isNotBlank(samplePath)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Invalid sample sample path - the sample path cannot be empty"))
+                    .build();
+        }
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         InputStream transformContentStream = storageService.getStorageContent(samplePath, "transform.txt", StringUtils.defaultIfBlank(subjectKey, authorizedSubjectKey), null);;
         try {
