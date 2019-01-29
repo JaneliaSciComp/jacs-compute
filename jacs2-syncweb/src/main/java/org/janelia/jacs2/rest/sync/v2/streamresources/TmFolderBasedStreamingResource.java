@@ -5,11 +5,11 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.cdi.WithCache;
-import org.janelia.model.rendering.CoordinateAxis;
-import org.janelia.model.rendering.RawImage;
-import org.janelia.model.rendering.RenderedVolume;
-import org.janelia.model.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.CoordinateAxis;
+import org.janelia.rendering.RawImage;
+import org.janelia.rendering.RenderedVolume;
+import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.cdi.WithCache;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;

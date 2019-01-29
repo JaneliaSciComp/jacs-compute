@@ -2,9 +2,9 @@ package org.janelia.jacs2.rest.sync.v2.streamresources;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.rendering.CoordinateAxis;
-import org.janelia.model.rendering.RenderedVolumeLoader;
-import org.janelia.model.rendering.TileKey;
+import org.janelia.rendering.CoordinateAxis;
+import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.TileKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -88,17 +88,13 @@ dependencies {
         HTTP_CLIENT_LIB = "org.apache.httpcomponents:httpclient:${HTTP_COMPONENTS_VERSION}"
         HTTP_MIME_LIB = "org.apache.httpcomponents:httpmime:${HTTP_COMPONENTS_VERSION}"
 
-        // janelia libraries
+        // Janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.0.0"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:1.1.1"
-        JACS_MODEL_UTILS_LIB = "org.janelia.jacs-model:jacs-model-utils:1.1.1"
+        JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:1.1.1"
 
         // scientific computing
         JAMA_LIB = "gov.nist.math:jama:1.0.3"
-
-        // codecs
-        JAI_CORE_LIB = "javax.media:jai-core:1.1.3"
-        JAI_CODEC_LIB = "com.sun.media:jai-codec:1.1.3"
 
         // testing
         JUNIT_VERSION = "4.12"

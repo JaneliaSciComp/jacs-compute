@@ -13,10 +13,10 @@ import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmProtobufExchanger;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
-import org.janelia.model.rendering.RenderedVolume;
-import org.janelia.model.rendering.RenderedVolumeLoader;
 import org.janelia.model.util.IdSource;
 import org.janelia.model.util.MatrixUtilities;
+import org.janelia.rendering.RenderedVolume;
+import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
