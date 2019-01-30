@@ -45,7 +45,7 @@ class StorageContentHelper {
                                        String storageName, List<String> storageTags,
                                        String ownerKey, String authToken) {
         return storageService
-                .lookupStorage(storageServiceURL, storageId, storageName, ownerKey, authToken)
+                .lookupStorage(storageServiceURL, storageId, storageName, null, ownerKey, authToken)
                 .orElseGet(() -> storageService.createStorage(storageServiceURL, storageName, storageTags, ownerKey, authToken))
                 ;
     }

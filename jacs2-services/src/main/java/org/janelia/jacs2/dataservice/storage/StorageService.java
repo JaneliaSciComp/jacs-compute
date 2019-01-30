@@ -63,10 +63,15 @@ public class StorageService {
         }
     }
 
-    public Optional<DataStorageInfo> lookupStorage(String storageURI, String storageId, String storageName, String subject, String authToken) {
+    public Optional<DataStorageInfo> lookupStorage(String storageURI, String storageId, String storageName, String storagePath, String subject, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
-            WebTarget target = httpclient.target(storageURI);
+            WebTarget target;
+            if (StringUtils.isBlank(storageURI)) {
+                target = httpclient.target(masterStorageServiceURL);
+            } else {
+                target = httpclient.target(storageURI);
+            }
             if (!StringUtils.endsWith(storageURI, "/storage")) {
                 target = target.path("storage");
             }
@@ -75,6 +80,9 @@ public class StorageService {
             }
             if (StringUtils.isNotBlank(storageName)) {
                 target = target.queryParam("name", storageName);
+            }
+            if (StringUtils.isNotBlank(storagePath)) {
+                target = target.queryParam("storagePath", storagePath);
             }
             if (StringUtils.isNotBlank(subject)) {
                 target = target.queryParam("ownerKey", subject);

@@ -197,7 +197,7 @@ public class TmSampleResource {
                     .build();
         }
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        DataStorageInfo dsInfo = storageService.lookupStorage(samplePath, null, null, StringUtils.defaultIfBlank(subjectKey, authorizedSubjectKey), null)
+        DataStorageInfo dsInfo = storageService.lookupStorage(null, null, null, samplePath, StringUtils.defaultIfBlank(subjectKey, authorizedSubjectKey), null)
                 .orElse(null);
         if (dsInfo == null) {
             return Response.status(Response.Status.BAD_REQUEST)
