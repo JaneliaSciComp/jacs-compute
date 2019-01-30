@@ -1,8 +1,7 @@
 package org.janelia.jacs2.dataservice.storage;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 
@@ -10,6 +9,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@JsonDeserialize(using = StoragePathURIDeserializer.class)
 public class StoragePathURI {
 
     private static final Pattern STORAGE_PATH_URI_PATTERN = Pattern.compile("(?<schema>.+://)?(?<storagePath>.*)");
@@ -17,8 +17,7 @@ public class StoragePathURI {
     private final String schema;
     private final String storagePath;
 
-    @JsonCreator
-    public StoragePathURI(@JsonProperty("storagePath") String storagePath) {
+    public StoragePathURI(String storagePath) {
         if (StringUtils.isBlank(storagePath)) {
             this.schema = "";
             this.storagePath = "";

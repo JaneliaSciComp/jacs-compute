@@ -17,6 +17,7 @@ public class DataStorageInfo {
     private String name;
     private String ownerKey;
     private StoragePathURI storageRootPathURI;
+    private String dataVirtualPath;
     private String storageRootDir;
     private String path;
     private String storageHost;
@@ -54,6 +55,14 @@ public class DataStorageInfo {
 
     public void setStorageRootPathURI(StoragePathURI storageRootPathURI) {
         this.storageRootPathURI = storageRootPathURI;
+    }
+
+    public String getDataVirtualPath() {
+        return dataVirtualPath;
+    }
+
+    public void setDataVirtualPath(String dataVirtualPath) {
+        this.dataVirtualPath = dataVirtualPath;
     }
 
     public String getStorageRootDir() {
