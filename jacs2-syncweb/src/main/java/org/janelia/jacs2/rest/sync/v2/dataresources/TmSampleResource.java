@@ -204,7 +204,7 @@ public class TmSampleResource {
                     .entity(new ErrorResponse("Invalid sample sample path - no storage found for " + samplePath))
                     .build();
         }
-        InputStream transformContentStream = storageService.getStorageContent(samplePath, "transform.txt", StringUtils.defaultIfBlank(subjectKey, authorizedSubjectKey), null);
+        InputStream transformContentStream = storageService.getStorageContent(dsInfo.getDataStorageURI(), "transform.txt", StringUtils.defaultIfBlank(subjectKey, authorizedSubjectKey), null);
         try {
             Map<String, Object> constants = new HashMap<>();
             Map<String, Integer> origin = new HashMap<>();

@@ -144,6 +144,9 @@ public class StorageService {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI);
+            if (StringUtils.isNotBlank(entryName)) {
+                target = target.path("entry_content").path(entryName);
+            }
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {

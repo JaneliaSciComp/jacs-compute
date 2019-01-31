@@ -17,8 +17,9 @@ public class DataStorageInfo {
     private String name;
     private String ownerKey;
     private StoragePathURI storageRootPathURI;
-    private String dataVirtualPath;
     private String storageRootDir;
+    private String dataVirtualPath;
+    private String dataStorageURI;
     private String path;
     private String storageHost;
     private List<String> storageTags;
@@ -57,6 +58,14 @@ public class DataStorageInfo {
         this.storageRootPathURI = storageRootPathURI;
     }
 
+    public String getStorageRootDir() {
+        return storageRootDir;
+    }
+
+    public void setStorageRootDir(String storageRootDir) {
+        this.storageRootDir = storageRootDir;
+    }
+
     public String getDataVirtualPath() {
         return dataVirtualPath;
     }
@@ -65,12 +74,12 @@ public class DataStorageInfo {
         this.dataVirtualPath = dataVirtualPath;
     }
 
-    public String getStorageRootDir() {
-        return storageRootDir;
+    public String getDataStorageURI() {
+        return dataStorageURI;
     }
 
-    public void setStorageRootDir(String storageRootDir) {
-        this.storageRootDir = storageRootDir;
+    public void setDataStorageURI(String dataStorageURI) {
+        this.dataStorageURI = dataStorageURI;
     }
 
     public String getPath() {
