@@ -1,6 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.streamresources;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.rendering.CoordinateAxis;
 import org.janelia.rendering.RenderedVolumeLoader;
@@ -18,6 +19,7 @@ class TmStreamingResourceHelper {
     private static final Logger LOG = LoggerFactory.getLogger(TmStreamingResourceHelper.class);
 
     static Response streamTileFromDirAndCoord(
+            RenderedVolumeLocationFactory renderedVolumeLocationFactory,
             RenderedVolumeLoader renderedVolumeLoader,
             String baseFolderParam,
             Integer zoomParam,
@@ -33,7 +35,7 @@ class TmStreamingResourceHelper {
                     .build();
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.loadVolume(Paths.get(baseFolderName))
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName))
                 .flatMap(rv -> rv.getTileInfo(axisParam)
                         .map(tileInfo -> TileKey.fromRavelerTileCoord(
                                 xParam,

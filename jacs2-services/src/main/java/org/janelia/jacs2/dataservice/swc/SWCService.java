@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.swc;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
@@ -38,6 +39,7 @@ public class SWCService {
     private final TmSampleDao tmSampleDao;
     private final TmWorkspaceDao tmWorkspaceDao;
     private final TmNeuronBufferDao tmNeuronBufferDao;
+    private final RenderedVolumeLocationFactory renderedVolumeLocationFactory;
     private final RenderedVolumeLoader renderedVolumeLoader;
     private final SWCReader swcReader;
     private final Path defaultSWCLocation;
@@ -50,6 +52,7 @@ public class SWCService {
                       TmSampleDao tmSampleDao,
                       TmWorkspaceDao tmWorkspaceDao,
                       TmNeuronBufferDao tmNeuronBufferDao,
+                      RenderedVolumeLocationFactory renderedVolumeLocationFactory,
                       RenderedVolumeLoader renderedVolumeLoader,
                       SWCReader swcReader,
                       IdSource neuronIdGenerator,
@@ -59,6 +62,7 @@ public class SWCService {
         this.tmSampleDao = tmSampleDao;
         this.tmWorkspaceDao = tmWorkspaceDao;
         this.tmNeuronBufferDao = tmNeuronBufferDao;
+        this.renderedVolumeLocationFactory = renderedVolumeLocationFactory;
         this.renderedVolumeLoader = renderedVolumeLoader;
         this.swcReader = swcReader;
         this.neuronIdGenerator = neuronIdGenerator;
@@ -76,7 +80,7 @@ public class SWCService {
             throw new IllegalArgumentException("Sample " + sampleId + " either does not exist or is not accessible");
         }
         TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(workspaceOwnerKey, createWorkspace(swcFolderName, sampleId, workspaceName, accessUsers));
-        RenderedVolume renderedVolume = renderedVolumeLoader.loadVolume(Paths.get(tmSample.getFilepath()))
+        RenderedVolume renderedVolume = renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath()))
                 .orElseThrow(() -> new IllegalStateException("Error loading volume metadata for sample " + sampleId));
 
         VectorOperator externalToInternalConverter = new JamaMatrixVectorOperator(

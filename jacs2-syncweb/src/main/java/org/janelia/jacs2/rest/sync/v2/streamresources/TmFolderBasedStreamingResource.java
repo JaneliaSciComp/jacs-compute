@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.rendering.CoordinateAxis;
 import org.janelia.rendering.RawImage;
@@ -34,6 +35,8 @@ import java.util.stream.Stream;
 @Path("/mouselight")
 public class TmFolderBasedStreamingResource {
 
+    @Inject
+    private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
     @WithCache
     @Inject
     private RenderedVolumeLoader renderedVolumeLoader;
@@ -57,7 +60,7 @@ public class TmFolderBasedStreamingResource {
                     .build();
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.loadVolume(Paths.get(baseFolderName))
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName))
                 .map(rv -> Response.ok(rv).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Error retrieving rendering info from " + baseFolderName + " or no folder found"))
@@ -89,7 +92,7 @@ public class TmFolderBasedStreamingResource {
         int yVoxel = yVoxelParam == null ? 0 : yVoxelParam;
         int zVoxel = zVoxelParam == null ? 0 : zVoxelParam;
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(Paths.get(baseFolderName), xVoxel, yVoxel, zVoxel)
+        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName), xVoxel, yVoxel, zVoxel)
                 .map(rawTileImage -> Response.ok(rawTileImage).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderName + " with ("
@@ -130,7 +133,7 @@ public class TmFolderBasedStreamingResource {
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(Paths.get(baseFolderName), xVoxel, yVoxel, zVoxel)
+        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName), xVoxel, yVoxel, zVoxel)
                 .map(rawTileImage -> {
                     byte[] rawImageBytes = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rawTileImage,
                             xVoxel, yVoxel, zVoxel, sx, sy, sz, channel);
@@ -168,7 +171,8 @@ public class TmFolderBasedStreamingResource {
             @QueryParam("x") Integer xParam,
             @QueryParam("y") Integer yParam,
             @QueryParam("z") Integer zParam) {
-        return TmStreamingResourceHelper.streamTileFromDirAndCoord(renderedVolumeLoader, baseFolderParam, zoomParam, axisParam, xParam, yParam, zParam);
+        return TmStreamingResourceHelper.streamTileFromDirAndCoord(
+                renderedVolumeLocationFactory, renderedVolumeLoader, baseFolderParam, zoomParam, axisParam, xParam, yParam, zParam);
     }
 
     @ApiOperation(value = "Tiff Stream", notes = "Streams the requested tile stored as a TIFF file")

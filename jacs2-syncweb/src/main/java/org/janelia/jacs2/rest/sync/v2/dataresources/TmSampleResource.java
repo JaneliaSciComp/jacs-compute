@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.dataservice.search.SolrConnector;
 import org.janelia.jacs2.dataservice.storage.DataStorageInfo;
 import org.janelia.jacs2.dataservice.storage.StorageService;
@@ -23,6 +24,7 @@ import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
+import org.janelia.rendering.RenderedVolumeLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +81,7 @@ public class TmSampleResource {
     @Inject
     private TmSampleDao tmSampleDao;
     @Inject
-    private StorageService storageService;
+    private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
     @Inject
     private SolrConnector domainObjectIndexer;
 
@@ -196,15 +198,8 @@ public class TmSampleResource {
                     .entity(new ErrorResponse("Invalid sample sample path - the sample path cannot be empty"))
                     .build();
         }
-        String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        DataStorageInfo dsInfo = storageService.lookupStorage(null, null, null, samplePath, StringUtils.defaultIfBlank(subjectKey, authorizedSubjectKey), null)
-                .orElse(null);
-        if (dsInfo == null) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse("Invalid sample sample path - no storage found for " + samplePath))
-                    .build();
-        }
-        InputStream transformContentStream = storageService.getStorageContent(dsInfo.getDataStorageURI(), "transform.txt", StringUtils.defaultIfBlank(subjectKey, authorizedSubjectKey), null);
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath);
+        InputStream transformContentStream = rvl.readTransformData();
         try {
             Map<String, Object> constants = new HashMap<>();
             Map<String, Integer> origin = new HashMap<>();

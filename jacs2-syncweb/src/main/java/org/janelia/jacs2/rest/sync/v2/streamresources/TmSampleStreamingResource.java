@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
@@ -33,6 +34,8 @@ public class TmSampleStreamingResource {
 
     @Inject
     private TmSampleDao tmSampleDao;
+    @Inject
+    private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
     @WithCache
     @Inject
     private RenderedVolumeLoader renderedVolumeLoader;
@@ -60,7 +63,7 @@ public class TmSampleStreamingResource {
                     .entity(new ErrorResponse("No rendering path set for " + sampleId))
                     .build();
         }
-        return renderedVolumeLoader.loadVolume(Paths.get(tmSample.getFilepath()))
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath()))
                 .map(rv -> Response.ok(rv).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Error getting rendering info for " + sampleId))
@@ -106,7 +109,7 @@ public class TmSampleStreamingResource {
         int sy = syParam == null ? -1 : syParam;
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
-        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(Paths.get(tmSample.getFilepath()), xVoxel, yVoxel, zVoxel)
+        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath()), xVoxel, yVoxel, zVoxel)
                 .map(rawTileImage -> {
                     byte[] rawImageBytes = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rawTileImage,
                             xVoxel, yVoxel, zVoxel, sx, sy, sz, channel);
@@ -152,7 +155,8 @@ public class TmSampleStreamingResource {
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
         }
-        return TmStreamingResourceHelper.streamTileFromDirAndCoord(renderedVolumeLoader, tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
+        return TmStreamingResourceHelper.streamTileFromDirAndCoord(
+                renderedVolumeLocationFactory, renderedVolumeLoader, tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
     }
 
     @Deprecated
@@ -180,7 +184,8 @@ public class TmSampleStreamingResource {
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
         }
-        return TmStreamingResourceHelper.streamTileFromDirAndCoord(renderedVolumeLoader, tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
+        return TmStreamingResourceHelper.streamTileFromDirAndCoord(
+                renderedVolumeLocationFactory, renderedVolumeLoader, tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
     }
 
 }
