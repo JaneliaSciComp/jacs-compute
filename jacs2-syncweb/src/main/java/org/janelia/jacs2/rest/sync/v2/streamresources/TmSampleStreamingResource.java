@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.domain.dao.TmSampleDao;
@@ -46,6 +47,7 @@ public class TmSampleStreamingResource {
     @Inject
     private Logger logger;
 
+    @RequireAuthentication /* !!!!!!!! */
     @ApiOperation(value = "Get sample rendering info", notes = "Retrieve volume rendering info for the specified sample")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = RenderedVolume.class),
