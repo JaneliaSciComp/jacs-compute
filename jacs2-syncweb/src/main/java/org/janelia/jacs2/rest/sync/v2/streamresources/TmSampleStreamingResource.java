@@ -27,6 +27,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import java.nio.file.Paths;
 
@@ -53,7 +54,9 @@ public class TmSampleStreamingResource {
     @GET
     @Path("samples/{sampleId}/volume_info")
     @Produces({MediaType.APPLICATION_JSON})
-    public Response getSampleVolumeInfo(@PathParam("sampleId") Long sampleId, @Context ContainerRequestContext requestContext) {
+    public Response getSampleVolumeInfo(@PathParam("sampleId") Long sampleId,
+                                        @Context ContainerRequestContext requestContext,
+                                        @Context SecurityContext securityContext) {
         TmSample tmSample = tmSampleDao.findById(sampleId);
         if (tmSample == null) {
             logger.warn("No sample found for {}", sampleId);
