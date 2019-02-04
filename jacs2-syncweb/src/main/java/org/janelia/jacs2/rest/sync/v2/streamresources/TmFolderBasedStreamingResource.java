@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.rendering.CoordinateAxis;
@@ -20,6 +21,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -52,7 +55,8 @@ public class TmFolderBasedStreamingResource {
     @GET
     @Path("volume_info/{baseFolder:.*}")
     @Produces({MediaType.APPLICATION_JSON})
-    public Response getVolumeInfoFromBaseFolder(@PathParam("baseFolder") String baseFolderParam) {
+    public Response getVolumeInfoFromBaseFolder(@PathParam("baseFolder") String baseFolderParam,
+                                                @Context ContainerRequestContext requestContext) {
         if (StringUtils.isBlank(baseFolderParam)) {
             logger.warn("No base folder has been specified: {}", baseFolderParam);
             return Response.status(Response.Status.BAD_REQUEST)
@@ -60,7 +64,9 @@ public class TmFolderBasedStreamingResource {
                     .build();
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName))
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName,
+                JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
+                null))
                 .map(rv -> Response.ok(rv).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Error retrieving rendering info from " + baseFolderName + " or no folder found"))
@@ -81,7 +87,8 @@ public class TmFolderBasedStreamingResource {
     public Response findClosestRawImageFromVoxelCoord(@PathParam("baseFolder") String baseFolderParam,
                                                       @QueryParam("x") Integer xVoxelParam,
                                                       @QueryParam("y") Integer yVoxelParam,
-                                                      @QueryParam("z") Integer zVoxelParam) {
+                                                      @QueryParam("z") Integer zVoxelParam,
+                                                      @Context ContainerRequestContext requestContext) {
         if (StringUtils.isBlank(baseFolderParam)) {
             logger.warn("No base folder has been specified: {}", baseFolderParam);
             return Response.status(Response.Status.BAD_REQUEST)
@@ -92,7 +99,11 @@ public class TmFolderBasedStreamingResource {
         int yVoxel = yVoxelParam == null ? 0 : yVoxelParam;
         int zVoxel = zVoxelParam == null ? 0 : zVoxelParam;
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName), xVoxel, yVoxel, zVoxel)
+        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
+                renderedVolumeLocationFactory.getVolumeLocation(baseFolderName,
+                        JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
+                        null),
+                xVoxel, yVoxel, zVoxel)
                 .map(rawTileImage -> Response.ok(rawTileImage).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderName + " with ("
@@ -118,7 +129,8 @@ public class TmFolderBasedStreamingResource {
                                                         @QueryParam("sx") Integer sxParam,
                                                         @QueryParam("sy") Integer syParam,
                                                         @QueryParam("sz") Integer szParam,
-                                                        @QueryParam("channel") Integer channelParam) {
+                                                        @QueryParam("channel") Integer channelParam,
+                                                        @Context ContainerRequestContext requestContext) {
         if (StringUtils.isBlank(baseFolderParam)) {
             logger.warn("No base folder has been specified: {}", baseFolderParam);
             return Response.status(Response.Status.BAD_REQUEST)
@@ -133,7 +145,11 @@ public class TmFolderBasedStreamingResource {
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName), xVoxel, yVoxel, zVoxel)
+        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
+                renderedVolumeLocationFactory.getVolumeLocation(baseFolderName,
+                        JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
+                        null),
+                xVoxel, yVoxel, zVoxel)
                 .map(rawTileImage -> {
                     byte[] rawImageBytes = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rawTileImage,
                             xVoxel, yVoxel, zVoxel, sx, sy, sz, channel);
@@ -170,9 +186,12 @@ public class TmFolderBasedStreamingResource {
             @QueryParam("axis") CoordinateAxis axisParam,
             @QueryParam("x") Integer xParam,
             @QueryParam("y") Integer yParam,
-            @QueryParam("z") Integer zParam) {
+            @QueryParam("z") Integer zParam,
+            @Context ContainerRequestContext requestContext) {
         return TmStreamingResourceHelper.streamTileFromDirAndCoord(
-                renderedVolumeLocationFactory, renderedVolumeLoader, baseFolderParam, zoomParam, axisParam, xParam, yParam, zParam);
+                renderedVolumeLocationFactory, renderedVolumeLoader,
+                JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
+                baseFolderParam, zoomParam, axisParam, xParam, yParam, zParam);
     }
 
     @ApiOperation(value = "Tiff Stream", notes = "Streams the requested tile stored as a TIFF file")

@@ -21,6 +21,7 @@ class TmStreamingResourceHelper {
     static Response streamTileFromDirAndCoord(
             RenderedVolumeLocationFactory renderedVolumeLocationFactory,
             RenderedVolumeLoader renderedVolumeLoader,
+            String subjectKey,
             String baseFolderParam,
             Integer zoomParam,
             CoordinateAxis axisParam,
@@ -35,7 +36,7 @@ class TmStreamingResourceHelper {
                     .build();
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName))
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName, subjectKey, null))
                 .flatMap(rv -> rv.getTileInfo(axisParam)
                         .map(tileInfo -> TileKey.fromRavelerTileCoord(
                                 xParam,

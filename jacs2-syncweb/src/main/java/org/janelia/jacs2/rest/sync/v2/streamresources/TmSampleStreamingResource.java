@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.domain.dao.TmSampleDao;
@@ -22,6 +23,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -50,7 +53,7 @@ public class TmSampleStreamingResource {
     @GET
     @Path("samples/{sampleId}/volume_info")
     @Produces({MediaType.APPLICATION_JSON})
-    public Response getSampleVolumeInfo(@PathParam("sampleId") Long sampleId) {
+    public Response getSampleVolumeInfo(@PathParam("sampleId") Long sampleId, @Context ContainerRequestContext requestContext) {
         TmSample tmSample = tmSampleDao.findById(sampleId);
         if (tmSample == null) {
             logger.warn("No sample found for {}", sampleId);
@@ -63,7 +66,9 @@ public class TmSampleStreamingResource {
                     .entity(new ErrorResponse("No rendering path set for " + sampleId))
                     .build();
         }
-        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath()))
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(),
+                JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
+                null))
                 .map(rv -> Response.ok(rv).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Error getting rendering info for " + sampleId))
@@ -89,7 +94,8 @@ public class TmSampleStreamingResource {
                                                         @QueryParam("sx") Integer sxParam,
                                                         @QueryParam("sy") Integer syParam,
                                                         @QueryParam("sz") Integer szParam,
-                                                        @QueryParam("channel") Integer channelParam) {
+                                                        @QueryParam("channel") Integer channelParam,
+                                                        @Context ContainerRequestContext requestContext) {
         TmSample tmSample = tmSampleDao.findById(sampleId);
         if (tmSample == null) {
             logger.warn("No sample found for {}", sampleId);
@@ -109,7 +115,11 @@ public class TmSampleStreamingResource {
         int sy = syParam == null ? -1 : syParam;
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
-        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath()), xVoxel, yVoxel, zVoxel)
+        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
+                renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(),
+                        JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
+                        null),
+                xVoxel, yVoxel, zVoxel)
                 .map(rawTileImage -> {
                     byte[] rawImageBytes = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rawTileImage,
                             xVoxel, yVoxel, zVoxel, sx, sy, sz, channel);
@@ -146,7 +156,8 @@ public class TmSampleStreamingResource {
             @QueryParam("axis") CoordinateAxis axisParam,
             @QueryParam("x") Integer xParam,
             @QueryParam("y") Integer yParam,
-            @QueryParam("z") Integer zParam) {
+            @QueryParam("z") Integer zParam,
+            @Context ContainerRequestContext requestContext) {
         logger.debug("Stream tile ({}, {}, {}, {}, {}) for {}", zoomParam, axisParam, xParam, yParam, zParam, sampleId);
         TmSample tmSample = tmSampleDao.findById(sampleId);
         if (tmSample == null) {
@@ -156,7 +167,9 @@ public class TmSampleStreamingResource {
                     .build();
         }
         return TmStreamingResourceHelper.streamTileFromDirAndCoord(
-                renderedVolumeLocationFactory, renderedVolumeLoader, tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
+                renderedVolumeLocationFactory, renderedVolumeLoader,
+                JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
+                tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
     }
 
     @Deprecated
@@ -175,7 +188,8 @@ public class TmSampleStreamingResource {
             @QueryParam("zoom") Integer zoomParam,
             @QueryParam("maxZoom") Integer maxZoomParam,
             @QueryParam("rendering_type") RenderingType renderingType,
-            @QueryParam("axis") CoordinateAxis axisParam) {
+            @QueryParam("axis") CoordinateAxis axisParam,
+            @Context ContainerRequestContext requestContext) {
         logger.debug("Stream 2D tile ({}, {}, {}, {}, {}) for {}", zoomParam, axisParam, xParam, yParam, zParam, sampleId);
         TmSample tmSample = tmSampleDao.findById(sampleId);
         if (tmSample == null) {
@@ -185,7 +199,9 @@ public class TmSampleStreamingResource {
                     .build();
         }
         return TmStreamingResourceHelper.streamTileFromDirAndCoord(
-                renderedVolumeLocationFactory, renderedVolumeLoader, tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
+                renderedVolumeLocationFactory, renderedVolumeLoader,
+                JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
+                tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
     }
 
 }

@@ -63,7 +63,7 @@ public class StorageService {
         }
     }
 
-    public Optional<DataStorageInfo> lookupStorage(String storageURI, String storageId, String storageName, String storagePath, String subject, String authToken) {
+    public Optional<DataStorageInfo> lookupStorage(String storageURI, String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target;
@@ -84,10 +84,10 @@ public class StorageService {
             if (StringUtils.isNotBlank(storagePath)) {
                 target = target.queryParam("storagePath", storagePath);
             }
-            if (StringUtils.isNotBlank(subject)) {
-                target = target.queryParam("ownerKey", subject);
+            if (StringUtils.isNotBlank(subjectKey)) {
+                target = target.queryParam("ownerKey", subjectKey);
             }
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subject, authToken);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {

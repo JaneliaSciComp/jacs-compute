@@ -80,7 +80,7 @@ public class SWCService {
             throw new IllegalArgumentException("Sample " + sampleId + " either does not exist or is not accessible");
         }
         TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(workspaceOwnerKey, createWorkspace(swcFolderName, sampleId, workspaceName, accessUsers));
-        RenderedVolume renderedVolume = renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath()))
+        RenderedVolume renderedVolume = renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(), workspaceOwnerKey, null))
                 .orElseThrow(() -> new IllegalStateException("Error loading volume metadata for sample " + sampleId));
 
         VectorOperator externalToInternalConverter = new JamaMatrixVectorOperator(

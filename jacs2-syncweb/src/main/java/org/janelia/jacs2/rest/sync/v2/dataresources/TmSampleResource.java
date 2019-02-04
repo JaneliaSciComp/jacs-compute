@@ -198,7 +198,9 @@ public class TmSampleResource {
                     .entity(new ErrorResponse("Invalid sample sample path - the sample path cannot be empty"))
                     .build();
         }
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath);
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath,
+                JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext),
+                null);
         InputStream transformContentStream = rvl.readTransformData();
         try {
             Map<String, Object> constants = new HashMap<>();
