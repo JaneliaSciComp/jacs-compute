@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Response attribute in millis
+ * Response attribute in seconds.
  */
 public class ResponseTimeAttribute implements ExchangeAttribute {
 

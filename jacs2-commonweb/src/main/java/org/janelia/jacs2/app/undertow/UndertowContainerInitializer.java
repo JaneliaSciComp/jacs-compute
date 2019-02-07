@@ -138,7 +138,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
                         new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
-                        new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTime>
+                        new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTimeInSeconds>
                         new NameValueAttribute("tp", new ThroughputAttribute()) // tp=<Throughput>
                 }, " "),
                 getAccessLogFilter()
