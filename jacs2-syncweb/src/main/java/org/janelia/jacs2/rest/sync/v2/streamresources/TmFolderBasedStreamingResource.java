@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.rendering.CoordinateAxis;
+import org.janelia.rendering.Coordinate;
 import org.janelia.rendering.RawImage;
 import org.janelia.rendering.RenderedVolume;
 import org.janelia.rendering.RenderedVolumeLoader;
@@ -29,7 +29,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -185,7 +184,7 @@ public class TmFolderBasedStreamingResource {
     public Response streamTileFromDirAndCoord(
             @PathParam("baseFolder") String baseFolderParam,
             @QueryParam("zoom") Integer zoomParam,
-            @QueryParam("axis") CoordinateAxis axisParam,
+            @QueryParam("axis") Coordinate axisParam,
             @QueryParam("x") Integer xParam,
             @QueryParam("y") Integer yParam,
             @QueryParam("z") Integer zParam,
