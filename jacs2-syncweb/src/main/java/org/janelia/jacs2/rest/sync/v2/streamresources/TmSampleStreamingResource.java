@@ -13,6 +13,7 @@ import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.rendering.CoordinateAxis;
 import org.janelia.rendering.RenderedVolume;
 import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.RenderingType;
 import org.janelia.rendering.cdi.WithCache;
 import org.slf4j.Logger;
@@ -118,14 +119,15 @@ public class TmSampleStreamingResource {
         int sy = syParam == null ? -1 : syParam;
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(),
+                JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
+                null);
         return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
-                renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(),
-                        JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
-                        null),
+                rvl,
                 xVoxel, yVoxel, zVoxel)
                 .map(rawTileImage -> {
-                    byte[] rawImageBytes = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rawTileImage,
-                            xVoxel, yVoxel, zVoxel, sx, sy, sz, channel);
+                    byte[] rawImageBytes = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage,
+                            channel, xVoxel, yVoxel, zVoxel, sx, sy, sz);
                     if (rawImageBytes == null) {
                         return Response
                                 .noContent()

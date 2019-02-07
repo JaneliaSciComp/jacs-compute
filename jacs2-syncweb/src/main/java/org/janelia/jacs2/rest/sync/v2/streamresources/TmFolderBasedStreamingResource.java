@@ -11,6 +11,7 @@ import org.janelia.rendering.CoordinateAxis;
 import org.janelia.rendering.RawImage;
 import org.janelia.rendering.RenderedVolume;
 import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.cdi.WithCache;
 import org.slf4j.Logger;
 
@@ -145,14 +146,15 @@ public class TmFolderBasedStreamingResource {
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(baseFolderName,
+                JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
+                null);
         return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
-                renderedVolumeLocationFactory.getVolumeLocation(baseFolderName,
-                        JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
-                        null),
+                rvl,
                 xVoxel, yVoxel, zVoxel)
                 .map(rawTileImage -> {
-                    byte[] rawImageBytes = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rawTileImage,
-                            xVoxel, yVoxel, zVoxel, sx, sy, sz, channel);
+                    byte[] rawImageBytes = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage,
+                            channel, xVoxel, yVoxel, zVoxel, sx, sy, sz);
                     if (rawImageBytes == null) {
                         return Response
                                 .noContent()
