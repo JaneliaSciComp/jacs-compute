@@ -57,8 +57,7 @@ public class TmSampleStreamingResource {
     @Path("samples/{sampleId}/volume_info")
     @Produces({MediaType.APPLICATION_JSON})
     public Response getSampleVolumeInfo(@PathParam("sampleId") Long sampleId,
-                                        @Context ContainerRequestContext requestContext,
-                                        @Context SecurityContext securityContext) {
+                                        @Context ContainerRequestContext requestContext) {
         TmSample tmSample = tmSampleDao.findById(sampleId);
         if (tmSample == null) {
             logger.warn("No sample found for {}", sampleId);
@@ -80,7 +79,6 @@ public class TmSampleStreamingResource {
                         .build())
                 ;
     }
-
 
     @ApiOperation(
             value = "Find closest tile info from voxel coordinates for the specified sample",
