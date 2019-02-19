@@ -123,7 +123,7 @@ public class StorageService {
                 target = target.queryParam("name", storageName);
             }
             if (StringUtils.isNotBlank(storagePath)) {
-                target = target.queryParam("storagePath", storagePath);
+                target = target.queryParam("dataStoragePath", storagePath);
             }
             if (StringUtils.isNotBlank(subjectKey)) {
                 target = target.queryParam("ownerKey", subjectKey);
