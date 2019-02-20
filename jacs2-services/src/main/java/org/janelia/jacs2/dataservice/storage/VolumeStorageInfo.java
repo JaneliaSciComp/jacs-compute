@@ -1,7 +1,11 @@
 package org.janelia.jacs2.dataservice.storage;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.ws.rs.core.UriBuilder;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 /**
@@ -89,5 +93,14 @@ public class VolumeStorageInfo {
 
     public void setStorageTags(List<String> storageTags) {
         this.storageTags = storageTags;
+    }
+
+    @JsonIgnore
+    public String getStorageURL() {
+        try {
+            return UriBuilder.fromUri(new URI(storageServiceURL)).path("agent_storage/storage_volume").path(getStorageId()).build().toString();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 }
