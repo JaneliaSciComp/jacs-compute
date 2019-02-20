@@ -12,7 +12,7 @@ import java.util.List;
  * This is the equivalent of the jade.JacsStorageVolume type.
  */
 public class VolumeStorageInfo {
-    @JsonProperty("id")
+    @JsonProperty("_id")
     private String storageId;
     private String name;
     private StoragePathURI storageRootPathURI;
