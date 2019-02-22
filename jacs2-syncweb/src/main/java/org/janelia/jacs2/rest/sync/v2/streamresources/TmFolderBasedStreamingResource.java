@@ -12,7 +12,6 @@ import org.janelia.rendering.RawImage;
 import org.janelia.rendering.RenderedVolume;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.janelia.rendering.RenderedVolumeLocation;
-import org.janelia.rendering.cdi.WithCache;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -40,7 +39,6 @@ public class TmFolderBasedStreamingResource {
 
     @Inject
     private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
-    @WithCache
     @Inject
     private RenderedVolumeLoader renderedVolumeLoader;
     @Inject
