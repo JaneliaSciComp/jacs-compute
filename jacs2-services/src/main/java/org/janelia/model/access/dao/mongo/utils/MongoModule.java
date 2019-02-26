@@ -7,6 +7,7 @@ import java.util.Date;
 public class MongoModule extends SimpleModule {
 
     public MongoModule() {
+        setNamingStrategy(new MongoNamingStrategy());
         addSerializer(Date.class, new ISODateSerializer());
         addDeserializer(Date.class, new ISODateDeserializer());
         addDeserializer(Long.class, new MongoNumberLongDeserializer());
