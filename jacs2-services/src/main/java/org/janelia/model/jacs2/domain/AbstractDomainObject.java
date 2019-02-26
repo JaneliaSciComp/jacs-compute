@@ -1,13 +1,13 @@
 package org.janelia.model.jacs2.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.janelia.model.jacs2.DomainModelUtils;
+import org.janelia.model.jacs2.domain.annotations.EntityId;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -22,7 +22,7 @@ import java.util.Set;
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 public abstract class AbstractDomainObject implements DomainObject {
-    @JsonProperty("_id")
+    @EntityId
     private Number id;
     private String name;
     private String ownerKey;

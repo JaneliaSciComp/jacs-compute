@@ -10,6 +10,7 @@ import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.BaseEntity;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.jacs2.domain.annotations.EntityId;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
 
@@ -21,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,7 +37,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         return se;
     }
 
-    @JsonProperty("_id")
+    @EntityId
     private Number id;
     private String name;
     private String description;

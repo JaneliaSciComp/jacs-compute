@@ -1,10 +1,10 @@
 package org.janelia.model.jacs2.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.model.jacs2.BaseEntity;
+import org.janelia.model.jacs2.domain.annotations.EntityId;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
 
@@ -18,7 +18,7 @@ public class Subject implements BaseEntity, HasIdentifier {
     public static final String ALL_KEY = "group:all";
     public static final String USERS_KEY = "group:workstation_users";
 
-    @JsonProperty("_id")
+    @EntityId
     private Number id;
     private String key;
     private String name;

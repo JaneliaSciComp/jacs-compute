@@ -1,8 +1,8 @@
 package org.janelia.model.service;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.model.jacs2.BaseEntity;
+import org.janelia.model.jacs2.domain.annotations.EntityId;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
 
@@ -14,7 +14,7 @@ import java.util.Map;
 
 @MongoMapping(collectionName="jacsScheduledService", label="JacsScheduledService")
 public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
-    @JsonProperty("_id")
+    @EntityId
     private Number id;
     private String name; // scheduled job name
     private String description; // scheduled job description

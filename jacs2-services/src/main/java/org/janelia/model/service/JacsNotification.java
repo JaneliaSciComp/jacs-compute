@@ -1,9 +1,9 @@
 package org.janelia.model.service;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.model.jacs2.domain.annotations.EntityId;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
 import org.janelia.model.jacs2.BaseEntity;
@@ -14,7 +14,7 @@ import java.util.Map;
 @MongoMapping(collectionName="jacsNotification", label="Jacs Notification")
 public class JacsNotification implements BaseEntity, HasIdentifier {
 
-    @JsonProperty("_id")
+    @EntityId
     private Number id;
     private String eventName;
     private Date notificationDate = new Date();
