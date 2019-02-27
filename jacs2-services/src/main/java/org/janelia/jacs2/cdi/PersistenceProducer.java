@@ -100,11 +100,16 @@ public class PersistenceProducer {
                 return m;
             }
         } else {
-            // use the connection URI
-            MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
-            MongoClient m = new MongoClient(mongoConnectionString);
-            log.info("Connected to MongoDB ({}@{})", mongoDatabase, mongoConnectionString);
-            return m;
+            // use connection URL
+            if (StringUtils.isBlank(mongoConnectionURL)) {
+                log.error("Neither mongo server(s) nor the mongo URL have been specified");
+                throw new IllegalStateException("Neither mongo server(s) nor the mongo URL have been specified");
+            } else {
+                MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
+                MongoClient m = new MongoClient(mongoConnectionString);
+                log.info("Connected to MongoDB ({}@{})", mongoDatabase, mongoConnectionString);
+                return m;
+            }
         }
     }
 
