@@ -187,7 +187,7 @@ public class StorageService {
         try {
             WebTarget target = httpclient.target(storageURI);
             if (StringUtils.isNotBlank(entryName)) {
-                target = target.path("entry_content").path(entryName);
+                target = target.path("data_content").path(entryName);
             }
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.get();
@@ -207,7 +207,7 @@ public class StorageService {
     public StorageEntryInfo putStorageContent(String storageURI, String entryName, String subject, String authToken, InputStream dataStream) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
-            WebTarget target = httpclient.target(storageURI).path("file").path(entryName);
+            WebTarget target = httpclient.target(storageURI).path("data_content").path(entryName);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.put(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
             String entryLocationUrl;
