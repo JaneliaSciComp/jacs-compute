@@ -28,6 +28,7 @@ import javax.inject.Named;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -93,7 +94,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
                          Logger log) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, defaultMinRequiredWorkers, log);
         this.clusterAccounting = clusterAccounting;
-        this.searchTimeoutInMillis = searchTimeoutInSeconds * 1000;
+        this.searchTimeoutInMillis = searchTimeoutInSeconds > 0 ? searchTimeoutInSeconds * 1000 : -1;
         this.searchIntervalCheckInMillis = searchIntervalCheckInMillis;
         this.jarPath = jarPath;
     }
@@ -202,7 +203,8 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
                 clusterAccounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
-                getSparkLogConfigFile(jacsServiceData.getResources()));
+                getSparkLogConfigFile(jacsServiceData.getResources()),
+                searchTimeoutInMillis > 0 ? (int) (Duration.ofMillis(searchTimeoutInMillis).toMinutes()+ 1) : -1);
     }
 
     private ServiceComputation<SparkApp> runApp(JacsServiceData jacsServiceData, ColorDepthSearchArgs args, SparkCluster cluster) {

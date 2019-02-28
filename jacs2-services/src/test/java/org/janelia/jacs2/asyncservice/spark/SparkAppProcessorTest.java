@@ -113,7 +113,8 @@ public class SparkAppProcessorTest {
                 clusterBillingInfo,
                 testDriverMemory,
                 testExecutorMemory,
-                null))
+                null,
+                -1))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
 
         Mockito.when(sparkCluster.runApp(

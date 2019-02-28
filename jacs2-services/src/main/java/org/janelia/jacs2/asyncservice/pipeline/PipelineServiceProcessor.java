@@ -97,6 +97,7 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
                                 .description(description)
                                 .waitFor(previousStageResult.getJacsServiceData())
                                 .processingLocation(getServiceProcessingLocation(serviceConfig))
+                                .setServiceTimeoutInMillis(getServiceTimeout(serviceConfig))
                                 .addDictionaryArgs(getServiceDictionaryArgs(serviceConfig))
                                 .addResources(jacsServiceData.getResources())
                                 .addResources(getServiceResources(serviceConfig))
@@ -139,6 +140,11 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
     private List<String> getServiceArgs(Map<String, Object> serviceConfig) {
         List<String> serviceArgs = (List<String>)serviceConfig.get("serviceArgs");
         return serviceArgs != null ? serviceArgs : Collections.emptyList();
+    }
+
+    private Long getServiceTimeout(Map<String, Object> serviceConfig) {
+        String serviceTimeout = (String) serviceConfig.get("serviceTimeout");
+        return StringUtils.isBlank(serviceTimeout) ? null : Long.valueOf(serviceTimeout.trim());
     }
 
     @SuppressWarnings("unchecked")

@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.temporal.TemporalUnit;
 import java.util.List;
 
 @Named("startSparkCluster")
@@ -134,6 +136,7 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                 accounting.getComputeAccount(jacsServiceData),
                 getSparkDriverMemory(jacsServiceData.getResources()),
                 getSparkExecutorMemory(jacsServiceData.getResources()),
-                getSparkLogConfigFile(jacsServiceData.getResources()));
+                getSparkLogConfigFile(jacsServiceData.getResources()),
+                jacsServiceData.timeoutInMillis() > 0 ? jacsServiceData.timeoutInMins() + 1 : -1);
     }
 }

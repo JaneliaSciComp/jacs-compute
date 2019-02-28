@@ -94,7 +94,7 @@ public class ServiceDependenciesCompletedContinuationCond implements Continuatio
 
     private void verifyAndFailIfTimeOut(JacsServiceData jacsServiceData) {
         long timeSinceStart = System.currentTimeMillis() - jacsServiceData.getProcessStartTime().getTime();
-        if (jacsServiceData.timeout() > 0 && timeSinceStart > jacsServiceData.timeout()) {
+        if (jacsServiceData.timeoutInMillis() > 0 && timeSinceStart > jacsServiceData.timeoutInMillis()) {
             jacsServiceDataPersistence.updateServiceState(
                     jacsServiceData,
                     JacsServiceState.TIMEOUT,

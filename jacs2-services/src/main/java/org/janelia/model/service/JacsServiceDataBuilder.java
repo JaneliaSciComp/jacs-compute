@@ -82,6 +82,11 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
+    public JacsServiceDataBuilder setServiceTimeout(Long serviceTimeout) {
+        serviceData.setServiceTimeout(serviceTimeout);
+        return this;
+    }
+
     public JacsServiceDataBuilder addDependency(JacsServiceData serviceDependency) {
         serviceData.addServiceDependency(serviceDependency);
         return this;

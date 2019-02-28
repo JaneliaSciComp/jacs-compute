@@ -11,6 +11,7 @@ import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
+import java.time.Duration;
 import java.util.Map;
 
 abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor<R> {
@@ -82,6 +83,17 @@ abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor
             return Long.valueOf(timeout.trim());
         } else {
             return null;
+        }
+    }
+
+    int serviceTimeoutInMins(JacsServiceData jacsServiceData) {
+        Long sparkAppTimeoutInMillis = getSparkAppTimeoutInMillis(jacsServiceData.getResources());
+        if (sparkAppTimeoutInMillis != null && sparkAppTimeoutInMillis > 0) {
+            return (int) (Duration.ofMillis(sparkAppTimeoutInMillis).toMinutes() + 1);
+        } else if (jacsServiceData.timeoutInMins() > 0) {
+            return jacsServiceData.timeoutInMins() + 1;
+        } else {
+            return -1;
         }
     }
 

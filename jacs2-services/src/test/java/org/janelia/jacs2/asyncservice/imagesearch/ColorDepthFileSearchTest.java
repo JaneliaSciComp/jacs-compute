@@ -28,6 +28,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -112,7 +113,8 @@ public class ColorDepthFileSearchTest {
                 clusterBillingInfo,
                 null,
                 null,
-                null))
+                null,
+                (int) (Duration.ofSeconds(SEARCH_TIMEOUT_IN_SECONDS).toMinutes()+ 1)))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
 
         Mockito.when(sparkCluster.runApp(

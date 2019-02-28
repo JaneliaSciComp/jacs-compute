@@ -80,7 +80,7 @@ public class LSFSparkClusterLauncher {
                                    @StrPropertyValue(name = "service.spark.driver.memory", defaultValue = "1g") String defaultSparkDriverMemory,
                                    @StrPropertyValue(name = "service.spark.executor.memory", defaultValue = "75g") String defaultSparkExecutorMemory,
                                    @IntPropertyValue(name = "service.spark.executor.cores", defaultValue = 5) int defaultCoresPerSparkExecutor,
-                                   @IntPropertyValue(name = "service.spark.cluster.hard.duration.mins", defaultValue = 30) int sparkClusterHardDurationMins,
+                                   @IntPropertyValue(name = "service.spark.cluster.hard.duration.mins", defaultValue = 60) int sparkClusterHardDurationMins,
                                    @StrPropertyValue(name = "service.spark.log4jconfig.filepath", defaultValue = "") String defaultSparkLogConfigFile,
                                    @IntPropertyValue(name = "service.spark.cluster.startTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
                                    @IntPropertyValue(name = "service.spark.cluster.intervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
@@ -99,7 +99,7 @@ public class LSFSparkClusterLauncher {
         this.defaultCoresPerSparkExecutor = defaultCoresPerSparkExecutor;
         this.sparkClusterHardDurationMins = sparkClusterHardDurationMins;
         this.defaultSparkLogConfigFile = defaultSparkLogConfigFile;
-        this.clusterStartTimeoutInMillis = clusterStartTimeoutInSeconds * 1000;
+        this.clusterStartTimeoutInMillis = clusterStartTimeoutInSeconds > 0 ? clusterStartTimeoutInSeconds * 1000 : -1;
         this.clusterIntervalCheckInMillis = clusterIntervalCheckInMillis;
         this.hadoopHomeDir = hadoopHomeDir;
         this.lsfApplication = lsfApplication;
@@ -115,7 +115,8 @@ public class LSFSparkClusterLauncher {
                                                          String billingInfo,
                                                          String sparkDriverMemory,
                                                          String sparkExecutorMemory,
-                                                         String sparkLogConfigFile) {
+                                                         String sparkLogConfigFile,
+                                                         int sparkJobsTimeoutInMins) {
         int minRequiredWorkers;
         if (minRequiredWorkersParam <= 0) {
             minRequiredWorkers = 0;
@@ -124,8 +125,8 @@ public class LSFSparkClusterLauncher {
         } else {
             minRequiredWorkers = minRequiredWorkersParam;
         }
-        return startSparkMasterJob(jobWorkingPath, jobOutputPath, jobErrorPath, billingInfo)
-                .thenCompose(masterJobId -> startSparkWorkerJobs(masterJobId, numNodes, minRequiredWorkers, jobWorkingPath, jobOutputPath, jobErrorPath, billingInfo, sparkDriverMemory, sparkExecutorMemory, sparkLogConfigFile))
+        return startSparkMasterJob(jobWorkingPath, jobOutputPath, jobErrorPath, billingInfo, sparkJobsTimeoutInMins)
+                .thenCompose(masterJobId -> startSparkWorkerJobs(masterJobId, numNodes, minRequiredWorkers, jobWorkingPath, jobOutputPath, jobErrorPath, billingInfo, sparkDriverMemory, sparkExecutorMemory, sparkLogConfigFile, sparkJobsTimeoutInMins))
                 .thenCompose(sparkCluster -> waitForSparkCluster(sparkCluster))
                 ;
     }
@@ -133,7 +134,8 @@ public class LSFSparkClusterLauncher {
     private ServiceComputation<Long> startSparkMasterJob(Path jobWorkingPath,
                                                          Path jobOutputPath,
                                                          Path jobErrorPath,
-                                                         String billingInfo) {
+                                                         String billingInfo,
+                                                         int sparkJobsTimeoutInMins) {
         logger.info("Starting spark {} master job with working directory", sparkVersion, jobWorkingPath);
         try {
             JobTemplate masterJobTemplate = createSparkJobTemplate(
@@ -141,7 +143,7 @@ public class LSFSparkClusterLauncher {
                     jobWorkingPath,
                     jobOutputPath,
                     jobErrorPath,
-                    createNativeSpec(billingInfo, "master"));
+                    createNativeSpec(billingInfo, "master", sparkJobsTimeoutInMins));
             // Submit master job
             JobFuture masterJobFuture = jobMgr.submitJob(masterJobTemplate);
             logger.info("Submitted master spark job {} ", masterJobFuture.getJobId());
@@ -162,7 +164,8 @@ public class LSFSparkClusterLauncher {
                                                                   String billingInfo,
                                                                   String sparkDriverMemory,
                                                                   String sparkExecutorMemory,
-                                                                  String sparkLogConfigFile) {
+                                                                  String sparkLogConfigFile,
+                                                                  int sparkJobsTimeoutInMins) {
         logger.info("Starting Spark-{} cluster with master {} + {} worker nodes and working directory {}", sparkVersion, masterJobId, numNodes, jobWorkingPath);
         List<JobFuture> workerJobs = IntStream.range(0, numNodes)
                 .mapToObj(ni -> createSparkJobTemplate(
@@ -170,7 +173,7 @@ public class LSFSparkClusterLauncher {
                         jobWorkingPath,
                         jobOutputPath,
                         jobErrorPath,
-                        createNativeSpec(billingInfo, "worker")))
+                        createNativeSpec(billingInfo, "worker", sparkJobsTimeoutInMins)))
                 .map(jt -> {
                     try {
                         JobFuture workerJob = jobMgr.submitJob(jt);
@@ -310,10 +313,20 @@ public class LSFSparkClusterLauncher {
                 ;
     }
 
-    private List<String> createNativeSpec(String billingAccount, String nodeType) {
+    private List<String> createNativeSpec(String billingAccount, String nodeType, int userSpecifiedClusterTimeoutInMins) {
         List<String> spec = new ArrayList<>();
         spec.add("-a " + String.format("%s(%s,%s)", lsfApplication, nodeType, sparkVersion)); // spark32(master,2.3.1) or spark32(worker,2.3.1)
-        spec.add("-W "+ sparkClusterHardDurationMins);
+        int sparkClusterTimeoutInMins;
+        if (userSpecifiedClusterTimeoutInMins > 0) {
+            sparkClusterTimeoutInMins = userSpecifiedClusterTimeoutInMins;
+        } else if (sparkClusterHardDurationMins > 0) {
+            sparkClusterTimeoutInMins = sparkClusterHardDurationMins;
+        } else {
+            sparkClusterTimeoutInMins = -1;
+        }
+        if (sparkClusterTimeoutInMins > 0) {
+            spec.add("-W " + sparkClusterTimeoutInMins);
+        }
         if (requiresAccountInfo)
             spec.add("-P "+billingAccount);
 
