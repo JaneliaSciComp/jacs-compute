@@ -3,7 +3,6 @@ package org.janelia.model.access.dao.mongo;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexModel;
@@ -18,12 +17,9 @@ import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.JacsServiceDataDao;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
-import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
-import org.janelia.model.jacs2.domain.Subject;
-import org.janelia.model.service.JacsServiceEvent;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.jacs2.page.SortCriteria;
@@ -33,7 +29,6 @@ import org.janelia.model.service.JacsServiceState;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,9 +37,7 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.in;
-import static com.mongodb.client.model.Filters.lt;
 
 /**
  * Mongo based implementation of JacsServiceDataDao.
