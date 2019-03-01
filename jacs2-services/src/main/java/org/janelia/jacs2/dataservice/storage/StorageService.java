@@ -182,21 +182,14 @@ public class StorageService {
         }
     }
 
-    public InputStream getStorageContent(String storageEntryURI, String subject, String authToken) {
-        return getStorageContent(storageEntryURI, null, subject, authToken);
-    }
-
-    public InputStream getStorageContent(String storageURI, String entryName, String subject, String authToken) {
+    public InputStream getStorageContent(String storageURI, String subject, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI);
-            if (StringUtils.isNotBlank(entryName)) {
-                target = target.path("data_content").path(entryName);
-            }
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new IllegalStateException(storageURI + " for " + entryName + " returned with " + response.getStatus());
+                throw new IllegalStateException(storageURI + " returned with " + response.getStatus());
             }
             return response.readEntity(InputStream.class);
         } catch (IllegalStateException e) {
