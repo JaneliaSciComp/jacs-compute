@@ -182,6 +182,10 @@ public class StorageService {
         }
     }
 
+    public InputStream getStorageContent(String storageEntryURI, String subject, String authToken) {
+        return getStorageContent(storageEntryURI, null, subject, authToken);
+    }
+
     public InputStream getStorageContent(String storageURI, String entryName, String subject, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {

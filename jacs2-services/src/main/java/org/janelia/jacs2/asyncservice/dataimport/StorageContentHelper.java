@@ -89,7 +89,6 @@ class StorageContentHelper {
                                             Files.copy(
                                                     storageService.getStorageContent(
                                                             contentEntry.getMainRep().getRemoteInfo().getEntryURL(),
-                                                            contentEntry.getMainRep().getRemoteInfo().getEntryRelativePath(),
                                                             jacsServiceData.getOwnerKey(),
                                                             ResourceHelper.getAuthToken(jacsServiceData.getResources())),
                                                     localEntryFullPath,
