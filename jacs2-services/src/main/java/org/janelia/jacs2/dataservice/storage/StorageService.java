@@ -192,7 +192,7 @@ public class StorageService {
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new IllegalStateException(storageURI + "for " + entryName + " returned with " + response.getStatus());
+                throw new IllegalStateException(storageURI + " for " + entryName + " returned with " + response.getStatus());
             }
             return response.readEntity(InputStream.class);
         } catch (IllegalStateException e) {
