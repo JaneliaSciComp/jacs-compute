@@ -114,17 +114,17 @@ public class DataTreeNodeResource {
             subjectKey = authorizedSubjectKey;
         }
         try {
-            T parentFolder = (T) query.getDomainObjectAs(TreeNode.class);
-            TreeNode existingParentFolder = legacyFolderDao.getDomainObject(subjectKey, TreeNode.class, parentFolder.getId());
-            if (existingParentFolder == null) {
-                LOG.warn("No folder found for parent node {} accessible by {}", parentFolder, subjectKey);
+            T parentNode = (T) query.getDomainObjectAs(TreeNode.class);
+            TreeNode existingParentNode = legacyFolderDao.getDomainObject(subjectKey, TreeNode.class, parentNode.getId());
+            if (existingParentNode == null) {
+                LOG.warn("No folder found for parent node {} accessible by {}", parentNode, subjectKey);
                 return Response
                         .status(Response.Status.NOT_FOUND)
                         .build();
             }
-            TreeNode updatedNode = legacyFolderDao.addChildren(subjectKey, existingParentFolder, query.getReferences());
+            TreeNode updatedNode = legacyFolderDao.addChildren(subjectKey, existingParentNode, query.getReferences());
             return Response
-                    .status(Response.Status.OK)
+                    .ok()
                     .entity(updatedNode)
                     .build();
         } catch (Exception e) {
@@ -137,6 +137,53 @@ public class DataTreeNodeResource {
         }
     }
 
+    @POST
+    @Path("/node/children")
+    @ApiOperation(value = "Removes items from a Node",
+            notes = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
+                    "the References parameter for the list of items to remove"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully removed items from the Node", response = TreeNode.class),
+            @ApiResponse( code = 500, message = "Internal Server Error removing items from the Node" )
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @SuppressWarnings("unchecked")
+    public <T extends TreeNode> Response removeChildren(@ApiParam DomainQuery query,
+                                                        @Context ContainerRequest containerRequestContext) {
+        LOG.trace("Start removeChildren({})",query);
+        String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
+        String subjectKey;
+        if (StringUtils.isBlank(authorizedSubjectKey)) {
+            subjectKey = query.getSubjectKey();
+        } else {
+            subjectKey = authorizedSubjectKey;
+        }
+        try {
+            T parentNode = (T) query.getDomainObjectAs(TreeNode.class);
+            TreeNode existingParentNode = legacyFolderDao.getDomainObject(subjectKey, TreeNode.class, parentNode.getId());
+            if (existingParentNode == null) {
+                LOG.warn("No folder found for parent node {} accessible by {}", parentNode, subjectKey);
+                return Response
+                        .status(Response.Status.NO_CONTENT)
+                        .build();
+            }
+            TreeNode updatedNode = legacyFolderDao.removeChildren(subjectKey, existingParentNode, query.getReferences());
+            return Response
+                    .status(Response.Status.OK)
+                    .entity(updatedNode)
+                    .build();
+        } catch (Exception e) {
+            LOG.error("Error occurred in remove children with {}",query, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error while trying remove children nodes using " + query))
+                    .build();
+        } finally {
+            LOG.trace("Finish removeChildren({})",query);
+        }
+    }
+
     @PUT
     @Path("/node/{node-id}/children/{folder}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -146,8 +193,8 @@ public class DataTreeNodeResource {
                                      @Context ContainerRequest containerRequestContext) {
         LOG.trace("Start addChildren({}, {})", dataNodeId, folderName);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        TreeNode parentFolder = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
-        if (parentFolder == null) {
+        TreeNode parentNode = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
+        if (parentNode == null) {
             LOG.warn("No folder found for {} owned by {}", dataNodeId, authorizedSubjectKey);
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -157,20 +204,63 @@ public class DataTreeNodeResource {
             TreeNode folder = new TreeNode();
             folder.setName(folderName);
             TreeNode newFolder = legacyFolderDao.save(authorizedSubjectKey, folder);
-            legacyFolderDao.addChildren(authorizedSubjectKey, parentFolder, ImmutableList.of(Reference.createFor(newFolder)));
-
+            legacyFolderDao.addChildren(authorizedSubjectKey, parentNode, ImmutableList.of(Reference.createFor(newFolder)));
             return Response
                     .status(Response.Status.CREATED)
                     .entity(newFolder)
                     .contentLocation(UriBuilder.fromMethod(DataTreeNodeResource.class, "getDataNode").build(newFolder.getId()))
                     .build();
         } catch (Exception e) {
-            LOG.error("Error while trying to add child folder {} to {}", folderName, parentFolder, e);
+            LOG.error("Error while trying to add child folder {} to {}", folderName, parentNode, e);
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
                     .build();
         } finally {
             LOG.trace("Finished addChildren({}, {})", dataNodeId, folderName);
+        }
+    }
+
+    @POST
+    @Path("/node/reorder")
+    @ApiOperation(value = "Reorders the items in a node",
+            notes = "Uses the DomainObject parameter of the DomainQuery and the Ordering parameter for the new ordering."
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully reordered Node", response = TreeNode.class),
+            @ApiResponse( code = 500, message = "Internal Server Error reordering Node" )
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response reorderNode(@ApiParam DomainQuery query,
+                                @Context ContainerRequest containerRequestContext) {
+        LOG.trace("Start reorderNode({})",query);
+        String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
+        String subjectKey;
+        if (StringUtils.isBlank(authorizedSubjectKey)) {
+            subjectKey = query.getSubjectKey();
+        } else {
+            subjectKey = authorizedSubjectKey;
+        }
+        try {
+            List<Integer> orderList = query.getOrdering();
+            int[] order = new int[orderList.size()];
+            for (int i=0; i < orderList.size(); i++) {
+                order[i] = orderList.get(i).intValue();
+            }
+            TreeNode parentNode = query.getDomainObjectAs(TreeNode.class);
+            TreeNode updatedNode = legacyFolderDao.reorderChildren(subjectKey, parentNode, order);
+            return Response
+                    .ok()
+                    .entity(updatedNode)
+                    .build();
+
+        } catch (Exception e) {
+            LOG.error("Error occurred in reorder nodes with {}",query, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error while trying to reorder nodes: " + query))
+                    .build();
+        } finally {
+            LOG.trace("Finish reorderNode({})",query);
         }
     }
 
@@ -270,52 +360,6 @@ public class DataTreeNodeResource {
                     .build();
         } finally {
             LOG.trace("Finished getAllWorkspacesBySubjectKey({})", subjectKey);
-        }
-    }
-
-    @POST
-    @Path("/node/children")
-    @ApiOperation(value = "Removes items from a Node",
-            notes = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
-                    "the References parameter for the list of items to remove"
-    )
-    @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully removed items from the Node", response = TreeNode.class),
-            @ApiResponse( code = 500, message = "Internal Server Error removing items from the Node" )
-    })
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public <T extends TreeNode> Response removeChildren(@ApiParam DomainQuery query,
-                                                        @Context ContainerRequest containerRequestContext) {
-        LOG.trace("Start removeChildren({})",query);
-        String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        String subjectKey;
-        if (StringUtils.isBlank(authorizedSubjectKey)) {
-            subjectKey = query.getSubjectKey();
-        } else {
-            subjectKey = authorizedSubjectKey;
-        }
-        try {
-            T parentFolder = (T) query.getDomainObjectAs(TreeNode.class);
-            TreeNode existingParentFolder = legacyFolderDao.getDomainObject(subjectKey, TreeNode.class, parentFolder.getId());
-            if (existingParentFolder == null) {
-                LOG.warn("No folder found for parent node {} accessible by {}", parentFolder, subjectKey);
-                return Response
-                        .status(Response.Status.NO_CONTENT)
-                        .build();
-            }
-            TreeNode updatedNode = legacyFolderDao.removeChildren(subjectKey, existingParentFolder, query.getReferences());
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(updatedNode)
-                    .build();
-        } catch (Exception e) {
-            LOG.error("Error occurred in remove children with {}",query, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new ErrorResponse("Error while trying remove children nodes using " + query))
-                    .build();
-        } finally {
-            LOG.trace("Finish removeChildren({})",query);
         }
     }
 
