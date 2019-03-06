@@ -1,5 +1,7 @@
 # JACS - JAnelia Computational Services
 
+[![CircleCI](https://circleci.com/gh/JaneliaSciComp/jacs-compute.svg?style=svg)](https://circleci.com/gh/JaneliaSciComp/jacs-compute)
+
 JACS is both a framework and a collection of computational services for scientific computing at Janelia. It currently includes:
 
   - asynchronous RESTful services for running jobs on clusters

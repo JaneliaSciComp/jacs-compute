@@ -1,0 +1,40 @@
+version: 2
+jobs:
+  build:
+
+    branches:
+      only:
+       - master
+   
+    working_directory: ~/jacs-compute
+
+    docker:
+      - image: circleci/openjdk:8u171-jdk
+
+    environment:
+      TERM: dumb
+
+    steps:
+
+      - checkout
+
+      - restore_cache:
+          keys: 
+            - jacs-compute-{{ checksum "build.gradle" }}
+            - jacs-compute-
+      
+      - run: ./gradlew dependencies
+      
+      - save_cache:
+          key: jacs-compute-{{ checksum "build.gradle" }}
+          paths:
+            - ~/.gradle
+
+      - run: ./gradlew installDist test
+
+      - store_test_results:
+          paths: 
+            - jacs2-*/build/test-results/test
+      
+      - store_artifacts:
+          path: build/libs/*.jar
