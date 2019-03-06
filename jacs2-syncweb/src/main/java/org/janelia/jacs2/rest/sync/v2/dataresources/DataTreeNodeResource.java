@@ -90,12 +90,54 @@ public class DataTreeNodeResource {
     }
 
     @PUT
+    @Path("/node/children")
+    @ApiOperation(value = "Adds items to a Node",
+            notes = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
+                    "the References parameter for the list of items to add"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully added items to the Node", response=TreeNode.class),
+            @ApiResponse( code = 500, message = "Internal Server Error adding items to the Node" )
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @SuppressWarnings("unchecked")
+    public <T extends TreeNode> Response addChildren(@ApiParam DomainQuery query,
+                                                     @Context ContainerRequest containerRequestContext) {
+        LOG.trace("addChildren({})",query);
+        String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
+        try {
+            T parentFolder = (T) query.getDomainObjectAs(TreeNode.class);
+            TreeNode existingParentFolder = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, parentFolder.getId());
+            if (existingParentFolder == null) {
+                LOG.warn("No folder found for parent node {} accessible by {}", parentFolder, authorizedSubjectKey);
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .build();
+            }
+            TreeNode updatedNode = legacyFolderDao.addChildren(authorizedSubjectKey, parentFolder, query.getReferences());
+            return Response
+                    .status(Response.Status.OK)
+                    .entity(updatedNode)
+                    .build();
+        } catch (Exception e) {
+            LOG.error("Error occurred in add children to tree node {}",query, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error while trying to create a treeNode from " + query))
+                    .build();
+        } finally {
+            LOG.trace("Finished createTreeNode({})", query);
+        }
+    }
+
+    @PUT
     @Path("/node/{node-id}/children/{folder}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response addChildrenNodes(@PathParam("node-id") Long dataNodeId,
                                      @PathParam("folder") String folderName,
                                      @Context ContainerRequest containerRequestContext) {
+        LOG.trace("Start addChildren({}, {})", dataNodeId, folderName);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         TreeNode parentFolder = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
         if (parentFolder == null) {
@@ -120,6 +162,8 @@ public class DataTreeNodeResource {
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
                     .build();
+        } finally {
+            LOG.trace("Finished addChildren({}, {})", dataNodeId, folderName);
         }
     }
 
