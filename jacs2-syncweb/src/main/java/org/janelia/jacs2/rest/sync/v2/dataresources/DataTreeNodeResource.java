@@ -29,6 +29,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -106,24 +107,30 @@ public class DataTreeNodeResource {
                                                      @Context ContainerRequest containerRequestContext) {
         LOG.trace("addChildren({})",query);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
+        String subjectKey;
+        if (StringUtils.isBlank(authorizedSubjectKey)) {
+            subjectKey = query.getSubjectKey();
+        } else {
+            subjectKey = authorizedSubjectKey;
+        }
         try {
             T parentFolder = (T) query.getDomainObjectAs(TreeNode.class);
-            TreeNode existingParentFolder = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, parentFolder.getId());
+            TreeNode existingParentFolder = legacyFolderDao.getDomainObject(subjectKey, TreeNode.class, parentFolder.getId());
             if (existingParentFolder == null) {
-                LOG.warn("No folder found for parent node {} accessible by {}", parentFolder, authorizedSubjectKey);
+                LOG.warn("No folder found for parent node {} accessible by {}", parentFolder, subjectKey);
                 return Response
                         .status(Response.Status.NOT_FOUND)
                         .build();
             }
-            TreeNode updatedNode = legacyFolderDao.addChildren(authorizedSubjectKey, parentFolder, query.getReferences());
+            TreeNode updatedNode = legacyFolderDao.addChildren(subjectKey, existingParentFolder, query.getReferences());
             return Response
                     .status(Response.Status.OK)
                     .entity(updatedNode)
                     .build();
         } catch (Exception e) {
-            LOG.error("Error occurred in add children to tree node {}",query, e);
+            LOG.error("Error occurred in add children with {}",query, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new ErrorResponse("Error while trying to create a treeNode from " + query))
+                    .entity(new ErrorResponse("Error while trying to add children: " + query))
                     .build();
         } finally {
             LOG.trace("Finished createTreeNode({})", query);
@@ -265,4 +272,51 @@ public class DataTreeNodeResource {
             LOG.trace("Finished getAllWorkspacesBySubjectKey({})", subjectKey);
         }
     }
+
+    @POST
+    @Path("/node/children")
+    @ApiOperation(value = "Removes items from a Node",
+            notes = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
+                    "the References parameter for the list of items to remove"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully removed items from the Node", response = TreeNode.class),
+            @ApiResponse( code = 500, message = "Internal Server Error removing items from the Node" )
+    })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public <T extends TreeNode> Response removeChildren(@ApiParam DomainQuery query,
+                                                        @Context ContainerRequest containerRequestContext) {
+        LOG.trace("Start removeChildren({})",query);
+        String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
+        String subjectKey;
+        if (StringUtils.isBlank(authorizedSubjectKey)) {
+            subjectKey = query.getSubjectKey();
+        } else {
+            subjectKey = authorizedSubjectKey;
+        }
+        try {
+            T parentFolder = (T) query.getDomainObjectAs(TreeNode.class);
+            TreeNode existingParentFolder = legacyFolderDao.getDomainObject(subjectKey, TreeNode.class, parentFolder.getId());
+            if (existingParentFolder == null) {
+                LOG.warn("No folder found for parent node {} accessible by {}", parentFolder, subjectKey);
+                return Response
+                        .status(Response.Status.NO_CONTENT)
+                        .build();
+            }
+            TreeNode updatedNode = legacyFolderDao.removeChildren(subjectKey, existingParentFolder, query.getReferences());
+            return Response
+                    .status(Response.Status.OK)
+                    .entity(updatedNode)
+                    .build();
+        } catch (Exception e) {
+            LOG.error("Error occurred in remove children with {}",query, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error while trying remove children nodes using " + query))
+                    .build();
+        } finally {
+            LOG.trace("Finish removeChildren({})",query);
+        }
+    }
+
 }
