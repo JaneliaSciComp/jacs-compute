@@ -78,6 +78,9 @@ dependencies {
         // expressions
         JAVA_EXP_IMPL_LIB = "org.glassfish:javax.el:3.0.0"
 
+        // auth
+        JWT_LIB = "com.nimbusds:nimbus-jose-jwt:5.4"
+
         // cron utils
         CRON_UTILS_LIB = "com.cronutils:cron-utils:7.0.1"
 

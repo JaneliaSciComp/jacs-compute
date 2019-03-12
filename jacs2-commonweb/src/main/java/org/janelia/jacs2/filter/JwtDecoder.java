@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
 
+// TODO: merge this functionality into the JWTProvider class
 public class JwtDecoder {
     private static final Logger LOG = LoggerFactory.getLogger(JwtDecoder.class);
 

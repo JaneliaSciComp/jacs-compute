@@ -1,0 +1,43 @@
+package org.janelia.jacs2.auth.impl;
+
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.auth.PasswordProvider;
+import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.model.access.domain.dao.SubjectDao;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+
+/**
+ * Produces the correct authentication implementation based on user-defined properties.
+ *
+ * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
+ */
+@ApplicationScoped
+public class AuthProducer {
+    private static final Logger LOG = LoggerFactory.getLogger(AuthProducer.class);
+
+    @Inject
+    private SubjectDao subjectDao;
+    @Inject
+    private PasswordProvider pwProvider;
+
+    @ApplicationScoped
+    @Produces
+    public AuthProvider getAuth(@PropertyValue(name = "LDAP.URL") String ldapUrl,
+                                @PropertyValue(name = "LDAP.SearchBase") String ldapSearchBase,
+                                @PropertyValue(name = "LDAP.SearchFilter") String ldapSearchFilter,
+                                @PropertyValue(name = "LDAP.BindDN") String ldapBindDN,
+                                @PropertyValue(name = "LDAP.BindCredentials") String ldapBindCredentials,
+                                @PropertyValue(name = "LDAP.TimeOut") Integer ldapTimeout) {
+        if (StringUtils.isAnyEmpty(ldapUrl, ldapSearchBase, ldapSearchFilter)) {
+            LOG.info("No LDAP configuration found. Defaulting to local auth implementation.");
+            return new LocalAuthProvider(subjectDao, pwProvider);
+        }
+        return new LDAPAuthProvider(subjectDao, ldapUrl, ldapSearchBase,
+                ldapSearchFilter, ldapBindDN, ldapBindCredentials, ldapTimeout);
+    }
+}

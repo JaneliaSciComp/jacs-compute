@@ -1,23 +1,20 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.auth.LDAPProvider;
+import org.glassfish.jersey.server.ContainerRequest;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
+import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.auth.impl.AuthProvider;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.jacs2.rest.sync.v2.dataresources.dto.AuthenticationRequest;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.dto.DomainQuery;
+import org.janelia.model.security.Group;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.janelia.model.security.util.SubjectUtils;
@@ -25,18 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,9 +58,57 @@ public class UserResource {
     @Inject
     private SubjectDao subjectDao;
     @Inject
-    private LDAPProvider ldapProvider;
+    private PasswordProvider pwProvider;
+    @Inject
+    private AuthProvider authProvider;
 
-    @ApiOperation(value = "Gets or creates a user",
+    @ApiOperation(value = "Changes a user's password",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully set user password", response = User.class),
+            @ApiResponse(code = 500, message = "Internal Server Error setting user preferences")
+    })
+    @POST
+    @Path("/user/password")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public User changePassword(AuthenticationRequest authenticationMessage, @Context ContainerRequest containerRequestContext) {
+        LOG.trace("changePassword({})", authenticationMessage.getUsername());
+        try {
+
+            String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
+            if (authorizedSubjectKey!=null && !authorizedSubjectKey.equals(authenticationMessage.getUsername())) {
+                // Someone is trying to change a password that isn't there own. Is it an admin?
+                String authenticatedSubjectKey = JacsSecurityContextHelper.getAuthenticatedSubjectKey(containerRequestContext);
+                User authUser = (User)subjectDao.findByName(authenticatedSubjectKey);
+                if (!authUser.hasGroupRead(Group.ADMIN_KEY)) {
+                    LOG.info("Unauthorized attempt to change password for {}", authenticationMessage.getUsername());
+                    throw new WebApplicationException(Response.Status.FORBIDDEN);
+                }
+            }
+
+            Subject subject = subjectDao.findByName(authenticationMessage.getUsername());
+            if (!(subject instanceof User)) {
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
+            }
+            User user = (User)subject;
+            user.setPassword(pwProvider.generatePBKDF2Hash(authenticationMessage.getPassword()));
+            subjectDao.save(user);
+            return user;
+
+        } catch (Exception e) {
+            if (e instanceof WebApplicationException) {
+                throw (WebApplicationException)e;
+            }
+            else {
+                LOG.error("Error occurred changing password for user {}", authenticationMessage.getUsername(), e);
+                throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+            }
+        }
+    }
+
+    @ApiOperation(value = "Gets a user, creating the user if necessary",
             notes = "The authenticated user must be the same as the user being retrieved"
     )
     @ApiResponses(value = {
@@ -92,24 +130,25 @@ public class UserResource {
             String username = SubjectUtils.getSubjectName(subjectKey);
             Subject existingUser = subjectDao.findByNameOrKey(subjectKey);
             if (existingUser == null) {
-                // if subject doesn't exist for this user, create the account
-                User newUser = ldapProvider.getUserInfo(username);
-                subjectDao.save(newUser);
-                LOG.info("Created new user based on LDAP information: {}", newUser);
-                return Response
-                        .created(UriBuilder.fromMethod(UserResource.class, "getSubjectById").build(newUser.getId()))
-                        .entity(newUser)
-                        .build();
-            } else {
-                return Response.ok(existingUser)
-                        .build();
+
+                User user = authProvider.createUser(username);
+                if (user!=null) {
+                    return Response.ok(user).build();
+                }
+                return Response.status(Response.Status.NOT_FOUND).build();
+
             }
-        } catch (Exception e) {
+            else {
+                return Response.ok(existingUser).build();
+            }
+        }
+        catch (Exception e) {
             LOG.error("Error trying to get or create user for {}", subjectKey);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error getting or creating user for " + subjectKey))
                     .build();
-        } finally {
+        }
+        finally {
             LOG.trace("Finished getOrCreateUser({})", subjectKey);
         }
     }
