@@ -57,7 +57,7 @@ public abstract class AbstractServicesApp {
         cmdline.usage(output);
     }
 
-    protected void start(AppArgs appArgs) {
+    protected void start(AppArgs appArgs) throws Exception {
         ContainerInitializer containerInitializer = new UndertowContainerInitializer(
                 getApplicationId(),
                 getRestApiContext(),
@@ -65,12 +65,8 @@ public abstract class AbstractServicesApp {
                 getPathsExcludedFromAccessLog(),
                 getAppListeners()
         );
-        try {
-            containerInitializer.initialize(this.getJaxApplication(), appArgs);
-            containerInitializer.start();
-        } catch (Exception e) {
-            LOG.error("Error starting the application", e);
-        }
+        containerInitializer.initialize(this.getJaxApplication(), appArgs);
+        containerInitializer.start();
     }
 
     String getApiVersion() {
