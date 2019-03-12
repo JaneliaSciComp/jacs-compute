@@ -34,7 +34,8 @@ jobs:
 
       - store_test_results:
           paths: 
-            - jacs2-*/build/test-results/test
+            - jacs2-services/build/test-results/test
+            - jacs2-commonweb/build/test-results/test
+            - jacs2-asyncweb/build/test-results/test
+            - jacs2-syncweb/build/test-results/test
       
-      - store_artifacts:
-          path: build/libs/*.jar
