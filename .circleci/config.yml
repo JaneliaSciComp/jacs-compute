@@ -30,7 +30,7 @@ jobs:
           paths:
             - ~/.gradle
 
-      - run: ./gradlew installDist test
+      - run: ./gradlew --no-daemon installDist test
 
       - store_test_results:
           paths: 
