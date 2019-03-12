@@ -7,8 +7,8 @@ import static org.junit.Assert.assertNotNull;
 public class JWTProviderTest {
 
     @Test
-    public void testHashing() throws Exception {
-        String SECRET_KEY = "dgteig894jFIORGJGdkfgjd";
+    public void testJWTCreation() throws Exception {
+        String SECRET_KEY = "tQlva5Ls8LCi7DPPsQeOZI4euHJ45ZXGOCRYqzyec37JXfKCT6a7sLMShR6KpGE";
         String userName = "testuser";
         String userFullName = "Test User";
         String userEmail = "test@test.com";
