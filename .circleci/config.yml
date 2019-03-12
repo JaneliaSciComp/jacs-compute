@@ -20,13 +20,13 @@ jobs:
 
       - restore_cache:
           keys: 
-            - jacs-compute-{{ checksum "build.gradle" }}
-            - jacs-compute-
+            - jacs-compute-c1-{{ checksum "build.gradle" }}
+            - jacs-compute-c1
       
       - run: ./gradlew dependencies
       
       - save_cache:
-          key: jacs-compute-{{ checksum "build.gradle" }}
+          key: jacs-compute-c1-{{ checksum "build.gradle" }}
           paths:
             - ~/.gradle
 
