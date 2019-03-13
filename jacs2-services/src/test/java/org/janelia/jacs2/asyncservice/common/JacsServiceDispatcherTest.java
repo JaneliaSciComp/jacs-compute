@@ -48,6 +48,7 @@ import static org.mockito.Mockito.when;
 public class JacsServiceDispatcherTest {
 
     private static final Long TEST_ID = 101L;
+    private static final String TEST_QUEUE_NAME = "queue";
 
     private ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
@@ -68,8 +69,8 @@ public class JacsServiceDispatcherTest {
         jacsNotificationDao = mock(JacsNotificationDao.class);
         Instance<ServiceRegistry> serviceRegistrarSource = mock(Instance.class);
         serviceRegistry = mock(ServiceRegistry.class);
-        jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, "queue", 10, logger);
-        jacsServiceEngine = new JacsServiceEngineImpl(jacsServiceDataPersistence, jacsServiceQueue, serviceRegistrarSource, 10, logger);
+        jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, TEST_QUEUE_NAME, 10, logger);
+        jacsServiceEngine = new JacsServiceEngineImpl(jacsServiceDataPersistence, jacsServiceQueue, serviceRegistrarSource, 10, TEST_QUEUE_NAME, logger);
         testDispatcher = new JacsServiceDispatcher(serviceComputationFactory,
                 jacsServiceQueue,
                 jacsServiceDataPersistence,
