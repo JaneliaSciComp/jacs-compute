@@ -33,7 +33,13 @@ public class JWTProvider {
 
     @Inject
     public JWTProvider(@PropertyValue(name = "JWT.SecretKey") String secretKey) {
-        this.secretKeyBytes = secretKey.getBytes();
+        if (secretKey==null) {
+            LOG.warn("You must configure a JWT.SecretKey in your properties file");
+            this.secretKeyBytes = new byte[32];
+        }
+        else {
+            this.secretKeyBytes = secretKey.getBytes();
+        }
     }
 
     public String encodeJWT(User user) {
