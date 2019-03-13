@@ -77,13 +77,20 @@ public class UserResource {
         LOG.trace("changePassword({})", authenticationMessage.getUsername());
         try {
 
-            String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-            if (authorizedSubjectKey!=null && !authorizedSubjectKey.equals(authenticationMessage.getUsername())) {
+            User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
+            User authenticatedUser = JacsSecurityContextHelper.getAuthenticatedUser(containerRequestContext);
+
+            if (authorizedSubject==null || authenticatedUser==null) {
+                LOG.info("Unauthorized attempt to change password for {}", authenticationMessage.getUsername());
+                throw new WebApplicationException(Response.Status.FORBIDDEN);
+            }
+
+            LOG.info("User {} is changing password for {}", authenticatedUser.getName(), authenticationMessage.getUsername());
+            if (!authorizedSubject.getName().equals(authenticationMessage.getUsername())) {
                 // Someone is trying to change a password that isn't there own. Is it an admin?
-                String authenticatedSubjectKey = JacsSecurityContextHelper.getAuthenticatedSubjectKey(containerRequestContext);
-                User authUser = (User)subjectDao.findByName(authenticatedSubjectKey);
-                if (!authUser.hasGroupRead(Group.ADMIN_KEY)) {
-                    LOG.info("Unauthorized attempt to change password for {}", authenticationMessage.getUsername());
+                if (!authenticatedUser.hasGroupRead(Group.ADMIN_KEY)) {
+                    LOG.info("Non-admin user {} attempted to change password for {}",
+                            authenticatedUser.getName(), authenticationMessage.getUsername());
                     throw new WebApplicationException(Response.Status.FORBIDDEN);
                 }
             }
@@ -93,8 +100,7 @@ public class UserResource {
                 throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             User user = (User)subject;
-            user.setPassword(pwProvider.generatePBKDF2Hash(authenticationMessage.getPassword()));
-            subjectDao.save(user);
+            subjectDao.setUserPassword(user, pwProvider.generatePBKDF2Hash(authenticationMessage.getPassword()));
             return user;
 
         } catch (Exception e) {
