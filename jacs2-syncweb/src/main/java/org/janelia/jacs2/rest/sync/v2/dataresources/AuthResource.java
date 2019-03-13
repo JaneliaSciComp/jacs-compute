@@ -53,7 +53,7 @@ public class AuthResource {
             }
 
             // Generate JWT
-            String token = jwtProvider.generateJWT(user);
+            String token = jwtProvider.encodeJWT(user);
 
             // Create response
             AuthenticationResponse authRes = new AuthenticationResponse();

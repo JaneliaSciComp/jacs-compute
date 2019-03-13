@@ -1,16 +1,16 @@
 package org.janelia.jacs2.auth;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.lang.Strings;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.model.security.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.crypto.SecretKey;
 import javax.inject.Inject;
-import java.security.SecureRandom;
 import java.util.Date;
 
 /**
@@ -20,6 +20,8 @@ import java.util.Date;
  */
 public class JWTProvider {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JWTProvider.class);
+
     private byte[] secretKeyBytes;
 
     @Inject
@@ -27,25 +29,36 @@ public class JWTProvider {
         this.secretKeyBytes = secretKey.getBytes();
     }
 
-    public String generateJWT(User user) throws JOSEException {
+    public String encodeJWT(User user) {
+
+        Object[] readGroups = user.getReadGroups().stream().map(f -> f.replace("group:", "")).toArray();
+        String readGroupStr = Strings.arrayToCommaDelimitedString(readGroups);
 
         Date now = new Date();
         Date tomorrow = new Date(now.getTime() + 24 * 60 * 60 *1000);
-
-        JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                .subject(user.getName())
-                .expirationTime(tomorrow)
+        SecretKey key = Keys.hmacShaKeyFor(secretKeyBytes);
+        return Jwts.builder()
+                .setExpiration(tomorrow)
+                .claim("groups", readGroupStr)
                 .claim("user_name", user.getName())
                 .claim("full_name", user.getFullName())
                 .claim("mail", user.getEmail())
-                .build();
-        SignedJWT jwt = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claims);
+                .signWith(key)
+                .compact();
+    }
 
-        // Apply the HMAC to the JWS object
-        new SecureRandom().nextBytes(secretKeyBytes);
-        jwt.sign(new MACSigner(secretKeyBytes));
+    public Jws<Claims> decodeJWT(String jws) {
+        SecretKey key = Keys.hmacShaKeyFor(secretKeyBytes);
+        try {
+            return Jwts.parser().setSigningKey(key).parseClaimsJws(jws);
+        }
+        catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException | SignatureException e) {
+            LOG.debug("Invalid JWT due to {}: {}"+e.getClass().getSimpleName(), e.getMessage());
+            return null;
+        }
+    }
 
-        // Output in URL-safe format
-        return jwt.serialize();
+    public boolean verifyJWT(String jws) {
+        return decodeJWT(jws) != null;
     }
 }

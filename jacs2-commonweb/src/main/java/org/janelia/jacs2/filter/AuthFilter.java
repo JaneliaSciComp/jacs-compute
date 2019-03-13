@@ -135,7 +135,7 @@ public class AuthFilter implements ContainerRequestFilter {
                 })
                 .filter(StringUtils::isNotBlank)
                 .map(token -> jwtDecoder.decode(token))
-                .filter(jwt -> jwt.isValid())
+                .filter(JWT::isValid)
                 .map(jwt -> jwt.userName);
     }
 }
