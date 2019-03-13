@@ -24,7 +24,7 @@ public class JWTProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(JWTProvider.class);
 
-    public static final String TYPE_CLAIM = "typ";
+    public static final String TYPE_HEADER = "typ";
     public static final String USERNAME_CLAIM = "user_name";
     public static final String FULLNAME_CLAIM = "full_name";
     public static final String EMAIL_CLAIM = "mail";
@@ -52,8 +52,8 @@ public class JWTProvider {
         Date tomorrow = new Date(now.getTime() + 24 * 60 * 60 *1000);
         SecretKey key = Keys.hmacShaKeyFor(secretKeyBytes);
         return Jwts.builder()
+                .setHeaderParam(TYPE_HEADER, "JWT") // required by nginx-jwt library
                 .setExpiration(tomorrow)
-                .claim(TYPE_CLAIM, "JWT") // required by nginx-jwt library
                 .claim(USERNAME_CLAIM, user.getName())
                 .claim(FULLNAME_CLAIM, user.getFullName())
                 .claim(EMAIL_CLAIM, user.getEmail())
