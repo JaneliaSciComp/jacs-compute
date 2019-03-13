@@ -12,15 +12,22 @@ import org.slf4j.LoggerFactory;
 import javax.crypto.SecretKey;
 import javax.inject.Inject;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Handling of JWT security tokens.
+ * Handles JWT security tokens abstractly, without exposing the details of the implementation.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class JWTProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(JWTProvider.class);
+
+    public static final String USERNAME_CLAIM = "user_name";
+    public static final String FULLNAME_CLAIM = "full_name";
+    public static final String EMAIL_CLAIM = "mail";
+    public static final String GROUPS_CLAIM = "groups";
 
     private byte[] secretKeyBytes;
 
@@ -39,18 +46,32 @@ public class JWTProvider {
         SecretKey key = Keys.hmacShaKeyFor(secretKeyBytes);
         return Jwts.builder()
                 .setExpiration(tomorrow)
-                .claim("groups", readGroupStr)
-                .claim("user_name", user.getName())
-                .claim("full_name", user.getFullName())
-                .claim("mail", user.getEmail())
+                .claim(USERNAME_CLAIM, user.getName())
+                .claim(FULLNAME_CLAIM, user.getFullName())
+                .claim(EMAIL_CLAIM, user.getEmail())
+                .claim(GROUPS_CLAIM, readGroupStr)
                 .signWith(key)
                 .compact();
     }
 
-    public Jws<Claims> decodeJWT(String jws) {
+    /**
+     * Returns the claims for the given JWT, if it can be verified. If not, null is returned.
+     * The claims use keys given by the constants defined in this class.
+     * @param jws Signed JWT
+     * @return map of
+     */
+    public Map<String, String> decodeJWT(String jws) {
         SecretKey key = Keys.hmacShaKeyFor(secretKeyBytes);
         try {
-            return Jwts.parser().setSigningKey(key).parseClaimsJws(jws);
+            Claims body = Jwts.parser().setSigningKey(key).parseClaimsJws(jws).getBody();
+            Map<String,String> claims = new HashMap<>();
+            // Translate claim values to strings
+            for (Map.Entry<String, Object> entry : body.entrySet()) {
+                if (entry.getValue()!=null) {
+                    claims.put(entry.getKey(), entry.getValue().toString());
+                }
+            }
+            return claims;
         }
         catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException | SignatureException e) {
             LOG.debug("Invalid JWT due to {}: {}"+e.getClass().getSimpleName(), e.getMessage());

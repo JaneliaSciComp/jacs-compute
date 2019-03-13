@@ -1,10 +1,10 @@
 package org.janelia.jacs2.auth;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
 import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.User;
 import org.junit.Test;
+
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -40,12 +40,12 @@ public class JWTProviderTest {
         user.setUserGroupRole("group:testers", GroupRole.Reader);
         String jws = jp.encodeJWT(user);
         assertNotNull(jws);
-        Jws<Claims> claimsJws = jp.decodeJWT(jws);
+        Map<String, String> claimsJws = jp.decodeJWT(jws);
         assertNotNull(claimsJws);
-        assertEquals(userName, claimsJws.getBody().get("user_name", String.class));
-        assertEquals(userFullName, claimsJws.getBody().get("full_name", String.class));
-        assertEquals(userEmail, claimsJws.getBody().get("mail", String.class));
-        assertEquals("testers", claimsJws.getBody().get("groups", String.class));
+        assertEquals(userName, claimsJws.get(JWTProvider.USERNAME_CLAIM));
+        assertEquals(userFullName, claimsJws.get(JWTProvider.FULLNAME_CLAIM));
+        assertEquals(userEmail, claimsJws.get(JWTProvider.EMAIL_CLAIM));
+        assertEquals("testers", claimsJws.get(JWTProvider.GROUPS_CLAIM));
     }
 
 }

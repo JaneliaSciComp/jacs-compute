@@ -1,6 +1,7 @@
 package org.janelia.jacs2.filter;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.auth.JacsSecurityContext;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
@@ -18,6 +19,7 @@ import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.lang.reflect.Method;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -40,11 +42,12 @@ public class AuthFilter implements ContainerRequestFilter {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String HEADER_USERNAME = "username";
     private static final String HEADER_RUNASUSER = "runasuser";
+    private static final String BEARER_PREFIX = "Bearer ";
 
     @Inject
     private LegacyDomainDao dao;
     @Inject
-    private JwtDecoder jwtDecoder;
+    private JWTProvider jwtProvider;
     @Inject
     private Logger logger;
     @Context
@@ -127,15 +130,14 @@ public class AuthFilter implements ContainerRequestFilter {
     private Optional<String> getUserNameFromAuthorizationHeader(ContainerRequestContext requestContext) {
         return getSingleHeaderValue(requestContext, AUTHORIZATION_HEADER)
                 .flatMap(authHeader -> {
-                    if (StringUtils.startsWithIgnoreCase(authHeader, "Bearer ")) {
-                        return Optional.of(authHeader.substring("Bearer ".length()).trim());
+                    if (StringUtils.startsWithIgnoreCase(authHeader, BEARER_PREFIX)) {
+                        return Optional.of(authHeader.substring(BEARER_PREFIX.length()).trim());
                     } else {
                         return Optional.empty();
                     }
                 })
                 .filter(StringUtils::isNotBlank)
-                .map(token -> jwtDecoder.decode(token))
-                .filter(JWT::isValid)
-                .map(jwt -> jwt.userName);
+                .map(token -> jwtProvider.decodeJWT(token))
+                .map(jwt -> jwt.get(JWTProvider.USERNAME_CLAIM));
     }
 }

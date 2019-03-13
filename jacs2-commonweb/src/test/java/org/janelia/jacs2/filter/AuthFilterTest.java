@@ -1,6 +1,6 @@
 package org.janelia.jacs2.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.auth.JacsSecurityContext;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -9,23 +9,20 @@ import org.janelia.model.security.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
-import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -33,12 +30,13 @@ import static org.mockito.ArgumentMatchers.any;
 @PrepareForTest({
         AuthFilter.class,
 })
+@PowerMockIgnore({"javax.crypto.*" }) // Due to https://github.com/powermock/powermock/issues/294
 public class AuthFilterTest {
 
     @Mock
     private LegacyDomainDao dao;
     @Mock
-    private JwtDecoder jwtDecoder;
+    private JWTProvider jwtProvider;
     @Mock
     private Logger logger;
     @Mock
@@ -51,7 +49,7 @@ public class AuthFilterTest {
         Whitebox.setInternalState(authFilter, "dao", dao);
         Whitebox.setInternalState(authFilter, "logger", logger);
         Whitebox.setInternalState(authFilter, "resourceInfo", resourceInfo);
-        Whitebox.setInternalState(authFilter, "jwtDecoder", jwtDecoder);
+        Whitebox.setInternalState(authFilter, "jwtProvider", jwtProvider);
     }
 
     @Test
@@ -68,7 +66,7 @@ public class AuthFilterTest {
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
         Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
         Mockito.when(requestContext.getHeaderString("Authorization")).thenReturn("Bearer " + testToken);
-        Mockito.when(jwtDecoder.decode(testToken)).thenReturn(createTestJWT(testUserName, System.currentTimeMillis()/1000 + 200));
+        Mockito.when(jwtProvider.decodeJWT(testToken)).thenReturn(createTestJWT(testUserName));
         Mockito.when(dao.getSubjectByNameOrKey(testUserName)).then(invocation -> {
             String usernameArg = invocation.getArgument(0);
             Subject subject = new User();
@@ -82,10 +80,9 @@ public class AuthFilterTest {
         Mockito.verify(requestContext).setSecurityContext(any(JacsSecurityContext.class));
     }
 
-    private JWT createTestJWT(String user, long expInSec) {
-        JWT jwt = new JWT();
-        jwt.userName = user;
-        jwt.expInSeconds = expInSec;
-        return jwt;
+    private Map<String,String> createTestJWT(String user) {
+        Map<String,String> claims = new HashMap<>();
+        claims.put(JWTProvider.USERNAME_CLAIM, user);
+        return claims;
     }
 }

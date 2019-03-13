@@ -3,15 +3,14 @@ package org.janelia.jacs2.testrest;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
+import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.dataservice.cronservice.CronScheduledServiceManager;
-import org.janelia.jacs2.filter.JwtDecoder;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
 
 import static org.mockito.Mockito.mock;
 
@@ -21,7 +20,7 @@ public class TestResourceDependenciesProducer {
     private JacsServiceDataManager jacsServiceDataManager = mock(JacsServiceDataManager.class);
     private ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
     private LegacyDomainDao legacyDomainDao = mock(LegacyDomainDao.class);
-    private JwtDecoder jwtDecoder = mock(JwtDecoder.class);
+    private JWTProvider jwtProvider = mock(JWTProvider.class);
     private ObjectMapperFactory objectMapperFactory = ObjectMapperFactory.instance();
     private CronScheduledServiceManager jacsScheduledServiceDataManager = mock(CronScheduledServiceManager.class);
     private JacsServiceEngine jacsServiceEngine = mock(JacsServiceEngine.class);
@@ -62,7 +61,7 @@ public class TestResourceDependenciesProducer {
     }
 
     @Produces
-    public JwtDecoder getJwtDecoder() {
-        return jwtDecoder;
+    public JWTProvider getJWTProvider() {
+        return jwtProvider;
     }
 }
