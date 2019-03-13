@@ -29,8 +29,7 @@ public class AsyncServicesApp extends AbstractServicesApp {
             SeContainer container = SeContainerFactory.getSeContainer();
             AsyncServicesApp app = container.select(AsyncServicesApp.class).get();
             app.start(appArgs);
-        }
-        catch (Throwable e) {
+        } catch (Throwable e) {
             // For some reason, any Throwables thrown out of this main function are discarded. Thus, we must log them
             // here. Of course, this will be problematic if there is ever an issue with the logger.
             LOG.error("Error starting application", e);
