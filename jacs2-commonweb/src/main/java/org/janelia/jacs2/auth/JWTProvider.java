@@ -4,6 +4,7 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.lang.Strings;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.model.security.User;
 import org.slf4j.Logger;
@@ -25,19 +26,18 @@ public class JWTProvider {
     private static final Logger LOG = LoggerFactory.getLogger(JWTProvider.class);
 
     public static final String USERNAME_CLAIM = "user_name";
-    public static final String FULLNAME_CLAIM = "full_name";
-    public static final String EMAIL_CLAIM = "mail";
-    public static final String GROUPS_CLAIM = "groups";
+    static final String FULLNAME_CLAIM = "full_name";
+    static final String EMAIL_CLAIM = "mail";
+    static final String GROUPS_CLAIM = "groups";
 
     private byte[] secretKeyBytes;
 
     @Inject
     public JWTProvider(@PropertyValue(name = "JWT.SecretKey") String secretKey) {
-        if (secretKey==null) {
+        if (StringUtils.isBlank(secretKey)) {
             LOG.warn("You must configure a JWT.SecretKey in your properties file");
             this.secretKeyBytes = new byte[32];
-        }
-        else {
+        } else {
             this.secretKeyBytes = secretKey.getBytes();
         }
     }
@@ -78,9 +78,8 @@ public class JWTProvider {
                 }
             }
             return claims;
-        }
-        catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException | SignatureException e) {
-            LOG.debug("Invalid JWT due to {}: {}"+e.getClass().getSimpleName(), e.getMessage());
+        } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException | SignatureException e) {
+            LOG.debug("Invalid JWT due to {}: {}", e.getClass().getSimpleName(), e.getMessage());
             return null;
         }
     }
