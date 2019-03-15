@@ -46,8 +46,8 @@ import java.util.List;
 )
 @RequireAuthentication
 @ApplicationScoped
-@Path("/samples")
 @Produces("application/json")
+@Path("/samples")
 public class Jacs2SampleDataResource {
     private static final int DEFAULT_PAGE_SIZE = 100;
 

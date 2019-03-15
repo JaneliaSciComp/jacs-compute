@@ -9,26 +9,10 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.glassfish.jersey.media.multipart.BodyPart;
-import org.glassfish.jersey.media.multipart.BodyPartEntity;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.glassfish.jersey.media.multipart.MultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartMediaTypes;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.DomainUtils;
-import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmReviewTaskDao;
-import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.dto.DomainQuery;
-import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
-import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
-import org.janelia.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,17 +24,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -77,8 +54,6 @@ public class TmReviewsResource {
     @Inject
     private TmReviewTaskDao tmReviewTaskDao;
 
-    @GET
-    @Path("/reviewtask")
     @ApiOperation(value = "Gets all review tasks",
             notes = "Returns a list of all the review tasks currently in the system"
     )
@@ -87,14 +62,14 @@ public class TmReviewsResource {
                     responseContainer = "List" ),
             @ApiResponse( code = 500, message = "Error occurred while fetching the review tasks" )
     })
+    @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/reviewtask")
     public List<TmReviewTask> getTmReviewTasks(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getTmReviewTasks()");
         return tmReviewTaskDao.getReviewTasksForSubject(subjectKey);
     }
 
-    @PUT
-    @Path("/reviewtask")
     @ApiOperation(value = "Creates a new TmReviewTask",
             notes = "Creates a TmWorkspace using the DomainObject parameter of the DomainQuery"
     )
@@ -102,8 +77,10 @@ public class TmReviewsResource {
             @ApiResponse( code = 200, message = "Successfully created a TmReviewTask", response = TmReviewTask.class),
             @ApiResponse( code = 500, message = "Error occurred while creating a TmReviewTask" )
     })
+    @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/reviewtask")
     public TmReviewTask createTmReviewTask(DomainQuery query) {
         LOG.trace("Start createTmReviewTask({})", query);
         return tmReviewTaskDao.createTmReviewTask(query.getSubjectKey(), (TmReviewTask) query.getDomainObject());

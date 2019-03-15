@@ -59,14 +59,14 @@ public class DataSummaryResource {
     @PropertyValue(name = "Dataset.Storage.DefaultVolume")
     private String defaultVolume;
 
-    @GET
-    @Path("summary/disk")
     @ApiOperation(value = "Returns a disk usage summary for a given user")
     @ApiResponses(value = {
             @ApiResponse( code = 200, message = "Successfully got disk uage summary", response= DiskUsageSummary.class),
             @ApiResponse( code = 500, message = "Internal Server Error getting disk usage summary" )
     })
+    @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("summary/disk")
     public Response getDiskUsageSummary(@ApiParam @QueryParam("volumeName") String volumeNameParam,
                                         @ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDiskUsageSummary({}, {})", volumeNameParam, subjectKey);
@@ -97,8 +97,8 @@ public class DataSummaryResource {
             @ApiResponse( code = 500, message = "Internal Server Error getting data summary" )
     })
     @GET
-    @Path("/summary/database")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/summary/database")
     public Response getDatabaseSummary(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDatabaseSummary({})", subjectKey);
         try {

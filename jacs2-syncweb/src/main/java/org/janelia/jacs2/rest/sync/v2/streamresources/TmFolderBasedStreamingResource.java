@@ -51,8 +51,8 @@ public class TmFolderBasedStreamingResource {
             @ApiResponse(code = 404, message = "Sample not found or no rendering"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("volume_info/{baseFolder:.*}")
     @Produces({MediaType.APPLICATION_JSON})
+    @Path("volume_info/{baseFolder:.*}")
     public Response getVolumeInfoFromBaseFolder(@PathParam("baseFolder") String baseFolderParam,
                                                 @Context ContainerRequestContext requestContext) {
         if (StringUtils.isBlank(baseFolderParam)) {
@@ -80,8 +80,8 @@ public class TmFolderBasedStreamingResource {
             @ApiResponse(code = 404, message = "Base folder not found"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("closest_raw_tile_info/{baseFolder:.*}")
     @Produces({MediaType.APPLICATION_JSON})
+    @Path("closest_raw_tile_info/{baseFolder:.*}")
     public Response findClosestRawImageFromVoxelCoord(@PathParam("baseFolder") String baseFolderParam,
                                                       @QueryParam("x") Integer xVoxelParam,
                                                       @QueryParam("y") Integer yVoxelParam,
@@ -118,8 +118,8 @@ public class TmFolderBasedStreamingResource {
             @ApiResponse(code = 404, message = "Base folder not found"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("closest_raw_tile_stream/{baseFolder:.*}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
+    @Path("closest_raw_tile_stream/{baseFolder:.*}")
     public Response streamClosestRawImageFromVoxelCoord(@PathParam("baseFolder") String baseFolderParam,
                                                         @QueryParam("x") Integer xVoxelParam,
                                                         @QueryParam("y") Integer yVoxelParam,
@@ -177,8 +177,8 @@ public class TmFolderBasedStreamingResource {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("rendering/tile/{baseFolder:.*}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("rendering/tile/{baseFolder:.*}")
     public Response streamTileFromDirAndCoord(
             @PathParam("baseFolder") String baseFolderParam,
             @QueryParam("zoom") Integer zoomParam,
@@ -198,8 +198,8 @@ public class TmFolderBasedStreamingResource {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("mouseLightTiffStream")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("mouseLightTiffStream")
     public Response streamTIFFTile(@QueryParam("suggestedPath") String pathHint) {
         return getTileTIFFFile(pathHint)
                 .map(tileFile -> {

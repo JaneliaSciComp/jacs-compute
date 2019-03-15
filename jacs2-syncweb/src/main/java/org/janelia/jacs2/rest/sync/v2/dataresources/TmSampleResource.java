@@ -16,8 +16,6 @@ import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.dataservice.search.SolrConnector;
-import org.janelia.jacs2.dataservice.storage.DataStorageInfo;
-import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
@@ -94,8 +92,8 @@ public class TmSampleResource {
             @ApiResponse(code = 500, message = "Error occurred while fetching sample paths")
     })
     @GET
-    @Path("sampleRootPaths")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("sampleRootPaths")
     public Response getSampleRootPreferences(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         String updatedSubjectKey = StringUtils.defaultIfBlank(subjectKey, DomainConstants.MOUSELIGHT_GROUP_KEY);
         LOG.trace("Start getTmSamplePaths({})", updatedSubjectKey);
@@ -121,9 +119,9 @@ public class TmSampleResource {
             @ApiResponse(code = 500, message = "Error occurred while updating sample paths")
     })
     @POST
-    @Path("sampleRootPaths")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("sampleRootPaths")
     public Response updateSampleRootPreferences(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                 @ApiParam List<String> samplePaths) {
         String updatedSubjectKey = StringUtils.defaultIfBlank(subjectKey, DomainConstants.MOUSELIGHT_GROUP_KEY);
@@ -154,8 +152,8 @@ public class TmSampleResource {
             @ApiResponse(code = 500, message = "Error occurred while fetching the samples")
     })
     @GET
-    @Path("sample")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("sample")
     public List<TmSample> getTmSamples(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         String sampleOwnerKey = StringUtils.defaultIfBlank(subjectKey, DomainConstants.MOUSELIGHT_GROUP_KEY);
         return tmSampleDao.findOwnedEntitiesBySubjectKey(sampleOwnerKey, 0, -1);
@@ -170,8 +168,8 @@ public class TmSampleResource {
             @ApiResponse(code = 500, message = "Error occurred while fetching the sample")
     })
     @GET
-    @Path("sample/{sampleId}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("sample/{sampleId}")
     public TmSample getTmSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                 @ApiParam @PathParam("sampleId") final Long sampleId) {
         return tmSampleDao.findEntityByIdAccessibleBySubjectKey(sampleId, subjectKey);
@@ -185,8 +183,8 @@ public class TmSampleResource {
             @ApiResponse(code = 500, message = "Error occurred while fetching the sample constants")
     })
     @GET
-    @Path("sample/constants")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("sample/constants")
     public Response getTmSampleConstants(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                          @ApiParam @QueryParam("samplePath") final String samplePath,
                                          @Context ContainerRequest containerRequestContext) {
@@ -264,9 +262,9 @@ public class TmSampleResource {
             @ApiResponse(code = 500, message = "Error occurred while updating a TmSample")
     })
     @POST
-    @Path("sample")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("sample")
     public TmSample updateTmSample(@ApiParam DomainQuery query) {
         LOG.debug("updateTmSample({})", query);
         TmSample updatedTmSample = tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));

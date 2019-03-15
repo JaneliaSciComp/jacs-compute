@@ -73,9 +73,9 @@ public class DataTreeNodeResource {
     private WorkspaceNodeDao workspaceNodeDao;
 
     @GET
-    @Path("{node-id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getDataNode(@PathParam("node-id") Long dataNodeId,
+    @Path("{nodeId}")
+    public Response getDataNode(@PathParam("nodeId") Long dataNodeId,
                                 @Context ContainerRequest containerRequestContext) {
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         TreeNode dataNode = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
@@ -90,8 +90,6 @@ public class DataTreeNodeResource {
                 .build();
     }
 
-    @PUT
-    @Path("/node/children")
     @ApiOperation(value = "Adds items to a Node",
             notes = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
                     "the References parameter for the list of items to add"
@@ -100,8 +98,10 @@ public class DataTreeNodeResource {
             @ApiResponse( code = 200, message = "Successfully added items to the Node", response=TreeNode.class),
             @ApiResponse( code = 500, message = "Internal Server Error adding items to the Node" )
     })
+    @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/node/children")
     @SuppressWarnings("unchecked")
     public <T extends TreeNode> Response addChildren(@ApiParam DomainQuery query,
                                                      @Context ContainerRequest containerRequestContext) {
@@ -137,8 +137,6 @@ public class DataTreeNodeResource {
         }
     }
 
-    @POST
-    @Path("/node/children")
     @ApiOperation(value = "Removes items from a Node",
             notes = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
                     "the References parameter for the list of items to remove"
@@ -147,8 +145,10 @@ public class DataTreeNodeResource {
             @ApiResponse( code = 200, message = "Successfully removed items from the Node", response = TreeNode.class),
             @ApiResponse( code = 500, message = "Internal Server Error removing items from the Node" )
     })
+    @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/node/children")
     @SuppressWarnings("unchecked")
     public <T extends TreeNode> Response removeChildren(@ApiParam DomainQuery query,
                                                         @Context ContainerRequest containerRequestContext) {
@@ -185,10 +185,10 @@ public class DataTreeNodeResource {
     }
 
     @PUT
-    @Path("/node/{node-id}/children/{folder}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addChildrenNodes(@PathParam("node-id") Long dataNodeId,
+    @Path("/node/{nodeId}/children/{folder}")
+    public Response addChildrenNodes(@PathParam("nodeId") Long dataNodeId,
                                      @PathParam("folder") String folderName,
                                      @Context ContainerRequest containerRequestContext) {
         LOG.trace("Start addChildren({}, {})", dataNodeId, folderName);
@@ -220,8 +220,6 @@ public class DataTreeNodeResource {
         }
     }
 
-    @POST
-    @Path("/node/reorder")
     @ApiOperation(value = "Reorders the items in a node",
             notes = "Uses the DomainObject parameter of the DomainQuery and the Ordering parameter for the new ordering."
     )
@@ -229,8 +227,10 @@ public class DataTreeNodeResource {
             @ApiResponse( code = 200, message = "Successfully reordered Node", response = TreeNode.class),
             @ApiResponse( code = 500, message = "Internal Server Error reordering Node" )
     })
+    @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/node/reorder")
     public Response reorderNode(@ApiParam DomainQuery query,
                                 @Context ContainerRequest containerRequestContext) {
         LOG.trace("Start reorderNode({})",query);
@@ -272,9 +272,9 @@ public class DataTreeNodeResource {
             @ApiResponse( code = 500, message = "Internal Server Error creating TreeNode" )
     })
     @PUT
-    @Path("treenode")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("treenode")
     @SuppressWarnings("unchecked")
     public <T extends TreeNode> Response createTreeNode(@ApiParam DomainQuery query) {
         LOG.trace("Start createTreeNode({})", query);
@@ -342,8 +342,8 @@ public class DataTreeNodeResource {
             @ApiResponse( code = 500, message = "Internal Server Error getting workspaces" )
     })
     @GET
-    @Path("workspaces")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("workspaces")
     public Response getAllWorkspacesBySubjectKey(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getAllWorkspacesBySubjectKey({})", subjectKey);
         try {

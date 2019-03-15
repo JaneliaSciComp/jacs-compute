@@ -72,8 +72,8 @@ public class DatasetResource {
             @ApiResponse( code = 500, message = "Internal Server Error fetching teh datasets" )
     })
     @GET
-    @Path("dataset")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("dataset")
     public Response getDatasets(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDataSets({})", subjectKey);
         try {
@@ -86,7 +86,6 @@ public class DatasetResource {
         }
     }
 
-    @RequireAuthentication
     @ApiOperation(value = "Gets a List of DataSets for the User",
             notes = "Uses the subject key to return a list of DataSets for the user"
     )
@@ -96,8 +95,8 @@ public class DatasetResource {
             @ApiResponse( code = 500, message = "Internal Server Error fetching teh datasets" )
     })
     @GET
-    @Path("dataset/{id}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("dataset/{id}")
     public Response getDatasetById(@ApiParam @PathParam("id") Long id,
                                    @Context SecurityContext securityContext) {
         LOG.trace("Start getDatasetById({}) by {}", id, securityContext.getUserPrincipal());
@@ -126,7 +125,6 @@ public class DatasetResource {
         }
     }
 
-    @RequireAuthentication
     @ApiOperation(value = "Creates a DataSet using the DomainObject parameter of the DomainQuery")
     @ApiResponses(value = {
             @ApiResponse( code = 200, message = "Successfully created a DataSet",
@@ -134,9 +132,9 @@ public class DatasetResource {
             @ApiResponse( code = 500, message = "Internal Server Error creating a dataset" )
     })
     @PUT
-    @Path("dataset")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("dataset")
     public Response createDataSet(DomainQuery query) {
         LOG.debug("Start createDataSet({})", query);
         try {
@@ -155,7 +153,6 @@ public class DatasetResource {
         }
     }
 
-    @RequireAuthentication
     @ApiOperation(value = "Updates a DataSet using the DomainObject parameter of the DomainQuery")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully updated a DataSet",
@@ -163,9 +160,9 @@ public class DatasetResource {
             @ApiResponse(code = 500, message = "Internal Server Error updating a dataset")
     })
     @POST
-    @Path("dataset")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("dataset")
     public Response updateDataSet(DomainQuery query) {
         LOG.debug("Start updateDataSet({})", query);
         try {
@@ -189,8 +186,8 @@ public class DatasetResource {
             @ApiResponse( code = 500, message = "Internal Server Error removing a dataset" )
     })
     @DELETE
-    @Path("dataset")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("dataset")
     public Response removeDataSet(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("dataSetId") final String datasetIdParam) {
         LOG.debug("Start removeDataSet({}, dataSetId={})", subjectKey, datasetIdParam);
@@ -214,8 +211,8 @@ public class DatasetResource {
 
     @ApiOperation(value = "Gets a distinct list of all datasets")
     @GET
-    @Path("dataset/all")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("dataset/all")
     public List<String> getAllDatasetNames() {
         LOG.trace("Start getAllDatasetNames()");
         try {

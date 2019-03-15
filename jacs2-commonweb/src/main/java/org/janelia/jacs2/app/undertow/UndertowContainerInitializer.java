@@ -87,7 +87,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         .setEnabled(true)
                         .addInitParam(ServletProperties.JAXRS_APPLICATION_CLASS, application.getClass().getName())
                         .addInitParam("jersey.config.server.wadl.disableWadl", "true")
-                        .addMapping("/*")
+                        .addMappings("/*", "/authenticated/*", "/unauthenticated/*")
                 ;
 
         String basepath = "http://" + appArgs.hostname + ":" + appArgs.portNumber + contextPath;

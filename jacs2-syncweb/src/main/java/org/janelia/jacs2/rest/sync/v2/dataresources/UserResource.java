@@ -1,6 +1,14 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiKeyAuthDefinition;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.SecurityDefinition;
+import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
@@ -22,7 +30,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
@@ -70,9 +86,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error setting user preferences")
     })
     @POST
-    @Path("/user/password")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/password")
     public User changePassword(AuthenticationRequest authenticationMessage, @Context ContainerRequest containerRequestContext) {
         LOG.trace("changePassword({})", authenticationMessage.getUsername());
         try {
@@ -122,8 +138,8 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error trying to get or create user")
     })
     @GET
-    @Path("/user/getorcreate")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/getorcreate")
     public Response getOrCreateUser(@QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getOrCreateUser({})", subjectKey);
         if (StringUtils.isBlank(subjectKey)) {
@@ -166,9 +182,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting list of workstation users")
     })
     @GET
-    @Path("/user/subjects")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/subjects")
     public Response getSubjects(@QueryParam("offset") Long offsetParam, @QueryParam("length") Integer lengthParam) {
         LOG.trace("Start getSubjects()");
         try {
@@ -191,9 +207,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting subject")
     })
     @GET
-    @Path("/user/subjects/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/subjects/{id}")
     public Response getSubjectById(@PathParam("id") Long subjectId) {
         LOG.trace("Start getSubjectById({})", subjectId);
         try {
@@ -218,9 +234,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting subject")
     })
     @GET
-    @Path("/user/subject")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/subject")
     public Response getSubjectByNameOrKey(@QueryParam("subjectKey") String subjectNameOrKey) {
         LOG.trace("Start getSubjectByKey({})", subjectNameOrKey);
         try {
@@ -245,9 +261,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting user preferences")
     })
     @GET
-    @Path("/user/preferences")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/preferences")
     public Response getPreferences(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getPreferences({})", subjectKey);
         try {
@@ -269,9 +285,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error setting user preferences")
     })
     @PUT
-    @Path("/user/preferences")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/preferences")
     public Preference setPreferences(DomainQuery query) {
         LOG.trace("Start setPreferences({})", query);
         try {
@@ -293,8 +309,8 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting user preferences")
     })
     @PUT
-    @Path("/user/permissions")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/user/permissions")
     public void setPermissions(@ApiParam Map<String, Object> params) {
         LOG.trace("Start setPermissions({})", params);
         try {
@@ -325,8 +341,8 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error fetching the members")
     })
     @GET
-    @Path("/group/{groupKey:.*}/members")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/group/{groupKey:.*}/members")
     public List<Subject> getMembers(@ApiParam @PathParam("groupKey") final String groupKey) {
         LOG.trace("Start getMembers({})", groupKey);
         try {
@@ -343,8 +359,8 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting list of groups")
     })
     @GET
-    @Path("/groups")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/groups")
     public Map<Subject, Number> getGroups() {
         LOG.trace("Start getGroups()");
         try {
@@ -364,9 +380,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting list of datasets")
     })
     @GET
-    @Path("/group/{groupName:.*}/data_sets")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/group/{groupName:.*}/data_sets")
     public Map<String, String> getDataSets(@ApiParam @PathParam("groupName") final String groupName) {
         LOG.trace("Start getDataSets({})", groupName);
         try {

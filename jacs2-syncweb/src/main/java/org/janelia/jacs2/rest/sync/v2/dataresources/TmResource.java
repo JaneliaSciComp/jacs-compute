@@ -94,8 +94,8 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting workspaces")
     })
     @GET
-    @Path("/workspaces")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspaces")
     public List<Workspace> getAllWorkspaces(@QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getAllWorkspace({})", subjectKey);
         try {
@@ -117,8 +117,8 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while fetching the workspaces")
     })
     @GET
-    @Path("/workspace")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace")
     public List<TmWorkspace> getTmWorkspaces(@ApiParam @QueryParam("subjectKey") String subjectKey,
                                              @ApiParam @QueryParam("sampleId") Long sampleId,
                                              @ApiParam @QueryParam("offset") Long offsetParam,
@@ -141,8 +141,8 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while fetching the workspace")
     })
     @GET
-    @Path("/workspace/{workspaceId}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/{workspaceId}")
     public TmWorkspace getTmWorkspace(@ApiParam @QueryParam("subjectKey") String subjectKey,
                                       @ApiParam @PathParam("workspaceId") Long workspaceId) {
         LOG.debug("getTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
@@ -157,9 +157,9 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while creating a TmWorkspace")
     })
     @PUT
-    @Path("/workspace")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace")
     public TmWorkspace createTmWorkspace(DomainQuery query) {
         LOG.trace("createTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
@@ -167,8 +167,6 @@ public class TmResource {
         return tmWorkspace;
     }
 
-    @POST
-    @Path("/workspace/copy")
     @ApiOperation(value = "Creates a copy of an existing TmWorkspace",
             notes = "Creates a copy of the given TmWorkspace with a new name given by the parameter value of the DomainQuery"
     )
@@ -176,8 +174,10 @@ public class TmResource {
             @ApiResponse(code = 200, message = "Successfully copies a TmWorkspace", response = TmWorkspace.class),
             @ApiResponse(code = 500, message = "Error occurred while copying a TmWorkspace")
     })
+    @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/copy")
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("copyTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), (String) query.getObjectType());
@@ -193,9 +193,9 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while updating a TmWorkspace")
     })
     @POST
-    @Path("/workspace")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace")
     public TmWorkspace updateTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("updateTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
@@ -227,16 +227,14 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
     @GET
-    @Path("/workspace/neuron/metadata")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/neuron/metadata")
     public List<TmNeuronMetadata> getWorkspaceNeuronMetadata(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                              @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.info("getWorkspaceNeuronMetadata({})", workspaceId);
         return tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(subjectKey, workspaceId);
     }
 
-    @GET
-    @Path("/workspace/neuron")
     @ApiOperation(value = "Gets the neurons for a workspace",
             notes = "Returns a list of neurons contained in a given workspace"
     )
@@ -244,7 +242,9 @@ public class TmResource {
             @ApiResponse(code = 200, message = "Successfully fetched neurons"),
             @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
+    @GET
     @Produces(MultiPartMediaTypes.MULTIPART_MIXED)
+    @Path("/workspace/neuron")
     public Response getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.info("getWorkspaceNeurons({}, workspaceId={})", subjectKey, workspaceId);
@@ -276,9 +276,9 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while creating a TmNeuron")
     })
     @PUT
-    @Path("/workspace/neuron")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/neuron")
     public Response createTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                    @ApiParam @FormDataParam("neuronMetadata") TmNeuronMetadata neuron,
                                    @ApiParam @FormDataParam("protobufBytes") InputStream neuronPointsStream) {
@@ -305,9 +305,9 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while updating TmNeurons")
     })
     @POST
-    @Path("/workspace/neuron")
     @Consumes(MultiPartMediaTypes.MULTIPART_MIXED)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/neuron")
     public List<TmNeuronMetadata> updateTmNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                   @ApiParam MultiPart multiPart) {
         int numParts = multiPart.getBodyParts().size();
@@ -351,8 +351,8 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
     @GET
-    @Path("/neuron/metadata")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/neuron/metadata")
     public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                       @ApiParam @QueryParam("neuronIds") final List<Long> neuronIds) {
         LOG.info("getNeuronMetadata({}, neuronIds={})", subjectKey, neuronIds);
@@ -367,9 +367,9 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while bulk updating styles")
     })
     @POST
-    @Path("/workspace/neuronStyle")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/neuronStyle")
     public Response updateNeuronStyles(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                        @ApiParam final BulkNeuronStyleUpdate bulkNeuronStyleUpdate) {
         LOG.debug("updateNeuronStyles({}, {})", subjectKey, bulkNeuronStyleUpdate);
@@ -399,8 +399,6 @@ public class TmResource {
         }
     }
 
-    @POST
-    @Path("/workspace/neuronTags")
     @ApiOperation(value = "Add or remove tags",
             notes = "Add or remove the given tags to a list of neurons"
     )
@@ -408,8 +406,10 @@ public class TmResource {
             @ApiResponse(code = 200, message = "Successfully bulk updated tags"),
             @ApiResponse(code = 500, message = "Error occurred while bulk updating tags")
     })
+    @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/neuronTags")
     public Response addNeuronTags(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("tags") final String tags,
                                   @ApiParam @QueryParam("tagState") final boolean tagState,

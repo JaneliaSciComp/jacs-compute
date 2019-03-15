@@ -49,8 +49,8 @@ public class TmSampleStreamingResource {
             @ApiResponse(code = 404, message = "Sample not found or no rendering"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("samples/{sampleId}/volume_info")
     @Produces({MediaType.APPLICATION_JSON})
+    @Path("samples/{sampleId}/volume_info")
     public Response getSampleVolumeInfo(@PathParam("sampleId") Long sampleId,
                                         @Context ContainerRequestContext requestContext) {
         TmSample tmSample = tmSampleDao.findById(sampleId);
@@ -83,8 +83,8 @@ public class TmSampleStreamingResource {
             @ApiResponse(code = 404, message = "Sample not found"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("samples/{sampleId}/closest_raw_tile_stream")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
+    @Path("samples/{sampleId}/closest_raw_tile_stream")
     public Response streamClosestRawImageFromVoxelCoord(@PathParam("sampleId") Long sampleId,
                                                         @QueryParam("x") Integer xVoxelParam,
                                                         @QueryParam("y") Integer yVoxelParam,
@@ -147,8 +147,8 @@ public class TmSampleStreamingResource {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("samples/{sampleId}/rendering/tile")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("samples/{sampleId}/rendering/tile")
     public Response streamTileFromCoord(
             @PathParam("sampleId") Long sampleId,
             @QueryParam("zoom") Integer zoomParam,
@@ -177,8 +177,8 @@ public class TmSampleStreamingResource {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("sample2DTile")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("sample2DTile")
     public Response deprecatedStreamTileFromCoord(
             @QueryParam("sampleId") Long sampleId,
             @QueryParam("x") Integer xParam,

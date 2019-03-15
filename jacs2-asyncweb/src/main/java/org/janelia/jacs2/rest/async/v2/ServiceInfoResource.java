@@ -42,24 +42,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@Api(value = "JACS Service Info")
 @RequestScoped
 @Produces("application/json")
 @Path("/services")
-@Api(value = "JACS Service Info")
 public class ServiceInfoResource {
     private static final int DEFAULT_PAGE_SIZE = 100;
 
     @Inject private Logger logger;
     @Inject private JacsServiceDataManager jacsServiceDataManager;
 
-    @RequireAuthentication
-    @GET
-    @Produces("text/plain")
-    @Path("/count")
     @ApiOperation(value = "Count services", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @GET
+    @Produces("text/plain")
+    @Path("/count")
     public Response countServices(@QueryParam("service-name") String serviceName,
                                    @QueryParam("service-id") Long serviceId,
                                    @QueryParam("parent-id") Long parentServiceId,
@@ -90,12 +90,12 @@ public class ServiceInfoResource {
                 .build();
     }
 
-    @RequireAuthentication
-    @GET
     @ApiOperation(value = "Search queued services", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @GET
     public Response searchServices(@QueryParam("service-name") String serviceName,
                                    @QueryParam("service-id") Long serviceId,
                                    @QueryParam("parent-id") Long parentServiceId,
@@ -215,13 +215,13 @@ public class ServiceInfoResource {
         return pattern;
     }
 
-    @RequireAuthentication
-    @GET
-    @Path("/{service-instance-id}")
     @ApiOperation(value = "Get service info", notes = "Returns data about a given service")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @GET
+    @Path("/{service-instance-id}")
     public Response getServiceInfo(@PathParam("service-instance-id") Long instanceId,
                                    @Context SecurityContext securityContext) {
         JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
@@ -241,14 +241,14 @@ public class ServiceInfoResource {
         }
     }
 
-    @RequireAuthentication
-    @GET
-    @Produces({"application/json", "application/octet-stream"})
-    @Path("/{service-instance-id}/job-output")
     @ApiOperation(value = "Get service info", notes = "Returns service standard output")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @GET
+    @Produces({"application/json", "application/octet-stream"})
+    @Path("/{service-instance-id}/job-output")
     public Response getServiceStandardOutput(@PathParam("service-instance-id") Long instanceId,
                                              @Context SecurityContext securityContext) {
         JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
@@ -291,14 +291,14 @@ public class ServiceInfoResource {
         }
     }
 
-    @RequireAuthentication
-    @GET
-    @Produces({"application/json", "application/octet-stream"})
-    @Path("/{service-instance-id}/job-errors")
     @ApiOperation(value = "Get service info", notes = "Returns service standard error")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @GET
+    @Produces({"application/json", "application/octet-stream"})
+    @Path("/{service-instance-id}/job-errors")
     public Response getServiceStandardError(@PathParam("service-instance-id") Long instanceId,
                                              @Context SecurityContext securityContext) {
         JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));

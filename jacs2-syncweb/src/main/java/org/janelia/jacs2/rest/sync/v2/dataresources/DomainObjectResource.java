@@ -76,9 +76,9 @@ public class DomainObjectResource {
             @ApiResponse( code = 500, message = "Internal Server Error updating a domain object's properties" )
     })
     @POST
-    @Path("/domainobject")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/domainobject")
     public Response updateObjectProperty(@ApiParam DomainQuery query) {
         LOG.trace("Start updateObjectProperty({})", query);
         try {
@@ -113,9 +113,9 @@ public class DomainObjectResource {
             @ApiResponse( code = 500, message = "Internal Server Error updating DomainObject" )
     })
     @PUT
-    @Path("/domainobject")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/domainobject")
     public DomainObject saveDomainObject(@ApiParam DomainQuery query) {
         LOG.trace("Start saveDomainObject({})", query);
         try {
@@ -134,9 +134,9 @@ public class DomainObjectResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting list of DomainObjects" )
     })
     @POST
-    @Path("/domainobject/details")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/domainobject/details")
     public Response getObjectDetails(@ApiParam DomainQuery query) {
         LOG.trace("Start getObjectDetails(({})", query);
         try {
@@ -163,9 +163,9 @@ public class DomainObjectResource {
      * @return all existing examples of things of this type.
      */
     @GET
-    @Path("/domainobject/class")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/domainobject/class")
     public Response getObjectsByClass(@QueryParam("subjectKey") final String subjectKey,
                                       @QueryParam("domainClass") final String domainClass) {
         LOG.trace("Start getObjectsByClass({}, domainClass={})", subjectKey, domainClass);
@@ -195,12 +195,12 @@ public class DomainObjectResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting list of DomainObjects")
     })
     @GET
-    @Path("/domainobject/name")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/domainobject/name")
     public Response getObjectsByName(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                               @ApiParam @QueryParam("name") final String name,
-                                               @ApiParam @QueryParam("domainClass") final String domainClass) {
+                                     @ApiParam @QueryParam("name") final String name,
+                                     @ApiParam @QueryParam("domainClass") final String domainClass) {
         LOG.trace("Start getObjectsByName({}, name={}, domainClass={})", subjectKey, name, domainClass);
         Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(domainClass);
         try {
@@ -284,14 +284,14 @@ public class DomainObjectResource {
             @ApiResponse( code = 500, message = "Internal Server Error getting list of DomainObjects" )
     })
     @GET
-    @Path("/domainobject/reverseLookup")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/domainobject/reverseLookup")
     public Response getObjectsByReverseRef(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                                     @ApiParam @QueryParam("referenceId") final Long referenceId,
-                                                     @ApiParam @QueryParam("count") final Long count,
-                                                     @ApiParam @QueryParam("referenceAttr") final String referenceAttr,
-                                                     @ApiParam @QueryParam("referenceClass") final String referenceClass) {
+                                           @ApiParam @QueryParam("referenceId") final Long referenceId,
+                                           @ApiParam @QueryParam("count") final Long count,
+                                           @ApiParam @QueryParam("referenceAttr") final String referenceAttr,
+                                           @ApiParam @QueryParam("referenceClass") final String referenceClass) {
         LOG.trace("Start getObjectsByReverseRef({}, referenceId={}, count={}, referenceAttr={}, referenceClass={})", subjectKey, referenceId, count, referenceAttr, referenceClass);
         ReverseReference reverseRef = new ReverseReference();
         reverseRef.setCount(count);
