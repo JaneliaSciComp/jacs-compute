@@ -110,7 +110,7 @@ public class ComputeAccounting {
      * @param subjectKey
      * @return
      */
-    private synchronized String getComputeGroup(String subjectKey) {
+    public String getComputeGroup(String subjectKey) {
         try {
             return computeAccounts.get(subjectKey);
         } catch (InvalidCacheLoadException | ExecutionException e) {
@@ -126,7 +126,7 @@ public class ComputeAccounting {
      * @param subjectKey
      * @return
      */
-    private synchronized String getDiscountedComputeAccount(String subjectKey) {
+    private String getDiscountedComputeAccount(String subjectKey) {
         String group = getComputeGroup(subjectKey);
         if (StringUtils.isBlank(group)) {
             log.warn("Defaulting to compute account '"+DEFAULT_GROUP_NAME+"' for subject '"+subjectKey+"'");

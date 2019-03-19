@@ -37,16 +37,19 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
     private final JobManager jobMgr;
     private final ComputeAccounting accounting;
     private final boolean requiresAccountInfo;
+    private final boolean useJobGroup;
 
     @Inject
     public ExternalLSFJavaJobRunner(MonitoredJobManager monitoredJobManager,
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
                                     ComputeAccounting accounting,
                                     @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
+                                    @BoolPropertyValue(name = "service.cluster.useJobGroup") boolean useJobGroup,
                                     Logger logger) {
         super(jacsServiceDataPersistence, logger);
         this.jobMgr = monitoredJobManager.getJobMgr();
         this.requiresAccountInfo = requiresAccountInfo;
+        this.useJobGroup = useJobGroup;
         this.accounting = accounting;
     }
 
@@ -129,7 +132,18 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         List<String> nativeSpec = createNativeSpec(serviceContext.getResources());
 
         if (requiresAccountInfo)
-            nativeSpec.add("-P "+billingAccount);
+            nativeSpec.add("-P " + billingAccount);
+
+        if (useJobGroup) {
+            String computingGroup = accounting.getComputeGroup(serviceContext.getOwnerKey());
+            if (StringUtils.isNotBlank(computingGroup)) {
+                nativeSpec.add("-G " + computingGroup);
+            }
+            String jobGroup = ProcessorHelper.getJobGroup(serviceContext.getResources());
+            if (StringUtils.isNotBlank(jobGroup)) {
+                nativeSpec.add("-g " + StringUtils.prependIfMissing(jobGroup, "/"));
+            }
+        }
 
         jt.setNativeSpecification(nativeSpec);
 
