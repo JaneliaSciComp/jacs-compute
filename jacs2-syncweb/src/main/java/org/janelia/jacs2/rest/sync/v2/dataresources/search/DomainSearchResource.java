@@ -8,8 +8,12 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocumentList;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.search.SolrConnector;
+import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.domain.DomainObject;
+import org.janelia.model.domain.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +29,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @Api(value = "Janelia Workstation Domain Data")
 @RequireAuthentication
@@ -34,6 +40,8 @@ public class DomainSearchResource {
 
     @Inject
     private SolrConnector domainObjectIndexer;
+    @Inject
+    private LegacyDomainDao legacyDomainDao;
 
     @POST
     @Path("/search")
@@ -57,6 +65,33 @@ public class DomainSearchResource {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             LOG.trace("Finished searchSolrIndices({})", queryParams);
+        }
+    }
+
+    @ApiOperation(value = "Performs a SOLR search using a SolrParams class to find domain objects")
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully returned domain objects", response=SolrJsonResults.class),
+            @ApiResponse( code = 500, message = "Internal Server Error returning domain objects" )
+    })
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/domainobjects/search")
+    public SolrJsonResults searchDomainObjects(@ApiParam SolrParams queryParams) {
+        LOG.trace("Start searchDomainObjects({})", queryParams);
+        try {
+            SolrJsonResults searchResults = getSearchResults(queryParams);
+            LOG.debug("Solr search found {} results, returning {}", searchResults.getNumFound(), searchResults.getResults().size());
+            SolrDocumentList docs = searchResults.getResults();
+            List<DomainObject> details = legacyDomainDao.getDomainObjects(
+                    queryParams.getSubjectKey(),
+                    docs.stream().map(d -> Reference.createFor(d.get("type_label") + "#" + d.get("id"))).collect(Collectors.toList()));
+            return new SolrJsonResults(details, searchResults.getFacetValues(), docs.getNumFound());
+        } catch (Exception e) {
+            LOG.error("Error occurred executing search against SOLR", e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            LOG.trace("Finished searchDomainObjects({})", queryParams);
         }
     }
 
