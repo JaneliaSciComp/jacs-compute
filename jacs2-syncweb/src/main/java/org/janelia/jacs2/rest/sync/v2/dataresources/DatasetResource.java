@@ -1,5 +1,15 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonRootName;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -9,6 +19,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
+import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -34,8 +45,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -56,7 +68,6 @@ import java.util.List;
 @Path("/data")
 public class DatasetResource {
     private static final Logger LOG = LoggerFactory.getLogger(DatasetResource.class);
-    private static final BigDecimal TERRA_BYTES = new BigDecimal(1024).pow(4);
 
     @Inject
     private DatasetDao datasetDao;
@@ -222,4 +233,100 @@ public class DatasetResource {
         }
     }
 
+    @ApiOperation(value = "Gets a list of all data sets available for color depth search in a certain alignment space")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("dataset/colordepth")
+    public List<DataSet> getColorDepthDatasets(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                               @ApiParam @QueryParam("alignmentSpace") final String alignmentSpace) {
+        LOG.trace("Start getColorDepthDatasets(subject={}, alignmentSpace={})", subjectKey, alignmentSpace);
+        try {
+            return legacyDomainDao.getDataSetsWithColorDepthImages(subjectKey, alignmentSpace);
+        } finally {
+            LOG.trace("Finished getColorDepthDatasets(subject={}, alignmentSpace={})", subjectKey, alignmentSpace);
+        }
+    }
+
+    @ApiOperation(
+            value = "Gets the default pipelines for datasets",
+            notes = "Uses the subject key to return a list of DataSets for the user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully fetched list of dataset-pipeline matches",  response = Map.class),
+            @ApiResponse( code = 500, message = "Internal Server Error list of dataset-pipeline matches" )
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("dataset/pipeline")
+    public Map<String, String> getDatasetPipelines() {
+        LOG.trace("Start getDatasetPipelines()");
+        try {
+            List<DataSet> dataSets = datasetDao.findEntitiesReadableBySubjectKey(null, 0, -1);
+            return dataSets.stream()
+                    .filter(ds -> CollectionUtils.isNotEmpty(ds.getPipelineProcesses()))
+                    .collect(Collectors.toMap(
+                            DataSet::getIdentifier,
+                            ds->"PipelineConfig_" + ds.getPipelineProcesses().stream().reduce("", (p1, p2) -> p2)));
+        } finally {
+            LOG.trace("Finished getDatasetPipelines()");
+        }
+    }
+
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+    static class SageSyncedDataSet {
+        @JsonProperty("dataSetIdentifier")
+        String identifier;
+        @JsonProperty
+        String name;
+        @JsonProperty
+        String sageSync;
+        @JsonProperty
+        String user;
+    }
+
+    @JacksonXmlRootElement(localName = "dataSetList")
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+    static class SageSyncedDataSets {
+        @JacksonXmlElementWrapper(localName = "dataSetList", useWrapping = false)
+        @JsonProperty("dataSetList")
+        @JacksonXmlProperty(localName = "dataSet")
+        final List<SageSyncedDataSet> syncedDataSets;
+
+        SageSyncedDataSets(List<SageSyncedDataSet> syncedDataSets) {
+            this.syncedDataSets = syncedDataSets;
+        }
+    }
+
+    @ApiOperation(value = "Gets Sage synced Data Set")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully fetched list of datasets synced with SAGE",
+                    response = SageSyncedDataSet.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal Server Error list of dataset synced with SAGE")
+    })
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Path("dataSet/sage")
+    public SageSyncedDataSets getSageSyncedDataSets(@ApiParam @QueryParam("owners") final List<String> owners,
+                                                    @ApiParam @QueryParam("sageSync") final Boolean sageSync) {
+        LOG.trace("Start getSageSyncDataSets(owners={}, sageSync={})", owners, sageSync);
+        try {
+            List<DataSet> dataSets = datasetDao.getDatasetsByOwnersAndSageSyncFlag(owners, sageSync);
+            List<SageSyncedDataSet> sageSyncedDataSets = dataSets.stream()
+                    .map(ds -> {
+                        SageSyncedDataSet sds = new SageSyncedDataSet();
+                        sds.identifier = ds.getIdentifier();
+                        sds.name = ds.getName();
+                        if (ds.isSageSync()) {
+                            sds.sageSync = "SAGE Sync";
+                        }
+                        sds.user = ds.getOwnerKey();
+                        return sds;
+                    })
+                    .collect(Collectors.toList());
+            return new SageSyncedDataSets(sageSyncedDataSets);
+        } finally {
+            LOG.trace("Finished getSageSyncDataSets(owners={}, sageSync={})", owners, sageSync);
+        }
+    }
 }

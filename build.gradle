@@ -31,7 +31,7 @@ subprojects {
 
         configurations {
             provided
-            compile.extendsFrom(provided)
+            testArtifacts.extendsFrom(testCompile)
             integrationTestCompile.extendsFrom(testCompile)
             integrationTestRuntime.extendsFrom(testRuntime)
         }
@@ -109,11 +109,20 @@ subprojects {
             dependencyConfiguration = 'compile'
         }
 
+        task testJar(type: Jar) {
+            from sourceSets.test.output
+            classifier = "test"
+        }
+
         task integrationTest(type: Test) {
             testClassesDirs += sourceSets.integrationTest.output.classesDirs
             classpath = sourceSets.integrationTest.runtimeClasspath
         }
     
+        artifacts {
+            testArtifacts testJar
+            archives testJar
+        }
     }
     
     sourceCompatibility = 1.8

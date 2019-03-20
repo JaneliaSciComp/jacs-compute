@@ -180,7 +180,7 @@ public class TmResource {
     @Path("/workspace/copy")
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("copyTmWorkspace({})", query);
-        TmWorkspace tmWorkspace = tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), (String) query.getObjectType());
+        TmWorkspace tmWorkspace = tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), query.getObjectType());
         domainObjectIndexer.addToIndex(tmWorkspace);
         return tmWorkspace;
     }

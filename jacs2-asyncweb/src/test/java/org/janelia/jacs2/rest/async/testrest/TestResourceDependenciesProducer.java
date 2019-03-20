@@ -1,4 +1,4 @@
-package org.janelia.jacs2.testrest;
+package org.janelia.jacs2.rest.async.testrest;
 
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;

@@ -251,6 +251,8 @@ public interface LegacyDomainDao {
 
     List<DataSet> getDataSets(String subjectKey);
 
+    List<DataSet> getDataSetsWithColorDepthImages(String subjectKey, String alignmentSpace);
+
     List<DataSet> getUserDataSets(String subjectKey);
 
     DataSet getDataSetByIdentifier(String subjectKey, String dataSetIdentifier);

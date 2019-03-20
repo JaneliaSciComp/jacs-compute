@@ -1,4 +1,4 @@
-package org.janelia.jacs2.testrest;
+package org.janelia.jacs2.rest.async.testrest;
 
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;

@@ -1,27 +1,16 @@
 package org.janelia.jacs2.rest.async.v2;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.hamcrest.beans.HasPropertyWithValue;
-import org.janelia.jacs2.app.AsyncServicesApp;
-import org.janelia.jacs2.app.JAXAsyncAppConfig;
-import org.janelia.jacs2.testrest.AbstractCdiInjectedResourceTest;
-import org.janelia.jacs2.testrest.TestResourceBinder;
-import org.janelia.jacs2.testrest.TestResourceDependenciesProducer;
 import org.janelia.model.jacs2.DataInterval;
-import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.SortCriteria;
 import org.janelia.model.jacs2.page.SortDirection;
 import org.janelia.model.security.User;
 import org.janelia.model.service.JacsServiceData;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
 import javax.ws.rs.core.Response;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;

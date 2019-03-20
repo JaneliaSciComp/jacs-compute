@@ -336,6 +336,11 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
+    public List<DataSet> getDataSetsWithColorDepthImages(String subjectKey, String alignmentSpace) {
+        return dao.getDataSetsWithColorDepthImages(subjectKey, alignmentSpace);
+    }
+
+    @Override
     public List<DataSet> getUserDataSets(String subjectKey) {
         return dao.getUserDataSets(subjectKey);
     }

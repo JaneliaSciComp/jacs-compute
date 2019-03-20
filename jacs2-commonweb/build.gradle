@@ -6,14 +6,20 @@ project(":jacs2-commonweb") {
                 JACKSON_JAXRS_JSON_PROVIDER,
                 JAVAX_SERVLET_API_LIB,
                 JAX_RS_API_LIB,
+                JAX_RS_JERSEY_CDI_SERVLET_LIB,
                 JAX_RS_JERSEY_CONTAINERS_LIB,
                 JAX_RS_JERSEY_CORE_LIB,
+                JAX_RS_JERSEY_INJECT_LIB,
                 JAX_RS_JERSEY_SERVER_LIB,
                 LDAP_CLIENT_LIB,
                 SWAGGER_JAXRS_LIB,
                 UNDERTOW_CORE_LIB,
                 UNDERTOW_SERVLET_LIB,
                 JWT_API
+
+        testCompile JAX_RS_JERSEY_TEST_LIB,
+                    JAX_RS_JERSEY_TEST_PROVIDER_LIB
+
         runtime JWT_RUNTIME_IMPL,
                 JWT_RUNTIME_JACKSON
     }
