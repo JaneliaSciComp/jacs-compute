@@ -43,6 +43,7 @@ import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @SwaggerDefinition(
@@ -213,6 +214,40 @@ public class DomainObjectResource {
         }
     }
 
+    @ApiOperation(
+            value = "Gets Folder References to a DomainObject ",
+            notes = "uses the DomainObject parameter of the DomainQuery"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    code = 200,
+                    message = "Successfully got a list of Folder References", response=Reference.class,
+                    responseContainer = "List"),
+            @ApiResponse(
+                    code = 500,
+                    message = "Internal Server Error getting list of Folder References" )
+    })
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/domainobject/references")
+    public Response getContainerReferences(@ApiParam DomainQuery query) {
+        LOG.trace("Start getContainerReferences({})", query);
+        try {
+            List<Reference> objectReferences = legacyDomainDao.getContainerReferences(query.getDomainObject());
+            return Response.ok()
+                    .entity(new GenericEntity<List<Reference>>(objectReferences){})
+                    .build();
+        } catch (Exception e) {
+            LOG.error("Error getting references to {}", query, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error getting references to " + Reference.createFor(query.getDomainObject())))
+                    .build();
+        } finally {
+            LOG.trace("Finish getContainerReferences({})", query);
+        }
+    }
+
     @ApiOperation(value = "Removes a Domain Object",
             notes = "uses the References parameter of the DomainQuery"
     )
@@ -279,9 +314,14 @@ public class DomainObjectResource {
             notes = "Uses reference attribute and reference class to determine type of parent reference to find"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully got a list of DomainObjectst", response=DomainObject.class,
+            @ApiResponse(
+                    code = 200,
+                    message = "Successfully got a list of DomainObjects",
+                    response = DomainObject.class,
                     responseContainer = "List"),
-            @ApiResponse( code = 500, message = "Internal Server Error getting list of DomainObjects" )
+            @ApiResponse(
+                    code = 500,
+                    message = "Internal Server Error getting list of DomainObjects" )
     })
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
@@ -308,4 +348,33 @@ public class DomainObjectResource {
         }
     }
 
+    @ApiOperation(value = "Retrieve all search attributes")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    code = 200,
+                    message = "Successfully got search attributes mapping"),
+            @ApiResponse(
+                    code = 500,
+                    message = "Internal Server Error getting search attributes")
+    })
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/object_attribute_label_mapping")
+    public Response getAllSearchAttributes() {
+        LOG.trace("Start getAllSearchAttributes()");
+        try {
+            Map<String, List<String>> searchAttributes = DomainUtils.getAllSearchAttributes();
+            return Response.ok()
+                    .entity(new GenericEntity<Map<String, List<String>>>(searchAttributes){})
+                    .build();
+        } catch (Exception e) {
+            LOG.error("Error occurred retrieving all search attributes", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error occurred retrieving all search attributes"))
+                    .build();
+        } finally {
+            LOG.trace("Finish getAllSearchAttributes()");
+        }
+    }
 }
