@@ -46,11 +46,13 @@ public class JacsQueueSyncer {
 
     @PostConstruct
     public void initialize() {
+        logger.info("Initialize queue synchronizer to run every {}s with an initial delay of {}s", period, initialDelay);
         scheduler.scheduleAtFixedRate(() -> doWork(), initialDelay, period, TimeUnit.SECONDS);
     }
 
     @PreDestroy
     public void destroy() {
+        logger.info("Shutdown queue synchronizer");
         scheduler.shutdownNow();
     }
 }

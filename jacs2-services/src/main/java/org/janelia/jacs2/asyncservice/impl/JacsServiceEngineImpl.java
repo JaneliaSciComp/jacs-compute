@@ -95,7 +95,7 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
         this.serviceRegistrarSource = serviceRegistrarSource;
         this.logger = logger;
         this.nAvailableSlots = nAvailableSlots <= 0 ? DEFAULT_MAX_RUNNING_SLOTS : nAvailableSlots;
-        this.defaultProcessorQueueId = defaultProcessorQueueId;
+        this.defaultProcessorQueueId = StringUtils.defaultIfBlank(defaultProcessorQueueId, null);
         availableSlots = new Semaphore(this.nAvailableSlots, true);
     }
 
