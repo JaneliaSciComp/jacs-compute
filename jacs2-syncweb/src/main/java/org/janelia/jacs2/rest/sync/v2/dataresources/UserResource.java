@@ -16,7 +16,6 @@ import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.auth.impl.AuthProvider;
 import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.jacs2.rest.sync.v2.dataresources.dto.AuthenticationRequest;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
@@ -25,6 +24,8 @@ import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
+import org.janelia.model.security.AuthenticationRequest;
+import org.janelia.model.security.UserGroupRole;
 import org.janelia.model.security.util.SubjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,7 @@ import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -92,23 +94,9 @@ public class UserResource {
     public User changePassword(AuthenticationRequest authenticationMessage, @Context ContainerRequest containerRequestContext) {
         LOG.trace("changePassword({})", authenticationMessage.getUsername());
         try {
-
-            User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
-            User authenticatedUser = JacsSecurityContextHelper.getAuthenticatedUser(containerRequestContext);
-
-            if (authorizedSubject==null || authenticatedUser==null) {
-                LOG.info("Unauthorized attempt to change password for {}", authenticationMessage.getUsername());
+            boolean isAllowed = checkAdministrationPrivileges(authenticationMessage.getUsername(), containerRequestContext);
+            if (!isAllowed) {
                 throw new WebApplicationException(Response.Status.FORBIDDEN);
-            }
-
-            LOG.info("User {} is changing password for {}", authenticatedUser.getName(), authenticationMessage.getUsername());
-            if (!authorizedSubject.getName().equals(authenticationMessage.getUsername())) {
-                // Someone is trying to change a password that isn't there own. Is it an admin?
-                if (!authenticatedUser.hasGroupRead(Group.ADMIN_KEY)) {
-                    LOG.info("Non-admin user {} attempted to change password for {}",
-                            authenticatedUser.getName(), authenticationMessage.getUsername());
-                    throw new WebApplicationException(Response.Status.FORBIDDEN);
-                }
             }
 
             Subject subject = subjectDao.findByName(authenticationMessage.getUsername());
@@ -172,6 +160,142 @@ public class UserResource {
         }
         finally {
             LOG.trace("Finished getOrCreateUser({})", subjectKey);
+        }
+    }
+
+    @ApiOperation(value = "Updates a user details",
+            notes = "The user id is used to search for the appropriate user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully updated user", response = User.class),
+            @ApiResponse(code = 500, message = "Internal Server Error trying to update user")
+    })
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/property")
+    public Response updateUser(@ApiParam Map<String, Object> userProperties, @Context ContainerRequest containerRequestContext) {
+        User dbUser = null;
+        try {
+            LOG.info("Start updateUserProperty()");
+            if (StringUtils.isBlank((String) userProperties.get("name"))) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("Invalid subject key " + userProperties.get("name")))
+                        .build();
+            }
+
+            String username = (String)userProperties.get("name");
+            boolean isAllowed = checkAdministrationPrivileges(username, containerRequestContext);
+            if (!isAllowed) {
+                throw new WebApplicationException(Response.Status.FORBIDDEN);
+            }
+
+            dbUser = (User) subjectDao.findByNameOrKey((String) userProperties.get("name"));
+
+            // create new user
+            if (dbUser == null) {
+                User blankUser = authProvider.addUser(userProperties);
+                if (blankUser != null) {
+                    LOG.trace("Create new user({}, {})");
+                    return Response.status(Response.Status.OK).build();
+                } else {
+                    return Response.status(Response.Status.CREATED).build();
+                }
+            } else {
+                // existing user
+                boolean emailR = subjectDao.updateUserProperty(dbUser, "email", (String) userProperties.get("email"));
+                boolean fullNameR = subjectDao.updateUserProperty(dbUser, "fullName", (String) userProperties.get("fullname"));
+                boolean nameR = subjectDao.updateUserProperty(dbUser, "name", (String) userProperties.get("name"));
+                if (emailR && fullNameR && nameR)
+                    return Response.status(Response.Status.OK).build();
+                else
+                    return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+        }
+        catch (Exception e) {
+            LOG.error("Error trying to update user for {}", dbUser.getKey());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error trying to update user roles " + dbUser.getKey()))
+                    .build();
+        }
+        finally {
+            LOG.trace("Finished updateUserProperty({})", dbUser.getKey());
+        }
+    }
+
+
+    @ApiOperation(value = "Updates the user's group roles",
+            notes = "The user id is used to search for the appropriate user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully updated user property", response = User.class),
+            @ApiResponse(code = 500, message = "Internal Server Error trying to update user")
+    })
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/roles")
+    public Response updateUserRoles(@ApiParam Set<UserGroupRole> roles,
+                                    @ApiParam @QueryParam("userKey") String userKey) {
+        Subject subject = subjectDao.findByNameOrKey(userKey);
+
+        LOG.info("Start UpdateUser({}, {})", userKey, roles);
+        if (subject==null) {
+            LOG.error("Invalid user ({}) provided to updateUser", userKey);
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Invalid user " + userKey))
+                    .build();
+        }
+        try {
+            User user = (User)subject;
+            if (subjectDao.updateUserGroupRoles(user, roles))
+                return Response.status(Response.Status.OK).build();
+            else
+                return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        catch (Exception e) {
+            LOG.error("Error trying to update user for {}", userKey);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error trying to update user roles " + userKey))
+                    .build();
+        }
+        finally {
+            LOG.trace("Finished updateUserRoles({})", userKey);
+        }
+    }
+
+
+    @ApiOperation(value = "Creates a Group",
+            notes = "values given are the group's relevant properties"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully created new group", response = Group.class),
+            @ApiResponse(code = 500, message = "Internal Server Error trying to create new group")
+    })
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/group")
+    public Response createGroup(@ApiParam Group group) {
+        String groupKey = group.getKey();
+        LOG.trace("Start CreateGroup({})", groupKey);
+        try {
+            Group newGroup = subjectDao.createGroup(groupKey, group.getFullName(), group.getLdapGroupName());
+            if (newGroup!=null)
+                return Response.ok(newGroup).build();
+            else
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity(new ErrorResponse("Error trying to create new group " + groupKey))
+                        .build();
+        }
+        catch (Exception e) {
+            LOG.error("Error trying to create new group " + groupKey);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error trying to create new group " + groupKey))
+                    .build();
+        }
+        finally {
+            LOG.trace("Finished createGroup({})", groupKey);
         }
     }
 
@@ -393,6 +517,27 @@ public class UserResource {
         } finally {
             LOG.trace("Finished getDataSets({})", groupName);
         }
+    }
+
+    private boolean checkAdministrationPrivileges (String username, ContainerRequest containerRequestContext) {
+        User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
+        User authenticatedUser = JacsSecurityContextHelper.getAuthenticatedUser(containerRequestContext);
+
+        if (authorizedSubject==null || authenticatedUser==null) {
+            LOG.info("Unauthorized attempt to change password for {}", username);
+            return false;
+        }
+
+        LOG.info("User {} is performing admin on user account for {}", authenticatedUser.getName(), username);
+        if (!authorizedSubject.getName().equals(username)) {
+            // Someone is trying to change a password that isn't there own. Is it an admin?
+            if (!authenticatedUser.hasGroupRead(Group.ADMIN_KEY)) {
+                LOG.info("Non-admin user {} attempted to change password for {}",
+                        authenticatedUser.getName(), username);
+                return false;
+            }
+        }
+        return true;
     }
 
 }
