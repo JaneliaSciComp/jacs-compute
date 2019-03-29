@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * LDAP-based authentication implementation.
@@ -128,6 +129,15 @@ public class LDAPAuthProvider implements AuthProvider {
         finally {
             closeLdapConnection(connection);
         }
+    }
+
+    @Override
+    public User addUser(Map<String,Object> userProperties) {
+        // for now this is just a passthrough... we'll re-examine whether the logic needs to be different
+        // in the future
+        if (userProperties!=null && userProperties.containsKey("name"))
+            return createUser((String)userProperties.get("name"));
+        return null;
     }
 
     /**

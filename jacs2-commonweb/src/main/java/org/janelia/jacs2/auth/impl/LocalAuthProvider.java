@@ -7,6 +7,8 @@ import org.janelia.model.security.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 /**
  * Authentication implementation which stores passwords in the Mongo database.
  *
@@ -50,5 +52,27 @@ public class LocalAuthProvider implements AuthProvider {
     public User createUser(String username) {
         // Local authentication implementation cannot create users based on external data
         return null;
+    }
+
+    @Override
+    public User addUser(Map<String,Object> userProperties) {
+        try {
+            if (userProperties!=null && userProperties.containsKey("name")) {
+                String username = (String) userProperties.get("name");
+
+                // double-check this user doesn't exist
+                Subject subject = subjectDao.findByName(username);
+                if (subject != null)
+                    return null;
+                User newUser = new User();
+                newUser.setEmail((String) userProperties.get("email"));
+                newUser.setKey((String)userProperties.get("user:" + username));
+                newUser.setFullName((String) userProperties.get("fullname"));
+                subjectDao.save(newUser);
+            }
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

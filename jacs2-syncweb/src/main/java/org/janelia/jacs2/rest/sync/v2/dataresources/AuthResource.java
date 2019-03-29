@@ -5,9 +5,9 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.auth.impl.AuthProvider;
-import org.janelia.jacs2.rest.sync.v2.dataresources.dto.AuthenticationRequest;
 import org.janelia.jacs2.rest.sync.v2.dataresources.dto.AuthenticationResponse;
 import org.janelia.model.security.User;
+import org.janelia.model.security.AuthenticationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

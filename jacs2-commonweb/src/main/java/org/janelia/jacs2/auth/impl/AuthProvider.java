@@ -2,6 +2,8 @@ package org.janelia.jacs2.auth.impl;
 
 import org.janelia.model.security.User;
 
+import java.util.Map;
+
 /**
  * Interface defining a method for authenticating users by username/password.
  *
@@ -24,4 +26,11 @@ public interface AuthProvider {
      * @return persisted User object or null if user does not exist in the external source
      */
     User createUser(String username);
+
+    /**
+     * Administration method to create a user
+     * @param userProperties useful information to map to authentication mechanism
+     * @return persisted User object or null if user does not exist in the external source
+     */
+    User addUser(Map<String,Object> userProperties);
 }
