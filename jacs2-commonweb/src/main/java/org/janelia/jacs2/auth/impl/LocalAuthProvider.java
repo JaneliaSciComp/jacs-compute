@@ -59,6 +59,7 @@ public class LocalAuthProvider implements AuthProvider {
         try {
             if (userProperties!=null && userProperties.containsKey("name")) {
                 String username = (String) userProperties.get("name");
+                LOG.info("Attempting to Add User {} to Local MongoDB", username);
 
                 // double-check this user doesn't exist
                 Subject subject = subjectDao.findByName(username);
@@ -66,12 +67,14 @@ public class LocalAuthProvider implements AuthProvider {
                     return null;
                 User newUser = new User();
                 newUser.setEmail((String) userProperties.get("email"));
-                newUser.setKey((String)userProperties.get("user:" + username));
+                newUser.setKey("user:" + username);
+                newUser.setName(username);
                 newUser.setFullName((String) userProperties.get("fullname"));
                 subjectDao.save(newUser);
             }
             return null;
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

@@ -191,15 +191,14 @@ public class UserResource {
             }
 
             dbUser = (User) subjectDao.findByNameOrKey((String) userProperties.get("name"));
-
             // create new user
             if (dbUser == null) {
                 User blankUser = authProvider.addUser(userProperties);
                 if (blankUser != null) {
-                    LOG.trace("Create new user({}, {})");
-                    return Response.status(Response.Status.OK).build();
+                    LOG.trace("Created new user({}, {})", blankUser.getId(), blankUser.getKey());
+                    return Response.ok(blankUser).build();
                 } else {
-                    return Response.status(Response.Status.CREATED).build();
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
                 }
             } else {
                 // existing user
@@ -211,6 +210,7 @@ public class UserResource {
                 else
                     return Response.status(Response.Status.BAD_REQUEST).build();
             }
+
         }
         catch (Exception e) {
             LOG.error("Error trying to update user for {}", dbUser.getKey());
@@ -219,7 +219,7 @@ public class UserResource {
                     .build();
         }
         finally {
-            LOG.trace("Finished updateUserProperty({})", dbUser.getKey());
+           LOG.trace("Finished updateUserProperty({})", dbUser.getKey());
         }
     }
 
