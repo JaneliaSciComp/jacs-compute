@@ -24,7 +24,7 @@ import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
-import org.janelia.model.security.AuthenticationRequest;
+import org.janelia.model.security.dto.AuthenticationRequest;
 import org.janelia.model.security.UserGroupRole;
 import org.janelia.model.security.util.SubjectUtils;
 import org.slf4j.Logger;
