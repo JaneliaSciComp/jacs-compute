@@ -108,7 +108,7 @@ public class AlignmentUtils {
             insightWriter.println("#Insight Transform File V1.0");
             insightWriter.println("#Transform 0");
             insightWriter.println("Transform: MatrixOffsetTransformBase_double_3_3");
-            insightWriter.printf("Parameters: %s %s %s %s %s %s %s %s %s 0 0 0\n",
+            insightWriter.printf("Parameters: %s %s %s %s %s %s %s %s %s 0 0 0%n",
                     affineMat.getElem(0, 0), affineMat.getElem(1, 0), affineMat.getElem(2, 0),
                     affineMat.getElem(0, 1), affineMat.getElem(1, 1), affineMat.getElem(2, 1),
                     affineMat.getElem(0, 2), affineMat.getElem(1, 2), affineMat.getElem(2, 2));
