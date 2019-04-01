@@ -29,11 +29,12 @@ public class AlignmentUtilsTest {
         Mockito.when(testFs.provider()).thenReturn(testFsProvider);
         Mockito.when(testFsProvider.newOutputStream(testOutputPath)).thenReturn(outputWriter);
         AlignmentUtils.convertAffineMatToInsightMat(Paths.get(testMat), testOutputPath);
-        final String expectedOutput = "#Insight Transform File V1.0\n" +
-                "#Transform 0\n" +
-                "Transform: MatrixOffsetTransformBase_double_3_3\n" +
-                "Parameters: 0.7760273859 0.5681118308 -0.08607871711 -0.5312055299 0.7869334512 -0.1875634849 -0.06294143877 0.1666959753 0.8998907077 0 0 0\n" +
-                "FixedParameters: 0 0 0\n";
+        String nl = System.lineSeparator();
+        final String expectedOutput = "#Insight Transform File V1.0" + nl +
+                "#Transform 0" + nl +
+                "Transform: MatrixOffsetTransformBase_double_3_3" + nl +
+                "Parameters: 0.7760273859 0.5681118308 -0.08607871711 -0.5312055299 0.7869334512 -0.1875634849 -0.06294143877 0.1666959753 0.8998907077 0 0 0" + nl +
+                "FixedParameters: 0 0 0" + nl;
         assertThat(outputWriter.toString(), CoreMatchers.equalTo(expectedOutput));
     }
 }
