@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -36,6 +37,7 @@ import static org.mockito.Mockito.when;
 
 public class CMTKAlignmentProcessorTest {
     private static final Long TEST_SERVICE_ID = 1L;
+    private static final String TEST_IMAGES_DIR = "src/test/resources/testdata/cmtkalign/images/";
     private static final String TEST_WORKING_DIR = "testWorkingDir";
 
     private SingleCMTKAlignmentProcessor singleCMTKAlignmentProcessor;
@@ -183,7 +185,10 @@ public class CMTKAlignmentProcessorTest {
     private JacsServiceData createTestServiceData(Long serviceId, List<String> inputImages, String outputDir) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey("testOwner")
-                .addArgs("-inputImages", String.join(",", inputImages))
+                .addArgs("-inputImages", inputImages
+                        .stream()
+                        .map(inputImageName -> TEST_IMAGES_DIR + inputImageName)
+                        .reduce("", (i1, i2) -> StringUtils.isBlank(i1) ? i2 : i1 + "," + i2))
                 .addArgs("-outputDir", outputDir)
                 .setWorkspace(TEST_WORKING_DIR);
 
