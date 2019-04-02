@@ -92,7 +92,7 @@ public class UserResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/user/password")
     public User changePassword(AuthenticationRequest authenticationMessage, @Context ContainerRequest containerRequestContext) {
-        LOG.trace("changePassword({})", authenticationMessage.getUsername());
+        LOG.info("changePassword({})", authenticationMessage.getUsername());
         try {
             boolean isAllowed = checkAdministrationPrivileges(authenticationMessage.getUsername(), containerRequestContext);
             if (!isAllowed) {
@@ -194,8 +194,9 @@ public class UserResource {
             // create new user
             if (dbUser == null) {
                 User blankUser = authProvider.addUser(userProperties);
+
                 if (blankUser != null) {
-                    LOG.trace("Created new user({}, {})", blankUser.getId(), blankUser.getKey());
+                    LOG.info("Created new user({}, {})", blankUser.getId(), blankUser.getKey());
                     return Response.ok(blankUser).build();
                 } else {
                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -219,7 +220,7 @@ public class UserResource {
                     .build();
         }
         finally {
-           LOG.trace("Finished updateUserProperty({})", dbUser.getKey());
+           LOG.trace("Finished updateUserProperty");
         }
     }
 

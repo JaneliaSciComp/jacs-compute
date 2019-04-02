@@ -71,6 +71,9 @@ public class LocalAuthProvider implements AuthProvider {
                 newUser.setName(username);
                 newUser.setFullName((String) userProperties.get("fullname"));
                 subjectDao.save(newUser);
+                subject = subjectDao.findByName(username);
+                if (subject!=null)
+                    return (User)subject;
             }
             return null;
         } catch (Exception e) {

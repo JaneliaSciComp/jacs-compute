@@ -49,7 +49,8 @@ public class AuthResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/authenticate")
     public AuthenticationResponse authenticate(AuthenticationRequest authReq) {
-        LOG.trace("Authenticate({})", authReq.getUsername());
+        System.out.println ("AAAAAAAAAAAAAAAAAAAAAAA");
+        LOG.info("Authenticate({})", authReq.getUsername());
         try {
             User user = authProvider.authenticate(authReq.getUsername(), authReq.getPassword());
             if (user==null) {
