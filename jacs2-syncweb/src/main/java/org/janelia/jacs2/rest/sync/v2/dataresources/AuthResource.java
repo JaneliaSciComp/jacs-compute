@@ -49,7 +49,6 @@ public class AuthResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/authenticate")
     public AuthenticationResponse authenticate(AuthenticationRequest authReq) {
-        System.out.println ("AAAAAAAAAAAAAAAAAAAAAAA");
         LOG.info("Authenticate({})", authReq.getUsername());
         try {
             User user = authProvider.authenticate(authReq.getUsername(), authReq.getPassword());
@@ -68,8 +67,7 @@ public class AuthResource {
         } catch (Exception e) {
             if (e instanceof WebApplicationException) {
                 throw (WebApplicationException)e;
-            }
-            else {
+            } else {
                 LOG.error("Error occurred authenticating {}", authReq.getUsername(), e);
                 throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
             }
