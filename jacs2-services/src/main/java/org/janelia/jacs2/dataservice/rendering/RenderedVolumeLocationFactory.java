@@ -31,11 +31,22 @@ public class RenderedVolumeLocationFactory {
         return storageService.lookupDataStorage(null, null, null, samplePath, subjectKey, authToken)
                 .map(dsInfo -> Optional.<RenderedVolumeLocation>of(new JADEBasedRenderedVolumeLocation(dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, httpClientProvider)))
                 .orElseGet(() -> storageService.lookupStorageVolumes(null, null, samplePath, subjectKey, authToken)
-                            .map(vsInfo -> new JADEBasedRenderedVolumeLocation(vsInfo.getStorageURL(),
-                                    Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(samplePath)).toString(),
-                                    authToken,
-                                    storageServiceApiKey,
-                                    httpClientProvider)))
+                            .map(vsInfo -> {
+                                if (samplePath.startsWith(vsInfo.getStorageVirtualPath())) {
+                                    return new JADEBasedRenderedVolumeLocation(vsInfo.getStorageURL(),
+                                            Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(samplePath)).toString(),
+                                            authToken,
+                                            storageServiceApiKey,
+                                            httpClientProvider);
+
+                                } else {
+                                    return new JADEBasedRenderedVolumeLocation(vsInfo.getStorageURL(),
+                                            Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(samplePath)).toString(),
+                                            authToken,
+                                            storageServiceApiKey,
+                                            httpClientProvider);
+                                }
+                            }))
                 .orElseThrow(() -> new IllegalArgumentException("No volume location could be created for sample at " + samplePath))
                 ;
     }

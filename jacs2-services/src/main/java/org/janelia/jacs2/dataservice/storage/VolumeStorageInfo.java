@@ -16,10 +16,16 @@ public class VolumeStorageInfo {
     @JsonProperty
     private String baseStorageRootDir;
     @JsonProperty
+    private String storageVirtualPath;
+    @JsonProperty
     private String storageServiceURL;
 
     void setId(String id) {
         this.id = id;
+    }
+
+    public String getBaseStorageRootDir() {
+        return baseStorageRootDir;
     }
 
     void setBaseStorageRootDir(String baseStorageRootDir) {
@@ -30,8 +36,12 @@ public class VolumeStorageInfo {
         this.storageServiceURL = storageServiceURL;
     }
 
-    public String getBaseStorageRootDir() {
-        return baseStorageRootDir;
+    public String getStorageVirtualPath() {
+        return storageVirtualPath;
+    }
+
+    void setStorageVirtualPath(String storageVirtualPath) {
+        this.storageVirtualPath = storageVirtualPath;
     }
 
     @JsonIgnore
