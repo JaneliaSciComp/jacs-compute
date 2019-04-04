@@ -7,6 +7,7 @@ import org.janelia.model.security.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.util.Map;
 
 /**
@@ -70,7 +71,9 @@ public class LocalAuthProvider implements AuthProvider {
                 newUser.setKey("user:" + username);
                 newUser.setName(username);
                 newUser.setFullName((String) userProperties.get("fullname"));
+
                 subjectDao.save(newUser);
+
                 subject = subjectDao.findByName(username);
                 if (subject!=null)
                     return (User)subject;

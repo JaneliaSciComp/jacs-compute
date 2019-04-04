@@ -19,8 +19,10 @@ import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
+import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.dto.DomainQuery;
+import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
@@ -79,6 +81,8 @@ public class UserResource {
     private PasswordProvider pwProvider;
     @Inject
     private AuthProvider authProvider;
+    @Inject
+    private WorkspaceNodeDao workspaceNodeDao;
 
     @ApiOperation(value = "Changes a user's password",
             notes = ""
@@ -197,6 +201,15 @@ public class UserResource {
 
                 if (blankUser != null) {
                     LOG.info("Created new user({}, {})", blankUser.getId(), blankUser.getKey());
+
+                    // create home folder for user
+                    Workspace newHomeWorkspace = new Workspace();
+                    newHomeWorkspace.setName("Home");
+                    newHomeWorkspace.setOwnerKey(blankUser.getKey());
+                    LOG.info("Creating Home Folder for user {}", blankUser.getKey());
+                    workspaceNodeDao.saveBySubjectKey(newHomeWorkspace, blankUser.getKey());
+
+                    // assign
                     return Response.ok(blankUser).build();
                 } else {
                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
