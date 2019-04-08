@@ -294,7 +294,7 @@ public class UserResource {
         String groupKey = group.getKey();
         LOG.trace("Start CreateGroup({})", groupKey);
         try {
-            Group newGroup = subjectDao.createGroup(groupKey, group.getFullName(), group.getLdapGroupName());
+            Group newGroup = legacyDomainDao.createGroup(group.getName(), group.getFullName());
             if (newGroup!=null)
                 return Response.ok(newGroup).build();
             else
