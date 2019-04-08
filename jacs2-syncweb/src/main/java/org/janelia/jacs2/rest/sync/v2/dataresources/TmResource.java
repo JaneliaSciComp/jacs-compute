@@ -243,7 +243,10 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
     @GET
-    @Produces(MultiPartMediaTypes.MULTIPART_MIXED)
+    @Produces({
+            MultiPartMediaTypes.MULTIPART_MIXED,
+            MediaType.APPLICATION_JSON
+    })
     @Path("/workspace/neuron")
     public Response getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
@@ -254,18 +257,27 @@ public class TmResource {
             LOG.error("No workspace found for {} accessible by {}", workspaceId, subjectKey);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Error getting the workspace " + workspaceId + " for " + subjectKey))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
-        List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, workspace);
-        if (neuronPairs.isEmpty()) {
-            multiPartEntity.bodyPart(new BodyPart("Empty", MediaType.TEXT_PLAIN_TYPE));
-        } else {
-            for (Pair<TmNeuronMetadata, InputStream> neuronPair : neuronPairs) {
-                multiPartEntity.bodyPart(new BodyPart(neuronPair.getLeft(), MediaType.APPLICATION_JSON_TYPE));
-                multiPartEntity.bodyPart(new BodyPart(neuronPair.getRight(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        try {
+            List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, workspace);
+            if (neuronPairs.isEmpty()) {
+                multiPartEntity.bodyPart(new BodyPart("Empty", MediaType.TEXT_PLAIN_TYPE));
+            } else {
+                for (Pair<TmNeuronMetadata, InputStream> neuronPair : neuronPairs) {
+                    multiPartEntity.bodyPart(new BodyPart(neuronPair.getLeft(), MediaType.APPLICATION_JSON_TYPE));
+                    multiPartEntity.bodyPart(new BodyPart(neuronPair.getRight(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+                }
             }
+            return Response.ok().entity(multiPartEntity).type(MultiPartMediaTypes.MULTIPART_MIXED).build();
+        } catch (Exception e) {
+            LOG.error("Error getting neurons from workspace {}", workspace, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error getting neuorons from workspace " + workspaceId + " for " + subjectKey))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
         }
-        return Response.ok().entity(multiPartEntity).type(MultiPartMediaTypes.MULTIPART_MIXED).build();
     }
 
     @ApiOperation(value = "Creates a new neuron",
