@@ -20,6 +20,7 @@ import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
+import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.model.access.dao.mongo.utils.RegistryHelper;
 import org.slf4j.Logger;
 
@@ -131,11 +132,13 @@ public class PersistenceProducer {
     @Produces
     public DataSource createDatasource(@PropertyValue(name = "mouselight.db.url") String dbUrl,
                                        @PropertyValue(name = "mouselight.db.user") String dbUser,
-                                       @PropertyValue(name = "mouselight.db.password") String dbPassword) {
+                                       @PropertyValue(name = "mouselight.db.password") String dbPassword,
+                                       @StrPropertyValue(name = "mouselight.db.validationQuery", defaultValue = "select 1") String validationQuery) {
         ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(dbUrl, dbUser, dbPassword);
         PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
         ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
         poolableConnectionFactory.setPool(connectionPool);
+        poolableConnectionFactory.setValidationQuery(StringUtils.defaultIfBlank(validationQuery, null));
         return new PoolingDataSource<>(connectionPool);
     }
 
