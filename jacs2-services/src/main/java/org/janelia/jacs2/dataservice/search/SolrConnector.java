@@ -34,13 +34,13 @@ import java.util.function.BiConsumer;
 public class SolrConnector {
     private static final Logger LOG = LoggerFactory.getLogger(SolrConnector.class);
 
-    private final SolrServer solr;
+    private final SolrServer solrServer;
     private final int solrCommitDelayInMillis;
 
     @Inject
     SolrConnector(@PropertyValue(name = "Solr.ServerURL") String solrURL,
                   @IntPropertyValue(name = "Solr.CommitDelayInMillis", defaultValue = 500) int solrCommitDelayInMillis) {
-        this.solr = new HttpSolrServer(solrURL);
+        this.solrServer = StringUtils.isBlank(solrURL) ? null : new HttpSolrServer(solrURL.trim());
         this.solrCommitDelayInMillis = solrCommitDelayInMillis;
     }
 
@@ -52,35 +52,47 @@ public class SolrConnector {
      */
     public QueryResponse search(SolrQuery query) {
         LOG.trace("search(query={})", query.getQuery());
-
-        LOG.debug("Running SOLR query: {}", query);
-        try {
-            return solr.query(query);
-        } catch (SolrServerException e) {
-            LOG.error("Search error for {}", query, e);
-            throw new IllegalStateException(e);
+        if (solrServer == null) {
+            LOG.debug("SOLR search is not configured");
+            return new QueryResponse();
+        } else {
+            LOG.debug("Running SOLR query: {}", query);
+            try {
+                return solrServer.query(query);
+            } catch (SolrServerException e) {
+                LOG.error("Search error for {}", query, e);
+                throw new IllegalStateException(e);
+            }
         }
     }
 
     public boolean addToIndex(DomainObject domainObject) {
-        try {
-            solr.add(createSolrDoc(domainObject), solrCommitDelayInMillis);
-            solr.commit(false, false);
-            return true;
-        } catch (Exception e) {
-            LOG.error("Error while updating solr index for {}", domainObject, e);
+        if (solrServer == null) {
             return false;
+        } else {
+            try {
+                solrServer.add(createSolrDoc(domainObject), solrCommitDelayInMillis);
+                solrServer.commit(false, false);
+                return true;
+            } catch (Exception e) {
+                LOG.error("Error while updating solr index for {}", domainObject, e);
+                return false;
+            }
         }
     }
 
     public boolean removeFromIndexById(String id) {
-        try {
-            solr.deleteById(id, solrCommitDelayInMillis);
-            solr.commit(false, false);
-            return true;
-        } catch (Exception e) {
-            LOG.error("Error while removing {} from solr index", id, e);
+        if (solrServer == null) {
             return false;
+        } else {
+            try {
+                solrServer.deleteById(id, solrCommitDelayInMillis);
+                solrServer.commit(false, false);
+                return true;
+            } catch (Exception e) {
+                LOG.error("Error while removing {} from solr index", id, e);
+                return false;
+            }
         }
     }
 
