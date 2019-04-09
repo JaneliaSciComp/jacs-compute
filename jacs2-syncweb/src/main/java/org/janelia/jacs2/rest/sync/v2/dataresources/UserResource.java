@@ -84,9 +84,7 @@ public class UserResource {
     @Inject
     private WorkspaceNodeDao workspaceNodeDao;
 
-    @ApiOperation(value = "Changes a user's password",
-            notes = ""
-    )
+    @ApiOperation(value = "Changes a user's password")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully set user password", response = User.class),
             @ApiResponse(code = 500, message = "Internal Server Error setting user preferences")
@@ -110,12 +108,10 @@ public class UserResource {
             User user = (User)subject;
             subjectDao.setUserPassword(user, pwProvider.generatePBKDF2Hash(authenticationMessage.getPassword()));
             return user;
-
         } catch (Exception e) {
             if (e instanceof WebApplicationException) {
-                throw (WebApplicationException)e;
-            }
-            else {
+                throw (WebApplicationException) e;
+            } else {
                 LOG.error("Error occurred changing password for user {}", authenticationMessage.getUsername(), e);
                 throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
             }
@@ -150,19 +146,15 @@ public class UserResource {
                     return Response.ok(user).build();
                 }
                 return Response.status(Response.Status.NOT_FOUND).build();
-
-            }
-            else {
+            } else {
                 return Response.ok(existingUser).build();
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error trying to get or create user for {}", subjectKey);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error getting or creating user for " + subjectKey))
                     .build();
-        }
-        finally {
+        } finally {
             LOG.trace("Finished getOrCreateUser({})", subjectKey);
         }
     }
