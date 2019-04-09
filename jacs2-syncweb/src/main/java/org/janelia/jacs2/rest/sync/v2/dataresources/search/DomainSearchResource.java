@@ -112,8 +112,10 @@ public class DomainSearchResource {
                 facetFieldValueMap.put(ff.getName(), facetValues);
             }
         }
-
-        return new SolrJsonResults(response.getResults(), facetFieldValueMap, response.getResults().getNumFound());
+        long numResults = response.getResults() != null
+                ? response.getResults().getNumFound()
+                : 0L;
+        return new SolrJsonResults(response.getResults(), facetFieldValueMap, numResults);
     }
 
 }
