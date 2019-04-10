@@ -91,22 +91,27 @@ public class SWCService {
         VectorOperator externalToInternalConverter = new JamaMatrixVectorOperator(
                 MatrixUtilities.buildMicronToVox(renderedVolume.getMicromsPerVoxel(), renderedVolume.getOriginVoxel()));
 
+        LOG.info("Lookup SWC folder {}", swcFolderName);
         storageService.lookupStorageVolumes(null, null, swcFolderName, null, null)
                 .map(vsInfo -> {
+                    LOG.info("Found {} for SWC folder {}", vsInfo, swcFolderName);
                     String swcPath;
                     if (swcFolderName.startsWith(vsInfo.getStorageVirtualPath())) {
                         swcPath = Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(swcFolderName)).toString();
                     } else {
                         swcPath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(swcFolderName)).toString();
                     }
+                    LOG.info("List swc entries on {} : {}", vsInfo, swcPath);
                     return storageService.listStorageContent(vsInfo.getStorageURL(), swcPath, null, null, 3).stream();
                 })
                 .orElseGet(() -> Stream.of())
                 .filter(storageEntryInfo -> storageEntryInfo.getEntryRelativePath().endsWith(".swc"))
                 .forEach(swcEntry ->{
+                    LOG.info("Read swcEntry {} from {}", swcEntry, swcEntry.getEntryURL());
                     InputStream swcStream = storageService.getStorageContent(swcEntry.getEntryURL(), null, null);
                     TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getEntryRelativePath(), swcStream, neuronOwnerKey, tmWorkspace, externalToInternalConverter);
                     try {
+                        LOG.info("Create neuron points for swcEntry {} in workspace {} for sample {}", swcEntry, tmWorkspace, tmSample);
                         tmNeuronBufferDao.createNeuronWorkspacePoints(neuronMetadata.getId(), tmWorkspace.getId(), new ByteArrayInputStream(protobufExchanger.serializeNeuron(neuronMetadata)));
                     } catch (Exception e) {
                         LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
