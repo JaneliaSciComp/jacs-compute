@@ -57,7 +57,8 @@ class StorageContentHelper {
                             storageURL,
                             storagePath,
                             jacsServiceData.getOwnerKey(),
-                            ResourceHelper.getAuthToken(jacsServiceData.getResources()));
+                            ResourceHelper.getAuthToken(jacsServiceData.getResources()),
+                            -1);
                     return new JacsServiceResult<>(jacsServiceData,
                             contentToLoad.stream()
                                     .map(entry -> {

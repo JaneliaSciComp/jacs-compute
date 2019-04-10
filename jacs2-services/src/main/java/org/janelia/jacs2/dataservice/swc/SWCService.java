@@ -1,9 +1,9 @@
 package org.janelia.jacs2.dataservice.swc;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
+import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
@@ -24,17 +24,20 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.awt.*;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class SWCService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SWCService.class);
 
+    private final StorageService storageService;
     private final LegacyDomainDao domainDao;
     private final TmSampleDao tmSampleDao;
     private final TmWorkspaceDao tmWorkspaceDao;
@@ -48,7 +51,8 @@ public class SWCService {
     private final TmProtobufExchanger protobufExchanger;
 
     @Inject
-    public SWCService(LegacyDomainDao domainDao,
+    public SWCService(StorageService storageService,
+                      LegacyDomainDao domainDao,
                       TmSampleDao tmSampleDao,
                       TmWorkspaceDao tmWorkspaceDao,
                       TmNeuronBufferDao tmNeuronBufferDao,
@@ -58,6 +62,7 @@ public class SWCService {
                       IdSource neuronIdGenerator,
                       TmProtobufExchanger protobufExchanger,
                       @PropertyValue(name = "service.swcImport.DefaultLocation") String defaultSWCLocation) {
+        this.storageService = storageService;
         this.domainDao = domainDao;
         this.tmSampleDao = tmSampleDao;
         this.tmWorkspaceDao = tmWorkspaceDao;
@@ -86,13 +91,25 @@ public class SWCService {
         VectorOperator externalToInternalConverter = new JamaMatrixVectorOperator(
                 MatrixUtilities.buildMicronToVox(renderedVolume.getMicromsPerVoxel(), renderedVolume.getOriginVoxel()));
 
-        FileUtils.lookupFiles(Paths.get(swcFolderName), 3, "glob:**/*.swc")
-                .forEach(swcFile -> {
-                    TmNeuronMetadata neuronMetadata = importSWCFile(swcFile, neuronOwnerKey, tmWorkspace, externalToInternalConverter);
+        storageService.lookupStorageVolumes(null, null, swcFolderName, null, null)
+                .map(vsInfo -> {
+                    String swcPath;
+                    if (swcFolderName.startsWith(vsInfo.getStorageVirtualPath())) {
+                        swcPath = Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(swcFolderName)).toString();
+                    } else {
+                        swcPath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(swcFolderName)).toString();
+                    }
+                    return storageService.listStorageContent(vsInfo.getStorageURL(), swcPath, null, null, 3).stream();
+                })
+                .orElseGet(() -> Stream.of())
+                .filter(storageEntryInfo -> storageEntryInfo.getEntryRelativePath().endsWith(".swc"))
+                .forEach(swcEntry ->{
+                    InputStream swcStream = storageService.getStorageContent(swcEntry.getEntryURL(), null, null);
+                    TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getEntryRelativePath(), swcStream, neuronOwnerKey, tmWorkspace, externalToInternalConverter);
                     try {
                         tmNeuronBufferDao.createNeuronWorkspacePoints(neuronMetadata.getId(), tmWorkspace.getId(), new ByteArrayInputStream(protobufExchanger.serializeNeuron(neuronMetadata)));
                     } catch (Exception e) {
-                        LOG.error("Error creating neuron points while importing {} into {}", swcFile, neuronMetadata, e);
+                        LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
                         throw new IllegalStateException(e);
                     }
                 });
@@ -115,8 +132,8 @@ public class SWCService {
         return tmWorkspace;
     }
 
-    private TmNeuronMetadata importSWCFile(Path swcFile, String neuronOwnerKey, TmWorkspace tmWorkspace, VectorOperator externalToInternalConverter) {
-        SWCData swcData = swcReader.readSWCFile(swcFile);
+    private TmNeuronMetadata importSWCFile(String swcEntryName, InputStream swcStream, String neuronOwnerKey, TmWorkspace tmWorkspace, VectorOperator externalToInternalConverter) {
+        SWCData swcData = swcReader.readSWCStream(swcEntryName, swcStream);
 
         // externalOffset is because Vaa3d cannot handle large coordinates in swc
         // se we added an OFFSET header and recentered on zero when exporting

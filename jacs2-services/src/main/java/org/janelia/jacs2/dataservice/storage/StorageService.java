@@ -150,7 +150,6 @@ public class StorageService {
         } finally {
             httpclient.close();
         }
-
     }
 
     public DataStorageInfo createStorage(String storageServiceURL, String storageName, List<String> storageTags, String subject, String authToken) {
@@ -228,12 +227,16 @@ public class StorageService {
     public List<StorageEntryInfo> listStorageContent(String storageURI,
                                                      String storagePath,
                                                      String subject,
-                                                     String authToken) {
+                                                     String authToken,
+                                                     int level) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI).path("list");
             if (StringUtils.isNotBlank(storagePath)) {
                 target = target.path(storagePath);
+            }
+            if (level > 0) {
+                target = target.queryParam("depth", level);
             }
             Invocation.Builder requestBuilder = createRequestWithCredentials(
                     target.request(MediaType.APPLICATION_JSON), subject, authToken);

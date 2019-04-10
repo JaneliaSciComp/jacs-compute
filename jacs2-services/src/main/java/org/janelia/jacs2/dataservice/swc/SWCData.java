@@ -1,5 +1,6 @@
 package org.janelia.jacs2.dataservice.swc;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -24,7 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * this class holds data from a file using the .swc format, which is
+ * This class holds data from a file using the .swc format, which is
  * used for storing neuron skeletons; see http://research.mssm.edu/cnic/swc.html
  * for the best description I could find
  *
@@ -56,7 +58,7 @@ public class SWCData {
     private static final String NAME_HEADER_PREFIX = "NAME";
     private static final String COLOR_HEADER_PREFIX = "COLOR";
 
-    private Path swcFile;
+    private String swcName;
     private List<SWCNode> nodeList = new ArrayList<>();
     private List<String> headerList = new ArrayList<>();
 
@@ -64,8 +66,8 @@ public class SWCData {
     // some routines want it in original form
     private double[] neuronCenter = {0.0, 0.0, 0.0};
 
-    SWCData(Path swcFile) {
-        this.swcFile = swcFile;
+    SWCData(String swcName) {
+        this.swcName = swcName;
     }
 
     void addHeader(String header) {
@@ -159,8 +161,8 @@ public class SWCData {
                     return nameHeader.substring(hdrPos + NAME_HEADER_PREFIX.length()).trim();
                 })
                 .orElseGet(() -> {
-                    if (swcFile != null) {
-                        String swcFileName = swcFile.getFileName().toString();
+                    if (StringUtils.isBlank(swcName)) {
+                        String swcFileName = Paths.get(swcName).getFileName().toString();
                         if (swcFileName.endsWith(STD_SWC_EXTENSION)) {
                             return swcFileName.substring(0, swcFileName.length() - STD_SWC_EXTENSION.length());
                         } else {

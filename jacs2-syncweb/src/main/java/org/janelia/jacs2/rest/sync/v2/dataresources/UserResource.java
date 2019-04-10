@@ -371,14 +371,8 @@ public class UserResource {
         LOG.trace("Start getSubjectByKey({})", subjectNameOrKey);
         try {
             Subject s = subjectDao.findByNameOrKey(subjectNameOrKey);
-            if (s == null) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("No subject found for " + subjectNameOrKey))
-                        .build();
-            } else {
-                return Response.ok(s)
-                        .build();
-            }
+            return Response.ok(s)
+                    .build();
         } finally {
             LOG.trace("Finished getSubjectByKey({})", subjectNameOrKey);
         }
