@@ -133,13 +133,9 @@ public class PersistenceProducer {
     public DataSource createDatasource(@PropertyValue(name = "mouselight.db.url") String dbUrl,
                                        @PropertyValue(name = "mouselight.db.user") String dbUser,
                                        @PropertyValue(name = "mouselight.db.password") String dbPassword,
-                                       @StrPropertyValue(name = "mouselight.db.validationQuery", defaultValue = "select 1") String validationQuery) {
-        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(dbUrl, dbUser, dbPassword);
-        PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
-        ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
-        poolableConnectionFactory.setPool(connectionPool);
-        poolableConnectionFactory.setValidationQuery(StringUtils.defaultIfBlank(validationQuery, null));
-        return new PoolingDataSource<>(connectionPool);
+                                       @StrPropertyValue(name = "mouselight.db.validationQuery", defaultValue = "select 1") String validationQuery,
+                                       @IntPropertyValue(name = "mouselight.db.maxOpenedCursors", defaultValue = 20) int maxOpenedCursors) {
+        return createPooledDatasource(dbUrl, dbUser, dbPassword, validationQuery, maxOpenedCursors);
     }
 
     @Sage
@@ -147,9 +143,16 @@ public class PersistenceProducer {
     @Produces
     public DataSource createSageDatasource(@PropertyValue(name = "sage.db.url") String dbUrl,
                                            @PropertyValue(name = "sage.db.user") String dbUser,
-                                           @PropertyValue(name = "sage.db.password") String dbPassword) {
+                                           @PropertyValue(name = "sage.db.password") String dbPassword,
+                                           @StrPropertyValue(name = "sage.db.validationQuery", defaultValue = "select 1") String validationQuery) {
+        return createPooledDatasource(dbUrl, dbUser, dbPassword, validationQuery, 10);
+    }
+
+    private DataSource createPooledDatasource(String dbUrl, String dbUser, String dbPassword, String validationQuery, int maxOpenedCursors) {
         ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(dbUrl, dbUser, dbPassword);
         PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
+        poolableConnectionFactory.setValidationQuery(StringUtils.defaultIfBlank(validationQuery, null));
+        poolableConnectionFactory.setMaxOpenPreparedStatements(maxOpenedCursors);
         ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
         poolableConnectionFactory.setPool(connectionPool);
         return new PoolingDataSource<>(connectionPool);
