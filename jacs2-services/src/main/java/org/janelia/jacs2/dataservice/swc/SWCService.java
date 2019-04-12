@@ -78,7 +78,10 @@ public class SWCService {
         this.neuronManipulator = new TmModelManipulator(null, neuronIdGenerator);
     }
 
-    public TmWorkspace importSWCFolder(String swcFolderName, Long sampleId, String neuronOwnerKey, String workspaceName, String workspaceOwnerKey, List<String> accessUsers) {
+    public TmWorkspace importSWCFolder(String swcFolderName, Long sampleId,
+                                       String workspaceName, String workspaceOwnerKey,
+                                       String neuronOwnerKey,
+                                       List<String> accessUsers) {
         TmSample tmSample = tmSampleDao.findEntityByIdAccessibleBySubjectKey(sampleId, workspaceOwnerKey);
         if (tmSample == null) {
             LOG.error("Sample {} either does not exist or user {} has no access to it", sampleId, workspaceOwnerKey);
