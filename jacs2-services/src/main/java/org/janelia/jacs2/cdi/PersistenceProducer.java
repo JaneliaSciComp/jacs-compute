@@ -7,15 +7,11 @@ import com.mongodb.MongoClientURI;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoDatabase;
-import org.apache.commons.dbcp2.ConnectionFactory;
-import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp2.PoolableConnection;
-import org.apache.commons.dbcp2.PoolableConnectionFactory;
-import org.apache.commons.dbcp2.PoolingDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.janelia.jacs2.cdi.qualifier.GridExecutor;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -26,10 +22,13 @@ import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -133,9 +132,8 @@ public class PersistenceProducer {
     public DataSource createDatasource(@PropertyValue(name = "mouselight.db.url") String dbUrl,
                                        @PropertyValue(name = "mouselight.db.user") String dbUser,
                                        @PropertyValue(name = "mouselight.db.password") String dbPassword,
-                                       @StrPropertyValue(name = "mouselight.db.validationQuery", defaultValue = "select 1") String validationQuery,
-                                       @IntPropertyValue(name = "mouselight.db.maxOpenedCursors", defaultValue = 20) int maxOpenedCursors) {
-        return createPooledDatasource(dbUrl, dbUser, dbPassword, validationQuery, maxOpenedCursors);
+                                       @StrPropertyValue(name = "mouselight.db.validationQuery", defaultValue = "select 1") String validationQuery) {
+        return createPooledDatasource(dbUrl, dbUser, dbPassword, validationQuery);
     }
 
     @Sage
@@ -145,17 +143,15 @@ public class PersistenceProducer {
                                            @PropertyValue(name = "sage.db.user") String dbUser,
                                            @PropertyValue(name = "sage.db.password") String dbPassword,
                                            @StrPropertyValue(name = "sage.db.validationQuery", defaultValue = "select 1") String validationQuery) {
-        return createPooledDatasource(dbUrl, dbUser, dbPassword, validationQuery, 10);
+        return createPooledDatasource(dbUrl, dbUser, dbPassword, validationQuery);
     }
 
-    private DataSource createPooledDatasource(String dbUrl, String dbUser, String dbPassword, String validationQuery, int maxOpenedCursors) {
-        ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(dbUrl, dbUser, dbPassword);
-        PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
-        poolableConnectionFactory.setValidationQuery(StringUtils.defaultIfBlank(validationQuery, null));
-        poolableConnectionFactory.setMaxOpenPreparedStatements(maxOpenedCursors);
-        ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
-        poolableConnectionFactory.setPool(connectionPool);
-        return new PoolingDataSource<>(connectionPool);
+    private DataSource createPooledDatasource(String dbUrl, String dbUser, String dbPassword, String validationQuery) {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(dbUrl);
+        config.setUsername(dbUser);
+        config.setPassword(dbPassword);
+        return new HikariDataSource(config);
     }
 
 }
