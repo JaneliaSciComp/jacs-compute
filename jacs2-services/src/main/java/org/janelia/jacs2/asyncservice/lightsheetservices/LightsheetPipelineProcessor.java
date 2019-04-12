@@ -47,8 +47,6 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
     static class LightsheetProcessingArgs extends ServiceArgs {
         @Parameter(names = "-configAddress", description = "Address for accessing job's config json.")
         String pipelineConfigURL;
-        @Parameter(names = "-configReference", description = "Job's configuration reference")
-        String pipelineConfigReference;
 
         LightsheetProcessingArgs() {
             super("Lightsheet processor. This is a processor that can pipeline multiple lightsheet steps");
@@ -101,8 +99,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                                 .addResources(getStepResources(lightsheetStepConfig))
                                 .build(),
                         new ServiceArg("-step", stepName),
-                        new ServiceArg("-stepIndex", stepIndex),
-                        new ServiceArg("-configReference", args.pipelineConfigReference)
+                        new ServiceArg("-stepIndex", stepIndex)
                 ));
                 index++;
             }
