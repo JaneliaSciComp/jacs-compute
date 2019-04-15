@@ -22,7 +22,10 @@ subprojects {
             mavenLocal()
             mavenCentral()
             maven {
-                url "https://raw.githubusercontent.com/JaneliaSciComp/mvn-repo/master/repository/"
+                url "https://nexus.janelia.org/repository/maven-snapshots"
+            }
+            maven {
+                url "https://nexus.janelia.org/repository/maven-releases"
             }
             flatDir {
                 dirs "${rootDir}/projectrepository"
