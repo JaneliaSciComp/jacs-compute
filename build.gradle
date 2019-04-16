@@ -22,10 +22,10 @@ subprojects {
             mavenLocal()
             mavenCentral()
             maven {
-                url "https://nexus.janelia.org/repository/maven-snapshots"
+                url "https://nexus.janelia.org/repository/maven-releases"
             }
             maven {
-                url "https://nexus.janelia.org/repository/maven-releases"
+                url "https://nexus.janelia.org/repository/maven-snapshots"
             }
             flatDir {
                 dirs "${rootDir}/projectrepository"
