@@ -196,7 +196,11 @@ public class LightsheetPipelineStepProcessor extends AbstractServiceProcessor<Vo
                         "ImageProcessing.Lightsheet." + args.step + ".Version",
                         applicationConfig.getStringPropertyValue("ImageProcessing.Lightsheet.Version"));
                 if (StringUtils.isNotBlank(containerImageVersion)) {
-                    containerImage += ":" + containerImageVersion;
+                    containerImage += containerImageVersion;
+                }
+                String containerImageExt = applicationConfig.getStringPropertyValue("Singularity.Image.DefaultExt");
+                if (StringUtils.isNotBlank(containerImageExt)) {
+                    containerImage += containerImageExt;
                 }
             }
             return containerImage;
