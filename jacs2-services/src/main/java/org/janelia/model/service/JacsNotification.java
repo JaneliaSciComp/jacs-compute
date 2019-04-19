@@ -9,6 +9,7 @@ import org.janelia.model.jacs2.domain.support.MongoMapping;
 import org.janelia.model.jacs2.BaseEntity;
 
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @MongoMapping(collectionName="jacsNotification", label="Jacs Notification")
@@ -19,7 +20,7 @@ public class JacsNotification implements BaseEntity, HasIdentifier {
     private String eventName;
     private Date notificationDate = new Date();
     private JacsServiceLifecycleStage notificationStage;
-    private Map<String, String> notificationData;
+    private Map<String, String> notificationData = new LinkedHashMap<>();
 
     @Override
     public Number getId() {
@@ -60,7 +61,13 @@ public class JacsNotification implements BaseEntity, HasIdentifier {
     }
 
     public void setNotificationData(Map<String, String> notificationData) {
-        this.notificationData = notificationData;
+        if (notificationData != null) {
+            this.notificationData.putAll(notificationData);
+        }
+    }
+
+    public void addNotificationData(String name, String value) {
+        this.notificationData.put(name, value);
     }
 
     @Override

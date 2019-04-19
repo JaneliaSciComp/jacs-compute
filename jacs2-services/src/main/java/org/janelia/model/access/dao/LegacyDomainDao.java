@@ -27,6 +27,29 @@ import java.util.*;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public interface LegacyDomainDao {
+
+    class DaoIndex {
+        private final String keys;
+        private final String options;
+
+        public DaoIndex(String keys) {
+            this(keys, null);
+        }
+
+        public DaoIndex(String keys, String options) {
+            this.keys = keys;
+            this.options = options;
+        }
+
+        public String getKeys() {
+            return keys;
+        }
+
+        public String getOptions() {
+            return options;
+        }
+    }
+
     /**
      * Save the given subject.
      */
@@ -364,6 +387,8 @@ public interface LegacyDomainDao {
 
     void setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception;
 
+    void giveOwnerReadWritToAllFromCollection(String collectionName);
+
     void addPipelineStatusTransition(Long sampleId, PipelineStatus source, PipelineStatus target, String orderNo,
                                      String process, Map<String, Object> parameters) throws Exception;
 
@@ -402,4 +427,6 @@ public interface LegacyDomainDao {
     void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result);
 
     <T extends DomainObject> List<T> fullTextSearch(String subjectKey, Class<T> domainClass, String text);
+
+    void ensureCollectionIndex(String collectionName, List<DaoIndex> indexes);
 }

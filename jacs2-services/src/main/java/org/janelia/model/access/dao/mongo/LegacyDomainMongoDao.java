@@ -1,9 +1,11 @@
 package org.janelia.model.access.dao.mongo;
 
 import com.mongodb.MongoClient;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.Reference;
@@ -23,6 +25,7 @@ import org.janelia.model.security.Group;
 import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
+import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
 
 import javax.inject.Inject;
@@ -541,6 +544,24 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
+    public void giveOwnerReadWritToAllFromCollection(String collectionName) {
+        Class<?> baseClass = DomainUtils.getBaseClass(collectionName);
+        if (DomainObject.class.isAssignableFrom(baseClass)) {
+            MongoCollection mongoCollection = dao.getCollectionByName(collectionName);
+            Iterable<?> iterable = mongoCollection.find().as(baseClass);
+            if (iterable != null) {
+                for (Object obj : iterable) {
+                    DomainObject domainObject = (DomainObject) obj;
+                    String ownerKey = domainObject.getOwnerKey();
+                    if (StringUtils.isNotBlank(ownerKey)) {
+                        mongoCollection.update("{_id:#}", domainObject.getId()).with("{$addToSet:{readers:#,writers:#}}", ownerKey, ownerKey);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public void addPipelineStatusTransition(Long sampleId, PipelineStatus source, PipelineStatus target, String orderNo, String process, Map<String, Object> parameters) throws Exception {
         dao.addPipelineStatusTransition(sampleId, source, target, orderNo, process, parameters);
     }
@@ -613,5 +634,17 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public <T extends DomainObject> List<T> fullTextSearch(String subjectKey, Class<T> domainClass, String text) {
         return dao.fullTextSearch(subjectKey, domainClass, text);
+    }
+
+    @Override
+    public void ensureCollectionIndex(String collectionName, List<DaoIndex> indexes) {
+        MongoCollection mongoCollection = dao.getCollectionByName(collectionName);
+        for (DaoIndex index : indexes) {
+            if (StringUtils.isBlank(index.getOptions())) {
+                mongoCollection.ensureIndex(index.getKeys());
+            } else {
+                mongoCollection.ensureIndex(index.getKeys(), index.getOptions());
+            }
+        }
     }
 }
