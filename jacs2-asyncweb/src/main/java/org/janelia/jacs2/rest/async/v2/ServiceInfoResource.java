@@ -36,6 +36,7 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
@@ -261,16 +262,22 @@ public class ServiceInfoResource {
             StreamingOutput fileStream = output -> {
                 try {
                     jacsServiceDataManager.streamServiceStdOutput(serviceData)
-                            .forEach(is -> {
+                            .forEach(isProvider -> {
+                                InputStream is;
                                 try {
-                                    ByteStreams.copy(is, output);
-                                } catch (IOException ioex) {
-                                    logger.error("Error while streaming service {} standard output", serviceData, ioex);
-                                } finally {
+                                    is = isProvider.get();
                                     try {
-                                        is.close();
-                                    } catch (IOException ignore) {
+                                        ByteStreams.copy(is, output);
+                                    } catch (IOException ioex) {
+                                        logger.error("Error while streaming service {} standard output", serviceData, ioex);
+                                    } finally {
+                                        try {
+                                            is.close();
+                                        } catch (IOException ignore) {
+                                        }
                                     }
+                                } catch (Exception ex) {
+                                    logger.error("Error while opening the output stream(s) for {}", serviceData, ex);
                                 }
                             });
                 } catch (Exception e) {
@@ -311,16 +318,22 @@ public class ServiceInfoResource {
             StreamingOutput fileStream = output -> {
                 try {
                     jacsServiceDataManager.streamServiceStdError(serviceData)
-                            .forEach(is -> {
+                            .forEach(isProvider -> {
+                                InputStream is;
                                 try {
-                                    ByteStreams.copy(is, output);
-                                } catch (IOException ioex) {
-                                    logger.error("Error while streaming service {} standard error", serviceData, ioex);
-                                } finally {
+                                    is = isProvider.get();
                                     try {
-                                        is.close();
-                                    } catch (IOException ignore) {
+                                        ByteStreams.copy(is, output);
+                                    } catch (IOException ioex) {
+                                        logger.error("Error while streaming service {} standard error", serviceData, ioex);
+                                    } finally {
+                                        try {
+                                            is.close();
+                                        } catch (IOException ignore) {
+                                        }
                                     }
+                                } catch (Exception ex) {
+                                    logger.error("Error while opening the error stream(s) for {}", serviceData, ex);
                                 }
                             });
                 } catch (Exception e) {

@@ -7,6 +7,7 @@ import org.janelia.model.service.JacsServiceData;
 
 import java.io.InputStream;
 import java.util.Date;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public interface JacsServiceDataManager {
@@ -15,7 +16,7 @@ public interface JacsServiceDataManager {
     PageResult<JacsServiceData> searchServices(JacsServiceData ref, DataInterval<Date> creationInterval, PageRequest pageRequest);
     long getServiceStdOutputSize(JacsServiceData serviceData);
     long getServiceStdErrorSize(JacsServiceData serviceData);
-    Stream<InputStream> streamServiceStdOutput(JacsServiceData serviceData);
-    Stream<InputStream> streamServiceStdError(JacsServiceData serviceData);
+    Stream<Supplier<InputStream>> streamServiceStdOutput(JacsServiceData serviceData);
+    Stream<Supplier<InputStream>> streamServiceStdError(JacsServiceData serviceData);
     JacsServiceData updateService(Number instanceId, JacsServiceData serviceData);
 }
