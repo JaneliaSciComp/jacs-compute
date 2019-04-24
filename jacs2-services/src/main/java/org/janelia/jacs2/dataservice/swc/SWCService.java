@@ -87,7 +87,14 @@ public class SWCService {
             LOG.error("Sample {} either does not exist or user {} has no access to it", sampleId, workspaceOwnerKey);
             throw new IllegalArgumentException("Sample " + sampleId + " either does not exist or is not accessible");
         }
-        TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(workspaceOwnerKey, createWorkspace(swcFolderName, sampleId, workspaceName, accessUsers));
+        TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(workspaceOwnerKey, createWorkspace(swcFolderName, sampleId, workspaceName));
+        accessUsers.forEach(accessUserKey -> {
+            try {
+                domainDao.setPermissions(workspaceOwnerKey, TmWorkspace.class.getName(), tmWorkspace.getId(), accessUserKey, true, true, true);
+            } catch (Exception e) {
+                LOG.error("Error giving permission on {} to {}", tmWorkspace, accessUserKey, e);
+            }
+        });
         RenderedVolume renderedVolume = renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(), workspaceOwnerKey, null))
                 .orElseThrow(() -> new IllegalStateException("Error loading volume metadata for sample " + sampleId));
 
@@ -124,7 +131,7 @@ public class SWCService {
         return tmWorkspace;
     }
 
-    private TmWorkspace createWorkspace(String swcFolderName, Long sampleId, String workspaceNameParam, List<String> accessUsers) {
+    private TmWorkspace createWorkspace(String swcFolderName, Long sampleId, String workspaceNameParam) {
         Path swcPath = Paths.get(swcFolderName);
         Path swcBasePath;
         if (swcPath.isAbsolute()) {
@@ -135,8 +142,6 @@ public class SWCService {
         String workspaceName = StringUtils.defaultIfBlank(workspaceNameParam, swcPath.getFileName().toString());
         TmWorkspace tmWorkspace = new TmWorkspace(workspaceName.trim(), sampleId);
         tmWorkspace.setOriginalSWCPath(swcBasePath.toString());
-        tmWorkspace.getReaders().addAll(accessUsers);
-        tmWorkspace.getWriters().addAll(accessUsers);
         return tmWorkspace;
     }
 
