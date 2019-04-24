@@ -94,6 +94,11 @@ public class SWCService {
             } catch (Exception e) {
                 LOG.error("Error giving permission on {} to {}", tmWorkspace, accessUserKey, e);
             }
+            try {
+                domainDao.setPermissions(tmSample.getOwnerKey(), TmSample.class.getName(), tmSample.getId(), accessUserKey, true, true, true);
+            } catch (Exception e) {
+                LOG.error("Error giving permission on {} to {}", tmWorkspace, accessUserKey, e);
+            }
         });
         RenderedVolume renderedVolume = renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(), workspaceOwnerKey, null))
                 .orElseThrow(() -> new IllegalStateException("Error loading volume metadata for sample " + sampleId));
