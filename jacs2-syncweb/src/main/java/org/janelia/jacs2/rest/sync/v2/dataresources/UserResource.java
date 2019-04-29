@@ -10,7 +10,6 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.server.ContainerRequest;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
@@ -42,6 +41,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
@@ -93,7 +93,7 @@ public class UserResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/user/password")
-    public User changePassword(AuthenticationRequest authenticationMessage, @Context ContainerRequest containerRequestContext) {
+    public User changePassword(AuthenticationRequest authenticationMessage, @Context ContainerRequestContext containerRequestContext) {
         LOG.info("changePassword({})", authenticationMessage.getUsername());
         try {
             boolean isAllowed = checkAdministrationPrivileges(authenticationMessage.getUsername(), containerRequestContext);
@@ -170,7 +170,7 @@ public class UserResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/user/property")
-    public Response updateUser(@ApiParam Map<String, Object> userProperties, @Context ContainerRequest containerRequestContext) {
+    public Response updateUser(@ApiParam Map<String, Object> userProperties, @Context ContainerRequestContext containerRequestContext) {
         User dbUser = null;
         try {
             LOG.info("Start updateUserProperty()");
@@ -519,7 +519,7 @@ public class UserResource {
         }
     }
 
-    private boolean checkAdministrationPrivileges (String username, ContainerRequest containerRequestContext) {
+    private boolean checkAdministrationPrivileges (String username, ContainerRequestContext containerRequestContext) {
         User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
         User authenticatedUser = JacsSecurityContextHelper.getAuthenticatedUser(containerRequestContext);
 

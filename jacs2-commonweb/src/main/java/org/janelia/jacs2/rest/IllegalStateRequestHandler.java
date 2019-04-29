@@ -14,7 +14,7 @@ public class IllegalStateRequestHandler implements ExceptionMapper<IllegalStateE
 
     @Override
     public Response toResponse(IllegalStateException exception) {
-        LOG.error("Invalid argument response", exception);
+        LOG.error("Invalid state exception", exception);
         String errorMessage = exception.getMessage();
         if (StringUtils.isBlank(errorMessage)) {
             errorMessage = "Illegal state";

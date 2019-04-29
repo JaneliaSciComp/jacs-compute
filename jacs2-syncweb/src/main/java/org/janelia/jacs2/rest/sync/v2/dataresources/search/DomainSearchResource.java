@@ -43,8 +43,6 @@ public class DomainSearchResource {
     @Inject
     private LegacyDomainDao legacyDomainDao;
 
-    @POST
-    @Path("/search")
     @ApiOperation(value = "Performs a SOLRSearch using a SolrParams class",
             notes = "Refer to the API docs on SOLRQuery for an explanation of the serialized parameters in SolrParams"
     )
@@ -52,6 +50,8 @@ public class DomainSearchResource {
             @ApiResponse(code = 200, message = "Successfully performed SOLR search", response = SolrJsonResults.class),
             @ApiResponse(code = 500, message = "Internal Server Error performing SOLR Search")
     })
+    @POST
+    @Path("/search")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public SolrJsonResults searchSolrIndices(@ApiParam SolrParams queryParams) {

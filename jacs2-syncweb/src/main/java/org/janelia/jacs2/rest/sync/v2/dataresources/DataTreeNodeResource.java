@@ -11,7 +11,6 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.server.ContainerRequest;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
@@ -35,6 +34,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
@@ -76,7 +76,7 @@ public class DataTreeNodeResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{nodeId}")
     public Response getDataNode(@PathParam("nodeId") Long dataNodeId,
-                                @Context ContainerRequest containerRequestContext) {
+                                @Context ContainerRequestContext containerRequestContext) {
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         TreeNode dataNode = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
         if (dataNode == null) {
@@ -104,7 +104,7 @@ public class DataTreeNodeResource {
     @Path("/node/children")
     @SuppressWarnings("unchecked")
     public <T extends TreeNode> Response addChildren(@ApiParam DomainQuery query,
-                                                     @Context ContainerRequest containerRequestContext) {
+                                                     @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("addChildren({})",query);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         String subjectKey;
@@ -151,7 +151,7 @@ public class DataTreeNodeResource {
     @Path("/node/children")
     @SuppressWarnings("unchecked")
     public <T extends TreeNode> Response removeChildren(@ApiParam DomainQuery query,
-                                                        @Context ContainerRequest containerRequestContext) {
+                                                        @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start removeChildren({})",query);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         String subjectKey;
@@ -190,7 +190,7 @@ public class DataTreeNodeResource {
     @Path("/node/{nodeId}/children/{folder}")
     public Response addChildrenNodes(@PathParam("nodeId") Long dataNodeId,
                                      @PathParam("folder") String folderName,
-                                     @Context ContainerRequest containerRequestContext) {
+                                     @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start addChildren({}, {})", dataNodeId, folderName);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         TreeNode parentNode = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
@@ -232,7 +232,7 @@ public class DataTreeNodeResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/node/reorder")
     public Response reorderNode(@ApiParam DomainQuery query,
-                                @Context ContainerRequest containerRequestContext) {
+                                @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start reorderNode({})",query);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         String subjectKey;

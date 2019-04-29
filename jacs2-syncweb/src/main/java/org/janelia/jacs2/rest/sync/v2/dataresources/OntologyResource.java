@@ -10,7 +10,6 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang.StringUtils;
-import org.glassfish.jersey.server.ContainerRequest;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
@@ -31,6 +30,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
@@ -72,7 +72,7 @@ public class OntologyResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/ontologies/{id}")
     public Response getOntologyById(@ApiParam @PathParam("id") final Long ontologyId,
-                                    @Context ContainerRequest containerRequestContext) {
+                                    @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start getOntologyById({})", ontologyId);
         try {
             String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
@@ -149,7 +149,7 @@ public class OntologyResource {
     @Path("/ontology")
     public Response removeOntology(@ApiParam @QueryParam("subjectKey") final String subjectKeyParam,
                                    @ApiParam @QueryParam("ontologyId") final String ontologyIdParam,
-                                   @Context ContainerRequest containerRequestContext) {
+                                   @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start removeOntology({}, {})", subjectKeyParam, ontologyIdParam);
         Long ontologyId;
         try {

@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -92,6 +93,16 @@ public class SolrConnector {
         }
     }
 
+    public void clearIndex() {
+        if (solrServer != null) {
+            try {
+                solrServer.deleteByQuery("*:*", solrCommitDelayInMillis);
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+
     public boolean removeFromIndexById(String id) {
         if (solrServer == null) {
             return false;
@@ -101,8 +112,7 @@ public class SolrConnector {
                 solrServer.commit(false, false);
                 return true;
             } catch (Exception e) {
-                LOG.error("Error while removing {} from solr index", id, e);
-                return false;
+                throw new IllegalStateException(e);
             }
         }
     }
@@ -154,6 +164,7 @@ public class SolrConnector {
         return solrDoc;
     }
 
+    @SuppressWarnings("unchecked")
     public void updateAncestorsForSolrDocs(List<Long> solrDocIds, Long ancestorDocId, int batchSize) {
         List<SolrInputDocument> solrDocs = searchByDocIds(solrDocIds, batchSize)
                 .map(solrDoc -> ClientUtils.toSolrInputDocument(solrDoc))
