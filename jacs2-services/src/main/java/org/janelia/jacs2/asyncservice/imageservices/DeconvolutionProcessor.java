@@ -74,7 +74,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(SimpleRunSingularityContainerProcessor.class, new DeconvolutionArgs());
+        return ServiceArgs.getMetadata(DeconvolutionProcessor.class, new DeconvolutionArgs());
     }
 
     @Override
