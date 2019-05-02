@@ -9,6 +9,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
+import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
@@ -59,7 +60,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                            @Any Instance<ExternalProcessRunner> serviceRunners,
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                            JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
-                           ApplicationConfig applicationConfig,
+                           @ApplicationProperties ApplicationConfig applicationConfig,
                            ComputeAccounting accounting,
                            @PropertyValue(name= "Python.Bin.Path") String pythonPath,
                            @PropertyValue(name= "Deconvolution.Script.Path") String executableScript,
