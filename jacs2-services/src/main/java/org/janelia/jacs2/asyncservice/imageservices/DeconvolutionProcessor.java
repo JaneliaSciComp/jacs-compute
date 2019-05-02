@@ -8,7 +8,6 @@ import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
-import org.janelia.jacs2.asyncservice.containerizedservices.SimpleRunSingularityContainerProcessor;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -30,7 +29,8 @@ import java.util.List;
 public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Void> {
 
     static class DeconvolutionArgs extends ServiceArgs {
-        @Parameter(names = {"-i", "-tileChannelConfigurationFiles"}, description = "Path to the input tile configuration files. Each configuration corresponds to one channel.")
+        @Parameter(names = {"-i", "-tileChannelConfigurationFiles"},
+                   description = "Path to the input tile configuration files. Each configuration corresponds to one channel.")
         List<String> tileChannelConfigurationFiles = new ArrayList<>();
         @Parameter(names = {"-p", "-psfFiles"}, description = "Path to the files containing point spread functions. Each psf file correspond to one channel and there must be a 1:1 correspondence with input configuration files")
         List<String> psfFiles = new ArrayList<>();
