@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Streams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
@@ -33,6 +34,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @Named("deconvolution")
@@ -132,15 +134,14 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
         return args;
     }
 
-    private Map<String, Object> loadJsonConfiguration(String jsonFileName) {
+    private <T> Optional<T> loadJsonConfiguration(String jsonFileName, TypeReference<T> typeReference) {
         if (StringUtils.isBlank(jsonFileName)) {
-            return ImmutableMap.of();
+            return Optional.empty();
         } else {
             InputStream jsonInputStream;
             try {
                 jsonInputStream = new FileInputStream(jsonFileName);
-                return objectMapper.readValue(jsonInputStream, new TypeReference<Map<String, Object>>() {
-                });
+                return Optional.of(objectMapper.readValue(jsonInputStream, typeReference));
             } catch (Exception e) {
                 logger.error("Error reading json config from {}", jsonFileName, e);
                 throw new IllegalStateException("Error reading json config from " + jsonFileName, e);
@@ -148,7 +149,8 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
         }
     }
 
-    private Path getFlatfieldFilePath(Path channelConfigFilePath) {
+    private String getFlatfieldFileName(String channelConfigFile) {
+        Path channelConfigFilePath = Paths.get(channelConfigFile);
         Path channelConfigDir;
         if (channelConfigFilePath.getParent() == null) {
             channelConfigDir = Paths.get("");
@@ -160,6 +162,23 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                 .map(flatfieldSuffix -> channelConfigDir.resolve(channelConfigFileName + flatfieldSuffix))
                 .filter(flatfieldPath -> FileUtils.fileExists(flatfieldPath))
                 .findFirst()
+                .map(fp -> fp.toString())
                 .orElse(null);
+    }
+
+    private void prepareJobConfigs(DeconvolutionArgs args) {
+        Streams.zip(args.tileChannelConfigurationFiles.stream(), args.psfFiles.stream(), (channelConfigFile, psfFile) -> {
+            Map<String, Object> channelConfig = loadJsonConfiguration(channelConfigFile);
+            Map<String, Object> flatFieldConfig = loadJsonConfiguration(getFlatfieldFileName(channelConfigFile));
+            Float backgroundIntensity;
+            if (args.backgroundValue != null) {
+                backgroundIntensity = args.backgroundValue;
+            } else {
+                Number pivotValue = (Number)flatFieldConfig.get("pivotValue");
+                if (pivotValue != null) {
+                    backgroundIntensity = pivotValue.floatValue();
+                }
+            }
+        });
     }
 }

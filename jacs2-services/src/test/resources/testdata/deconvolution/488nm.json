@@ -1,0 +1,542 @@
+[
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0008347536msecAbs_003x_009y_004z_0000t.tif",
+        "index": 0,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            320.4198144329897,
+            -999.0515463917526,
+            -683.3435222222223
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0008358081msecAbs_004x_009y_004z_0000t.tif",
+        "index": 1,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            320.4198144329897,
+            -333.0103092783505,
+            -683.3435222222223
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0008368668msecAbs_005x_009y_004z_0000t.tif",
+        "index": 2,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            320.43638144329896,
+            333.0103092783505,
+            -683.3294500000001
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0008442557msecAbs_005x_010y_004z_0000t.tif",
+        "index": 3,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -0.039690721649484534,
+            333.020618556701,
+            -683.3701944444445
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0008453115msecAbs_004x_010y_004z_0000t.tif",
+        "index": 4,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -0.030989690721649484,
+            -333.03092783505156,
+            -683.3731722222223
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0008463636msecAbs_003x_010y_004z_0000t.tif",
+        "index": 5,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            0.0068453608247422675,
+            -999.0721649484535,
+            -683.3203111111112
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0008516573msecAbs_003x_011y_004z_0000t.tif",
+        "index": 6,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -320.4613711340206,
+            -999.0618556701031,
+            -683.3440055555556
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0008527090msecAbs_004x_011y_004z_0000t.tif",
+        "index": 7,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -320.40613402061854,
+            -333.020618556701,
+            -683.2970944444445
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0008537662msecAbs_005x_011y_004z_0000t.tif",
+        "index": 8,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -320.4700721649484,
+            333.03092783505156,
+            -683.3410277777778
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0010019978msecAbs_005x_011y_005z_0000t.tif",
+        "index": 9,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -320.48144329896905,
+            333.03092783505156,
+            -227.81375555555556
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0010030611msecAbs_004x_011y_005z_0000t.tif",
+        "index": 10,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -320.408793814433,
+            -333.03092783505156,
+            -227.77280555555558
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0010041169msecAbs_003x_011y_005z_0000t.tif",
+        "index": 11,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -320.4436082474227,
+            -999.0618556701031,
+            -227.76090000000002
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0010093892msecAbs_003x_010y_005z_0000t.tif",
+        "index": 12,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -0.01322680412371134,
+            -999.0618556701031,
+            -227.7900666666667
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0010104544msecAbs_004x_010y_005z_0000t.tif",
+        "index": 13,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -0.0021855670103092784,
+            -333.020618556701,
+            -227.78068333333334
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0010115098msecAbs_005x_010y_005z_0000t.tif",
+        "index": 14,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            0.05071134020618556,
+            333.020618556701,
+            -227.74613333333335
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0010189139msecAbs_005x_009y_005z_0000t.tif",
+        "index": 15,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            320.391030927835,
+            333.03092783505156,
+            -227.8103
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0010199679msecAbs_004x_009y_005z_0000t.tif",
+        "index": 16,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            320.44627835051546,
+            -333.0103092783505,
+            -227.76339444444446
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0010210328msecAbs_003x_009y_005z_0000t.tif",
+        "index": 17,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            320.43756701030924,
+            -999.0618556701031,
+            -227.76041666666669
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0011595538msecAbs_005x_009y_006z_0000t.tif",
+        "index": 18,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            320.42620618556697,
+            333.03092783505156,
+            227.76685
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0011606047msecAbs_004x_009y_006z_0000t.tif",
+        "index": 19,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            320.4174948453608,
+            -333.0103092783505,
+            227.7698277777778
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0011616606msecAbs_003x_009y_006z_0000t.tif",
+        "index": 20,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            320.48144329896905,
+            -999.0618556701031,
+            227.81375555555556
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0011669509msecAbs_003x_010y_006z_0000t.tif",
+        "index": 21,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -0.008865979381443298,
+            -999.0515463917526,
+            227.77130000000002
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0011680072msecAbs_004x_010y_006z_0000t.tif",
+        "index": 22,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -0.014391752577319589,
+            -333.020618556701,
+            227.76661111111113
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0011690632msecAbs_005x_010y_006z_0000t.tif",
+        "index": 23,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -0.030958762886597938,
+            333.0103092783505,
+            227.75253888888892
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0011764822msecAbs_005x_011y_006z_0000t.tif",
+        "index": 24,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -320.4171443298969,
+            333.03092783505156,
+            227.81923333333333
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0011775433msecAbs_004x_011y_006z_0000t.tif",
+        "index": 25,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -320.44627835051546,
+            -333.0103092783505,
+            227.76339444444446
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    },
+    {
+        "file": "/groups/lightsheet/lightsheet/home/ackermand/testIgorsCode/raw-tiles/Image_Iter_000_ch0_CAM1_stack0000_488nm_0000000msec_0011786141msecAbs_003x_011y_006z_0000t.tif",
+        "index": 26,
+        "pixelResolution": [
+            0.097,
+            0.097,
+            0.18
+        ],
+        "position": [
+            -320.391030927835,
+            -999.0618556701031,
+            227.8103
+        ],
+        "size": [
+            360,
+            704,
+            501
+        ],
+        "type": "GRAY16"
+    }
+]
