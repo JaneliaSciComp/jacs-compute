@@ -1,6 +1,9 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
@@ -8,6 +11,7 @@ import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -22,8 +26,14 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 @Named("deconvolution")
 public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Void> {
@@ -32,7 +42,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
         @Parameter(names = {"-i", "-tileChannelConfigurationFiles"},
                    description = "Path to the input tile configuration files. Each configuration corresponds to one channel.")
         List<String> tileChannelConfigurationFiles = new ArrayList<>();
-        @Parameter(names = {"-p", "-psfFiles"}, description = "Path to the files containing point spread functions. Each psf file correspond to one channel and there must be a 1:1 correspondence with input configuration files")
+        @Parameter(names = {"-p", "-psfFiles"}, description = "Path to the files containing point spread functions. Each psf file correspond to one channel and there must be a 1:1 correspondence with input configuration files", required = true)
         List<String> psfFiles = new ArrayList<>();
         @Parameter(names = {"-z", "-psfZStep"}, description = "PSF Z step in microns.")
         Float psfZStep;
@@ -46,10 +56,16 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
         DeconvolutionArgs() {
             super("Image deconvolution processor");
         }
+
+        void validate() {
+            if (tileChannelConfigurationFiles.size() != psfFiles.size()) {
+                throw new IllegalArgumentException("Tile configuration files and psf files must have the same size - " +
+                        "tileConfigurationFiles: " + tileChannelConfigurationFiles.size() + ", psfFile: " + psfFiles.size());
+            }
+        }
     }
 
-    private final ComputeAccounting accounting;
-    private final String pythonPath;
+    private final ObjectMapper objectMapper;
     private final String executableScript;
     private final boolean requiresAccountInfo;
 
@@ -60,14 +76,12 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                            JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                            ApplicationConfig applicationConfig,
-                           ComputeAccounting accounting,
-                           @PropertyValue(name= "Python.Bin.Path") String pythonPath,
+                           ObjectMapper objectMapper,
                            @PropertyValue(name= "Deconvolution.Script.Path") String executableScript,
                            @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
-        this.accounting = accounting;
-        this.pythonPath = pythonPath;
+        this.objectMapper = objectMapper;
         this.executableScript = executableScript;
         this.requiresAccountInfo = requiresAccountInfo;
     }
@@ -113,7 +127,39 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
     }
 
     private DeconvolutionArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new DeconvolutionArgs());
+        DeconvolutionArgs args = ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new DeconvolutionArgs());
+        args.validate();
+        return args;
     }
 
+    private Map<String, Object> loadJsonConfiguration(String jsonFileName) {
+        if (StringUtils.isBlank(jsonFileName)) {
+            return ImmutableMap.of();
+        } else {
+            InputStream jsonInputStream;
+            try {
+                jsonInputStream = new FileInputStream(jsonFileName);
+                return objectMapper.readValue(jsonInputStream, new TypeReference<Map<String, Object>>() {
+                });
+            } catch (Exception e) {
+                logger.error("Error reading json config from {}", jsonFileName, e);
+                throw new IllegalStateException("Error reading json config from " + jsonFileName, e);
+            }
+        }
+    }
+
+    private Path getFlatfieldFilePath(Path channelConfigFilePath) {
+        Path channelConfigDir;
+        if (channelConfigFilePath.getParent() == null) {
+            channelConfigDir = Paths.get("");
+        } else {
+            channelConfigDir = channelConfigFilePath.getParent();
+        }
+        String channelConfigFileName = FileUtils.getFileNameOnly(channelConfigFilePath);
+        return Stream.of("-flatfield", "-n5-flatfield")
+                .map(flatfieldSuffix -> channelConfigDir.resolve(channelConfigFileName + flatfieldSuffix))
+                .filter(flatfieldPath -> FileUtils.fileExists(flatfieldPath))
+                .findFirst()
+                .orElse(null);
+    }
 }
