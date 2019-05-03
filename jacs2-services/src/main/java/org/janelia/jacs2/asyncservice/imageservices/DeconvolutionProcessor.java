@@ -58,7 +58,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
         @Parameter(names = {"-v", "-backgroundValue"}, description = "Background intensity value which will be subtracted from the data and the PSF (one per input channel). If omitted, the pivot value estimated in the Flatfield Correction step will be used (default).")
         Float backgroundValue;
         @Parameter(names = {"-c", "-coresPerTask"}, description = "Number of CPU cores used by a single decon task.")
-        Integer coresPerTask;
+        Integer coresPerTask = 8;
 
         DeconvolutionArgs() {
             super("Image deconvolution processor");
