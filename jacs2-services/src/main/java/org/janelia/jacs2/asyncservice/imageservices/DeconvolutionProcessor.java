@@ -249,6 +249,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
         return Paths.get(deconvOutputDir, tileFileName + "_decon" + tileFileExt).toString();
     }
 
+    @SuppressWarnings("unchecked")
     private Stream<Map<String, String>> prepareJobConfigs(DeconvolutionArgs args) {
         return Streams.zip(args.tileChannelConfigurationFiles.stream(), args.psfFiles.stream(), (channelConfigFile, psfFile) -> ImmutablePair.of(channelConfigFile, psfFile))
                 .flatMap(inputPair -> {
