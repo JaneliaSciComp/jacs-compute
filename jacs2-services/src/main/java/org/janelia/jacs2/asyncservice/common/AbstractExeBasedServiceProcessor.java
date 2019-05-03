@@ -30,6 +30,7 @@ import java.util.Optional;
 public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicLifeCycleServiceProcessor<R, Void> {
 
     protected static final String DY_LIBRARY_PATH_VARNAME = "LD_LIBRARY_PATH";
+    protected static final String LIBPATH_SEPARATOR = ":";
 
     private final String executablesBaseDir;
     private final Instance<ExternalProcessRunner> serviceRunners;
@@ -176,7 +177,7 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
             return "";
         }
         return getEnvVar(varName)
-                .map(currentValue -> addedValue + ":" + currentValue)
+                .map(currentValue -> addedValue + LIBPATH_SEPARATOR + currentValue)
                 .orElse(addedValue)
                 ;
     }
