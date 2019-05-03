@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
-public class DeconvolutionProcessorTest {
+public class DeconvolutionJobsProcessorTest {
     private static final String DECONV_SCRIPT = "scripts/matlab_deconv";
     private static final String DEFAULT_WORKING_DIR = "testWorking";
     private static final String DEFAULT_EXECUTABLES_DIR = "testExecutables";
@@ -35,7 +35,7 @@ public class DeconvolutionProcessorTest {
     private static final String TEST_OWNER = "user:test";
     private static final Number TEST_SERVICE_ID = 1L;
 
-    private DeconvolutionProcessor deconvolutionProcessor;
+    private DeconvolutionJobsProcessor deconvolutionJobsProcessor;
 
     @Before
     public void setUp() {
@@ -62,7 +62,7 @@ public class DeconvolutionProcessorTest {
             return jacsServiceData;
         });
 
-        deconvolutionProcessor = new DeconvolutionProcessor(computationFactory,
+        deconvolutionJobsProcessor = new DeconvolutionJobsProcessor(computationFactory,
                 jacsServiceDataPersistence,
                 null,
                 DEFAULT_WORKING_DIR,
@@ -79,7 +79,7 @@ public class DeconvolutionProcessorTest {
     @Test
     public void prepareTaskConfigs() {
         JacsServiceData testService = createTestServiceData();
-        List<ExternalCodeBlock> taskConfigs = deconvolutionProcessor.prepareConfigurationFiles(testService);
+        List<ExternalCodeBlock> taskConfigs = deconvolutionJobsProcessor.prepareConfigurationFiles(testService);
         assertTrue(taskConfigs.size() > 0);
     }
 
