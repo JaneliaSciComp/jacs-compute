@@ -191,7 +191,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
     }
 
     private String getTileTaskArg(Map<String, String> tileTaskArgs, String argName) {
-        return StringUtils.wrap(StringUtils.defaultIfBlank(tileTaskArgs.get("background_value"), ""), '"');
+        return StringUtils.wrap(StringUtils.defaultIfBlank(tileTaskArgs.get(argName), ""), '"');
     }
 
     private DeconvolutionArgs getArgs(JacsServiceData jacsServiceData) {
@@ -257,8 +257,8 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                     String psfFile = inputPair.getRight();
                     List<Map<String, Object>> channelTileConfigs = loadJsonConfiguration(channelConfigFile,
                             new TypeReference<List<Map<String, Object>>>() {}).orElseGet(() -> ImmutableList.of());
-                    String flatfieldFileName = getFlatfieldAttributesFileName(channelConfigFile);
-                    Map<String, Object> flatFieldConfig = loadJsonConfiguration(flatfieldFileName,
+                    String flatfieldAttributesFileName = getFlatfieldAttributesFileName(channelConfigFile);
+                    Map<String, Object> flatFieldConfig = loadJsonConfiguration(flatfieldAttributesFileName,
                             new TypeReference<Map<String, Object>>() {}).orElseGet(() -> ImmutableMap.of());
                     Float backgroundIntensity;
                     if (args.backgroundValue != null) {
@@ -279,7 +279,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                                 taskConfig.put("tile_filepath", (String)tileConfig.get("file"));
                                 taskConfig.put("output_tile_filepath", getDeconvTileOutputPath(tileConfig, deconvOutputDir));
                                 taskConfig.put("psf_filepath", psfFile);
-                                taskConfig.put("flatfield_dirpath", flatfieldFileName);
+                                taskConfig.put("flatfield_dirpath", FileUtils.getParent(flatfieldAttributesFileName));
                                 taskConfig.put("background_value", backgroundIntensity != null ? backgroundIntensity.toString() : null);
                                 taskConfig.put("data_z_resolution", pixelResolutions.get(2).toString());
                                 taskConfig.put("psf_z_step", args.psfZStep != null ? args.psfZStep.toString() : null);
