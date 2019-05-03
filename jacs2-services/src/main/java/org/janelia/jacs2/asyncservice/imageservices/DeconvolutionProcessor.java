@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.imageservices;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
@@ -11,6 +12,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -72,6 +74,8 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
 
     private final ObjectMapper objectMapper;
     private final String matlabRootDir;
+    private final List<String> matlabLibRelativeDirs;
+    private final String matlabX11LibRelativeDir;
     private final String deconvolutionExecutable;
 
     @Inject
@@ -83,11 +87,17 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                            @ApplicationProperties ApplicationConfig applicationConfig,
                            ObjectMapper objectMapper,
                            @PropertyValue(name= "Matlab.Root.Path") String matlabRootDir,
+                           @PropertyValue(name = "Matlab.Lib.RelativePaths") String matlabLibRelativeDirs,
+                           @PropertyValue(name = "Matlab.X11Lib.RelativePath") String matlabX11LibRelativeDir,
                            @PropertyValue(name= "Deconvolution.Script.Path") String deconvolutionExecutable,
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
         this.objectMapper = objectMapper;
-        this.matlabRootDir = matlabRootDir;
+        this.matlabRootDir = StringUtils.defaultIfBlank(matlabRootDir, "");
+        this.matlabLibRelativeDirs = StringUtils.isNotBlank(matlabLibRelativeDirs)
+                ? Splitter.on(',').trimResults().omitEmptyStrings().splitToList(matlabLibRelativeDirs)
+                : ImmutableList.of();
+        this.matlabX11LibRelativeDir = matlabX11LibRelativeDir;
         this.deconvolutionExecutable = deconvolutionExecutable;
     }
 
@@ -98,8 +108,26 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
 
     @Override
     protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
+        String matlabLibPaths = matlabLibRelativeDirs.stream()
+                .map(libRelDir -> Paths.get(matlabRootDir, libRelDir).toString())
+                .reduce((p1, p2) -> p1 + LIBPATH_SEPARATOR + p2)
+                .orElse("");
+        String matlabX11LibDir = StringUtils.isNotBlank(matlabX11LibRelativeDir)
+                ? Paths.get(matlabRootDir, matlabX11LibRelativeDir).toString()
+                : "";
+        return ImmutableMap.of("MATLAB_ROOT", matlabRootDir,
+                DY_LIBRARY_PATH_VARNAME, getUpdatedEnvValue(DY_LIBRARY_PATH_VARNAME, matlabLibPaths),
+                "XAPPLRESDIR", matlabX11LibDir,
+                "MCR_INHIBIT_CTF_LOCK", "1");
+    }
+
+    @Override
+    protected void prepareResources(JacsServiceData jacsServiceData) {
         DeconvolutionArgs args = getArgs(jacsServiceData);
-        return ImmutableMap.of("MATLAB_ROOT", matlabRootDir);
+        if (args.coresPerTask != null) {
+            ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(),
+                    Math.max(ProcessorHelper.getRequiredSlots(jacsServiceData.getResources()), args.coresPerTask));
+        }
     }
 
     @Override

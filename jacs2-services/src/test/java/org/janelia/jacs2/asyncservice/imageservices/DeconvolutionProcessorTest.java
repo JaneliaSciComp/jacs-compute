@@ -30,6 +30,8 @@ public class DeconvolutionProcessorTest {
     private static final String DEFAULT_WORKING_DIR = "testWorking";
     private static final String DEFAULT_EXECUTABLES_DIR = "testExecutables";
     private static final String MATLAB_ROOT_DIR = "testmatlab";
+    private static final String MATLAB_LIB_DIRS = "bin/glnxa64,runtime/glnxa64,sys/os/glnxa64,sys/java/jre/glnxa64/jre/lib/amd64/native_threads";
+    private static final String MATLAB_X11LIB_DIR = "X11/app-defaults";
     private static final String TEST_DATA_DIR = "src/test/resources/testdata/deconvolution";
     private static final String TEST_OWNER = "user:test";
     private static final Number TEST_SERVICE_ID = 1L;
@@ -69,6 +71,8 @@ public class DeconvolutionProcessorTest {
                 applicationConfig,
                 ObjectMapperFactory.instance().newObjectMapper(),
                 MATLAB_ROOT_DIR,
+                MATLAB_LIB_DIRS,
+                MATLAB_X11LIB_DIR,
                 DECONV_SCRIPT,
                 logger);
     }
