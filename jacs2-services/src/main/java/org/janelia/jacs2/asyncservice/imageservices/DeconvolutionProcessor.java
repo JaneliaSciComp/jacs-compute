@@ -191,7 +191,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
     }
 
     private String getTileTaskArg(Map<String, String> tileTaskArgs, String argName) {
-        return StringUtils.wrap(StringUtils.defaultIfBlank(tileTaskArgs.get(argName), ""), '"');
+        return StringUtils.defaultIfBlank(tileTaskArgs.get(argName), "");
     }
 
     private DeconvolutionArgs getArgs(JacsServiceData jacsServiceData) {
