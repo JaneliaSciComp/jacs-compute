@@ -157,7 +157,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                 .addIndent().exportVar("MCR_CACHE_ROOT", "`mktemp -u`").removeIndent()
                 .add("fi");
         // create output directory
-        scriptWriter.addWithArgs("mkdir").addArgs("-p", "$output_tile_dir");
+        scriptWriter.add("mkdir -p $output_tile_dir");
         // invoke matlab deconvolution tool
         scriptWriter
                 .addWithArgs(getFullExecutableName(deconvolutionExecutable))
