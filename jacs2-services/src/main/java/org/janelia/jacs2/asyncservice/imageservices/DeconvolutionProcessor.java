@@ -139,24 +139,34 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
     }
 
     private void createScript(JacsServiceData jacsServiceData, DeconvolutionArgs args, ScriptWriter scriptWriter) {
-        scriptWriter.read("tile_filepath");
-        scriptWriter.read("output_tile_filepath");
-        scriptWriter.read("psf_filepath");
-        scriptWriter.read("flatfield_dirpath");
-        scriptWriter.read("background_value");
-        scriptWriter.read("data_z_resolution");
-        scriptWriter.read("psf_z_step");
-        scriptWriter.read("num_iterations");
-        scriptWriter.addWithArgs(getFullExecutableName(deconvolutionExecutable));
-        scriptWriter.addArg("$tile_filepath");
-        scriptWriter.addArg("$output_tile_filepath");
-        scriptWriter.addArg("$psf_filepath");
-        scriptWriter.addArg("$flatfield_dirpath");
-        scriptWriter.addArg("$background_value");
-        scriptWriter.addArg("$data_z_resolution");
-        scriptWriter.addArg("$psf_z_step");
-        scriptWriter.addArg("$num_iterations");
-        scriptWriter.endArgs();
+        scriptWriter
+                .read("tile_filepath")
+                .read("output_tile_filepath")
+                .read("psf_filepath")
+                .read("flatfield_dirpath")
+                .read("background_value")
+                .read("data_z_resolution")
+                .read("psf_z_step")
+                .read("num_iterations");
+
+        scriptWriter
+                .add("if [ -d /scratch ] ; then")
+                .addIndent().exportVar("MCR_CACHE_ROOT", "/scratch/${USER}/mcr_cache_$$").removeIndent()
+                .add("else")
+                .addIndent().exportVar("MCR_CACHE_ROOT", "`mktemp -u`").removeIndent()
+                .add("fi");
+
+        scriptWriter
+                .addWithArgs(getFullExecutableName(deconvolutionExecutable))
+                .addArg("$tile_filepath")
+                .addArg("$output_tile_filepath")
+                .addArg("$psf_filepath")
+                .addArg("$flatfield_dirpath")
+                .addArg("$background_value")
+                .addArg("$data_z_resolution")
+                .addArg("$psf_z_step")
+                .addArg("$num_iterations")
+                .endArgs();
     }
 
     @Override
