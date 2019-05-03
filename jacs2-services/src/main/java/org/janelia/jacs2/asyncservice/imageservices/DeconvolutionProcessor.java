@@ -141,6 +141,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
     private void createScript(JacsServiceData jacsServiceData, DeconvolutionArgs args, ScriptWriter scriptWriter) {
         scriptWriter
                 .read("tile_filepath")
+                .read("output_tile_dir")
                 .read("output_tile_filepath")
                 .read("psf_filepath")
                 .read("flatfield_dirpath")
@@ -148,14 +149,16 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                 .read("data_z_resolution")
                 .read("psf_z_step")
                 .read("num_iterations");
-
+        // set MCR_CACHE
         scriptWriter
                 .add("if [ -d /scratch ] ; then")
                 .addIndent().exportVar("MCR_CACHE_ROOT", "/scratch/${USER}/mcr_cache_$$").removeIndent()
                 .add("else")
                 .addIndent().exportVar("MCR_CACHE_ROOT", "`mktemp -u`").removeIndent()
                 .add("fi");
-
+        // create output directory
+        scriptWriter.addWithArgs("mkdir").addArgs("-p", "$output_tile_dir");
+        // invoke matlab deconvolution tool
         scriptWriter
                 .addWithArgs(getFullExecutableName(deconvolutionExecutable))
                 .addArg("$tile_filepath")
@@ -177,6 +180,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                     ExternalCodeBlock instanceConfig = new ExternalCodeBlock();
                     ScriptWriter configWriter = instanceConfig.getCodeWriter();
                     configWriter.add(getTileTaskArg(instanceArgs, "tile_filepath"));
+                    configWriter.add(getTileTaskArg(instanceArgs, "output_tile_dir"));
                     configWriter.add(getTileTaskArg(instanceArgs, "output_tile_filepath"));
                     configWriter.add(getTileTaskArg(instanceArgs, "psf_filepath"));
                     configWriter.add(getTileTaskArg(instanceArgs, "flatfield_dirpath"));
@@ -277,6 +281,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                                 Map<String, String> taskConfig = new LinkedHashMap<>();
                                 List<Number> pixelResolutions = (List<Number>) tileConfig.get("pixelResolution");
                                 taskConfig.put("tile_filepath", (String)tileConfig.get("file"));
+                                taskConfig.put("output_tile_dir", deconvOutputDir);
                                 taskConfig.put("output_tile_filepath", getDeconvTileOutputPath(tileConfig, deconvOutputDir));
                                 taskConfig.put("psf_filepath", psfFile);
                                 taskConfig.put("flatfield_dirpath", FileUtils.getParent(flatfieldAttributesFileName));
