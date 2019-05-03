@@ -3,18 +3,19 @@ package org.janelia.jacs2.asyncservice.imageservices;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
-import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
+import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -32,9 +33,11 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Named("deconvolution")
@@ -68,8 +71,8 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
     }
 
     private final ObjectMapper objectMapper;
-    private final String executableScript;
-    private final boolean requiresAccountInfo;
+    private final String matlabRootDir;
+    private final String deconvolutionExecutable;
 
     @Inject
     DeconvolutionProcessor(ServiceComputationFactory computationFactory,
@@ -77,20 +80,26 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                            @Any Instance<ExternalProcessRunner> serviceRunners,
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                            JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
-                           ApplicationConfig applicationConfig,
+                           @ApplicationProperties ApplicationConfig applicationConfig,
                            ObjectMapper objectMapper,
-                           @PropertyValue(name= "Deconvolution.Script.Path") String executableScript,
-                           @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
+                           @PropertyValue(name= "Matlab.Root.Path") String matlabRootDir,
+                           @PropertyValue(name= "Deconvolution.Script.Path") String deconvolutionExecutable,
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
         this.objectMapper = objectMapper;
-        this.executableScript = executableScript;
-        this.requiresAccountInfo = requiresAccountInfo;
+        this.matlabRootDir = matlabRootDir;
+        this.deconvolutionExecutable = deconvolutionExecutable;
     }
 
     @Override
     public ServiceMetaData getMetadata() {
         return ServiceArgs.getMetadata(DeconvolutionProcessor.class, new DeconvolutionArgs());
+    }
+
+    @Override
+    protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
+        DeconvolutionArgs args = getArgs(jacsServiceData);
+        return ImmutableMap.of("MATLAB_ROOT", matlabRootDir);
     }
 
     @Override
@@ -102,30 +111,49 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
     }
 
     private void createScript(JacsServiceData jacsServiceData, DeconvolutionArgs args, ScriptWriter scriptWriter) {
-        if (StringUtils.isNotBlank(pythonPath)) {
-            scriptWriter.addWithArgs(pythonPath);
-            scriptWriter.addArg(getFullExecutableName(executableScript));
-        } else {
-            scriptWriter.addWithArgs(getFullExecutableName(executableScript));
-        }
-        scriptWriter.addArg("-i").addArgs(args.tileChannelConfigurationFiles);
-        scriptWriter.addArg("-p").addArgs(args.psfFiles);
-        if (args.psfZStep != null) {
-            scriptWriter.addArgs("-z", args.psfZStep.toString());
-        }
-        if (args.nIterations != null && args.nIterations > 0) {
-            scriptWriter.addArgs("-n", args.nIterations.toString());
-        }
-        if (args.backgroundValue != null) {
-            scriptWriter.addArgs("-v", args.backgroundValue.toString());
-        }
-        if (args.coresPerTask != null && args.coresPerTask > 0) {
-            scriptWriter.addArgs("-c", args.coresPerTask.toString());
-        }
-        if (requiresAccountInfo) {
-            scriptWriter.addArgs("--lsfproject", accounting.getComputeAccount(jacsServiceData));
-        }
+        scriptWriter.read("tile_filepath");
+        scriptWriter.read("output_tile_filepath");
+        scriptWriter.read("psf_filepath");
+        scriptWriter.read("flatfield_dirpath");
+        scriptWriter.read("background_value");
+        scriptWriter.read("data_z_resolution");
+        scriptWriter.read("psf_z_step");
+        scriptWriter.read("num_iterations");
+        scriptWriter.addWithArgs(getFullExecutableName(deconvolutionExecutable));
+        scriptWriter.addArg("$tile_filepath");
+        scriptWriter.addArg("$output_tile_filepath");
+        scriptWriter.addArg("$psf_filepath");
+        scriptWriter.addArg("$flatfield_dirpath");
+        scriptWriter.addArg("$background_value");
+        scriptWriter.addArg("$data_z_resolution");
+        scriptWriter.addArg("$psf_z_step");
+        scriptWriter.addArg("$num_iterations");
         scriptWriter.endArgs();
+    }
+
+    @Override
+    protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
+        DeconvolutionArgs args = getArgs(jacsServiceData);
+        return prepareJobConfigs(args)
+                .map(instanceArgs -> {
+                    ExternalCodeBlock instanceConfig = new ExternalCodeBlock();
+                    ScriptWriter configWriter = instanceConfig.getCodeWriter();
+                    configWriter.add(getTileTaskArg(instanceArgs, "tile_filepath"));
+                    configWriter.add(getTileTaskArg(instanceArgs, "output_tile_filepath"));
+                    configWriter.add(getTileTaskArg(instanceArgs, "psf_filepath"));
+                    configWriter.add(getTileTaskArg(instanceArgs, "flatfield_dirpath"));
+                    configWriter.add(getTileTaskArg(instanceArgs, "background_value"));
+                    configWriter.add(getTileTaskArg(instanceArgs, "data_z_resolution"));
+                    configWriter.add(getTileTaskArg(instanceArgs, "psf_z_step"));
+                    configWriter.add(getTileTaskArg(instanceArgs, "num_iterations"));
+                    configWriter.close();
+                    return instanceConfig;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private String getTileTaskArg(Map<String, String> tileTaskArgs, String argName) {
+        return StringUtils.wrap(StringUtils.defaultIfBlank(tileTaskArgs.get("background_value"), ""), '"');
     }
 
     private DeconvolutionArgs getArgs(JacsServiceData jacsServiceData) {
@@ -149,7 +177,7 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
         }
     }
 
-    private String getFlatfieldFileName(String channelConfigFile) {
+    private String getFlatfieldAttributesFileName(String channelConfigFile) {
         Path channelConfigFilePath = Paths.get(channelConfigFile);
         Path channelConfigDir;
         if (channelConfigFilePath.getParent() == null) {
@@ -162,23 +190,64 @@ public class DeconvolutionProcessor extends AbstractExeBasedServiceProcessor<Voi
                 .map(flatfieldSuffix -> channelConfigDir.resolve(channelConfigFileName + flatfieldSuffix))
                 .filter(flatfieldPath -> FileUtils.fileExists(flatfieldPath))
                 .findFirst()
-                .map(fp -> fp.toString())
+                .map(fp -> fp.resolve("attributes.json").toString())
                 .orElse(null);
     }
 
-    private void prepareJobConfigs(DeconvolutionArgs args) {
-        Streams.zip(args.tileChannelConfigurationFiles.stream(), args.psfFiles.stream(), (channelConfigFile, psfFile) -> {
-            Map<String, Object> channelConfig = loadJsonConfiguration(channelConfigFile);
-            Map<String, Object> flatFieldConfig = loadJsonConfiguration(getFlatfieldFileName(channelConfigFile));
-            Float backgroundIntensity;
-            if (args.backgroundValue != null) {
-                backgroundIntensity = args.backgroundValue;
-            } else {
-                Number pivotValue = (Number)flatFieldConfig.get("pivotValue");
-                if (pivotValue != null) {
-                    backgroundIntensity = pivotValue.floatValue();
-                }
-            }
-        });
+    private String getDeconvOutputDir(String channelConfigFile) {
+        Path channelConfigFilePath = Paths.get(channelConfigFile);
+        final String deconvOutputDirname = "matlab_decon";
+        if (channelConfigFilePath.getParent() == null) {
+            return deconvOutputDirname;
+        } else {
+            return channelConfigFilePath.getParent().resolve(deconvOutputDirname).toString();
+        }
+    }
+
+    private String getDeconvTileOutputPath(Map<String, Object> tileConfig, String deconvOutputDir) {
+        Path tilePath = Paths.get((String) tileConfig.get("file"));
+        String tileFileName = FileUtils.getFileNameOnly(tilePath);
+        String tileFileExt = FileUtils.getFileExtensionOnly(tilePath);
+        return Paths.get(deconvOutputDir, tileFileName + "_decon" + tileFileExt).toString();
+    }
+
+    private Stream<Map<String, String>> prepareJobConfigs(DeconvolutionArgs args) {
+        return Streams.zip(args.tileChannelConfigurationFiles.stream(), args.psfFiles.stream(), (channelConfigFile, psfFile) -> ImmutablePair.of(channelConfigFile, psfFile))
+                .flatMap(inputPair -> {
+                    String channelConfigFile = inputPair.getLeft();
+                    String psfFile = inputPair.getRight();
+                    List<Map<String, Object>> channelTileConfigs = loadJsonConfiguration(channelConfigFile,
+                            new TypeReference<List<Map<String, Object>>>() {}).orElseGet(() -> ImmutableList.of());
+                    String flatfieldFileName = getFlatfieldAttributesFileName(channelConfigFile);
+                    Map<String, Object> flatFieldConfig = loadJsonConfiguration(flatfieldFileName,
+                            new TypeReference<Map<String, Object>>() {}).orElseGet(() -> ImmutableMap.of());
+                    Float backgroundIntensity;
+                    if (args.backgroundValue != null) {
+                        backgroundIntensity = args.backgroundValue;
+                    } else {
+                        Number pivotValue = (Number)flatFieldConfig.get("pivotValue");
+                        if (pivotValue != null) {
+                            backgroundIntensity = pivotValue.floatValue();
+                        } else {
+                            backgroundIntensity = null;
+                        }
+                    }
+                    String deconvOutputDir = getDeconvOutputDir(channelConfigFile);
+                    return channelTileConfigs.stream()
+                            .map(tileConfig -> {
+                                Map<String, String> taskConfig = new LinkedHashMap<>();
+                                List<Number> pixelResolutions = (List<Number>) tileConfig.get("pixelResolution");
+                                taskConfig.put("tile_filepath", (String)tileConfig.get("file"));
+                                taskConfig.put("output_tile_filepath", getDeconvTileOutputPath(tileConfig, deconvOutputDir));
+                                taskConfig.put("psf_filepath", psfFile);
+                                taskConfig.put("flatfield_dirpath", flatfieldFileName);
+                                taskConfig.put("background_value", backgroundIntensity != null ? backgroundIntensity.toString() : null);
+                                taskConfig.put("data_z_resolution", pixelResolutions.get(2).toString());
+                                taskConfig.put("psf_z_step", args.psfZStep != null ? args.psfZStep.toString() : null);
+                                taskConfig.put("num_iterations", args.nIterations != null ? args.nIterations.toString() : null);
+                                return taskConfig;
+                            });
+                })
+                ;
     }
 }
