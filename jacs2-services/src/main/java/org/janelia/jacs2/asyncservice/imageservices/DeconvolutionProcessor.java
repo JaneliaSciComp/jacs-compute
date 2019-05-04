@@ -83,8 +83,8 @@ public class DeconvolutionProcessor extends AbstractServiceProcessor<List<File>>
         return deconvolutionJobsProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Run deconvolution for all image tiles")
                         .build(),
-                new ServiceArg("-i", args.tileChannelConfigurationFiles),
-                new ServiceArg("-p", args.psfFiles),
+                new ServiceArg("-i", args.tileChannelConfigurationFiles.stream().reduce((c1, c2) -> c1 + "," + c2).orElse("")),
+                new ServiceArg("-p", args.psfFiles.stream().reduce((f1, f2) -> f1 + "," + f2).orElse("")),
                 new ServiceArg("-z", args.psfZStep),
                 new ServiceArg("-n", args.nIterations),
                 new ServiceArg("-v", args.backgroundValue),
