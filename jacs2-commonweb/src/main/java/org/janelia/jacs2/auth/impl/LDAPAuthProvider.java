@@ -1,5 +1,6 @@
 package org.janelia.jacs2.auth.impl;
 
+import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
@@ -23,7 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+
 
 /**
  * LDAP-based authentication implementation.
@@ -45,7 +48,12 @@ public class LDAPAuthProvider implements AuthProvider {
         this.subjectDao = subjectDao;
         LdapConnectionConfig config = new LdapConnectionConfig();
         try {
-            this.baseDN = new Dn(searchBase);
+            if (StringUtils.isNotBlank(searchBase)) {
+                List<String> searchBaseComps = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(searchBase);
+                this.baseDN = new Dn(searchBaseComps.toArray(new String[0]));
+            } else {
+                this.baseDN = new Dn();
+            }
             this.searchFilter = searchFilter;
         } catch (LdapInvalidDnException e) {
             throw new IllegalArgumentException(e);
