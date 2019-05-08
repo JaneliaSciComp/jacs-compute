@@ -17,7 +17,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartMediaTypes;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.search.SolrConnector;
+import org.janelia.jacs2.dataservice.search.SolrIndexer;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.DomainUtils;
@@ -81,7 +81,7 @@ public class TmResource {
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
     @Inject
-    private SolrConnector domainObjectIndexer;
+    private SolrIndexer domainObjectIndexer;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
@@ -163,7 +163,7 @@ public class TmResource {
     public TmWorkspace createTmWorkspace(DomainQuery query) {
         LOG.trace("createTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        domainObjectIndexer.addDocToIndex(tmWorkspace);
+        domainObjectIndexer.indexDocument(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -181,7 +181,7 @@ public class TmResource {
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("copyTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), query.getObjectType());
-        domainObjectIndexer.addDocToIndex(tmWorkspace);
+        domainObjectIndexer.indexDocument(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -199,7 +199,7 @@ public class TmResource {
     public TmWorkspace updateTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("updateTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        domainObjectIndexer.addDocToIndex(tmWorkspace);
+        domainObjectIndexer.indexDocument(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -303,7 +303,7 @@ public class TmResource {
                     .build();
         } else {
             TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace, neuronPointsStream);
-            domainObjectIndexer.addDocToIndex(newNeuron);
+            domainObjectIndexer.indexDocument(newNeuron);
             return Response.ok(newNeuron)
                     .build();
         }
@@ -341,7 +341,7 @@ public class TmResource {
                 protoBufStream = null;
             }
             TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
-            domainObjectIndexer.addDocToIndex(updatedNeuron);
+            domainObjectIndexer.indexDocument(updatedNeuron);
             tmNeuronMetadataDao.updateNeuronPoints(updatedNeuron, protoBufStream);
             list.add(updatedNeuron);
         }

@@ -15,6 +15,7 @@ import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.access.domain.dao.TreeNodeDao;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.domain.Reference;
@@ -280,7 +281,7 @@ public class DataTreeNodeResource {
         LOG.trace("Start createTreeNode({})", query);
         try {
             T dn = (T) query.getDomainObjectAs(TreeNode.class);
-            T savedNode = ((TreeNodeDao<T>)workspaceNodeDao).saveBySubjectKey(dn, query.getSubjectKey());
+            T savedNode = ((NodeDao<T>)workspaceNodeDao).saveBySubjectKey(dn, query.getSubjectKey());
             return Response.created(UriBuilder.fromMethod(DataTreeNodeResource.class, "getDataNode").build(savedNode.getId()))
                     .entity(savedNode)
                     .build();

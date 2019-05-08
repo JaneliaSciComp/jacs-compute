@@ -9,6 +9,7 @@ import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.search.SolrConnector;
 import org.janelia.jacs2.dataservice.search.SolrIndexer;
+import org.janelia.model.domain.DomainObject;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.User;
 import org.slf4j.Logger;
@@ -37,6 +38,28 @@ public class DomainIndexingResource {
 
     @Inject
     private SolrIndexer domainObjectIndexer;
+
+    @ApiOperation(value = "Add document to index")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully added new document to SOLR index"),
+            @ApiResponse(code = 500, message = "Internal Server Error while adding document to SOLR index")
+    })
+    @POST
+    @Path("/searchIndex")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response indexDocument(@ApiParam DomainObject domainObject) {
+        LOG.trace("Start indexDocument({})", domainObject);
+        try {
+            domainObjectIndexer.indexDocument(domainObject);
+            return Response.ok(domainObject).build();
+        } catch (Exception e) {
+            LOG.error("Error occurred while adding {} to index", domainObject, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        } finally {
+            LOG.trace("Finished indexDocument({})", domainObject);
+        }
+    }
 
     @ApiOperation(value = "Update the ancestor ids for the list of childrens specified in the body of the request")
     @ApiResponses(value = {
@@ -80,7 +103,7 @@ public class DomainIndexingResource {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
             if (!authorizedSubject.hasGroupWrite(Group.ADMIN_KEY)) {
-                LOG.info("Non-admin user {} attempted to update the entire search index", authorizedSubject.getName());
+                LOG.warn("Non-admin user {} attempted to update the entire search index", authorizedSubject.getName());
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
             if (clearIndex != null && clearIndex) domainObjectIndexer.clearIndex();
@@ -92,7 +115,6 @@ public class DomainIndexingResource {
         } finally {
             LOG.trace("Finished updateAllDocumentsIndex()");
         }
-
     }
 
     @ApiOperation(value = "Clear search index. The operation requires admin privileges")
@@ -113,11 +135,11 @@ public class DomainIndexingResource {
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
             if (!authorizedSubject.hasGroupWrite(Group.ADMIN_KEY)) {
-                LOG.info("Non-admin user {} attempted to remove search index", authorizedSubject.getName());
+                LOG.warn("Non-admin user {} attempted to remove search index", authorizedSubject.getName());
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
             domainObjectIndexer.clearIndex();
-            return Response.ok().build();
+            return Response.noContent().build();
         } catch (Exception e) {
             LOG.error("Error occurred while deleting document index", e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
@@ -125,4 +147,36 @@ public class DomainIndexingResource {
             LOG.trace("Finished deleteDocumentsIndex()");
         }
     }
+
+    @ApiOperation(value = "Delete document from index. The operation requires admin privileges")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully performed SOLR index clear"),
+            @ApiResponse(code = 403, message = "The authorized subject is not an admin"),
+            @ApiResponse(code = 500, message = "Internal Server Error performing SOLR index clear")
+    })
+    @DELETE
+    @Path("/searchIndex/{docId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteDocumentFromIndex(@PathParam("docId") Long docId, @Context ContainerRequestContext containerRequestContext) {
+        LOG.trace("Start deleteDocumentsIndex()");
+        try {
+            User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
+            if (authorizedSubject == null) {
+                LOG.warn("Unauthorized attempt to delete document {} from index", docId);
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+            if (!authorizedSubject.hasGroupWrite(Group.ADMIN_KEY)) {
+                LOG.warn("Non-admin user {} attempted to remove document {} from index", docId, authorizedSubject.getName());
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+            domainObjectIndexer.removeFromIndexById(docId.toString());
+            return Response.noContent().build();
+        } catch (Exception e) {
+            LOG.error("Error occurred while deleting document index", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        } finally {
+            LOG.trace("Finished deleteDocumentsIndex()");
+        }
+    }
+
 }

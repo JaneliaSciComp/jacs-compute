@@ -9,6 +9,7 @@ import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.dataservice.search.SolrConnector;
+import org.janelia.jacs2.dataservice.search.SolrIndexer;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
@@ -51,6 +52,7 @@ public class TestResourceDependenciesProducer {
     private PasswordProvider pwProvider = mock(PasswordProvider.class);
     private AuthProvider authProvider = mock(AuthProvider.class);
     private SolrConnector solrConnector = mock(SolrConnector.class);
+    private SolrIndexer solrIndexer = mock(SolrIndexer.class);
     private SampleDataService sampleDataService = mock(SampleDataService.class);
     private SageDataService sageDataService = mock(SageDataService.class);
 
@@ -156,6 +158,11 @@ public class TestResourceDependenciesProducer {
     @Produces
     public SolrConnector getSolrConnector() {
         return solrConnector;
+    }
+
+    @Produces
+    public SolrIndexer getSolrIndexer() {
+        return solrIndexer;
     }
 
     @Produces

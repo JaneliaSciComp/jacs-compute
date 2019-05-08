@@ -10,6 +10,7 @@ import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.dataservice.search.SolrConnector;
+import org.janelia.jacs2.dataservice.search.SolrIndexer;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
@@ -58,6 +59,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getPwProvider()).to(PasswordProvider.class);
         bind(dependenciesProducer.getAuthProvider()).to(AuthProvider.class);
         bind(dependenciesProducer.getSolrConnector()).to(SolrConnector.class);
+        bind(dependenciesProducer.getSolrIndexer()).to(SolrIndexer.class);
         bind(dependenciesProducer.getSampleDataService()).to(SampleDataService.class);
         bind(dependenciesProducer.getSageDataService()).to(SageDataService.class);
         bind(dependenciesProducer.defaultVolume).to(String.class).qualifiedBy(new Annotation() {

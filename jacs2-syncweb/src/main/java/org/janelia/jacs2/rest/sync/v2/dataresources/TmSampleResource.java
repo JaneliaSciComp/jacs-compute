@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
-import org.janelia.jacs2.dataservice.search.SolrConnector;
+import org.janelia.jacs2.dataservice.search.SolrIndexer;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
@@ -81,7 +81,7 @@ public class TmSampleResource {
     @Inject
     private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
     @Inject
-    private SolrConnector domainObjectIndexer;
+    private SolrIndexer domainObjectIndexer;
 
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
@@ -250,7 +250,7 @@ public class TmSampleResource {
     public TmSample createTmSample(DomainQuery query) {
         LOG.trace("createTmSample({})", query);
         TmSample tmSample = tmSampleDao.createTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
-        domainObjectIndexer.addDocToIndex(tmSample);
+        domainObjectIndexer.indexDocument(tmSample);
         return tmSample;
     }
 
@@ -268,7 +268,7 @@ public class TmSampleResource {
     public TmSample updateTmSample(@ApiParam DomainQuery query) {
         LOG.debug("updateTmSample({})", query);
         TmSample updatedTmSample = tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
-        domainObjectIndexer.addDocToIndex(updatedTmSample);
+        domainObjectIndexer.indexDocument(updatedTmSample);
         return updatedTmSample;
     }
 

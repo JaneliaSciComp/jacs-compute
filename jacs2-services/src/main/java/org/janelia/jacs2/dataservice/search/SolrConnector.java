@@ -75,6 +75,20 @@ public class SolrConnector {
         }
     }
 
+    boolean addDocToIndex(SolrInputDocument solrDoc) {
+        if (solrServer == null) {
+            return false;
+        } else {
+            try {
+                solrServer.add(solrDoc, solrCommitDelayInMillis);
+                solrServer.commit(false, false);
+                return true;
+            } catch (Exception e) {
+                LOG.error("Error while adding {} to solr index", solrDoc, e);
+                return false;
+            }
+        }
+    }
     boolean addDocsToIndex(Stream<SolrInputDocument> solrDocsStream, int batchSize) {
         if (solrServer == null) {
             return false;

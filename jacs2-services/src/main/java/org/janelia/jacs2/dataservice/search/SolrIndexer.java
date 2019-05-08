@@ -69,6 +69,18 @@ public class SolrIndexer {
         this.solrConnector = solrConnector;
     }
 
+    public boolean indexDocument(DomainObject domainObject) {
+        Set<Long> domainObjectAncestorsIds = new LinkedHashSet<>();
+        NodeUtils.traverseAllAncestors(
+                Reference.createFor(domainObject),
+                nodeReference -> {
+                    List<TreeNode> nodeAncestors = treeNodeDao.getNodeDirectAncestors(nodeReference);
+                    return nodeAncestors.stream().map(n -> Reference.createFor(n)).collect(Collectors.toSet());
+                },
+                n -> domainObjectAncestorsIds.add(n.getTargetId()));
+        return solrConnector.addDocToIndex(solrConnector.createSolrDoc(domainObject, domainObjectAncestorsIds));
+    }
+
     @SuppressWarnings("unchecked")
     public boolean indexAllDocuments() {
         Set<Class<?>> searcheableClasses = DomainUtils.getDomainClassesAnnotatedWith(SearchType.class);
