@@ -1,8 +1,7 @@
 package org.janelia.model.access.dao.mongo;
 
-import com.mongodb.MongoClient;
+import com.mongodb.DBCursor;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.DomainUtils;
@@ -18,7 +17,14 @@ import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
 import org.janelia.model.domain.ontology.OntologyTermReference;
 import org.janelia.model.domain.orders.IntakeOrder;
-import org.janelia.model.domain.sample.*;
+import org.janelia.model.domain.sample.DataSet;
+import org.janelia.model.domain.sample.LSMImage;
+import org.janelia.model.domain.sample.LineRelease;
+import org.janelia.model.domain.sample.NeuronFragment;
+import org.janelia.model.domain.sample.NeuronSeparation;
+import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.sample.SampleLock;
+import org.janelia.model.domain.sample.StatusTransition;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
@@ -29,7 +35,13 @@ import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -196,6 +208,15 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public <T extends DomainObject> List<TreeNode> getContainers(String subjectKey, Collection<Reference> references) throws Exception {
         return dao.getContainers(subjectKey, references);
+    }
+
+    @Override
+    public <T extends DomainObject> Iterator<T> iterateDomainObjects(Class<T> domainClass) {
+        return dao.getCollectionByClass(domainClass).find(
+                "{$or:[{class:{$exists:0}},{class:#}]}", domainClass.getName())
+                .with((DBCursor cursor) -> cursor.noCursorTimeout(true))
+                .as(domainClass)
+                .iterator();
     }
 
     @Override

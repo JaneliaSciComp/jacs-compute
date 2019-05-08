@@ -6,12 +6,12 @@ import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
-import org.janelia.model.domain.Reference;
+import org.janelia.model.jacs2.domain.Reference;
 
 /**
  * Reference2Codec implements a Codec for a Reference type.
  */
-public class ReferenceCodec implements Codec<Reference> {
+public class Reference2Codec implements Codec<Reference> {
 
     @Override
     public Reference decode(BsonReader reader, DecoderContext decoderContext) {

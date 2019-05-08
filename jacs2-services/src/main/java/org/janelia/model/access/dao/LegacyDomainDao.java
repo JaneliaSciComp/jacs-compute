@@ -167,6 +167,8 @@ public interface LegacyDomainDao {
 
     <T extends DomainObject> List<TreeNode> getContainers(String subjectKey, Collection<Reference> references) throws Exception;
 
+    <T extends DomainObject> Iterator<T> iterateDomainObjects(Class<T> domainClass);
+
     /**
      * Create a list of the result set in iteration order.
      */

@@ -163,7 +163,7 @@ public class TmResource {
     public TmWorkspace createTmWorkspace(DomainQuery query) {
         LOG.trace("createTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        domainObjectIndexer.addToIndex(tmWorkspace);
+        domainObjectIndexer.addDocToIndex(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -181,7 +181,7 @@ public class TmResource {
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("copyTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), query.getObjectType());
-        domainObjectIndexer.addToIndex(tmWorkspace);
+        domainObjectIndexer.addDocToIndex(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -199,7 +199,7 @@ public class TmResource {
     public TmWorkspace updateTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("updateTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        domainObjectIndexer.addToIndex(tmWorkspace);
+        domainObjectIndexer.addDocToIndex(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -303,7 +303,7 @@ public class TmResource {
                     .build();
         } else {
             TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace, neuronPointsStream);
-            domainObjectIndexer.addToIndex(newNeuron);
+            domainObjectIndexer.addDocToIndex(newNeuron);
             return Response.ok(newNeuron)
                     .build();
         }
@@ -341,7 +341,7 @@ public class TmResource {
                 protoBufStream = null;
             }
             TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
-            domainObjectIndexer.addToIndex(updatedNeuron);
+            domainObjectIndexer.addDocToIndex(updatedNeuron);
             tmNeuronMetadataDao.updateNeuronPoints(updatedNeuron, protoBufStream);
             list.add(updatedNeuron);
         }

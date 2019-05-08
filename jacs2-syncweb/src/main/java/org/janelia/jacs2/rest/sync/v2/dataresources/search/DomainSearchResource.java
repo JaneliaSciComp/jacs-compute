@@ -39,7 +39,7 @@ public class DomainSearchResource {
     private static final Logger LOG = LoggerFactory.getLogger(DomainSearchResource.class);
 
     @Inject
-    private SolrConnector domainObjectIndexer;
+    private SolrConnector domainObjectSearcher;
     @Inject
     private LegacyDomainDao legacyDomainDao;
 
@@ -99,7 +99,7 @@ public class DomainSearchResource {
         SolrQuery query = SolrQueryBuilder.deSerializeSolrQuery(queryParams);
         query.setFacetMinCount(1);
         query.setFacetLimit(500);
-        QueryResponse response = domainObjectIndexer.search(query);
+        QueryResponse response = domainObjectSearcher.search(query);
         Map<String, List<FacetValue>> facetFieldValueMap = new HashMap<>();
         if (response.getFacetFields() != null) {
             for (final FacetField ff : response.getFacetFields()) {

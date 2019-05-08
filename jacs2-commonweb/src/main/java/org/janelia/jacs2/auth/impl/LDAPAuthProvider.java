@@ -79,9 +79,7 @@ public class LDAPAuthProvider implements AuthProvider {
 
     @Override
     public User authenticate(String username, String password) {
-
         LdapConnection connection = openLdapConnection();
-
         try {
             // DN resolution
             LdapUser ldapUser = getUserInfo(connection, username);
@@ -89,13 +87,11 @@ public class LDAPAuthProvider implements AuthProvider {
                 LOG.info("User not found in LDAP: {}", username);
                 return null;
             }
-
             // Authenticate the user
             if (!authenticate(connection, ldapUser.getUserDn(), password)) {
                 LOG.info("User failed authentication against LDAP: {}", username);
                 return null;
             }
-
             // Ensure user exists in Mongo
             return getPersistedUser(ldapUser.getUserInfo());
         }
@@ -109,9 +105,7 @@ public class LDAPAuthProvider implements AuthProvider {
 
     @Override
     public User createUser(String username) {
-
         LdapConnection connection = openLdapConnection();
-
         try {
             // DN resolution
             LdapUser ldapUser = getUserInfo(connection, username);
@@ -119,7 +113,6 @@ public class LDAPAuthProvider implements AuthProvider {
                 LOG.info("User not found in LDAP: {}", username);
                 return null;
             }
-
             // Ensure user exists in Mongo
             return getPersistedUser(ldapUser.getUserInfo());
         }
@@ -222,12 +215,10 @@ public class LDAPAuthProvider implements AuthProvider {
      * @return persisted User object
      */
     private User getPersistedUser(User userInfo) {
-
         Subject existingUser = subjectDao.findByKey(userInfo.getKey());
         if (existingUser !=null) {
             return (User)existingUser;
         }
-
         subjectDao.save(userInfo);
         LOG.info("Created new user based on LDAP information: {}", userInfo);
         return userInfo;

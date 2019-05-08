@@ -250,7 +250,7 @@ public class TmSampleResource {
     public TmSample createTmSample(DomainQuery query) {
         LOG.trace("createTmSample({})", query);
         TmSample tmSample = tmSampleDao.createTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
-        domainObjectIndexer.addToIndex(tmSample);
+        domainObjectIndexer.addDocToIndex(tmSample);
         return tmSample;
     }
 
@@ -268,7 +268,7 @@ public class TmSampleResource {
     public TmSample updateTmSample(@ApiParam DomainQuery query) {
         LOG.debug("updateTmSample({})", query);
         TmSample updatedTmSample = tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
-        domainObjectIndexer.addToIndex(updatedTmSample);
+        domainObjectIndexer.addDocToIndex(updatedTmSample);
         return updatedTmSample;
     }
 

@@ -22,16 +22,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -78,22 +75,34 @@ public class SolrConnector {
         }
     }
 
-    public boolean addToIndex(DomainObject domainObject) {
+    boolean addDocsToIndex(Stream<SolrInputDocument> solrDocsStream, int batchSize) {
         if (solrServer == null) {
             return false;
         } else {
-            try {
-                solrServer.add(createSolrDoc(domainObject), solrCommitDelayInMillis);
-                solrServer.commit(false, false);
-                return true;
-            } catch (Exception e) {
-                LOG.error("Error while updating solr index for {}", domainObject, e);
-                return false;
-            }
+            final AtomicInteger counter = new AtomicInteger();
+            int actualBatchSize = Math.max(batchSize, 1);
+            // group documents in batches of given size to send the to solr
+            return solrDocsStream
+                    .collect(Collectors.groupingBy(solrDoc -> counter.getAndIncrement() / actualBatchSize,
+                            Collectors.collectingAndThen(Collectors.toList(), solrDocsBatch -> {
+                                try {
+                                    solrServer.add(solrDocsBatch, solrCommitDelayInMillis);
+                                    solrServer.commit(false, false);
+                                    return true;
+                                } catch (Exception e) {
+                                    LOG.error("Error while updating solr index for {}", solrDocsBatch, e);
+                                    return false;
+                                }
+                            })))
+                    .entrySet().stream()
+                    .map(e -> e.getValue())
+                    .reduce((e1, e2) -> e1 && e2)
+                    .orElse(false)
+                    ;
         }
     }
 
-    public void clearIndex() {
+    void clearIndex() {
         if (solrServer != null) {
             try {
                 solrServer.deleteByQuery("*:*", solrCommitDelayInMillis);
@@ -103,7 +112,7 @@ public class SolrConnector {
         }
     }
 
-    public boolean removeFromIndexById(String id) {
+    boolean removeFromIndexById(String id) {
         if (solrServer == null) {
             return false;
         } else {
@@ -118,14 +127,12 @@ public class SolrConnector {
     }
 
     @SuppressWarnings("unchecked")
-    private SolrInputDocument createSolrDoc(DomainObject domainObject) {
+    SolrInputDocument createSolrDoc(DomainObject domainObject, Set<Long> ancestorIds) {
         SolrInputDocument solrDoc = new SolrInputDocument();
         solrDoc.setField("doc_type", SolrDocType.DOCUMENT.name(), 1.0f);
         solrDoc.setField("class", domainObject.getClass().getName(), 1.0f);
         solrDoc.setField("collection", DomainUtils.getCollectionName(domainObject), 1.0f);
-
-        Map<String, Object> attrs = new HashMap<>();
-        Set<Field> searchableFields = ReflectionUtils.getAllFields(domainObject.getClass(), ReflectionUtils.withAnnotation(SearchAttribute.class));
+        solrDoc.setField("ancestor_ids", new ArrayList<>(ancestorIds), 0.2f);
 
         BiConsumer<SearchAttribute, Object> searchFieldHandler = (searchAttribute, fieldValue) -> {
             if (fieldValue == null || fieldValue instanceof String && StringUtils.isBlank((String) fieldValue)) {
@@ -140,6 +147,8 @@ public class SolrConnector {
                 }
             }
         };
+
+        Set<Field> searchableFields = ReflectionUtils.getAllFields(domainObject.getClass(), ReflectionUtils.withAnnotation(SearchAttribute.class));
         for (Field field : searchableFields) {
             try {
                 SearchAttribute searchAttributeAnnot = field.getAnnotation(SearchAttribute.class);
@@ -165,8 +174,8 @@ public class SolrConnector {
     }
 
     @SuppressWarnings("unchecked")
-    public void updateAncestorsForSolrDocs(List<Long> solrDocIds, Long ancestorDocId, int batchSize) {
-        List<SolrInputDocument> solrDocs = searchByDocIds(solrDocIds, batchSize)
+    void addAncestorIdToAllDocs(Long ancestorDocId, List<Long> solrDocIds, int batchSize) {
+        Stream<SolrInputDocument> solrDocsStream = searchByDocIds(solrDocIds, batchSize)
                 .map(solrDoc -> ClientUtils.toSolrInputDocument(solrDoc))
                 .map(solrInputDoc -> {
                     Collection<Long> ancestorIds;
@@ -180,15 +189,8 @@ public class SolrConnector {
                     solrInputDoc.setField("ancestor_ids", ancestorIds, 0.2f);
                     return solrInputDoc;
                 })
-                .collect(Collectors.toList())
                 ;
-        if (CollectionUtils.isNotEmpty(solrDocs)) {
-            try {
-                solrServer.add(solrDocs, solrCommitDelayInMillis);
-            } catch (Exception e) {
-                LOG.error("Error persisting documents {} after trying to update ancestor id to {}", solrDocIds, ancestorDocId, e);
-            }
-        }
+        addDocsToIndex(solrDocsStream, batchSize);
     }
 
     private Stream<SolrDocument> searchByDocIds(List<Long> solrDocIds, int batchSize) {

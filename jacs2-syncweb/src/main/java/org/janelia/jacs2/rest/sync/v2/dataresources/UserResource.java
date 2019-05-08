@@ -140,7 +140,6 @@ public class UserResource {
             String username = SubjectUtils.getSubjectName(subjectKey);
             Subject existingUser = subjectDao.findByNameOrKey(subjectKey);
             if (existingUser == null) {
-
                 User user = authProvider.createUser(username);
                 if (user!=null) {
                     return Response.ok(user).build();
