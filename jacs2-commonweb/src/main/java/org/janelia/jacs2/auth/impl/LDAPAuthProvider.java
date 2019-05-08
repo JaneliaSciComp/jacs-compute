@@ -52,22 +52,24 @@ public class LDAPAuthProvider implements AuthProvider {
         }
 
         int port = 389; // Default port
-        String[] urlParts = url.replace("ldap://","").split(":");
+        String[] urlParts = url.replace("ldap://", "").split(":");
         String server = urlParts[0];
         if (urlParts.length == 2) {
             port = Integer.parseInt(urlParts[1]);
         }
+
+        LOG.info("Configuring LDAP authentication with the following parameters:");
+        LOG.info("  URL: {}", url);
+        LOG.info("  Server: {}", server);
+        LOG.info("  Port: {}", port);
+        LOG.info("  Search base: {}", searchBase);
+        LOG.info("  Search filter: {}", searchFilter);
 
         config.setLdapHost(server);
         config.setLdapPort(port);
         if (timeout != null) {
             config.setTimeout(timeout);
         }
-
-        LOG.info("Configuring LDAP authentication with the following parameters:");
-        LOG.info("  URL: {}", url);
-        LOG.info("  Search base: {}", searchBase);
-        LOG.info("  Search filter: {}", searchFilter);
 
         if (!StringUtils.isAnyEmpty(bindDN, bindCredentials)) {
             LOG.info("  Bind name: {}", bindDN);
@@ -83,7 +85,7 @@ public class LDAPAuthProvider implements AuthProvider {
         try {
             // DN resolution
             LdapUser ldapUser = getUserInfo(connection, username);
-            if (ldapUser==null) {
+            if (ldapUser == null) {
                 LOG.info("User not found in LDAP: {}", username);
                 return null;
             }
@@ -94,11 +96,9 @@ public class LDAPAuthProvider implements AuthProvider {
             }
             // Ensure user exists in Mongo
             return getPersistedUser(ldapUser.getUserInfo());
-        }
-        catch (LdapException e) {
+        } catch (LdapException e) {
             throw new RuntimeException(e);
-        }
-        finally {
+        } finally {
             closeLdapConnection(connection);
         }
     }
@@ -109,40 +109,39 @@ public class LDAPAuthProvider implements AuthProvider {
         try {
             // DN resolution
             LdapUser ldapUser = getUserInfo(connection, username);
-            if (ldapUser==null) {
+            if (ldapUser == null) {
                 LOG.info("User not found in LDAP: {}", username);
                 return null;
             }
             // Ensure user exists in Mongo
             return getPersistedUser(ldapUser.getUserInfo());
-        }
-        catch (LdapException e) {
+        } catch (LdapException e) {
             throw new RuntimeException(e);
-        }
-        finally {
+        } finally {
             closeLdapConnection(connection);
         }
     }
 
     @Override
-    public User addUser(Map<String,Object> userProperties) {
+    public User addUser(Map<String, Object> userProperties) {
         // for now this is just a passthrough... we'll re-examine whether the logic needs to be different
         // in the future
-        if (userProperties!=null && userProperties.containsKey("name"))
-            return createUser((String)userProperties.get("name"));
+        if (userProperties != null && userProperties.containsKey("name"))
+            return createUser((String) userProperties.get("name"));
         return null;
     }
 
     /**
      * Get user information from LDAP.
+     *
      * @param username username
      * @return User object populated with information from LDAP
      * @throws LdapException
      */
     private LdapUser getUserInfo(LdapConnection connection, String username) throws LdapException {
-
         EntryCursor cursor = null;
         try {
+            LOG.debug("Get user info for {}", username);
             String filter = searchFilter.replace(USERNAME_PLACEHOLDER, username);
             cursor = connection.search(baseDN, filter, SearchScope.ONELEVEL);
             LdapUser ldapUser = null;
@@ -162,12 +161,10 @@ public class LDAPAuthProvider implements AuthProvider {
             }
 
             return ldapUser;
-        }
-        catch (CursorException e) {
+        } catch (CursorException e) {
             throw new LdapException(e);
-        }
-        finally {
-            if (cursor!=null) closeLdapTraverseCursor(cursor);
+        } finally {
+            if (cursor != null) closeLdapTraverseCursor(cursor);
         }
     }
 
@@ -211,13 +208,14 @@ public class LDAPAuthProvider implements AuthProvider {
      * Takes unpersisted user info and checks to see if the same user already exists in the database. If so, the
      * persisted user is returned. Otherwise, the provided userInfo is persisted into the database, and the
      * persisted record is returned.
+     *
      * @param userInfo unpersisted user populated with user's information
      * @return persisted User object
      */
     private User getPersistedUser(User userInfo) {
         Subject existingUser = subjectDao.findByKey(userInfo.getKey());
-        if (existingUser !=null) {
-            return (User)existingUser;
+        if (existingUser != null) {
+            return (User) existingUser;
         }
         subjectDao.save(userInfo);
         LOG.info("Created new user based on LDAP information: {}", userInfo);
@@ -227,26 +225,23 @@ public class LDAPAuthProvider implements AuthProvider {
     private LdapConnection openLdapConnection() {
         try {
             return pool.getConnection();
-        }
-        catch (LdapException e) {
-            throw new RuntimeException(e);
+        } catch (LdapException e) {
+            LOG.error("Error opening LDAP connection", e);
+            throw new IllegalStateException(e);
         }
     }
 
     private void closeLdapConnection(LdapConnection conn) {
         try {
             conn.unBind();
-        }
-        catch (LdapException e) {
+        } catch (LdapException e) {
             LOG.error("Error unbinding the LDAP connection {}", conn, e);
         }
         try {
             pool.releaseConnection(conn);
-        }
-        catch (LdapException e) {
+        } catch (LdapException e) {
             LOG.error("Problems releasing LDAP connection {}", conn, e);
         }
-
     }
 
     private void closeLdapTraverseCursor(EntryCursor cursor) {
