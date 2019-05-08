@@ -48,12 +48,7 @@ public class LDAPAuthProvider implements AuthProvider {
         this.subjectDao = subjectDao;
         LdapConnectionConfig config = new LdapConnectionConfig();
         try {
-            if (StringUtils.isNotBlank(searchBase)) {
-                List<String> searchBaseComps = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(searchBase);
-                this.baseDN = new Dn(searchBaseComps.toArray(new String[0]));
-            } else {
-                this.baseDN = new Dn();
-            }
+            this.baseDN = new Dn(searchBase);
             this.searchFilter = searchFilter;
         } catch (LdapInvalidDnException e) {
             throw new IllegalArgumentException(e);
