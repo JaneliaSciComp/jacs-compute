@@ -206,11 +206,11 @@ public class LDAPAuthProvider implements AuthProvider {
 
         final BindResponse bind = connection.bind(bindRequest);
         if (!bind.getLdapResult().getResultCode().equals(ResultCodeEnum.SUCCESS)) {
-            LOG.trace("Re-binding DN {} failed", userDn);
-            throw new RuntimeException(bind.toString());
+            LOG.info("Re-binding DN {} failed: {}", userDn, bind.getLdapResult().getResultCode().getMessage());
+            return false;
         }
 
-        LOG.trace("Binding DN {} did not throw, connection authenticated: {}", userDn, connection.isAuthenticated());
+        LOG.trace("Binding DN {} successful, authenticated: {}", userDn, connection.isAuthenticated());
         return connection.isAuthenticated();
     }
 
