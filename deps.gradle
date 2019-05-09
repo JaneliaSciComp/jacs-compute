@@ -98,22 +98,23 @@ dependencies {
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.0.0"
         JACS_MODEL_VERSION = "2.1.0-SNAPSHOT"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
+        JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
 
         // scientific computing
         JAMA_LIB = "gov.nist.math:jama:1.0.3"
 
         // testing
+        ASSERTJ_VERSION = "3.11.1"
         JUNIT_VERSION = "4.12"
         HAMCREST_VERSION = "2.0.0.0"
         MOCKITO_VERSION = "2.8.9"
         POWERMOCKITO_VERSION = "1.7.3"
-        ASSERTJ_VERSION = "3.6.1"
 
         JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
+        ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
         HAMCREST_LIB = "org.hamcrest:java-hamcrest:${HAMCREST_VERSION}"
         MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
-        ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
         POWERMOCK_JUNIT4_LIB = "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}"
         POWERMOCK_MOCKITO_API_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
     }

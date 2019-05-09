@@ -7,7 +7,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.search.SolrConnector;
 import org.janelia.jacs2.dataservice.search.SolrIndexer;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.security.Group;

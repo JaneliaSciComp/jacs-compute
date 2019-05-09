@@ -9,7 +9,6 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.dataservice.search.SolrConnector;
 import org.janelia.jacs2.dataservice.search.SolrIndexer;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -23,6 +22,7 @@ import org.janelia.model.access.domain.dao.TmReviewTaskDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
+import org.janelia.model.access.domain.search.SolrConnector;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
 
@@ -62,11 +62,6 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getSolrIndexer()).to(SolrIndexer.class);
         bind(dependenciesProducer.getSampleDataService()).to(SampleDataService.class);
         bind(dependenciesProducer.getSageDataService()).to(SageDataService.class);
-        bind(dependenciesProducer.defaultVolume).to(String.class).qualifiedBy(new Annotation() {
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return PropertyValue.class;
-            }
-        });
+        bind(dependenciesProducer.defaultVolume).to(String.class).qualifiedBy(() -> PropertyValue.class);
     }
 }

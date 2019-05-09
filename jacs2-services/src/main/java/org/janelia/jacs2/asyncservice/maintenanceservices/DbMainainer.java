@@ -1,7 +1,7 @@
 package org.janelia.jacs2.asyncservice.maintenanceservices;
 
 import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.domain.DomainUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

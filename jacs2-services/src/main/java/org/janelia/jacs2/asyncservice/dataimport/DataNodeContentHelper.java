@@ -7,7 +7,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.storage.StoragePathURI;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
-import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.sample.Image;
 import org.janelia.model.domain.workspace.TreeNode;
@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

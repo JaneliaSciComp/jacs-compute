@@ -10,8 +10,8 @@ import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.search.SolrConnector;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.search.SolrConnector;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.slf4j.Logger;
@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Api(value = "Janelia Workstation Domain Data")

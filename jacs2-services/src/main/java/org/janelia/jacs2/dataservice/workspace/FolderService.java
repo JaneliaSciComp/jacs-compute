@@ -1,13 +1,12 @@
 package org.janelia.jacs2.dataservice.workspace;
 
 import com.google.common.collect.ImmutableList;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.DomainUtils;
+import org.janelia.model.domain.DomainUtils;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.sample.Image;
 import org.janelia.model.domain.workspace.TreeNode;
-import org.janelia.model.domain.Reference;
 
 import javax.inject.Inject;
 
