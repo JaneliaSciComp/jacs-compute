@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
-import org.janelia.jacs2.dataservice.search.SolrIndexer;
+import org.janelia.jacs2.dataservice.search.IndexingService;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
@@ -81,7 +81,7 @@ public class TmSampleResource {
     @Inject
     private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
     @Inject
-    private SolrIndexer domainObjectIndexer;
+    private IndexingService domainObjectIndexer;
 
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
@@ -285,7 +285,7 @@ public class TmSampleResource {
                                @ApiParam @QueryParam("sampleId") final Long sampleId) {
         LOG.debug("removeTmSample(subjectKey: {}, sampleId: {})", subjectKey, sampleId);
         if (tmSampleDao.removeTmSample(subjectKey, sampleId) && sampleId != null) {
-            domainObjectIndexer.removeFromIndexById(sampleId.toString());
+            domainObjectIndexer.removeFromIndexById(sampleId);
         }
     }
 

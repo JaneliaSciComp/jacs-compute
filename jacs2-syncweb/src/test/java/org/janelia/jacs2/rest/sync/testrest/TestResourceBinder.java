@@ -9,7 +9,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.dataservice.search.SolrIndexer;
+import org.janelia.jacs2.dataservice.search.IndexingService;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
@@ -22,12 +22,11 @@ import org.janelia.model.access.domain.dao.TmReviewTaskDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
-import org.janelia.model.access.domain.search.SolrConnector;
+import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
-import java.lang.annotation.Annotation;
 
 public class TestResourceBinder extends AbstractBinder {
     private final TestResourceDependenciesProducer dependenciesProducer;
@@ -58,8 +57,8 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getSubjectDao()).to(SubjectDao.class);
         bind(dependenciesProducer.getPwProvider()).to(PasswordProvider.class);
         bind(dependenciesProducer.getAuthProvider()).to(AuthProvider.class);
-        bind(dependenciesProducer.getSolrConnector()).to(SolrConnector.class);
-        bind(dependenciesProducer.getSolrIndexer()).to(SolrIndexer.class);
+        bind(dependenciesProducer.getDomainObjectIndexer()).to(DomainObjectIndexer.class);
+        bind(dependenciesProducer.getIndexingService()).to(IndexingService.class);
         bind(dependenciesProducer.getSampleDataService()).to(SampleDataService.class);
         bind(dependenciesProducer.getSageDataService()).to(SageDataService.class);
         bind(dependenciesProducer.defaultVolume).to(String.class).qualifiedBy(() -> PropertyValue.class);

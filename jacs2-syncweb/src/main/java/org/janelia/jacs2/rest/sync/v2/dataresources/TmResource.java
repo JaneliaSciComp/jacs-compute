@@ -17,7 +17,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartMediaTypes;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.search.SolrIndexer;
+import org.janelia.jacs2.dataservice.search.IndexingService;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
@@ -81,7 +81,7 @@ public class TmResource {
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
     @Inject
-    private SolrIndexer domainObjectIndexer;
+    private IndexingService domainObjectIndexer;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
@@ -216,7 +216,7 @@ public class TmResource {
                                   @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.debug("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
         long nDeletedItems = tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
-        if (nDeletedItems > 0 && workspaceId != null) domainObjectIndexer.removeFromIndexById(workspaceId.toString());
+        if (nDeletedItems > 0 && workspaceId != null) domainObjectIndexer.removeFromIndexById(workspaceId);
     }
 
     @ApiOperation(value = "Gets the neurons for a workspace",
@@ -407,7 +407,7 @@ public class TmResource {
                                @ApiParam @QueryParam("neuronId") final Long neuronId) {
         LOG.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
         if (tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey) && neuronId != null) {
-            domainObjectIndexer.removeFromIndexById(neuronId.toString());
+            domainObjectIndexer.removeFromIndexById(neuronId);
         }
     }
 

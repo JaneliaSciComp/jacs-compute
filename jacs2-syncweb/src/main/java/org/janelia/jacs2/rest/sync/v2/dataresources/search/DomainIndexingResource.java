@@ -1,14 +1,17 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources.search;
 
+import com.google.common.collect.ImmutableSet;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.search.SolrIndexer;
+import org.janelia.jacs2.dataservice.search.IndexingService;
 import org.janelia.model.domain.DomainObject;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.User;
 import org.slf4j.Logger;
@@ -36,7 +39,7 @@ public class DomainIndexingResource {
     private static final Logger LOG = LoggerFactory.getLogger(DomainIndexingResource.class);
 
     @Inject
-    private SolrIndexer domainObjectIndexer;
+    private IndexingService indexingService;
 
     @ApiOperation(value = "Add document to index")
     @ApiResponses(value = {
@@ -44,19 +47,20 @@ public class DomainIndexingResource {
             @ApiResponse(code = 500, message = "Internal Server Error while adding document to SOLR index")
     })
     @POST
-    @Path("/searchIndex")
+    @Path("searchIndex")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response indexDocument(@ApiParam DomainObject domainObject) {
-        LOG.trace("Start indexDocument({})", domainObject);
+    public Response indexDocument(@ApiParam Reference domainObjectReference, @Context ContainerRequestContext containerRequestContext) {
+        LOG.trace("Start indexDocument({})", domainObjectReference);
         try {
-            domainObjectIndexer.indexDocument(domainObject);
-            return Response.ok(domainObject).build();
+            User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
+            indexingService.indexDocument(authorizedSubject != null ? authorizedSubject.getKey() : null, domainObjectReference);
+            return Response.ok(domainObjectReference).build();
         } catch (Exception e) {
-            LOG.error("Error occurred while adding {} to index", domainObject, e);
+            LOG.error("Error occurred while adding {} to index", domainObjectReference, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         } finally {
-            LOG.trace("Finished indexDocument({})", domainObject);
+            LOG.trace("Finished indexDocument({})", domainObjectReference);
         }
     }
 
@@ -66,19 +70,21 @@ public class DomainIndexingResource {
             @ApiResponse(code = 500, message = "Internal Server Error performing SOLR index update")
     })
     @PUT
-    @Path("/searchIndex/{docId}/children")
+    @Path("searchIndex/{docId}/descendants")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addAncestorIdToAllDocs(@PathParam("docId") Long ancestorDocId, @ApiParam List<Long> documentIds) {
-        LOG.trace("Start addAncestorIdToAllDocs({}, {})", ancestorDocId, documentIds);
+    public Response updateDocDescendants(@PathParam("docId") Long ancestorId, @ApiParam List<Long> descendantIds) {
+        LOG.trace("Start addAncestorIdToAllDocs({}, {})", ancestorId, descendantIds);
         try {
-            domainObjectIndexer.addAncestorIdToAllDocs(ancestorDocId, documentIds);
+            if (CollectionUtils.isNotEmpty(descendantIds)) {
+                indexingService.updateDocsAncestors(ImmutableSet.copyOf(descendantIds), ancestorId);
+            }
             return Response.ok().build();
         } catch (Exception e) {
-            LOG.error("Error occurred while updating the ancestors for {} to {}", documentIds, ancestorDocId, e);
+            LOG.error("Error occurred while updating the ancestors for {} to {}", descendantIds, ancestorId, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         } finally {
-            LOG.trace("Finished addAncestorIdToAllDocs({}, {})", ancestorDocId, documentIds);
+            LOG.trace("Finished addAncestorIdToAllDocs({}, {})", ancestorId, descendantIds);
         }
     }
 
@@ -91,9 +97,9 @@ public class DomainIndexingResource {
             @ApiResponse(code = 500, message = "Internal Server Error performing SOLR index clear")
     })
     @PUT
-    @Path("/searchIndex")
+    @Path("searchIndex")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateAllDocumentsIndex(@QueryParam("clearIndex") Boolean clearIndex, @Context ContainerRequestContext containerRequestContext) {
+    public Response refreshDocumentsIndex(@QueryParam("clearIndex") Boolean clearIndex, @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start updateAllDocumentsIndex()");
         try {
             User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
@@ -105,8 +111,8 @@ public class DomainIndexingResource {
                 LOG.warn("Non-admin user {} attempted to update the entire search index", authorizedSubject.getName());
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
-            if (clearIndex != null && clearIndex) domainObjectIndexer.clearIndex();
-            domainObjectIndexer.indexAllDocuments();
+            if (clearIndex != null && clearIndex) indexingService.removeIndex();
+            indexingService.indexAllDocuments();
             return Response.ok().build();
         } catch (Exception e) {
             LOG.error("Error occurred while deleting document index", e);
@@ -123,7 +129,7 @@ public class DomainIndexingResource {
             @ApiResponse(code = 500, message = "Internal Server Error performing SOLR index clear")
     })
     @DELETE
-    @Path("/searchIndex")
+    @Path("searchIndex")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteDocumentsIndex(@Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start deleteDocumentsIndex()");
@@ -137,7 +143,7 @@ public class DomainIndexingResource {
                 LOG.warn("Non-admin user {} attempted to remove search index", authorizedSubject.getName());
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
-            domainObjectIndexer.clearIndex();
+            indexingService.removeIndex();
             return Response.noContent().build();
         } catch (Exception e) {
             LOG.error("Error occurred while deleting document index", e);
@@ -154,7 +160,7 @@ public class DomainIndexingResource {
             @ApiResponse(code = 500, message = "Internal Server Error performing SOLR index clear")
     })
     @DELETE
-    @Path("/searchIndex/{docId}")
+    @Path("searchIndex/{docId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteDocumentFromIndex(@PathParam("docId") Long docId, @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start deleteDocumentsIndex()");
@@ -168,7 +174,7 @@ public class DomainIndexingResource {
                 LOG.warn("Non-admin user {} attempted to remove document {} from index", docId, authorizedSubject.getName());
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
-            domainObjectIndexer.removeFromIndexById(docId.toString());
+            indexingService.removeFromIndexById(docId);
             return Response.noContent().build();
         } catch (Exception e) {
             LOG.error("Error occurred while deleting document index", e);

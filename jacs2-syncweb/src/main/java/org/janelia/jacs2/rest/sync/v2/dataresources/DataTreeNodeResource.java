@@ -16,7 +16,6 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.NodeDao;
-import org.janelia.model.access.domain.dao.TreeNodeDao;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.dto.DomainQuery;

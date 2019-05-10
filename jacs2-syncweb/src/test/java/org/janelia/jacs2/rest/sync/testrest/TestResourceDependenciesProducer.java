@@ -8,7 +8,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.dataservice.search.SolrIndexer;
+import org.janelia.jacs2.dataservice.search.IndexingService;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
@@ -21,7 +21,7 @@ import org.janelia.model.access.domain.dao.TmReviewTaskDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
-import org.janelia.model.access.domain.search.SolrConnector;
+import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +51,8 @@ public class TestResourceDependenciesProducer {
     private SubjectDao subjectDao = mock(SubjectDao.class);
     private PasswordProvider pwProvider = mock(PasswordProvider.class);
     private AuthProvider authProvider = mock(AuthProvider.class);
-    private SolrConnector solrConnector = mock(SolrConnector.class);
-    private SolrIndexer solrIndexer = mock(SolrIndexer.class);
+    private DomainObjectIndexer domainObjectIndexer = mock(DomainObjectIndexer.class);
+    private IndexingService indexingService = mock(IndexingService.class);
     private SampleDataService sampleDataService = mock(SampleDataService.class);
     private SageDataService sageDataService = mock(SageDataService.class);
 
@@ -156,13 +156,13 @@ public class TestResourceDependenciesProducer {
     }
 
     @Produces
-    public SolrConnector getSolrConnector() {
-        return solrConnector;
+    public DomainObjectIndexer getDomainObjectIndexer() {
+        return domainObjectIndexer;
     }
 
     @Produces
-    public SolrIndexer getSolrIndexer() {
-        return solrIndexer;
+    public IndexingService getIndexingService() {
+        return indexingService;
     }
 
     @Produces

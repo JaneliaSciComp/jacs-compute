@@ -10,6 +10,8 @@ import com.mongodb.client.MongoDatabase;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacs2.cdi.qualifier.GridExecutor;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
@@ -22,13 +24,10 @@ import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -154,4 +153,9 @@ public class PersistenceProducer {
         return new HikariDataSource(config);
     }
 
+    @Produces
+    @ApplicationScoped
+    public SolrServer createSolrServer(@PropertyValue(name = "Solr.ServerURL") String solrServerURL) {
+        return StringUtils.isBlank(solrServerURL) ? null : new HttpSolrServer(solrServerURL);
+    }
 }
