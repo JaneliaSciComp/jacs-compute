@@ -10,7 +10,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.search.IndexingService;
-import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.User;
@@ -33,7 +32,6 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 
 @Api(value = "Janelia Workstation Domain Data")
-@RequireAuthentication
 @Path("/data")
 public class DomainIndexingResource {
     private static final Logger LOG = LoggerFactory.getLogger(DomainIndexingResource.class);
@@ -50,17 +48,16 @@ public class DomainIndexingResource {
     @Path("searchIndex")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response indexDocument(@ApiParam Reference domainObjectReference, @Context ContainerRequestContext containerRequestContext) {
-        LOG.trace("Start indexDocument({})", domainObjectReference);
+    public Response indexDocuments(@ApiParam List<Reference> domainObjectReferences) {
+        LOG.trace("Start indexDocument({})", domainObjectReferences);
         try {
-            User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
-            indexingService.indexDocument(authorizedSubject != null ? authorizedSubject.getKey() : null, domainObjectReference);
-            return Response.ok(domainObjectReference).build();
+            indexingService.indexDocuments(domainObjectReferences);
+            return Response.ok().build();
         } catch (Exception e) {
-            LOG.error("Error occurred while adding {} to index", domainObjectReference, e);
+            LOG.error("Error occurred while adding {} to index", domainObjectReferences, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         } finally {
-            LOG.trace("Finished indexDocument({})", domainObjectReference);
+            LOG.trace("Finished indexDocument({})", domainObjectReferences);
         }
     }
 
@@ -88,6 +85,7 @@ public class DomainIndexingResource {
         }
     }
 
+    @RequireAuthentication
     @ApiOperation(value = "Refresh the entire search index. " +
             "The operation requires admin privileges because it may require a lot of resources to perform the action " +
             "and I don't want to let anybody to just go and refresh the index")
@@ -122,6 +120,7 @@ public class DomainIndexingResource {
         }
     }
 
+    @RequireAuthentication
     @ApiOperation(value = "Clear search index. The operation requires admin privileges")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully performed SOLR index clear"),
@@ -131,7 +130,7 @@ public class DomainIndexingResource {
     @DELETE
     @Path("searchIndex")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteDocumentsIndex(@Context ContainerRequestContext containerRequestContext) {
+    public Response removeDocumentsIndex(@Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start deleteDocumentsIndex()");
         try {
             User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
@@ -153,34 +152,25 @@ public class DomainIndexingResource {
         }
     }
 
-    @ApiOperation(value = "Delete document from index. The operation requires admin privileges")
+    @ApiOperation(value = "Delete documents from index.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully performed SOLR index clear"),
-            @ApiResponse(code = 403, message = "The authorized subject is not an admin"),
             @ApiResponse(code = 500, message = "Internal Server Error performing SOLR index clear")
     })
     @DELETE
-    @Path("searchIndex/{docId}")
+    @Path("searchIndex/docsToRemove")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteDocumentFromIndex(@PathParam("docId") Long docId, @Context ContainerRequestContext containerRequestContext) {
-        LOG.trace("Start deleteDocumentsIndex()");
+    public Response deleteDocumentsFromIndex(List<Long> docIds) {
+        LOG.trace("Start deleteDocumentsFromIndex({})", docIds);
         try {
-            User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
-            if (authorizedSubject == null) {
-                LOG.warn("Unauthorized attempt to delete document {} from index", docId);
-                return Response.status(Response.Status.FORBIDDEN).build();
-            }
-            if (!authorizedSubject.hasGroupWrite(Group.ADMIN_KEY)) {
-                LOG.warn("Non-admin user {} attempted to remove document {} from index", docId, authorizedSubject.getName());
-                return Response.status(Response.Status.FORBIDDEN).build();
-            }
-            indexingService.removeFromIndexById(docId);
+            indexingService.removeDocuments(docIds);
             return Response.noContent().build();
         } catch (Exception e) {
-            LOG.error("Error occurred while deleting document index", e);
+            LOG.error("Error occurred while deleting documents {} index", docIds, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         } finally {
-            LOG.trace("Finished deleteDocumentsIndex()");
+            LOG.trace("Finished deleteDocumentsFromIndex({})", docIds);
         }
     }
 

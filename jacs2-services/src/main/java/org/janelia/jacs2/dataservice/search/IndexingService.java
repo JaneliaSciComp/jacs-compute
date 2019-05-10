@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -40,9 +41,9 @@ public class IndexingService {
         this.domainObjectIndexer = new DomainObjectIndexer(solrServer, treeNodeDao, solrBatchSize, solrCommitDelayInMillis);
     }
 
-    public boolean indexDocument(String subjectKey, Reference domainObjectReference) {
-        DomainObject domainObject = legacyDomainDao.getDomainObject(subjectKey, domainObjectReference);
-        return domainObjectIndexer.indexDocument(domainObject);
+    public boolean indexDocuments(List<Reference> domainObjectReferences) {
+        List<DomainObject> domainObjects = legacyDomainDao.getDomainObjectsAs(domainObjectReferences, DomainObject.class);
+        return domainObjectIndexer.indexDocumentStream(domainObjects.stream());
     }
 
     public boolean indexDocument(DomainObject domainObject) {
@@ -64,8 +65,12 @@ public class IndexingService {
         domainObjectIndexer.removeIndex();
     }
 
-    public boolean removeFromIndexById(Long id) {
+    public boolean removeDocument(Long id) {
         return domainObjectIndexer.removeDocument(id);
+    }
+
+    public boolean removeDocuments(List<Long> ids) {
+        return domainObjectIndexer.removeDocumentStream(ids.stream());
     }
 
     public DocumentSearchResults searchIndex(DocumentSearchParams searchParams) {

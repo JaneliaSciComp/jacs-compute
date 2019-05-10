@@ -9,20 +9,20 @@ import org.janelia.model.access.domain.IdSource;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
-import org.janelia.model.access.tiledMicroscope.TmModelManipulator;
 import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmProtobufExchanger;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.util.MatrixUtilities;
+import org.janelia.model.util.TmNeuronUtils;
 import org.janelia.rendering.RenderedVolume;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.awt.*;
+import java.awt.Color;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -47,7 +47,6 @@ public class SWCService {
     private final SWCReader swcReader;
     private final Path defaultSWCLocation;
     private final IdSource neuronIdGenerator;
-    private final TmModelManipulator neuronManipulator;
     private final TmProtobufExchanger protobufExchanger;
 
     @Inject
@@ -75,7 +74,6 @@ public class SWCService {
         this.defaultSWCLocation = StringUtils.isNotBlank(defaultSWCLocation)
             ? Paths.get(defaultSWCLocation)
             : Paths.get("");
-        this.neuronManipulator = new TmModelManipulator(null, neuronIdGenerator);
     }
 
     public TmWorkspace importSWCFolder(String swcFolderName, Long sampleId,
@@ -184,7 +182,7 @@ public class SWCService {
             nodeParentLinkage.put(node.getIndex(), node.getParentIndex());
 
         }
-        neuronManipulator.addLinkedGeometricAnnotationsInMemory(nodeParentLinkage, annotations, neuronMetadata);
+        TmNeuronUtils.addLinkedGeometricAnnotationsInMemory(nodeParentLinkage, annotations, neuronMetadata, () -> neuronIdGenerator.next());
 
         // Set neuron color
         float[] colorArr = swcData.extractColors();

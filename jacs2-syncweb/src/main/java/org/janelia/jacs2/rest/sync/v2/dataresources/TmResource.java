@@ -216,7 +216,7 @@ public class TmResource {
                                   @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.debug("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
         long nDeletedItems = tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
-        if (nDeletedItems > 0 && workspaceId != null) domainObjectIndexer.removeFromIndexById(workspaceId);
+        if (nDeletedItems > 0 && workspaceId != null) domainObjectIndexer.removeDocument(workspaceId);
     }
 
     @ApiOperation(value = "Gets the neurons for a workspace",
@@ -407,7 +407,7 @@ public class TmResource {
                                @ApiParam @QueryParam("neuronId") final Long neuronId) {
         LOG.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
         if (tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey) && neuronId != null) {
-            domainObjectIndexer.removeFromIndexById(neuronId);
+            domainObjectIndexer.removeDocument(neuronId);
         }
     }
 
