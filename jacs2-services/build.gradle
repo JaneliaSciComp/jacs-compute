@@ -35,6 +35,8 @@ project(":jacs2-services") {
 
         compile JACS_MODEL_RENDERING_LIB
 
+        compile JACS_MESSAGING_CORE_LIB
+
         compile (HIBERNATE_LIB) {
             exclude group: 'javax.transaction'
         }

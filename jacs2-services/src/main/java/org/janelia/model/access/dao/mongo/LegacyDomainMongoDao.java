@@ -1,9 +1,12 @@
 package org.janelia.model.access.dao.mongo;
 
+import com.google.common.collect.ImmutableList;
 import com.mongodb.DBCursor;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.cdi.qualifier.DaoIndexer;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Preference;
@@ -42,6 +45,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -49,10 +53,13 @@ import java.util.Set;
 public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     private final DomainDAO dao;
+    private final DomainObjectIndexer domainObjectIndexer;
 
     @Inject
-    public LegacyDomainMongoDao(DomainDAO dao) {
+    public LegacyDomainMongoDao(DomainDAO dao,
+                                @DaoIndexer DomainObjectIndexer domainObjectIndexer) {
         this.dao = dao;
+        this.domainObjectIndexer = domainObjectIndexer;
     }
 
     @Override
@@ -232,11 +239,14 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public <T extends DomainObject> void deleteDomainObject(String subjectKey, Class<T> domainClass, Long id) {
         dao.deleteDomainObject(subjectKey, domainClass, id);
+        domainObjectIndexer.removeDocument(id);
     }
 
     @Override
     public <T extends DomainObject> boolean deleteDomainObjects(String subjectKey, Class<T> domainClass, List<Long> ids) {
-        return dao.deleteDomainObjects(subjectKey, domainClass, ids);
+        boolean deleted = dao.deleteDomainObjects(subjectKey, domainClass, ids);
+        domainObjectIndexer.removeDocumentStream(ids.stream());
+        return deleted;
     }
 
     @Override
@@ -346,7 +356,9 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public Annotation createAnnotation(String subjectKey, Reference target, OntologyTermReference ontologyTermReference, Object value) throws Exception {
-        return dao.createAnnotation(subjectKey, target, ontologyTermReference, value);
+        Annotation annotation = dao.createAnnotation(subjectKey, target, ontologyTermReference, value);
+        domainObjectIndexer.indexDocument(annotation);
+        return annotation;
     }
 
     @Override
@@ -376,7 +388,9 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public DataSet createDataSet(String subjectKey, DataSet dataSet) throws Exception {
-        return dao.createDataSet(subjectKey, dataSet);
+        DataSet ds = dao.createDataSet(subjectKey, dataSet);
+        domainObjectIndexer.indexDocument(ds);
+        return ds;
     }
 
     @Override
@@ -476,17 +490,22 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public <T extends DomainObject> T createWithPrepopulatedId(String subjectKey, T domainObject) throws Exception {
-        return dao.createWithPrepopulatedId(subjectKey, domainObject);
+        T persistedDomainObject = dao.createWithPrepopulatedId(subjectKey, domainObject);
+        domainObjectIndexer.indexDocument(persistedDomainObject);
+        return persistedDomainObject;
     }
 
     @Override
     public <T extends DomainObject> T save(String subjectKey, T domainObject) throws Exception {
-        return dao.save(subjectKey, domainObject);
+        T persistedDomainObject = dao.save(subjectKey, domainObject);
+        domainObjectIndexer.indexDocument(persistedDomainObject);
+        return persistedDomainObject;
     }
 
     @Override
     public void remove(String subjectKey, DomainObject domainObject) throws Exception {
         dao.remove(subjectKey, domainObject);
+        domainObjectIndexer.removeDocument(domainObject.getId());
     }
 
     @Override
@@ -496,12 +515,16 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public Ontology addTerms(String subjectKey, Long ontologyId, Long parentTermId, Collection<OntologyTerm> terms, Integer index) throws Exception {
-        return dao.addTerms(subjectKey, ontologyId, parentTermId, terms, index);
+        Ontology updatedOntoly = dao.addTerms(subjectKey, ontologyId, parentTermId, terms, index);
+        domainObjectIndexer.indexDocument(updatedOntoly);
+        return updatedOntoly;
     }
 
     @Override
     public Ontology removeTerm(String subjectKey, Long ontologyId, Long parentTermId, Long termId) throws Exception {
-        return dao.removeTerm(subjectKey, ontologyId, parentTermId, termId);
+        Ontology updatedOntoly = dao.removeTerm(subjectKey, ontologyId, parentTermId, termId);
+        domainObjectIndexer.indexDocument(updatedOntoly);
+        return updatedOntoly;
     }
 
     @Override
@@ -521,17 +544,28 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
-        return dao.addChildren(subjectKey, treeNodeArg, references);
+        TreeNode updatedNode = dao.addChildren(subjectKey, treeNodeArg, references);
+        domainObjectIndexer.updateDocsAncestors(
+                references.stream().map(ref -> ref.getTargetId()).collect(Collectors.toSet()),
+                updatedNode.getId());
+        return updatedNode;
     }
 
     @Override
     public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references, Integer index) throws Exception {
-        return dao.addChildren(subjectKey, treeNodeArg, references, index);
+        TreeNode updatedNode = dao.addChildren(subjectKey, treeNodeArg, references, index);
+        domainObjectIndexer.updateDocsAncestors(
+                references.stream().map(ref -> ref.getTargetId()).collect(Collectors.toSet()),
+                updatedNode.getId());
+        return updatedNode;
     }
 
     @Override
     public TreeNode removeChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
-        return dao.removeChildren(subjectKey, treeNodeArg, references);
+        TreeNode updatedNode = dao.removeChildren(subjectKey, treeNodeArg, references);
+        List<DomainObject> children = dao.getDomainObjects(subjectKey, ImmutableList.copyOf(references));
+        domainObjectIndexer.indexDocumentStream(children.stream()); // reindex the children
+        return updatedNode;
     }
 
     @Override
@@ -541,12 +575,16 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) throws Exception {
-        return dao.updateProperty(subjectKey, clazz, id, propName, propValue);
+        T updatedDomainObject = dao.updateProperty(subjectKey, clazz, id, propName, propValue);
+        domainObjectIndexer.indexDocument(updatedDomainObject);
+        return updatedDomainObject;
     }
 
     @Override
     public DomainObject updateProperty(String subjectKey, String className, Long id, String propName, Object propValue) throws Exception {
-        return dao.updateProperty(subjectKey, className, id, propName, propValue);
+        DomainObject updatedDomainObject = dao.updateProperty(subjectKey, className, id, propName, propValue);
+        domainObjectIndexer.indexDocument(updatedDomainObject);
+        return updatedDomainObject;
     }
 
     @Override

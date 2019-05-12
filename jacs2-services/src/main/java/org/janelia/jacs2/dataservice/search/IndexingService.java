@@ -8,6 +8,7 @@ import org.janelia.model.access.domain.dao.TreeNodeDao;
 import org.janelia.model.access.domain.search.DocumentSearchParams;
 import org.janelia.model.access.domain.search.DocumentSearchResults;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
+import org.janelia.model.access.domain.search.SolrBasedDomainObjectIndexer;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
@@ -38,7 +39,7 @@ public class IndexingService {
                     @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 100) int solrBatchSize,
                     @IntPropertyValue(name = "Solr.CommitDelayInMillis", defaultValue = 100) int solrCommitDelayInMillis) {
         this.legacyDomainDao = legacyDomainDao;
-        this.domainObjectIndexer = new DomainObjectIndexer(solrServer, treeNodeDao, solrBatchSize, solrCommitDelayInMillis);
+        this.domainObjectIndexer = new SolrBasedDomainObjectIndexer(solrServer, treeNodeDao, solrBatchSize, solrCommitDelayInMillis);
     }
 
     public boolean indexDocuments(List<Reference> domainObjectReferences) {

@@ -81,7 +81,7 @@ public class TmResource {
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
     @Inject
-    private IndexingService domainObjectIndexer;
+    private IndexingService indexingService;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
@@ -163,7 +163,7 @@ public class TmResource {
     public TmWorkspace createTmWorkspace(DomainQuery query) {
         LOG.trace("createTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        domainObjectIndexer.indexDocument(tmWorkspace);
+        indexingService.indexDocument(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -181,7 +181,7 @@ public class TmResource {
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("copyTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), query.getObjectType());
-        domainObjectIndexer.indexDocument(tmWorkspace);
+        indexingService.indexDocument(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -199,7 +199,7 @@ public class TmResource {
     public TmWorkspace updateTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("updateTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        domainObjectIndexer.indexDocument(tmWorkspace);
+        indexingService.indexDocument(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -216,7 +216,7 @@ public class TmResource {
                                   @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.debug("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
         long nDeletedItems = tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
-        if (nDeletedItems > 0 && workspaceId != null) domainObjectIndexer.removeDocument(workspaceId);
+        if (nDeletedItems > 0 && workspaceId != null) indexingService.removeDocument(workspaceId);
     }
 
     @ApiOperation(value = "Gets the neurons for a workspace",
@@ -303,7 +303,7 @@ public class TmResource {
                     .build();
         } else {
             TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace, neuronPointsStream);
-            domainObjectIndexer.indexDocument(newNeuron);
+            indexingService.indexDocument(newNeuron);
             return Response.ok(newNeuron)
                     .build();
         }
@@ -341,7 +341,7 @@ public class TmResource {
                 protoBufStream = null;
             }
             TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
-            domainObjectIndexer.indexDocument(updatedNeuron);
+            indexingService.indexDocument(updatedNeuron);
             tmNeuronMetadataDao.updateNeuronPoints(updatedNeuron, protoBufStream);
             list.add(updatedNeuron);
         }
@@ -407,7 +407,7 @@ public class TmResource {
                                @ApiParam @QueryParam("neuronId") final Long neuronId) {
         LOG.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
         if (tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey) && neuronId != null) {
-            domainObjectIndexer.removeDocument(neuronId);
+            indexingService.removeDocument(neuronId);
         }
     }
 

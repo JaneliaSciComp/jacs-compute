@@ -81,7 +81,7 @@ public class TmSampleResource {
     @Inject
     private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
     @Inject
-    private IndexingService domainObjectIndexer;
+    private IndexingService indexingService;
 
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
@@ -250,7 +250,7 @@ public class TmSampleResource {
     public TmSample createTmSample(DomainQuery query) {
         LOG.trace("createTmSample({})", query);
         TmSample tmSample = tmSampleDao.createTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
-        domainObjectIndexer.indexDocument(tmSample);
+        indexingService.indexDocument(tmSample);
         return tmSample;
     }
 
@@ -268,7 +268,7 @@ public class TmSampleResource {
     public TmSample updateTmSample(@ApiParam DomainQuery query) {
         LOG.debug("updateTmSample({})", query);
         TmSample updatedTmSample = tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
-        domainObjectIndexer.indexDocument(updatedTmSample);
+        indexingService.indexDocument(updatedTmSample);
         return updatedTmSample;
     }
 
@@ -285,7 +285,7 @@ public class TmSampleResource {
                                @ApiParam @QueryParam("sampleId") final Long sampleId) {
         LOG.debug("removeTmSample(subjectKey: {}, sampleId: {})", subjectKey, sampleId);
         if (tmSampleDao.removeTmSample(subjectKey, sampleId) && sampleId != null) {
-            domainObjectIndexer.removeDocument(sampleId);
+            indexingService.removeDocument(sampleId);
         }
     }
 
