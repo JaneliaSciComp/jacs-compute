@@ -15,7 +15,7 @@ public class MessagingProducer {
     @ApplicationScoped
     @Produces
     public ConnectionManager createConnectionManager() {
-        return new ConnectionManager(1);
+        return ConnectionManager.getInstance();
     }
 
     @ApplicationScoped
@@ -24,10 +24,11 @@ public class MessagingProducer {
                                                      @PropertyValue(name = "Messaging.Server") String messagingServer,
                                                      @PropertyValue(name = "Messaging.User") String messagingUser,
                                                      @PropertyValue(name = "Messaging.Password") String messagingPassword,
-                                                     @PropertyValue(name = "Messaging.AsyncIndexingQueue") String asyncIndexingQueue) {
+                                                     @PropertyValue(name = "Messaging.AsyncIndexingExchange") String asyncIndexingExchange,
+                                                     @PropertyValue(name = "Messaging.AsyncIndexingRoutingKey") String asyncIndexingRoutingKey) {
         if (StringUtils.isNotBlank(messagingServer)) {
             MessageSender messageSender = new MessageSenderImpl(connectionManager);
-            messageSender.connect(messagingServer, messagingUser, messagingPassword, asyncIndexingQueue, asyncIndexingQueue, 1);
+            messageSender.connect(messagingServer, messagingUser, messagingPassword, asyncIndexingExchange, asyncIndexingRoutingKey);
             return messageSender;
         } else {
             return null;
