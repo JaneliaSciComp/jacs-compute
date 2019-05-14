@@ -335,8 +335,6 @@ public class TmResource {
             InputStream protoBufStream;
             if (part1.getMediaType().equals(MediaType.APPLICATION_OCTET_STREAM_TYPE)) {
                 protoBufStream = ((BodyPartEntity) part1.getEntity()).getInputStream();
-            } else if (part1.getMediaType().equals(MediaType.TEXT_PLAIN_TYPE)) {
-                protoBufStream = ((BodyPartEntity) part1.getEntity()).getInputStream();
             } else {
                 protoBufStream = null;
             }
