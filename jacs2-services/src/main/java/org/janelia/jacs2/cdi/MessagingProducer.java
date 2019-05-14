@@ -2,8 +2,9 @@ package org.janelia.jacs2.cdi;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.messaging.core.MessageConnection;
 import org.janelia.messaging.core.MessageSender;
-import org.janelia.messaging.core.impl.MessageConnection;
+import org.janelia.messaging.core.impl.MessageConnectionImpl;
 import org.janelia.messaging.core.impl.MessageSenderImpl;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.slf4j.Logger;
@@ -18,14 +19,13 @@ public class MessagingProducer {
     private static final Logger LOG = LoggerFactory.getLogger(MessagingProducer.class);
 
     @ApplicationScoped
-    @AsyncIndex
     @Produces
     public MessageConnection createIndexingMessageConnection(@PropertyValue(name = "Messaging.Server") String messagingServer,
                                                              @PropertyValue(name = "Messaging.User") String messagingUser,
                                                              @PropertyValue(name = "Messaging.Password") String messagingPassword) {
         LOG.info("Create messaging connection to {} as {}", messagingServer, messagingUser);
         if (StringUtils.isNotBlank(messagingServer)) {
-            MessageConnection messageConnection = new MessageConnection();
+            MessageConnection messageConnection = new MessageConnectionImpl();
             messageConnection.openConnection(messagingServer, messagingUser, messagingPassword, 1);
             return messageConnection;
         } else {
@@ -36,7 +36,7 @@ public class MessagingProducer {
     @ApplicationScoped
     @AsyncIndex
     @Produces
-    public MessageSender createIndexingMessageSender(@AsyncIndex MessageConnection messageConnection,
+    public MessageSender createIndexingMessageSender(MessageConnection messageConnection,
                                                      @PropertyValue(name = "Messaging.AsyncIndexingExchange") String asyncIndexingExchange,
                                                      @PropertyValue(name = "Messaging.AsyncIndexingRoutingKey") String asyncIndexingRoutingKey) {
         LOG.info("Create sender and connect to {}:{}", asyncIndexingExchange, asyncIndexingRoutingKey);
