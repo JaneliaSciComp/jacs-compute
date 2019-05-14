@@ -1,12 +1,15 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.beust.jcommander.Parameter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 
 import java.util.ArrayList;
 import java.util.List;
 
 class DeconvolutionArgs extends ServiceArgs {
+    private static final int DEFAULT_ITERATIONS = 10;
+
     @Parameter(names = {"-i", "-tileChannelConfigurationFiles"},
                description = "Path to the input tile configuration files. Each configuration corresponds to one channel.")
     List<String> tileChannelConfigurationFiles = new ArrayList<>();
@@ -15,7 +18,7 @@ class DeconvolutionArgs extends ServiceArgs {
     @Parameter(names = {"-z", "-psfZStep"}, description = "PSF Z step in microns.")
     Float psfZStep;
     @Parameter(names = {"-n", "-numIterations"}, description = "Number of deconvolution iterations.")
-    Integer nIterations = 10;
+    List<Integer> nIterationsPerChannel = new ArrayList<>();
     @Parameter(names = {"-v", "-backgroundValue"}, description = "Background intensity value which will be subtracted from the data and the PSF (one per input channel). If omitted, the pivot value estimated in the Flatfield Correction step will be used (default).")
     Float backgroundValue;
     @Parameter(names = {"-c", "-coresPerTask"}, description = "Number of CPU cores used by a single decon task.")
@@ -29,6 +32,16 @@ class DeconvolutionArgs extends ServiceArgs {
         if (tileChannelConfigurationFiles.size() != psfFiles.size()) {
             throw new IllegalArgumentException("Tile configuration files and psf files must have the same size - " +
                     "tileConfigurationFiles: " + tileChannelConfigurationFiles.size() + ", psfFile: " + psfFiles.size());
+        }
+    }
+
+    int getNumIterations(int channelIndex) {
+        if (CollectionUtils.isEmpty(nIterationsPerChannel)) {
+            return DEFAULT_ITERATIONS;
+        } else if (channelIndex < nIterationsPerChannel.size()) {
+            return nIterationsPerChannel.get(channelIndex);
+        } else {
+            return DEFAULT_ITERATIONS;
         }
     }
 }

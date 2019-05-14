@@ -1,11 +1,13 @@
 package org.janelia.model.jacs2.domain;
 
+import com.google.common.collect.Streams;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -24,6 +26,10 @@ public class IndexedReference<T, I> {
     public static <T, I> Stream<IndexedReference<T, I>> indexArrayContent(T[] content, BiFunction<Integer, T, IndexedReference<T, I>> indexedMapper) {
         return IntStream.range(0, content.length)
                 .mapToObj(pos -> indexedMapper.apply(pos, content[pos]));
+    }
+
+    public static <T, I> Stream<IndexedReference<T, I>> indexStream(Stream<T> content, BiFunction<Integer, T, IndexedReference<T, I>> indexedMapper) {
+        return Streams.zip(IntStream.range(0, Integer.MAX_VALUE).boxed(), content, indexedMapper);
     }
 
     private final T reference;

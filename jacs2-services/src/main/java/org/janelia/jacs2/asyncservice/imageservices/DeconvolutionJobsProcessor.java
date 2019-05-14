@@ -8,6 +8,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
@@ -21,6 +23,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
+import org.janelia.model.jacs2.domain.IndexedReference;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -210,10 +213,13 @@ public class DeconvolutionJobsProcessor extends AbstractExeBasedServiceProcessor
 
     @SuppressWarnings("unchecked")
     private Stream<Map<String, String>> prepareJobConfigs(DeconvolutionArgs args) {
-        return Streams.zip(args.tileChannelConfigurationFiles.stream(), args.psfFiles.stream(), (channelConfigFile, psfFile) -> ImmutablePair.of(channelConfigFile, psfFile))
-                .flatMap(inputPair -> {
-                    String channelConfigFile = inputPair.getLeft();
-                    String psfFile = inputPair.getRight();
+        return IndexedReference.indexStream(
+                Streams.zip(args.tileChannelConfigurationFiles.stream(), args.psfFiles.stream(), (channelConfigFile, psfFile) -> ImmutablePair.of(channelConfigFile, psfFile)),
+                (channelIndex, channelConfigPair) -> new IndexedReference<>(channelConfigPair, channelIndex))
+                .flatMap(indexedConfig -> {
+                    int channelIndex = indexedConfig.getPos();
+                    String channelConfigFile = indexedConfig.getReference().getLeft();
+                    String psfFile = indexedConfig.getReference().getRight();
                     List<Map<String, Object>> channelTileConfigs = deconvolutionHelper.loadJsonConfiguration(channelConfigFile,
                             new TypeReference<List<Map<String, Object>>>() {}).orElseGet(() -> ImmutableList.of());
 
@@ -232,6 +238,7 @@ public class DeconvolutionJobsProcessor extends AbstractExeBasedServiceProcessor
                         }
                     }
                     String deconvOutputDir = deconvolutionHelper.mapToDeconvOutputDir(channelConfigFile);
+                    Integer nIterations = args.getNumIterations(channelIndex);
                     return channelTileConfigs.stream()
                             .map(tileConfig -> {
                                 Map<String, String> taskConfig = new LinkedHashMap<>();
@@ -244,7 +251,7 @@ public class DeconvolutionJobsProcessor extends AbstractExeBasedServiceProcessor
                                 taskConfig.put("background_value", backgroundIntensity != null ? backgroundIntensity.toString() : null);
                                 taskConfig.put("data_z_resolution", pixelResolutions.get(2).toString());
                                 taskConfig.put("psf_z_step", args.psfZStep != null ? args.psfZStep.toString() : null);
-                                taskConfig.put("num_iterations", args.nIterations != null ? args.nIterations.toString() : null);
+                                taskConfig.put("num_iterations", nIterations.toString());
                                 return taskConfig;
                             });
                 })

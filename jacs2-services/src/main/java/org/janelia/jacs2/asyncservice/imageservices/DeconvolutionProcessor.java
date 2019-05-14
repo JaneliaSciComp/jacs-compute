@@ -86,7 +86,7 @@ public class DeconvolutionProcessor extends AbstractServiceProcessor<List<File>>
                 new ServiceArg("-i", args.tileChannelConfigurationFiles.stream().reduce((c1, c2) -> c1 + "," + c2).orElse("")),
                 new ServiceArg("-p", args.psfFiles.stream().reduce((f1, f2) -> f1 + "," + f2).orElse("")),
                 new ServiceArg("-z", args.psfZStep),
-                new ServiceArg("-n", args.nIterations),
+                new ServiceArg("-n", args.nIterationsPerChannel.stream().map(Object::toString).reduce((f1, f2) -> f1 + "," + f2).orElse("")),
                 new ServiceArg("-v", args.backgroundValue),
                 new ServiceArg("-c", args.coresPerTask))
                 .thenApply(r -> {
