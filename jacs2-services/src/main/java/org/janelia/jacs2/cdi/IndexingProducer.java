@@ -14,7 +14,7 @@ public class IndexingProducer {
     @ApplicationScoped
     @AsyncIndex
     @Produces
-    public DomainObjectIndexer createDomainObjectIndexer(MessageSender mesageSender) {
+    public DomainObjectIndexer createDomainObjectIndexer(@AsyncIndex MessageSender mesageSender) {
         return new AsyncDomainObjectIndexer(mesageSender);
     }
 

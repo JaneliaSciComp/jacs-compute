@@ -5,6 +5,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.messaging.core.MessageSender;
 import org.janelia.messaging.core.impl.MessageConnection;
 import org.janelia.messaging.core.impl.MessageSenderImpl;
+import org.janelia.model.access.cdi.AsyncIndex;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -13,6 +14,7 @@ import javax.enterprise.inject.Produces;
 public class MessagingProducer {
 
     @ApplicationScoped
+    @AsyncIndex
     @Produces
     public MessageConnection createIndexingMessageConnection(@PropertyValue(name = "Messaging.Server") String messagingServer,
                                                              @PropertyValue(name = "Messaging.User") String messagingUser,
@@ -27,8 +29,9 @@ public class MessagingProducer {
     }
 
     @ApplicationScoped
+    @AsyncIndex
     @Produces
-    public MessageSender createIndexingMessageSender(MessageConnection messageConnection,
+    public MessageSender createIndexingMessageSender(@AsyncIndex MessageConnection messageConnection,
                                                      @PropertyValue(name = "Messaging.AsyncIndexingExchange") String asyncIndexingExchange,
                                                      @PropertyValue(name = "Messaging.AsyncIndexingRoutingKey") String asyncIndexingRoutingKey) {
         MessageSender messageSender = new MessageSenderImpl(messageConnection);
