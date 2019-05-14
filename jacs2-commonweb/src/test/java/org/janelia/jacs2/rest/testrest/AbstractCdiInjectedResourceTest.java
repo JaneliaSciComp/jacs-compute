@@ -1,6 +1,6 @@
 package org.janelia.jacs2.rest.testrest;
 
-//import org.glassfish.jersey.ext.cdi1x.internal.CdiComponentProvider;
+import org.glassfish.jersey.ext.cdi1x.internal.CdiComponentProvider;
 import org.glassfish.jersey.inject.hk2.Hk2InjectionManagerFactory;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
@@ -26,7 +26,7 @@ public abstract class AbstractCdiInjectedResourceTest extends JerseyTest {
         SeContainerInitializer containerInit = SeContainerInitializer
                 .newInstance()
                 .disableDiscovery()
-//                .addExtensions(new CdiComponentProvider())
+                .addExtensions(new CdiComponentProvider())
                 .addBeanClasses(getTestBeanProviders())
                 ;
         container = spy(containerInit.initialize());
