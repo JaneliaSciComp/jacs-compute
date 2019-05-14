@@ -10,6 +10,7 @@ import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.dataservice.search.IndexingService;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
@@ -95,6 +96,7 @@ public class TestResourceDependenciesProducer {
         return volumeLocationFactory;
     }
 
+    @AsyncIndex
     @Produces
     public OntologyDao getOntologyDao() {
         return ontologyDao;

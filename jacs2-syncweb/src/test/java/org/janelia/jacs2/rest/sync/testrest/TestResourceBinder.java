@@ -11,6 +11,7 @@ import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.dataservice.search.IndexingService;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
@@ -27,6 +28,7 @@ import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
+import java.lang.annotation.Annotation;
 
 public class TestResourceBinder extends AbstractBinder {
     private final TestResourceDependenciesProducer dependenciesProducer;

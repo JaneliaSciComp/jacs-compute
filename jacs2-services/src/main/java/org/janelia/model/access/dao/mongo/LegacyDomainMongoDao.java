@@ -3,7 +3,7 @@ package org.janelia.model.access.dao.mongo;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.DBCursor;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.cdi.qualifier.DaoIndexer;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.DomainDAO;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
@@ -57,7 +57,7 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Inject
     public LegacyDomainMongoDao(DomainDAO dao,
-                                @DaoIndexer DomainObjectIndexer domainObjectIndexer) {
+                                @AsyncIndex DomainObjectIndexer domainObjectIndexer) {
         this.dao = dao;
         this.domainObjectIndexer = domainObjectIndexer;
     }

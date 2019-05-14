@@ -13,6 +13,7 @@ import org.apache.commons.lang.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.OntologyDao;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.ontology.Ontology;
@@ -59,6 +60,7 @@ import java.util.List;
 public class OntologyResource {
     private static final Logger LOG = LoggerFactory.getLogger(OntologyResource.class);
 
+    @AsyncIndex
     @Inject
     private OntologyDao ontologyDao;
 
