@@ -136,8 +136,9 @@ public class TestResourceDependenciesProducer {
         return tmWorkspaceDao;
     }
 
+    @AsyncIndex
     @Produces
-    public TmReviewTaskDao getTmReviewTaskDao() {
+    public TmReviewTaskDao getTmReviewTaskSearchableDao() {
         return tmReviewTaskDao;
     }
 

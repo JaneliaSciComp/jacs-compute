@@ -40,6 +40,8 @@ public class TestResourceBinder extends AbstractBinder {
 
     @Override
     protected void configure() {
+        // for a class qualified with an annotation to be injected properly in the unit test,
+        // it must both be annotated in the producer and qualified with the proper annotation instance in the binder
         Annotation asyncIndexAnnotation = getAsyncIndexAnnotation();
         bind(dependenciesProducer.getLogger()).to(Logger.class);
         bind(dependenciesProducer.getAnnotationSearchableDao()).to(AnnotationDao.class).qualifiedBy(asyncIndexAnnotation);
@@ -53,7 +55,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getRenderedVolumeLoader()).to(RenderedVolumeLoader.class);
         bind(dependenciesProducer.getStorageService()).to(StorageService.class);
         bind(dependenciesProducer.getSummaryDao()).to(SummaryDao.class);
-        bind(dependenciesProducer.getTmReviewTaskDao()).to(TmReviewTaskDao.class);
+        bind(dependenciesProducer.getTmReviewTaskSearchableDao()).to(TmReviewTaskDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getTmSampleSearchableDao()).to(TmSampleDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getWorkspaceNodeSearchableDao()).to(WorkspaceNodeDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getTmNeuronMetadataSearchableDao()).to(TmNeuronMetadataDao.class).qualifiedBy(asyncIndexAnnotation);

@@ -10,6 +10,7 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.TmReviewTaskDao;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.TmReviewTask;
@@ -51,6 +52,7 @@ import java.util.List;
 public class TmReviewsResource {
     private static final Logger LOG = LoggerFactory.getLogger(TmReviewsResource.class);
 
+    @AsyncIndex
     @Inject
     private TmReviewTaskDao tmReviewTaskDao;
 
