@@ -2,9 +2,9 @@ package org.janelia.jacs2.cdi;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.messaging.core.ConnectionManager;
 import org.janelia.messaging.core.MessageConnection;
 import org.janelia.messaging.core.MessageSender;
-import org.janelia.messaging.core.impl.MessageConnectionImpl;
 import org.janelia.messaging.core.impl.MessageSenderImpl;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.slf4j.Logger;
@@ -25,9 +25,7 @@ public class MessagingProducer {
                                                              @PropertyValue(name = "Messaging.Password") String messagingPassword) {
         LOG.info("Create messaging connection to {} as {}", messagingServer, messagingUser);
         if (StringUtils.isNotBlank(messagingServer)) {
-            MessageConnection messageConnection = new MessageConnectionImpl();
-            messageConnection.openConnection(messagingServer, messagingUser, messagingPassword, 1);
-            return messageConnection;
+            return ConnectionManager.getInstance().getConnection(messagingServer, messagingUser, messagingPassword, 1);
         } else {
             return null;
         }
