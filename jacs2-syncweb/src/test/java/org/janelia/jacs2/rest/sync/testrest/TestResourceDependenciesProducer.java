@@ -66,9 +66,16 @@ public class TestResourceDependenciesProducer {
         return logger;
     }
 
+    @AsyncIndex
     @Produces
-    public AnnotationDao getAnnotationDao() {
+    public AnnotationDao getAnnotationSearchableDao() {
         return annotationDao;
+    }
+
+    @AsyncIndex
+    @Produces
+    public DatasetDao getDatasetSearchableDao() {
+        return datasetDao;
     }
 
     @Produces
@@ -98,7 +105,7 @@ public class TestResourceDependenciesProducer {
 
     @AsyncIndex
     @Produces
-    public OntologyDao getOntologyDao() {
+    public OntologyDao getOntologySearchableDao() {
         return ontologyDao;
     }
 
@@ -117,13 +124,15 @@ public class TestResourceDependenciesProducer {
         return storageService;
     }
 
+    @AsyncIndex
     @Produces
-    public TmNeuronMetadataDao getTmNeuronMetadataDao() {
+    public TmNeuronMetadataDao getTmNeuronMetadataSearchableDao() {
         return tmNeuronMetadataDao;
     }
 
+    @AsyncIndex
     @Produces
-    public TmWorkspaceDao getTmWorkspaceDao() {
+    public TmWorkspaceDao getTmWorkspaceSearchableDao() {
         return tmWorkspaceDao;
     }
 
@@ -132,13 +141,20 @@ public class TestResourceDependenciesProducer {
         return tmReviewTaskDao;
     }
 
+    @AsyncIndex
+    @Produces
+    public TmSampleDao getTmSampleSearchableDao() {
+        return tmSampleDao;
+    }
+
     @Produces
     public TmSampleDao getTmSampleDao() {
         return tmSampleDao;
     }
 
+    @AsyncIndex
     @Produces
-    public WorkspaceNodeDao getWorkspaceNodeDao() {
+    public WorkspaceNodeDao getWorkspaceNodeSearchableDao() {
         return workspaceNodeDao;
     }
 

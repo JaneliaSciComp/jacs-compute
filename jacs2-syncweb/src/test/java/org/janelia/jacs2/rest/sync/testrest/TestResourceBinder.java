@@ -40,22 +40,24 @@ public class TestResourceBinder extends AbstractBinder {
 
     @Override
     protected void configure() {
+        Annotation asyncIndexAnnotation = getAsyncIndexAnnotation();
         bind(dependenciesProducer.getLogger()).to(Logger.class);
-        bind(dependenciesProducer.getAnnotationDao()).to(AnnotationDao.class);
+        bind(dependenciesProducer.getAnnotationSearchableDao()).to(AnnotationDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getDatasetDao()).to(DatasetDao.class);
+        bind(dependenciesProducer.getDatasetSearchableDao()).to(DatasetDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getLegacyDomainDao()).to(LegacyDomainDao.class);
         bind(dependenciesProducer.getObjectMapperFactory()).to(ObjectMapperFactory.class);
         bind(dependenciesProducer.getVolumeLocationFactory()).to(RenderedVolumeLocationFactory.class);
         bind(dependenciesProducer.getJwtProvider()).to(JWTProvider.class);
-        bind(dependenciesProducer.getOntologyDao()).to(OntologyDao.class);
+        bind(dependenciesProducer.getOntologySearchableDao()).to(OntologyDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getRenderedVolumeLoader()).to(RenderedVolumeLoader.class);
         bind(dependenciesProducer.getStorageService()).to(StorageService.class);
         bind(dependenciesProducer.getSummaryDao()).to(SummaryDao.class);
         bind(dependenciesProducer.getTmReviewTaskDao()).to(TmReviewTaskDao.class);
-        bind(dependenciesProducer.getTmSampleDao()).to(TmSampleDao.class);
-        bind(dependenciesProducer.getWorkspaceNodeDao()).to(WorkspaceNodeDao.class);
-        bind(dependenciesProducer.getTmNeuronMetadataDao()).to(TmNeuronMetadataDao.class);
-        bind(dependenciesProducer.getTmWorkspaceDao()).to(TmWorkspaceDao.class);
+        bind(dependenciesProducer.getTmSampleSearchableDao()).to(TmSampleDao.class).qualifiedBy(asyncIndexAnnotation);
+        bind(dependenciesProducer.getWorkspaceNodeSearchableDao()).to(WorkspaceNodeDao.class).qualifiedBy(asyncIndexAnnotation);
+        bind(dependenciesProducer.getTmNeuronMetadataSearchableDao()).to(TmNeuronMetadataDao.class).qualifiedBy(asyncIndexAnnotation);
+        bind(dependenciesProducer.getTmWorkspaceSearchableDao()).to(TmWorkspaceDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getSubjectDao()).to(SubjectDao.class);
         bind(dependenciesProducer.getPwProvider()).to(PasswordProvider.class);
         bind(dependenciesProducer.getAuthProvider()).to(AuthProvider.class);
@@ -64,5 +66,13 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getSampleDataService()).to(SampleDataService.class);
         bind(dependenciesProducer.getSageDataService()).to(SageDataService.class);
         bind(dependenciesProducer.defaultVolume).to(String.class).qualifiedBy(() -> PropertyValue.class);
+    }
+
+    private Annotation getAsyncIndexAnnotation() {
+        try {
+            return dependenciesProducer.getClass().getMethod("getDatasetSearchableDao").getAnnotation(AsyncIndex.class);
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

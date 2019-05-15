@@ -17,8 +17,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartMediaTypes;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.search.IndexingService;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
@@ -76,12 +76,12 @@ public class TmResource {
 
     @Inject
     private LegacyDomainDao legacyWorkspaceDao;
+    @AsyncIndex
     @Inject
     private TmWorkspaceDao tmWorkspaceDao;
+    @AsyncIndex
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
-    @Inject
-    private IndexingService indexingService;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
@@ -163,7 +163,6 @@ public class TmResource {
     public TmWorkspace createTmWorkspace(DomainQuery query) {
         LOG.trace("createTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        indexingService.indexDocument(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -181,7 +180,6 @@ public class TmResource {
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("copyTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), query.getObjectType());
-        indexingService.indexDocument(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -199,7 +197,6 @@ public class TmResource {
     public TmWorkspace updateTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("updateTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        indexingService.indexDocument(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -215,8 +212,7 @@ public class TmResource {
     public void removeTmWorkspace(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.debug("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
-        long nDeletedItems = tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
-        if (nDeletedItems > 0 && workspaceId != null) indexingService.removeDocument(workspaceId);
+        tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
     }
 
     @ApiOperation(value = "Gets the neurons for a workspace",
@@ -303,7 +299,6 @@ public class TmResource {
                     .build();
         } else {
             TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace, neuronPointsStream);
-            indexingService.indexDocument(newNeuron);
             return Response.ok(newNeuron)
                     .build();
         }
@@ -339,7 +334,6 @@ public class TmResource {
                 protoBufStream = null;
             }
             TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
-            indexingService.indexDocument(updatedNeuron);
             tmNeuronMetadataDao.updateNeuronPoints(updatedNeuron, protoBufStream);
             list.add(updatedNeuron);
         }
@@ -404,9 +398,7 @@ public class TmResource {
     public void removeTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("neuronId") final Long neuronId) {
         LOG.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
-        if (tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey) && neuronId != null) {
-            indexingService.removeDocument(neuronId);
-        }
+        tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey);
     }
 
     @ApiOperation(value = "Add or remove tags",

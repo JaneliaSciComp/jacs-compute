@@ -11,6 +11,7 @@ import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.domain.dto.DomainQuery;
@@ -51,6 +52,7 @@ import java.util.List;
 public class DataAnnotationResource {
     private static final Logger LOG = LoggerFactory.getLogger(DataAnnotationResource.class);
 
+    @AsyncIndex
     @Inject
     private AnnotationDao annotationDao;
     @Inject

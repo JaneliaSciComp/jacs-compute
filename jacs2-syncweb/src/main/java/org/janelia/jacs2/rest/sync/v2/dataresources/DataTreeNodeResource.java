@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
@@ -69,6 +70,7 @@ public class DataTreeNodeResource {
 
     @Inject
     private LegacyDomainDao legacyFolderDao;
+    @AsyncIndex
     @Inject
     private WorkspaceNodeDao workspaceNodeDao;
 

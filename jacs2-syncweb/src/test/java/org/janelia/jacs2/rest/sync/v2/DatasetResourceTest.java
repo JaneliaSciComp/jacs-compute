@@ -84,7 +84,7 @@ public class DatasetResourceTest extends AbstractSyncServicesAppResourceTest {
         Mockito.when(dependenciesProducer.getLegacyDomainDao().getSubjectByNameOrKey(TEST_USERNAME))
                 .thenReturn(testUser);
 
-        Mockito.when(dependenciesProducer.getDatasetDao().getDatasetsByOwnersAndSageSyncFlag(testOwners, testSageSyncFlag))
+        Mockito.when(dependenciesProducer.getDatasetSearchableDao().getDatasetsByOwnersAndSageSyncFlag(testOwners, testSageSyncFlag))
                 .thenReturn(testDataSets)
         ;
         return testDataSets;

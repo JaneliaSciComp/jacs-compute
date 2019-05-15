@@ -15,6 +15,7 @@ import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.auth.impl.AuthProvider;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
@@ -81,6 +82,7 @@ public class UserResource {
     private PasswordProvider pwProvider;
     @Inject
     private AuthProvider authProvider;
+    @AsyncIndex
     @Inject
     private WorkspaceNodeDao workspaceNodeDao;
 

@@ -16,6 +16,7 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.dataservice.search.IndexingService;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.domain.DomainConstants;
@@ -76,12 +77,11 @@ public class TmSampleResource {
 
     @Inject
     private LegacyDomainDao legacyDomainDao;
+    @AsyncIndex
     @Inject
     private TmSampleDao tmSampleDao;
     @Inject
     private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
-    @Inject
-    private IndexingService indexingService;
 
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
@@ -249,9 +249,7 @@ public class TmSampleResource {
     @Produces(MediaType.APPLICATION_JSON)
     public TmSample createTmSample(DomainQuery query) {
         LOG.trace("createTmSample({})", query);
-        TmSample tmSample = tmSampleDao.createTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
-        indexingService.indexDocument(tmSample);
-        return tmSample;
+        return tmSampleDao.createTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
     }
 
     @ApiOperation(value = "Updates an existing TmSample",
@@ -266,10 +264,8 @@ public class TmSampleResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("sample")
     public TmSample updateTmSample(@ApiParam DomainQuery query) {
-        LOG.debug("updateTmSample({})", query);
-        TmSample updatedTmSample = tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
-        indexingService.indexDocument(updatedTmSample);
-        return updatedTmSample;
+        LOG.trace("updateTmSample({})", query);
+        return tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
     }
 
     @ApiOperation(value = "Removes a TmSample",
@@ -283,10 +279,8 @@ public class TmSampleResource {
     @Path("sample")
     public void removeTmSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("sampleId") final Long sampleId) {
-        LOG.debug("removeTmSample(subjectKey: {}, sampleId: {})", subjectKey, sampleId);
-        if (tmSampleDao.removeTmSample(subjectKey, sampleId) && sampleId != null) {
-            indexingService.removeDocument(sampleId);
-        }
+        LOG.trace("removeTmSample(subjectKey: {}, sampleId: {})", subjectKey, sampleId);
+        tmSampleDao.removeTmSample(subjectKey, sampleId);
     }
 
 }

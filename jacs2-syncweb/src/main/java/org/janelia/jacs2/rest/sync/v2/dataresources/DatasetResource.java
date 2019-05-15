@@ -22,6 +22,7 @@ import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.domain.dto.DomainQuery;
@@ -69,6 +70,7 @@ import java.util.stream.Collectors;
 public class DatasetResource {
     private static final Logger LOG = LoggerFactory.getLogger(DatasetResource.class);
 
+    @AsyncIndex
     @Inject
     private DatasetDao datasetDao;
     @Inject
