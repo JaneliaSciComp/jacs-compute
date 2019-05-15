@@ -197,6 +197,13 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
                     .append(']');
             ;
         }
+        String gridResources = ProcessorHelper.getGridJobResources(jobResources);
+        if (StringUtils.isNotBlank(gridResources)) {
+            if (resourceBuffer.length() > 0) {
+                resourceBuffer.append(' ');
+            }
+            resourceBuffer.append(gridResources);
+        }
         if (resourceBuffer.length() > 0) {
             spec.add("-R \""+resourceBuffer+"\"");
         }
