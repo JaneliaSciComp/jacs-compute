@@ -109,8 +109,7 @@ public class DomainIndexingResource {
                 LOG.warn("Non-admin user {} attempted to update the entire search index", authorizedSubject.getName());
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
-            if (clearIndex != null && clearIndex) indexingService.removeIndex();
-            indexingService.indexAllDocuments();
+            indexingService.indexAllDocuments(clearIndex != null && clearIndex);
             return Response.ok().build();
         } catch (Exception e) {
             LOG.error("Error occurred while deleting document index", e);

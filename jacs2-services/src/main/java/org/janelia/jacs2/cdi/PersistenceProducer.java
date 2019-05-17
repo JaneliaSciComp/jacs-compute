@@ -10,15 +10,15 @@ import com.mongodb.client.MongoDatabase;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.janelia.jacs2.cdi.qualifier.GridExecutor;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
+import org.janelia.jacs2.dataservice.search.SolrServerConstructor;
 import org.janelia.model.access.dao.mongo.utils.RegistryHelper;
 import org.slf4j.Logger;
 
@@ -27,6 +27,7 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.sql.DataSource;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -155,7 +156,24 @@ public class PersistenceProducer {
 
     @Produces
     @ApplicationScoped
-    public SolrServer createSolrServer(@PropertyValue(name = "Solr.ServerURL") String solrServerURL) {
-        return StringUtils.isBlank(solrServerURL) ? null : new HttpSolrServer(solrServerURL);
+    public SolrServerConstructor createSolrServer() {
+        return (String solrBaseURL, String coreName, boolean forConcurrentUpdate, int queueSize, int threadCount) -> {
+            if (StringUtils.isBlank(solrBaseURL)) {
+                return null;
+            } else {
+                String solrURL = StringUtils.appendIfMissing(solrBaseURL, "/") + StringUtils.defaultIfBlank(coreName, "");
+                if (forConcurrentUpdate) {
+                    try {
+                        return new ConcurrentUpdateSolrServer(solrURL, queueSize, threadCount);
+                    } catch (Exception e) {
+                        log.error("Error instantiating concurrent SOLR for {} with core {} -> {} and concurrent params - queueSize: {}, threadCount: {}",
+                                solrBaseURL, coreName, solrURL, queueSize, threadCount);
+                        throw new IllegalArgumentException("Error instantiating concurrent SOLR server for " + solrURL, e);
+                    }
+                } else {
+                    return new HttpSolrServer(solrURL);
+                }
+            }
+        };
     }
 }
