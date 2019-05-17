@@ -156,7 +156,7 @@ public class DomainIndexingResource {
             @ApiResponse(code = 200, message = "Successfully performed SOLR index clear"),
             @ApiResponse(code = 500, message = "Internal Server Error performing SOLR index clear")
     })
-    @DELETE
+    @POST
     @Path("searchIndex/docsToRemove")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
