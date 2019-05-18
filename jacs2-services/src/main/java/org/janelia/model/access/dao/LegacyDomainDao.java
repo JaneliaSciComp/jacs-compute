@@ -1,5 +1,13 @@
 package org.janelia.model.access.dao;
 
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
+
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.Reference;
@@ -12,7 +20,14 @@ import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
 import org.janelia.model.domain.ontology.OntologyTermReference;
 import org.janelia.model.domain.orders.IntakeOrder;
-import org.janelia.model.domain.sample.*;
+import org.janelia.model.domain.sample.DataSet;
+import org.janelia.model.domain.sample.LSMImage;
+import org.janelia.model.domain.sample.LineRelease;
+import org.janelia.model.domain.sample.NeuronFragment;
+import org.janelia.model.domain.sample.NeuronSeparation;
+import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.sample.SampleLock;
+import org.janelia.model.domain.sample.StatusTransition;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
@@ -20,8 +35,6 @@ import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.jongo.MongoCursor;
-
-import java.util.*;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -167,7 +180,7 @@ public interface LegacyDomainDao {
 
     <T extends DomainObject> List<TreeNode> getContainers(String subjectKey, Collection<Reference> references) throws Exception;
 
-    <T extends DomainObject> Iterator<T> iterateDomainObjects(Class<T> domainClass);
+    <T extends DomainObject> Stream<T> iterateDomainObjects(Class<T> domainClass);
 
     /**
      * Create a list of the result set in iteration order.

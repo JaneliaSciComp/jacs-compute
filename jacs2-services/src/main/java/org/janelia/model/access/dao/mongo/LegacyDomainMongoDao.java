@@ -45,7 +45,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -218,12 +222,62 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public <T extends DomainObject> Iterator<T> iterateDomainObjects(Class<T> domainClass) {
-        return dao.getCollectionByClass(domainClass).find(
-                "{$or:[{class:{$exists:0}},{class:#}]}", domainClass.getName())
-                .with((DBCursor cursor) -> cursor.noCursorTimeout(true))
-                .as(domainClass)
-                .iterator();
+    public <T extends DomainObject> Stream<T> iterateDomainObjects(Class<T> domainClass) {
+        int length = 2000;
+        Spliterator<T> iterator = new Spliterator<T>() {
+            int offset;
+            int n;
+            Iterator<T> cursor;
+            {
+                offset = 0;
+                n = 0;
+                advance(0);
+            }
+
+            private void advance(int l) {
+                offset += l;
+                cursor = dao.getCollectionByClass(domainClass).find(
+                        "{$or:[{class:{$exists:0}},{class:#}]}", domainClass.getName())
+                        .with((DBCursor cursor) -> cursor.noCursorTimeout(true))
+                        .skip(offset)
+                        .limit(length)
+                        .as(domainClass)
+                        ;
+            }
+
+            @Override
+            public boolean tryAdvance(Consumer<? super T> action) {
+                if (cursor.hasNext()) {
+                    action.accept(cursor.next());
+                    n++;
+                }
+                if (!cursor.hasNext()) {
+                    advance(length);
+                }
+                return cursor.hasNext();
+            }
+
+            @Override
+            public Spliterator<T> trySplit() {
+                return null;
+            }
+
+            @Override
+            public long estimateSize() {
+                int estimateSize = dao.getCollectionByClass(domainClass).find(
+                        "{$or:[{class:{$exists:0}},{class:#}]}", domainClass.getName())
+                        .with((DBCursor cursor) -> cursor.noCursorTimeout(true))
+                        .as(domainClass)
+                        .count();
+                return estimateSize;
+            }
+
+            @Override
+            public int characteristics() {
+                return 0;
+            }
+        };
+        return StreamSupport.stream(iterator, false);
     }
 
     @Override

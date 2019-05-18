@@ -38,7 +38,7 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
     }
 
     @Override
-    public boolean indexDocumentStream(Stream<DomainObject> domainObjectStream) {
+    public boolean indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
         return domainObjectStream.map(this::indexDocument).reduce((r1, r2) -> r1 && r2).orElse(false);
     }
 

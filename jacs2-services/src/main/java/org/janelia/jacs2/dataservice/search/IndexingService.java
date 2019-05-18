@@ -81,11 +81,13 @@ public class IndexingService {
             domainObjectIndexer.removeIndex();
         }
         Set<Class<?>> searcheableClasses = DomainUtils.getDomainClassesAnnotatedWith(SearchType.class);
-        Stream<DomainObject> solrDocsStream = searcheableClasses.stream()
+        Stream<? extends DomainObject> domainObjects = searcheableClasses.stream()
                 .filter(clazz -> DomainObject.class.isAssignableFrom(clazz))
                 .map(clazz -> (Class<? extends DomainObject>) clazz)
-                .flatMap(domainClass -> Streams.stream(legacyDomainDao.iterateDomainObjects(domainClass)));
-        boolean result = domainObjectIndexer.indexDocumentStream(solrDocsStream);
+                .parallel()
+                .flatMap(domainClass -> legacyDomainDao.iterateDomainObjects(domainClass))
+                ;
+        boolean result = domainObjectIndexer.indexDocumentStream(domainObjects);
         optimize(solrServer);
         swapCores(solrServer);
         return result;
