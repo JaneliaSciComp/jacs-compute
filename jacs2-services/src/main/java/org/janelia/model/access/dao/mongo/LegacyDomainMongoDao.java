@@ -223,24 +223,17 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public <T extends DomainObject> Stream<T> iterateDomainObjects(Class<T> domainClass) {
-        int length = 2000;
         Spliterator<T> iterator = new Spliterator<T>() {
-            int offset;
             int n;
             Iterator<T> cursor;
             {
-                offset = 0;
-                n = 0;
-                advance(0);
+                setCursor();
             }
 
-            private void advance(int l) {
-                offset += l;
+            private void setCursor() {
                 cursor = dao.getCollectionByClass(domainClass).find(
                         "{$or:[{class:{$exists:0}},{class:#}]}", domainClass.getName())
                         .with((DBCursor cursor) -> cursor.noCursorTimeout(true))
-                        .skip(offset)
-                        .limit(length)
                         .as(domainClass)
                         ;
             }
@@ -250,9 +243,6 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
                 if (cursor.hasNext()) {
                     action.accept(cursor.next());
                     n++;
-                }
-                if (!cursor.hasNext()) {
-                    advance(length);
                 }
                 return cursor.hasNext();
             }
