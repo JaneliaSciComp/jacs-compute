@@ -1,14 +1,13 @@
 package org.janelia.jacs2.auth.impl;
 
+import java.util.Map;
+
 import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.util.Map;
 
 /**
  * Authentication implementation which stores passwords in the Mongo database.
@@ -31,7 +30,7 @@ public class LocalAuthProvider implements AuthProvider {
         try {
             Subject subject = subjectDao.findByName(username);
             if (!(subject instanceof User)) {
-                LOG.info("Illegal attempt to authenticate as {}", subject.getKey());
+                LOG.info("Illegal attempt to authenticate as {}", username);
                 return null;
             }
             User user = (User) subject;
