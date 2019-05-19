@@ -31,6 +31,7 @@ public class IndexingProducer {
     @Produces
     public DomainObjectIndexerConstructor<SolrServer> createSolrBasedDomainObjectIndexerProvider(TreeNodeDao treeNodeDao,
                                                                                                  @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
+                                                                                                 @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize,
                                                                                                  @IntPropertyValue(name = "Solr.CommitDelayInMillis", defaultValue = 100) int solrCommitDelayInMillis) {
         return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,
                 nodeReference -> {
@@ -38,6 +39,7 @@ public class IndexingProducer {
                     return nodeAncestors.stream().map(n -> Reference.createFor(n)).collect(Collectors.toSet());
                 },
                 solrBatchSize,
+                solrCommitSize,
                 solrCommitDelayInMillis)
                 ;
     }

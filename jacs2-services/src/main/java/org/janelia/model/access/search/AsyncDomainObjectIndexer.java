@@ -38,8 +38,8 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
     }
 
     @Override
-    public boolean indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
-        return domainObjectStream.map(this::indexDocument).reduce((r1, r2) -> r1 && r2).orElse(false);
+    public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
+        return (int) domainObjectStream.map(this::indexDocument).count();
     }
 
     @Override
@@ -55,8 +55,8 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
     }
 
     @Override
-    public boolean removeDocumentStream(Stream<Long> docIdsStream) {
-        return docIdsStream.map(this::removeDocument).reduce((r1, r2) -> r1 && r2).orElse(false);
+    public int removeDocumentStream(Stream<Long> docIdsStream) {
+        return (int) docIdsStream.map(this::removeDocument).count();
     }
 
     @Override

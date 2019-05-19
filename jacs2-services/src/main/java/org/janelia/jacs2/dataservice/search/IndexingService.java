@@ -6,8 +6,6 @@ import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
-import com.google.common.collect.Streams;
-
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.common.params.CoreAdminParams;
@@ -60,7 +58,7 @@ public class IndexingService {
         this.solrLoaderThreadCount = solrLoaderThreadCount;
     }
 
-    public boolean indexDocuments(List<Reference> domainObjectReferences) {
+    public int indexDocuments(List<Reference> domainObjectReferences) {
         List<DomainObject> domainObjects = legacyDomainDao.getDomainObjectsAs(domainObjectReferences, DomainObject.class);
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerConstructor.createDomainObjectIndexer(
                 createSolrServer(solrMainCore, false));
@@ -74,7 +72,7 @@ public class IndexingService {
     }
 
     @SuppressWarnings("unchecked")
-    public boolean indexAllDocuments(boolean clearIndex) {
+    public int indexAllDocuments(boolean clearIndex) {
         SolrServer solrServer = createSolrServer(solrBuildCore, true);
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerConstructor.createDomainObjectIndexer(solrServer);
         if (clearIndex) {
@@ -87,7 +85,7 @@ public class IndexingService {
                 .parallel()
                 .flatMap(domainClass -> legacyDomainDao.iterateDomainObjects(domainClass))
                 ;
-        boolean result = domainObjectIndexer.indexDocumentStream(domainObjects);
+        int result = domainObjectIndexer.indexDocumentStream(domainObjects);
         optimize(solrServer);
         swapCores(solrServer);
         return result;
@@ -131,7 +129,7 @@ public class IndexingService {
         return domainObjectIndexer.removeDocument(id);
     }
 
-    public boolean removeDocuments(List<Long> ids) {
+    public int removeDocuments(List<Long> ids) {
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerConstructor.createDomainObjectIndexer(
                 createSolrServer(solrMainCore, false));
         return domainObjectIndexer.removeDocumentStream(ids.stream());
