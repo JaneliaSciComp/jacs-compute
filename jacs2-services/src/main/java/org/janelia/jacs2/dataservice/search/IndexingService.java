@@ -79,25 +79,29 @@ public class IndexingService {
             domainObjectIndexer.removeIndex();
         }
         Set<Class<?>> searcheableClasses = DomainUtils.getDomainClassesAnnotatedWith(SearchType.class);
-        Stream<? extends DomainObject> domainObjects = searcheableClasses.stream()
+        int result = searcheableClasses.stream()
                 .filter(clazz -> DomainObject.class.isAssignableFrom(clazz))
                 .map(clazz -> (Class<? extends DomainObject>) clazz)
                 .parallel()
-                .flatMap(domainClass -> legacyDomainDao.iterateDomainObjects(domainClass))
-                ;
-        int result = domainObjectIndexer.indexDocumentStream(domainObjects);
+                .map(domainClass -> indexDocumentsOfType(domainObjectIndexer, domainClass))
+                .reduce(0, (r1, r2) -> r1 + r2);
         optimize(solrServer);
-        swapCores(solrServer);
+        swapCores();
         return result;
     }
 
-    private void swapCores(SolrServer solrServer) {
+    private int indexDocumentsOfType(DomainObjectIndexer domainObjectIndexer, Class<? extends DomainObject> domainClass) {
+        return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass));
+    }
+
+    private void swapCores() {
         try {
+            SolrServer adminSolrServer = createSolrServer(null, false);
             CoreAdminRequest car = new CoreAdminRequest();
             car.setCoreName(solrBuildCore);
             car.setOtherCoreName(solrMainCore);
             car.setAction(CoreAdminParams.CoreAdminAction.SWAP);
-            car.process(solrServer);
+            car.process(adminSolrServer);
         } catch (Exception e) {
             LOG.error("Error while trying to swap core {} with {}", solrBuildCore, solrMainCore, e);
             throw new IllegalStateException(e);

@@ -224,7 +224,6 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public <T extends DomainObject> Stream<T> iterateDomainObjects(Class<T> domainClass) {
         Spliterator<T> iterator = new Spliterator<T>() {
-            int n;
             Iterator<T> cursor;
             {
                 setCursor();
@@ -242,7 +241,6 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
             public boolean tryAdvance(Consumer<? super T> action) {
                 if (cursor.hasNext()) {
                     action.accept(cursor.next());
-                    n++;
                 }
                 return cursor.hasNext();
             }

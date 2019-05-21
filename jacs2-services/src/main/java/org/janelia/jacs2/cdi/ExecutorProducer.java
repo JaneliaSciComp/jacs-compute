@@ -1,20 +1,21 @@
 package org.janelia.jacs2.cdi;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.janelia.jacs2.cdi.qualifier.GridExecutor;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.slf4j.Logger;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
-import javax.inject.Named;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
+import org.janelia.jacs2.cdi.qualifier.GridExecutor;
+import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.slf4j.Logger;
 
 @ApplicationScoped
 public class ExecutorProducer {
