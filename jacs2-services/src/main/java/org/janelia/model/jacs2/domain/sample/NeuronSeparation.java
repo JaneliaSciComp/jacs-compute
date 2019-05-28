@@ -1,6 +1,6 @@
 package org.janelia.model.jacs2.domain.sample;
 
-import org.janelia.model.jacs2.domain.ReverseReference;
+import org.janelia.model.domain.ReverseReference;
 
 /**
  * The result of running the Neuron Separator on some input file.

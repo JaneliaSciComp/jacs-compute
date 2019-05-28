@@ -3,8 +3,8 @@ package org.janelia.jacs2.dataservice;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.jacs2.domain.DomainObject;
-import org.janelia.model.jacs2.domain.Reference;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.jacs2.dao.DaoFactory;
 import org.janelia.model.jacs2.dao.DomainObjectDao;
@@ -29,7 +29,7 @@ public class DomainObjectService implements LockService {
     public Stream<DomainObject> streamAllReferences(Subject subject, Stream<Reference> refStream) {
         return refStream.collect(
                 ArrayListMultimap::<String, Number>create,
-                (m, ref) -> m.put(ref.getTargetClassname(), ref.getTargetId()),
+                (m, ref) -> m.put(ref.getTargetClassName(), ref.getTargetId()),
                 (m1, m2) -> m1.putAll(m2)).asMap().entrySet().stream().flatMap(e -> {
                     DomainObjectDao<?> dao = daoFactory.createDomainObjectDao(e.getKey());
                     return dao.findByIds(subject, ImmutableList.copyOf(e.getValue())).stream();

@@ -2,7 +2,7 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.janelia.model.jacs2.domain.Reference;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.jacs2.domain.enums.FileType;
 import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
 import org.janelia.model.jacs2.domain.sample.LSMImage;

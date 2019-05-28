@@ -1,11 +1,25 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
@@ -25,12 +39,12 @@ import org.janelia.jacs2.dataservice.dataset.DatasetService;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.DomainModelUtils;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SampleUtils;
 import org.janelia.model.jacs2.SetFieldValueHandler;
-import org.janelia.model.jacs2.domain.Reference;
 import org.janelia.model.jacs2.domain.sample.DataSet;
 import org.janelia.model.jacs2.domain.sample.LSMImage;
 import org.janelia.model.jacs2.domain.sample.ObjectiveSample;
@@ -48,18 +62,6 @@ import org.janelia.model.jacs2.sage.SlideImageGroup;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Named("lsmImport")
 public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportResult>> {
@@ -322,7 +324,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         });
         newSample.setName(DomainModelUtils.replaceVariables(getSampleNamePattern(dataSet), DomainModelUtils.getFieldValues(newSample)));
         sampleDataService.createSample(newSample);
-        Reference newSampleRef = Reference.createFor(newSample);
+        Reference newSampleRef = Reference.createFor(newSample.toString());
 
         // update LSM's sampleRef
         lsmsGroupedByAbjectiveAndArea.forEach((objective, areas) -> {
@@ -364,7 +366,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
                                             existingSampleTile.findLsmReference(lsm)
                                                     .orElseGet(() -> {
                                                         // if lsm reference not found make sure we update the lsm tile name
-                                                        Reference tileLsmReference = Reference.createFor(lsm);
+                                                        Reference tileLsmReference = Reference.createFor(lsm.toString());
                                                         updateLsmTileName(lsm, existingSampleTile.getName(), lsmUpdates);
                                                         existingSampleTile.addLsmReference(tileLsmReference);
                                                         return tileLsmReference;
@@ -446,7 +448,7 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
         tile.setName(tileKey.getTileName());
         areaGroup.getImages().forEach(lsm -> {
             updateLsmTileName(lsm, tile.getName(), lsmUpdates);
-            tile.addLsmReference(Reference.createFor(lsm));
+            tile.addLsmReference(Reference.createFor(lsm.toString()));
         });
         return tile;
     }
