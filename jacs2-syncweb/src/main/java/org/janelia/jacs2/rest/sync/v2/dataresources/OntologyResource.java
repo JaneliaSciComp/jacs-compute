@@ -15,6 +15,7 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.domain.dao.OntologyDao;
+import org.janelia.model.domain.DomainObjectComparator;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
@@ -38,7 +39,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -106,7 +109,11 @@ public class OntologyResource {
     public Response getSubjectOntologies(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         LOG.trace("Start getSubjectOntologies({})", subjectKey);
         try {
-            List<Ontology> accessibleOntologies = ontologyDao.getOntologiesAccessibleBySubjectGroups(subjectKey, 0, -1);
+            List<Ontology> accessibleOntologies = ontologyDao.getOntologiesAccessibleBySubjectGroups(subjectKey, 0, -1)
+                    .stream()
+                    .sorted(new DomainObjectComparator(subjectKey))
+                    .collect(Collectors.toList());
+
             return Response.ok()
                     .entity(new GenericEntity<List<Ontology>>(accessibleOntologies){})
                     .build();

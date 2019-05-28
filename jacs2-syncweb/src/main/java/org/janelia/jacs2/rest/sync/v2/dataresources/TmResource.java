@@ -22,6 +22,7 @@ import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.DomainObjectComparator;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
@@ -124,13 +125,15 @@ public class TmResource {
                                              @ApiParam @QueryParam("offset") Long offsetParam,
                                              @ApiParam @QueryParam("length") Integer lengthParam) {
         LOG.trace("getTmWorkspaces({}, sampleId={})", subjectKey, sampleId);
+        List<TmWorkspace> workspaces;
         if (sampleId == null) {
             long offset = offsetParam != null ? offsetParam : 0;
             int length = lengthParam != null ? lengthParam : -1;
-            return tmWorkspaceDao.findOwnedEntitiesBySubjectKey(subjectKey, offset, length);
+            workspaces = tmWorkspaceDao.findOwnedEntitiesBySubjectKey(subjectKey, offset, length);
         } else {
-            return tmWorkspaceDao.getTmWorkspacesForSample(subjectKey, sampleId);
+            workspaces = tmWorkspaceDao.getTmWorkspacesForSample(subjectKey, sampleId);
         }
+        return workspaces.stream().sorted(new DomainObjectComparator(subjectKey)).collect(Collectors.toList());
     }
 
     @ApiOperation(value = "Gets a TM Workspace by id",
