@@ -1,26 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
-import org.apache.commons.lang.StringUtils;
-import org.janelia.jacs2.auth.JacsSecurityContextHelper;
-import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.access.cdi.AsyncIndex;
-import org.janelia.model.access.domain.dao.OntologyDao;
-import org.janelia.model.domain.DomainObjectComparator;
-import org.janelia.model.domain.dto.DomainQuery;
-import org.janelia.model.domain.ontology.Ontology;
-import org.janelia.model.domain.ontology.OntologyTerm;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -38,10 +19,27 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiKeyAuthDefinition;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.SecurityDefinition;
+import io.swagger.annotations.SwaggerDefinition;
+import org.apache.commons.lang.StringUtils;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
+import org.janelia.model.access.domain.dao.OntologyDao;
+import org.janelia.model.domain.dto.DomainQuery;
+import org.janelia.model.domain.ontology.Ontology;
+import org.janelia.model.domain.ontology.OntologyTerm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -109,10 +107,7 @@ public class OntologyResource {
     public Response getSubjectOntologies(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         LOG.trace("Start getSubjectOntologies({})", subjectKey);
         try {
-            List<Ontology> accessibleOntologies = ontologyDao.getOntologiesAccessibleBySubjectGroups(subjectKey, 0, -1)
-                    .stream()
-                    .sorted(new DomainObjectComparator(subjectKey))
-                    .collect(Collectors.toList());
+            List<Ontology> accessibleOntologies = ontologyDao.getOntologiesAccessibleBySubjectGroups(subjectKey, 0, -1);
 
             return Response.ok()
                     .entity(new GenericEntity<List<Ontology>>(accessibleOntologies){})

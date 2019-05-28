@@ -125,15 +125,13 @@ public class TmResource {
                                              @ApiParam @QueryParam("offset") Long offsetParam,
                                              @ApiParam @QueryParam("length") Integer lengthParam) {
         LOG.trace("getTmWorkspaces({}, sampleId={})", subjectKey, sampleId);
-        List<TmWorkspace> workspaces;
         if (sampleId == null) {
             long offset = offsetParam != null ? offsetParam : 0;
             int length = lengthParam != null ? lengthParam : -1;
-            workspaces = tmWorkspaceDao.findOwnedEntitiesBySubjectKey(subjectKey, offset, length);
+            return tmWorkspaceDao.findOwnedEntitiesBySubjectKey(subjectKey, offset, length);
         } else {
-            workspaces = tmWorkspaceDao.getTmWorkspacesForSample(subjectKey, sampleId);
+            return tmWorkspaceDao.getTmWorkspacesForSample(subjectKey, sampleId);
         }
-        return workspaces.stream().sorted(new DomainObjectComparator(subjectKey)).collect(Collectors.toList());
     }
 
     @ApiOperation(value = "Gets a TM Workspace by id",
