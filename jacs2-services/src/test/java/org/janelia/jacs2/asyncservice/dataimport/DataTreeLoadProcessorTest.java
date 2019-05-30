@@ -519,7 +519,7 @@ public class DataTreeLoadProcessorTest {
         Mockito.when(Files.exists(any(Path.class))).thenReturn(true);
         Mockito.when(Files.size(any(Path.class))).thenReturn(100L);
 
-        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId);
+        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE, serviceId.toString());
 
         Path f1Path = basePath.resolve("mips/f1.lsm");
         Path f2Path = basePath.resolve("mips/f2.v3draw");
@@ -607,8 +607,8 @@ public class DataTreeLoadProcessorTest {
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             eq("f1_signal.png"),
-                            eq(testStoragePrefix + "/mips"),
-                            eq(testStoragePrefix + "/mips/f1_signal.png"),
+                            eq(testStoragePrefix  + "/mips"),
+                            eq(testStoragePrefix  + "/mips/f1_signal.png"),
                             eq(FileType.SignalMip),
                             eq(true),
                             eq(testOwner));

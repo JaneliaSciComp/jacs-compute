@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -113,8 +114,8 @@ public class CMTKAlignmentProcessorTest {
                             any(ServiceExecutionContext.class),
                             argThat(new ListArgMatcher<>(
                                     ImmutableList.of(
-                                            new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859/images")),
-                                            new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859")),
+                                            new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + File.separatorChar + "GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859" + File.separatorChar + "images")),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + File.separatorChar + "GMR_09C10_AE_01_23-fA01b_C100120_20100120125311859")),
                                             new ServiceArgMatcher(new ServiceArg("-template", "")),
                                             new ServiceArgMatcher(new ServiceArg("-a", "true")),
                                             new ServiceArgMatcher(new ServiceArg("-w", "true")),
@@ -134,8 +135,8 @@ public class CMTKAlignmentProcessorTest {
                             any(ServiceExecutionContext.class),
                             argThat(new ListArgMatcher<>(
                                     ImmutableList.of(
-                                            new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734/images")),
-                                            new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734")),
+                                            new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + File.separatorChar + "GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734" + File.separatorChar + "images")),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + File.separatorChar + "GMR_09C11_AE_01_57-fA01b_C101214_20101214100952734")),
                                             new ServiceArgMatcher(new ServiceArg("-template", "")),
                                             new ServiceArgMatcher(new ServiceArg("-a", "true")),
                                             new ServiceArgMatcher(new ServiceArg("-w", "true")),
@@ -156,8 +157,8 @@ public class CMTKAlignmentProcessorTest {
                             any(ServiceExecutionContext.class),
                             argThat(new ListArgMatcher<>(
                                     ImmutableList.of(
-                                            new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + "/" + "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625/images")),
-                                            new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + "/" + "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625")),
+                                            new ServiceArgMatcher(new ServiceArg("-inputDir", outputDir + File.separatorChar + "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625" + File.separatorChar + "images")),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", outputDir + File.separatorChar + "GMR_09D12_AE_01_03-fA01b_C110218_20110218103433625")),
                                             new ServiceArgMatcher(new ServiceArg("-template", "")),
                                             new ServiceArgMatcher(new ServiceArg("-a", "true")),
                                             new ServiceArgMatcher(new ServiceArg("-w", "true")),

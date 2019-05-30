@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 
+import java.io.File;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,17 +26,26 @@ public class StoragePathURI {
             Matcher m = STORAGE_PATH_URI_PATTERN.matcher(storagePath);
             if (m.matches()) {
                 this.schema = StringUtils.defaultIfBlank(m.group("schema"), "");
-                this.storagePath = m.group("storagePath");
+                this.storagePath = normalizePath(m.group("storagePath"));
             } else {
                 this.schema = "";
-                this.storagePath = storagePath;
+                this.storagePath = normalizePath(storagePath);
             }
         }
     }
 
     private StoragePathURI(String schema, String storagePath) {
         this.schema = schema;
-        this.storagePath = storagePath;
+        this.storagePath = normalizePath(storagePath);
+    }
+
+    /**
+     * Normalize the paths by using the UNIX style separator.
+     * @param p
+     * @return
+     */
+    private String normalizePath(String p) {
+        return p.replace(File.separatorChar, '/');
     }
 
     public String getStoragePath() {
