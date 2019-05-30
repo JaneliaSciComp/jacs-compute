@@ -2,8 +2,9 @@ package org.janelia.jacs2.asyncservice.sampleprocessing;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Ordering;
-import org.janelia.model.jacs2.domain.Reference;
-import org.janelia.model.jacs2.domain.ReverseReference;
+
+import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.jacs2.domain.enums.FileType;
 import org.janelia.model.jacs2.domain.sample.NeuronFragment;
 import org.janelia.model.jacs2.domain.sample.NeuronSeparation;
@@ -44,7 +45,7 @@ class SampleNeuronSeparationResultHandler {
         ReverseReference fragmentsReference = new ReverseReference();
         fragmentsReference.setReferringClassName(NeuronFragment.class.getSimpleName());
         fragmentsReference.setReferenceAttr("separationId");
-        fragmentsReference.setReferenceId(neuronSeparation.getId());
+        fragmentsReference.setReferenceId(neuronSeparation.getId().longValue());
         fragmentsReference.setCount((long) neuronSeparationFiles.getNeurons().size());
         neuronSeparation.setFragmentsReference(fragmentsReference);
 
@@ -57,7 +58,7 @@ class SampleNeuronSeparationResultHandler {
             neuronFragment.setWriters(sample.getWriters());
             neuronFragment.setName("Neuron Fragment " + neuronIndex);
             neuronFragment.setNumber(neuronIndex);
-            neuronFragment.setSample(Reference.createFor(sample));
+            neuronFragment.setSample(Reference.createFor(sample.toString()));
             neuronFragment.setSeparationId(resultId);
             neuronFragment.setFilepath(neuronSeparationFiles.getResultDir());
             neuronFragment.setFileName(FileType.SignalMip, neuron);

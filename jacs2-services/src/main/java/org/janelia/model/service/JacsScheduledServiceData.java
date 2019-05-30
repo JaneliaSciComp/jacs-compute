@@ -1,19 +1,20 @@
 package org.janelia.model.service;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.model.jacs2.BaseEntity;
-import org.janelia.model.jacs2.domain.annotations.EntityId;
-import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
-import org.janelia.model.jacs2.domain.support.MongoMapping;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.model.domain.entityannotations.EntityId;
+import org.janelia.model.jacs2.BaseEntity;
+import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
+import org.janelia.model.jacs2.domain.support.MongoMapping;
+
 @MongoMapping(collectionName="jacsScheduledService", label="JacsScheduledService")
 public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
+
     @EntityId
     private Number id;
     private String name; // scheduled job name

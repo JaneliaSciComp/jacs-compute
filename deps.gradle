@@ -23,8 +23,8 @@ dependencies {
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // database
-        MONGODB_VERSION = "3.9.0"
-        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver-legacy:${MONGODB_VERSION}"
+        MONGODB_VERSION = "3.10.0"
+        MONGODB_DRIVER_LIB = "org.mongodb:mongo-java-driver:${MONGODB_VERSION}"
         MARIADB_DRIVER_LIB = "org.mariadb.jdbc:mariadb-java-client:2.4.1"
         DBCP_LIB = "com.zaxxer:HikariCP:3.3.1"
         JONGO_LIB = "org.jongo:jongo:1.3.0"
@@ -97,11 +97,11 @@ dependencies {
 
         // Janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.0.0"
-        JACS_MODEL_VERSION = "2.2.0"
+        JACS_MODEL_VERSION = "2.3.0"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
         JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
-        JACS_MESSAGING_VERSION = "2.0.0"
+        JACS_MESSAGING_VERSION = "2.1.0"
         JACS_MESSAGING_CORE_LIB = "org.janelia.jacs-messaging:jacs-messaging-core:${JACS_MESSAGING_VERSION}"
 
         // scientific computing

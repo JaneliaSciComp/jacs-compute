@@ -1,5 +1,25 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -20,25 +40,6 @@ import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import java.util.ArrayList;
-import java.util.List;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -107,6 +108,7 @@ public class OntologyResource {
         LOG.trace("Start getSubjectOntologies({})", subjectKey);
         try {
             List<Ontology> accessibleOntologies = ontologyDao.getOntologiesAccessibleBySubjectGroups(subjectKey, 0, -1);
+
             return Response.ok()
                     .entity(new GenericEntity<List<Ontology>>(accessibleOntologies){})
                     .build();

@@ -3,13 +3,13 @@ package org.janelia.jacs2.dataservice.sample;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.jacs2.domain.sample.NeuronFragment;
 import org.janelia.model.jacs2.domain.sample.PipelineResult;
 import org.janelia.model.jacs2.domain.sample.SamplePipelineRun;
 import org.janelia.model.jacs2.dao.LSMImageDao;
 import org.janelia.model.jacs2.dao.NeuronFragmentDao;
 import org.janelia.model.jacs2.dao.SampleDao;
-import org.janelia.model.jacs2.domain.Reference;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
 import org.janelia.model.jacs2.domain.sample.LSMImage;
@@ -144,20 +144,20 @@ public class SampleDataService {
                                     logger.error("No LSMs set for tile {} in sample {} objective {}", t, sample, objectiveSample);
                                     throw new IllegalStateException("No LSMs set for tile " + t + " in sample " + sample + " objective " + objectiveSample);
                                 }
-                                LSMImage firstLSM = indexedLsms.get(firstLsmRef.getTargetRefId());
+                                LSMImage firstLSM = indexedLsms.get(firstLsmRef.toString());
                                 if (firstLSM == null) {
                                     logger.error("No LSM found for {} - first LSM for tile {} in sample {} objective {}",
-                                            firstLsmRef.getTargetRefId(), t, sample, objectiveSample);
-                                    throw new IllegalStateException("No LSM found for " + firstLsmRef.getTargetRefId());
+                                            firstLsmRef.getTargetId(), t, sample, objectiveSample);
+                                    throw new IllegalStateException("No LSM found for " + firstLsmRef);
                                 }
                                 Reference secondLsmRef = t.getLsmReferenceAt(1);
                                 LSMImage secondLSM = null;
                                 if (secondLsmRef != null) {
-                                    secondLSM = indexedLsms.get(secondLsmRef.getTargetRefId());
+                                    secondLSM = indexedLsms.get(secondLsmRef.toString());
                                     if (secondLSM == null) {
                                         logger.error("No LSM found for {} - second LSM for tile {} in sample {} objective {}",
-                                                secondLsmRef.getTargetRefId(), t, sample, objectiveSample);
-                                        throw new IllegalStateException("No LSM found for " + secondLsmRef.getTargetRefId());
+                                                secondLsmRef.getTargetId(), t, sample, objectiveSample);
+                                        throw new IllegalStateException("No LSM found for " + secondLsmRef);
                                     }
                                     if (Optional.ofNullable(firstLSM.getNumChannels()).orElse(0) == 2) {
                                         // Switch the LSMs so that the 3 channel image always comes first

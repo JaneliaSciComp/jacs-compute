@@ -2,10 +2,10 @@ package org.janelia.jacs2.dataservice.sample;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.dao.DaoFactory;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.jacs2.dao.LSMImageDao;
 import org.janelia.model.jacs2.dao.NeuronFragmentDao;
 import org.janelia.model.jacs2.dao.SampleDao;
-import org.janelia.model.jacs2.domain.Reference;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.domain.sample.AnatomicalArea;
 import org.janelia.model.jacs2.domain.sample.LSMImage;
@@ -134,7 +134,7 @@ public class SampleDataServiceTest {
     private SampleTile createSampleTile(Long... lsmIds) {
         SampleTile sampleTile = new SampleTile();
         for (Long lsmId : lsmIds) {
-            sampleTile.addLsmReference(new Reference("LSMImage", lsmId));
+            sampleTile.addLsmReference(Reference.createFor("LSMImage", lsmId));
         }
         return sampleTile;
     }

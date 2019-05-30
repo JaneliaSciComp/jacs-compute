@@ -1,16 +1,16 @@
 package org.janelia.model.service;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.model.jacs2.domain.annotations.EntityId;
-import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
-import org.janelia.model.jacs2.domain.support.MongoMapping;
-import org.janelia.model.jacs2.BaseEntity;
-
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.model.domain.entityannotations.EntityId;
+import org.janelia.model.jacs2.BaseEntity;
+import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
+import org.janelia.model.jacs2.domain.support.MongoMapping;
 
 @MongoMapping(collectionName="jacsNotification", label="Jacs Notification")
 public class JacsNotification implements BaseEntity, HasIdentifier {

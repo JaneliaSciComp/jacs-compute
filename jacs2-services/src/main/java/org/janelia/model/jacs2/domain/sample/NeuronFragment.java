@@ -1,17 +1,18 @@
 package org.janelia.model.jacs2.domain.sample;
 
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.janelia.model.domain.Reference;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.domain.AbstractDomainObject;
 import org.janelia.model.jacs2.domain.FileReference;
-import org.janelia.model.jacs2.domain.Reference;
 import org.janelia.model.jacs2.domain.enums.FileType;
 import org.janelia.model.jacs2.domain.interfaces.HasRelativeFiles;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
-import org.janelia.model.jacs2.EntityFieldValueHandler;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * A neuron fragment segmented from an image by the Neuron Separator. 

@@ -22,6 +22,7 @@ import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.DomainObjectComparator;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;

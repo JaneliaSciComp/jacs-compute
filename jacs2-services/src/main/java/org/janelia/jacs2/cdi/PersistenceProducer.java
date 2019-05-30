@@ -19,13 +19,15 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.search.SolrServerConstructor;
-import org.janelia.model.access.dao.mongo.utils.RegistryHelper;
+import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoDBHelper;
+import org.janelia.model.access.domain.dao.mongo.mongodbutils.RegistryHelper;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.sql.DataSource;
 
 import java.util.List;
@@ -69,62 +71,33 @@ public class PersistenceProducer {
             @PropertyValue(name = "MongoDB.Username") String username,
             @PropertyValue(name = "MongoDB.Password") String password,
             ObjectMapperFactory objectMapperFactory) {
-
-        CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(objectMapperFactory);
-        MongoClientOptions.Builder optionsBuilder =
-                MongoClientOptions.builder()
-                        .threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockMultiplier)
-                        .maxWaitTime(maxWaitTimeInSecs * 1000)
-                        .maxConnectionIdleTime(maxConnectionIdleTimeInSecs * 1000)
-                        .maxConnectionLifeTime(maxConnLifeTimeInSecs * 1000)
-                        .connectionsPerHost(connectionsPerHost)
-                        .connectTimeout(connectTimeout)
-                        .codecRegistry(codecRegistry);
-
-        if (StringUtils.isNotBlank(mongoServer)) {
-            // Alternative connection method to support passwords special characters not supported by MongoClientURI
-            List<ServerAddress> members = Splitter.on(',').trimResults().omitEmptyStrings().splitToList(mongoServer)
-                    .stream()
-                    .map(ServerAddress::new)
-                    .collect(Collectors.toList());
-            if (StringUtils.isNotBlank(username)) {
-                String credentialsDb = StringUtils.defaultIfBlank(authMongoDatabase, mongoDatabase);
-                char[] passwordChars = StringUtils.isBlank(password) ? null : password.toCharArray();
-                MongoCredential credential = MongoCredential.createCredential(username, credentialsDb, passwordChars);
-                MongoClient m = new MongoClient(members, credential, optionsBuilder.build());
-                log.info("Connected to MongoDB ({}@{}) as user {}", mongoDatabase, mongoServer, username);
-                return m;
-            } else {
-                MongoClient m = new MongoClient(members, optionsBuilder.build());
-                log.info("Connected to MongoDB ({}@{})", mongoDatabase, mongoServer);
-                return m;
-            }
-        } else {
-            // use connection URL
-            if (StringUtils.isBlank(mongoConnectionURL)) {
-                log.error("Neither mongo server(s) nor the mongo URL have been specified");
-                throw new IllegalStateException("Neither mongo server(s) nor the mongo URL have been specified");
-            } else {
-                MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
-                MongoClient m = new MongoClient(mongoConnectionString);
-                log.info("Connected to MongoDB ({}@{})", mongoDatabase, mongoConnectionString);
-                return m;
-            }
-        }
+        return MongoDBHelper.createMongoClient(
+                mongoConnectionURL,
+                mongoServer,
+                StringUtils.defaultIfBlank(authMongoDatabase, mongoDatabase),
+                username,
+                password,
+                threadsAllowedToBlockMultiplier,
+                connectionsPerHost,
+                connectTimeout,
+                maxWaitTimeInSecs,
+                maxConnectionIdleTimeInSecs,
+                maxConnLifeTimeInSecs,
+                () -> RegistryHelper.createCodecRegistryWithJacsksonEncoder(objectMapperFactory.newMongoCompatibleObjectMapper())
+        );
     }
 
     @Produces
     @Default
     public MongoDatabase createDefaultMongoDatabase(MongoClient mongoClient) {
-        log.trace("Creating default database: {}", mongoDatabase);
-        return mongoClient.getDatabase(mongoDatabase);
+        return MongoDBHelper.createMongoDatabase(mongoClient, mongoDatabase);
     }
 
     @Produces
     @Jacs2Future
     public MongoDatabase createFutureMongoDatabase(MongoClient mongoClient) {
         log.info("Creating future database: {}", mongoFutureDatabase);
-        return mongoClient.getDatabase(mongoFutureDatabase);
+        return MongoDBHelper.createMongoDatabase(mongoClient, mongoFutureDatabase);
     }
 
     @ApplicationScoped

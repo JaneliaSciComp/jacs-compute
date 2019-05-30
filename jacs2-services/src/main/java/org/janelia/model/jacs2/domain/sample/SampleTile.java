@@ -1,15 +1,16 @@
 package org.janelia.model.jacs2.domain.sample;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.janelia.model.jacs2.domain.Reference;
-import org.janelia.model.jacs2.domain.enums.FileType;
-import org.janelia.model.jacs2.domain.interfaces.HasFiles;
-import org.janelia.model.jacs2.EntityFieldValueHandler;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import org.janelia.model.domain.Reference;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
+import org.janelia.model.jacs2.domain.enums.FileType;
+import org.janelia.model.jacs2.domain.interfaces.HasFiles;
 
 /**
  * A sample tile consists of a set of LSMs with the same objective,
@@ -66,7 +67,7 @@ public class SampleTile implements HasFiles {
         if (lsmReferences == null) {
             return Optional.empty();
         } else {
-            Reference lsmImageReference = Reference.createFor(lsmImage);
+            Reference lsmImageReference = Reference.createFor(lsmImage.toString());
             return lsmReferences.stream().filter(lsmReference -> lsmReference.equals(lsmImageReference)).findFirst();
         }
     }
