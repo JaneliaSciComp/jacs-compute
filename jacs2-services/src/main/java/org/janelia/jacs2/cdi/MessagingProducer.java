@@ -23,8 +23,8 @@ public class MessagingProducer {
     public MessageConnection createIndexingMessageConnection(@PropertyValue(name = "Messaging.Server") String messagingServer,
                                                              @PropertyValue(name = "Messaging.User") String messagingUser,
                                                              @PropertyValue(name = "Messaging.Password") String messagingPassword) {
-        LOG.info("Create messaging connection to {} as {}", messagingServer, messagingUser);
         if (StringUtils.isNotBlank(messagingServer)) {
+            LOG.info("Create messaging connection to {} as {}", messagingServer, messagingUser);
             return ConnectionManager.getInstance().getConnection(messagingServer, messagingUser, messagingPassword, 1);
         } else {
             return ConnectionManager.getInstance().getConnection();
@@ -37,10 +37,12 @@ public class MessagingProducer {
     public MessageSender createIndexingMessageSender(MessageConnection messageConnection,
                                                      @PropertyValue(name = "Messaging.AsyncIndexingExchange") String asyncIndexingExchange,
                                                      @PropertyValue(name = "Messaging.AsyncIndexingRoutingKey") String asyncIndexingRoutingKey) {
-        LOG.info("Create sender and connect to {}:{}", asyncIndexingExchange, asyncIndexingRoutingKey);
         MessageSender messageSender = new MessageSenderImpl(messageConnection);
-        if (messageConnection.isOpen()) {
+        if (StringUtils.isNotBlank(asyncIndexingExchange)) {
+            LOG.info("Create sender and connect to {}:{}", asyncIndexingExchange, asyncIndexingRoutingKey);
             messageSender.connectTo(asyncIndexingExchange, asyncIndexingRoutingKey);
+        } else {
+            LOG.warn("Created an unconnected sender since no exchange was provided");
         }
         return messageSender;
     }
