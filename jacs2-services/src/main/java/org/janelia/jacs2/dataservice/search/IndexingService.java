@@ -85,12 +85,15 @@ public class IndexingService {
                 .parallel()
                 .map(domainClass -> indexDocumentsOfType(domainObjectIndexer, domainClass))
                 .reduce(0, (r1, r2) -> r1 + r2);
+        LOG.info("Completed indexing "+result+" objects");
         optimize(solrServer);
         swapCores();
+        LOG.info("The new SOLR index is now live.");
         return result;
     }
 
     private int indexDocumentsOfType(DomainObjectIndexer domainObjectIndexer, Class<? extends DomainObject> domainClass) {
+        LOG.info("Indexing objects of type {}", domainClass.getName());
         return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass));
     }
 
@@ -102,6 +105,7 @@ public class IndexingService {
             car.setOtherCoreName(solrMainCore);
             car.setAction(CoreAdminParams.CoreAdminAction.SWAP);
             car.process(adminSolrServer);
+            LOG.info("Swapped core {} with {}", solrBuildCore, solrMainCore);
         } catch (Exception e) {
             LOG.error("Error while trying to swap core {} with {}", solrBuildCore, solrMainCore, e);
             throw new IllegalStateException(e);
@@ -113,10 +117,10 @@ public class IndexingService {
      */
     private void optimize(SolrServer solrServer) {
         try {
-            LOG.info("Optimizing SOLR index - {}", solrServer);
+            LOG.info("Optimizing SOLR index");
             solrServer.optimize();
         } catch (Exception e) {
-            LOG.error("Error while trying to optimize {}", solrServer, e);
+            LOG.error("Error while trying to optimize SOLR index", e);
             throw new IllegalStateException(e);
         }
     }
