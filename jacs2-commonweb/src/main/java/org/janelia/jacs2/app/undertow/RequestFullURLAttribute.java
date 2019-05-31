@@ -18,47 +18,23 @@
 
 package org.janelia.jacs2.app.undertow;
 
-import java.util.function.Predicate;
-
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.ReadOnlyAttributeException;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HeaderMap;
-import io.undertow.util.HttpString;
 
 /**
- * Request Headers attribute
+ * Response attribute in seconds.
  */
-public class RequestHeadersAttribute implements ExchangeAttribute {
-
-    private final Predicate<HttpString> omittedHeadersFilter;
-
-    RequestHeadersAttribute(Predicate<HttpString> omittedHeadersFilter) {
-        this.omittedHeadersFilter = omittedHeadersFilter;
-    }
+public class RequestFullURLAttribute implements ExchangeAttribute {
 
     @Override
     public String readAttribute(final HttpServerExchange exchange) {
-        HeaderMap headers = exchange.getRequestHeaders();
-        HeaderMap filteredHeaders;
-        if (headers == null || omittedHeadersFilter == null) {
-            filteredHeaders = headers;
-        } else {
-            filteredHeaders = new HeaderMap();
-            headers.getHeaderNames().stream()
-                    .filter(omittedHeadersFilter.negate())
-                    .forEach(header -> filteredHeaders.addAll(header, headers.get(header)));
-        }
-        if (filteredHeaders == null || filteredHeaders.size() == 0) {
-            return "{}";
-        } else {
-            return filteredHeaders.toString();
-        }
+        return exchange.getRequestURL();
     }
 
     @Override
     public void writeAttribute(final HttpServerExchange exchange, final String newValue) throws ReadOnlyAttributeException {
-        throw new ReadOnlyAttributeException("Headers", newValue);
+        throw new ReadOnlyAttributeException("Request URL", newValue);
     }
 
 }

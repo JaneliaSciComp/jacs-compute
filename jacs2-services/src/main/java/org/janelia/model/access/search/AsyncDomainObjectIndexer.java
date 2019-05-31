@@ -26,7 +26,7 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
 
     @Override
     public boolean indexDocument(DomainObject domainObject) {
-        if (messageSender != null) {
+        if (isEnabled()) {
             Map<String, Object> messageHeaders = new LinkedHashMap<>();
             messageHeaders.put("msgType", "UPDATE_DOC");
             messageHeaders.put("objectId", domainObject.getId());
@@ -39,12 +39,12 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
 
     @Override
     public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
-        return (int) domainObjectStream.map(this::indexDocument).count();
+        return (int) domainObjectStream.map(this::indexDocument).filter(r -> r).count();
     }
 
     @Override
     public boolean removeDocument(Long docId) {
-        if (messageSender != null) {
+        if (isEnabled()) {
             Map<String, Object> messageHeaders = new LinkedHashMap<>();
             messageHeaders.put("msgType", "DELETE_DOC");
             messageHeaders.put("objectId", docId);
@@ -56,7 +56,7 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
 
     @Override
     public int removeDocumentStream(Stream<Long> docIdsStream) {
-        return (int) docIdsStream.map(this::removeDocument).count();
+        return (int) docIdsStream.map(this::removeDocument).filter(r -> r).count();
     }
 
     @Override
@@ -66,7 +66,7 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
 
     @Override
     public void updateDocsAncestors(Set<Long> docIds, Long ancestorId) {
-        if (messageSender != null) {
+        if (isEnabled()) {
             Map<String, Object> messageHeaders = new LinkedHashMap<>();
             messageHeaders.put("msgType", "ADD_ANCESTOR");
             messageHeaders.put("ancestorId", ancestorId);
@@ -75,5 +75,9 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
                 messageSender.sendMessage(messageHeaders, null);
             });
         }
+    }
+
+    private boolean isEnabled() {
+        return messageSender != null && messageSender.isConnected();
     }
 }

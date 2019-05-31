@@ -1,5 +1,14 @@
 package org.janelia.jacs2.app.undertow;
 
+import java.nio.file.Paths;
+import java.util.EventListener;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.servlet.ServletException;
+import javax.ws.rs.core.Application;
+
 import io.swagger.jersey.config.JerseyJaxrsConfig;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -12,7 +21,6 @@ import io.undertow.attribute.QueryStringAttribute;
 import io.undertow.attribute.RemoteHostAttribute;
 import io.undertow.attribute.RemoteUserAttribute;
 import io.undertow.attribute.RequestMethodAttribute;
-import io.undertow.attribute.RequestPathAttribute;
 import io.undertow.attribute.ResponseCodeAttribute;
 import io.undertow.attribute.ResponseHeaderAttribute;
 import io.undertow.predicate.Predicate;
@@ -27,23 +35,18 @@ import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.ListenerInfo;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.util.HttpString;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.servlet.ServletProperties;
 import org.janelia.jacs2.app.AppArgs;
 import org.janelia.jacs2.app.ContainerInitializer;
 import org.janelia.jacs2.app.ContextPathBuilder;
+import org.janelia.jacs2.config.ApplicationConfig;
 import org.jboss.weld.environment.servlet.Listener;
 import org.jboss.weld.module.web.servlet.WeldInitialListener;
 import org.jboss.weld.module.web.servlet.WeldTerminalListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletException;
-import javax.ws.rs.core.Application;
-import java.nio.file.Paths;
-import java.util.EventListener;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.undertow.Handlers.resource;
 import static io.undertow.servlet.Servlets.servlet;
@@ -56,6 +59,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
     private final String restApiContext;
     private final String restApiVersion;
     private final String[] excludedPathsFromAccessLog;
+    private final ApplicationConfig applicationConfig;
     private final List<ListenerInfo> appListeners;
 
     private Undertow server;
@@ -64,11 +68,13 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                                         String restApiContext,
                                         String restApiVersion,
                                         String[] excludedPathsFromAccessLog,
+                                        ApplicationConfig applicationConfig,
                                         List<Class<? extends EventListener>> appListenerTypes) {
         this.applicationId = applicationId;
         this.restApiContext = restApiContext;
         this.restApiVersion = restApiVersion;
         this.excludedPathsFromAccessLog = excludedPathsFromAccessLog;
+        this.applicationConfig = applicationConfig;
         this.appListeners = appListenerTypes.stream().map(Servlets::listener).collect(Collectors.toList());
     }
 
@@ -132,9 +138,9 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         new ConstantExchangeAttribute(applicationId), // <Application-Id>
                         DateTimeAttribute.INSTANCE, // <timestamp>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
-                        RequestPathAttribute.INSTANCE, // <RequestPath>
+                        new RequestFullURLAttribute(), // <Request URL>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
-                        new NameValueAttribute("requestHeaders", new RequestHeadersAttribute()),
+                        new NameValueAttribute("requestHeaders", new RequestHeadersAttribute(getOmittedHeaders())),
                         new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
                         new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
@@ -164,5 +170,14 @@ public class UndertowContainerInitializer implements ContainerInitializer {
         return Predicates.not(
                 Predicates.prefixes(excludedPathsFromAccessLog)
         );
+    }
+
+    private java.util.function.Predicate<HttpString> getOmittedHeaders() {
+        Set<HttpString> ignoredHeaders =
+                applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
+                        .filter(h -> StringUtils.isNotBlank(h))
+                        .map(h -> new HttpString(h.trim()))
+                        .collect(Collectors.toSet());
+        return h -> ignoredHeaders.contains("*") || ignoredHeaders.contains(h);
     }
 }

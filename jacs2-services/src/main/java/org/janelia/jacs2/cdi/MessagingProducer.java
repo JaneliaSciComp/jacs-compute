@@ -27,7 +27,7 @@ public class MessagingProducer {
         if (StringUtils.isNotBlank(messagingServer)) {
             return ConnectionManager.getInstance().getConnection(messagingServer, messagingUser, messagingPassword, 1);
         } else {
-            return null;
+            return ConnectionManager.getInstance().getConnection();
         }
     }
 
@@ -39,7 +39,9 @@ public class MessagingProducer {
                                                      @PropertyValue(name = "Messaging.AsyncIndexingRoutingKey") String asyncIndexingRoutingKey) {
         LOG.info("Create sender and connect to {}:{}", asyncIndexingExchange, asyncIndexingRoutingKey);
         MessageSender messageSender = new MessageSenderImpl(messageConnection);
-        messageSender.connectTo(asyncIndexingExchange, asyncIndexingRoutingKey);
+        if (messageConnection.isOpen()) {
+            messageSender.connectTo(asyncIndexingExchange, asyncIndexingRoutingKey);
+        }
         return messageSender;
     }
 

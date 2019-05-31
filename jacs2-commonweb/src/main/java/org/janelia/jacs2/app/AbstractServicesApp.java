@@ -15,6 +15,7 @@ import io.undertow.servlet.api.ServletInfo;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.janelia.jacs2.app.undertow.UndertowContainerInitializer;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
+import org.janelia.jacs2.config.ApplicationConfig;
 import org.jboss.weld.environment.servlet.Listener;
 import org.jboss.weld.module.web.servlet.WeldInitialListener;
 import org.jboss.weld.module.web.servlet.WeldTerminalListener;
@@ -57,12 +58,13 @@ public abstract class AbstractServicesApp {
         cmdline.usage(output);
     }
 
-    protected void start(AppArgs appArgs) throws Exception {
+    protected void start(AppArgs appArgs, ApplicationConfig applicationConfig) throws Exception {
         ContainerInitializer containerInitializer = new UndertowContainerInitializer(
                 getApplicationId(),
                 getRestApiContext(),
                 getApiVersion(),
                 getPathsExcludedFromAccessLog(),
+                applicationConfig,
                 getAppListeners()
         );
         containerInitializer.initialize(this.getJaxApplication(), appArgs);

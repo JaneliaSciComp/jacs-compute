@@ -1,6 +1,8 @@
 package org.janelia.jacs2.app;
 
 import org.janelia.jacs2.cdi.SeContainerFactory;
+import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
+import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.job.BackgroundJobs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +30,14 @@ public class AsyncServicesApp extends AbstractServicesApp {
             }
             SeContainer container = SeContainerFactory.getSeContainer();
             AsyncServicesApp app = container.select(AsyncServicesApp.class).get();
-            app.start(appArgs);
+            ApplicationConfig appConfig = container.select(ApplicationConfig.class, new ApplicationProperties() {
+                @Override
+                public Class<ApplicationProperties> annotationType() {
+                    return ApplicationProperties.class;
+                }
+            }).get();
+
+            app.start(appArgs, appConfig);
         } catch (Throwable e) {
             // For some reason, any Throwables thrown out of this main function are discarded. Thus, we must log them
             // here. Of course, this will be problematic if there is ever an issue with the logger.
