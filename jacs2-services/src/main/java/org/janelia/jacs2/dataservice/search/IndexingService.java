@@ -93,6 +93,7 @@ public class IndexingService {
     }
 
     private int indexDocumentsOfType(DomainObjectIndexer domainObjectIndexer, Class<? extends DomainObject> domainClass) {
+        LOG.info("Indexing objects of type {}", domainClass.getName());
         return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass));
     }
 
