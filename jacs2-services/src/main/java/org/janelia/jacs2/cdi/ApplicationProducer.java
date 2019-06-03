@@ -1,15 +1,20 @@
 package org.janelia.jacs2.cdi;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.janelia.jacs2.cdi.qualifier.*;
-import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
-import org.janelia.model.access.cdi.DaoObjectMapper;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
-import java.io.IOException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
+import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
+import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
+import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
+import org.janelia.jacs2.config.ApplicationConfig;
+import org.janelia.model.access.cdi.DaoObjectMapper;
+import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 
 @ApplicationScoped
 public class ApplicationProducer {
@@ -19,55 +24,56 @@ public class ApplicationProducer {
         return objectMapperFactory.getDefaultObjectMapper();
     }
 
-    @Produces @DaoObjectMapper
+    @DaoObjectMapper
+    @Produces
     public ObjectMapper mongoObjectMapper(ObjectMapperFactory objectMapperFactory) {
         return objectMapperFactory.newMongoCompatibleObjectMapper();
     }
 
     @JacsDefault
-    @Produces
     @ApplicationScoped
+    @Produces
     public TimebasedIdentifierGenerator idGenerator(@PropertyValue(name = "TimebasedIdentifierGenerator.DeploymentContext") Integer deploymentContext) {
         return new TimebasedIdentifierGenerator(deploymentContext);
     }
 
-    @Produces
     @PropertyValue(name = "")
+    @Produces
     public String stringPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
         final PropertyValue property = injectionPoint.getAnnotated().getAnnotation(PropertyValue.class);
         return applicationConfig.getStringPropertyValue(property.name());
     }
 
-    @Produces
     @PropertyValue(name = "")
+    @Produces
     public Integer integerPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
         final PropertyValue property = injectionPoint.getAnnotated().getAnnotation(PropertyValue.class);
         return applicationConfig.getIntegerPropertyValue(property.name());
     }
 
-    @Produces
     @IntPropertyValue(name = "")
+    @Produces
     public int intPropertyValueWithDefault(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
         final IntPropertyValue property = injectionPoint.getAnnotated().getAnnotation(IntPropertyValue.class);
         return applicationConfig.getIntegerPropertyValue(property.name(), property.defaultValue());
     }
 
-    @Produces
     @StrPropertyValue(name = "")
+    @Produces
     public String stringPropertyValueWithDefault(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
         final StrPropertyValue property = injectionPoint.getAnnotated().getAnnotation(StrPropertyValue.class);
         return applicationConfig.getStringPropertyValue(property.name(), property.defaultValue());
     }
 
-    @Produces
     @BoolPropertyValue(name = "")
+    @Produces
     public boolean booleanPropertyValueWithDefault(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
         final BoolPropertyValue property = injectionPoint.getAnnotated().getAnnotation(BoolPropertyValue.class);
         return applicationConfig.getBooleanPropertyValue(property.name(), property.defaultValue());
     }
 
-    @ApplicationScoped
     @ApplicationProperties
+    @ApplicationScoped
     @Produces
     public ApplicationConfig applicationConfig() {
         return new ApplicationConfigProvider()

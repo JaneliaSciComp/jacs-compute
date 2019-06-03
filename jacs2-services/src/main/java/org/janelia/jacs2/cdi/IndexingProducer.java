@@ -18,8 +18,8 @@ import org.janelia.model.domain.workspace.NodeAncestorsGetter;
 @ApplicationScoped
 public class IndexingProducer {
 
-    @ApplicationScoped
     @AsyncIndex
+    @ApplicationScoped
     @Produces
     public DomainObjectIndexer createDomainObjectIndexer(@AsyncIndex MessageSender mesageSender) {
         return new AsyncDomainObjectIndexer(mesageSender);

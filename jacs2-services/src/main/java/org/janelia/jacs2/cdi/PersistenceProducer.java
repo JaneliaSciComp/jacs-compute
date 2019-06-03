@@ -1,18 +1,19 @@
 package org.janelia.jacs2.cdi;
 
-import com.google.common.base.Splitter;
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import javax.sql.DataSource;
+
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoClientURI;
-import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoDatabase;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -22,16 +23,6 @@ import org.janelia.jacs2.dataservice.search.SolrServerConstructor;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoDBHelper;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.RegistryHelper;
 import org.slf4j.Logger;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.sql.DataSource;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class PersistenceProducer {
@@ -87,14 +78,15 @@ public class PersistenceProducer {
         );
     }
 
+    @ApplicationScoped
     @Produces
-    @Default
     public MongoDatabase createDefaultMongoDatabase(MongoClient mongoClient) {
         return MongoDBHelper.createMongoDatabase(mongoClient, mongoDatabase);
     }
 
-    @Produces
     @Jacs2Future
+    @ApplicationScoped
+    @Produces
     public MongoDatabase createFutureMongoDatabase(MongoClient mongoClient) {
         log.info("Creating future database: {}", mongoFutureDatabase);
         return MongoDBHelper.createMongoDatabase(mongoClient, mongoFutureDatabase);

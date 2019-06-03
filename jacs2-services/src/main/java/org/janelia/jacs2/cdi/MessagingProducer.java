@@ -31,8 +31,8 @@ public class MessagingProducer {
         }
     }
 
-    @ApplicationScoped
     @AsyncIndex
+    @ApplicationScoped
     @Produces
     public MessageSender createIndexingMessageSender(MessageConnection messageConnection,
                                                      @PropertyValue(name = "Messaging.AsyncIndexingExchange") String asyncIndexingExchange,
