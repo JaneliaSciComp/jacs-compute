@@ -1,5 +1,6 @@
 package org.janelia.jacs2.app;
 
+import org.janelia.jacs2.cdi.SeContainerFactory;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.slf4j.Logger;
@@ -27,8 +28,7 @@ public class SyncServicesApp extends AbstractServicesApp {
                 displayAppUsage(appArgs);
                 return;
             }
-            SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-            SeContainer container = containerInit.initialize();
+            SeContainer container = SeContainerFactory.getSeContainer();
             SyncServicesApp app = container.select(SyncServicesApp.class).get();
             ApplicationConfig appConfig = container.select(ApplicationConfig.class, new ApplicationProperties() {
                 @Override

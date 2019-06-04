@@ -9,7 +9,7 @@ public class SeContainerFactory {
     private static SeContainer seContainer;
 
     public synchronized static SeContainer getSeContainer() {
-        if (seContainerInit == null) seContainerInit = SeContainerInitializer.newInstance();
+        if (seContainerInit == null) seContainerInit = SeContainerInitializer.newInstance().addExtensions(new OnStartupExtension());
         if (seContainer == null) seContainer = seContainerInit.initialize();
         return seContainer;
     }

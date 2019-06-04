@@ -39,10 +39,10 @@ public class MessagingProducer {
                                                      @PropertyValue(name = "Messaging.AsyncIndexingRoutingKey") String asyncIndexingRoutingKey) {
         MessageSender messageSender = new MessageSenderImpl(messageConnection);
         if (StringUtils.isNotBlank(asyncIndexingExchange)) {
-            LOG.info("Create sender and connect to {}:{}", asyncIndexingExchange, asyncIndexingRoutingKey);
+            LOG.info("Create message sender connected to {}:{}", asyncIndexingExchange, asyncIndexingRoutingKey);
             messageSender.connectTo(asyncIndexingExchange, asyncIndexingRoutingKey);
         } else {
-            LOG.warn("Created an unconnected sender since no exchange was provided");
+            LOG.warn("Created an unconnected sender since no message exchange was provided");
         }
         return messageSender;
     }
