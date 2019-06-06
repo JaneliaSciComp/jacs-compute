@@ -21,7 +21,7 @@ public class SavedRequestHandler implements HttpHandler {
 
     private static Set<String> SUPPORTED_METHODS = ImmutableSet.of("PUT", "POST");
     private static Set<String> SUPPORTED_MIMETYPPES = ImmutableSet.of(
-            "application/json", "application/xml", "multipart/form-data", "multipart/mixed"
+            "application/json", "application/xml"
     );
 
     private final HttpHandler next;
