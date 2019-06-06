@@ -131,7 +131,7 @@ public class UndertowAppContainer implements AppContainer {
                 Handlers.path(
                         Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
-                        .addPrefixPath(contextPath, new SavedRequestHandler(restApiHttpHandler)),
+                        .addPrefixPath(contextPath, restApiHttpHandler),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
