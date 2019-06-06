@@ -20,7 +20,9 @@ public class SavedRequestHandler implements HttpHandler {
     static final AttachmentKey<StringBuilder> SAVED_REQUEST_BODY = AttachmentKey.create(StringBuilder.class);
 
     private static Set<String> SUPPORTED_METHODS = ImmutableSet.of("PUT", "POST");
-    private static Set<String> SUPPORTED_MIMETYPPES = ImmutableSet.of("application/json", "application/xml", "multipart/form-data");
+    private static Set<String> SUPPORTED_MIMETYPPES = ImmutableSet.of(
+            "application/json", "application/xml", "multipart/form-data", "multipart/mixed"
+    );
 
     private final HttpHandler next;
 
