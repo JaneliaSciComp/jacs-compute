@@ -21,6 +21,7 @@ package org.janelia.jacs2.app.undertow;
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.ReadOnlyAttributeException;
 import io.undertow.server.HttpServerExchange;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Name value attribute
@@ -29,15 +30,28 @@ public class NameValueAttribute implements ExchangeAttribute {
 
     private final String name;
     private final ExchangeAttribute valueAttr;
+    private final boolean ignoreIfEmpty;
 
     public NameValueAttribute(String name, ExchangeAttribute valueAttr) {
         this.name = name;
         this.valueAttr = valueAttr;
+        this.ignoreIfEmpty = false;
+    }
+
+    public NameValueAttribute(String name, ExchangeAttribute valueAttr, boolean ignoreIfEmpty) {
+        this.name = name;
+        this.valueAttr = valueAttr;
+        this.ignoreIfEmpty = ignoreIfEmpty;
     }
 
     @Override
     public String readAttribute(HttpServerExchange exchange) {
-        return name + "=" + valueAttr.readAttribute(exchange);
+        String val = valueAttr.readAttribute(exchange);
+        if (ignoreIfEmpty && StringUtils.isBlank(val)) {
+            return "";
+        } else {
+            return name + "=" + val;
+        }
     }
 
     @Override

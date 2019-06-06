@@ -15,6 +15,7 @@ import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.attribute.BytesSentAttribute;
 import io.undertow.attribute.ConstantExchangeAttribute;
+import io.undertow.attribute.CookieAttribute;
 import io.undertow.attribute.DateTimeAttribute;
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.QueryStringAttribute;
@@ -26,6 +27,7 @@ import io.undertow.attribute.ResponseHeaderAttribute;
 import io.undertow.predicate.Predicate;
 import io.undertow.predicate.Predicates;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.RequestBufferingHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.handlers.resource.PathResourceManager;
 import io.undertow.server.handlers.resource.ResourceHandler;
@@ -39,7 +41,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.servlet.ServletProperties;
 import org.janelia.jacs2.app.AppArgs;
-import org.janelia.jacs2.app.ContainerInitializer;
+import org.janelia.jacs2.app.AppContainer;
 import org.janelia.jacs2.app.ContextPathBuilder;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.jboss.weld.environment.servlet.Listener;
@@ -51,9 +53,9 @@ import org.slf4j.LoggerFactory;
 import static io.undertow.Handlers.resource;
 import static io.undertow.servlet.Servlets.servlet;
 
-public class UndertowContainerInitializer implements ContainerInitializer {
+public class UndertowAppContainer implements AppContainer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(UndertowContainerInitializer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UndertowAppContainer.class);
 
     private final String applicationId;
     private final String restApiContext;
@@ -64,12 +66,12 @@ public class UndertowContainerInitializer implements ContainerInitializer {
 
     private Undertow server;
 
-    public UndertowContainerInitializer(String applicationId,
-                                        String restApiContext,
-                                        String restApiVersion,
-                                        String[] excludedPathsFromAccessLog,
-                                        ApplicationConfig applicationConfig,
-                                        List<Class<? extends EventListener>> appListenerTypes) {
+    public UndertowAppContainer(String applicationId,
+                                String restApiContext,
+                                String restApiVersion,
+                                String[] excludedPathsFromAccessLog,
+                                ApplicationConfig applicationConfig,
+                                List<Class<? extends EventListener>> appListenerTypes) {
         this.applicationId = applicationId;
         this.restApiContext = restApiContext;
         this.restApiVersion = restApiVersion;
@@ -129,7 +131,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                 Handlers.path(
                         Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
-                        .addPrefixPath(contextPath, restApiHttpHandler),
+                        .addPrefixPath(contextPath, new SavedRequestHandler(restApiHttpHandler)),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
@@ -140,12 +142,14 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         new RequestFullURLAttribute(), // <Request URL>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
+                        new NameValueAttribute("sessionId", new CookieAttribute("JSESSIONID"), true),
                         new NameValueAttribute("requestHeaders", new RequestHeadersAttribute(getOmittedHeaders())),
-                        new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
+                        new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location")), true), // location=<ResponseLocation>
                         new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
                         new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTimeInSeconds>
-                        new NameValueAttribute("tp", new ThroughputAttribute()) // tp=<Throughput>
+                        new NameValueAttribute("tp", new ThroughputAttribute()), // tp=<Throughput>
+                        new RequestBodyAttribute() // <Request Body>
                 }, " "),
                 getAccessLogFilter()
         );

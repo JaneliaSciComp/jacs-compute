@@ -138,7 +138,6 @@ public class DomainIndexingResource {
             } finally {
                 LOG.trace("Finished updateAllDocumentsIndex()");
             }
-
         });
     }
 

@@ -151,7 +151,7 @@ public class UserResource {
                 return Response.ok(existingUser).build();
             }
         } catch (Exception e) {
-            LOG.error("Error trying to get or create user for {}", subjectKey);
+            LOG.error("Error trying to get or create user for {}", subjectKey, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error getting or creating user for " + subjectKey))
                     .build();
@@ -220,7 +220,7 @@ public class UserResource {
 
         }
         catch (Exception e) {
-            LOG.error("Error trying to update user for {}", dbUser.getKey());
+            LOG.error("Error trying to update user for {}", dbUser.getKey(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error trying to update user roles " + dbUser.getKey()))
                     .build();
@@ -261,7 +261,7 @@ public class UserResource {
                 return Response.status(Response.Status.BAD_REQUEST).build();
         }
         catch (Exception e) {
-            LOG.error("Error trying to update user for {}", userKey);
+            LOG.error("Error trying to update user for {}", userKey, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error trying to update user roles " + userKey))
                     .build();
@@ -296,7 +296,7 @@ public class UserResource {
                         .build();
         }
         catch (Exception e) {
-            LOG.error("Error trying to create new group " + groupKey);
+            LOG.error("Error trying to create new group {}", groupKey, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error trying to create new group " + groupKey))
                     .build();

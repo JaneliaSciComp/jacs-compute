@@ -138,7 +138,7 @@ public class DataAnnotationResource {
     @DELETE
     @Path("annotation")
     public Response removeAnnotations(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                  @ApiParam @QueryParam("annotationId") final String annotationIdParam) {
+                                      @ApiParam @QueryParam("annotationId") final String annotationIdParam) {
         LOG.trace("Start removeAnnotations({},{})", subjectKey, annotationIdParam);
         Long annotationId;
         try {

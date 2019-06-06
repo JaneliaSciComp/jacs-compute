@@ -56,7 +56,7 @@ public class DomainSearchResource {
             LOG.debug("Document search found {} results, returning {}", results.getNumFound(), results.getResults().size());
             return results;
         } catch (Exception e) {
-            LOG.error("Error occurred executing search against SOLR", e);
+            LOG.error("Error occurred executing search with {}", searchParams, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             LOG.trace("Finished searchSolrIndices({})", searchParams);
@@ -83,7 +83,7 @@ public class DomainSearchResource {
                     docs.stream().map(d -> Reference.createFor(d.get("type_label") + "#" + d.get("id"))).collect(Collectors.toList()));
             return new DocumentSearchResults(details, searchResults.getFacetValues(), docs.getNumFound());
         } catch (Exception e) {
-            LOG.error("Error occurred executing search against SOLR", e);
+            LOG.error("Error occurred executing search with {}", searchParams, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             LOG.trace("Finished searchDomainObjects({})", searchParams);
