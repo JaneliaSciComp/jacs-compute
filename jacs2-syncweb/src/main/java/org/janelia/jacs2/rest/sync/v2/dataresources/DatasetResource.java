@@ -1,15 +1,32 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriBuilder;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonRootName;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -29,26 +46,6 @@ import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.sample.DataSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriBuilder;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -149,7 +146,7 @@ public class DatasetResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("dataset")
     public Response createDataSet(DomainQuery query) {
-        LOG.debug("Start createDataSet({})", query);
+        LOG.trace("Start createDataSet({})", query);
         try {
             DataSet dataset = legacyDomainDao.createDataSet(query.getSubjectKey(), query.getDomainObjectAs(DataSet.class));
             return Response
@@ -162,7 +159,7 @@ public class DatasetResource {
                     .entity(new ErrorResponse("Error while creating a dataset from " + query))
                     .build();
         } finally {
-            LOG.debug("Finished createDataSet({})", query);
+            LOG.trace("Finished createDataSet({})", query);
         }
     }
 
@@ -177,7 +174,7 @@ public class DatasetResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("dataset")
     public Response updateDataSet(DomainQuery query) {
-        LOG.debug("Start updateDataSet({})", query);
+        LOG.trace("Start updateDataSet({})", query);
         try {
             DataSet dataset = datasetDao.saveBySubjectKey(query.getDomainObjectAs(DataSet.class), query.getSubjectKey());
             return Response
@@ -189,7 +186,7 @@ public class DatasetResource {
                     .entity(new ErrorResponse("Error while updating the dataset " + query))
                     .build();
         } finally {
-            LOG.debug("Finished updateDataSet({})", query);
+            LOG.trace("Finished updateDataSet({})", query);
         }
     }
 
@@ -203,7 +200,7 @@ public class DatasetResource {
     @Path("dataset")
     public Response removeDataSet(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("dataSetId") final String datasetIdParam) {
-        LOG.debug("Start removeDataSet({}, dataSetId={})", subjectKey, datasetIdParam);
+        LOG.trace("Start removeDataSet({}, dataSetId={})", subjectKey, datasetIdParam);
         Long datasetId;
         try {
             try {
@@ -218,7 +215,7 @@ public class DatasetResource {
             return Response.noContent()
                     .build();
         } finally {
-            LOG.debug("Finished removeDataSet({}, dataSetId={})", subjectKey, datasetIdParam);
+            LOG.trace("Finished removeDataSet({}, dataSetId={})", subjectKey, datasetIdParam);
         }
     }
 

@@ -333,6 +333,10 @@ public interface LegacyDomainDao {
 
     List<LSMImage> getActiveLsmsBySampleId(String subjectKey, Long sampleId);
 
+    List<LSMImage> getInactiveLsmsBySampleId(String subjectKey, Long sampleId);
+
+    List<LSMImage> getAllLsmsBySampleId(String subjectKey, Long sampleId);
+
     LSMImage getActiveLsmBySageId(String subjectKey, Integer sageId);
 
     List<LSMImage> getUserLsmsBySageId(String subjectKey, Integer sageId);

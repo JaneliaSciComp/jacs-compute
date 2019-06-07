@@ -1,7 +1,23 @@
 package org.janelia.model.access.dao.mongo;
 
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import javax.inject.Inject;
+
 import com.google.common.collect.ImmutableList;
 import com.mongodb.DBCursor;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -36,20 +52,6 @@ import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
-
-import javax.inject.Inject;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -483,6 +485,16 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public List<LSMImage> getActiveLsmsBySampleId(String subjectKey, Long sampleId) {
         return dao.getActiveLsmsBySampleId(subjectKey, sampleId);
+    }
+
+    @Override
+    public List<LSMImage> getInactiveLsmsBySampleId(String subjectKey, Long sampleId) {
+        return dao.getInactiveLsmsBySampleId(subjectKey, sampleId);
+    }
+
+    @Override
+    public List<LSMImage> getAllLsmsBySampleId(String subjectKey, Long sampleId) {
+        return dao.getAllLsmsBySampleId(subjectKey, sampleId);
     }
 
     @Override
