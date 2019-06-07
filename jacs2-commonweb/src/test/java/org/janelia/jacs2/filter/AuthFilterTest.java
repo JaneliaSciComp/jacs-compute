@@ -19,10 +19,16 @@ import org.slf4j.Logger;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -65,7 +71,8 @@ public class AuthFilterTest {
 
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
         Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
-        Mockito.when(requestContext.getHeaderString("Authorization")).thenReturn("Bearer " + testToken);
+        Mockito.when(requestContext.getHeaders())
+                .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of("Authorization", "Bearer " + testToken)));
         Mockito.when(jwtProvider.decodeJWT(testToken)).thenReturn(createTestJWT(testUserName));
         Mockito.when(dao.getSubjectByNameOrKey(testUserName)).then(invocation -> {
             String usernameArg = invocation.getArgument(0);

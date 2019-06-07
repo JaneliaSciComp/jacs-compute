@@ -11,9 +11,9 @@ public class RequestBodyAttribute implements ExchangeAttribute {
 
     @Override
     public String readAttribute(final HttpServerExchange exchange) {
-        if (exchange.getAttachment(SavedRequestHandler.SAVED_REQUEST_BODY) != null) {
-            String body = exchange.getAttachment(SavedRequestHandler.SAVED_REQUEST_BODY).toString();
-            exchange.removeAttachment(SavedRequestHandler.SAVED_REQUEST_BODY);
+        String body = exchange.getAttachment(SavedRequestBodyHandler.SAVED_REQUEST_BODY);
+        if (body != null) {
+            exchange.removeAttachment(SavedRequestBodyHandler.SAVED_REQUEST_BODY);
             return body;
         } else {
             return "";

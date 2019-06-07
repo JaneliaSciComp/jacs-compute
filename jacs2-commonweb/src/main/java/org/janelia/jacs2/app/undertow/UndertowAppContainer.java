@@ -27,7 +27,6 @@ import io.undertow.attribute.ResponseHeaderAttribute;
 import io.undertow.predicate.Predicate;
 import io.undertow.predicate.Predicates;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.handlers.RequestBufferingHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.handlers.resource.PathResourceManager;
 import io.undertow.server.handlers.resource.ResourceHandler;
@@ -131,7 +130,7 @@ public class UndertowAppContainer implements AppContainer {
                 Handlers.path(
                         Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
-                        .addPrefixPath(contextPath, restApiHttpHandler),
+                        .addPrefixPath(contextPath, new SavedRequestBodyHandler(restApiHttpHandler, applicationConfig.getBooleanPropertyValue("AccessLog.WithRequestBody", false))),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {

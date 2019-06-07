@@ -123,8 +123,10 @@ public class AuthFilter implements ContainerRequestFilter {
     }
 
     private Optional<String> getSingleHeaderValue(ContainerRequestContext requestContext, String headerName) {
-        String headerValue = requestContext.getHeaderString(headerName);
-        return StringUtils.isNotBlank(headerValue) ? Optional.of(headerValue) : Optional.empty();
+        return requestContext.getHeaders().entrySet().stream()
+                .filter(e -> StringUtils.equalsIgnoreCase(e.getKey(), headerName) && e.getValue() != null)
+                .flatMap(e -> e.getValue().stream())
+                .findFirst();
     }
 
     private Optional<String> getUserNameFromAuthorizationHeader(ContainerRequestContext requestContext) {
