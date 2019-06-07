@@ -15,6 +15,7 @@ import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
+import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.OntologyDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.access.domain.dao.SummaryDao;
@@ -47,6 +48,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getAnnotationSearchableDao()).to(AnnotationDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getDatasetDao()).to(DatasetDao.class);
         bind(dependenciesProducer.getDatasetSearchableDao()).to(DatasetDao.class).qualifiedBy(asyncIndexAnnotation);
+        bind(dependenciesProducer.getLineReleaseSearchableDao()).to(LineReleaseDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getLegacyDomainDao()).to(LegacyDomainDao.class);
         bind(dependenciesProducer.getObjectMapperFactory()).to(ObjectMapperFactory.class);
         bind(dependenciesProducer.getVolumeLocationFactory()).to(RenderedVolumeLocationFactory.class);

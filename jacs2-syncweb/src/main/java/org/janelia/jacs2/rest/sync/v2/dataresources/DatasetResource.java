@@ -100,8 +100,7 @@ public class DatasetResource {
             notes = "Uses the subject key to return a list of DataSets for the user"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched the list of datasets",  response = DataSet.class,
-                    responseContainer = "List" ),
+            @ApiResponse( code = 200, message = "Successfully fetched the list of datasets",  response = DataSet.class),
             @ApiResponse( code = 500, message = "Internal Server Error fetching teh datasets" )
     })
     @GET
@@ -118,7 +117,7 @@ public class DatasetResource {
                         .build();
             } else {
                 DataSet existingDataset = datasetDao.findById(id); // this is only for logging purposes
-                if (existingDataset == null) {
+                if (existingDataset != null) {
                     LOG.info("A dataset exists for {} but is not accessible by {}", id, securityContext.getUserPrincipal());
                     return Response.status(Response.Status.FORBIDDEN)
                             .entity(new ErrorResponse("Dataset is not accessible"))
@@ -137,8 +136,7 @@ public class DatasetResource {
 
     @ApiOperation(value = "Creates a DataSet using the DomainObject parameter of the DomainQuery")
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully created a DataSet",
-                    response = DataSet.class),
+            @ApiResponse( code = 200, message = "Successfully created a DataSet", response = DataSet.class),
             @ApiResponse( code = 500, message = "Internal Server Error creating a dataset" )
     })
     @PUT
@@ -179,6 +177,7 @@ public class DatasetResource {
             DataSet dataset = datasetDao.saveBySubjectKey(query.getDomainObjectAs(DataSet.class), query.getSubjectKey());
             return Response
                     .ok(dataset)
+                    .contentLocation(UriBuilder.fromMethod(DatasetResource.class, "getDatasetById").build(dataset.getId()))
                     .build();
         } catch (Exception e) {
             LOG.error("Error occurred updating the dataset {}", query, e);

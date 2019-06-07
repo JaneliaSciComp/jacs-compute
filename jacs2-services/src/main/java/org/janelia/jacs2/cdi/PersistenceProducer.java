@@ -77,6 +77,7 @@ public class PersistenceProducer {
     @ApplicationScoped
     @Produces
     public MongoDatabase createDefaultMongoDatabase(MongoClient mongoClient) {
+        log.info("Creating database: {}", mongoDatabase);
         return MongoDBHelper.createMongoDatabase(mongoClient, mongoDatabase);
     }
 

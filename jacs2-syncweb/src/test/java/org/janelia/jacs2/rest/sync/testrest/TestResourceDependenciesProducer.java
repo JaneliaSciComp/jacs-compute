@@ -14,6 +14,7 @@ import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
+import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.OntologyDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.access.domain.dao.SummaryDao;
@@ -36,6 +37,7 @@ public class TestResourceDependenciesProducer {
     private Logger logger = LoggerFactory.getLogger(TestResourceDependenciesProducer.class);
     private AnnotationDao annotationDao = mock(AnnotationDao.class);
     private DatasetDao datasetDao = mock(DatasetDao.class);
+    private LineReleaseDao lineReleaseDao = mock(LineReleaseDao.class);
     private JWTProvider jwtProvider = mock(JWTProvider.class);
     private LegacyDomainDao legacyDomainDao = mock(LegacyDomainDao.class);
     private ObjectMapperFactory objectMapperFactory = ObjectMapperFactory.instance();
@@ -81,6 +83,12 @@ public class TestResourceDependenciesProducer {
     @Produces
     public DatasetDao getDatasetDao() {
         return datasetDao;
+    }
+
+    @AsyncIndex
+    @Produces
+    public LineReleaseDao getLineReleaseSearchableDao() {
+        return lineReleaseDao;
     }
 
     @Produces
