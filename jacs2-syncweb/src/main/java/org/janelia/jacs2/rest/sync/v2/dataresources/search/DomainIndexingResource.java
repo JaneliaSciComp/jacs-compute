@@ -1,24 +1,8 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources.search;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.apache.commons.collections4.CollectionUtils;
-import org.glassfish.jersey.process.JerseyProcessingUncaughtExceptionHandler;
-import org.glassfish.jersey.server.ManagedAsync;
-import org.janelia.jacs2.auth.JacsSecurityContextHelper;
-import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.search.IndexingService;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.security.Group;
-import org.janelia.model.security.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -36,10 +20,25 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import org.apache.commons.collections4.CollectionUtils;
+import org.glassfish.jersey.server.ManagedAsync;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.dataservice.search.IndexingService;
+import org.janelia.model.domain.Reference;
+import org.janelia.model.security.Group;
+import org.janelia.model.security.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Api(value = "Janelia Workstation Domain Data")
 @Path("/data")
@@ -173,6 +172,7 @@ public class DomainIndexingResource {
         }
     }
 
+    @RequireAuthentication
     @ApiOperation(value = "Delete documents from index.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully performed SOLR index clear"),

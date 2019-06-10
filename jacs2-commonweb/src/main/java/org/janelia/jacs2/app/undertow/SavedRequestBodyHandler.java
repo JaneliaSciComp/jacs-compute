@@ -1,5 +1,6 @@
 package org.janelia.jacs2.app.undertow;
 
+import java.util.Collection;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
@@ -20,17 +21,19 @@ public class SavedRequestBodyHandler implements HttpHandler {
     private final boolean enabled;
     private final Set<String> supportedMethods;
     private final Set<String> supportedMimeTypes;
+    private final Set<String> restrictedPaths;
 
-    SavedRequestBodyHandler(HttpHandler next, boolean enabled) {
+    SavedRequestBodyHandler(HttpHandler next, boolean enabled, Collection<String> restrictedPaths) {
         this.next = next;
         this.enabled = enabled;
         this.supportedMethods = ImmutableSet.of("PUT", "POST");
         this.supportedMimeTypes = ImmutableSet.of("application/json", "application/xml", "multipart/");
+        this.restrictedPaths = ImmutableSet.copyOf(restrictedPaths);
     }
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if (enabled && supportedMethods.contains(exchange.getRequestMethod().toString())) {
+        if (enabled && supportedMethods.contains(exchange.getRequestMethod().toString()) && isRequestPathNotRestricted(exchange.getRelativePath())) {
             String mimeType = exchange.getRequestHeaders().getFirst(Headers.CONTENT_TYPE);
             if (mimeType != null && supportedMimeTypes.stream().filter(supportedMimeType -> mimeType.startsWith(supportedMimeType)).findAny().orElse(null) != null) {
                 boolean isMultipart;
@@ -53,6 +56,10 @@ public class SavedRequestBodyHandler implements HttpHandler {
             }
         }
         next.handleRequest(exchange);
+    }
+
+    private boolean isRequestPathNotRestricted(String relativePath) {
+        return !restrictedPaths.contains(relativePath);
     }
 
 }

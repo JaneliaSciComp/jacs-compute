@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import javax.servlet.ServletException;
 import javax.ws.rs.core.Application;
 
+import com.google.common.collect.ImmutableList;
+
 import io.swagger.jersey.config.JerseyJaxrsConfig;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -130,7 +132,11 @@ public class UndertowAppContainer implements AppContainer {
                 Handlers.path(
                         Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
-                        .addPrefixPath(contextPath, new SavedRequestBodyHandler(restApiHttpHandler, applicationConfig.getBooleanPropertyValue("AccessLog.WithRequestBody", false))),
+                        .addPrefixPath(contextPath, new SavedRequestBodyHandler(
+                                restApiHttpHandler,
+                                applicationConfig.getBooleanPropertyValue("AccessLog.WithRequestBody", false),
+                                applicationConfig.getStringListPropertyValue("AccessLog.RestrictedPaths",
+                                        ImmutableList.of("/auth/authenticate", "/data/user/password")))),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {

@@ -32,6 +32,7 @@ import org.janelia.model.security.util.SubjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -111,10 +112,10 @@ public class UserResource {
             subjectDao.setUserPassword(user, pwProvider.generatePBKDF2Hash(authenticationMessage.getPassword()));
             return user;
         } catch (Exception e) {
+            LOG.error("Error occurred changing password for user {}", authenticationMessage.getUsername(), e);
             if (e instanceof WebApplicationException) {
                 throw (WebApplicationException) e;
             } else {
-                LOG.error("Error occurred changing password for user {}", authenticationMessage.getUsername(), e);
                 throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
             }
         }
