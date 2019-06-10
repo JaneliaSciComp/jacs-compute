@@ -70,7 +70,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     public List<String> getStringListPropertyValue(String name, List<String> defaultValue) {
         String stringValue = getStringPropertyValue(name);
         if (StringUtils.isBlank(stringValue)) {
-            return ImmutableList.of();
+            return defaultValue;
         } else {
             return Splitter.on(',').trimResults().splitToList(stringValue);
         }
