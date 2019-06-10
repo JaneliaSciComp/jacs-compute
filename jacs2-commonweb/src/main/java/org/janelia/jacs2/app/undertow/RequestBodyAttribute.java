@@ -5,7 +5,8 @@ import io.undertow.attribute.ReadOnlyAttributeException;
 import io.undertow.server.HttpServerExchange;
 
 /**
- * Response attribute in seconds.
+ * Request body attribute. This only works together with SavedRequestBodyHandler because
+ * it expects the request body to be saved as an exchange attachment.
  */
 public class RequestBodyAttribute implements ExchangeAttribute {
 
