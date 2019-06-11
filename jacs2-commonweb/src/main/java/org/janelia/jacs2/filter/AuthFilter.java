@@ -115,7 +115,7 @@ public class AuthFilter implements ContainerRequestFilter {
             return;
         }
 
-        String runAsUserName = requestContext.getHeaderString(HEADER_RUNASUSER);
+        String runAsUserName = getSingleHeaderValue(requestContext, HEADER_RUNASUSER).orElse(null);
         Subject authorizedSubject;
 
         if (StringUtils.isNotBlank(runAsUserName)) {
