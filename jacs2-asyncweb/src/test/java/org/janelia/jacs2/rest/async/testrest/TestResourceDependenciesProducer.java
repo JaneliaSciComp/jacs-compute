@@ -27,6 +27,7 @@ public class TestResourceDependenciesProducer {
     private ApplicationConfig applicationConfig = new ApplicationConfigProvider()
             .fromMap(ImmutableMap.<String, String>builder()
                     .put("JACS.ApiKey", "TESTKEY")
+                    .put("JACS.SystemAppUserName", "TESTUSER")
                     .build()
             )
             .build();

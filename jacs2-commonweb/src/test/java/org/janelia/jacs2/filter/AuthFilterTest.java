@@ -47,6 +47,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 public class AuthFilterTest {
 
     private static final String TEST_KEY = "TESTKEY";
+    private static final String TEST_SYSTEM_USER = "TESTUSER";
 
     @Mock
     private LegacyDomainDao dao;
@@ -66,6 +67,7 @@ public class AuthFilterTest {
         Whitebox.setInternalState(authFilter, "resourceInfo", resourceInfo);
         Whitebox.setInternalState(authFilter, "jwtProvider", jwtProvider);
         Whitebox.setInternalState(authFilter, "apiKey", TEST_KEY);
+        Whitebox.setInternalState(authFilter, "systemUser", TEST_SYSTEM_USER);
     }
 
     @Test

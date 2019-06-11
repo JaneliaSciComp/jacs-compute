@@ -51,6 +51,9 @@ public class AuthFilter implements ContainerRequestFilter {
     private LegacyDomainDao dao;
     @Inject
     private JWTProvider jwtProvider;
+    @PropertyValue(name = "JACS.SystemAppUserName")
+    @Inject
+    private String systemUser;
     @PropertyValue(name = "JACS.ApiKey")
     @Inject
     private String apiKey;
@@ -109,6 +112,7 @@ public class AuthFilter implements ContainerRequestFilter {
                 // As a note the authenticated user created for an API key authenticated request
                 // does not have admin privileges for now.
                 authenticatedSubject = new Subject() {{
+                    setName(systemUser);
                     addRoles(GroupRole.Reader, GroupRole.Writer, GroupRole.Admin);
                 }};
             }
