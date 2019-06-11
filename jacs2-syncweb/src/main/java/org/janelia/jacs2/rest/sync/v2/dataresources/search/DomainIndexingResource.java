@@ -36,6 +36,7 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.search.IndexingService;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.security.Group;
+import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,13 +119,13 @@ public class DomainIndexingResource {
         ASYNC_TASK_EXECUTOR.submit(() -> {
             LOG.trace("Start updateAllDocumentsIndex()");
             try {
-                User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
+                Subject authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubject(containerRequestContext, Subject.class);
                 if (authorizedSubject == null) {
                     LOG.warn("Unauthorized attempt to update the entire search index");
                     asyncResponse.resume(new WebApplicationException(Response.Status.FORBIDDEN));
                     return;
                 }
-                if (!authorizedSubject.hasGroupWrite(Group.ADMIN_KEY)) {
+                if (!authorizedSubject.hasWritePrivilege()) {
                     LOG.warn("Non-admin user {} attempted to update the entire search index", authorizedSubject.getName());
                     asyncResponse.resume(new WebApplicationException(Response.Status.FORBIDDEN));
                     return;
@@ -153,12 +154,12 @@ public class DomainIndexingResource {
     public Response removeDocumentsIndex(@Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start deleteDocumentsIndex()");
         try {
-            User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
+            Subject authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubject(containerRequestContext, Subject.class);
             if (authorizedSubject == null) {
                 LOG.warn("Unauthorized attempt to delete the search index");
                 return Response.status(Response.Status.FORBIDDEN).build();
             }
-            if (!authorizedSubject.hasGroupWrite(Group.ADMIN_KEY)) {
+            if (!authorizedSubject.hasWritePrivilege()) {
                 LOG.warn("Non-admin user {} attempted to remove search index", authorizedSubject.getName());
                 return Response.status(Response.Status.FORBIDDEN).build();
             }

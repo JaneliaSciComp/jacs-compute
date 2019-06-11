@@ -1,5 +1,6 @@
 package org.janelia.jacs2.auth;
 
+import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 
 import javax.ws.rs.container.ContainerRequestContext;
@@ -9,22 +10,24 @@ public class JacsSecurityContextHelper {
 
     public static String getAuthenticatedSubjectKey(ContainerRequestContext containerRequestContext) {
         JacsSecurityContext jacsSecurityContext = getSecurityContext(containerRequestContext);
-        return jacsSecurityContext==null?null:jacsSecurityContext.getAuthenticatedSubject().getKey();
+        return jacsSecurityContext == null ? null : jacsSecurityContext.getAuthenticatedSubject().getKey();
     }
 
     public static String getAuthorizedSubjectKey(ContainerRequestContext containerRequestContext) {
         JacsSecurityContext jacsSecurityContext = getSecurityContext(containerRequestContext);
-        return jacsSecurityContext==null?null:jacsSecurityContext.getAuthorizedSubject().getKey();
+        return jacsSecurityContext == null ? null : jacsSecurityContext.getAuthorizedSubject().getKey();
     }
 
-    public static User getAuthenticatedUser(ContainerRequestContext containerRequestContext) {
+    @SuppressWarnings("unchecked")
+    public static <S extends Subject> S getAuthenticatedSubject(ContainerRequestContext containerRequestContext, Class<S> subjectType) {
         JacsSecurityContext jacsSecurityContext = getSecurityContext(containerRequestContext);
-        return jacsSecurityContext==null?null:(User)jacsSecurityContext.getAuthenticatedSubject();
+        return jacsSecurityContext == null ? null : (S) jacsSecurityContext.getAuthenticatedSubject();
     }
 
-    public static User getAuthorizedUser(ContainerRequestContext containerRequestContext) {
+    @SuppressWarnings("unchecked")
+    public static <S extends Subject> S getAuthorizedSubject(ContainerRequestContext containerRequestContext, Class<S> subjectType) {
         JacsSecurityContext jacsSecurityContext = getSecurityContext(containerRequestContext);
-        return jacsSecurityContext==null?null:(User)jacsSecurityContext.getAuthorizedSubject();
+        return jacsSecurityContext == null ? null : (S) jacsSecurityContext.getAuthorizedSubject();
     }
 
     private static JacsSecurityContext getSecurityContext(ContainerRequestContext containerRequestContext) {

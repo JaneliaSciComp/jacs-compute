@@ -522,20 +522,20 @@ public class UserResource {
     }
 
     private boolean checkAdministrationPrivileges (String username, ContainerRequestContext containerRequestContext) {
-        User authorizedSubject = JacsSecurityContextHelper.getAuthorizedUser(containerRequestContext);
-        User authenticatedUser = JacsSecurityContextHelper.getAuthenticatedUser(containerRequestContext);
+        Subject authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubject(containerRequestContext, Subject.class);
+        Subject authenticatedSubject = JacsSecurityContextHelper.getAuthenticatedSubject(containerRequestContext, Subject.class);
 
-        if (authorizedSubject==null || authenticatedUser==null) {
+        if (authorizedSubject == null || authenticatedSubject == null) {
             LOG.info("Unauthorized attempt to change password for {}", username);
             return false;
         }
 
-        LOG.info("User {} is performing admin on user account for {}", authenticatedUser.getName(), username);
-        if (!authorizedSubject.getName().equals(username)) {
+        LOG.info("User {} is performing admin on user account for {}", authenticatedSubject.getName(), username);
+        if (!authorizedSubject.getName().equals(username) && authenticatedSubject instanceof User) {
+            User authenticatedUser = (User) authenticatedSubject;
             // Someone is trying to change a password that isn't there own. Is it an admin?
             if (!authenticatedUser.hasGroupRead(Group.ADMIN_KEY)) {
-                LOG.info("Non-admin user {} attempted to change password for {}",
-                        authenticatedUser.getName(), username);
+                LOG.info("Non-admin user {} attempted to change password for {}", authenticatedUser.getName(), username);
                 return false;
             }
         }

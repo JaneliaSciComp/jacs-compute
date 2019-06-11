@@ -7,6 +7,7 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.util.SubjectUtils;
 import org.slf4j.Logger;
@@ -68,11 +69,11 @@ public class AuthFilter implements ContainerRequestFilter {
             return;
         }
         String authUserName = getAuthUserName(requestContext).orElse("");
-        Subject authenticatedUser;
+        Subject authenticatedSubject;
         Response subjectCheckResponse;
         if (StringUtils.isNotBlank(authUserName)) {
-            authenticatedUser = dao.getSubjectByNameOrKey(authUserName);
-            if (authenticatedUser == null) {
+            authenticatedSubject = dao.getSubjectByNameOrKey(authUserName);
+            if (authenticatedSubject == null) {
                 logger.warn("Invalid username parameter passed in for authentication - no entry found for {}", authUserName);
                 subjectCheckResponse = Response.status(Response.Status.UNAUTHORIZED)
                         .entity(new ErrorResponse("Invalid authentication"))
@@ -98,7 +99,7 @@ public class AuthFilter implements ContainerRequestFilter {
                     })
                     .orElse(false);
             if (!validApiKeyFound) {
-                authenticatedUser = null;
+                authenticatedSubject = null;
                 subjectCheckResponse = Response.status(Response.Status.UNAUTHORIZED)
                         .entity(new ErrorResponse("Invalid authentication"))
                         .build();
@@ -107,7 +108,9 @@ public class AuthFilter implements ContainerRequestFilter {
                 // create a dummy principal with no specific key and/or ID
                 // As a note the authenticated user created for an API key authenticated request
                 // does not have admin privileges for now.
-                authenticatedUser = new Subject() {};
+                authenticatedSubject = new Subject() {{
+                    addRoles(GroupRole.Reader, GroupRole.Writer, GroupRole.Admin);
+                }};
             }
         }
         if (subjectCheckResponse != null) {
@@ -130,10 +133,10 @@ public class AuthFilter implements ContainerRequestFilter {
                 );
                 return;
             }
-            if (!authorizedSubject.getId().equals(authenticatedUser.getId())) {
+            if (!authorizedSubject.getId().equals(authenticatedSubject.getId())) {
                 // if the user it's trying to run the job as somebody else it must have admin privileges
                 // otherwise if they are the same we should not care
-                if (!SubjectUtils.isAdmin(authenticatedUser)) {
+                if (!authenticatedSubject.hasReadPrivilege()) {
                     logger.warn("User {} is not authorized to act as subject {}", authUserName, runAsUserName);
                     requestContext.abortWith(
                             Response.status(Response.Status.FORBIDDEN)
@@ -144,9 +147,9 @@ public class AuthFilter implements ContainerRequestFilter {
                 }
             }
         } else {
-            authorizedSubject = authenticatedUser;
+            authorizedSubject = authenticatedSubject;
         }
-        JacsSecurityContext securityContext = new JacsSecurityContext(authenticatedUser,
+        JacsSecurityContext securityContext = new JacsSecurityContext(authenticatedSubject,
                 authorizedSubject,
                 "https".equals(requestContext.getUriInfo().getRequestUri().getScheme()),
                 "");
