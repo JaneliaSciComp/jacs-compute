@@ -50,7 +50,7 @@ public class AuthFilter implements ContainerRequestFilter {
     private LegacyDomainDao dao;
     @Inject
     private JWTProvider jwtProvider;
-    @PropertyValue(name = "StorageService.ApiKey")
+    @PropertyValue(name = "JACS.ApiKey")
     @Inject
     private String apiKey;
     @Inject

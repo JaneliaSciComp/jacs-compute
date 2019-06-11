@@ -52,7 +52,8 @@ public class TestResourceBinder extends AbstractBinder {
                     .findFirst()
                     .map(a -> (PropertyValue) a)
                     .map(pv -> applicationConfig.getStringPropertyValue(pv.name()))
-                    .orElse(null);
+                    .orElseThrow(() -> new IllegalStateException("PropertyValue not found"))
+                    ;
         }
 
         @Override

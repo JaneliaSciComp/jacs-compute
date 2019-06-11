@@ -26,7 +26,7 @@ public class TestResourceDependenciesProducer {
     private Logger logger = LoggerFactory.getLogger(TestResourceDependenciesProducer.class);
     private ApplicationConfig applicationConfig = new ApplicationConfigProvider()
             .fromMap(ImmutableMap.<String, String>builder()
-                    .put("StorageService.ApiKey", "TESTKEY")
+                    .put("JACS.ApiKey", "TESTKEY")
                     .build()
             )
             .build();
