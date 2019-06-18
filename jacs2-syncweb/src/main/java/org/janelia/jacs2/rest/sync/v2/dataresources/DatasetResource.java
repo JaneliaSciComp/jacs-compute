@@ -87,7 +87,7 @@ public class DatasetResource {
     public Response getDatasets(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDataSets({})", subjectKey);
         try {
-            List<DataSet> dataSets = datasetDao.findOwnedEntitiesBySubjectKey(subjectKey, 0, -1);
+            List<DataSet> dataSets = datasetDao.findEntitiesReadableBySubjectKey(subjectKey, 0, -1);
             return Response
                     .ok(new GenericEntity<List<DataSet>>(dataSets){})
                     .build();
