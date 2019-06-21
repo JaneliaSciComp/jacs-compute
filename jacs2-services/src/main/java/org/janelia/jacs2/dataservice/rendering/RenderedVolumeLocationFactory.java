@@ -33,7 +33,7 @@ public class RenderedVolumeLocationFactory {
     public RenderedVolumeLocation getVolumeLocation(String samplePath, String subjectKey, String authToken) {
         Preconditions.checkArgument(StringUtils.isNotBlank(samplePath));
         return storageService.lookupDataStorage(null, null, null, samplePath, subjectKey, authToken)
-                .map(dsInfo -> Optional.<RenderedVolumeLocation>of(new JADEBasedRenderedVolumeLocation(dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, httpClientProvider)))
+                .map(dsInfo -> Optional.<RenderedVolumeLocation>of(new JADEBasedRenderedVolumeLocation(dsInfo.getConnectionURL(), dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, httpClientProvider)))
                 .orElseGet(() -> storageService.lookupStorageVolumes(null, null, samplePath, subjectKey, authToken)
                             .map(vsInfo -> {
                                 String renderedVolumePath;
@@ -42,8 +42,10 @@ public class RenderedVolumeLocationFactory {
                                 } else {
                                     renderedVolumePath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(samplePath)).toString();
                                 }
-                                LOG.info("Create JADE volume location with URL {} and volume path {}", vsInfo.getStorageURL(), renderedVolumePath);
-                                return new JADEBasedRenderedVolumeLocation(vsInfo.getStorageURL(),
+                                LOG.info("Create JADE volume location with URLs {}, {} and volume path {}", vsInfo.getStorageServiceURL(), vsInfo.getVolumeStorageURI(), renderedVolumePath);
+                                return new JADEBasedRenderedVolumeLocation(
+                                        vsInfo.getStorageServiceURL(),
+                                        vsInfo.getVolumeStorageURI(),
                                         renderedVolumePath,
                                         authToken,
                                         storageServiceApiKey,

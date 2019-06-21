@@ -115,7 +115,7 @@ public class SWCService {
                         swcPath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(swcFolderName)).toString();
                     }
                     LOG.info("List swc entries on {} : {}", vsInfo, swcPath);
-                    return storageService.listStorageContent(vsInfo.getStorageURL(), swcPath, null, null, 3).stream();
+                    return storageService.listStorageContent(vsInfo.getVolumeStorageURI(), swcPath, null, null, 3).stream();
                 })
                 .orElseGet(() -> Stream.of())
                 .filter(storageEntryInfo -> storageEntryInfo.getEntryRelativePath().endsWith(".swc"))

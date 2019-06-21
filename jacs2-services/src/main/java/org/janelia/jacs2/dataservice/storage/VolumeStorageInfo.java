@@ -20,6 +20,10 @@ public class VolumeStorageInfo {
     @JsonProperty
     private String storageServiceURL;
 
+    public String getId() {
+        return id;
+    }
+
     void setId(String id) {
         this.id = id;
     }
@@ -30,6 +34,10 @@ public class VolumeStorageInfo {
 
     void setBaseStorageRootDir(String baseStorageRootDir) {
         this.baseStorageRootDir = baseStorageRootDir;
+    }
+
+    public String getStorageServiceURL() {
+        return storageServiceURL;
     }
 
     void setStorageServiceURL(String storageServiceURL) {
@@ -45,7 +53,7 @@ public class VolumeStorageInfo {
     }
 
     @JsonIgnore
-    public String getStorageURL() {
+    public String getVolumeStorageURI() {
         try {
             return UriBuilder.fromUri(new URI(storageServiceURL)).path("agent_storage/storage_volume").path(id).build().toString();
         } catch (URISyntaxException e) {
