@@ -173,22 +173,22 @@ public class UserResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/user/property")
     public Response updateUser(@ApiParam Map<String, Object> userProperties, @Context ContainerRequestContext containerRequestContext) {
-        User dbUser = null;
+        // TODO: this method should update the user based on a user id, which is a stable identifier
+        String username = (String) userProperties.get("name");
         try {
             LOG.info("Start updateUserProperty()");
-            if (StringUtils.isBlank((String) userProperties.get("name"))) {
+            if (StringUtils.isBlank(username)) {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity(new ErrorResponse("Invalid subject key " + userProperties.get("name")))
                         .build();
             }
 
-            String username = (String)userProperties.get("name");
             boolean isAllowed = checkAdministrationPrivileges(username, containerRequestContext);
             if (!isAllowed) {
                 throw new WebApplicationException(Response.Status.FORBIDDEN);
             }
 
-            dbUser = (User) subjectDao.findByNameOrKey((String) userProperties.get("name"));
+            User dbUser = (User) subjectDao.findByNameOrKey(username);
             // create new user
             if (dbUser == null) {
                 User blankUser = authProvider.addUser(userProperties);
@@ -205,25 +205,29 @@ public class UserResource {
 
                     // assign
                     return Response.ok(blankUser).build();
-                } else {
+                }
+                else {
                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
                 }
             } else {
                 // existing user
                 boolean emailR = subjectDao.updateUserProperty(dbUser, "email", (String) userProperties.get("email"));
                 boolean fullNameR = subjectDao.updateUserProperty(dbUser, "fullName", (String) userProperties.get("fullname"));
-                boolean nameR = subjectDao.updateUserProperty(dbUser, "name", (String) userProperties.get("name"));
-                if (emailR && fullNameR && nameR)
-                    return Response.status(Response.Status.OK).build();
-                else
+                boolean nameR = subjectDao.updateUserProperty(dbUser, "name", username);
+                if (emailR && fullNameR && nameR) {
+                    dbUser = (User) subjectDao.findByNameOrKey(username);
+                    return Response.ok(dbUser).build();
+                }
+                else {
                     return Response.status(Response.Status.BAD_REQUEST).build();
+                }
             }
 
         }
         catch (Exception e) {
-            LOG.error("Error trying to update user for {}", dbUser.getKey(), e);
+            LOG.error("Error trying to update user {}", username, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new ErrorResponse("Error trying to update user roles " + dbUser.getKey()))
+                    .entity(new ErrorResponse("Error trying to update user roles " + username))
                     .build();
         }
         finally {
