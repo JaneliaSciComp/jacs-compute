@@ -260,10 +260,13 @@ public class UserResource {
         }
         try {
             User user = (User)subject;
-            if (subjectDao.updateUserGroupRoles(user, roles))
+            if (subjectDao.updateUserGroupRoles(user, roles)) {
                 return Response.status(Response.Status.OK).build();
-            else
+            }
+            else {
+                LOG.error("Could not update group roles for user {}", user);
                 return Response.status(Response.Status.BAD_REQUEST).build();
+            }
         }
         catch (Exception e) {
             LOG.error("Error trying to update user for {}", userKey, e);
