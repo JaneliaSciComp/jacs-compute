@@ -16,8 +16,8 @@ import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.util.MatrixUtilities;
 import org.janelia.model.util.TmNeuronUtils;
-import org.janelia.rendering.RenderedVolume;
 import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.RenderedVolumeMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,11 +98,11 @@ public class SWCService {
                 LOG.error("Error giving permission on {} to {}", tmWorkspace, accessUserKey, e);
             }
         });
-        RenderedVolume renderedVolume = renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(), workspaceOwnerKey, null))
+        RenderedVolumeMetadata renderedVolumeMetadata = renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(), workspaceOwnerKey, null))
                 .orElseThrow(() -> new IllegalStateException("Error loading volume metadata for sample " + sampleId));
 
         VectorOperator externalToInternalConverter = new JamaMatrixVectorOperator(
-                MatrixUtilities.buildMicronToVox(renderedVolume.getMicromsPerVoxel(), renderedVolume.getOriginVoxel()));
+                MatrixUtilities.buildMicronToVox(renderedVolumeMetadata.getMicromsPerVoxel(), renderedVolumeMetadata.getOriginVoxel()));
 
         LOG.info("Lookup SWC folder {}", swcFolderName);
         storageService.lookupStorageVolumes(null, null, swcFolderName, null, null)
