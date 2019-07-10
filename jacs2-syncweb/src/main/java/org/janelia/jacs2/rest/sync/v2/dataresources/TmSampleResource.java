@@ -200,47 +200,49 @@ public class TmSampleResource {
         RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext),
                 null);
-        StreamableContent streamableTransform = rvl.readTransformData();
-        if (streamableTransform == null) {
-            LOG.error("Transform constants file not found for {} from {}", subjectKey, samplePath);
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("Missing transform.txt from " + samplePath))
-                    .build();
-        }
-        try {
-            Map<String, Object> constants = new HashMap<>();
-            Map<String, Integer> origin = new HashMap<>();
-            Map<String, Double> scaling = new HashMap<>();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(streamableTransform.getStream()));
-            String line;
-            Map<String, Double> values = new HashMap<>();
-            while ((line = reader.readLine()) != null) {
-                String[] keyVals = line.split(":");
-                if (keyVals.length == 2) {
-                    values.put(keyVals[0], Double.parseDouble(keyVals[1].trim()));
-                }
-            }
-            origin.put("x", values.get("ox").intValue());
-            origin.put("y", values.get("oy").intValue());
-            origin.put("z", values.get("oz").intValue());
-            scaling.put("x", values.get("sx"));
-            scaling.put("y", values.get("sy"));
-            scaling.put("z", values.get("sz"));
+        return rvl.getTransformData()
+                .map(streamableTransform -> {
+                    try {
+                        Map<String, Object> constants = new HashMap<>();
+                        Map<String, Integer> origin = new HashMap<>();
+                        Map<String, Double> scaling = new HashMap<>();
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(streamableTransform.getStream()));
+                        String line;
+                        Map<String, Double> values = new HashMap<>();
+                        while ((line = reader.readLine()) != null) {
+                            String[] keyVals = line.split(":");
+                            if (keyVals.length == 2) {
+                                values.put(keyVals[0], Double.parseDouble(keyVals[1].trim()));
+                            }
+                        }
+                        origin.put("x", values.get("ox").intValue());
+                        origin.put("y", values.get("oy").intValue());
+                        origin.put("z", values.get("oz").intValue());
+                        scaling.put("x", values.get("sx"));
+                        scaling.put("y", values.get("sy"));
+                        scaling.put("z", values.get("sz"));
 
-            constants.put("origin", origin);
-            constants.put("scaling", scaling);
-            constants.put("numberLevels", values.get("nl").longValue());
-            return Response.ok()
-                    .entity(new GenericEntity<Map<String, Object>>(constants){})
-                    .build();
-        } catch (Exception e) {
-            LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath, e);
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("Error reading transform.txt from " + samplePath))
-                    .build();
-        } finally {
-            IOUtils.closeQuietly(streamableTransform);
-        }
+                        constants.put("origin", origin);
+                        constants.put("scaling", scaling);
+                        constants.put("numberLevels", values.get("nl").longValue());
+                        return Response.ok()
+                                .entity(new GenericEntity<Map<String, Object>>(constants){})
+                                .build();
+                    } catch (Exception e) {
+                        LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath, e);
+                        return Response.status(Response.Status.NOT_FOUND)
+                                .entity(new ErrorResponse("Error reading transform.txt from " + samplePath))
+                                .build();
+                    } finally {
+                        IOUtils.closeQuietly(streamableTransform);
+                    }
+                })
+                .orElseGet(() -> {
+                    LOG.error("Transform constants file not found for {} from {}", subjectKey, samplePath);
+                    return Response.status(Response.Status.NOT_FOUND)
+                            .entity(new ErrorResponse("Missing transform.txt from " + samplePath))
+                            .build();
+                });
     }
 
     @ApiOperation(value = "Creates a new TmSample",
