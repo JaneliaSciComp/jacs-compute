@@ -23,6 +23,7 @@ import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.rendering.RenderedVolumeLocation;
+import org.janelia.rendering.StreamableContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -199,12 +200,18 @@ public class TmSampleResource {
         RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext),
                 null);
-        InputStream transformContentStream = rvl.readTransformData();
+        StreamableContent streamableTransform = rvl.readTransformData();
+        if (streamableTransform == null) {
+            LOG.error("Transform constants file not found for {} from {}", subjectKey, samplePath);
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Missing transform.txt from " + samplePath))
+                    .build();
+        }
         try {
             Map<String, Object> constants = new HashMap<>();
             Map<String, Integer> origin = new HashMap<>();
             Map<String, Double> scaling = new HashMap<>();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(transformContentStream));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(streamableTransform.getStream()));
             String line;
             Map<String, Double> values = new HashMap<>();
             while ((line = reader.readLine()) != null) {
@@ -232,7 +239,7 @@ public class TmSampleResource {
                     .entity(new ErrorResponse("Error reading transform.txt from " + samplePath))
                     .build();
         } finally {
-            IOUtils.closeQuietly(transformContentStream);
+            IOUtils.closeQuietly(streamableTransform);
         }
     }
 
