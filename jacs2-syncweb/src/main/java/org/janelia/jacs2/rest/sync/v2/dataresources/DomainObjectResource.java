@@ -234,7 +234,7 @@ public class DomainObjectResource {
     public Response getContainerReferences(@ApiParam DomainQuery query) {
         LOG.trace("Start getContainerReferences({})", query);
         try {
-            List<Reference> objectReferences = legacyDomainDao.getContainerReferences(query.getDomainObject());
+            List<Reference> objectReferences = legacyDomainDao.getAllNodeContainerReferences(query.getDomainObject());
             return Response.ok()
                     .entity(new GenericEntity<List<Reference>>(objectReferences){})
                     .build();

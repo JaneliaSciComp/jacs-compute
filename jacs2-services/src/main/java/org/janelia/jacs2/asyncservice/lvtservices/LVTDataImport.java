@@ -136,7 +136,7 @@ public class LVTDataImport extends AbstractServiceProcessor<File> {
         sample.setFilepath(filepath);
         sample.setName(sampleName);
         sample = legacyDomainDao.save(subjectKey, sample);
-        TreeNode folder = legacyDomainDao.getOrCreateDefaultFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
+        TreeNode folder = legacyDomainDao.getOrCreateDefaultTreeNodeFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
         legacyDomainDao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(sample)));
         return sample;
     }
