@@ -1,30 +1,17 @@
 package org.janelia.jacs2.asyncservice.maintenanceservices;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.ComputationException;
-import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
-import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
-import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
-import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.service.JacsNotification;
 import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -33,11 +20,6 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.util.Map;
 
 @Named("dbMaintenance")
 public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
@@ -53,7 +35,7 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
     }
 
     private final JacsNotificationDao jacsNotificationDao;
-    private final DbMainainer dbMainainer;
+    private final DbMaintainer dbMainainer;
 
     @Inject
     DbMaintenanceProcessor(ServiceComputationFactory computationFactory,
@@ -61,7 +43,7 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
                            @Any Instance<ExternalProcessRunner> serviceRunners,
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                            JacsNotificationDao jacsNotificationDao,
-                           DbMainainer dbMainainer,
+                           DbMaintainer dbMainainer,
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.jacsNotificationDao = jacsNotificationDao;
