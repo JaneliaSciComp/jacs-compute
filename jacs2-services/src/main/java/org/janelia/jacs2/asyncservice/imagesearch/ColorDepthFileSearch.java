@@ -62,8 +62,10 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
     static class ColorDepthSearchArgs extends ServiceArgs {
         @Parameter(names = {"-inputFiles"}, description = "Comma-delimited list of mask files", required = true)
         String inputFiles;
-        @Parameter(names = {"-searchDirs"}, description = "Comma-delimited list of directories containing the color depth projects to search", required = true)
+        @Parameter(names = {"-searchDirs"}, description = "Comma-delimited list of directories containing the color depth MIPs to search")
         String searchDirs;
+        @Parameter(names = {"-searchImageFile"}, description = "Filepath to a text file containing all a list of paths to search")
+        String searchImageFile;
         @Parameter(names = {"-dataThreshold"}, description = "Data threshold")
         Integer dataThreshold;
         @Parameter(names = {"-maskThresholds"}, description = "Mask thresholds", variableArity = true)
@@ -239,8 +241,10 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
         appArgs.add("-m");
         appArgs.addAll(inputFiles);
 
-        appArgs.add("-i");
-        appArgs.add(args.searchDirs);
+        if (args.searchDirs != null) {
+            appArgs.add("-i");
+            appArgs.add(args.searchDirs);
+        }
 
         if (args.maskThresholds != null && !args.maskThresholds.isEmpty()) {
             appArgs.add("--maskThresholds");

@@ -1,21 +1,5 @@
 package org.janelia.jacs2.asyncservice.common.cluster;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.CacheLoader.InvalidCacheLoadException;
-import com.google.common.cache.LoadingCache;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
-import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
-import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.security.Group;
-import org.janelia.model.security.Subject;
-import org.janelia.model.security.util.SubjectUtils;
-import org.janelia.model.service.JacsServiceData;
-import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -23,6 +7,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.CacheLoader.InvalidCacheLoadException;
+import com.google.common.cache.LoadingCache;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
+import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.security.Group;
+import org.janelia.model.security.Subject;
+import org.janelia.model.security.util.SubjectUtils;
+import org.janelia.model.service.JacsServiceData;
+import org.slf4j.Logger;
 
 /**
  * A centralized utility class for determining how to bill people for compute time.
@@ -40,7 +40,6 @@ public class ComputeAccounting {
 
     @Inject
     public ComputeAccounting(LegacyDomainDao dao,
-                             @StrPropertyValue(name = "service.colorDepthSearch.filepath") String rootPath,
                              Logger logger) {
         this.log = logger;
         this.dao = dao;
