@@ -36,6 +36,7 @@ import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
@@ -117,7 +118,7 @@ public class DataNodeResource {
         }
         try {
             T parentNode = (T) query.getDomainObjectAs(Node.class);
-            Node existingParentNode = legacyDomainDao.getDomainObject(subjectKey, Node.class, parentNode.getId());
+            T existingParentNode = (T) legacyDomainDao.getDomainObject(subjectKey, Reference.createFor(parentNode));
             if (existingParentNode == null) {
                 LOG.warn("No folder found for parent node {} accessible by {}", parentNode, subjectKey);
                 return Response
@@ -164,7 +165,7 @@ public class DataNodeResource {
         }
         try {
             T parentNode = (T) query.getDomainObjectAs(Node.class);
-            T existingParentNode = legacyDomainDao.getDomainObject(subjectKey, (Class<T>) parentNode.getClass(), parentNode.getId());
+            T existingParentNode = (T) legacyDomainDao.getDomainObject(subjectKey, Reference.createFor(parentNode));
             if (existingParentNode == null) {
                 LOG.warn("No folder found for parent node {} accessible by {}", parentNode, subjectKey);
                 return Response
