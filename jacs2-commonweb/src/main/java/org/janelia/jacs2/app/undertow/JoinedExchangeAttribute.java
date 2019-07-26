@@ -33,7 +33,7 @@ public class JoinedExchangeAttribute implements ExchangeAttribute {
     private final ExchangeAttribute[] attributes;
     private final String separator;
 
-    public JoinedExchangeAttribute(ExchangeAttribute[] attributes, String separator) {
+    JoinedExchangeAttribute(ExchangeAttribute[] attributes, String separator) {
         ExchangeAttribute[] copy = new ExchangeAttribute[attributes.length];
         System.arraycopy(attributes, 0, copy, 0, attributes.length);
         this.attributes = copy;
