@@ -3,9 +3,10 @@ package org.janelia.jacs2.app.undertow;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -20,64 +21,124 @@ import static org.mockito.ArgumentMatchers.any;
 public class RequestBodySaverStreamSourceConduitTest {
 
     private static final String TEST_BOUNDARY = "boundary";
-    private static final String BOUNDARY = "--" + TEST_BOUNDARY + "\r\n";
+    private static final String BOUNDARY = "\r\n--" + TEST_BOUNDARY + "\r\n";
     private static final String TEXT_MIME_TYPE = "Content-Type: plain/text\r\n";
     private static final String BINARY_MIME_TYPE = "Content-Type: application/octet-stream\r\n";
-    private static final String TEST_CONTENT = "Test content larger than 8 bytes\r\n";
-    private static final String END_BOUNDARY = "--" + TEST_BOUNDARY + "--" + "\r\n";
+    private static final String TEST_CONTENT = "Test content larger than 8 bytes";
+    private static final String BINARY_TEST_CONTENT = "Test binary content larger than 8 bytes";
+    private static final String END_BOUNDARY = "\r\n--" + TEST_BOUNDARY + "--" + "\r\n";
 
     private static final String TEXT_PART = BOUNDARY + TEXT_MIME_TYPE + TEST_CONTENT;
-    private static final String BINARY_PART = BOUNDARY + BINARY_MIME_TYPE + TEST_CONTENT;
+    private static final String BINARY_PART = BOUNDARY + BINARY_MIME_TYPE + BINARY_TEST_CONTENT;
+
+    private static class TestData {
+        private final String requestMimeType;
+        private final String boundary;
+        private final byte[] requestBody;
+        private final List<RequestBodyPart> expectedRequestBodyParts;
+
+        TestData(String requestMimeType, String boundary, String requestBody, List<RequestBodyPart> expectedRequestBodyParts) {
+            this.requestMimeType = requestMimeType;
+            this.boundary = boundary;
+            this.requestBody = requestBody != null ? requestBody.getBytes() : null;
+            this.expectedRequestBodyParts = expectedRequestBodyParts;
+        }
+    }
 
     @Test
     public void multipartRequestWithValidBoundary() {
-        Map<String, String> testData = ImmutableMap.<String, String>builder()
-                .put(TEXT_PART + TEXT_PART + END_BOUNDARY, TEXT_PART + TEXT_PART)
-                .put(BINARY_PART + BINARY_PART + END_BOUNDARY, BOUNDARY + BINARY_MIME_TYPE + BOUNDARY + BINARY_MIME_TYPE)
-                .put(TEXT_PART + BINARY_PART + END_BOUNDARY, TEXT_PART + BOUNDARY + BINARY_MIME_TYPE)
-                .put(TEXT_PART + BINARY_PART + BINARY_PART + END_BOUNDARY, TEXT_PART + BOUNDARY + BINARY_MIME_TYPE + BOUNDARY + BINARY_MIME_TYPE)
-                .put(TEXT_PART + BINARY_PART + TEXT_PART + END_BOUNDARY, TEXT_PART + BOUNDARY + BINARY_MIME_TYPE + TEXT_PART)
-                .put(BINARY_PART + BINARY_PART + TEXT_PART + END_BOUNDARY, BOUNDARY + BINARY_MIME_TYPE + BOUNDARY + BINARY_MIME_TYPE + TEXT_PART)
-                .build();
+        TestData[] testData = new TestData[] {
+                new TestData("multipart/mixed", TEST_BOUNDARY, TEXT_PART + TEXT_PART + END_BOUNDARY,
+                        ImmutableList.of(
+                                requestBodyPart("plain/text", TEST_CONTENT),
+                                requestBodyPart("plain/text", TEST_CONTENT)
+                        )),
+                new TestData("multipart/mixed", TEST_BOUNDARY, BINARY_PART + BINARY_PART + END_BOUNDARY,
+                        ImmutableList.of(
+                                requestBodyPart("application/octet-stream", null),
+                                requestBodyPart("application/octet-stream", null)
+                        )),
+                new TestData("multipart/mixed", TEST_BOUNDARY, TEXT_PART + BINARY_PART + END_BOUNDARY,
+                        ImmutableList.of(
+                                requestBodyPart("plain/text", TEST_CONTENT),
+                                requestBodyPart("application/octet-stream", null)
+                        )),
+                new TestData("multipart/mixed", TEST_BOUNDARY, TEXT_PART + BINARY_PART + BINARY_PART + END_BOUNDARY,
+                        ImmutableList.of(
+                                requestBodyPart("plain/text", TEST_CONTENT),
+                                requestBodyPart("application/octet-stream", null),
+                                requestBodyPart("application/octet-stream", null)
+                        )),
+                new TestData("multipart/mixed", TEST_BOUNDARY, TEXT_PART + BINARY_PART + TEXT_PART + END_BOUNDARY,
+                        ImmutableList.of(
+                                requestBodyPart("plain/text", TEST_CONTENT),
+                                requestBodyPart("application/octet-stream", null),
+                                requestBodyPart("plain/text", TEST_CONTENT)
+                        )),
+                new TestData("multipart/mixed", TEST_BOUNDARY, BINARY_PART + BINARY_PART + TEXT_PART + END_BOUNDARY,
+                        ImmutableList.of(
+                                requestBodyPart("application/octet-stream", null),
+                                requestBodyPart("application/octet-stream", null),
+                                requestBodyPart("plain/text", TEST_CONTENT)
+                        )),
+        };
         for (int bufferLength : new int[]{8, 16, 32, 256}) {
-            verifyMultipartRequest(true, TEST_BOUNDARY, testData, bufferLength);
+            verifyMultipartRequest(Arrays.asList(testData), bufferLength);
         }
     }
 
     @Test
     public void multipartRequestWithNullBoundary() {
-        Map<String, String> testData = ImmutableMap.<String, String>builder()
-                .put(TEXT_PART + TEXT_PART + END_BOUNDARY, "")
-                .put(BINARY_PART + BINARY_PART + END_BOUNDARY, "")
-                .put(TEXT_PART + BINARY_PART + END_BOUNDARY, "")
-                .put(TEXT_PART + BINARY_PART + BINARY_PART + END_BOUNDARY, "")
-                .put(TEXT_PART + BINARY_PART + TEXT_PART + END_BOUNDARY, "")
-                .put(BINARY_PART + BINARY_PART + TEXT_PART + END_BOUNDARY, "")
-                .build();
+        TestData[] testData = new TestData[] {
+                new TestData("multipart/mixed", null, TEXT_PART + TEXT_PART + END_BOUNDARY, ImmutableList.of()),
+                new TestData("multipart/mixed", null, BINARY_PART + BINARY_PART + END_BOUNDARY, ImmutableList.of()),
+                new TestData("multipart/mixed", null, TEXT_PART + BINARY_PART + END_BOUNDARY, ImmutableList.of()),
+                new TestData("multipart/mixed", null, TEXT_PART + BINARY_PART + BINARY_PART + END_BOUNDARY, ImmutableList.of()),
+                new TestData("multipart/mixed", null, TEXT_PART + BINARY_PART + TEXT_PART + END_BOUNDARY, ImmutableList.of()),
+                new TestData("multipart/mixed", null, BINARY_PART + BINARY_PART + TEXT_PART + END_BOUNDARY, ImmutableList.of()),
+        };
         for (int bufferLength : new int[]{8, 16, 32, 256}) {
-            verifyMultipartRequest(true, null, testData, bufferLength);
+            verifyMultipartRequest(Arrays.asList(testData), bufferLength);
         }
     }
 
     @Test
     public void nonMultipartRequest() {
-        Map<String, String> testData = ImmutableMap.<String, String>builder()
-                .put(TEST_CONTENT, TEST_CONTENT)
-                .put("", "")
-                .build();
+        TestData[] testData = new TestData[] {
+                new TestData("plain/text", null, TEST_CONTENT, ImmutableList.of(requestBodyPart("plain/text", TEST_CONTENT))),
+                new TestData("plain/text", null, "", ImmutableList.of())
+        };
         for (int bufferLength : new int[]{8, 16, 32, 256}) {
-            verifyMultipartRequest(false, null, testData, bufferLength);
+            verifyNonMultipartRequest(Arrays.asList(testData), bufferLength);
         }
     }
 
-    private void verifyMultipartRequest(boolean isMultipart, String headerBoundary, Map<String, String> testData, int readBufferLength) {
+    private RequestBodyPart requestBodyPart(String mimeType, String body) {
+        RequestBodyPart rb = new RequestBodyPart(mimeType);
+        if (body != null) rb.partBodyBuilder.append(body);
+        return rb;
+    }
+
+    private void verifyMultipartRequest(List<TestData> testData, int readBufferLength) {
         StreamSourceConduit mockSourceConduit = Mockito.mock(StreamSourceConduit.class);
-        testData.forEach((req, savedReq) -> {
-            RequestBodySaverStreamSourceConduit requestBodySaverStreamSourceConduit = new RequestBodySaverStreamSourceConduit(mockSourceConduit, isMultipart, headerBoundary,
-                    rb -> {
-                        assertThat(rb, equalTo(savedReq));
-                    });
-            prepareWrappedConduit(mockSourceConduit, req.getBytes());
+        testData.forEach(td -> {
+            RequestBodySaverStreamSourceConduit requestBodySaverStreamSourceConduit = new RequestBodySaverStreamSourceConduit(mockSourceConduit, true, td.boundary,
+                    () -> new RequestBodyPart(null),
+                    rb -> assertThat(rb, equalTo(td.expectedRequestBodyParts)));
+            prepareWrappedConduit(mockSourceConduit, td.requestBody);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(readBufferLength);
+            exerciseStreamSource(requestBodySaverStreamSourceConduit, byteBuffer);
+            Mockito.reset(mockSourceConduit);
+        });
+    }
+
+    private void verifyNonMultipartRequest(List<TestData> testData, int readBufferLength) {
+        StreamSourceConduit mockSourceConduit = Mockito.mock(StreamSourceConduit.class);
+        testData.forEach(td -> {
+            RequestBodySaverStreamSourceConduit requestBodySaverStreamSourceConduit = new RequestBodySaverStreamSourceConduit(mockSourceConduit, false, null,
+                    () -> new RequestBodyPart(td.requestMimeType),
+                    rb -> assertThat(rb, equalTo(td.expectedRequestBodyParts)));
+            prepareWrappedConduit(mockSourceConduit, td.requestBody);
             ByteBuffer byteBuffer = ByteBuffer.allocate(readBufferLength);
             exerciseStreamSource(requestBodySaverStreamSourceConduit, byteBuffer);
             Mockito.reset(mockSourceConduit);
