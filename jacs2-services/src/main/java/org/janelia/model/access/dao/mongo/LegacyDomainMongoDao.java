@@ -430,16 +430,6 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public ColorDepthLibrary getColorDepthLibraryByIdentifier(String subjectKey, String libraryIdentifier) {
-        return dao.getColorDepthLibraryByIdentifier(subjectKey, libraryIdentifier);
-    }
-
-    @Override
-    public List<ColorDepthImage> getColorDepthImagesByIdentifier(String subjectKey, String libraryIdentifier) {
-        return dao.getColorDepthImagesByIdentifier(subjectKey, libraryIdentifier);
-    }
-
-    @Override
     public List<String> getColorDepthPaths(String subjectKey, String libraryIdentifier, String alignmentSpace) {
         return dao.getColorDepthPaths(subjectKey, libraryIdentifier, alignmentSpace);
     }

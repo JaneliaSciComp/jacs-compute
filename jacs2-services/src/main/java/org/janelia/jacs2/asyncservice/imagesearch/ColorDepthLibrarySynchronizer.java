@@ -29,6 +29,8 @@ import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.domain.gui.cdmip.ColorDepthFilepathParser;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.sample.DataSet;
+import org.janelia.model.security.Subject;
 import org.janelia.model.service.JacsNotification;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceLifecycleStage;
@@ -57,7 +59,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private final Path rootPath;
     private final LegacyDomainDao dao;
     private final JacsNotificationDao jacsNotificationDao;
-    private final String OWNER = "group:flylight";
+    private final String DEFAULT_OWNER = "group:flylight";
     private int existing = 0;
     private int created = 0;
     private int totalCreated = 0;
@@ -152,6 +154,41 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     logger.info("  Found {} existing paths", existingPaths.size());
                 }
 
+                String ownerKey = null;
+
+                // Figure out the owner of the library and the images
+                ColorDepthLibrary library = libraryMap.get(libraryIdentifier);
+                if (library == null) {
+                    library = new ColorDepthLibrary();
+                    library.setIdentifier(libraryIdentifier);
+                    library.setName(libraryIdentifier);
+
+                    DataSet dataSet = dao.getDataSetByIdentifier(null, libraryIdentifier);
+                    if (dataSet!=null) {
+                        // Copy permissions from corresponding data set
+                        library.setOwnerKey(dataSet.getOwnerKey());
+                        library.setReaders(dataSet.getReaders());
+                        library.setWriters(dataSet.getWriters());
+                        // Update owner key
+                        ownerKey = library.getOwnerKey();
+                    }
+                    else {
+                        String ownerName = libraryIdentifier.split("_")[0];
+                        Subject subject = dao.getSubjectByName(ownerName);
+                        if (subject != null) {
+                            ownerKey = subject.getKey();
+                            logger.warn("Using library owner {}", ownerKey);
+                        }
+                    }
+
+                    if (ownerKey == null) {
+                        ownerKey = DEFAULT_OWNER;
+                        logger.warn("Using default owner {}", ownerKey);
+                    }
+                }
+
+                final String finalOwnerKey = ownerKey;
+
                 // Walk all images within any structure
                 FileUtils.lookupFiles(
                         libraryDir.toPath(), 4, "glob:**/*")
@@ -170,7 +207,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                             return true;
                         })
                         .forEach(file -> {
-                            if (createColorDepthImage(file)) {
+                            if (createColorDepthImage(finalOwnerKey, file)) {
                                 created++;
                             }
                         });
@@ -180,26 +217,13 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 int total = existing + created;
                 totalCreated += created;
 
-                ColorDepthLibrary library = libraryMap.get(libraryIdentifier);
-                if (library == null && total > 0) {
-                    library = new ColorDepthLibrary();
-                    library.setIdentifier(libraryIdentifier);
-                    library.setName(libraryIdentifier);
-                    try {
-                        library = dao.save(OWNER, library);
-                        libraryMap.put(libraryIdentifier, library);
-                        logger.debug("  Created color depth library: {}", libraryIdentifier);
-                    } catch (Exception e) {
-                        throw new IllegalStateException("Could not create library for: " + libraryIdentifier);
-                    }
-                }
-
-                if (library != null) {
+                if (library.getId()!=null || total > 0) {
+                    // If the library exists already, or should be created
                     library.getColorDepthCounts().put(alignmentSpace, total);
                     try {
-                        library = dao.save(OWNER, library);
+                        library = dao.save(library.getOwnerKey(), library);
                         libraryMap.put(libraryIdentifier, library);
-                        logger.debug("  Updated color depth count to: {}", total);
+                        logger.debug("  Saved color depth library {} with count {}", libraryIdentifier, total);
                     }
                     catch (Exception e) {
                         throw new IllegalStateException("Could not update library file counts for: " + libraryIdentifier);
@@ -217,7 +241,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
      * @param file file within the rootPath filestore
      * @return true if the image was created successfully
      */
-    private boolean createColorDepthImage(File file) {
+    private boolean createColorDepthImage(String ownerKey, File file) {
         String filepath = file.getPath();
 
         try {
@@ -271,11 +295,11 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             }
 
             ColorDepthImage image = new ColorDepthImage();
-            image.setLibrary(libraryIdentifier);
+            image.getLibraries().add(libraryIdentifier);
             image.setAlignmentSpace(parser.getAlignmentSpace());
             image.setFilepath(filepath);
             image.setFileSize(file.length());
-            dao.save(OWNER, image);
+            dao.save(ownerKey, image);
             return true;
         }
         catch (ParseException e) {

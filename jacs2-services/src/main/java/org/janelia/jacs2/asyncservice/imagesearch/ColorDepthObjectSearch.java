@@ -144,7 +144,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
             pathsToSearch.addAll(colorDepthPaths);
             totalFileCount += colorDepthPaths.size();
         }
-        logger.info("Searching {} directories with {} total images", search.getLibraries().size(), totalFileCount);
+        logger.info("Searching {} libraries with {} total images", search.getLibraries().size(), totalFileCount);
 
         // Curve fitting using https://www.desmos.com/calculator
         // This equation was found using https://mycurvefit.com
@@ -165,7 +165,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         }
 
         List<ServiceArg> serviceArgList = new ArrayList<>();
-        serviceArgList.add(new ServiceArg("-inputFile", inputFiles));
+        serviceArgList.add(new ServiceArg("-inputFiles", inputFiles));
         serviceArgList.add(new ServiceArg("-searchDirs", colorDepthPaths.getAbsolutePath()));
         serviceArgList.add(new ServiceArg("-maskThresholds", maskThresholds));
         serviceArgList.add(new ServiceArg("-numNodes", numNodes));

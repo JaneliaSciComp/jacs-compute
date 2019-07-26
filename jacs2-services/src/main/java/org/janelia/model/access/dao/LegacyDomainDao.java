@@ -295,10 +295,6 @@ public interface LegacyDomainDao {
 
     DataSet getDataSetByIdentifier(String subjectKey, String dataSetIdentifier);
 
-    ColorDepthLibrary getColorDepthLibraryByIdentifier(String subjectKey, String libraryIdentifier);
-
-    List<ColorDepthImage> getColorDepthImagesByIdentifier(String subjectKey, String libraryIdentifier);
-
     List<String> getColorDepthPaths(String subjectKey, String libraryIdentifier, String alignmentSpace);
 
     ColorDepthImage getColorDepthImageByPath(String subjectKey, String filepath);
