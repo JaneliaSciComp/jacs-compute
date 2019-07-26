@@ -144,7 +144,6 @@ public class UndertowAppContainer implements AppContainer {
                         RemoteHostAttribute.INSTANCE, // <RemoteIP>
                         new AuthenticatedUserAttribute(), // <RemoteUser>
                         new RequestHeaderAttribute(new HttpString("Application-Id")), // <Application-Id>
-                        DateTimeAttribute.INSTANCE, // <timestamp>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         new RequestFullURLAttribute(), // <Request URL>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
