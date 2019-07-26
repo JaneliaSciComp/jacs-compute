@@ -25,7 +25,14 @@ public class MessagingProducer {
                                                              @PropertyValue(name = "Messaging.Password") String messagingPassword) {
         if (StringUtils.isNotBlank(messagingServer)) {
             LOG.info("Create messaging connection to {} as {}", messagingServer, messagingUser);
-            return ConnectionManager.getInstance().getConnection(messagingServer, messagingUser, messagingPassword, 1);
+            return ConnectionManager.getInstance().getConnection(
+                    messagingServer,
+                    messagingUser,
+                    messagingPassword,
+                    1,
+                    (exc) -> {
+                        LOG.error("Failed to open a connection to {} using {}", messagingServer, messagingUser, exc);
+                    });
         } else {
             return ConnectionManager.getInstance().getConnection();
         }
