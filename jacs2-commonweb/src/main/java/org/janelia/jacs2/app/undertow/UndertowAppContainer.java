@@ -147,12 +147,12 @@ public class UndertowAppContainer implements AppContainer {
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         new RequestFullURLAttribute(), // <Request URL>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
-                        new NameValueAttribute("sessionId", new CookieAttribute("JSESSIONID"), true),
                         new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location")), true), // location=<ResponseLocation>
                         new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
                         new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTimeInSeconds>
                         new NameValueAttribute("tp", new ThroughputAttribute()), // tp=<Throughput>
+                        new NameValueAttribute("sessionId", new CookieAttribute("JSESSIONID"), true),
                         new NameValueAttribute("requestHeaders", new RequestHeadersAttribute(getOmittedHeaders())),
                         new RequestBodyAttribute(applicationConfig.getIntegerPropertyValue("AccessLog.MaxRequestBody")) // Request Body
                 }, " "),
