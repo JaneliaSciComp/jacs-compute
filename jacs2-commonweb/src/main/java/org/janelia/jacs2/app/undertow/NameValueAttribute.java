@@ -48,7 +48,7 @@ public class NameValueAttribute implements ExchangeAttribute {
     public String readAttribute(HttpServerExchange exchange) {
         String val = valueAttr.readAttribute(exchange);
         if (ignoreIfEmpty && StringUtils.isBlank(val)) {
-            return "";
+            return null;
         } else {
             return name + "=" + val;
         }
