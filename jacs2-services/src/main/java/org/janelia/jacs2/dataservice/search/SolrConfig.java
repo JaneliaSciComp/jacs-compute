@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.search;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.cdi.qualifier.OnStartup;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
@@ -41,7 +42,12 @@ public class SolrConfig {
         this.solrBuildCore = solrBuildCore;
         this.solrLoaderQueueSize = solrLoaderQueueSize;
         this.solrLoaderThreadCount = solrLoaderThreadCount;
-        LOG.info("Use SOLR URL: {} with core {} and build core {}", solrServerBaseURL, solrMainCore, solrBuildCore);
+        if (StringUtils.isBlank(solrServerBaseURL)) {
+            LOG.warn("No SOLR server configured (Solr.ServerURL)");
+        }
+        else {
+            LOG.info("Use SOLR URL: {} with core {} and build core {}", solrServerBaseURL, solrMainCore, solrBuildCore);
+        }
     }
 
     String getSolrServerBaseURL() {
