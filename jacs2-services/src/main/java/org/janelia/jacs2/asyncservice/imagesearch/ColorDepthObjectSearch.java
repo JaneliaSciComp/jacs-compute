@@ -248,8 +248,11 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                     }
 
                     colorDepthResult = dao.save(jacsServiceData.getOwnerKey(), colorDepthResult);
+                    logger.info("Saved {}", colorDepthResult);
                     dao.addColorDepthSearchResult(jacsServiceData.getOwnerKey(), search.getId(), colorDepthResult);
-                } catch (Exception e) {
+                    logger.info("Updated ColorDepthSearch#{} with new result", search.getId());
+                }
+                catch (Exception e) {
                     throw new ComputationException(jacsServiceData, e);
                 }
 

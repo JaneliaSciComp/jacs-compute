@@ -153,9 +153,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 if (!existingPaths.isEmpty()) {
                     logger.info("  Found {} existing paths", existingPaths.size());
                 }
-
-                String ownerKey = null;
-
                 // Figure out the owner of the library and the images
                 ColorDepthLibrary library = libraryMap.get(libraryIdentifier);
                 if (library == null) {
@@ -169,25 +166,22 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         library.setOwnerKey(dataSet.getOwnerKey());
                         library.setReaders(dataSet.getReaders());
                         library.setWriters(dataSet.getWriters());
-                        // Update owner key
-                        ownerKey = library.getOwnerKey();
                     }
                     else {
                         String ownerName = libraryIdentifier.split("_")[0];
                         Subject subject = dao.getSubjectByName(ownerName);
                         if (subject != null) {
-                            ownerKey = subject.getKey();
-                            logger.warn("Using library owner {}", ownerKey);
+                            logger.warn("Falling back on owner encoded in library identifier: {}", subject.getKey());
+                            library.setOwnerKey(subject.getKey());
                         }
-                    }
-
-                    if (ownerKey == null) {
-                        ownerKey = DEFAULT_OWNER;
-                        logger.warn("Using default owner {}", ownerKey);
+                        else {
+                            logger.warn("Falling back on default owner: {}", DEFAULT_OWNER);
+                            library.setOwnerKey(DEFAULT_OWNER);
+                        }
                     }
                 }
 
-                final String finalOwnerKey = ownerKey;
+                final ColorDepthLibrary finalLibrary = library;
 
                 // Walk all images within any structure
                 FileUtils.lookupFiles(
@@ -207,7 +201,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                             return true;
                         })
                         .forEach(file -> {
-                            if (createColorDepthImage(finalOwnerKey, file)) {
+                            if (createColorDepthImage(finalLibrary, file)) {
                                 created++;
                             }
                         });
@@ -226,7 +220,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         logger.debug("  Saved color depth library {} with count {}", libraryIdentifier, total);
                     }
                     catch (Exception e) {
-                        throw new IllegalStateException("Could not update library file counts for: " + libraryIdentifier);
+                        logger.error("Could not update library file counts for: " + libraryIdentifier, e);
                     }
                 }
             });
@@ -241,12 +235,10 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
      * @param file file within the rootPath filestore
      * @return true if the image was created successfully
      */
-    private boolean createColorDepthImage(String ownerKey, File file) {
+    private boolean createColorDepthImage(ColorDepthLibrary library, File file) {
         String filepath = file.getPath();
 
         try {
-            ColorDepthFilepathParser parser = ColorDepthFilepathParser.parse(filepath);
-
             /*
                 This assumes that the MIP files reside in a directory structure like this:
                 <anything>/ROOT_NAME/<alignmentSpace>/<library>/d1/d2/d3/<file>
@@ -254,14 +246,13 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 Where "d1/d2/d3" can be any directory hierarchy, or none. This is done so that we can break up
                 large directories which are inefficient to access on NFS.
              */
-
             String rootName = rootPath.getFileName().toString();
 
             boolean foundRoot = false;
             String libraryIdentifier = null;
             String alignmentSpace = null;
 
-            String[] parts = filepath.split("\\/");
+            String[] parts = filepath.split("/");
             for (String part : parts) {
                 if (libraryIdentifier!=null) {
                     break;
@@ -289,21 +280,40 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 throw new IllegalStateException("Path does not contain library: "+filepath);
             }
 
-            if (!alignmentSpace.equals(parser.getAlignmentSpace())) {
-                throw new IllegalStateException("Alignment space does not match path: ("
-                        +parser.getAlignmentSpace()+" != "+alignmentSpace+")");
+            if (!library.getIdentifier().equals(libraryIdentifier)) {
+                throw new IllegalStateException("Library does not match path: ("
+                        +library.getIdentifier()+" != "+libraryIdentifier+")");
+            }
+
+            ColorDepthFilepathParser parser = null;
+            try {
+                parser = ColorDepthFilepathParser.parse(filepath);
+                if (!alignmentSpace.equals(parser.getAlignmentSpace())) {
+                    throw new IllegalStateException("Alignment space does not match path: ("
+                            +parser.getAlignmentSpace()+" != "+alignmentSpace+")");
+                }
+            }
+            catch (ParseException e) {
+                logger.warn("  Accepting non-standard filename: {}", filepath);
             }
 
             ColorDepthImage image = new ColorDepthImage();
-            image.getLibraries().add(libraryIdentifier);
-            image.setAlignmentSpace(parser.getAlignmentSpace());
+            image.getLibraries().add(library.getIdentifier());
+            image.setName(file.getName());
             image.setFilepath(filepath);
             image.setFileSize(file.length());
-            dao.save(ownerKey, image);
+            image.setAlignmentSpace(alignmentSpace);
+            image.setReaders(library.getReaders());
+            image.setWriters(library.getWriters());
+            if (parser != null) {
+                image.setSampleRef(parser.getSampleRef());
+                image.setObjective(parser.getObjective());
+                image.setAnatomicalArea(parser.getAnatomicalArea());
+                image.setChannelNumber(parser.getChannelNumber());
+            }
+
+            dao.save(library.getOwnerKey(), image);
             return true;
-        }
-        catch (ParseException e) {
-            logger.warn("  Illegally named file in filestore: {}", filepath);
         }
         catch (Exception e) {
             logger.warn("  Could not create image for: " + file.getPath());
