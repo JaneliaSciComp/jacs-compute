@@ -180,6 +180,14 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
             serviceArgList.add(new ServiceArg("-pixColorFluctuation", search.getPixColorFluctuation()));
         }
 
+        if (search.getXyShift() != null) {
+            serviceArgList.add(new ServiceArg("-xyShift", search.getXyShift()));
+        }
+
+        if (search.getMirrorMask() != null && search.getMirrorMask()) {
+            serviceArgList.add(new ServiceArg("-mirrorMask"));
+        }
+
         if (search.getPctPositivePixels() != null) {
             serviceArgList.add(new ServiceArg("-pctPositivePixels", search.getPctPositivePixels()));
         }
