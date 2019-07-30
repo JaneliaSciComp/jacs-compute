@@ -210,7 +210,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
     }
 
     private ServiceComputation<SparkApp> runApp(JacsServiceData jacsServiceData, ColorDepthSearchArgs args, SparkCluster cluster) {
-        logger.info("Run color depth with {}", args);
+        logger.trace("Run color depth with {}", args);
 
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         prepareDir(jacsServiceData.getOutputPath());

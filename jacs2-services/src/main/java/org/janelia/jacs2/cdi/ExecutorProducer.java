@@ -35,7 +35,7 @@ public class ExecutorProducer {
             threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
         }
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setNameFormat("JACS-%d")
+                .setNameFormat("JACS-%03d")
                 .setDaemon(true)
                 .build();
         return Executors.newFixedThreadPool(threadPoolSize, threadFactory);

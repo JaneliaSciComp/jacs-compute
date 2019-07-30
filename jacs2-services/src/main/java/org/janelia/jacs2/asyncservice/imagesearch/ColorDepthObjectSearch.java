@@ -16,6 +16,7 @@ import javax.inject.Named;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.base.Stopwatch;
 import org.apache.commons.io.FileUtils;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
@@ -103,6 +104,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
     public ServiceComputation<JacsServiceResult<Boolean>> process(JacsServiceData jacsServiceData) {
         IntegratedColorDepthSearchArgs args = getArgs(jacsServiceData);
 
+        Stopwatch sparkAppWatch = Stopwatch.createStarted();
         logger.info("Executing ColorDepthSearch#{}", args.searchId);
 
         ColorDepthSearch search = dao.getDomainObject(jacsServiceData.getOwnerKey(),
@@ -251,6 +253,9 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                     logger.info("Saved {}", colorDepthResult);
                     dao.addColorDepthSearchResult(jacsServiceData.getOwnerKey(), search.getId(), colorDepthResult);
                     logger.info("Updated ColorDepthSearch#{} with new result", search.getId());
+
+                    long seconds = sparkAppWatch.stop().elapsed().getSeconds();
+                    logger.info("ColorDepthSearch#{} completed after {} seconds", search.getId(), seconds);
                 }
                 catch (Exception e) {
                     throw new ComputationException(jacsServiceData, e);
