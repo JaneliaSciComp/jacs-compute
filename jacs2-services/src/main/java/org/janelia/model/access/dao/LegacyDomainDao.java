@@ -30,6 +30,7 @@ import org.janelia.model.domain.sample.NeuronSeparation;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.sample.SampleLock;
 import org.janelia.model.domain.sample.StatusTransition;
+import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
@@ -154,33 +155,33 @@ public interface LegacyDomainDao {
     Preference save(String subjectKey, Preference preference) throws Exception;
 
     /**
-     * Returns any TreeNodes which reference the given object.
+     * Returns any nodes which reference the given object.
      *
      * @param domainObject
      * @return boolean
      * @throws Exception
      */
-    List<Reference> getContainerReferences(DomainObject domainObject) throws Exception;
+    List<Reference> getAllNodeContainerReferences(DomainObject domainObject) throws Exception;
 
     /**
-     * Returns the count of TreeNodes which reference the given object.
+     * Returns the count of tree nodes which reference the given object.
      *
      * @param domainObject
      * @return
      * @throws Exception
      */
-    long getContainerReferenceCount(DomainObject domainObject) throws Exception;
+    long getTreeNodeContainerReferenceCount(DomainObject domainObject) throws Exception;
 
     /**
-     * Returns the count of TreeNodes which reference the given object.
+     * Returns the count of tree nodes which reference the given object.
      *
      * @param references
      * @return
      * @throws Exception
      */
-    long getContainerReferenceCount(Collection<Reference> references) throws Exception;
+    long getTreeNodeContainerReferenceCount(Collection<Reference> references) throws Exception;
 
-    <T extends DomainObject> List<TreeNode> getContainers(String subjectKey, Collection<Reference> references) throws Exception;
+    List<TreeNode> getTreeNodeContainers(String subjectKey, Collection<Reference> references) throws Exception;
 
     <T extends DomainObject> Stream<T> iterateDomainObjects(Class<T> domainClass);
 
@@ -388,19 +389,19 @@ public interface LegacyDomainDao {
 
     Ontology removeTerm(String subjectKey, Long ontologyId, Long parentTermId, Long termId) throws Exception;
 
-    TreeNode getOrCreateDefaultFolder(String subjectKey, String folderName) throws Exception;
+    TreeNode getOrCreateDefaultTreeNodeFolder(String subjectKey, String folderName) throws Exception;
 
-    TreeNode reorderChildren(String subjectKey, TreeNode treeNodeArg, int[] order) throws Exception;
+    Node reorderChildren(String subjectKey, Node nodeArg, int[] order) throws Exception;
 
-    List<DomainObject> getChildren(String subjectKey, TreeNode treeNode);
+    List<DomainObject> getChildren(String subjectKey, Node node);
 
-    TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception;
+    Node addChildren(String subjectKey, Node nodeArg, Collection<Reference> references) throws Exception;
 
-    TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references, Integer index) throws Exception;
+    Node addChildren(String subjectKey, Node nodeArg, Collection<Reference> references, Integer index) throws Exception;
 
-    TreeNode removeChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception;
+    Node removeChildren(String subjectKey, Node nodeArg, Collection<Reference> references) throws Exception;
 
-    TreeNode removeReference(String subjectKey, TreeNode treeNodeArg, Reference reference) throws Exception;
+    Node removeReference(String subjectKey, Node nodeArg, Reference reference) throws Exception;
 
     <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) throws Exception;
 

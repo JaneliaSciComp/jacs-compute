@@ -3,7 +3,10 @@ package org.janelia.jacs2.app.undertow;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.xnio.channels.StreamSinkChannel;
 import org.xnio.conduits.AbstractStreamSourceConduit;
@@ -17,28 +20,30 @@ class RequestBodySaverStreamSourceConduit extends AbstractStreamSourceConduit<St
     private final boolean isMultipart;
     private final String partBoundary;
     private final String lastBoundary;
-    private final StringBuilder requestBodyBuffer;
+    private final List<RequestBodyPart> requestBodyParts;
     private final StringBuilder boundaryLookupBuffer;
     private final StringBuilder currentPartBuffer;
-    private final Consumer<String> onDone;
-    private String currentPartMimetype;
+    private final Supplier<RequestBodyPart> requestBodyPartSupplier;
+    private final Consumer<List<RequestBodyPart>> onDone;
+    private RequestBodyPart currentBodyPart;
     private boolean finished;
 
-    RequestBodySaverStreamSourceConduit(StreamSourceConduit next, boolean isMultipart, String boundary, Consumer<String> onDone) {
+    RequestBodySaverStreamSourceConduit(StreamSourceConduit next, boolean isMultipart, String boundary, Supplier<RequestBodyPart> requestBodyPartSupplier, Consumer<List<RequestBodyPart>> onDone) {
         super(next);
         this.isMultipart = isMultipart;
         if (isMultipart && boundary != null) {
-            this.partBoundary = "--" + boundary + "\r\n";
-            this.lastBoundary = "--" + boundary + "--" + "\r\n";
+            this.partBoundary = "\r\n--" + boundary + "\r\n";
+            this.lastBoundary = "\r\n--" + boundary + "--" + "\r\n";
         } else {
             this.partBoundary = null;
             this.lastBoundary = null;
         }
-        this.requestBodyBuffer = new StringBuilder();
+        this.requestBodyParts = new ArrayList<>();
         this.boundaryLookupBuffer = new StringBuilder();
         this.currentPartBuffer = new StringBuilder();
+        this.requestBodyPartSupplier = requestBodyPartSupplier;
         this.onDone = onDone;
-        this.currentPartMimetype = null;
+        this.currentBodyPart = null;
         this.finished = false;
     }
 
@@ -76,7 +81,11 @@ class RequestBodySaverStreamSourceConduit extends AbstractStreamSourceConduit<St
                     }
                 } else {
                     // simply add the bytes to the body
-                    requestBodyBuffer.append(new String(d));
+                    if (currentBodyPart == null) {
+                        currentBodyPart = requestBodyPartSupplier.get();
+                        requestBodyParts.add(currentBodyPart);
+                    }
+                    currentBodyPart.partBodyBuilder.append(new String(d));
                 }
             }
             return res;
@@ -92,17 +101,16 @@ class RequestBodySaverStreamSourceConduit extends AbstractStreamSourceConduit<St
             boundaryLookupBuffer.append(c);
             int boundaryIndex = boundaryStartIndex();
             if (boundaryIndex >= 0) {
-                if (currentPartMimetype == null) {
+                if (currentBodyPart == null) {
                     currentPartBuffer.append(c);
-                } else if (!currentPartMimetype.contains("application/octet-stream")) {
-                    currentPartBuffer.append(c);
-                    currentPartBuffer.setLength(currentPartBuffer.length() - boundaryLookupBuffer.length() + boundaryIndex);
+                } else if (!currentBodyPart.partMimeType.contains("application/octet-stream")) {
+                    currentBodyPart.partBodyBuilder.append(c);
+                    currentBodyPart.partBodyBuilder.setLength(currentBodyPart.partBodyBuilder.length() - boundaryLookupBuffer.length() + boundaryIndex);
                 }
-                if (currentPartMimetype != null) {
-                    requestBodyBuffer.append(currentPartBuffer);
+                if (currentBodyPart != null) {
+                    requestBodyParts.add(currentBodyPart);
+                    currentBodyPart = null;
                     currentPartBuffer.setLength(0);
-                    currentPartBuffer.append(boundaryLookupBuffer.substring(boundaryIndex));
-                    currentPartMimetype = null;
                 }
                 boundaryLookupBuffer.setLength(0);
                 continue;
@@ -117,21 +125,24 @@ class RequestBodySaverStreamSourceConduit extends AbstractStreamSourceConduit<St
                 }
                 boundaryLookupBuffer.setLength(partBoundary.length());
             }
-            if (currentPartMimetype == null) {
+            if (currentBodyPart == null) {
                 currentPartBuffer.append(c);
                 int contentTypeIndex = currentPartBuffer.indexOf("Content-Type:");
                 if (contentTypeIndex >= 0) {
                     int nextLineIndex = currentPartBuffer.indexOf("\n", contentTypeIndex + "Content-Type:".length());
                     if (nextLineIndex > 0) {
-                        currentPartMimetype = currentPartBuffer.substring(contentTypeIndex + "Content-Type:".length(), nextLineIndex).trim();
-                        if (currentPartMimetype.contains("application/octet-stream")) {
+                        currentBodyPart = requestBodyPartSupplier.get();
+                        currentBodyPart.partMimeType = currentPartBuffer.substring(contentTypeIndex + "Content-Type:".length(), nextLineIndex).trim();
+                        if (currentBodyPart.partMimeType.contains("application/octet-stream")) {
                             // discard octet-stream parts
                             currentPartBuffer.setLength(nextLineIndex + 1);
+                        } else {
+                            currentBodyPart.partBodyBuilder.append(currentPartBuffer.substring(nextLineIndex + 1));
                         }
                     }
                 }
-            } else if (!currentPartMimetype.contains("application/octet-stream")) {
-                currentPartBuffer.append(c);
+            } else if (!currentBodyPart.partMimeType.contains("application/octet-stream")) {
+                currentBodyPart.partBodyBuilder.append(c);
             }
         }
     }
@@ -164,7 +175,7 @@ class RequestBodySaverStreamSourceConduit extends AbstractStreamSourceConduit<St
         if (consumed == -1) {
             if (!finished) {
                 finished = true;
-                onDone.accept(requestBodyBuffer.toString());
+                onDone.accept(requestBodyParts);
             }
         }
     }

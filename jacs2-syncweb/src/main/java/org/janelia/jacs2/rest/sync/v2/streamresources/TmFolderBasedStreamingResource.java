@@ -9,9 +9,9 @@ import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.rendering.Coordinate;
 import org.janelia.rendering.RawImage;
-import org.janelia.rendering.RenderedVolume;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.janelia.rendering.RenderedVolumeLocation;
+import org.janelia.rendering.RenderedVolumeMetadata;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -47,7 +47,7 @@ public class TmFolderBasedStreamingResource {
 
     @ApiOperation(value = "Get sample rendering info", notes = "Retrieve volume rendering info for the specified base folder")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = RenderedVolume.class),
+            @ApiResponse(code = 200, message = "Success", response = RenderedVolumeMetadata.class),
             @ApiResponse(code = 404, message = "Sample not found or no rendering"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
@@ -149,22 +149,19 @@ public class TmFolderBasedStreamingResource {
         return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
                 rvl,
                 xVoxel, yVoxel, zVoxel)
-                .map(rawTileImage -> {
-                    byte[] rawImageBytes = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage,
-                            channel, xVoxel, yVoxel, zVoxel, sx, sy, sz);
-                    if (rawImageBytes == null) {
-                        return Response
+                .map(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz)
+                        .map(rawImageBytes -> {
+                            StreamingOutput rawImageBytesStream = output -> {
+                                output.write(rawImageBytes);
+                            };
+                            return Response
+                                    .ok(rawImageBytesStream, MediaType.APPLICATION_OCTET_STREAM)
+                                    .build();
+
+                        })
+                        .orElseGet(() -> Response
                                 .noContent()
-                                .build();
-                    } else {
-                        StreamingOutput rawImageBytesStream = output -> {
-                            output.write(rawImageBytes);
-                        };
-                        return Response
-                                .ok(rawImageBytesStream, MediaType.APPLICATION_OCTET_STREAM)
-                                .build();
-                    }
-                })
+                                .build()))
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderName + " with ("
                                 + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))

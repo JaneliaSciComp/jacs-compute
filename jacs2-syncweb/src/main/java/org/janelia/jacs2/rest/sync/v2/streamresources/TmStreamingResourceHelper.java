@@ -5,6 +5,7 @@ import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.rendering.Coordinate;
 import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.TileKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +36,9 @@ class TmStreamingResourceHelper {
                     .build();
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName, subjectKey, null))
-                .flatMap(rv -> rv.getTileInfo(axisParam)
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(baseFolderName, subjectKey, null);
+        return renderedVolumeLoader.loadVolume(rvl)
+                .flatMap(rvm -> rvm.getTileInfo(axisParam)
                         .map(tileInfo -> TileKey.fromRavelerTileCoord(
                                 xParam,
                                 yParam,
@@ -47,7 +49,7 @@ class TmStreamingResourceHelper {
                         .flatMap(tileKey -> {
                             LOG.debug("Load tile {} ({}, {}, {}, {}, {}) from {}",
                                     tileKey, zoomParam, axisParam, xParam, yParam, zParam, baseFolderName);
-                            return renderedVolumeLoader.loadSlice(rv, tileKey);
+                            return renderedVolumeLoader.loadSlice(rvl, rvm, tileKey);
                         }))
                 .map(sliceImageBytes -> {
                     StreamingOutput sliceImageStream = output -> {

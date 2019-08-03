@@ -1,7 +1,9 @@
 package org.janelia.jacs2.app.undertow;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -13,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SavedRequestBodyHandler implements HttpHandler {
-    static final AttachmentKey<String> SAVED_REQUEST_BODY = AttachmentKey.create(String.class);
+    static final AttachmentKey<List<RequestBodyPart>> SAVED_REQUEST_BODY = AttachmentKey.create(List.class);
 
     private static final Logger LOG = LoggerFactory.getLogger(SavedRequestBodyHandler.class);
 
@@ -52,7 +54,12 @@ public class SavedRequestBodyHandler implements HttpHandler {
                         factory.create(),
                         isMultipart,
                         boundary,
-                        requestBody -> wrappedExchange.putAttachment(SAVED_REQUEST_BODY, requestBody)));
+                        () -> new RequestBodyPart(isMultipart ? null : mimeType),
+                        requestParts -> wrappedExchange.putAttachment(
+                                SAVED_REQUEST_BODY,
+                                requestParts.stream()
+                                        .filter(rp -> supportedMimeTypes.contains(rp.partMimeType))
+                                        .collect(Collectors.toList()))));
             }
         }
         next.handleRequest(exchange);

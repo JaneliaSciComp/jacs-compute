@@ -22,7 +22,7 @@ public class FolderService {
     public TreeNode getOrCreateFolder(Number parentFolderId, String folderName, String subjectKey) {
         try {
             if (parentFolderId == null) {
-                return folderDao.getOrCreateDefaultFolder(subjectKey, folderName);
+                return folderDao.getOrCreateDefaultTreeNodeFolder(subjectKey, folderName);
             } else {
                 TreeNode parentFolder = folderDao.getDomainObject(subjectKey, TreeNode.class, parentFolderId.longValue());
                 if (parentFolder == null) {

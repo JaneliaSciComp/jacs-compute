@@ -1,6 +1,24 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import com.google.common.collect.ImmutableList;
+import java.util.List;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -20,31 +38,14 @@ import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.dto.DomainQuery;
+import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import java.util.List;
-
 /**
- * Web service for handling Workspace and TreeNode entities.
+ * Web service for handling Node entities.
  */
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -55,7 +56,7 @@ import java.util.List;
         )
 )
 @Api(
-        value = "Data TreeNode and Workspace Service",
+        value = "Data Node Service",
         authorizations = {
                 @Authorization("user"),
                 @Authorization("runAs")
@@ -64,12 +65,12 @@ import java.util.List;
 @RequireAuthentication
 @ApplicationScoped
 @Path("/data")
-public class DataTreeNodeResource {
+public class DataNodeResource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DataTreeNodeResource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DataNodeResource.class);
 
     @Inject
-    private LegacyDomainDao legacyFolderDao;
+    private LegacyDomainDao legacyDomainDao;
     @AsyncIndex
     @Inject
     private WorkspaceNodeDao workspaceNodeDao;
@@ -80,7 +81,7 @@ public class DataTreeNodeResource {
     public Response getDataNode(@PathParam("nodeId") Long dataNodeId,
                                 @Context ContainerRequestContext containerRequestContext) {
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        TreeNode dataNode = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
+        Node dataNode = legacyDomainDao.getDomainObject(authorizedSubjectKey, Node.class, dataNodeId);
         if (dataNode == null) {
             LOG.warn("No folder found for {} owned by {}", dataNodeId, authorizedSubjectKey);
             return Response
@@ -97,7 +98,7 @@ public class DataTreeNodeResource {
                     "the References parameter for the list of items to add"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully added items to the Node", response=TreeNode.class),
+            @ApiResponse( code = 200, message = "Successfully added items to the Node", response=Node.class),
             @ApiResponse( code = 500, message = "Internal Server Error adding items to the Node" )
     })
     @PUT
@@ -105,8 +106,8 @@ public class DataTreeNodeResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/node/children")
     @SuppressWarnings("unchecked")
-    public <T extends TreeNode> Response addChildren(@ApiParam DomainQuery query,
-                                                     @Context ContainerRequestContext containerRequestContext) {
+    public <T extends Node> Response addChildren(@ApiParam DomainQuery query,
+                                                 @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("addChildren({})",query);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         String subjectKey;
@@ -116,15 +117,15 @@ public class DataTreeNodeResource {
             subjectKey = authorizedSubjectKey;
         }
         try {
-            T parentNode = (T) query.getDomainObjectAs(TreeNode.class);
-            TreeNode existingParentNode = legacyFolderDao.getDomainObject(subjectKey, TreeNode.class, parentNode.getId());
+            T parentNode = (T) query.getDomainObjectAs(Node.class);
+            T existingParentNode = (T) legacyDomainDao.getDomainObject(subjectKey, Reference.createFor(parentNode));
             if (existingParentNode == null) {
                 LOG.warn("No folder found for parent node {} accessible by {}", parentNode, subjectKey);
                 return Response
                         .status(Response.Status.NOT_FOUND)
                         .build();
             }
-            TreeNode updatedNode = legacyFolderDao.addChildren(subjectKey, existingParentNode, query.getReferences());
+            Node updatedNode = legacyDomainDao.addChildren(subjectKey, existingParentNode, query.getReferences());
             return Response
                     .ok()
                     .entity(updatedNode)
@@ -135,7 +136,7 @@ public class DataTreeNodeResource {
                     .entity(new ErrorResponse("Error while trying to add children: " + query))
                     .build();
         } finally {
-            LOG.trace("Finished createTreeNode({})", query);
+            LOG.trace("Finished addChildren({})", query);
         }
     }
 
@@ -144,7 +145,7 @@ public class DataTreeNodeResource {
                     "the References parameter for the list of items to remove"
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully removed items from the Node", response = TreeNode.class),
+            @ApiResponse( code = 200, message = "Successfully removed items from the Node", response = Node.class),
             @ApiResponse( code = 500, message = "Internal Server Error removing items from the Node" )
     })
     @POST
@@ -152,8 +153,8 @@ public class DataTreeNodeResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/node/children")
     @SuppressWarnings("unchecked")
-    public <T extends TreeNode> Response removeChildren(@ApiParam DomainQuery query,
-                                                        @Context ContainerRequestContext containerRequestContext) {
+    public <T extends Node> Response removeChildren(@ApiParam DomainQuery query,
+                                                    @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start removeChildren({})",query);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
         String subjectKey;
@@ -163,15 +164,15 @@ public class DataTreeNodeResource {
             subjectKey = authorizedSubjectKey;
         }
         try {
-            T parentNode = (T) query.getDomainObjectAs(TreeNode.class);
-            TreeNode existingParentNode = legacyFolderDao.getDomainObject(subjectKey, TreeNode.class, parentNode.getId());
+            T parentNode = (T) query.getDomainObjectAs(Node.class);
+            T existingParentNode = (T) legacyDomainDao.getDomainObject(subjectKey, Reference.createFor(parentNode));
             if (existingParentNode == null) {
                 LOG.warn("No folder found for parent node {} accessible by {}", parentNode, subjectKey);
                 return Response
                         .status(Response.Status.NO_CONTENT)
                         .build();
             }
-            TreeNode updatedNode = legacyFolderDao.removeChildren(subjectKey, existingParentNode, query.getReferences());
+            Node updatedNode = legacyDomainDao.removeChildren(subjectKey, existingParentNode, query.getReferences());
             return Response
                     .status(Response.Status.OK)
                     .entity(updatedNode)
@@ -186,47 +187,11 @@ public class DataTreeNodeResource {
         }
     }
 
-    @PUT
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/node/{nodeId}/children/{folder}")
-    public Response addChildrenNodes(@PathParam("nodeId") Long dataNodeId,
-                                     @PathParam("folder") String folderName,
-                                     @Context ContainerRequestContext containerRequestContext) {
-        LOG.trace("Start addChildren({}, {})", dataNodeId, folderName);
-        String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        TreeNode parentNode = legacyFolderDao.getDomainObject(authorizedSubjectKey, TreeNode.class, dataNodeId);
-        if (parentNode == null) {
-            LOG.warn("No folder found for {} owned by {}", dataNodeId, authorizedSubjectKey);
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .build();
-        }
-        try {
-            TreeNode folder = new TreeNode();
-            folder.setName(folderName);
-            TreeNode newFolder = legacyFolderDao.save(authorizedSubjectKey, folder);
-            legacyFolderDao.addChildren(authorizedSubjectKey, parentNode, ImmutableList.of(Reference.createFor(newFolder)));
-            return Response
-                    .status(Response.Status.CREATED)
-                    .entity(newFolder)
-                    .contentLocation(UriBuilder.fromMethod(DataTreeNodeResource.class, "getDataNode").build(newFolder.getId()))
-                    .build();
-        } catch (Exception e) {
-            LOG.error("Error while trying to add child folder {} to {}", folderName, parentNode, e);
-            return Response
-                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .build();
-        } finally {
-            LOG.trace("Finished addChildren({}, {})", dataNodeId, folderName);
-        }
-    }
-
     @ApiOperation(value = "Reorders the items in a node",
             notes = "Uses the DomainObject parameter of the DomainQuery and the Ordering parameter for the new ordering."
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully reordered Node", response = TreeNode.class),
+            @ApiResponse( code = 200, message = "Successfully reordered Node", response = Node.class),
             @ApiResponse( code = 500, message = "Internal Server Error reordering Node" )
     })
     @POST
@@ -249,8 +214,8 @@ public class DataTreeNodeResource {
             for (int i=0; i < orderList.size(); i++) {
                 order[i] = orderList.get(i).intValue();
             }
-            TreeNode parentNode = query.getDomainObjectAs(TreeNode.class);
-            TreeNode updatedNode = legacyFolderDao.reorderChildren(subjectKey, parentNode, order);
+            Node parentNode = query.getDomainObjectAs(Node.class);
+            Node updatedNode = legacyDomainDao.reorderChildren(subjectKey, parentNode, order);
             return Response
                     .ok()
                     .entity(updatedNode)
@@ -283,7 +248,7 @@ public class DataTreeNodeResource {
         try {
             T dn = (T) query.getDomainObjectAs(TreeNode.class);
             T savedNode = ((NodeDao<T>)workspaceNodeDao).saveBySubjectKey(dn, query.getSubjectKey());
-            return Response.created(UriBuilder.fromMethod(DataTreeNodeResource.class, "getDataNode").build(savedNode.getId()))
+            return Response.created(UriBuilder.fromMethod(DataNodeResource.class, "getDataNode").build(savedNode.getId()))
                     .entity(savedNode)
                     .build();
         } catch (Exception e) {
@@ -300,7 +265,7 @@ public class DataTreeNodeResource {
             notes = "Returns the user's default Workspace object."
     )
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully got default workspace", response= Workspace.class),
+            @ApiResponse( code = 200, message = "Successfully got default workspace", response=Workspace.class),
             @ApiResponse( code = 500, message = "Internal Server Error getting default workspace" )
     })
     @GET

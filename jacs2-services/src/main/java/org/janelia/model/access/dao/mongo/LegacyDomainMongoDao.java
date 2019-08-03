@@ -44,6 +44,7 @@ import org.janelia.model.domain.sample.NeuronSeparation;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.domain.sample.SampleLock;
 import org.janelia.model.domain.sample.StatusTransition;
+import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
@@ -208,23 +209,23 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public List<Reference> getContainerReferences(DomainObject domainObject) throws Exception {
-        return dao.getContainerReferences(domainObject);
+    public List<Reference> getAllNodeContainerReferences(DomainObject domainObject) throws Exception {
+        return dao.getAllNodeReferences(domainObject);
     }
 
     @Override
-    public long getContainerReferenceCount(DomainObject domainObject) throws Exception {
-        return dao.getContainerReferenceCount(domainObject);
+    public long getTreeNodeContainerReferenceCount(DomainObject domainObject) throws Exception {
+        return dao.getTreeNodeContainerReferenceCount(domainObject);
     }
 
     @Override
-    public long getContainerReferenceCount(Collection<Reference> references) throws Exception {
-        return dao.getContainerReferenceCount(references);
+    public long getTreeNodeContainerReferenceCount(Collection<Reference> references) throws Exception {
+        return dao.getTreeNodeContainerReferenceCount(references);
     }
 
     @Override
-    public <T extends DomainObject> List<TreeNode> getContainers(String subjectKey, Collection<Reference> references) throws Exception {
-        return dao.getContainers(subjectKey, references);
+    public List<TreeNode> getTreeNodeContainers(String subjectKey, Collection<Reference> references) throws Exception {
+        return dao.getTreeNodeContainers(subjectKey, references);
     }
 
     @Override
@@ -596,23 +597,23 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public TreeNode getOrCreateDefaultFolder(String subjectKey, String folderName) throws Exception {
-        return dao.getOrCreateDefaultFolder(subjectKey, folderName);
+    public TreeNode getOrCreateDefaultTreeNodeFolder(String subjectKey, String folderName) throws Exception {
+        return dao.getOrCreateDefaultTreeNodeFolder(subjectKey, folderName);
     }
 
     @Override
-    public TreeNode reorderChildren(String subjectKey, TreeNode treeNodeArg, int[] order) throws Exception {
-        return dao.reorderChildren(subjectKey, treeNodeArg, order);
+    public Node reorderChildren(String subjectKey, Node nodeArg, int[] order) throws Exception {
+        return dao.reorderChildren(subjectKey, nodeArg, order);
     }
 
     @Override
-    public List<DomainObject> getChildren(String subjectKey, TreeNode treeNode) {
-        return dao.getChildren(subjectKey, treeNode);
+    public List<DomainObject> getChildren(String subjectKey, Node node) {
+        return dao.getChildren(subjectKey, node);
     }
 
     @Override
-    public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
-        TreeNode updatedNode = dao.addChildren(subjectKey, treeNodeArg, references);
+    public Node addChildren(String subjectKey, Node treeNodeArg, Collection<Reference> references) throws Exception {
+        Node updatedNode = dao.addChildren(subjectKey, treeNodeArg, references);
         domainObjectIndexer.updateDocsAncestors(
                 references.stream().map(ref -> ref.getTargetId()).collect(Collectors.toSet()),
                 updatedNode.getId());
@@ -620,8 +621,8 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references, Integer index) throws Exception {
-        TreeNode updatedNode = dao.addChildren(subjectKey, treeNodeArg, references, index);
+    public Node addChildren(String subjectKey, Node nodeArg, Collection<Reference> references, Integer index) throws Exception {
+        Node updatedNode = dao.addChildren(subjectKey, nodeArg, references, index);
         domainObjectIndexer.updateDocsAncestors(
                 references.stream().map(ref -> ref.getTargetId()).collect(Collectors.toSet()),
                 updatedNode.getId());
@@ -629,16 +630,16 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public TreeNode removeChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
-        TreeNode updatedNode = dao.removeChildren(subjectKey, treeNodeArg, references);
+    public Node removeChildren(String subjectKey, Node nodeArg, Collection<Reference> references) throws Exception {
+        Node updatedNode = dao.removeChildren(subjectKey, nodeArg, references);
         List<DomainObject> children = dao.getDomainObjects(subjectKey, ImmutableList.copyOf(references));
         domainObjectIndexer.indexDocumentStream(children.stream()); // reindex the children
         return updatedNode;
     }
 
     @Override
-    public TreeNode removeReference(String subjectKey, TreeNode treeNodeArg, Reference reference) throws Exception {
-        return dao.removeReference(subjectKey, treeNodeArg, reference);
+    public Node removeReference(String subjectKey, Node nodeArg, Reference reference) throws Exception {
+        return dao.removeReference(subjectKey, nodeArg, reference);
     }
 
     @Override

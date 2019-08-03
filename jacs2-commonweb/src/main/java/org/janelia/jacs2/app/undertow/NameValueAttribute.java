@@ -32,13 +32,13 @@ public class NameValueAttribute implements ExchangeAttribute {
     private final ExchangeAttribute valueAttr;
     private final boolean ignoreIfEmpty;
 
-    public NameValueAttribute(String name, ExchangeAttribute valueAttr) {
+    NameValueAttribute(String name, ExchangeAttribute valueAttr) {
         this.name = name;
         this.valueAttr = valueAttr;
         this.ignoreIfEmpty = false;
     }
 
-    public NameValueAttribute(String name, ExchangeAttribute valueAttr, boolean ignoreIfEmpty) {
+    NameValueAttribute(String name, ExchangeAttribute valueAttr, boolean ignoreIfEmpty) {
         this.name = name;
         this.valueAttr = valueAttr;
         this.ignoreIfEmpty = ignoreIfEmpty;
@@ -48,7 +48,7 @@ public class NameValueAttribute implements ExchangeAttribute {
     public String readAttribute(HttpServerExchange exchange) {
         String val = valueAttr.readAttribute(exchange);
         if (ignoreIfEmpty && StringUtils.isBlank(val)) {
-            return "";
+            return null;
         } else {
             return name + "=" + val;
         }
