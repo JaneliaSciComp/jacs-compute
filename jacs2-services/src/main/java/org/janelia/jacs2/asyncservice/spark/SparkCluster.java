@@ -1,5 +1,12 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.annotation.Nullable;
+
 import com.google.common.base.Stopwatch;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -10,15 +17,6 @@ import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.slf4j.Logger;
-
-import javax.annotation.Nullable;
-import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 /**
  * Manages a single Spark cluster with N nodes. Takes care of starting and stopping the master/worker nodes,
@@ -157,19 +155,17 @@ public class SparkCluster {
 
         int parallelism = appParallelism > 0 ? appParallelism : defaultParallelism;
         logger.info("Starting app {} on {} ({}); " +
-                        "driver output: {}, " +
-                        "driver error: {}, " +
                         "sparkExecutorMemory: {}, " +
                         "sparkExecutorCores: {}, " +
                         "parallelism: {}, " +
                         "appArgs: {}",
                 appResource, masterURI, masterJobId,
-                appOutputDir,
-                appErrorDir,
                 sparkExecutorMemory,
                 coresPerSparkExecutor,
                 parallelism,
                 Arrays.asList(appArgs));
+        logger.info("Driver output: {}", appOutputDir);
+        logger.info("Driver error: {}", appErrorDir);
         SparkLauncher sparkLauncher = new SparkLauncher();
 
         File sparkOutputFile;
@@ -274,8 +270,7 @@ public class SparkCluster {
         } catch (Exception e) {
             logger.error("Error stopping master spark job {}", masterJobId, e);
         }
-        workerJobIds.stream()
-                .forEach(jobId -> {
+        workerJobIds.forEach(jobId -> {
                     try {
                         logger.info("Kill spark worker job {} part of spark cluster {}", jobId, masterJobId);
                         jobMgr.killJob(jobId);

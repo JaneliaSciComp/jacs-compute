@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -43,6 +42,7 @@ import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.domain.dto.DomainQuery;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 import org.janelia.model.domain.sample.DataSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -235,11 +235,11 @@ public class DatasetResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("dataset/colordepth")
-    public List<DataSet> getColorDepthDatasets(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                               @ApiParam @QueryParam("alignmentSpace") final String alignmentSpace) {
-        LOG.trace("Start getColorDepthDatasets(subject={}, alignmentSpace={})", subjectKey, alignmentSpace);
+    public List<ColorDepthLibrary> getLibrariesWithColorDepthImages(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                                         @ApiParam @QueryParam("alignmentSpace") final String alignmentSpace) {
+        LOG.trace("Start getLibrariesWithColorDepthImages(subject={}, alignmentSpace={})", subjectKey, alignmentSpace);
         try {
-            return legacyDomainDao.getDataSetsWithColorDepthImages(subjectKey, alignmentSpace);
+            return legacyDomainDao.getLibrariesWithColorDepthImages(subjectKey, alignmentSpace);
         } finally {
             LOG.trace("Finished getColorDepthDatasets(subject={}, alignmentSpace={})", subjectKey, alignmentSpace);
         }

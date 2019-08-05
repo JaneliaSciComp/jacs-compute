@@ -13,8 +13,10 @@ import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.PipelineStatus;
-import org.janelia.model.domain.gui.colordepth.ColorDepthMask;
-import org.janelia.model.domain.gui.colordepth.ColorDepthResult;
+import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
+import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
@@ -290,11 +292,15 @@ public interface LegacyDomainDao {
 
     List<DataSet> getDataSets(String subjectKey);
 
-    List<DataSet> getDataSetsWithColorDepthImages(String subjectKey, String alignmentSpace);
-
     List<DataSet> getUserDataSets(String subjectKey);
 
     DataSet getDataSetByIdentifier(String subjectKey, String dataSetIdentifier);
+
+    List<String> getColorDepthPaths(String subjectKey, String libraryIdentifier, String alignmentSpace);
+
+    ColorDepthImage getColorDepthImageByPath(String subjectKey, String filepath);
+
+    List<ColorDepthLibrary> getLibrariesWithColorDepthImages(String subjectKey, String alignmentSpace);
 
     DataSet createDataSet(String subjectKey, DataSet dataSet) throws Exception;
 
@@ -441,8 +447,6 @@ public interface LegacyDomainDao {
      * @throws Exception
      */
     void updateDataSetDiskspaceUsage(String dataSetIdentifier) throws Exception;
-
-    void addColorDepthSearchMask(String subjectKey, Long searchId, ColorDepthMask mask);
 
     void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result);
 

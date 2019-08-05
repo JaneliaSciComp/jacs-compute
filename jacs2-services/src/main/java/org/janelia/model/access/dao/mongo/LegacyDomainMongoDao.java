@@ -17,7 +17,6 @@ import javax.inject.Inject;
 
 import com.google.common.collect.ImmutableList;
 import com.mongodb.DBCursor;
-
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -29,8 +28,9 @@ import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.PipelineStatus;
-import org.janelia.model.domain.gui.colordepth.ColorDepthMask;
-import org.janelia.model.domain.gui.colordepth.ColorDepthResult;
+import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
@@ -53,11 +53,15 @@ import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class LegacyDomainMongoDao implements LegacyDomainDao {
+
+    private static final Logger log = LoggerFactory.getLogger(LegacyDomainMongoDao.class);
 
     private final DomainDAO dao;
     private final DomainObjectIndexer domainObjectIndexer;
@@ -417,11 +421,6 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public List<DataSet> getDataSetsWithColorDepthImages(String subjectKey, String alignmentSpace) {
-        return dao.getDataSetsWithColorDepthImages(subjectKey, alignmentSpace);
-    }
-
-    @Override
     public List<DataSet> getUserDataSets(String subjectKey) {
         return dao.getUserDataSets(subjectKey);
     }
@@ -429,6 +428,21 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public DataSet getDataSetByIdentifier(String subjectKey, String dataSetIdentifier) {
         return dao.getDataSetByIdentifier(subjectKey, dataSetIdentifier);
+    }
+
+    @Override
+    public List<String> getColorDepthPaths(String subjectKey, String libraryIdentifier, String alignmentSpace) {
+        return dao.getColorDepthPaths(subjectKey, libraryIdentifier, alignmentSpace);
+    }
+
+    @Override
+    public ColorDepthImage getColorDepthImageByPath(String subjectKey, String filepath) {
+        return dao.getColorDepthImageByPath(subjectKey, filepath);
+    }
+
+    @Override
+    public List<ColorDepthLibrary> getLibrariesWithColorDepthImages(String subjectKey, String alignmentSpace) {
+        return dao.getLibrariesWithColorDepthImages(subjectKey, alignmentSpace);
     }
 
     @Override
@@ -736,11 +750,6 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public void addColorDepthSearchMask(String subjectKey, Long searchId, ColorDepthMask mask) {
-        dao.addColorDepthSearchMask(subjectKey, searchId, mask);
-    }
-
-    @Override
     public void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result) {
         dao.addColorDepthSearchResult(subjectKey, searchId, result);
     }
@@ -753,11 +762,20 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public void ensureCollectionIndex(String collectionName, List<DaoIndex> indexes) {
         MongoCollection mongoCollection = dao.getCollectionByName(collectionName);
+        log.info("Creating indexes on {}", collectionName);
         for (DaoIndex index : indexes) {
             if (StringUtils.isBlank(index.getOptions())) {
                 mongoCollection.ensureIndex(index.getKeys());
             } else {
                 mongoCollection.ensureIndex(index.getKeys(), index.getOptions());
+            }
+            if (log.isInfoEnabled()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(index.getKeys());
+                if (index.getOptions() != null) {
+                    sb.append(", ").append(index.getOptions());
+                }
+                log.info("  {}", sb);
             }
         }
     }

@@ -62,20 +62,37 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
     static class ColorDepthSearchArgs extends ServiceArgs {
         @Parameter(names = {"-inputFiles"}, description = "Comma-delimited list of mask files", required = true)
         String inputFiles;
-        @Parameter(names = {"-searchDirs"}, description = "Comma-delimited list of directories containing the color depth projects to search", required = true)
+
+        @Parameter(names = {"-searchDirs"}, description = "Comma-delimited list of directories containing the color depth MIPs to search")
         String searchDirs;
+
+        @Parameter(names = {"-searchImageFile"}, description = "Filepath to a text file containing all a list of paths to search")
+        String searchImageFile;
+
         @Parameter(names = {"-dataThreshold"}, description = "Data threshold")
         Integer dataThreshold;
+
         @Parameter(names = {"-maskThresholds"}, description = "Mask thresholds", variableArity = true)
         List<Integer> maskThresholds;
+
         @Parameter(names = {"-pixColorFluctuation"}, description = "Pix Color Fluctuation, 1.18 per slice")
         Double pixColorFluctuation;
+
+        @Parameter(names = {"-xyShift"}, description = "Number of pixels to try shifting in XY plane")
+        Integer xyShift = 0;
+
+        @Parameter(names = {"-mirrorMask"}, description = "Should the mask be mirrored across the Y axis?")
+        Boolean mirrorMask = false;
+
         @Parameter(names = {"-pctPositivePixels"}, description = "% of Positive PX Threshold (0-100%)")
         Double pctPositivePixels;
+
         @Parameter(names = {"-numNodes"}, description = "Number of worker nodes")
         Integer numNodes;
+
         @Parameter(names = {"-minWorkerNodes"}, description = "Minimum number of required worker nodes")
         Integer minWorkerNodes;
+
         @Parameter(names = {"-parallelism"}, description = "Parallelism")
         Integer parallelism;
     }
@@ -208,7 +225,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
     }
 
     private ServiceComputation<SparkApp> runApp(JacsServiceData jacsServiceData, ColorDepthSearchArgs args, SparkCluster cluster) {
-        logger.info("Run color depth with {}", args);
+        logger.trace("Run color depth with {}", args);
 
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         prepareDir(jacsServiceData.getOutputPath());
@@ -239,8 +256,10 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
         appArgs.add("-m");
         appArgs.addAll(inputFiles);
 
-        appArgs.add("-i");
-        appArgs.add(args.searchDirs);
+        if (args.searchDirs != null) {
+            appArgs.add("-i");
+            appArgs.add(args.searchDirs);
+        }
 
         if (args.maskThresholds != null && !args.maskThresholds.isEmpty()) {
             appArgs.add("--maskThresholds");
@@ -257,6 +276,15 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
         if (args.pixColorFluctuation != null) {
             appArgs.add("--pixColorFluctuation");
             appArgs.add(args.pixColorFluctuation.toString());
+        }
+
+        if (args.xyShift != null) {
+            appArgs.add("--xyShift");
+            appArgs.add(args.xyShift.toString());
+        }
+
+        if (args.mirrorMask != null && args.mirrorMask) {
+            appArgs.add("--mirrorMask");
         }
 
         if (args.pctPositivePixels != null) {
