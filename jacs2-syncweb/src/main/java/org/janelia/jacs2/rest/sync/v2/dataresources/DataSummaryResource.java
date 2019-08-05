@@ -71,21 +71,24 @@ public class DataSummaryResource {
                                         @ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDiskUsageSummary({}, {})", volumeNameParam, subjectKey);
         try {
-            DiskUsageSummary summary = new DiskUsageSummary();
-            BigDecimal totalSpace = summaryDao.getDiskSpaceUsageByOwnerKey(subjectKey);
-            Double tb = totalSpace.divide(TERRA_BYTES, 2, RoundingMode.HALF_UP).doubleValue();
-            summary.setUserDataSetsTB(tb);
-
             String volumeName;
             if (StringUtils.isBlank(volumeNameParam)) {
                 volumeName = defaultVolume;
             } else {
                 volumeName = volumeNameParam;
             }
-            storageService.fetchQuotaForUser(volumeName, subjectKey)
-                    .ifPresent(quotaUsage -> summary.setQuotaUsage(quotaUsage));
-            return Response.ok(summary)
-                    .build();
+            return storageService.fetchQuotaForUser(volumeName, subjectKey)
+                    .map(quotaUsage -> {
+                        DiskUsageSummary summary = new DiskUsageSummary();
+                        BigDecimal totalSpace = summaryDao.getDiskSpaceUsageByOwnerKey(subjectKey);
+                        Double tb = totalSpace.divide(TERRA_BYTES, 2, RoundingMode.HALF_UP).doubleValue();
+                        summary.setUserDataSetsTB(tb);
+                        summary.setQuotaUsage(quotaUsage);
+                        return summary;
+                    })
+                    .map(diskUsageSummary -> Response.ok(diskUsageSummary).build())
+                    .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST).build())
+                    ;
         } finally {
             LOG.trace("Finished getDataSummary({})", subjectKey);
         }
