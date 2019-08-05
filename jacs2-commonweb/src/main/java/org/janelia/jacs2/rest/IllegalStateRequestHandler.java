@@ -20,7 +20,7 @@ public class IllegalStateRequestHandler implements ExceptionMapper<IllegalStateE
             errorMessage = "Illegal state";
         }
         return Response
-                .status(Response.Status.BAD_REQUEST)
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(new ErrorResponse(errorMessage))
                 .build();
     }
