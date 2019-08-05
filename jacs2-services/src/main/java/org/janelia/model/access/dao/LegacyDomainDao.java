@@ -15,7 +15,6 @@ import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.PipelineStatus;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
-import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
 import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.ontology.Ontology;
