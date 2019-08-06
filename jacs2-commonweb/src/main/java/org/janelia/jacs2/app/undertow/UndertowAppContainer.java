@@ -15,18 +15,7 @@ import io.swagger.jersey.config.JerseyJaxrsConfig;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
-import io.undertow.attribute.BytesSentAttribute;
-import io.undertow.attribute.ConstantExchangeAttribute;
-import io.undertow.attribute.CookieAttribute;
-import io.undertow.attribute.DateTimeAttribute;
-import io.undertow.attribute.ExchangeAttribute;
-import io.undertow.attribute.QueryStringAttribute;
-import io.undertow.attribute.RemoteHostAttribute;
-import io.undertow.attribute.RemoteUserAttribute;
-import io.undertow.attribute.RequestHeaderAttribute;
-import io.undertow.attribute.RequestMethodAttribute;
-import io.undertow.attribute.ResponseCodeAttribute;
-import io.undertow.attribute.ResponseHeaderAttribute;
+import io.undertow.attribute.*;
 import io.undertow.predicate.Predicate;
 import io.undertow.predicate.Predicates;
 import io.undertow.server.HttpHandler;
@@ -143,7 +132,7 @@ public class UndertowAppContainer implements AppContainer {
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
                         RemoteHostAttribute.INSTANCE, // <RemoteIP>
                         new AuthenticatedUserAttribute(), // <RemoteUser>
-                        new RequestHeaderAttribute(new HttpString("Application-Id")), // <Application-Id>
+                        new QuotingExchangeAttribute(new RequestHeaderAttribute(new HttpString("Application-Id"))), // <Application-Id>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         new RequestFullURLAttribute(), // <Request URL>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
@@ -151,9 +140,7 @@ public class UndertowAppContainer implements AppContainer {
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
                         new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTimeInSeconds>
                         new NameValueAttribute("tp", new ThroughputAttribute()), // tp=<Throughput>
-                        new NameValueAttribute("sessionId", new CookieAttribute("JSESSIONID"), true),
-                        new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location")), true), // location=<ResponseLocation>
-                        new NameValueAttribute("requestHeaders", new RequestHeadersAttribute(getOmittedHeaders())),
+                        new QuotingExchangeAttribute(new RequestHeaderAttribute(new HttpString("User-Agent"))), // <Application-Id>
                         new RequestBodyAttribute(applicationConfig.getIntegerPropertyValue("AccessLog.MaxRequestBody")) // Request Body
                 }, " "),
                 getAccessLogFilter()
