@@ -5,6 +5,7 @@ import org.glassfish.hk2.api.InjectionResolver;
 import org.glassfish.hk2.api.ServiceHandle;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.janelia.jacs2.asyncservice.maintenanceservices.DbMaintainer;
 import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.jacs2.auth.impl.AuthProvider;
@@ -107,6 +108,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getIndexingService()).to(IndexingService.class);
         bind(dependenciesProducer.getSampleDataService()).to(SampleDataService.class);
         bind(dependenciesProducer.getSageDataService()).to(SageDataService.class);
+        bind(dependenciesProducer.getDbMaintainer()).to(DbMaintainer.class);
         bind(PropertyResolver.class)
                 .to(new TypeLiteral<InjectionResolver<PropertyValue>>() {})
                 .in(Singleton.class);

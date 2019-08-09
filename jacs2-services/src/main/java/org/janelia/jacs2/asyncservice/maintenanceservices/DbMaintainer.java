@@ -6,7 +6,6 @@ import java.nio.file.Paths;
 import javax.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.dao.LegacyDomainDao.DaoIndex;
