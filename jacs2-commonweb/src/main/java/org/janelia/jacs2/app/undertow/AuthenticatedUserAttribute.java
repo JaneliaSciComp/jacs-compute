@@ -23,7 +23,7 @@ import io.undertow.attribute.ReadOnlyAttributeException;
 import io.undertow.security.api.SecurityContext;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderValues;
-import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.security.util.SubjectUtils;
 
 /**
  * Authenticated user attribute
@@ -32,38 +32,41 @@ public class AuthenticatedUserAttribute implements ExchangeAttribute {
 
     private static final String USERNAME_ATTRIBUTE = "Username";
     private static final String RUNAS_ATTRIBUTE = "RunAsUser";
+    private static final String JACS_SUBJECT_ATTRIBUTE = "JacsSubject";
 
     @Override
     public String readAttribute(HttpServerExchange exchange) {
-        String authenticatedUser;
-        String authorizedUser;
         SecurityContext sc = exchange.getSecurityContext();
+
+        String authenticatedUser;
         if (sc != null && sc.isAuthenticated()) {
             authenticatedUser = sc.getAuthenticatedAccount().getPrincipal().getName();
-        } else {
+        }
+        else {
             HeaderValues usernameHeader = exchange.getRequestHeaders().get(USERNAME_ATTRIBUTE);
             if (usernameHeader == null || usernameHeader.size() == 0) {
-                authenticatedUser = "";
-            } else {
+                HeaderValues subjectHeader = exchange.getRequestHeaders().get(JACS_SUBJECT_ATTRIBUTE);
+                if (subjectHeader == null || subjectHeader.size() == 0) {
+                    authenticatedUser = "unknown";
+                }
+                else {
+                    authenticatedUser = subjectHeader.getFirst();
+                }
+            }
+            else {
                 authenticatedUser = usernameHeader.getFirst();
             }
         }
+
+        // By default, the authenticated user is used as the authorized user
+        String authorizedUser = authenticatedUser;
+
         HeaderValues runAsHeader = exchange.getRequestHeaders().get(RUNAS_ATTRIBUTE);
-        if (runAsHeader == null || runAsHeader.size() == 0) {
-            authorizedUser = "";
-        } else {
+        if (runAsHeader != null && runAsHeader.size() > 0) {
             authorizedUser = runAsHeader.getFirst();
         }
-        if (StringUtils.isBlank(authenticatedUser) && StringUtils.isBlank(authorizedUser)) {
-            return null;
-        } else {
-            StringBuilder sb = new StringBuilder();
-            sb.append(authenticatedUser);
-            if (StringUtils.isNotBlank(authorizedUser)) {
-                sb.append("/").append(authorizedUser);
-            }
-            return sb.toString();
-        }
+
+        return SubjectUtils.getSubjectName(authenticatedUser) + " " + SubjectUtils.getSubjectName(authorizedUser);
     }
 
     @Override
