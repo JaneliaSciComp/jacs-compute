@@ -1,5 +1,18 @@
 package org.janelia.jacs2.rest.sync.v2.streamresources;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -15,19 +28,6 @@ import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeMetadata;
 import org.janelia.rendering.RenderingType;
 import org.slf4j.Logger;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 
 @ApplicationScoped
 @Produces("application/json")
@@ -59,13 +59,15 @@ public class TmSampleStreamingResource {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
-        } else if (StringUtils.isBlank(tmSample.getFilepath())) {
+        }
+        String filepath = tmSample.getLargeVolumeOctreeFilepath();
+        if (StringUtils.isBlank(filepath)) {
             logger.warn("Sample {} found but it has not rendering path", tmSample);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No rendering path set for " + sampleId))
                     .build();
         }
-        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(),
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(filepath,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null))
                 .map(rv -> Response.ok(rv).build())
@@ -100,7 +102,9 @@ public class TmSampleStreamingResource {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
-        } else if (StringUtils.isBlank(tmSample.getFilepath())) {
+        }
+        String filepath = tmSample.getLargeVolumeOctreeFilepath();
+        if (StringUtils.isBlank(filepath)) {
             logger.warn("Sample {} found but it has not rendering path", tmSample);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No rendering path set for " + sampleId))
@@ -113,7 +117,7 @@ public class TmSampleStreamingResource {
         int sy = syParam == null ? -1 : syParam;
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(),
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(filepath,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null);
         return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
@@ -162,10 +166,11 @@ public class TmSampleStreamingResource {
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
         }
+        String filepath = tmSample.getLargeVolumeOctreeFilepath();
         return TmStreamingResourceHelper.streamTileFromDirAndCoord(
                 renderedVolumeLocationFactory, renderedVolumeLoader,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
-                tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
+                filepath, zoomParam, axisParam, xParam, yParam, zParam);
     }
 
     @Deprecated
@@ -194,10 +199,11 @@ public class TmSampleStreamingResource {
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
         }
+        String filepath = tmSample.getLargeVolumeOctreeFilepath();
         return TmStreamingResourceHelper.streamTileFromDirAndCoord(
                 renderedVolumeLocationFactory, renderedVolumeLoader,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
-                tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
+                filepath, zoomParam, axisParam, xParam, yParam, zParam);
     }
 
 }

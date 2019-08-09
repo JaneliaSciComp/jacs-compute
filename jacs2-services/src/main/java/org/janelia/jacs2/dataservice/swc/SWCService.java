@@ -9,6 +9,8 @@ import org.janelia.model.access.domain.IdSource;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.DomainUtils;
+import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmProtobufExchanger;
@@ -98,7 +100,8 @@ public class SWCService {
                 LOG.error("Error giving permission on {} to {}", tmWorkspace, accessUserKey, e);
             }
         });
-        RenderedVolumeMetadata renderedVolumeMetadata = renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(), workspaceOwnerKey, null))
+        String sampleFilepath = tmSample.getLargeVolumeOctreeFilepath();
+        RenderedVolumeMetadata renderedVolumeMetadata = renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(sampleFilepath, workspaceOwnerKey, null))
                 .orElseThrow(() -> new IllegalStateException("Error loading volume metadata for sample " + sampleId));
 
         VectorOperator externalToInternalConverter = new JamaMatrixVectorOperator(

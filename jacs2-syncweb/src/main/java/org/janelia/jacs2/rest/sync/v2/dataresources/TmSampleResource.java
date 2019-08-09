@@ -1,31 +1,13 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.auth.JacsSecurityContextHelper;
-import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
-import org.janelia.jacs2.dataservice.search.IndexingService;
-import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.access.cdi.AsyncIndex;
-import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.dao.TmSampleDao;
-import org.janelia.model.domain.DomainConstants;
-import org.janelia.model.domain.dto.DomainQuery;
-import org.janelia.model.domain.tiledMicroscope.TmSample;
-import org.janelia.rendering.RenderedVolumeLocation;
-import org.janelia.rendering.StreamableContent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -43,12 +25,38 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.ws.rs.core.UriBuilder;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiKeyAuthDefinition;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.SecurityDefinition;
+import io.swagger.annotations.SwaggerDefinition;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.maintenanceservices.DbMaintainer;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
+import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
+import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.TmSampleDao;
+import org.janelia.model.domain.DomainConstants;
+import org.janelia.model.domain.DomainUtils;
+import org.janelia.model.domain.dto.DomainQuery;
+import org.janelia.model.domain.enums.FileType;
+import org.janelia.model.domain.tiledMicroscope.TmSample;
+import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.RenderedVolumeLoaderImpl;
+import org.janelia.rendering.RenderedVolumeLocation;
+import org.janelia.rendering.ymlrepr.RawVolData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Web service for CRUD operations having to do with Tiled Microscope domain objects.
@@ -83,6 +91,8 @@ public class TmSampleResource {
     private TmSampleDao tmSampleDao;
     @Inject
     private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
+    @Inject
+    private DbMaintainer dbMaintainer;
 
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
@@ -190,16 +200,132 @@ public class TmSampleResource {
                                          @ApiParam @QueryParam("samplePath") final String samplePath,
                                          @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("getTmSampleConstants(subjectKey: {}, samplePath: {})", subjectKey, samplePath);
-        // read and process transform.txt file in Sample path
-        // this is intended to be a one-time process and data returned will be stored in TmSample upon creation
         if (StringUtils.isBlank(samplePath)) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResponse("Invalid sample sample path - the sample path cannot be empty"))
                     .build();
         }
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath,
-                JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext),
-                null);
+        String authSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath, subjectKey, null);
+        Map<String, Object> constants = getConstants(rvl);
+        if (constants==null) {
+            LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath);
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Error reading transform.txt from " + samplePath))
+                    .build();
+        }
+        return Response.ok()
+                .entity(new GenericEntity<Map<String, Object>>(constants){})
+                .build();
+    }
+
+    @ApiOperation(value = "Creates a new TmSample",
+            notes = "Creates a TmSample using the DomainObject parameter of the DomainQuery"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 201, message = "Successfully created a TmSample", response = TmSample.class),
+            @ApiResponse(code = 500, message = "Error occurred while creating a TmSample")
+    })
+    @PUT
+    @Path("sample")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createTmSample(DomainQuery query) {
+        LOG.trace("createTmSample({})", query);
+        TmSample sample = query.getDomainObjectAs(TmSample.class);
+
+        String samplePath = sample.getLargeVolumeOctreeFilepath();
+        LOG.info("Creating new TmSample with path {}", samplePath);
+
+        File octreeDir = new File(samplePath);
+        if (!octreeDir.exists()) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Directory does not exist: " + octreeDir))
+                    .build();
+        }
+
+        String subjectKey = query.getSubjectKey();
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath, subjectKey, null);
+
+        Map<String, Object> constants = getConstants(rvl);
+        if (constants==null) {
+            LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath);
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Error reading transform.txt from " + samplePath))
+                    .build();
+        }
+
+        populateConstants(sample, constants);
+        LOG.info("Found {} levels in octree", sample.getNumImageryLevels());
+
+        if (sample.getLargeVolumeKTXFilepath()==null) {
+            LOG.info("KTX data path not provided. Attempting to find it relative to the octree...");
+            File ktxDir = Paths.get(samplePath, "ktx").toFile();
+            if (ktxDir.exists()) {
+                LOG.info("Setting KTX data path to {}", ktxDir);
+                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxDir.getAbsolutePath());
+            }
+            else {
+                LOG.warn("Could not find KTX directory at {}", ktxDir);
+            }
+        }
+
+        if (DomainUtils.getFilepath(sample, FileType.TwoPhotonAcquisition)==null) {
+            LOG.info("RAW data path not provided. Attempting to read it from the tilebase.cache.yml...");
+            RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
+            RawVolData rawVolData = loader.loadRawVolumeData(rvl);
+            if (!StringUtils.isBlank(rawVolData.getPath())) {
+                LOG.info("Setting RAW data path to {}", rawVolData.getPath());
+                DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, rawVolData.getPath());
+            }
+            else {
+                LOG.warn("Could not find RAW directory in tilebase.cache.yml");
+            }
+        }
+
+        TmSample savedSample = tmSampleDao.createTmSample(query.getSubjectKey(), sample);
+        LOG.info("Saved new sample as {}", savedSample);
+        return Response.created(UriBuilder.fromMethod(this.getClass(), "getTmSample").build(savedSample.getId()))
+                .entity(savedSample)
+                .build();
+    }
+
+    @ApiOperation(value = "Updates an existing TmSample",
+            notes = "Updates a TmSample using the DomainObject parameter of the DomainQuery"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully updated a TmSample", response = TmSample.class),
+            @ApiResponse(code = 500, message = "Error occurred while updating a TmSample")
+    })
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("sample")
+    public TmSample updateTmSample(@ApiParam DomainQuery query) {
+        LOG.trace("updateTmSample({})", query);
+        TmSample sample = query.getDomainObjectAs(TmSample.class);
+        dbMaintainer.refreshTmSampleSync(sample);
+        return tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
+    }
+
+    @ApiOperation(value = "Removes a TmSample",
+            notes = "Removes the TmSample using the TmSample Id"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully removed a TmSample"),
+            @ApiResponse(code = 500, message = "Error occurred while removing a TmSample")
+    })
+    @DELETE
+    @Path("sample")
+    public void removeTmSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                               @ApiParam @QueryParam("sampleId") final Long sampleId) {
+        LOG.trace("removeTmSample(subjectKey: {}, sampleId: {})", subjectKey, sampleId);
+        tmSampleDao.removeTmSample(subjectKey, sampleId);
+    }
+
+    private  Map<String, Object> getConstants(RenderedVolumeLocation rvl) {
+        // read and process transform.txt file in Sample path
+        // this is intended to be a one-time process and data returned will be stored in TmSample upon creation
         return rvl.getTransformData()
                 .map(streamableTransform -> {
                     try {
@@ -225,71 +351,44 @@ public class TmSampleResource {
                         constants.put("origin", origin);
                         constants.put("scaling", scaling);
                         constants.put("numberLevels", values.get("nl").longValue());
-                        return Response.ok()
-                                .entity(new GenericEntity<Map<String, Object>>(constants){})
-                                .build();
+                        return constants;
                     } catch (Exception e) {
-                        LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath, e);
-                        return Response.status(Response.Status.NOT_FOUND)
-                                .entity(new ErrorResponse("Error reading transform.txt from " + samplePath))
-                                .build();
+                        LOG.error("Error reading transform constants", e);
+                        return null;
                     } finally {
                         IOUtils.closeQuietly(streamableTransform);
                     }
                 })
-                .orElseGet(() -> {
-                    LOG.error("Transform constants file not found for {} from {}", subjectKey, samplePath);
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity(new ErrorResponse("Missing transform.txt from " + samplePath))
-                            .build();
-                });
+                .orElse(null);
     }
 
-    @ApiOperation(value = "Creates a new TmSample",
-            notes = "Creates a TmSample using the DomainObject parameter of the DomainQuery"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created a TmSample", response = TmSample.class),
-            @ApiResponse(code = 500, message = "Error occurred while creating a TmSample")
-    })
-    @PUT
-    @Path("sample")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public TmSample createTmSample(DomainQuery query) {
-        LOG.trace("createTmSample({})", query);
-        return tmSampleDao.createTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
-    }
+    private void populateConstants(TmSample sample, Map<String, Object> constants) {
+        Map originMap = (Map)constants.get("origin");
+        List<Integer> origin = new ArrayList<>();
+        origin.add ((Integer)originMap.get("x"));
+        origin.add ((Integer)originMap.get("y"));
+        origin.add ((Integer)originMap.get("z"));
+        Map scalingMap = (Map)constants.get("scaling");
+        List<Double> scaling = new ArrayList<>();
+        scaling.add ((Double)scalingMap.get("x"));
+        scaling.add ((Double)scalingMap.get("y"));
+        scaling.add ((Double)scalingMap.get("z"));
 
-    @ApiOperation(value = "Updates an existing TmSample",
-            notes = "Updates a TmSample using the DomainObject parameter of the DomainQuery"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated a TmSample", response = TmSample.class),
-            @ApiResponse(code = 500, message = "Error occurred while updating a TmSample")
-    })
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("sample")
-    public TmSample updateTmSample(@ApiParam DomainQuery query) {
-        LOG.trace("updateTmSample({})", query);
-        return tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
-    }
+        sample.setOrigin(origin);
+        sample.setScaling(scaling);
 
-    @ApiOperation(value = "Removes a TmSample",
-            notes = "Removes the TmSample using the TmSample Id"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully removed a TmSample"),
-            @ApiResponse(code = 500, message = "Error occurred while removing a TmSample")
-    })
-    @DELETE
-    @Path("sample")
-    public void removeTmSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                               @ApiParam @QueryParam("sampleId") final Long sampleId) {
-        LOG.trace("removeTmSample(subjectKey: {}, sampleId: {})", subjectKey, sampleId);
-        tmSampleDao.removeTmSample(subjectKey, sampleId);
+        Object numberLevels = constants.get("numberLevels");
+        if (numberLevels instanceof Integer) {
+            sample.setNumImageryLevels(((Integer)numberLevels).longValue());
+        }
+        else if (numberLevels instanceof Long) {
+            sample.setNumImageryLevels((Long)numberLevels);
+        }
+        else  if (numberLevels instanceof String) {
+            sample.setNumImageryLevels(Long.parseLong((String)numberLevels));
+        }
+        else {
+            throw new IllegalStateException("Could not parse numberLevels: "+numberLevels);
+        }
     }
-
 }
