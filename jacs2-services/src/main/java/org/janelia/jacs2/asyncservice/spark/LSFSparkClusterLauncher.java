@@ -67,6 +67,7 @@ public class LSFSparkClusterLauncher {
     private final long clusterIntervalCheckInMillis;
     private final String hadoopHomeDir;
     private final String lsfApplication;
+    private final String lsfAdditionalSpec;
     private final String lsfRemoteCommand;
 
     @Inject
@@ -86,6 +87,7 @@ public class LSFSparkClusterLauncher {
                                    @IntPropertyValue(name = "service.spark.cluster.intervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
                                    @StrPropertyValue(name = "hadoop.homeDir") String hadoopHomeDir,
                                    @StrPropertyValue(name = "service.spark.lsf.application", defaultValue="spark32") String lsfApplication,
+                                   @StrPropertyValue(name = "service.spark.lsf.spec", defaultValue="") String lsfAdditionalSpec,
                                    @StrPropertyValue(name = "service.spark.lsf.remoteCommand", defaultValue="commandstring") String lsfRemoteCommand,
                                    Logger logger) {
         this.computationFactory = computationFactory;
@@ -103,6 +105,7 @@ public class LSFSparkClusterLauncher {
         this.clusterIntervalCheckInMillis = clusterIntervalCheckInMillis;
         this.hadoopHomeDir = hadoopHomeDir;
         this.lsfApplication = lsfApplication;
+        this.lsfAdditionalSpec = lsfAdditionalSpec;
         this.lsfRemoteCommand = lsfRemoteCommand;
         this.logger = logger;
     }
@@ -316,6 +319,9 @@ public class LSFSparkClusterLauncher {
     private List<String> createNativeSpec(String billingAccount, String nodeType, int userSpecifiedClusterTimeoutInMins) {
         List<String> spec = new ArrayList<>();
         spec.add("-a " + String.format("%s(%s,%s)", lsfApplication, nodeType, sparkVersion)); // spark32(master,2.3.1) or spark32(worker,2.3.1)
+        if (lsfAdditionalSpec!=null) {
+            spec.add(lsfAdditionalSpec);
+        }
         int sparkClusterTimeoutInMins;
         if (userSpecifiedClusterTimeoutInMins > 0) {
             sparkClusterTimeoutInMins = userSpecifiedClusterTimeoutInMins;
