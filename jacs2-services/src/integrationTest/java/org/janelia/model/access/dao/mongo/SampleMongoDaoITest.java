@@ -2,12 +2,12 @@ package org.janelia.model.access.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import org.hamcrest.beans.HasPropertyWithValue;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.jacs2.dao.mongo.SampleMongoDao;
 import org.janelia.model.jacs2.domain.sample.PipelineResult;
 import org.janelia.model.jacs2.domain.sample.SamplePipelineRun;
 import org.janelia.model.jacs2.dao.SampleDao;
 import org.janelia.model.jacs2.domain.enums.FileType;
-import org.janelia.model.jacs2.domain.Reference;
 import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.model.jacs2.domain.sample.ObjectiveSample;
 import org.janelia.model.jacs2.domain.sample.SampleTile;
@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.util.Objects.isNull;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
@@ -393,7 +392,7 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
 
     private SampleTile createTile() {
         SampleTile sampleTile = new SampleTile();
-        sampleTile.addLsmReference(new Reference("LSMImage", dataGenerator.nextLong()));
+        sampleTile.addLsmReference(Reference.createFor("LSMImage", dataGenerator.nextLong()));
         DomainModelUtils.setFullPathForFileType(sampleTile, FileType.ChanFile, "testChanFile");
         DomainModelUtils.setFullPathForFileType(sampleTile, FileType.MaskFile, "testMaskFile");
         return sampleTile;

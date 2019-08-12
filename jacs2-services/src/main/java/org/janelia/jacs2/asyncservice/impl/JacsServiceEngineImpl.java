@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.impl;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
@@ -76,6 +77,7 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
     private Logger logger;
     private int nAvailableSlots;
     private Semaphore availableSlots;
+    private String defaultProcessorQueueId;
 
     JacsServiceEngineImpl() {
         // CDI required ctor
@@ -86,13 +88,16 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
                                  JacsServiceQueue jacsServiceQueue,
                                  Instance<ServiceRegistry> serviceRegistrarSource,
                                  @PropertyValue(name = "service.engine.ProcessingSlots") int nAvailableSlots,
+                                 @PropertyValue(name = "service.defaultProcessor.queue.id") String defaultProcessorQueueId,
                                  Logger logger) {
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.jacsServiceQueue = jacsServiceQueue;
         this.serviceRegistrarSource = serviceRegistrarSource;
         this.logger = logger;
         this.nAvailableSlots = nAvailableSlots <= 0 ? DEFAULT_MAX_RUNNING_SLOTS : nAvailableSlots;
-        availableSlots = new Semaphore(this.nAvailableSlots, true);
+        this.availableSlots = new Semaphore(this.nAvailableSlots, true);
+        this.defaultProcessorQueueId = StringUtils.defaultIfBlank(defaultProcessorQueueId, null);
+        logger.info("Default queue id: {}", defaultProcessorQueueId);
     }
 
     @Override
@@ -158,6 +163,11 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
     public JacsServiceData submitSingleService(JacsServiceData serviceArgs) {
         if (serviceArgs.getState() == null) {
             serviceArgs.setState(JacsServiceState.CREATED);
+        }
+        if (StringUtils.isBlank(serviceArgs.getQueueId())) {
+            // if the client hasn't specified where the service should process
+            // use the defaultProcessorQueueId to specify where processing will take place
+            serviceArgs.setQueueId(defaultProcessorQueueId);
         }
         serviceArgs.initAccessId();
         jacsServiceDataPersistence.saveHierarchy(serviceArgs);

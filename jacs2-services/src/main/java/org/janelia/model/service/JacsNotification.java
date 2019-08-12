@@ -1,15 +1,16 @@
 package org.janelia.model.service;
 
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.model.jacs2.domain.annotations.EntityId;
+import org.janelia.model.domain.entityannotations.EntityId;
+import org.janelia.model.jacs2.BaseEntity;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
-import org.janelia.model.jacs2.BaseEntity;
-
-import java.util.Date;
-import java.util.Map;
 
 @MongoMapping(collectionName="jacsNotification", label="Jacs Notification")
 public class JacsNotification implements BaseEntity, HasIdentifier {
@@ -19,7 +20,7 @@ public class JacsNotification implements BaseEntity, HasIdentifier {
     private String eventName;
     private Date notificationDate = new Date();
     private JacsServiceLifecycleStage notificationStage;
-    private Map<String, String> notificationData;
+    private Map<String, String> notificationData = new LinkedHashMap<>();
 
     @Override
     public Number getId() {
@@ -60,7 +61,13 @@ public class JacsNotification implements BaseEntity, HasIdentifier {
     }
 
     public void setNotificationData(Map<String, String> notificationData) {
-        this.notificationData = notificationData;
+        if (notificationData != null) {
+            this.notificationData.putAll(notificationData);
+        }
+    }
+
+    public void addNotificationData(String name, String value) {
+        this.notificationData.put(name, value);
     }
 
     @Override

@@ -2,6 +2,8 @@ package org.janelia.jacs2.asyncservice.neuronservices;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -19,10 +21,8 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Named("swcImport")
 public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
@@ -34,14 +34,14 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
         String workspace;
         @Parameter(names = "-swcDirName", description = "SWC directory name", required = true)
         String swcDirName;
-        @Parameter(names = "-withSystemOwner", description = "If set mouselight group user is the owner of the imported neurons")
-        boolean withSystemOwner;
+        @Parameter(names = "-workspaceOwner", description = "If not set the workspace owner is the service caller")
+        String workspaceOwnerKey;
+        @Parameter(names = "-neuronsOwner", description = "If not set the neurons owner is the service caller")
+        String neuronsOwnerKey;
         SWCImportArgs() {
             super("Service that imports an SWC file into a workspace");
         }
     }
-
-    private static final String SYSTEM_OWNER_KEY = "group:mouselight";
 
     private final SWCService swcService;
 
@@ -86,18 +86,24 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
     @Override
     public ServiceComputation<JacsServiceResult<Long>> process(JacsServiceData jacsServiceData) {
         SWCImportArgs args = getArgs(jacsServiceData);
+        String workspaceOwnerKey;
         String neuronOwnerKey;
-        List<String> accessUsers;
-        if (args.withSystemOwner) {
-            neuronOwnerKey = SYSTEM_OWNER_KEY;
-            accessUsers = Arrays.asList(SYSTEM_OWNER_KEY);
+        Set<String> accessUsers = new LinkedHashSet<>();
+        if (StringUtils.isBlank(args.workspaceOwnerKey)) {
+            workspaceOwnerKey = jacsServiceData.getOwnerKey();
         } else {
-            neuronOwnerKey = jacsServiceData.getOwnerKey();
-            accessUsers = Collections.emptyList();
+            workspaceOwnerKey = args.workspaceOwnerKey.trim();
         }
+        if (StringUtils.isBlank(args.neuronsOwnerKey)) {
+            neuronOwnerKey = workspaceOwnerKey; // default to workspace owner
+        } else {
+            neuronOwnerKey = args.neuronsOwnerKey.trim();
+            accessUsers.add(neuronOwnerKey);
+        }
+        accessUsers.remove(workspaceOwnerKey); // if the neuron owner and the workspace owner are the same there's no need for this
         return computationFactory
                 .newCompletedComputation(swcService.importSWCFolder(args.swcDirName,
-                        args.sampleId, neuronOwnerKey, args.workspace, jacsServiceData.getOwnerKey(), accessUsers))
+                        args.sampleId, args.workspace, workspaceOwnerKey, neuronOwnerKey, ImmutableList.copyOf(accessUsers)))
                 .thenApply(tmWorkspace -> updateServiceResult(jacsServiceData, tmWorkspace.getId()));
     }
 

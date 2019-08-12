@@ -22,10 +22,10 @@ public class StorageEntryInfo {
     @JsonCreator
     public StorageEntryInfo(@JsonProperty("storageId") String storageId,
                             @JsonProperty("storageURL") String storageURL,
-                            @JsonProperty("entryURL") String entryURL,
+                            @JsonProperty("nodeAccessURL") String entryURL,
                             @JsonProperty("storageRootLocation") String storageRootLocation,
                             @JsonProperty("storageRootPathURI") StoragePathURI storageRootPathURI,
-                            @JsonProperty("entryRelativePath") String entryRelativePath,
+                            @JsonProperty("nodeRelativePath") String entryRelativePath,
                             @JsonProperty("collectionFlag") boolean collectionFlag) {
         this.storageId = storageId;
         this.storageURL = storageURL;

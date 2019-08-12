@@ -93,10 +93,7 @@ public class LightsheetPipelineProcessorTest {
     public void processLightsheetPipeline() {
         String pipelineConfigReference = "pipelineTestConfigID";
         List<String> testSteps = Arrays.asList("clusterCS", "clusterFM", "localAC");
-        JacsServiceData testServiceData = createTestService(
-                null,
-                pipelineConfigReference,
-                createPipelineConfig(testSteps));
+        JacsServiceData testServiceData = createTestService(createPipelineConfig(testSteps));
 
         Mockito.when(lightsheetPipelineStepProcessor.getResultHandler()).thenCallRealMethod();
 
@@ -113,8 +110,7 @@ public class LightsheetPipelineProcessorTest {
                             (stepIndex, stepName) -> new IndexedReference<>(stepName, stepIndex))
                             .map(indexedStep -> new ListArgMatcher<>(ImmutableList.of(
                                     new ServiceArgMatcher(new ServiceArg("-step", indexedStep.getReference())),
-                                    new ServiceArgMatcher(new ServiceArg("-stepIndex", indexedStep.getPos())),
-                                    new ServiceArgMatcher(new ServiceArg("-configReference", pipelineConfigReference))
+                                    new ServiceArgMatcher(new ServiceArg("-stepIndex", indexedStep.getPos()))
                             )))
                             .forEach(argMatcher -> Mockito.verify(lightsheetPipelineStepProcessor).createServiceData(
                                     any(ServiceExecutionContext.class),
@@ -133,10 +129,8 @@ public class LightsheetPipelineProcessorTest {
         Mockito.verify(failure, never()).accept(any());
     }
 
-    private JacsServiceData createTestService(String configURL, String configRefence, Map<String, Object> dictionaryArgs) {
+    private JacsServiceData createTestService(Map<String, Object> dictionaryArgs) {
         JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
-                .addArgs(StringUtils.isBlank(configURL) ? Arrays.asList() : Arrays.asList("-configURL", configURL))
-                .addArgs(StringUtils.isBlank(configRefence) ? Arrays.asList() : Arrays.asList("-configReference", configRefence))
                 .setDictionaryArgs(dictionaryArgs)
                 .build();
         testServiceData.setId(testServiceId);

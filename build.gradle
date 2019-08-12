@@ -7,7 +7,7 @@ allprojects {
     apply plugin: 'idea'
     apply plugin: 'eclipse'
     group = 'org.janelia.jacs2'
-    version = '2.1.0'
+    version = '2.2.1'
 }
 
 project.ext {
@@ -22,7 +22,10 @@ subprojects {
             mavenLocal()
             mavenCentral()
             maven {
-                url "https://raw.githubusercontent.com/JaneliaSciComp/mvn-repo/master/repository/"
+                url "https://nexus.janelia.org/repository/maven-releases"
+            }
+            maven {
+                url "https://nexus.janelia.org/repository/maven-snapshots"
             }
             flatDir {
                 dirs "${rootDir}/projectrepository"
@@ -31,7 +34,7 @@ subprojects {
 
         configurations {
             provided
-            compile.extendsFrom(provided)
+            testArtifacts.extendsFrom(testCompile)
             integrationTestCompile.extendsFrom(testCompile)
             integrationTestRuntime.extendsFrom(testRuntime)
         }
@@ -109,11 +112,20 @@ subprojects {
             dependencyConfiguration = 'compile'
         }
 
+        task testJar(type: Jar) {
+            from sourceSets.test.output
+            classifier = "test"
+        }
+
         task integrationTest(type: Test) {
             testClassesDirs += sourceSets.integrationTest.output.classesDirs
             classpath = sourceSets.integrationTest.runtimeClasspath
         }
     
+        artifacts {
+            testArtifacts testJar
+            archives testJar
+        }
     }
     
     sourceCompatibility = 1.8

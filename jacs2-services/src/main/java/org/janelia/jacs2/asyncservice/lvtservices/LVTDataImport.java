@@ -10,7 +10,9 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.domain.DomainConstants;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.service.JacsServiceData;
@@ -129,14 +131,15 @@ public class LVTDataImport extends AbstractServiceProcessor<File> {
             });
     }
 
-    // This is copy and pasted from JACSv1's TiledMicroscopeDAO. When that DAO gets ported over, it should be used instead.
+    // TODO: This is copy and pasted from JACSv1's TiledMicroscopeDAO. When that DAO gets ported over, it should be used instead.
     public TmSample createTmSample(String subjectKey, String filepath, String sampleName) throws Exception {
         logger.debug("createTmSample({}, {})",subjectKey,sampleName);
         TmSample sample = new TmSample();
-        sample.setFilepath(filepath);
         sample.setName(sampleName);
+        DomainUtils.setFilepath(sample, FileType.LargeVolumeOctree, filepath);
+        DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, filepath+"/ktx");
         sample = legacyDomainDao.save(subjectKey, sample);
-        TreeNode folder = legacyDomainDao.getOrCreateDefaultFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
+        TreeNode folder = legacyDomainDao.getOrCreateDefaultTreeNodeFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
         legacyDomainDao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(sample)));
         return sample;
     }

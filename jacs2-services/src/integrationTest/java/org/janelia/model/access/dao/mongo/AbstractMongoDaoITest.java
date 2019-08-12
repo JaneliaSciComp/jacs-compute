@@ -8,8 +8,9 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacs2.AbstractITest;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.model.access.dao.ReadWriteDao;
+import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoDBHelper;
+import org.janelia.model.access.domain.dao.mongo.mongodbutils.RegistryHelper;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
-import org.janelia.model.access.dao.mongo.utils.RegistryHelper;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -27,15 +28,25 @@ public abstract class AbstractMongoDaoITest<T extends HasIdentifier> extends Abs
 
     @BeforeClass
     public static void setUpMongoClient() {
-        CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(testObjectMapperFactory);
-        MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder().codecRegistry(codecRegistry).maxConnectionIdleTime(60000);
-        MongoClientURI mongoConnectionURI = new MongoClientURI(integrationTestsConfig.getStringPropertyValue("MongoDB.ConnectionURL"), optionsBuilder);
-        testMongoClient = new MongoClient(mongoConnectionURI);
+        testMongoClient = MongoDBHelper.createMongoClient(
+                integrationTestsConfig.getStringPropertyValue("MongoDB.ConnectionURL"),
+                integrationTestsConfig.getStringPropertyValue("MongoDB.ServerName"),
+                integrationTestsConfig.getStringPropertyValue("MongoDB.AuthDatabase", integrationTestsConfig.getStringPropertyValue("MongoDB.Database")),
+                integrationTestsConfig.getStringPropertyValue("MongoDB.Username"),
+                integrationTestsConfig.getStringPropertyValue("MongoDB.Password"),
+                0, // use default
+                0, // use default
+                -1, // use default
+                0,
+                0,
+                0,
+                () -> RegistryHelper.createCodecRegistryWithJacsksonEncoder(testObjectMapperFactory.newMongoCompatibleObjectMapper())
+        );
     }
 
     @Before
     public final void setUpMongoDatabase() {
-        testMongoDatabase = testMongoClient.getDatabase(integrationTestsConfig.getStringPropertyValue("MongoDB.Database"));
+        testMongoDatabase = MongoDBHelper.createMongoDatabase(testMongoClient, integrationTestsConfig.getStringPropertyValue("MongoDB.Database"));
     }
 
     protected void deleteAll(ReadWriteDao<T, Number> dao, List<T> es) {

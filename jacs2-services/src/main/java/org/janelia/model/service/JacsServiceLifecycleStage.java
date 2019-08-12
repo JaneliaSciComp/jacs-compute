@@ -2,6 +2,7 @@ package org.janelia.model.service;
 
 public enum JacsServiceLifecycleStage {
     START_PROCESSING,
+    PROCESSING,
     SUCCESSFUL_PROCESSING,
     FAILED_PROCESSING,
     SUSPEND_PROCESSING,

@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
@@ -97,18 +98,18 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
     }
 
     @Override
-    public Stream<InputStream> streamServiceStdOutput(JacsServiceData serviceData) {
+    public Stream<Supplier<InputStream>> streamServiceStdOutput(JacsServiceData serviceData) {
         return streamServiceOutputFiles(serviceData.getOutputPath());
     }
 
     @Override
-    public Stream<InputStream> streamServiceStdError(JacsServiceData serviceData) {
+    public Stream<Supplier<InputStream>> streamServiceStdError(JacsServiceData serviceData) {
         return streamServiceOutputFiles(serviceData.getErrorPath());
     }
 
-    private Stream<InputStream> streamServiceOutputFiles(String outputDir) {
+    private Stream<Supplier<InputStream>> streamServiceOutputFiles(String outputDir) {
         return streamOutputDir(outputDir)
-                .map(outputPath -> {
+                .map(outputPath -> () -> {
                     try {
                         return new ReaderInputStream(Files.newBufferedReader(outputPath));
                     } catch (IOException e) {

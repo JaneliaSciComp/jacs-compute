@@ -10,8 +10,9 @@ project(":jacs2-syncweb") {
     dependencies {
         compile project(":jacs2-commonweb"),
                 CDI_SE_CORE_LIB,
-                JAX_RS_JERSEY_CDI_SERVLET_LIB,
-                JAX_RS_JERSEY_INJECT_LIB
+                JACKSON_JAXRS_XML_PROVIDER
+
+        testCompile project(path: ":jacs2-commonweb", configuration: "testArtifacts")
     }
 
     distributions {
@@ -28,4 +29,16 @@ project(":jacs2-syncweb") {
             }
         }
     }
+
+    tasks.withType(CreateStartScripts).each { task ->
+        task.doLast {
+            task.windowsScript.write task.windowsScript.text.replaceFirst(/(set CLASSPATH=%APP_HOME%\\lib\\).*/, {
+                "${it[1]}*"
+            })
+            task.unixScript.write task.unixScript.text.replaceFirst(/(CLASSPATH=.APP_HOME\/lib\/).*/, {
+                "CLASSPATH=\$(echo \$APP_HOME/lib/*.jar | tr ' ' ':')"
+            })
+        }
+    }
+
 }

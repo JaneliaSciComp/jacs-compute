@@ -1,12 +1,12 @@
 package org.janelia.model.service;
 
+import java.util.Date;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.model.jacs2.domain.annotations.EntityId;
+import org.janelia.model.domain.entityannotations.EntityId;
+import org.janelia.model.jacs2.BaseEntity;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
-import org.janelia.model.jacs2.BaseEntity;
-
-import java.util.Date;
 
 /**
  * Final job metadata for a job instance (e.g. a single invocation in an array job).

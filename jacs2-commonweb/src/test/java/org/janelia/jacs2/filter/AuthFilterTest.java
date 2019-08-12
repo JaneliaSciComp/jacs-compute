@@ -1,44 +1,58 @@
 package org.janelia.jacs2.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.auth.JacsSecurityContext;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
         AuthFilter.class,
 })
+@PowerMockIgnore({"javax.crypto.*" }) // Due to https://github.com/powermock/powermock/issues/294
 public class AuthFilterTest {
+
+    private static final String TEST_KEY = "TESTKEY";
+    private static final String TEST_SYSTEM_USER = "TESTUSER";
 
     @Mock
     private LegacyDomainDao dao;
     @Mock
-    private JwtDecoder jwtDecoder;
+    private JWTProvider jwtProvider;
     @Mock
     private Logger logger;
     @Mock
@@ -51,24 +65,148 @@ public class AuthFilterTest {
         Whitebox.setInternalState(authFilter, "dao", dao);
         Whitebox.setInternalState(authFilter, "logger", logger);
         Whitebox.setInternalState(authFilter, "resourceInfo", resourceInfo);
-        Whitebox.setInternalState(authFilter, "jwtDecoder", jwtDecoder);
+        Whitebox.setInternalState(authFilter, "jwtProvider", jwtProvider);
+        Whitebox.setInternalState(authFilter, "apiKey", TEST_KEY);
+        Whitebox.setInternalState(authFilter, "systemUser", TEST_SYSTEM_USER);
     }
 
     @Test
-    public void filterWithAuthorizationHeader() {
+    public void noAuthRequired() {
+        class TestResource {
+            void m() {
+            }
+        }
+        ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        authFilter.filter(requestContext);
+        Mockito.verifyNoMoreInteractions(requestContext, dao, jwtProvider);
+    }
+
+    @Test
+    public void filterWithHeaderUsername() {
+        @RequireAuthentication
+        class TestResource {
+            void m() {
+            }
+        }
+        ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        final String testUserName = "thisuser";
+        Mockito.when(requestContext.getHeaders())
+                .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of("UserName", testUserName)));
+        Mockito.when(dao.getSubjectByNameOrKey(testUserName)).then(invocation -> {
+            String usernameArg = invocation.getArgument(0);
+            Subject subject = new User();
+            subject.setKey("user:" + usernameArg);
+            return subject;
+        });
+        UriInfo uriInfo = Mockito.mock(UriInfo.class);
+        Mockito.when(uriInfo.getRequestUri()).thenReturn(URI.create("http://test:1000"));
+        Mockito.when(requestContext.getUriInfo()).thenReturn(uriInfo);
+
+        authFilter.filter(requestContext);
+        Mockito.verify(requestContext, Mockito.times(2)).getHeaders();
+        Mockito.verify(requestContext).setSecurityContext(any(JacsSecurityContext.class));
+        Mockito.verify(requestContext, Mockito.times(1)).getUriInfo();
+        Mockito.verify(requestContext).setSecurityContext(any(JacsSecurityContext.class));
+        Mockito.verify(dao).getSubjectByNameOrKey(testUserName);
+
+        Mockito.verifyNoMoreInteractions(requestContext, dao, jwtProvider);
+    }
+
+    @Test
+    public void filterWithHeaderUsernameAnRunAs() {
+        @RequireAuthentication
+        class TestResource {
+            void m() {
+            }
+        }
+        ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        final String testUserName = "thisuser";
+        final String runAsThisUser = "runasthis";
+        Mockito.when(requestContext.getHeaders())
+                .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of(
+                        "UserName", testUserName,
+                        "RunAsUser", runAsThisUser
+                )));
+        AtomicLong idGen = new AtomicLong(1);
+        Mockito.when(dao.getSubjectByNameOrKey(anyString())).then(invocation -> {
+            String usernameArg = invocation.getArgument(0);
+            Subject subject = new User() {{
+                setUserGroupRole("group:admin", GroupRole.Reader);
+            }};
+            subject.setId(idGen.getAndIncrement());
+            subject.setKey("user:" + usernameArg);
+            return subject;
+        });
+        UriInfo uriInfo = Mockito.mock(UriInfo.class);
+        Mockito.when(uriInfo.getRequestUri()).thenReturn(URI.create("http://test:1000"));
+        Mockito.when(requestContext.getUriInfo()).thenReturn(uriInfo);
+
+        authFilter.filter(requestContext);
+        Mockito.verify(requestContext, Mockito.times(2)).getHeaders();
+        Mockito.verify(requestContext).setSecurityContext(any(JacsSecurityContext.class));
+        Mockito.verify(requestContext, Mockito.times(1)).getUriInfo();
+        Mockito.verify(requestContext).setSecurityContext(any(JacsSecurityContext.class));
+        Mockito.verify(dao).getSubjectByNameOrKey(testUserName);
+        Mockito.verify(dao).getSubjectByNameOrKey(runAsThisUser);
+
+        Mockito.verifyNoMoreInteractions(requestContext, dao, jwtProvider);
+    }
+
+    @Test
+    public void filterWithHeaderUsernameWithoutAdminAnRunAs() {
+        @RequireAuthentication
+        class TestResource {
+            void m() {
+            }
+        }
+        ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        final String testUserName = "thisuser";
+        final String runAsThisUser = "runasthis";
+        Mockito.when(requestContext.getHeaders())
+                .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of(
+                        "UserName", testUserName,
+                        "RunAsUser", runAsThisUser
+                )));
+        AtomicLong idGen = new AtomicLong(1);
+        Mockito.when(dao.getSubjectByNameOrKey(anyString())).then(invocation -> {
+            String usernameArg = invocation.getArgument(0);
+            Subject subject = new User();
+            subject.setId(idGen.getAndIncrement());
+            subject.setKey("user:" + usernameArg);
+            return subject;
+        });
+        UriInfo uriInfo = Mockito.mock(UriInfo.class);
+        Mockito.when(uriInfo.getRequestUri()).thenReturn(URI.create("http://test:1000"));
+        Mockito.when(requestContext.getUriInfo()).thenReturn(uriInfo);
+
+        authFilter.filter(requestContext);
+        Mockito.verify(requestContext, Mockito.times(2)).getHeaders();
+        Mockito.verify(requestContext).abortWith(argThat(argument -> argument.getStatus() == 403));
+        Mockito.verify(dao).getSubjectByNameOrKey(testUserName);
+        Mockito.verify(dao).getSubjectByNameOrKey(runAsThisUser);
+
+        Mockito.verifyNoMoreInteractions(requestContext, dao, jwtProvider);
+    }
+
+    @Test
+    public void filterWithJWTAuthorizationHeader() {
         final String testToken = "testToken";
         final String testUserName = "testUser";
 
         @RequireAuthentication
         class TestResource {
-            void m() {};
+            void m() {
+            }
         }
-        TestResource testResource = new TestResource();
-
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
         Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
-        Mockito.when(requestContext.getHeaderString("Authorization")).thenReturn("Bearer " + testToken);
-        Mockito.when(jwtDecoder.decode(testToken)).thenReturn(createTestJWT(testUserName, System.currentTimeMillis()/1000 + 200));
+        Mockito.when(requestContext.getHeaders())
+                .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of("Authorization", "Bearer " + testToken)));
+        Mockito.when(jwtProvider.decodeJWT(testToken)).thenReturn(createTestJWT(testUserName));
         Mockito.when(dao.getSubjectByNameOrKey(testUserName)).then(invocation -> {
             String usernameArg = invocation.getArgument(0);
             Subject subject = new User();
@@ -82,10 +220,64 @@ public class AuthFilterTest {
         Mockito.verify(requestContext).setSecurityContext(any(JacsSecurityContext.class));
     }
 
-    private JWT createTestJWT(String user, long expInSec) {
-        JWT jwt = new JWT();
-        jwt.userName = user;
-        jwt.expInSeconds = expInSec;
-        return jwt;
+    private Map<String,String> createTestJWT(String user) {
+        Map<String,String> claims = new HashMap<>();
+        claims.put(JWTProvider.USERNAME_CLAIM, user);
+        return claims;
     }
+
+    @Test
+    public void filterWithAPIKEYAuthorizationHeader() {
+        class TestResource {
+            @RequireAuthentication
+            void m() {
+            }
+        }
+        ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        Mockito.when(requestContext.getHeaders())
+                .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of("Authorization", "APIKEY " + TEST_KEY)));
+        UriInfo uriInfo = Mockito.mock(UriInfo.class);
+        Mockito.when(uriInfo.getRequestUri()).thenReturn(URI.create("http://test:1000"));
+        Mockito.when(requestContext.getUriInfo()).thenReturn(uriInfo);
+        authFilter.filter(requestContext);
+        Mockito.verify(requestContext).setSecurityContext(any(JacsSecurityContext.class));
+    }
+
+    @Test
+    public void invalidAPIKEYInAuthorizationHeader() {
+        @RequireAuthentication
+        class TestResource {
+            void m() {
+            }
+        }
+        ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        Mockito.when(requestContext.getHeaders())
+                .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of("Authorization", "APIKEY badkey")));
+        UriInfo uriInfo = Mockito.mock(UriInfo.class);
+        Mockito.when(uriInfo.getRequestUri()).thenReturn(URI.create("http://test:1000"));
+        Mockito.when(requestContext.getUriInfo()).thenReturn(uriInfo);
+        authFilter.filter(requestContext);
+        Mockito.verify(requestContext).abortWith(argThat(argument -> argument.getStatus() == 401));
+    }
+
+    @Test
+    public void noAuthorizationHeader() {
+        @RequireAuthentication
+        class TestResource {
+            void m() {
+            }
+        }
+        ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
+        Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
+        Mockito.when(requestContext.getHeaders())
+                .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of()));
+        UriInfo uriInfo = Mockito.mock(UriInfo.class);
+        Mockito.when(uriInfo.getRequestUri()).thenReturn(URI.create("http://test:1000"));
+        Mockito.when(requestContext.getUriInfo()).thenReturn(uriInfo);
+        authFilter.filter(requestContext);
+        Mockito.verify(requestContext).abortWith(argThat(argument -> argument.getStatus() == 401));
+    }
+
 }

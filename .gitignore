@@ -7,6 +7,8 @@
 .gradle
 .externalToolBuilders
 .idea
+jacs2.ipr
+jacs2.iws
 .svn
 .derived
 bin

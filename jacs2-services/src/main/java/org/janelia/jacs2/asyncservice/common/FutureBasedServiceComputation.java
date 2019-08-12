@@ -249,7 +249,7 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
                 }
 
                 // Check for timeout
-                if (timeoutInMillis != null && (System.currentTimeMillis() - startTime > timeoutInMillis)) {
+                if (timeoutInMillis != null && timeoutInMillis > 0 && (System.currentTimeMillis() - startTime > timeoutInMillis)) {
                     throw new CondTimeoutException(timeoutInMillis);
                 }
 

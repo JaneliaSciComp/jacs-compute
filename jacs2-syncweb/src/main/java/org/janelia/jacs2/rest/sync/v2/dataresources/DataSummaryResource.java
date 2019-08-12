@@ -59,33 +59,36 @@ public class DataSummaryResource {
     @PropertyValue(name = "Dataset.Storage.DefaultVolume")
     private String defaultVolume;
 
-    @GET
-    @Path("summary/disk")
     @ApiOperation(value = "Returns a disk usage summary for a given user")
     @ApiResponses(value = {
             @ApiResponse( code = 200, message = "Successfully got disk uage summary", response= DiskUsageSummary.class),
             @ApiResponse( code = 500, message = "Internal Server Error getting disk usage summary" )
     })
+    @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("summary/disk")
     public Response getDiskUsageSummary(@ApiParam @QueryParam("volumeName") String volumeNameParam,
                                         @ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDiskUsageSummary({}, {})", volumeNameParam, subjectKey);
         try {
-            DiskUsageSummary summary = new DiskUsageSummary();
-            BigDecimal totalSpace = summaryDao.getDiskSpaceUsageByOwnerKey(subjectKey);
-            Double tb = totalSpace.divide(TERRA_BYTES, 2, RoundingMode.HALF_UP).doubleValue();
-            summary.setUserDataSetsTB(tb);
-
             String volumeName;
             if (StringUtils.isBlank(volumeNameParam)) {
                 volumeName = defaultVolume;
             } else {
                 volumeName = volumeNameParam;
             }
-            storageService.fetchQuotaForUser(volumeName, subjectKey)
-                    .ifPresent(quotaUsage -> summary.setQuotaUsage(quotaUsage));
-            return Response.ok(summary)
-                    .build();
+            return storageService.fetchQuotaForUser(volumeName, subjectKey)
+                    .map(quotaUsage -> {
+                        DiskUsageSummary summary = new DiskUsageSummary();
+                        BigDecimal totalSpace = summaryDao.getDiskSpaceUsageByOwnerKey(subjectKey);
+                        Double tb = totalSpace.divide(TERRA_BYTES, 2, RoundingMode.HALF_UP).doubleValue();
+                        summary.setUserDataSetsTB(tb);
+                        summary.setQuotaUsage(quotaUsage);
+                        return summary;
+                    })
+                    .map(diskUsageSummary -> Response.ok(diskUsageSummary).build())
+                    .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST).build())
+                    ;
         } finally {
             LOG.trace("Finished getDataSummary({})", subjectKey);
         }
@@ -97,8 +100,8 @@ public class DataSummaryResource {
             @ApiResponse( code = 500, message = "Internal Server Error getting data summary" )
     })
     @GET
-    @Path("/summary/database")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/summary/database")
     public Response getDatabaseSummary(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getDatabaseSummary({})", subjectKey);
         try {

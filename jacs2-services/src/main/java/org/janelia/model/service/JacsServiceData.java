@@ -6,14 +6,15 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.model.domain.entityannotations.EntityId;
 import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.BaseEntity;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
-import org.janelia.model.jacs2.domain.annotations.EntityId;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -595,8 +596,13 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     }
 
     @JsonIgnore
-    public long timeout() {
+    public long timeoutInMillis() {
         return serviceTimeout != null && serviceTimeout > 0L ? serviceTimeout : -1;
+    }
+
+    @JsonIgnore
+    public int timeoutInMins() {
+        return serviceTimeout != null && serviceTimeout > 0L ? (int) Duration.ofMillis(serviceTimeout).toMinutes() : -1;
     }
 
     public Optional<JacsServiceData> findSimilarDependency(JacsServiceData dependency) {

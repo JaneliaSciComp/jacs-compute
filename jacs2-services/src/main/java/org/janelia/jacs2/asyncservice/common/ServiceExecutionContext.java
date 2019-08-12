@@ -54,6 +54,11 @@ public class ServiceExecutionContext {
             return this;
         }
 
+        public Builder setServiceTimeoutInMillis(Long timeoutInMillis) {
+            serviceExecutionContext.serviceTimeoutInMillis = timeoutInMillis;
+            return this;
+        }
+
         public Builder setServiceName(String serviceName) {
             serviceExecutionContext.serviceName = serviceName;
             return this;
@@ -114,6 +119,7 @@ public class ServiceExecutionContext {
     private String serviceName;
     private String workspace;
     private JacsServiceState serviceState;
+    private Long serviceTimeoutInMillis;
     private String description;
     private final List<JacsServiceData> waitFor = new ArrayList<>();
     private final List<Number> waitForIds = new ArrayList<>();
@@ -153,6 +159,10 @@ public class ServiceExecutionContext {
 
     JacsServiceState getServiceState() {
         return serviceState;
+    }
+
+    Long getServiceTimeoutInMillis() {
+        return serviceTimeoutInMillis;
     }
 
     String getServiceName(String defaultServiceName) {

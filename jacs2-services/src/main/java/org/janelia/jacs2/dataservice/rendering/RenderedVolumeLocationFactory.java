@@ -7,12 +7,16 @@ import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.rendering.JADEBasedRenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.utils.HttpClientProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.file.Paths;
 import java.util.Optional;
 
 public class RenderedVolumeLocationFactory {
+    private final static Logger LOG = LoggerFactory.getLogger(RenderedVolumeLocationFactory.class);
+
     private final StorageService storageService;
     private final HttpClientProvider httpClientProvider;
     private final String storageServiceApiKey;
@@ -29,13 +33,24 @@ public class RenderedVolumeLocationFactory {
     public RenderedVolumeLocation getVolumeLocation(String samplePath, String subjectKey, String authToken) {
         Preconditions.checkArgument(StringUtils.isNotBlank(samplePath));
         return storageService.lookupDataStorage(null, null, null, samplePath, subjectKey, authToken)
-                .map(dsInfo -> Optional.<RenderedVolumeLocation>of(new JADEBasedRenderedVolumeLocation(dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, httpClientProvider)))
+                .map(dsInfo -> Optional.<RenderedVolumeLocation>of(new JADEBasedRenderedVolumeLocation(dsInfo.getConnectionURL(), dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, httpClientProvider)))
                 .orElseGet(() -> storageService.lookupStorageVolumes(null, null, samplePath, subjectKey, authToken)
-                            .map(vsInfo -> new JADEBasedRenderedVolumeLocation(vsInfo.getStorageURL(),
-                                    Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(samplePath)).toString(),
-                                    authToken,
-                                    storageServiceApiKey,
-                                    httpClientProvider)))
+                            .map(vsInfo -> {
+                                String renderedVolumePath;
+                                if (samplePath.startsWith(vsInfo.getStorageVirtualPath())) {
+                                    renderedVolumePath = Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(samplePath)).toString();
+                                } else {
+                                    renderedVolumePath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(samplePath)).toString();
+                                }
+                                LOG.info("Create JADE volume location with URLs {}, {} and volume path {}", vsInfo.getStorageServiceURL(), vsInfo.getVolumeStorageURI(), renderedVolumePath);
+                                return new JADEBasedRenderedVolumeLocation(
+                                        vsInfo.getStorageServiceURL(),
+                                        vsInfo.getVolumeStorageURI(),
+                                        renderedVolumePath,
+                                        authToken,
+                                        storageServiceApiKey,
+                                        httpClientProvider);
+                            }))
                 .orElseThrow(() -> new IllegalArgumentException("No volume location could be created for sample at " + samplePath))
                 ;
     }

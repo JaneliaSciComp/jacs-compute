@@ -45,11 +45,6 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
     private static final Set<String> NON_EXECUTABLE_STEPS = ImmutableSet.of("globalParameters");
 
     static class LightsheetProcessingArgs extends ServiceArgs {
-        @Parameter(names = "-configAddress", description = "Address for accessing job's config json.")
-        String pipelineConfigURL;
-        @Parameter(names = "-configReference", description = "Job's configuration reference")
-        String pipelineConfigReference;
-
         LightsheetProcessingArgs() {
             super("Lightsheet processor. This is a processor that can pipeline multiple lightsheet steps");
         }
@@ -80,11 +75,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
         Map<String, Object> lightsheetPipelineConfig = serviceArgs.containsKey("pipelineConfig")
                 ? (Map<String, Object>) serviceArgs.get("pipelineConfig")
                 : new LinkedHashMap<>();
-        if (lightsheetPipelineConfig.isEmpty() && StringUtils.isNotBlank(args.pipelineConfigURL)) {
-            lightsheetPipelineConfig.putAll(getJsonConfig(args.pipelineConfigURL));
-        }
         List<Map<String, Object>> lightsheetStepsConfigs = getLightsheetSteps(lightsheetPipelineConfig);
-
         ServiceComputation<JacsServiceResult<Void>> stage = computationFactory.newCompletedComputation(new JacsServiceResult<>(null));
         int index = 0;
         for (Map<String, Object> lightsheetStepConfig : lightsheetStepsConfigs) {
@@ -101,8 +92,7 @@ public class LightsheetPipelineProcessor extends AbstractServiceProcessor<Void> 
                                 .addResources(getStepResources(lightsheetStepConfig))
                                 .build(),
                         new ServiceArg("-step", stepName),
-                        new ServiceArg("-stepIndex", stepIndex),
-                        new ServiceArg("-configReference", args.pipelineConfigReference)
+                        new ServiceArg("-stepIndex", stepIndex)
                 ));
                 index++;
             }

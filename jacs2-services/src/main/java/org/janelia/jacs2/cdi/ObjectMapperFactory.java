@@ -5,9 +5,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
-import org.janelia.model.access.dao.mongo.utils.MongoModule;
 
-import javax.enterprise.inject.Vetoed;
+import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoModule;
 
 public class ObjectMapperFactory {
     private static final ObjectMapperFactory INSTANCE = new ObjectMapperFactory();

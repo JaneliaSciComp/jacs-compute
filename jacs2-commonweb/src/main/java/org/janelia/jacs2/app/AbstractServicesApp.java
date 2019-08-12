@@ -1,34 +1,19 @@
 package org.janelia.jacs2.app;
 
 import com.beust.jcommander.JCommander;
-import io.swagger.jersey.config.JerseyJaxrsConfig;
-import io.undertow.Handlers;
+
 import io.undertow.Undertow;
-import io.undertow.server.handlers.PathHandler;
-import io.undertow.server.handlers.resource.PathResourceManager;
-import io.undertow.server.handlers.resource.ResourceHandler;
-import io.undertow.servlet.Servlets;
-import io.undertow.servlet.api.DeploymentInfo;
-import io.undertow.servlet.api.DeploymentManager;
-import io.undertow.servlet.api.ListenerInfo;
-import io.undertow.servlet.api.ServletInfo;
-import org.glassfish.jersey.servlet.ServletContainer;
-import org.janelia.jacs2.app.undertow.UndertowContainerInitializer;
+import org.janelia.jacs2.app.undertow.UndertowAppContainer;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
-import org.jboss.weld.environment.servlet.Listener;
-import org.jboss.weld.module.web.servlet.WeldInitialListener;
-import org.jboss.weld.module.web.servlet.WeldTerminalListener;
+import org.janelia.jacs2.config.ApplicationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContextListener;
-import javax.servlet.ServletException;
 import javax.ws.rs.core.Application;
-import java.nio.file.Paths;
+
 import java.util.EventListener;
 import java.util.List;
 
-import static io.undertow.Handlers.resource;
 import static io.undertow.servlet.Servlets.servlet;
 
 /**
@@ -57,20 +42,17 @@ public abstract class AbstractServicesApp {
         cmdline.usage(output);
     }
 
-    protected void start(AppArgs appArgs) {
-        ContainerInitializer containerInitializer = new UndertowContainerInitializer(
+    protected void start(AppArgs appArgs, ApplicationConfig applicationConfig) throws Exception {
+        AppContainer appContainer = new UndertowAppContainer(
                 getApplicationId(),
                 getRestApiContext(),
                 getApiVersion(),
                 getPathsExcludedFromAccessLog(),
+                applicationConfig,
                 getAppListeners()
         );
-        try {
-            containerInitializer.initialize(this.getJaxApplication(), appArgs);
-            containerInitializer.start();
-        } catch (Exception e) {
-            LOG.error("Error starting the application", e);
-        }
+        appContainer.initialize(this.getJaxApplication(), appArgs);
+        appContainer.start();
     }
 
     String getApiVersion() {

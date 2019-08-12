@@ -182,7 +182,7 @@ public class FileCopyProcessorTest {
                 .build();
         ExternalCodeBlock copyScript = fileCopyProcessor.prepareExternalScript(testServiceData);
         assertThat(copyScript.toString(),
-                equalTo(executablesBaseDir + "/" + scriptName + " " + testSource + " " + testDestFile.getAbsolutePath() + " \n"));
+                equalTo(executablesBaseDir + File.separatorChar + scriptName + " " + testSource + " " + testDestFile.getAbsolutePath() + " \n"));
     }
 
     @Test
@@ -197,7 +197,7 @@ public class FileCopyProcessorTest {
                 .build();
         ExternalCodeBlock copyScript = fileCopyProcessor.prepareExternalScript(testServiceData);
         assertThat(copyScript.toString(),
-                equalTo(executablesBaseDir + "/" + scriptName + " " + testSource + " " + testDestFile.getAbsolutePath() + " 8 \n"));
+                equalTo(executablesBaseDir + File.separatorChar + scriptName + " " + testSource + " " + testDestFile.getAbsolutePath() + " 8 \n"));
     }
 
     @Test

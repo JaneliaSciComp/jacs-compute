@@ -23,23 +23,23 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+@Api(value = "JACS Service Info")
 @RequestScoped
 @Produces("application/json")
 @Path("/services")
-@Api(value = "JACS Service Info")
 public class ServiceActionsResource {
 
     @Inject private Logger logger;
     @Inject private JacsServiceDataManager jacsServiceDataManager;
     @Inject private JacsServiceEngine jacsServiceEngine;
 
-    @RequireAuthentication
-    @PUT
-    @Path("/{service-instance-id}")
     @ApiOperation(value = "Update service data", notes = "Updates the specified service data")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @PUT
+    @Path("/{service-instance-id}")
     public Response updateServiceInfo(@PathParam("service-instance-id") Long instanceId,
                                       JacsServiceData si,
                                       @Context SecurityContext securityContext) {
@@ -64,9 +64,6 @@ public class ServiceActionsResource {
         }
     }
 
-    @RequireAuthentication
-    @PUT
-    @Path("/{service-instance-id}/state/{service-state}")
     @ApiOperation(
             value = "Update service state",
             notes = "Updates the state of the given service. " +
@@ -77,6 +74,9 @@ public class ServiceActionsResource {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 404, message = "If the service state or the transition is invalid"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @PUT
+    @Path("/{service-instance-id}/state/{service-state}")
     public Response updateServiceState(@PathParam("service-instance-id") Long instanceId,
                                        @PathParam("service-state") JacsServiceState serviceState,
                                        @QueryParam("force") Boolean force,

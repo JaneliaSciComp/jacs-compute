@@ -14,13 +14,13 @@ public class IllegalStateRequestHandler implements ExceptionMapper<IllegalStateE
 
     @Override
     public Response toResponse(IllegalStateException exception) {
-        LOG.error("Invalid argument response", exception);
+        LOG.error("Invalid state exception", exception);
         String errorMessage = exception.getMessage();
         if (StringUtils.isBlank(errorMessage)) {
             errorMessage = "Illegal state";
         }
         return Response
-                .status(Response.Status.BAD_REQUEST)
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(new ErrorResponse(errorMessage))
                 .build();
     }

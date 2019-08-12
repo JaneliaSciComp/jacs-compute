@@ -16,20 +16,20 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
+@Api(value = "JACS Service Info")
 @RequestScoped
 @Produces("application/json")
 @Path("/services")
-@Api(value = "JACS Service Info")
 public class ServiceMetadataResource {
 
     @Inject private ServiceRegistry serviceRegistry;
 
-    @GET
-    @Path("/metadata")
     @ApiOperation(value = "Get metadata about all services", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @GET
+    @Path("/metadata")
     public Response getAllServicesMetadata() {
         List<ServiceMetaData> services = serviceRegistry.getAllServicesMetadata();
         return Response
@@ -38,13 +38,13 @@ public class ServiceMetadataResource {
                 .build();
     }
 
-    @GET
-    @Path("/metadata/{service-name}")
     @ApiOperation(value = "Get metadata about a given service", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 404, message = "If the service name is invalid"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @GET
+    @Path("/metadata/{service-name}")
     public Response getServiceMetadata(@PathParam("service-name") String serviceName) {
         ServiceMetaData smd = serviceRegistry.getServiceMetadata(serviceName);
         if (smd == null) {

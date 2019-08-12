@@ -1,9 +1,9 @@
 package org.janelia.jacs2.rest.async.v2;
 
 import org.janelia.jacs2.app.JAXAsyncAppConfig;
-import org.janelia.jacs2.testrest.AbstractCdiInjectedResourceTest;
-import org.janelia.jacs2.testrest.TestResourceBinder;
-import org.janelia.jacs2.testrest.TestResourceDependenciesProducer;
+import org.janelia.jacs2.rest.async.testrest.TestResourceBinder;
+import org.janelia.jacs2.rest.async.testrest.TestResourceDependenciesProducer;
+import org.janelia.jacs2.rest.testrest.AbstractCdiInjectedResourceTest;
 
 public class AbstractAsyncServicesAppResourceTest extends AbstractCdiInjectedResourceTest {
 

@@ -1,18 +1,35 @@
 package org.janelia.model.access.dao;
 
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
+
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.PipelineStatus;
-import org.janelia.model.domain.gui.colordepth.ColorDepthMask;
-import org.janelia.model.domain.gui.colordepth.ColorDepthResult;
+import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
 import org.janelia.model.domain.ontology.OntologyTermReference;
 import org.janelia.model.domain.orders.IntakeOrder;
-import org.janelia.model.domain.sample.*;
+import org.janelia.model.domain.sample.DataSet;
+import org.janelia.model.domain.sample.LSMImage;
+import org.janelia.model.domain.sample.LineRelease;
+import org.janelia.model.domain.sample.NeuronFragment;
+import org.janelia.model.domain.sample.NeuronSeparation;
+import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.sample.SampleLock;
+import org.janelia.model.domain.sample.StatusTransition;
+import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
@@ -21,12 +38,33 @@ import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.jongo.MongoCursor;
 
-import java.util.*;
-
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public interface LegacyDomainDao {
+
+    class DaoIndex {
+        private final String keys;
+        private final String options;
+
+        public DaoIndex(String keys) {
+            this(keys, null);
+        }
+
+        public DaoIndex(String keys, String options) {
+            this.keys = keys;
+            this.options = options;
+        }
+
+        public String getKeys() {
+            return keys;
+        }
+
+        public String getOptions() {
+            return options;
+        }
+    }
+
     /**
      * Save the given subject.
      */
@@ -116,33 +154,35 @@ public interface LegacyDomainDao {
     Preference save(String subjectKey, Preference preference) throws Exception;
 
     /**
-     * Returns any TreeNodes which reference the given object.
+     * Returns any nodes which reference the given object.
      *
      * @param domainObject
      * @return boolean
      * @throws Exception
      */
-    List<Reference> getContainerReferences(DomainObject domainObject) throws Exception;
+    List<Reference> getAllNodeContainerReferences(DomainObject domainObject) throws Exception;
 
     /**
-     * Returns the count of TreeNodes which reference the given object.
+     * Returns the count of tree nodes which reference the given object.
      *
      * @param domainObject
      * @return
      * @throws Exception
      */
-    long getContainerReferenceCount(DomainObject domainObject) throws Exception;
+    long getTreeNodeContainerReferenceCount(DomainObject domainObject) throws Exception;
 
     /**
-     * Returns the count of TreeNodes which reference the given object.
+     * Returns the count of tree nodes which reference the given object.
      *
      * @param references
      * @return
      * @throws Exception
      */
-    long getContainerReferenceCount(Collection<Reference> references) throws Exception;
+    long getTreeNodeContainerReferenceCount(Collection<Reference> references) throws Exception;
 
-    <T extends DomainObject> List<TreeNode> getContainers(String subjectKey, Collection<Reference> references) throws Exception;
+    List<TreeNode> getTreeNodeContainers(String subjectKey, Collection<Reference> references) throws Exception;
+
+    <T extends DomainObject> Stream<T> iterateDomainObjects(Class<T> domainClass);
 
     /**
      * Create a list of the result set in iteration order.
@@ -255,6 +295,12 @@ public interface LegacyDomainDao {
 
     DataSet getDataSetByIdentifier(String subjectKey, String dataSetIdentifier);
 
+    List<String> getColorDepthPaths(String subjectKey, String libraryIdentifier, String alignmentSpace);
+
+    ColorDepthImage getColorDepthImageByPath(String subjectKey, String filepath);
+
+    List<ColorDepthLibrary> getLibrariesWithColorDepthImages(String subjectKey, String alignmentSpace);
+
     DataSet createDataSet(String subjectKey, DataSet dataSet) throws Exception;
 
     /**
@@ -292,6 +338,10 @@ public interface LegacyDomainDao {
     List<Sample> getUserSamplesBySlideCode(String subjectKey, String dataSetIdentifier, String slideCode);
 
     List<LSMImage> getActiveLsmsBySampleId(String subjectKey, Long sampleId);
+
+    List<LSMImage> getInactiveLsmsBySampleId(String subjectKey, Long sampleId);
+
+    List<LSMImage> getAllLsmsBySampleId(String subjectKey, Long sampleId);
 
     LSMImage getActiveLsmBySageId(String subjectKey, Integer sageId);
 
@@ -338,19 +388,19 @@ public interface LegacyDomainDao {
 
     Ontology removeTerm(String subjectKey, Long ontologyId, Long parentTermId, Long termId) throws Exception;
 
-    TreeNode getOrCreateDefaultFolder(String subjectKey, String folderName) throws Exception;
+    TreeNode getOrCreateDefaultTreeNodeFolder(String subjectKey, String folderName) throws Exception;
 
-    TreeNode reorderChildren(String subjectKey, TreeNode treeNodeArg, int[] order) throws Exception;
+    Node reorderChildren(String subjectKey, Node nodeArg, int[] order) throws Exception;
 
-    List<DomainObject> getChildren(String subjectKey, TreeNode treeNode);
+    List<DomainObject> getChildren(String subjectKey, Node node);
 
-    TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception;
+    Node addChildren(String subjectKey, Node nodeArg, Collection<Reference> references) throws Exception;
 
-    TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references, Integer index) throws Exception;
+    Node addChildren(String subjectKey, Node nodeArg, Collection<Reference> references, Integer index) throws Exception;
 
-    TreeNode removeChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception;
+    Node removeChildren(String subjectKey, Node nodeArg, Collection<Reference> references) throws Exception;
 
-    TreeNode removeReference(String subjectKey, TreeNode treeNodeArg, Reference reference) throws Exception;
+    Node removeReference(String subjectKey, Node nodeArg, Reference reference) throws Exception;
 
     <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) throws Exception;
 
@@ -361,6 +411,8 @@ public interface LegacyDomainDao {
     void addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean forceChildUpdates) throws Exception;
 
     void setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception;
+
+    void giveOwnerReadWritToAllFromCollection(String collectionName);
 
     void addPipelineStatusTransition(Long sampleId, PipelineStatus source, PipelineStatus target, String orderNo,
                                      String process, Map<String, Object> parameters) throws Exception;
@@ -395,9 +447,9 @@ public interface LegacyDomainDao {
      */
     void updateDataSetDiskspaceUsage(String dataSetIdentifier) throws Exception;
 
-    void addColorDepthSearchMask(String subjectKey, Long searchId, ColorDepthMask mask);
-
     void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result);
 
     <T extends DomainObject> List<T> fullTextSearch(String subjectKey, Class<T> domainClass, String text);
+
+    void ensureCollectionIndex(String collectionName, List<DaoIndex> indexes);
 }

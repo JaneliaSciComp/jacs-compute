@@ -86,4 +86,12 @@ public class ProcessorHelper {
     public static String getGridJobResourceLimits(Map<String, String> serviceResources) {
         return serviceResources.get("gridResourceLimits");
     }
+
+    public static String getGridJobResources(Map<String, String> serviceResources) {
+        return serviceResources.get("gridResources");
+    }
+
+    public static String getJobGroup(Map<String, String> serviceResources) {
+        return serviceResources.get("gridJobGroup");
+    }
 }

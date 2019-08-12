@@ -28,6 +28,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -112,7 +113,8 @@ public class ColorDepthFileSearchTest {
                 clusterBillingInfo,
                 null,
                 null,
-                null))
+                null,
+                (int) (Duration.ofSeconds(SEARCH_TIMEOUT_IN_SECONDS).toMinutes()+ 1)))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
 
         Mockito.when(sparkCluster.runApp(
@@ -124,10 +126,12 @@ public class ColorDepthFileSearchTest {
                 (long) SEARCH_INTERVAL_CHECK_IN_MILLIS,
                 SEARCH_TIMEOUT_IN_SECONDS * 1000L,
                 ImmutableList.of(
-                        "-m", "f1", "f2", "f3", "-i", "s1,s2",
+                        "-m", "f1", "f2", "f3",
+                        "-i", "s1,s2",
                         "--maskThresholds", "100", "100", "100",
                         "--dataThreshold", "100",
                         "--pixColorFluctuation", "2.0",
+                        "--xyShift", "20",
                         "--pctPositivePixels", "10.0",
                         "-o",
                         serviceWorkingFolder.getServiceFolder("f1_results.txt").toFile().getAbsolutePath(),
@@ -154,10 +158,12 @@ public class ColorDepthFileSearchTest {
                             (long) SEARCH_INTERVAL_CHECK_IN_MILLIS,
                             SEARCH_TIMEOUT_IN_SECONDS * 1000L,
                             ImmutableList.of(
-                                    "-m", "f1", "f2", "f3", "-i", "s1,s2",
+                                    "-m", "f1", "f2", "f3",
+                                    "-i", "s1,s2",
                                     "--maskThresholds", "100", "100", "100",
                                     "--dataThreshold", "100",
                                     "--pixColorFluctuation", "2.0",
+                                    "--xyShift", "20",
                                     "--pctPositivePixels", "10.0",
                                     "-o",
                                     serviceWorkingFolder.getServiceFolder("f1_results.txt").toFile().getAbsolutePath(),
@@ -169,7 +175,12 @@ public class ColorDepthFileSearchTest {
                 })
                 .exceptionally(exc -> {
                     failure.accept(exc);
-                    fail(exc.toString());
+                    if (exc instanceof NullPointerException) {
+                        // this usually occurs if the mocks are not setup correctly
+                        fail("Check that the parameters for the mock invocation are as they are expected by the test setup: " + exc.toString());
+                    } else {
+                        fail(exc.toString());
+                    }
                     return null;
                 });
     }
@@ -185,6 +196,7 @@ public class ColorDepthFileSearchTest {
                 .addArgs("-minWorkerNodes", "3")
                 .addArgs("-dataThreshold", "100")
                 .addArgs("-pixColorFluctuation", "2.0")
+                .addArgs("-xyShift", "20")
                 .addArgs("-pctPositivePixels", "10.0")
                 ;
         JacsServiceData testServiceData = testServiceDataBuilder

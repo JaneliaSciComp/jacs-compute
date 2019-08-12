@@ -1,25 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
-import org.apache.commons.lang.StringUtils;
-import org.glassfish.jersey.server.ContainerRequest;
-import org.janelia.jacs2.auth.JacsSecurityContextHelper;
-import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.access.domain.dao.OntologyDao;
-import org.janelia.model.domain.dto.DomainQuery;
-import org.janelia.model.domain.ontology.Ontology;
-import org.janelia.model.domain.ontology.OntologyTerm;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -31,13 +13,33 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
-import java.util.ArrayList;
-import java.util.List;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiKeyAuthDefinition;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.SecurityDefinition;
+import io.swagger.annotations.SwaggerDefinition;
+import org.apache.commons.lang.StringUtils;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
+import org.janelia.model.access.domain.dao.OntologyDao;
+import org.janelia.model.domain.dto.DomainQuery;
+import org.janelia.model.domain.ontology.Ontology;
+import org.janelia.model.domain.ontology.OntologyTerm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -59,6 +61,7 @@ import java.util.List;
 public class OntologyResource {
     private static final Logger LOG = LoggerFactory.getLogger(OntologyResource.class);
 
+    @AsyncIndex
     @Inject
     private OntologyDao ontologyDao;
 
@@ -69,10 +72,10 @@ public class OntologyResource {
             @ApiResponse( code = 500, message = "Internal Server Error getting list of Ontologies" )
     })
     @GET
-    @Path("/ontologies/{id}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/ontologies/{id}")
     public Response getOntologyById(@ApiParam @PathParam("id") final Long ontologyId,
-                                    @Context ContainerRequest containerRequestContext) {
+                                    @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start getOntologyById({})", ontologyId);
         try {
             String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
@@ -99,12 +102,13 @@ public class OntologyResource {
             @ApiResponse( code = 500, message = "Internal Server Error getting list of Ontologies" )
     })
     @GET
-    @Path("/ontology")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/ontology")
     public Response getSubjectOntologies(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         LOG.trace("Start getSubjectOntologies({})", subjectKey);
         try {
             List<Ontology> accessibleOntologies = ontologyDao.getOntologiesAccessibleBySubjectGroups(subjectKey, 0, -1);
+
             return Response.ok()
                     .entity(new GenericEntity<List<Ontology>>(accessibleOntologies){})
                     .build();
@@ -121,9 +125,9 @@ public class OntologyResource {
             @ApiResponse(code = 500, message = "Internal Server Error creating an Ontology")
     })
     @PUT
-    @Path("/ontology")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/ontology")
     public Response createOntology(@ApiParam DomainQuery query) {
         LOG.trace("Start createOntology({})", query);
         try {
@@ -144,12 +148,12 @@ public class OntologyResource {
             @ApiResponse( code = 500, message = "Internal Server Error removing an ontology" )
     })
     @DELETE
-    @Path("/ontology")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/ontology")
     public Response removeOntology(@ApiParam @QueryParam("subjectKey") final String subjectKeyParam,
                                    @ApiParam @QueryParam("ontologyId") final String ontologyIdParam,
-                                   @Context ContainerRequest containerRequestContext) {
+                                   @Context ContainerRequestContext containerRequestContext) {
         LOG.trace("Start removeOntology({}, {})", subjectKeyParam, ontologyIdParam);
         Long ontologyId;
         try {
@@ -181,9 +185,9 @@ public class OntologyResource {
             @ApiResponse( code = 500, message = "Internal Server Error adding terms to an Ontology" )
     })
     @PUT
-    @Path("/ontology/terms")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/ontology/terms")
     public Response addTermsToOntology(@ApiParam DomainQuery query) {
         LOG.trace("Start addTermsToOntology({})", query);
         try {
@@ -224,9 +228,9 @@ public class OntologyResource {
             @ApiResponse( code = 500, message = "Internal Server Error reordered terms in Ontology" )
     })
     @POST
-    @Path("/ontology/terms")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/ontology/terms")
     public Response reorderOntology(@ApiParam DomainQuery query) {
         LOG.trace("Start reorderOntology({})", query);
         try {
@@ -266,8 +270,8 @@ public class OntologyResource {
             @ApiResponse( code = 500, message = "Internal Server Error removed term from Ontology" )
     })
     @DELETE
-    @Path("/ontology/terms")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/ontology/terms")
     public Response removeTermsFromOntology(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                             @ApiParam @QueryParam("ontologyId") final Long ontologyId,
                                             @ApiParam @QueryParam("parentTermId") final Long parentTermId,

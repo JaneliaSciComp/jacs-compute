@@ -40,8 +40,6 @@ public class SparkAppProcessorTest {
 
     private static final String TEST_WORKSPACE = "testSparkWorkspace";
     private static final String DEFAULT_WORKING_DIR = "testWorking";
-    private static final int SEARCH_TIMEOUT_IN_SECONDS = 1200;
-    private static final int SEARCH_INTERVAL_CHECK_IN_MILLIS = 5000;
     private static final int DEFAULT_NUM_NODES = 6;
     private static final int DEFAULT_MIN_REQUIRED_WORKERS = 2;
 
@@ -113,7 +111,8 @@ public class SparkAppProcessorTest {
                 clusterBillingInfo,
                 testDriverMemory,
                 testExecutorMemory,
-                null))
+                null,
+                -1))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
 
         Mockito.when(sparkCluster.runApp(

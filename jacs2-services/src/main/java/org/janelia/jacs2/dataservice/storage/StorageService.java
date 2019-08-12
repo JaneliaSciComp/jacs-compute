@@ -150,7 +150,6 @@ public class StorageService {
         } finally {
             httpclient.close();
         }
-
     }
 
     public DataStorageInfo createStorage(String storageServiceURL, String storageName, List<String> storageTags, String subject, String authToken) {
@@ -182,17 +181,14 @@ public class StorageService {
         }
     }
 
-    public InputStream getStorageContent(String storageURI, String entryName, String subject, String authToken) {
+    public InputStream getStorageContent(String storageURI, String subject, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI);
-            if (StringUtils.isNotBlank(entryName)) {
-                target = target.path("data_content").path(entryName);
-            }
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.get();
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new IllegalStateException(storageURI + "for " + entryName + " returned with " + response.getStatus());
+                throw new IllegalStateException(storageURI + " returned with " + response.getStatus());
             }
             return response.readEntity(InputStream.class);
         } catch (IllegalStateException e) {
@@ -231,12 +227,16 @@ public class StorageService {
     public List<StorageEntryInfo> listStorageContent(String storageURI,
                                                      String storagePath,
                                                      String subject,
-                                                     String authToken) {
+                                                     String authToken,
+                                                     int level) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI).path("list");
             if (StringUtils.isNotBlank(storagePath)) {
                 target = target.path(storagePath);
+            }
+            if (level > 0) {
+                target = target.queryParam("depth", level);
             }
             Invocation.Builder requestBuilder = createRequestWithCredentials(
                     target.request(MediaType.APPLICATION_JSON), subject, authToken);

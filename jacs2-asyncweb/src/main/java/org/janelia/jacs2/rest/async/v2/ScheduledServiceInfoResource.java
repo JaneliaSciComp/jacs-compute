@@ -26,22 +26,22 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
+@Api(value = "Scheduled JACS Services")
 @RequestScoped
 @Produces("application/json")
 @Path("/scheduled-services")
-@Api(value = "Scheduled JACS Services")
 public class ScheduledServiceInfoResource {
     private static final int DEFAULT_PAGE_SIZE = 100;
 
     @Inject private CronScheduledServiceManager jacsScheduledServiceDataManager;
 
-    @RequireAuthentication
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Create a scheduled service entry")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response createScheduledService(JacsScheduledServiceData scheduledServiceData) {
         JacsScheduledServiceData newScheduledServiceData = jacsScheduledServiceDataManager.createScheduledService(scheduledServiceData);
         UriBuilder locationURIBuilder = UriBuilder.fromResource(ScheduledServiceInfoResource.class);
@@ -52,12 +52,12 @@ public class ScheduledServiceInfoResource {
                 .build();
     }
 
-    @RequireAuthentication
-    @GET
     @ApiOperation(value = "List all scheduled services", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @GET
     public Response listAllScheduledServices(@QueryParam("page") Integer pageNumber,
                                              @QueryParam("length") Integer pageLength) {
         PageResult<JacsScheduledServiceData> results = jacsScheduledServiceDataManager.listAllScheduledServices(createPageRequest(pageNumber, pageLength));
@@ -80,13 +80,13 @@ public class ScheduledServiceInfoResource {
         return pageRequest;
     }
 
-    @RequireAuthentication
-    @GET
-    @Path("/{service-id}")
     @ApiOperation(value = "Get service info", notes = "Returns service about a given service")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @GET
+    @Path("/{service-id}")
     public Response getScheduledService(@PathParam("service-id") Long scheduledServiceId) {
         JacsScheduledServiceData scheduledServiceData = jacsScheduledServiceDataManager.getScheduledServiceById(scheduledServiceId);
         if (scheduledServiceData == null) {
@@ -101,15 +101,15 @@ public class ScheduledServiceInfoResource {
         }
     }
 
-    @RequireAuthentication
-    @PUT
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/{service-id}")
     @ApiOperation(value = "Update scheduled service")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 404, message = "Entry not found"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{service-id}")
     public Response updateScheduledService(@PathParam("service-id") Long scheduledServiceId,
                                            JacsScheduledServiceData scheduledServiceData) {
         JacsScheduledServiceData existingScheduledServiceData = jacsScheduledServiceDataManager.getScheduledServiceById(scheduledServiceId);
@@ -126,14 +126,14 @@ public class ScheduledServiceInfoResource {
                 .build();
     }
 
-    @RequireAuthentication
-    @DELETE
-    @Path("/{service-id}")
     @ApiOperation(value = "Delete scheduled service")
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Success"),
             @ApiResponse(code = 404, message = "Entry not found"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @DELETE
+    @Path("/{service-id}")
     public Response deleteScheduledService(@PathParam("service-id") Long scheduledServiceId) {
         JacsScheduledServiceData existingScheduledServiceData = jacsScheduledServiceDataManager.getScheduledServiceById(scheduledServiceId);
         if (existingScheduledServiceData == null) {

@@ -25,5 +25,8 @@ public class JAXAppConfig extends ResourceConfig {
                 AppVersionResource.class,
                 CORSResponseFilter.class,
                 AuthFilter.class);
+        // Disable WADL generation, because uses JAXB, produces XML, and ignores our Jackson annotations,
+        // and generally doesn't work correctly
+        property("jersey.config.server.wadl.disableWadl", "true");
     }
 }

@@ -1,21 +1,5 @@
 package org.janelia.jacs2.rest.sync.v2.streamresources;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.auth.JacsSecurityContextHelper;
-import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
-import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.access.domain.dao.TmSampleDao;
-import org.janelia.model.domain.tiledMicroscope.TmSample;
-import org.janelia.rendering.Coordinate;
-import org.janelia.rendering.RenderedVolume;
-import org.janelia.rendering.RenderedVolumeLoader;
-import org.janelia.rendering.RenderedVolumeLocation;
-import org.janelia.rendering.RenderingType;
-import org.slf4j.Logger;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -28,6 +12,22 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
+import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
+import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.domain.dao.TmSampleDao;
+import org.janelia.model.domain.tiledMicroscope.TmSample;
+import org.janelia.rendering.Coordinate;
+import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.RenderedVolumeLocation;
+import org.janelia.rendering.RenderedVolumeMetadata;
+import org.janelia.rendering.RenderingType;
+import org.slf4j.Logger;
 
 @ApplicationScoped
 @Produces("application/json")
@@ -45,12 +45,12 @@ public class TmSampleStreamingResource {
 
     @ApiOperation(value = "Get sample rendering info", notes = "Retrieve volume rendering info for the specified sample")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = RenderedVolume.class),
+            @ApiResponse(code = 200, message = "Success", response = RenderedVolumeMetadata.class),
             @ApiResponse(code = 404, message = "Sample not found or no rendering"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("samples/{sampleId}/volume_info")
     @Produces({MediaType.APPLICATION_JSON})
+    @Path("samples/{sampleId}/volume_info")
     public Response getSampleVolumeInfo(@PathParam("sampleId") Long sampleId,
                                         @Context ContainerRequestContext requestContext) {
         TmSample tmSample = tmSampleDao.findById(sampleId);
@@ -59,13 +59,15 @@ public class TmSampleStreamingResource {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
-        } else if (StringUtils.isBlank(tmSample.getFilepath())) {
+        }
+        String filepath = tmSample.getLargeVolumeOctreeFilepath();
+        if (StringUtils.isBlank(filepath)) {
             logger.warn("Sample {} found but it has not rendering path", tmSample);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No rendering path set for " + sampleId))
                     .build();
         }
-        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(),
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(filepath,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null))
                 .map(rv -> Response.ok(rv).build())
@@ -83,8 +85,8 @@ public class TmSampleStreamingResource {
             @ApiResponse(code = 404, message = "Sample not found"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("samples/{sampleId}/closest_raw_tile_stream")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
+    @Path("samples/{sampleId}/closest_raw_tile_stream")
     public Response streamClosestRawImageFromVoxelCoord(@PathParam("sampleId") Long sampleId,
                                                         @QueryParam("x") Integer xVoxelParam,
                                                         @QueryParam("y") Integer yVoxelParam,
@@ -100,7 +102,9 @@ public class TmSampleStreamingResource {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
-        } else if (StringUtils.isBlank(tmSample.getFilepath())) {
+        }
+        String filepath = tmSample.getLargeVolumeOctreeFilepath();
+        if (StringUtils.isBlank(filepath)) {
             logger.warn("Sample {} found but it has not rendering path", tmSample);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No rendering path set for " + sampleId))
@@ -113,28 +117,25 @@ public class TmSampleStreamingResource {
         int sy = syParam == null ? -1 : syParam;
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(tmSample.getFilepath(),
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(filepath,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null);
         return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
                 rvl,
                 xVoxel, yVoxel, zVoxel)
-                .map(rawTileImage -> {
-                    byte[] rawImageBytes = renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage,
-                            channel, xVoxel, yVoxel, zVoxel, sx, sy, sz);
-                    if (rawImageBytes == null) {
-                        return Response
+                .map(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz)
+                        .map(rawImageBytes -> {
+                            StreamingOutput rawImageBytesStream = output -> {
+                                output.write(rawImageBytes);
+                            };
+                            return Response
+                                    .ok(rawImageBytesStream, MediaType.APPLICATION_OCTET_STREAM)
+                                    .build();
+
+                        })
+                        .orElseGet(() -> Response
                                 .noContent()
-                                .build();
-                    } else {
-                        StreamingOutput rawImageBytesStream = output -> {
-                            output.write(rawImageBytes);
-                        };
-                        return Response
-                                .ok(rawImageBytesStream, MediaType.APPLICATION_OCTET_STREAM)
-                                .build();
-                    }
-                })
+                                .build()))
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Error retrieving raw tile file info for sample " + sampleId + " with ("
                                 + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))
@@ -147,8 +148,8 @@ public class TmSampleStreamingResource {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("samples/{sampleId}/rendering/tile")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("samples/{sampleId}/rendering/tile")
     public Response streamTileFromCoord(
             @PathParam("sampleId") Long sampleId,
             @QueryParam("zoom") Integer zoomParam,
@@ -165,10 +166,11 @@ public class TmSampleStreamingResource {
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
         }
+        String filepath = tmSample.getLargeVolumeOctreeFilepath();
         return TmStreamingResourceHelper.streamTileFromDirAndCoord(
                 renderedVolumeLocationFactory, renderedVolumeLoader,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
-                tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
+                filepath, zoomParam, axisParam, xParam, yParam, zParam);
     }
 
     @Deprecated
@@ -177,8 +179,8 @@ public class TmSampleStreamingResource {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred")})
     @GET
-    @Path("sample2DTile")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("sample2DTile")
     public Response deprecatedStreamTileFromCoord(
             @QueryParam("sampleId") Long sampleId,
             @QueryParam("x") Integer xParam,
@@ -197,10 +199,11 @@ public class TmSampleStreamingResource {
                     .entity(new ErrorResponse("No sample found for " + sampleId))
                     .build();
         }
+        String filepath = tmSample.getLargeVolumeOctreeFilepath();
         return TmStreamingResourceHelper.streamTileFromDirAndCoord(
                 renderedVolumeLocationFactory, renderedVolumeLoader,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
-                tmSample.getFilepath(), zoomParam, axisParam, xParam, yParam, zParam);
+                filepath, zoomParam, axisParam, xParam, yParam, zParam);
     }
 
 }

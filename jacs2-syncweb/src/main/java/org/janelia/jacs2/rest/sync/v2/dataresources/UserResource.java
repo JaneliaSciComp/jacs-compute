@@ -10,36 +10,48 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.auth.LDAPProvider;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
+import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.auth.impl.AuthProvider;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
+import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.dto.DomainQuery;
+import org.janelia.model.domain.workspace.Workspace;
+import org.janelia.model.security.Group;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
+import org.janelia.model.security.dto.AuthenticationRequest;
+import org.janelia.model.security.UserGroupRole;
 import org.janelia.model.security.util.SubjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -68,9 +80,48 @@ public class UserResource {
     @Inject
     private SubjectDao subjectDao;
     @Inject
-    private LDAPProvider ldapProvider;
+    private PasswordProvider pwProvider;
+    @Inject
+    private AuthProvider authProvider;
+    @AsyncIndex
+    @Inject
+    private WorkspaceNodeDao workspaceNodeDao;
 
-    @ApiOperation(value = "Gets or creates a user",
+    @ApiOperation(value = "Changes a user's password")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully set user password", response = User.class),
+            @ApiResponse(code = 500, message = "Internal Server Error setting user preferences")
+    })
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/password")
+    public User changePassword(AuthenticationRequest authenticationMessage, @Context ContainerRequestContext containerRequestContext) {
+        LOG.info("changePassword({})", authenticationMessage.getUsername());
+        try {
+            boolean isAllowed = checkAdministrationPrivileges(authenticationMessage.getUsername(), containerRequestContext);
+            if (!isAllowed) {
+                throw new WebApplicationException(Response.Status.FORBIDDEN);
+            }
+
+            Subject subject = subjectDao.findByName(authenticationMessage.getUsername());
+            if (!(subject instanceof User)) {
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
+            }
+            User user = (User)subject;
+            subjectDao.setUserPassword(user, pwProvider.generatePBKDF2Hash(authenticationMessage.getPassword()));
+            return user;
+        } catch (Exception e) {
+            LOG.error("Error occurred changing password for user {}", authenticationMessage.getUsername(), e);
+            if (e instanceof WebApplicationException) {
+                throw (WebApplicationException) e;
+            } else {
+                throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+            }
+        }
+    }
+
+    @ApiOperation(value = "Gets a user, creating the user if necessary",
             notes = "The authenticated user must be the same as the user being retrieved"
     )
     @ApiResponses(value = {
@@ -78,8 +129,8 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error trying to get or create user")
     })
     @GET
-    @Path("/user/getorcreate")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/getorcreate")
     public Response getOrCreateUser(@QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getOrCreateUser({})", subjectKey);
         if (StringUtils.isBlank(subjectKey)) {
@@ -92,25 +143,174 @@ public class UserResource {
             String username = SubjectUtils.getSubjectName(subjectKey);
             Subject existingUser = subjectDao.findByNameOrKey(subjectKey);
             if (existingUser == null) {
-                // if subject doesn't exist for this user, create the account
-                User newUser = ldapProvider.getUserInfo(username);
-                subjectDao.save(newUser);
-                LOG.info("Created new user based on LDAP information: {}", newUser);
-                return Response
-                        .created(UriBuilder.fromMethod(UserResource.class, "getSubjectById").build(newUser.getId()))
-                        .entity(newUser)
-                        .build();
+                User user = authProvider.createUser(username);
+                if (user!=null) {
+                    return Response.ok(user).build();
+                }
+                return Response.status(Response.Status.NOT_FOUND).build();
             } else {
-                return Response.ok(existingUser)
-                        .build();
+                return Response.ok(existingUser).build();
             }
         } catch (Exception e) {
-            LOG.error("Error trying to get or create user for {}", subjectKey);
+            LOG.error("Error trying to get or create user for {}", subjectKey, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error getting or creating user for " + subjectKey))
                     .build();
         } finally {
             LOG.trace("Finished getOrCreateUser({})", subjectKey);
+        }
+    }
+
+    @ApiOperation(value = "Updates a user details",
+            notes = "The user id is used to search for the appropriate user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully updated user", response = User.class),
+            @ApiResponse(code = 500, message = "Internal Server Error trying to update user")
+    })
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/property")
+    public Response updateUser(@ApiParam Map<String, Object> userProperties, @Context ContainerRequestContext containerRequestContext) {
+        // TODO: this method should update the user based on a user id, which is a stable identifier
+        String username = (String) userProperties.get("name");
+        try {
+            LOG.info("Start updateUserProperty()");
+            if (StringUtils.isBlank(username)) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("Invalid subject key " + userProperties.get("name")))
+                        .build();
+            }
+
+            boolean isAllowed = checkAdministrationPrivileges(username, containerRequestContext);
+            if (!isAllowed) {
+                throw new WebApplicationException(Response.Status.FORBIDDEN);
+            }
+
+            User dbUser = (User) subjectDao.findByNameOrKey(username);
+            // create new user
+            if (dbUser == null) {
+                User blankUser = authProvider.addUser(userProperties);
+
+                if (blankUser != null) {
+                    LOG.info("Created new user({}, {})", blankUser.getId(), blankUser.getKey());
+
+                    // create home folder for user
+                    Workspace newHomeWorkspace = new Workspace();
+                    newHomeWorkspace.setName("Home");
+                    newHomeWorkspace.setOwnerKey(blankUser.getKey());
+                    LOG.info("Creating Home Folder for user {}", blankUser.getKey());
+                    workspaceNodeDao.saveBySubjectKey(newHomeWorkspace, blankUser.getKey());
+
+                    // assign
+                    return Response.ok(blankUser).build();
+                }
+                else {
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+                }
+            } else {
+                // existing user
+                boolean emailR = subjectDao.updateUserProperty(dbUser, "email", (String) userProperties.get("email"));
+                boolean fullNameR = subjectDao.updateUserProperty(dbUser, "fullName", (String) userProperties.get("fullname"));
+                boolean nameR = subjectDao.updateUserProperty(dbUser, "name", username);
+                if (emailR && fullNameR && nameR) {
+                    dbUser = (User) subjectDao.findByNameOrKey(username);
+                    return Response.ok(dbUser).build();
+                }
+                else {
+                    return Response.status(Response.Status.BAD_REQUEST).build();
+                }
+            }
+
+        }
+        catch (Exception e) {
+            LOG.error("Error trying to update user {}", username, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error trying to update user roles " + username))
+                    .build();
+        }
+        finally {
+           LOG.trace("Finished updateUserProperty");
+        }
+    }
+
+
+    @ApiOperation(value = "Updates the user's group roles",
+            notes = "The user id is used to search for the appropriate user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully updated user property", response = User.class),
+            @ApiResponse(code = 500, message = "Internal Server Error trying to update user")
+    })
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/roles")
+    public Response updateUserRoles(@ApiParam Set<UserGroupRole> roles,
+                                    @ApiParam @QueryParam("userKey") String userKey) {
+        Subject subject = subjectDao.findByNameOrKey(userKey);
+
+        LOG.info("Start UpdateUser({}, {})", userKey, roles);
+        if (subject==null) {
+            LOG.error("Invalid user ({}) provided to updateUser", userKey);
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Invalid user " + userKey))
+                    .build();
+        }
+        try {
+            User user = (User)subject;
+            if (subjectDao.updateUserGroupRoles(user, roles)) {
+                return Response.status(Response.Status.OK).build();
+            }
+            else {
+                LOG.error("Could not update group roles for user {}", user);
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
+        }
+        catch (Exception e) {
+            LOG.error("Error trying to update user for {}", userKey, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error trying to update user roles " + userKey))
+                    .build();
+        }
+        finally {
+            LOG.trace("Finished updateUserRoles({})", userKey);
+        }
+    }
+
+
+    @ApiOperation(value = "Creates a Group",
+            notes = "values given are the group's relevant properties"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully created new group", response = Group.class),
+            @ApiResponse(code = 500, message = "Internal Server Error trying to create new group")
+    })
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/group")
+    public Response createGroup(@ApiParam Group group) {
+        String groupKey = group.getKey();
+        LOG.trace("Start CreateGroup({})", groupKey);
+        try {
+            Group newGroup = legacyDomainDao.createGroup(group.getName(), group.getFullName());
+            if (newGroup!=null)
+                return Response.ok(newGroup).build();
+            else
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity(new ErrorResponse("Error trying to create new group " + groupKey))
+                        .build();
+        }
+        catch (Exception e) {
+            LOG.error("Error trying to create new group {}", groupKey, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error trying to create new group " + groupKey))
+                    .build();
+        }
+        finally {
+            LOG.trace("Finished createGroup({})", groupKey);
         }
     }
 
@@ -121,9 +321,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting list of workstation users")
     })
     @GET
-    @Path("/user/subjects")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/subjects")
     public Response getSubjects(@QueryParam("offset") Long offsetParam, @QueryParam("length") Integer lengthParam) {
         LOG.trace("Start getSubjects()");
         try {
@@ -146,9 +346,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting subject")
     })
     @GET
-    @Path("/user/subjects/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/subjects/{id}")
     public Response getSubjectById(@PathParam("id") Long subjectId) {
         LOG.trace("Start getSubjectById({})", subjectId);
         try {
@@ -173,21 +373,15 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting subject")
     })
     @GET
-    @Path("/user/subject")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/subject")
     public Response getSubjectByNameOrKey(@QueryParam("subjectKey") String subjectNameOrKey) {
         LOG.trace("Start getSubjectByKey({})", subjectNameOrKey);
         try {
             Subject s = subjectDao.findByNameOrKey(subjectNameOrKey);
-            if (s == null) {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("No subject found for " + subjectNameOrKey))
-                        .build();
-            } else {
-                return Response.ok(s)
-                        .build();
-            }
+            return Response.ok(s)
+                    .build();
         } finally {
             LOG.trace("Finished getSubjectByKey({})", subjectNameOrKey);
         }
@@ -200,9 +394,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting user preferences")
     })
     @GET
-    @Path("/user/preferences")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/preferences")
     public Response getPreferences(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getPreferences({})", subjectKey);
         try {
@@ -224,9 +418,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error setting user preferences")
     })
     @PUT
-    @Path("/user/preferences")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user/preferences")
     public Preference setPreferences(DomainQuery query) {
         LOG.trace("Start setPreferences({})", query);
         try {
@@ -248,8 +442,8 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting user preferences")
     })
     @PUT
-    @Path("/user/permissions")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/user/permissions")
     public void setPermissions(@ApiParam Map<String, Object> params) {
         LOG.trace("Start setPermissions({})", params);
         try {
@@ -280,8 +474,8 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error fetching the members")
     })
     @GET
-    @Path("/group/{groupKey:.*}/members")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/group/{groupKey:.*}/members")
     public List<Subject> getMembers(@ApiParam @PathParam("groupKey") final String groupKey) {
         LOG.trace("Start getMembers({})", groupKey);
         try {
@@ -298,8 +492,8 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting list of groups")
     })
     @GET
-    @Path("/groups")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/groups")
     public Map<Subject, Number> getGroups() {
         LOG.trace("Start getGroups()");
         try {
@@ -319,9 +513,9 @@ public class UserResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting list of datasets")
     })
     @GET
-    @Path("/group/{groupName:.*}/data_sets")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/group/{groupName:.*}/data_sets")
     public Map<String, String> getDataSets(@ApiParam @PathParam("groupName") final String groupName) {
         LOG.trace("Start getDataSets({})", groupName);
         try {
@@ -332,6 +526,27 @@ public class UserResource {
         } finally {
             LOG.trace("Finished getDataSets({})", groupName);
         }
+    }
+
+    private boolean checkAdministrationPrivileges (String username, ContainerRequestContext containerRequestContext) {
+        Subject authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubject(containerRequestContext, Subject.class);
+        Subject authenticatedSubject = JacsSecurityContextHelper.getAuthenticatedSubject(containerRequestContext, Subject.class);
+
+        if (authorizedSubject == null || authenticatedSubject == null) {
+            LOG.info("Unauthorized attempt to change password for {}", username);
+            return false;
+        }
+
+        LOG.info("User {} is performing admin on user account for {}", authenticatedSubject.getName(), username);
+        if (!authorizedSubject.getName().equals(username) && authenticatedSubject instanceof User) {
+            User authenticatedUser = (User) authenticatedSubject;
+            // Someone is trying to change a password that isn't there own. Is it an admin?
+            if (!authenticatedUser.hasGroupRead(Group.ADMIN_KEY)) {
+                LOG.info("Non-admin user {} attempted to change password for {}", authenticatedUser.getName(), username);
+                return false;
+            }
+        }
+        return true;
     }
 
 }

@@ -7,10 +7,8 @@ import io.swagger.annotations.ApiResponses;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
-import org.janelia.jacs2.auth.JacsServiceAccessDataUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.domain.enums.SubjectRole;
-import org.janelia.model.security.Subject;
 import org.janelia.model.service.JacsServiceData;
 
 import javax.enterprise.context.RequestScoped;
@@ -28,24 +26,23 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
+@Api(value = "Asynchronous JACS Service API")
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/async-services")
-@Api(value = "Asynchronous JACS Service API")
 public class AsyncServiceResource {
 
     @Inject private JacsServiceEngine jacsServiceEngine;
 
-    @RequireAuthentication
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Submit a list of services", notes = "The submission assumes an implicit positional dependecy where each service depends on its predecessors")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response createAsyncServices(List<JacsServiceData> services, @Context ContainerRequestContext containerRequestContext) {
         String authenticatedSubjectKey = JacsSecurityContextHelper.getAuthenticatedSubjectKey(containerRequestContext);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
@@ -60,14 +57,14 @@ public class AsyncServiceResource {
                 .build();
     }
 
-    @RequireAuthentication
-    @POST
-    @Path("/{service-name}")
-    @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Submit a single service of the specified type", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{service-name}")
     public Response createAsyncService(@PathParam("service-name") String serviceName, JacsServiceData si, @Context ContainerRequestContext containerRequestContext) {
         String authenticatedSubjectKey = JacsSecurityContextHelper.getAuthenticatedSubjectKey(containerRequestContext);
         String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
@@ -81,14 +78,14 @@ public class AsyncServiceResource {
                 .build();
     }
 
-    @RequireAuthentication
-    @PUT
-    @Path("/processing-slots-count/{slots-count}")
     @ApiOperation(value = "Update the number of processing slots", notes = "A value of 0 disables the processing of new services")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 403, message = "If the user doesn't have admin privileges"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @PUT
+    @Path("/processing-slots-count/{slots-count}")
     public Response setProcessingSlotsCount(@PathParam("slots-count") int nProcessingSlots, @Context SecurityContext securityContext) {
         if (!securityContext.isUserInRole(SubjectRole.Admin.getRole())) {
             return Response
@@ -101,14 +98,14 @@ public class AsyncServiceResource {
                 .build();
     }
 
-    @RequireAuthentication
-    @PUT
-    @Path("/waiting-slots-count/{slots-count}")
     @ApiOperation(value = "Update the size of the waiting queue", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 403, message = "If the user doesn't have admin privileges"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @PUT
+    @Path("/waiting-slots-count/{slots-count}")
     public Response setWaitingSlotsCount(@PathParam("slots-count") int nWaitingSlots, @Context SecurityContext securityContext) {
         if (!securityContext.isUserInRole(SubjectRole.Admin.getRole())) {
             return Response
@@ -121,13 +118,13 @@ public class AsyncServiceResource {
                 .build();
     }
 
-    @RequireAuthentication
-    @GET
-    @Path("/stats")
     @ApiOperation(value = "Retrieve processing statistics", notes = "")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @RequireAuthentication
+    @GET
+    @Path("/stats")
     public Response getServerStats() {
         ServerStats stats = jacsServiceEngine.getServerStats();
         return Response

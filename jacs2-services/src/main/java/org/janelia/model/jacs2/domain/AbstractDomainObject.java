@@ -6,8 +6,8 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.janelia.model.domain.entityannotations.EntityId;
 import org.janelia.model.jacs2.DomainModelUtils;
-import org.janelia.model.jacs2.domain.annotations.EntityId;
 
 import java.util.Date;
 import java.util.HashSet;

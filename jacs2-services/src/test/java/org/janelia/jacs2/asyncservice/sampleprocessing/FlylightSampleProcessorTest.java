@@ -35,6 +35,8 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.slf4j.Logger;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -228,7 +230,7 @@ public class FlylightSampleProcessorTest {
                     .thenApply(r -> {
                         successful.accept(r);
 
-                        String expectedSampleRootDir = testSampleDir + "/" + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
+                        String expectedSampleRootDir = testSampleDir + File.separatorChar + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
 
                         verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
                                 argThat(new ListArgMatcher<>(
@@ -237,7 +239,7 @@ public class FlylightSampleProcessorTest {
                                                 new ServiceArgMatcher(new ServiceArg("-objective", objective)),
                                                 new ServiceArgMatcher(new ServiceArg("-area", area)),
                                                 new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
-                                                new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))
+                                                new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", Paths.get("Temp", testLsmSubDir).toString()))
                                         )
                                 ))
                         );
@@ -250,8 +252,8 @@ public class FlylightSampleProcessorTest {
                                                 new ServiceArgMatcher(new ServiceArg("-area", area)),
                                                 new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
                                                 new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
-                                                new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)),
-                                                new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", Paths.get("Temp", testLsmSubDir).toString())),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", Paths.get("Summary", testLsmSubDir).toString())),
                                                 new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
                                                 new ServiceArgMatcher(new ServiceArg("-basicMipMapsOptions", DEFAULT_MIP_MAPS_OPTIONS)),
                                                 new ServiceArgMatcher(new ServiceArg("-montageMipMaps", true))
@@ -276,9 +278,9 @@ public class FlylightSampleProcessorTest {
                                                 new ServiceArgMatcher(new ServiceArg("-area", area)),
                                                 new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
                                                 new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
-                                                new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)),
-                                                new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir)),
-                                                new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir)),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", Paths.get("Temp", testLsmSubDir).toString())),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", Paths.get("Summary", testLsmSubDir).toString())),
+                                                new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", Paths.get("Sample", testLsmSubDir).toString())),
                                                 new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm)),
                                                 new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
                                                 new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)),
@@ -408,7 +410,7 @@ public class FlylightSampleProcessorTest {
                 .thenApply(r -> {
                     successful.accept(r);
 
-                    String expectedSampleRootDir = testSampleDir + "/" + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
+                    String expectedSampleRootDir = testSampleDir + File.separatorChar + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
 
                     verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ListArgMatcher<>(
@@ -417,7 +419,7 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-objective", objective)),
                                             new ServiceArgMatcher(new ServiceArg("-area", area)),
                                             new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
-                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", Paths.get("Temp", testLsmSubDir).toString()))
                                     )
                             ))
                     );
@@ -434,9 +436,9 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-area", area)),
                                             new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
                                             new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
-                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)),
-                                            new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir)),
-                                            new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", Paths.get("Temp", testLsmSubDir).toString())),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", Paths.get("Summary", testLsmSubDir).toString())),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", Paths.get("Sample", testLsmSubDir).toString())),
                                             new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm)),
                                             new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
                                             new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)),
@@ -461,7 +463,7 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-mode", "MCFO")),
                                             new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr")),
                                             new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1")),
-                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area)),
+                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", Paths.get(expectedSampleRootDir, "Post", testLsmSubDir, objective , area).toString())),
                                             new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist"))
                                     )
                             ))
@@ -473,7 +475,7 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-mode", "MCFO")),
                                             new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr")),
                                             new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1")),
-                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area)),
+                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", Paths.get(expectedSampleRootDir, "Post", testLsmSubDir, objective , area).toString())),
                                             new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist"))
                                     )
                             ))
@@ -485,7 +487,7 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-mode", "MCFO")),
                                             new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr")),
                                             new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1")),
-                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/" + area)),
+                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", Paths.get(expectedSampleRootDir, "Post", testLsmSubDir, objective, area).toString())),
                                             new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist"))
                                     )
                             ))
@@ -498,7 +500,7 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-objective", objective)),
                                             new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
                                             new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
-                                            new ServiceArgMatcher(new ServiceArg("-samplePostSubDir", "Post" + "/" + testLsmSubDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-samplePostSubDir", Paths.get("Post", testLsmSubDir).toString())),
                                             new ServiceArgMatcher(new ServiceArg("-resultDirs", String.join(",", TEST_MIPS_DIR, TEST_MIPS_DIR, TEST_MIPS_DIR)))
                                     )
                             ))
@@ -512,7 +514,7 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID)),
                                             new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID)),
                                             new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE)),
-                                            new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/" + area)),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", Paths.get(expectedSampleRootDir, "Separation", TEST_RESULT_ID.toString(), area).toString())),
                                             new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1")),
                                             new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3")),
                                             new ServiceArgMatcher(new ServiceArg("-previousResultFile", ""))
@@ -638,7 +640,7 @@ public class FlylightSampleProcessorTest {
         flylightProcessing
                 .thenApply(r -> {
                     successful.accept(r);
-                    String expectedSampleRootDir = testSampleDir + "/" + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
+                    String expectedSampleRootDir = testSampleDir + File.separatorChar + SubjectUtils.getSubjectName(testServiceData.getOwnerKey());
 
                     verify(getSampleImageFilesProcessor).createServiceData(any(ServiceExecutionContext.class),
                             argThat(new ListArgMatcher<>(
@@ -647,7 +649,7 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-objective", objective)),
                                             new ServiceArgMatcher(new ServiceArg("-area", "")),
                                             new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
-                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir))
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", Paths.get("Temp", testLsmSubDir).toString()))
                                     )
                             ))
                     );
@@ -664,9 +666,9 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-area", "")),
                                             new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
                                             new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
-                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", "Temp" + "/" + testLsmSubDir)),
-                                            new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", "Summary" + "/" + testLsmSubDir)),
-                                            new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", "Sample" + "/" + testLsmSubDir)),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleLsmsSubDir", Paths.get("Temp", testLsmSubDir).toString())),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSummarySubDir", Paths.get("Summary", testLsmSubDir).toString())),
+                                            new ServiceArgMatcher(new ServiceArg("-sampleSitchingSubDir", Paths.get("Sample", testLsmSubDir).toString())),
                                             new ServiceArgMatcher(new ServiceArg("-mergeAlgorithm", mergeAlgorithm)),
                                             new ServiceArgMatcher(new ServiceArg("-channelDyeSpec", channelDyeSpec)),
                                             new ServiceArgMatcher(new ServiceArg("-outputChannelOrder", outputChannelOrder)),
@@ -694,7 +696,7 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-mode", "MCFO")),
                                             new ServiceArgMatcher(new ServiceArg("-chanSpec", "sssr")),
                                             new ServiceArgMatcher(new ServiceArg("-colorSpec", "RGB1")),
-                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/NormalizedBrainVNC")),
+                                            new ServiceArgMatcher(new ServiceArg("-resultsDir", Paths.get(expectedSampleRootDir, "Post", testLsmSubDir, objective, "/NormalizedBrainVNC").toString())),
                                             new ServiceArgMatcher(new ServiceArg("-options", "mips:movies:legends:hist"))
                                     )
                             ))
@@ -707,8 +709,8 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-objective", objective)),
                                             new ServiceArgMatcher(new ServiceArg("-sampleResultsId", testServiceId)),
                                             new ServiceArgMatcher(new ServiceArg("-sampleDataRootDir", expectedSampleRootDir)),
-                                            new ServiceArgMatcher(new ServiceArg("-samplePostSubDir", "Post" + "/" + testLsmSubDir)),
-                                            new ServiceArgMatcher(new ServiceArg("-resultDirs", expectedSampleRootDir + "/" + "Post" + "/" + testLsmSubDir + "/" + objective + "/NormalizedBrainVNC"))
+                                            new ServiceArgMatcher(new ServiceArg("-samplePostSubDir", Paths.get("Post", testLsmSubDir).toString())),
+                                            new ServiceArgMatcher(new ServiceArg("-resultDirs", Paths.get(expectedSampleRootDir, "Post", testLsmSubDir, objective, "/NormalizedBrainVNC").toString()))
                                     )
                             ))
                     );
@@ -721,7 +723,7 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID)),
                                             new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID)),
                                             new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE)),
-                                            new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/Brain")),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", Paths.get(expectedSampleRootDir, "Separation", TEST_RESULT_ID.toString(), "Brain").toString())),
                                             new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1")),
                                             new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3")),
                                             new ServiceArgMatcher(new ServiceArg("-previousResultFile", ""))
@@ -736,7 +738,7 @@ public class FlylightSampleProcessorTest {
                                             new ServiceArgMatcher(new ServiceArg("-runId", TEST_RUN_ID)),
                                             new ServiceArgMatcher(new ServiceArg("-resultId", TEST_RESULT_ID)),
                                             new ServiceArgMatcher(new ServiceArg("-inputFile", TEST_AREA_FILE)),
-                                            new ServiceArgMatcher(new ServiceArg("-outputDir", expectedSampleRootDir + "/" + "Separation" + "/" + TEST_RESULT_ID + "/VNC")),
+                                            new ServiceArgMatcher(new ServiceArg("-outputDir", Paths.get(expectedSampleRootDir, "Separation", TEST_RESULT_ID.toString(), "VNC").toString())),
                                             new ServiceArgMatcher(new ServiceArg("-signalChannels", "0 1")),
                                             new ServiceArgMatcher(new ServiceArg("-referenceChannel", "3")),
                                             new ServiceArgMatcher(new ServiceArg("-previousResultFile", ""))

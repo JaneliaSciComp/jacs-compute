@@ -36,12 +36,12 @@ public class ThroughputAttribute implements ExchangeAttribute {
         } else {
             final long nanos;
             if (requestStartTime <= 0) {
-                return "n/a"; // N/A
+                return ""; // N/A
             } else {
                 nanos = System.nanoTime() - requestStartTime;
             }
             double tp = (bytesSent * 8  * 1000.) / nanos;
-            return String.format("%-7.3f", tp);
+            return String.format("%.3f", tp);
         }
     }
 

@@ -1,5 +1,7 @@
 package org.janelia.jacs2.config;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
@@ -8,6 +10,7 @@ import org.janelia.configutils.ConfigValueResolver;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -44,6 +47,33 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     public Integer getIntegerPropertyValue(String name, Integer defaultValue) {
         String stringValue = getStringPropertyValue(name);
         return StringUtils.isBlank(stringValue) ? defaultValue : Integer.valueOf(stringValue);
+    }
+
+    @Override
+    public Long getLongPropertyValue(String name) {
+        String stringValue = getStringPropertyValue(name);
+        return StringUtils.isBlank(stringValue) ? null : Long.valueOf(stringValue);
+    }
+
+    @Override
+    public Long getLongPropertyValue(String name, Long defaultValue) {
+        String stringValue = getStringPropertyValue(name);
+        return StringUtils.isBlank(stringValue) ? defaultValue : Long.valueOf(stringValue);
+    }
+
+    @Override
+    public List<String> getStringListPropertyValue(String name) {
+        return getStringListPropertyValue(name, ImmutableList.of());
+    }
+
+    @Override
+    public List<String> getStringListPropertyValue(String name, List<String> defaultValue) {
+        String stringValue = getStringPropertyValue(name);
+        if (StringUtils.isBlank(stringValue)) {
+            return defaultValue;
+        } else {
+            return Splitter.on(',').trimResults().splitToList(stringValue);
+        }
     }
 
     @Override

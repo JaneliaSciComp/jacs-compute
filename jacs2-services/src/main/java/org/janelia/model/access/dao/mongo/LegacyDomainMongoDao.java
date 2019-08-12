@@ -1,43 +1,76 @@
 package org.janelia.model.access.dao.mongo;
 
-import com.mongodb.MongoClient;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import javax.inject.Inject;
+
+import com.google.common.collect.ImmutableList;
+import com.mongodb.DBCursor;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.DomainDAO;
+import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.DomainObject;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.PipelineStatus;
-import org.janelia.model.domain.gui.colordepth.ColorDepthMask;
-import org.janelia.model.domain.gui.colordepth.ColorDepthResult;
+import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
 import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.ontology.Ontology;
 import org.janelia.model.domain.ontology.OntologyTerm;
 import org.janelia.model.domain.ontology.OntologyTermReference;
 import org.janelia.model.domain.orders.IntakeOrder;
-import org.janelia.model.domain.sample.*;
+import org.janelia.model.domain.sample.DataSet;
+import org.janelia.model.domain.sample.LSMImage;
+import org.janelia.model.domain.sample.LineRelease;
+import org.janelia.model.domain.sample.NeuronFragment;
+import org.janelia.model.domain.sample.NeuronSeparation;
+import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.sample.SampleLock;
+import org.janelia.model.domain.sample.StatusTransition;
+import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
+import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
-
-import javax.inject.Inject;
-import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class LegacyDomainMongoDao implements LegacyDomainDao {
 
+    private static final Logger log = LoggerFactory.getLogger(LegacyDomainMongoDao.class);
+
     private final DomainDAO dao;
+    private final DomainObjectIndexer domainObjectIndexer;
 
     @Inject
-    public LegacyDomainMongoDao(DomainDAO dao) {
+    public LegacyDomainMongoDao(DomainDAO dao,
+                                @AsyncIndex DomainObjectIndexer domainObjectIndexer) {
         this.dao = dao;
+        this.domainObjectIndexer = domainObjectIndexer;
     }
 
     @Override
@@ -176,23 +209,70 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public List<Reference> getContainerReferences(DomainObject domainObject) throws Exception {
-        return dao.getContainerReferences(domainObject);
+    public List<Reference> getAllNodeContainerReferences(DomainObject domainObject) throws Exception {
+        return dao.getAllNodeReferences(domainObject);
     }
 
     @Override
-    public long getContainerReferenceCount(DomainObject domainObject) throws Exception {
-        return dao.getContainerReferenceCount(domainObject);
+    public long getTreeNodeContainerReferenceCount(DomainObject domainObject) throws Exception {
+        return dao.getTreeNodeContainerReferenceCount(domainObject);
     }
 
     @Override
-    public long getContainerReferenceCount(Collection<Reference> references) throws Exception {
-        return dao.getContainerReferenceCount(references);
+    public long getTreeNodeContainerReferenceCount(Collection<Reference> references) throws Exception {
+        return dao.getTreeNodeContainerReferenceCount(references);
     }
 
     @Override
-    public <T extends DomainObject> List<TreeNode> getContainers(String subjectKey, Collection<Reference> references) throws Exception {
-        return dao.getContainers(subjectKey, references);
+    public List<TreeNode> getTreeNodeContainers(String subjectKey, Collection<Reference> references) throws Exception {
+        return dao.getTreeNodeContainers(subjectKey, references);
+    }
+
+    @Override
+    public <T extends DomainObject> Stream<T> iterateDomainObjects(Class<T> domainClass) {
+        Spliterator<T> iterator = new Spliterator<T>() {
+            Iterator<T> cursor;
+            {
+                setCursor();
+            }
+
+            private void setCursor() {
+                cursor = dao.getCollectionByClass(domainClass).find(
+                        "{$or:[{class:{$exists:0}},{class:#}]}", domainClass.getName())
+                        .with((DBCursor cursor) -> cursor.noCursorTimeout(true))
+                        .as(domainClass)
+                        ;
+            }
+
+            @Override
+            public boolean tryAdvance(Consumer<? super T> action) {
+                if (cursor.hasNext()) {
+                    action.accept(cursor.next());
+                }
+                return cursor.hasNext();
+            }
+
+            @Override
+            public Spliterator<T> trySplit() {
+                return null;
+            }
+
+            @Override
+            public long estimateSize() {
+                int estimateSize = dao.getCollectionByClass(domainClass).find(
+                        "{$or:[{class:{$exists:0}},{class:#}]}", domainClass.getName())
+                        .with((DBCursor cursor) -> cursor.noCursorTimeout(true))
+                        .as(domainClass)
+                        .count();
+                return estimateSize;
+            }
+
+            @Override
+            public int characteristics() {
+                return 0;
+            }
+        };
+        return StreamSupport.stream(iterator, false);
     }
 
     @Override
@@ -208,11 +288,14 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public <T extends DomainObject> void deleteDomainObject(String subjectKey, Class<T> domainClass, Long id) {
         dao.deleteDomainObject(subjectKey, domainClass, id);
+        domainObjectIndexer.removeDocument(id);
     }
 
     @Override
     public <T extends DomainObject> boolean deleteDomainObjects(String subjectKey, Class<T> domainClass, List<Long> ids) {
-        return dao.deleteDomainObjects(subjectKey, domainClass, ids);
+        boolean deleted = dao.deleteDomainObjects(subjectKey, domainClass, ids);
+        domainObjectIndexer.removeDocumentStream(ids.stream());
+        return deleted;
     }
 
     @Override
@@ -322,7 +405,9 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public Annotation createAnnotation(String subjectKey, Reference target, OntologyTermReference ontologyTermReference, Object value) throws Exception {
-        return dao.createAnnotation(subjectKey, target, ontologyTermReference, value);
+        Annotation annotation = dao.createAnnotation(subjectKey, target, ontologyTermReference, value);
+        domainObjectIndexer.indexDocument(annotation);
+        return annotation;
     }
 
     @Override
@@ -346,8 +431,25 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
+    public List<String> getColorDepthPaths(String subjectKey, String libraryIdentifier, String alignmentSpace) {
+        return dao.getColorDepthPaths(subjectKey, libraryIdentifier, alignmentSpace);
+    }
+
+    @Override
+    public ColorDepthImage getColorDepthImageByPath(String subjectKey, String filepath) {
+        return dao.getColorDepthImageByPath(subjectKey, filepath);
+    }
+
+    @Override
+    public List<ColorDepthLibrary> getLibrariesWithColorDepthImages(String subjectKey, String alignmentSpace) {
+        return dao.getLibrariesWithColorDepthImages(subjectKey, alignmentSpace);
+    }
+
+    @Override
     public DataSet createDataSet(String subjectKey, DataSet dataSet) throws Exception {
-        return dao.createDataSet(subjectKey, dataSet);
+        DataSet ds = dao.createDataSet(subjectKey, dataSet);
+        domainObjectIndexer.indexDocument(ds);
+        return ds;
     }
 
     @Override
@@ -401,6 +503,16 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
+    public List<LSMImage> getInactiveLsmsBySampleId(String subjectKey, Long sampleId) {
+        return dao.getInactiveLsmsBySampleId(subjectKey, sampleId);
+    }
+
+    @Override
+    public List<LSMImage> getAllLsmsBySampleId(String subjectKey, Long sampleId) {
+        return dao.getAllLsmsBySampleId(subjectKey, sampleId);
+    }
+
+    @Override
     public LSMImage getActiveLsmBySageId(String subjectKey, Integer sageId) {
         return dao.getActiveLsmBySageId(subjectKey, sageId);
     }
@@ -447,17 +559,22 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public <T extends DomainObject> T createWithPrepopulatedId(String subjectKey, T domainObject) throws Exception {
-        return dao.createWithPrepopulatedId(subjectKey, domainObject);
+        T persistedDomainObject = dao.createWithPrepopulatedId(subjectKey, domainObject);
+        domainObjectIndexer.indexDocument(persistedDomainObject);
+        return persistedDomainObject;
     }
 
     @Override
     public <T extends DomainObject> T save(String subjectKey, T domainObject) throws Exception {
-        return dao.save(subjectKey, domainObject);
+        T persistedDomainObject = dao.save(subjectKey, domainObject);
+        domainObjectIndexer.indexDocument(persistedDomainObject);
+        return persistedDomainObject;
     }
 
     @Override
     public void remove(String subjectKey, DomainObject domainObject) throws Exception {
         dao.remove(subjectKey, domainObject);
+        domainObjectIndexer.removeDocument(domainObject.getId());
     }
 
     @Override
@@ -467,57 +584,76 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public Ontology addTerms(String subjectKey, Long ontologyId, Long parentTermId, Collection<OntologyTerm> terms, Integer index) throws Exception {
-        return dao.addTerms(subjectKey, ontologyId, parentTermId, terms, index);
+        Ontology updatedOntoly = dao.addTerms(subjectKey, ontologyId, parentTermId, terms, index);
+        domainObjectIndexer.indexDocument(updatedOntoly);
+        return updatedOntoly;
     }
 
     @Override
     public Ontology removeTerm(String subjectKey, Long ontologyId, Long parentTermId, Long termId) throws Exception {
-        return dao.removeTerm(subjectKey, ontologyId, parentTermId, termId);
+        Ontology updatedOntoly = dao.removeTerm(subjectKey, ontologyId, parentTermId, termId);
+        domainObjectIndexer.indexDocument(updatedOntoly);
+        return updatedOntoly;
     }
 
     @Override
-    public TreeNode getOrCreateDefaultFolder(String subjectKey, String folderName) throws Exception {
-        return dao.getOrCreateDefaultFolder(subjectKey, folderName);
+    public TreeNode getOrCreateDefaultTreeNodeFolder(String subjectKey, String folderName) throws Exception {
+        return dao.getOrCreateDefaultTreeNodeFolder(subjectKey, folderName);
     }
 
     @Override
-    public TreeNode reorderChildren(String subjectKey, TreeNode treeNodeArg, int[] order) throws Exception {
-        return dao.reorderChildren(subjectKey, treeNodeArg, order);
+    public Node reorderChildren(String subjectKey, Node nodeArg, int[] order) throws Exception {
+        return dao.reorderChildren(subjectKey, nodeArg, order);
     }
 
     @Override
-    public List<DomainObject> getChildren(String subjectKey, TreeNode treeNode) {
-        return dao.getChildren(subjectKey, treeNode);
+    public List<DomainObject> getChildren(String subjectKey, Node node) {
+        return dao.getChildren(subjectKey, node);
     }
 
     @Override
-    public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
-        return dao.addChildren(subjectKey, treeNodeArg, references);
+    public Node addChildren(String subjectKey, Node treeNodeArg, Collection<Reference> references) throws Exception {
+        Node updatedNode = dao.addChildren(subjectKey, treeNodeArg, references);
+        domainObjectIndexer.updateDocsAncestors(
+                references.stream().map(ref -> ref.getTargetId()).collect(Collectors.toSet()),
+                updatedNode.getId());
+        return updatedNode;
     }
 
     @Override
-    public TreeNode addChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references, Integer index) throws Exception {
-        return dao.addChildren(subjectKey, treeNodeArg, references, index);
+    public Node addChildren(String subjectKey, Node nodeArg, Collection<Reference> references, Integer index) throws Exception {
+        Node updatedNode = dao.addChildren(subjectKey, nodeArg, references, index);
+        domainObjectIndexer.updateDocsAncestors(
+                references.stream().map(ref -> ref.getTargetId()).collect(Collectors.toSet()),
+                updatedNode.getId());
+        return updatedNode;
     }
 
     @Override
-    public TreeNode removeChildren(String subjectKey, TreeNode treeNodeArg, Collection<Reference> references) throws Exception {
-        return dao.removeChildren(subjectKey, treeNodeArg, references);
+    public Node removeChildren(String subjectKey, Node nodeArg, Collection<Reference> references) throws Exception {
+        Node updatedNode = dao.removeChildren(subjectKey, nodeArg, references);
+        List<DomainObject> children = dao.getDomainObjects(subjectKey, ImmutableList.copyOf(references));
+        domainObjectIndexer.indexDocumentStream(children.stream()); // reindex the children
+        return updatedNode;
     }
 
     @Override
-    public TreeNode removeReference(String subjectKey, TreeNode treeNodeArg, Reference reference) throws Exception {
-        return dao.removeReference(subjectKey, treeNodeArg, reference);
+    public Node removeReference(String subjectKey, Node nodeArg, Reference reference) throws Exception {
+        return dao.removeReference(subjectKey, nodeArg, reference);
     }
 
     @Override
     public <T extends DomainObject> T updateProperty(String subjectKey, Class<T> clazz, Long id, String propName, Object propValue) throws Exception {
-        return dao.updateProperty(subjectKey, clazz, id, propName, propValue);
+        T updatedDomainObject = dao.updateProperty(subjectKey, clazz, id, propName, propValue);
+        domainObjectIndexer.indexDocument(updatedDomainObject);
+        return updatedDomainObject;
     }
 
     @Override
     public DomainObject updateProperty(String subjectKey, String className, Long id, String propName, Object propValue) throws Exception {
-        return dao.updateProperty(subjectKey, className, id, propName, propValue);
+        DomainObject updatedDomainObject = dao.updateProperty(subjectKey, className, id, propName, propValue);
+        domainObjectIndexer.indexDocument(updatedDomainObject);
+        return updatedDomainObject;
     }
 
     @Override
@@ -533,6 +669,24 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public void setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception {
         dao.setPermissions(ownerKey, className, id, grantee, read, write, forceChildUpdates);
+    }
+
+    @Override
+    public void giveOwnerReadWritToAllFromCollection(String collectionName) {
+        Class<?> baseClass = DomainUtils.getBaseClass(collectionName);
+        if (DomainObject.class.isAssignableFrom(baseClass)) {
+            MongoCollection mongoCollection = dao.getCollectionByName(collectionName);
+            Iterable<?> iterable = mongoCollection.find().as(baseClass);
+            if (iterable != null) {
+                for (Object obj : iterable) {
+                    DomainObject domainObject = (DomainObject) obj;
+                    String ownerKey = domainObject.getOwnerKey();
+                    if (StringUtils.isNotBlank(ownerKey)) {
+                        mongoCollection.update("{_id:#}", domainObject.getId()).with("{$addToSet:{readers:#,writers:#}}", ownerKey, ownerKey);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -596,11 +750,6 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public void addColorDepthSearchMask(String subjectKey, Long searchId, ColorDepthMask mask) {
-        dao.addColorDepthSearchMask(subjectKey, searchId, mask);
-    }
-
-    @Override
     public void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result) {
         dao.addColorDepthSearchResult(subjectKey, searchId, result);
     }
@@ -608,5 +757,26 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public <T extends DomainObject> List<T> fullTextSearch(String subjectKey, Class<T> domainClass, String text) {
         return dao.fullTextSearch(subjectKey, domainClass, text);
+    }
+
+    @Override
+    public void ensureCollectionIndex(String collectionName, List<DaoIndex> indexes) {
+        MongoCollection mongoCollection = dao.getCollectionByName(collectionName);
+        log.info("Creating indexes on {}", collectionName);
+        for (DaoIndex index : indexes) {
+            if (StringUtils.isBlank(index.getOptions())) {
+                mongoCollection.ensureIndex(index.getKeys());
+            } else {
+                mongoCollection.ensureIndex(index.getKeys(), index.getOptions());
+            }
+            if (log.isInfoEnabled()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(index.getKeys());
+                if (index.getOptions() != null) {
+                    sb.append(", ").append(index.getOptions());
+                }
+                log.info("  {}", sb);
+            }
+        }
     }
 }

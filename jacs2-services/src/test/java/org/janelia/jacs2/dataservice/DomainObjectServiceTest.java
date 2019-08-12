@@ -2,10 +2,10 @@ package org.janelia.jacs2.dataservice;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.dao.DaoFactory;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.jacs2.dao.ImageDao;
 import org.janelia.model.jacs2.dao.SampleDao;
 import org.janelia.model.jacs2.domain.DomainObject;
-import org.janelia.model.jacs2.domain.Reference;
 import org.janelia.model.jacs2.domain.Subject;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,11 +42,11 @@ public class DomainObjectServiceTest {
     @Test
     public void streamListOfMixedReferences() {
         List<Reference> testData = ImmutableList.of(
-                new Reference("LSMImage", 1L),
-                new Reference("Sample", 2L),
-                new Reference("Sample", 3L),
-                new Reference("LSMImage", 4L),
-                new Reference("Sample", 5L));
+                Reference.createFor("LSMImage", 1L),
+                Reference.createFor("Sample", 2L),
+                Reference.createFor("Sample", 3L),
+                Reference.createFor("LSMImage", 4L),
+                Reference.createFor("Sample", 5L));
         Stream<DomainObject> testStream = testService.streamAllReferences(null, testData.stream());
         verify(imageDao, never()).findByIds(any(Subject.class), anyList());
         verify(sampleDao, never()).findByIds(any(Subject.class), anyList());

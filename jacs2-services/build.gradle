@@ -25,11 +25,17 @@ project(":jacs2-services") {
             exclude group: 'com.fasterxml.jackson.core'
         }
 
+        compile (JACS_MODEL_ACCESS_LIB) {
+            exclude group: 'com.fasterxml.jackson.core'
+        }
+
         compile (JACS_MODEL_CORE_LIB) {
             exclude group: 'com.fasterxml.jackson.core'
         }
 
         compile JACS_MODEL_RENDERING_LIB
+
+        compile JACS_MESSAGING_CORE_LIB
 
         compile (HIBERNATE_LIB) {
             exclude group: 'javax.transaction'

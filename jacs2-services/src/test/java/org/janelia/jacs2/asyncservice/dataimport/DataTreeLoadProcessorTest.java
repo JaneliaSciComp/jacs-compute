@@ -56,7 +56,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
@@ -136,7 +135,7 @@ public class DataTreeLoadProcessorTest {
 
         String testStorageRoot = "/storageRoot";
         String testStoragePrefix = "/storageRootPrefix";
-        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
+        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken, -1))
                 .thenReturn(ImmutableList.of(
                         new StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, new StoragePathURI(testStoragePrefix),"", true),
                         new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.gif", testStorageRoot, new StoragePathURI(testStoragePrefix), "f1.gif", false),
@@ -209,13 +208,13 @@ public class DataTreeLoadProcessorTest {
         String testStorageRoot = "/storageRoot";
         String testStoragePrefix = "/storageRootPrefix";
 
-        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
+        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken, -1))
                 .thenReturn(ImmutableList.of(
                         new StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, new StoragePathURI(testStoragePrefix), "", true),
                         new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, new StoragePathURI(testStoragePrefix), "f1.lsm", false),
                         new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, new StoragePathURI(testStoragePrefix), "f2.v3draw", false)
                 ));
-        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
+        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString()))
                 .thenReturn(new ByteArrayInputStream("test".getBytes()));
         Mockito.when(storageService.putStorageContent(anyString(), anyString(), anyString(), anyString(), any(InputStream.class)))
                 .then(invocation -> new StorageEntryInfo(
@@ -273,17 +272,16 @@ public class DataTreeLoadProcessorTest {
                     eq(testLocation),
                     isNull(),
                     eq(testOwner),
-                    eq(testAuthToken)
+                    eq(testAuthToken),
+                    eq(-1)
             );
             Mockito.verify(storageService).getStorageContent(
                     eq(testLocation + "/" + f1Path.getFileName()),
-                    eq(f1Path.getFileName().toString()),
                     eq(testOwner),
                     eq(testAuthToken)
             );
             Mockito.verify(storageService).getStorageContent(
                     eq(testLocation + "/" + f2Path.getFileName()),
-                    eq(f2Path.getFileName().toString()),
                     eq(testOwner),
                     eq(testAuthToken)
             );
@@ -365,13 +363,13 @@ public class DataTreeLoadProcessorTest {
         String testStorageRoot = "/storageRoot";
         String testStoragePrefix = "/storageRootPrefix";
 
-        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
+        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken, -1))
                 .thenReturn(ImmutableList.of(
                         new StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, new StoragePathURI(testStoragePrefix), "", true),
                         new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "f1.lsm", false),
                         new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, new StoragePathURI(testStoragePrefix), "f2.v3draw", false)
                 ));
-        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
+        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString()))
                 .thenReturn(new ByteArrayInputStream("test".getBytes()));
         Mockito.when(storageService.putStorageContent(anyString(), anyString(), anyString(), anyString(), any(InputStream.class)))
                 .then(invocation -> new StorageEntryInfo(
@@ -431,7 +429,8 @@ public class DataTreeLoadProcessorTest {
                             eq(testLocation),
                             isNull(),
                             eq(testOwner),
-                            eq(testAuthToken)
+                            eq(testAuthToken),
+                            eq(-1)
                     );
 
                     Mockito.verify(mipsConverterProcessor, never()).getMetadata();
@@ -491,13 +490,13 @@ public class DataTreeLoadProcessorTest {
         String testStorageRoot = "/storageRoot";
         String testStoragePrefix = "/storageRootPrefix";
 
-        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
+        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken, -1))
                 .thenReturn(ImmutableList.of(
                         new StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "", true),
                         new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "f1.lsm", false),
                         new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, new StoragePathURI(testStoragePrefix), "f2.v3draw", false)
                 ));
-        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
+        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString()))
                 .thenReturn(new ByteArrayInputStream("test".getBytes()));
         Mockito.when(storageService.putStorageContent(anyString(), anyString(), anyString(), anyString(), any(InputStream.class)))
                 .then(invocation -> new StorageEntryInfo(
@@ -520,7 +519,7 @@ public class DataTreeLoadProcessorTest {
         Mockito.when(Files.exists(any(Path.class))).thenReturn(true);
         Mockito.when(Files.size(any(Path.class))).thenReturn(100L);
 
-        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE + "/" + serviceId);
+        Path basePath = Paths.get(TEST_LOCAL_WORKSPACE, serviceId.toString());
 
         Path f1Path = basePath.resolve("mips/f1.lsm");
         Path f2Path = basePath.resolve("mips/f2.v3draw");
@@ -556,17 +555,16 @@ public class DataTreeLoadProcessorTest {
                             eq(testLocation),
                             isNull(),
                             eq(testOwner),
-                            eq(testAuthToken)
+                            eq(testAuthToken),
+                            eq(-1)
                     );
                     Mockito.verify(storageService).getStorageContent(
                             eq(testLocation + "/" + f1Path.getFileName()),
-                            eq(f1Path.getFileName().toString()),
                             eq(testOwner),
                             eq(testAuthToken)
                     );
                     Mockito.verify(storageService).getStorageContent(
                             eq(testLocation + "/" + f2Path.getFileName()),
-                            eq(f2Path.getFileName().toString()),
                             eq(testOwner),
                             eq(testAuthToken)
                     );
@@ -609,8 +607,8 @@ public class DataTreeLoadProcessorTest {
                             eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             eq("f1_signal.png"),
-                            eq(testStoragePrefix + "/mips"),
-                            eq(testStoragePrefix + "/mips/f1_signal.png"),
+                            eq(testStoragePrefix  + "/mips"),
+                            eq(testStoragePrefix  + "/mips/f1_signal.png"),
                             eq(FileType.SignalMip),
                             eq(true),
                             eq(testOwner));
@@ -655,13 +653,13 @@ public class DataTreeLoadProcessorTest {
         String testStorageRoot = "/storageRoot";
         String testStoragePrefix = "/storageRootPrefix";
 
-        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken))
+        Mockito.when(storageService.listStorageContent(testLocation, null, testOwner, testAuthToken, -1))
                 .thenReturn(ImmutableList.of(
                         new StorageEntryInfo(testStorageId, testLocation, testLocation, testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "", true),
                         new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f1.lsm", testStorageRoot, new StoragePathURI("jade://" + testStoragePrefix), "f1.lsm", false),
                         new StorageEntryInfo(testStorageId, testLocation, testLocation + "/" + "f2.v3draw", testStorageRoot, new StoragePathURI(testStoragePrefix), "f2.v3draw", false)
                 ));
-        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString(), anyString()))
+        Mockito.when(storageService.getStorageContent(anyString(), anyString(), anyString()))
                 .thenReturn(new ByteArrayInputStream("test".getBytes()));
 
         Mockito.when(storageService.putStorageContent(anyString(), anyString(), anyString(), anyString(), any(InputStream.class)))
@@ -729,17 +727,16 @@ public class DataTreeLoadProcessorTest {
                             eq(testLocation),
                             isNull(),
                             eq(testOwner),
-                            eq(testAuthToken)
+                            eq(testAuthToken),
+                            eq(-1)
                     );
                     Mockito.verify(storageService).getStorageContent(
                             eq(testLocation + "/" + f1Path.getFileName()),
-                            eq(f1Path.getFileName().toString()),
                             eq(testOwner),
                             eq(testAuthToken)
                     );
                     Mockito.verify(storageService).getStorageContent(
                             eq(testLocation + "/" + f2Path.getFileName()),
-                            eq(f2Path.getFileName().toString()),
                             eq(testOwner),
                             eq(testAuthToken)
                     );

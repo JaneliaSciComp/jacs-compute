@@ -3,8 +3,8 @@ package org.janelia.model.jacs2.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
+import org.janelia.model.domain.entityannotations.EntityId;
 import org.janelia.model.jacs2.BaseEntity;
-import org.janelia.model.jacs2.domain.annotations.EntityId;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
 import org.janelia.model.jacs2.domain.support.MongoMapping;
 

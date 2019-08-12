@@ -3,19 +3,20 @@ package org.janelia.jacs2.dataservice.swc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 public class SWCReader {
 
     private static final Logger LOG = LoggerFactory.getLogger(SWCReader.class);
 
-    SWCData readSWCFile(Path swcFile) {
-        SWCData swcData = new SWCData(swcFile);
+    SWCData readSWCStream(String name, InputStream swcStream) {
+        SWCData swcData = new SWCData(name);
         try {
-            Files.readAllLines(swcFile, Charset.defaultCharset())
-                    .stream()
+            BufferedReader reader = new BufferedReader(new InputStreamReader(swcStream, Charset.defaultCharset()));
+            reader.lines()
                     .map(l -> l.trim())
                     .filter(l -> l.length() > 0)
                     .forEach(l -> {
@@ -27,8 +28,8 @@ public class SWCReader {
                     });
             return swcData;
         } catch (Exception e) {
-            LOG.error("Error parsing SWC file {}", swcFile, e);
-            throw new IllegalArgumentException("Error reading " + swcFile, e);
+            LOG.error("Error parsing SWC stream {}", name, e);
+            throw new IllegalArgumentException("Error reading swc stream " + name, e);
         }
     }
 

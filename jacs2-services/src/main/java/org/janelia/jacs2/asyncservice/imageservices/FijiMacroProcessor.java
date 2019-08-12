@@ -187,7 +187,7 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
     }
 
     private int getTimeoutInSeconds(JacsServiceData sd) {
-        long timeoutInMillis = sd.timeout();
+        long timeoutInMillis = sd.timeoutInMillis();
         if (timeoutInMillis > 0) {
             return (int) timeoutInMillis / 1000;
         } else {

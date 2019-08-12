@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import java.util.EnumSet;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -203,16 +202,16 @@ public class JacsServiceDispatcher {
 
     private void sendNotification(JacsServiceData sd, JacsServiceLifecycleStage lifecycleStage) {
         if (sd.getProcessingNotification() != null && sd.getProcessingNotification().getRegisteredLifecycleStages().contains(lifecycleStage)) {
-            sendNotification(sd, lifecycleStage, sd.getProcessingNotification());
+            createNotification(sd, lifecycleStage, sd.getProcessingNotification());
         }
     }
 
-    private void sendNotification(JacsServiceData sd, JacsServiceLifecycleStage lifecycleStage, RegisteredJacsNotification rn) {
+    private void createNotification(JacsServiceData sd, JacsServiceLifecycleStage lifecycleStage, RegisteredJacsNotification rn) {
         JacsNotification jacsNotification = new JacsNotification();
         jacsNotification.setEventName(rn.getEventName());
         jacsNotification.setNotificationData(rn.getNotificationData());
         jacsNotification.setNotificationStage(lifecycleStage);
-        jacsNotification.getNotificationData().put("args", sd.getArgs().toString());
+        jacsNotification.addNotificationData("args", sd.getArgs().toString());
         logger.info("Service {} -> {}", sd, jacsNotification);
         jacsNotificationDao.save(jacsNotification);
     }

@@ -1,5 +1,26 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -17,12 +38,12 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartMediaTypes;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.search.SolrConnector;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.DomainUtils;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
@@ -30,26 +51,6 @@ import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -76,12 +77,12 @@ public class TmResource {
 
     @Inject
     private LegacyDomainDao legacyWorkspaceDao;
+    @AsyncIndex
     @Inject
     private TmWorkspaceDao tmWorkspaceDao;
+    @AsyncIndex
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
-    @Inject
-    private SolrConnector domainObjectIndexer;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
@@ -94,8 +95,8 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Internal Server Error getting workspaces")
     })
     @GET
-    @Path("/workspaces")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspaces")
     public List<Workspace> getAllWorkspaces(@QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getAllWorkspace({})", subjectKey);
         try {
@@ -117,8 +118,8 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while fetching the workspaces")
     })
     @GET
-    @Path("/workspace")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace")
     public List<TmWorkspace> getTmWorkspaces(@ApiParam @QueryParam("subjectKey") String subjectKey,
                                              @ApiParam @QueryParam("sampleId") Long sampleId,
                                              @ApiParam @QueryParam("offset") Long offsetParam,
@@ -141,8 +142,8 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while fetching the workspace")
     })
     @GET
-    @Path("/workspace/{workspaceId}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/{workspaceId}")
     public TmWorkspace getTmWorkspace(@ApiParam @QueryParam("subjectKey") String subjectKey,
                                       @ApiParam @PathParam("workspaceId") Long workspaceId) {
         LOG.debug("getTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
@@ -157,18 +158,15 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while creating a TmWorkspace")
     })
     @PUT
-    @Path("/workspace")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace")
     public TmWorkspace createTmWorkspace(DomainQuery query) {
         LOG.trace("createTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        domainObjectIndexer.addToIndex(tmWorkspace);
         return tmWorkspace;
     }
 
-    @POST
-    @Path("/workspace/copy")
     @ApiOperation(value = "Creates a copy of an existing TmWorkspace",
             notes = "Creates a copy of the given TmWorkspace with a new name given by the parameter value of the DomainQuery"
     )
@@ -176,12 +174,13 @@ public class TmResource {
             @ApiResponse(code = 200, message = "Successfully copies a TmWorkspace", response = TmWorkspace.class),
             @ApiResponse(code = 500, message = "Error occurred while copying a TmWorkspace")
     })
+    @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/copy")
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("copyTmWorkspace({})", query);
-        TmWorkspace tmWorkspace = tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), (String) query.getObjectType());
-        domainObjectIndexer.addToIndex(tmWorkspace);
+        TmWorkspace tmWorkspace = tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), query.getObjectType());
         return tmWorkspace;
     }
 
@@ -193,13 +192,12 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while updating a TmWorkspace")
     })
     @POST
-    @Path("/workspace")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace")
     public TmWorkspace updateTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("updateTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        domainObjectIndexer.addToIndex(tmWorkspace);
         return tmWorkspace;
     }
 
@@ -215,8 +213,7 @@ public class TmResource {
     public void removeTmWorkspace(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.debug("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
-        long nDeletedItems = tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
-        if (nDeletedItems > 0 && workspaceId != null) domainObjectIndexer.removeFromIndexById(workspaceId.toString());
+        tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
     }
 
     @ApiOperation(value = "Gets the neurons for a workspace",
@@ -227,16 +224,14 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
     @GET
-    @Path("/workspace/neuron/metadata")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/neuron/metadata")
     public List<TmNeuronMetadata> getWorkspaceNeuronMetadata(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                              @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.info("getWorkspaceNeuronMetadata({})", workspaceId);
         return tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(subjectKey, workspaceId);
     }
 
-    @GET
-    @Path("/workspace/neuron")
     @ApiOperation(value = "Gets the neurons for a workspace",
             notes = "Returns a list of neurons contained in a given workspace"
     )
@@ -244,7 +239,12 @@ public class TmResource {
             @ApiResponse(code = 200, message = "Successfully fetched neurons"),
             @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
-    @Produces(MultiPartMediaTypes.MULTIPART_MIXED)
+    @GET
+    @Produces({
+            MultiPartMediaTypes.MULTIPART_MIXED,
+            MediaType.APPLICATION_JSON
+    })
+    @Path("/workspace/neuron")
     public Response getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.info("getWorkspaceNeurons({}, workspaceId={})", subjectKey, workspaceId);
@@ -254,18 +254,27 @@ public class TmResource {
             LOG.error("No workspace found for {} accessible by {}", workspaceId, subjectKey);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Error getting the workspace " + workspaceId + " for " + subjectKey))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
-        List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, workspace);
-        if (neuronPairs.isEmpty()) {
-            multiPartEntity.bodyPart(new BodyPart("Empty", MediaType.TEXT_PLAIN_TYPE));
-        } else {
-            for (Pair<TmNeuronMetadata, InputStream> neuronPair : neuronPairs) {
-                multiPartEntity.bodyPart(new BodyPart(neuronPair.getLeft(), MediaType.APPLICATION_JSON_TYPE));
-                multiPartEntity.bodyPart(new BodyPart(neuronPair.getRight(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        try {
+            List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, workspace);
+            if (neuronPairs.isEmpty()) {
+                multiPartEntity.bodyPart(new BodyPart("Empty", MediaType.TEXT_PLAIN_TYPE));
+            } else {
+                for (Pair<TmNeuronMetadata, InputStream> neuronPair : neuronPairs) {
+                    multiPartEntity.bodyPart(new BodyPart(neuronPair.getLeft(), MediaType.APPLICATION_JSON_TYPE));
+                    multiPartEntity.bodyPart(new BodyPart(neuronPair.getRight(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+                }
             }
+            return Response.ok().entity(multiPartEntity).type(MultiPartMediaTypes.MULTIPART_MIXED).build();
+        } catch (Exception e) {
+            LOG.error("Error getting neurons from workspace {}", workspace, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error getting neuorons from workspace " + workspaceId + " for " + subjectKey))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
         }
-        return Response.ok().entity(multiPartEntity).type(MultiPartMediaTypes.MULTIPART_MIXED).build();
     }
 
     @ApiOperation(value = "Creates a new neuron",
@@ -276,9 +285,9 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while creating a TmNeuron")
     })
     @PUT
-    @Path("/workspace/neuron")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/neuron")
     public Response createTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                    @ApiParam @FormDataParam("neuronMetadata") TmNeuronMetadata neuron,
                                    @ApiParam @FormDataParam("protobufBytes") InputStream neuronPointsStream) {
@@ -291,7 +300,6 @@ public class TmResource {
                     .build();
         } else {
             TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace, neuronPointsStream);
-            domainObjectIndexer.addToIndex(newNeuron);
             return Response.ok(newNeuron)
                     .build();
         }
@@ -305,9 +313,9 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while updating TmNeurons")
     })
     @POST
-    @Path("/workspace/neuron")
     @Consumes(MultiPartMediaTypes.MULTIPART_MIXED)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/neuron")
     public List<TmNeuronMetadata> updateTmNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                   @ApiParam MultiPart multiPart) {
         int numParts = multiPart.getBodyParts().size();
@@ -323,13 +331,10 @@ public class TmResource {
             InputStream protoBufStream;
             if (part1.getMediaType().equals(MediaType.APPLICATION_OCTET_STREAM_TYPE)) {
                 protoBufStream = ((BodyPartEntity) part1.getEntity()).getInputStream();
-            } else if (part1.getMediaType().equals(MediaType.TEXT_PLAIN_TYPE)) {
-                protoBufStream = ((BodyPartEntity) part1.getEntity()).getInputStream();
             } else {
                 protoBufStream = null;
             }
             TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
-            domainObjectIndexer.addToIndex(updatedNeuron);
             tmNeuronMetadataDao.updateNeuronPoints(updatedNeuron, protoBufStream);
             list.add(updatedNeuron);
         }
@@ -351,8 +356,8 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
     @GET
-    @Path("/neuron/metadata")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/neuron/metadata")
     public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                       @ApiParam @QueryParam("neuronIds") final List<Long> neuronIds) {
         LOG.info("getNeuronMetadata({}, neuronIds={})", subjectKey, neuronIds);
@@ -367,9 +372,9 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while bulk updating styles")
     })
     @POST
-    @Path("/workspace/neuronStyle")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/neuronStyle")
     public Response updateNeuronStyles(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                        @ApiParam final BulkNeuronStyleUpdate bulkNeuronStyleUpdate) {
         LOG.debug("updateNeuronStyles({}, {})", subjectKey, bulkNeuronStyleUpdate);
@@ -394,13 +399,9 @@ public class TmResource {
     public void removeTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                @ApiParam @QueryParam("neuronId") final Long neuronId) {
         LOG.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
-        if (tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey) && neuronId != null) {
-            domainObjectIndexer.removeFromIndexById(neuronId.toString());
-        }
+        tmNeuronMetadataDao.removeTmNeuron(neuronId, subjectKey);
     }
 
-    @POST
-    @Path("/workspace/neuronTags")
     @ApiOperation(value = "Add or remove tags",
             notes = "Add or remove the given tags to a list of neurons"
     )
@@ -408,8 +409,10 @@ public class TmResource {
             @ApiResponse(code = 200, message = "Successfully bulk updated tags"),
             @ApiResponse(code = 500, message = "Error occurred while bulk updating tags")
     })
+    @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/neuronTags")
     public Response addNeuronTags(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("tags") final String tags,
                                   @ApiParam @QueryParam("tagState") final boolean tagState,

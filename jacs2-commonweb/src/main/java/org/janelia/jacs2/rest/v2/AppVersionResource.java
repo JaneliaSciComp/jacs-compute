@@ -45,12 +45,12 @@ public class AppVersionResource {
 
     @Inject private Logger logger;
 
-    @GET
-    @Produces({"text/plain", "application/json"})
     @ApiOperation(value = "Get application's version")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 500, message = "Error occurred") })
+    @GET
+    @Produces({"text/plain", "application/json"})
     public Response getApplicationVersion() {
         try (InputStream configStream = this.getClass().getResourceAsStream("/version.txt")) {
             String version = new String(ByteStreams.toByteArray(configStream));

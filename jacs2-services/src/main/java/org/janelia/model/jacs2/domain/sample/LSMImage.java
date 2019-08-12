@@ -2,7 +2,7 @@ package org.janelia.model.jacs2.domain.sample;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.model.jacs2.domain.Reference;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.jacs2.domain.support.SAGEAttribute;
 import org.janelia.model.jacs2.domain.support.SearchAttribute;
 

@@ -9,7 +9,7 @@ dependencies {
 
         // dependency injection
         JAVAX_ENTERPRISE_VERSION = "2.0.SP1"
-        WELD_VERSION = "3.0.5.Final"
+        WELD_VERSION = "3.1.1.Final"
         CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
         CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
         CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-core:${WELD_VERSION}"
@@ -23,10 +23,10 @@ dependencies {
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // database
-        MONGODB_VERSION = "3.9.0"
-        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver-legacy:${MONGODB_VERSION}"
-        MARIADB_DRIVER_LIB = "org.mariadb.jdbc:mariadb-java-client:2.3.0"
-        DBCP_LIB = "org.apache.commons:commons-dbcp2:2.1.1"
+        MONGODB_VERSION = "3.10.0"
+        MONGODB_DRIVER_LIB = "org.mongodb:mongo-java-driver:${MONGODB_VERSION}"
+        MARIADB_DRIVER_LIB = "org.mariadb.jdbc:mariadb-java-client:2.4.1"
+        DBCP_LIB = "com.zaxxer:HikariCP:3.3.1"
         JONGO_LIB = "org.jongo:jongo:1.3.0"
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
@@ -38,13 +38,14 @@ dependencies {
 
         // JAX-RS API
         JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.1"
-        JERSEY_VERSION = "2.27"
+        JERSEY_VERSION = "2.28"
         JAX_RS_JERSEY_CORE_LIB = "org.glassfish.jersey.core:jersey-common:${JERSEY_VERSION}"
         JAX_RS_JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
         JAX_RS_JERSEY_SERVER_LIB = "org.glassfish.jersey.core:jersey-server:${JERSEY_VERSION}"
         JAX_RS_JERSEY_MEDIA_LIB = "org.glassfish.jersey.media:jersey-media-multipart:${JERSEY_VERSION}"
         JAX_RS_JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_CONTAINERS_LIB = "org.glassfish.jersey.containers:jersey-container-servlet-core:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_CONTAINERS_CORE_LIB = "org.glassfish.jersey.containers:jersey-container-servlet-core:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_CONTAINER_LIB = "org.glassfish.jersey.containers:jersey-container-servlet:${JERSEY_VERSION}"
         JAX_RS_JERSEY_CDI_SERVLET_LIB = "org.glassfish.jersey.ext.cdi:jersey-cdi1x-servlet:${JERSEY_VERSION}"
         JAX_RS_JERSEY_INJECT_LIB = "org.glassfish.jersey.inject:jersey-hk2:${JERSEY_VERSION}"
         JAX_RS_JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-util:${JERSEY_VERSION}"
@@ -55,7 +56,7 @@ dependencies {
 
         // servlet engine
         JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:4.0.1"
-        UNDERTOW_VERSION = "2.0.16.Final"
+        UNDERTOW_VERSION = "2.0.21.Final"
         UNDERTOW_CORE_LIB = "io.undertow:undertow-core:${UNDERTOW_VERSION}"
         UNDERTOW_SERVLET_LIB = "io.undertow:undertow-servlet:${UNDERTOW_VERSION}"
 
@@ -71,12 +72,18 @@ dependencies {
         JACKSON_DATABIND_LIB = "com.fasterxml.jackson.core:jackson-databind:${JACKSON_VERSION}"
         JACKSON_DATATYPE_JODA_LIB = "com.fasterxml.jackson.datatype:jackson-datatype-joda:${JACKSON_VERSION}"
         JACKSON_JAXRS_JSON_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${JACKSON_VERSION}"
+        JACKSON_JAXRS_XML_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-xml-provider:${JACKSON_VERSION}"
 
         // Spark
         SPARK_LAUNCHER = "org.apache.spark:spark-launcher_2.11:2.3.1"
 
         // expressions
         JAVA_EXP_IMPL_LIB = "org.glassfish:javax.el:3.0.0"
+
+        // auth
+        JWT_API = 'io.jsonwebtoken:jjwt-api:0.10.5'
+        JWT_RUNTIME_IMPL = 'io.jsonwebtoken:jjwt-impl:0.10.5'
+        JWT_RUNTIME_JACKSON = 'io.jsonwebtoken:jjwt-jackson:0.10.5'
 
         // cron utils
         CRON_UTILS_LIB = "com.cronutils:cron-utils:7.0.1"
@@ -89,25 +96,28 @@ dependencies {
         HTTP_MIME_LIB = "org.apache.httpcomponents:httpmime:${HTTP_COMPONENTS_VERSION}"
 
         // Janelia libraries
-        JAVA_LSF_LIB = "org.janelia:java-lsf:1.0.0"
-        JACS_MODEL_VERSION = "2.0.0"
+        JAVA_LSF_LIB = "org.janelia:java-lsf:1.0.1"
+        JACS_MODEL_VERSION = "2.8.5"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
+        JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
+        JACS_MESSAGING_VERSION = "2.4.4"
+        JACS_MESSAGING_CORE_LIB = "org.janelia.jacs-messaging:jacs-messaging-core:${JACS_MESSAGING_VERSION}"
 
         // scientific computing
         JAMA_LIB = "gov.nist.math:jama:1.0.3"
 
         // testing
+        ASSERTJ_VERSION = "3.11.1"
         JUNIT_VERSION = "4.12"
         HAMCREST_VERSION = "2.0.0.0"
         MOCKITO_VERSION = "2.8.9"
         POWERMOCKITO_VERSION = "1.7.3"
-        ASSERTJ_VERSION = "3.6.1"
 
         JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
+        ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
         HAMCREST_LIB = "org.hamcrest:java-hamcrest:${HAMCREST_VERSION}"
         MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
-        ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
         POWERMOCK_JUNIT4_LIB = "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}"
         POWERMOCK_MOCKITO_API_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
     }
