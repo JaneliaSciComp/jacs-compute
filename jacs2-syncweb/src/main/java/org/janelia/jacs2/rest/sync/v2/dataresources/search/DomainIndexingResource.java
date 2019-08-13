@@ -35,9 +35,7 @@ import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.search.IndexingService;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.security.Group;
 import org.janelia.model.security.Subject;
-import org.janelia.model.security.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
