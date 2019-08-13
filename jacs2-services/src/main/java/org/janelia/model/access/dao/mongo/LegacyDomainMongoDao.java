@@ -1,9 +1,11 @@
 package org.janelia.model.access.dao.mongo;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,6 +18,7 @@ import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.mongodb.DBCursor;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -639,7 +642,9 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public Node removeReference(String subjectKey, Node nodeArg, Reference reference) throws Exception {
-        return dao.removeReference(subjectKey, nodeArg, reference);
+        Node updatedNode = dao.removeReference(subjectKey, nodeArg, reference);
+        domainObjectIndexer.updateDocsAncestors(ImmutableSet.of(reference.getTargetId()), updatedNode.getId());
+        return updatedNode;
     }
 
     @Override
@@ -658,33 +663,39 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public <T extends DomainObject> void deleteProperty(String ownerKey, Class<T> clazz, String propName) {
-        dao.deleteProperty(ownerKey, clazz, propName);
+        Collection<? extends DomainObject> affectedDomainObjects = dao.deleteProperty(ownerKey, clazz, propName);
+        domainObjectIndexer.indexDocumentStream(affectedDomainObjects.stream());
     }
 
     @Override
     public void addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean forceChildUpdates) throws Exception {
-        dao.addPermissions(ownerKey, className, id, permissionTemplate, forceChildUpdates);
+        Collection<? extends DomainObject> affectedDomainObjects = dao.addPermissions(ownerKey, className, id, permissionTemplate, forceChildUpdates);
+        domainObjectIndexer.indexDocumentStream(affectedDomainObjects.stream());
     }
 
     @Override
     public void setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception {
-        dao.setPermissions(ownerKey, className, id, grantee, read, write, forceChildUpdates);
+        DomainObject affectedDomainObject = dao.setPermissions(ownerKey, className, id, grantee, read, write, forceChildUpdates);
+        domainObjectIndexer.indexDocument(affectedDomainObject);
     }
 
     @Override
-    public void giveOwnerReadWritToAllFromCollection(String collectionName) {
+    public void giveOwnerReadWriteToAllFromCollection(String collectionName) {
         Class<?> baseClass = DomainUtils.getBaseClass(collectionName);
+        List<DomainObject> toIndex = new LinkedList<>();
         if (DomainObject.class.isAssignableFrom(baseClass)) {
             MongoCollection mongoCollection = dao.getCollectionByName(collectionName);
             Iterable<?> iterable = mongoCollection.find().as(baseClass);
             if (iterable != null) {
                 for (Object obj : iterable) {
                     DomainObject domainObject = (DomainObject) obj;
+                    toIndex.add(domainObject);
                     String ownerKey = domainObject.getOwnerKey();
                     if (StringUtils.isNotBlank(ownerKey)) {
                         mongoCollection.update("{_id:#}", domainObject.getId()).with("{$addToSet:{readers:#,writers:#}}", ownerKey, ownerKey);
                     }
                 }
+                domainObjectIndexer.indexDocumentStream(toIndex.stream());
             }
         }
     }

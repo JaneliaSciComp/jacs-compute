@@ -130,7 +130,7 @@ public class DbMaintainer {
                 .filter(collectionName -> !collectionName.equals("tmNeuron"))
                 .forEach(collectionName -> {
                     LOG.info("Refresh permissions on collection {}", collectionName);
-                    legacyDomainDao.giveOwnerReadWritToAllFromCollection(collectionName);
+                    legacyDomainDao.giveOwnerReadWriteToAllFromCollection(collectionName);
                 });
     }
 

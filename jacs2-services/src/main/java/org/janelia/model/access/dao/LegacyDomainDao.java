@@ -412,7 +412,7 @@ public interface LegacyDomainDao {
 
     void setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception;
 
-    void giveOwnerReadWritToAllFromCollection(String collectionName);
+    void giveOwnerReadWriteToAllFromCollection(String collectionName);
 
     void addPipelineStatusTransition(Long sampleId, PipelineStatus source, PipelineStatus target, String orderNo,
                                      String process, Map<String, Object> parameters) throws Exception;
