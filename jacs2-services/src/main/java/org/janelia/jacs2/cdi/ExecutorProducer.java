@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.slf4j.Logger;
 
 @ApplicationScoped
@@ -42,6 +43,22 @@ public class ExecutorProducer {
     }
 
     public void shutdownExecutor(@Disposes @Default ExecutorService executorService) throws InterruptedException {
+        logger.info("Shutting down {}", executorService);
+        executorService.shutdown();
+        executorService.awaitTermination(10, TimeUnit.MINUTES);
+    }
+
+    @ApplicationScoped
+    @Produces @AsyncIndex
+    public ExecutorService createIndexingExecutorService() {
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("JACS-INDEXING-%03d")
+                .setDaemon(true)
+                .build();
+        return Executors.newCachedThreadPool(threadFactory);
+    }
+
+    public void shutdownIndexingExecutor(@Disposes @AsyncIndex ExecutorService executorService) throws InterruptedException {
         logger.info("Shutting down {}", executorService);
         executorService.shutdown();
         executorService.awaitTermination(10, TimeUnit.MINUTES);

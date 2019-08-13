@@ -1,5 +1,7 @@
 package org.janelia.jacs2.cdi;
 
+import java.util.concurrent.ExecutorService;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
@@ -14,19 +16,15 @@ import org.janelia.model.access.search.AsyncDomainObjectIndexer;
 import org.janelia.model.domain.DomainObjectGetter;
 import org.janelia.model.domain.ontology.DomainAnnotationGetter;
 import org.janelia.model.domain.workspace.NodeAncestorsGetter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class IndexingProducer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(IndexingProducer.class);
-
     @AsyncIndex
     @ApplicationScoped
     @Produces
-    public DomainObjectIndexer createDomainObjectIndexer(@AsyncIndex MessageSender mesageSender) {
-        return new AsyncDomainObjectIndexer(mesageSender);
+    public DomainObjectIndexer createDomainObjectIndexer(@AsyncIndex MessageSender mesageSender, @AsyncIndex ExecutorService indexingExecutor) {
+        return new AsyncDomainObjectIndexer(mesageSender, indexingExecutor);
     }
 
     @Produces
