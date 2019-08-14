@@ -2,8 +2,8 @@ package org.janelia.jacs2.rest.sync.v2.dataresources.search;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -22,7 +22,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -34,12 +33,14 @@ import org.glassfish.jersey.server.ManagedAsync;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.search.IndexingService;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.security.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Api(value = "Janelia Workstation Domain Data")
+@ApplicationScoped
 @Path("/data")
 public class DomainIndexingResource {
     private static final Logger LOG = LoggerFactory.getLogger(DomainIndexingResource.class);
@@ -47,10 +48,8 @@ public class DomainIndexingResource {
     @Inject
     private IndexingService indexingService;
 
-    private static final ExecutorService ASYNC_TASK_EXECUTOR = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
-            .setNameFormat("JACS-INDEXING-%d")
-            .setDaemon(true)
-            .build());
+    @Inject @AsyncIndex
+    private ExecutorService asyncTaskExecutor;
 
     @ApiOperation(value = "Add document to index")
     @ApiResponses(value = {
@@ -114,7 +113,7 @@ public class DomainIndexingResource {
     public void refreshDocumentsIndex(@QueryParam("clearIndex") Boolean clearIndex,
                                       @Context ContainerRequestContext containerRequestContext,
                                       @Suspended AsyncResponse asyncResponse) {
-        ASYNC_TASK_EXECUTOR.submit(() -> {
+        asyncTaskExecutor.submit(() -> {
             LOG.trace("Start updateAllDocumentsIndex()");
             try {
                 Subject authorizedSubject = JacsSecurityContextHelper.getAuthorizedSubject(containerRequestContext, Subject.class);

@@ -39,6 +39,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import java.lang.annotation.Annotation;
+import java.util.concurrent.ExecutorService;
 
 public class TestResourceBinder extends AbstractBinder {
     static class PropertyResolver implements InjectionResolver<PropertyValue> {
@@ -108,6 +109,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getIndexingService()).to(IndexingService.class);
         bind(dependenciesProducer.getSampleDataService()).to(SampleDataService.class);
         bind(dependenciesProducer.getSageDataService()).to(SageDataService.class);
+        bind(dependenciesProducer.getIndexingExecutorService()).to(ExecutorService.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getDbMaintainer()).to(DbMaintainer.class);
         bind(PropertyResolver.class)
                 .to(new TypeLiteral<InjectionResolver<PropertyValue>>() {})

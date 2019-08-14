@@ -2,6 +2,7 @@ package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.util.List;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
         }
 )
 @RequireAuthentication
+@ApplicationScoped
 @Path("/data")
 public class SampleDataResource {
     private static final Logger LOG = LoggerFactory.getLogger(SampleDataResource.class);

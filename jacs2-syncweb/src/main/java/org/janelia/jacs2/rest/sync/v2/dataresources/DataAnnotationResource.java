@@ -19,6 +19,7 @@ import org.janelia.model.domain.ontology.Annotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -48,6 +49,7 @@ import java.util.List;
         }
 )
 @RequireAuthentication
+@ApplicationScoped
 @Path("/data")
 public class DataAnnotationResource {
     private static final Logger LOG = LoggerFactory.getLogger(DataAnnotationResource.class);

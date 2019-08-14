@@ -16,6 +16,7 @@ import org.janelia.model.domain.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 
 @Api(value = "Janelia Workstation Domain Data")
 @RequireAuthentication
+@ApplicationScoped
 @Path("/data")
 public class DomainSearchResource {
     private static final Logger LOG = LoggerFactory.getLogger(DomainSearchResource.class);
