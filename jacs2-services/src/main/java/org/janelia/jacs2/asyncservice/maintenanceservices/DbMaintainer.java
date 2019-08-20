@@ -101,7 +101,16 @@ public class DbMaintainer {
 
         legacyDomainDao.ensureCollectionIndex("cdmipImage",
                 asList(
-                        new DaoIndex("{filepath:1}", "{unique:true}")
+                        new DaoIndex("{filepath:1}", "{unique:true}"),
+                        new DaoIndex("{sampleRef:1}"),
+                        new DaoIndex("{libraries:1}")
+                ));
+
+        legacyDomainDao.ensureCollectionIndex("cdmipMask",
+                asList(
+                        new DaoIndex("{filepath:1}", "{unique:true}"),
+                        new DaoIndex("{sourceSampleRef:1}"),
+                        new DaoIndex("{alignmentSpace:1}")
                 ));
 
         legacyDomainDao.ensureCollectionIndex("cdmipLibrary",
