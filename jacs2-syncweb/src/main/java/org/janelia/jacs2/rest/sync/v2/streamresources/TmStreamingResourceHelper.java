@@ -14,6 +14,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
+import com.google.common.io.ByteStreams;
+
 class TmStreamingResourceHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(TmStreamingResourceHelper.class);
@@ -51,15 +53,16 @@ class TmStreamingResourceHelper {
                                     tileKey, zoomParam, axisParam, xParam, yParam, zParam, baseFolderName);
                             return renderedVolumeLoader.loadSlice(rvl, rvm, tileKey);
                         }))
-                .map(sliceImageBytes -> {
-                    StreamingOutput sliceImageStream = output -> {
-                        output.write(sliceImageBytes);
+                .filter(sc -> sc.getStream() != null)
+                .map(sc -> {
+                    StreamingOutput outputStreaming = output -> {
+                        ByteStreams.copy(sc.getStream(), output);
                     };
-                    return sliceImageStream;
+                    return Response
+                            .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
+                            .header("Content-Length", sc.getSize())
+                            .build();
                 })
-                .map(sliceImageStream -> Response
-                        .ok(sliceImageStream, MediaType.APPLICATION_OCTET_STREAM)
-                        .build())
                 .orElseGet(() -> Response.status(Response.Status.NO_CONTENT).build());
     }
 

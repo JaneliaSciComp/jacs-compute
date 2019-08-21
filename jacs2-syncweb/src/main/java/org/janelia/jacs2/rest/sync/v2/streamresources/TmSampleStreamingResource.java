@@ -13,6 +13,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
+import com.google.common.io.ByteStreams;
+
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -124,14 +126,15 @@ public class TmSampleStreamingResource {
                 rvl,
                 xVoxel, yVoxel, zVoxel)
                 .map(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz)
-                        .map(rawImageBytes -> {
-                            StreamingOutput rawImageBytesStream = output -> {
-                                output.write(rawImageBytes);
+                        .filter(sc -> sc.getStream() != null)
+                        .map(sc -> {
+                            StreamingOutput outputStreaming = output -> {
+                                ByteStreams.copy(sc.getStream(), output);
                             };
                             return Response
-                                    .ok(rawImageBytesStream, MediaType.APPLICATION_OCTET_STREAM)
+                                    .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
+                                    .header("Content-Length", sc.getSize())
                                     .build();
-
                         })
                         .orElseGet(() -> Response
                                 .noContent()
