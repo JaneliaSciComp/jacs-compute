@@ -206,7 +206,7 @@ public class TmSampleResource {
                     .build();
         }
         String authSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath, subjectKey, null);
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(samplePath, subjectKey, null);
         Map<String, Object> constants = getConstants(rvl);
         if (constants==null) {
             LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath);
@@ -245,7 +245,7 @@ public class TmSampleResource {
         }
 
         String subjectKey = query.getSubjectKey();
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath, subjectKey, null);
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(samplePath, subjectKey, null);
 
         Map<String, Object> constants = getConstants(rvl);
         if (constants==null) {
@@ -277,8 +277,7 @@ public class TmSampleResource {
             if (!StringUtils.isBlank(rawVolData.getPath())) {
                 LOG.info("Setting RAW data path to {}", rawVolData.getPath());
                 DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, rawVolData.getPath());
-            }
-            else {
+            } else {
                 LOG.warn("Could not find RAW directory in tilebase.cache.yml");
             }
         }

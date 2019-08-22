@@ -38,7 +38,7 @@ class TmStreamingResourceHelper {
                     .build();
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(baseFolderName, subjectKey, null);
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(baseFolderName, subjectKey, null);
         return renderedVolumeLoader.loadVolume(rvl)
                 .flatMap(rvm -> rvm.getTileInfo(axisParam)
                         .map(tileInfo -> TileKey.fromRavelerTileCoord(

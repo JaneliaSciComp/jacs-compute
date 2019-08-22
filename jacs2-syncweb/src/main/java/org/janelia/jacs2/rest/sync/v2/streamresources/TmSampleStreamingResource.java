@@ -69,7 +69,7 @@ public class TmSampleStreamingResource {
                     .entity(new ErrorResponse("No rendering path set for " + sampleId))
                     .build();
         }
-        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(filepath,
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getJadeVolumeLocation(filepath,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null))
                 .map(rv -> Response.ok(rv).build())
@@ -119,7 +119,7 @@ public class TmSampleStreamingResource {
         int sy = syParam == null ? -1 : syParam;
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(filepath,
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(filepath,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null);
         return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(

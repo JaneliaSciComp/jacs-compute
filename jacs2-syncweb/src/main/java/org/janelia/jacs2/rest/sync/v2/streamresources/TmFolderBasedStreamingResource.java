@@ -64,7 +64,7 @@ public class TmFolderBasedStreamingResource {
                     .build();
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName,
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getJadeVolumeLocation(baseFolderName,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null))
                 .map(rv -> Response.ok(rv).build())
@@ -100,7 +100,7 @@ public class TmFolderBasedStreamingResource {
         int zVoxel = zVoxelParam == null ? 0 : zVoxelParam;
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
         return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
-                renderedVolumeLocationFactory.getVolumeLocation(baseFolderName,
+                renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(baseFolderName,
                         JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                         null),
                 xVoxel, yVoxel, zVoxel)
@@ -145,7 +145,7 @@ public class TmFolderBasedStreamingResource {
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(baseFolderName,
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(baseFolderName,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null);
         return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(

@@ -19,6 +19,7 @@ import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.util.MatrixUtilities;
 import org.janelia.model.util.TmNeuronUtils;
 import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,8 +102,12 @@ public class SWCService {
             }
         });
         String sampleFilepath = tmSample.getLargeVolumeOctreeFilepath();
-        RenderedVolumeMetadata renderedVolumeMetadata = renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(sampleFilepath, workspaceOwnerKey, null))
-                .orElseThrow(() -> new IllegalStateException("Error loading volume metadata for sample " + sampleId));
+        RenderedVolumeLocation volumeLocation = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(sampleFilepath, workspaceOwnerKey, null);
+        RenderedVolumeMetadata renderedVolumeMetadata = renderedVolumeLoader.loadVolume(volumeLocation)
+                .orElseThrow(() -> {
+                    LOG.error("Could not load volume metadata for sample {} from {}", sampleId, volumeLocation.getVolumeLocation());
+                    return new IllegalStateException("Error loading volume metadata for sample " + sampleId + " from " + volumeLocation.getVolumeLocation());
+                });
 
         VectorOperator externalToInternalConverter = new JamaMatrixVectorOperator(
                 MatrixUtilities.buildMicronToVox(renderedVolumeMetadata.getMicromsPerVoxel(), renderedVolumeMetadata.getOriginVoxel()));

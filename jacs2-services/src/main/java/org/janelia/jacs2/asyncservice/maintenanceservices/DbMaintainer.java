@@ -182,7 +182,7 @@ public class DbMaintainer {
 
                 // Find raw data
                 try {
-                    RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(filepath, sample.getOwnerKey(), null);
+                    RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(filepath, sample.getOwnerKey(), null);
                     RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
                     RawVolData rawVolData = loader.loadRawVolumeData(rvl);
                     if (rawVolData != null && !StringUtils.isBlank(rawVolData.getPath())) {
