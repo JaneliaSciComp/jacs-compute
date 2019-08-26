@@ -21,10 +21,6 @@ import static io.undertow.servlet.Servlets.servlet;
  */
 public abstract class AbstractServicesApp {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractServicesApp.class);
-
-    private Undertow server;
-
     static <A extends AppArgs> A parseAppArgs(String[] args, A appArgs) {
         JCommander cmdline = new JCommander(appArgs);
         cmdline.parse(args);

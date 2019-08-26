@@ -326,12 +326,12 @@ public class TmSampleResource {
         // read and process transform.txt file in Sample path
         // this is intended to be a one-time process and data returned will be stored in TmSample upon creation
         return rvl.getTransformData()
-                .map(streamableTransform -> {
+                .consume(transformStream -> {
                     try {
                         Map<String, Object> constants = new HashMap<>();
                         Map<String, Integer> origin = new HashMap<>();
                         Map<String, Double> scaling = new HashMap<>();
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(streamableTransform.getStream()));
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(transformStream));
                         String line;
                         Map<String, Double> values = new HashMap<>();
                         while ((line = reader.readLine()) != null) {
@@ -355,10 +355,10 @@ public class TmSampleResource {
                         LOG.error("Error reading transform constants", e);
                         return null;
                     } finally {
-                        IOUtils.closeQuietly(streamableTransform);
+                        IOUtils.closeQuietly(transformStream);
                     }
-                })
-                .orElse(null);
+                }, (constantsMap, l) -> (long) constantsMap.size())
+                .getContent();
     }
 
     private void populateConstants(TmSample sample, Map<String, Object> constants) {

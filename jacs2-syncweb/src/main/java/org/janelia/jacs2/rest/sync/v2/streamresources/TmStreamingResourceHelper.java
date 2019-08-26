@@ -6,6 +6,7 @@ import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.rendering.Coordinate;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.janelia.rendering.RenderedVolumeLocation;
+import org.janelia.rendering.Streamable;
 import org.janelia.rendering.TileKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +40,7 @@ class TmStreamingResourceHelper {
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
         RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(baseFolderName, subjectKey, null);
-        return renderedVolumeLoader.loadVolume(rvl)
+        Streamable<byte[]> volumeSlice = renderedVolumeLoader.loadVolume(rvl)
                 .flatMap(rvm -> rvm.getTileInfo(axisParam)
                         .map(tileInfo -> TileKey.fromRavelerTileCoord(
                                 xParam,
@@ -48,22 +49,23 @@ class TmStreamingResourceHelper {
                                 zoomParam,
                                 axisParam,
                                 tileInfo))
-                        .flatMap(tileKey -> {
+                        .map(tileKey -> {
                             LOG.debug("Load tile {} ({}, {}, {}, {}, {}) from {}",
                                     tileKey, zoomParam, axisParam, xParam, yParam, zParam, baseFolderName);
                             return renderedVolumeLoader.loadSlice(rvl, rvm, tileKey);
                         }))
-                .filter(sc -> sc.getStream() != null)
-                .map(sc -> {
-                    StreamingOutput outputStreaming = output -> {
-                        ByteStreams.copy(sc.getStream(), output);
-                    };
-                    return Response
-                            .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
-                            .header("Content-Length", sc.getSize())
-                            .build();
-                })
-                .orElseGet(() -> Response.status(Response.Status.NO_CONTENT).build());
+                .orElse(Streamable.empty());
+        if (volumeSlice.getContent() == null) {
+            return Response.status(Response.Status.NO_CONTENT).build();
+        } else {
+            StreamingOutput outputStreaming = output -> {
+                output.write(volumeSlice.getContent());
+            };
+            return Response
+                    .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Length", volumeSlice.getSize())
+                    .build();
+        }
     }
 
 }

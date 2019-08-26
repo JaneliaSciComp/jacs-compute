@@ -1,4 +1,4 @@
-package org.janelia.jacs2.rest.sync.v2;
+package org.janelia.jacs2.rest.v2;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.GET;
@@ -7,10 +7,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 @ApplicationScoped
-@Produces("application/json")
 @Path("/")
 public class StatusResource {
     @GET
+    @Produces({"text/plain"})
     public Response getStatus() {
         return Response
                 .ok("OK")

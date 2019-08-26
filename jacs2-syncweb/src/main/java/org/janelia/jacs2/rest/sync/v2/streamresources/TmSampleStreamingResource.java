@@ -29,6 +29,7 @@ import org.janelia.rendering.RenderedVolumeLoader;
 import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeMetadata;
 import org.janelia.rendering.RenderingType;
+import org.janelia.rendering.Streamable;
 import org.slf4j.Logger;
 
 @ApplicationScoped
@@ -122,28 +123,25 @@ public class TmSampleStreamingResource {
         RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(filepath,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null);
-        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
+        Streamable<byte[]> rawImageContent = renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
                 rvl,
                 xVoxel, yVoxel, zVoxel)
-                .map(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz)
-                        .filter(sc -> sc.getStream() != null)
-                        .map(sc -> {
-                            StreamingOutput outputStreaming = output -> {
-                                ByteStreams.copy(sc.getStream(), output);
-                            };
-                            return Response
-                                    .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
-                                    .header("Content-Length", sc.getSize())
-                                    .build();
-                        })
-                        .orElseGet(() -> Response
-                                .noContent()
-                                .build()))
-                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("Error retrieving raw tile file info for sample " + sampleId + " with ("
-                                + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))
-                        .build())
-                ;
+                .map(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz))
+                .orElse(Streamable.empty());
+        if (rawImageContent.getContent() == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Error retrieving raw tile file info for sample " + sampleId + " with ("
+                            + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))
+                    .build();
+        } else {
+            StreamingOutput outputStreaming = output -> {
+                output.write(rawImageContent.getContent());
+            };
+            return Response
+                    .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Length", rawImageContent.getSize())
+                    .build();
+        }
     }
 
     @ApiOperation(value = "Get sample tile", notes = "Returns the requested TM sample tile at the specified zoom level")
