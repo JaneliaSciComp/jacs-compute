@@ -319,8 +319,7 @@ public class LSFSparkClusterLauncher {
 
     private List<String> createNativeSpec(String billingAccount, String nodeType, int userSpecifiedClusterTimeoutInMins) {
         List<String> spec = new ArrayList<>();
-        spec.add("-a ");
-        spec.add(String.format("%s(%s,%s)", lsfApplication, nodeType, sparkVersion)); // spark32(master,2.3.1) or spark32(worker,2.3.1)
+        spec.add(String.format("-a %s(%s,%s)", lsfApplication, nodeType, sparkVersion)); // spark32(master,2.3.1) or spark32(worker,2.3.1)
         if (StringUtils.isNotBlank(lsfAdditionalSpec)) {
             spec.addAll(Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(lsfAdditionalSpec));
         }
