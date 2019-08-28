@@ -54,7 +54,7 @@ public class DbMaintainer {
                         new DaoIndex("{writers:1,_id:1}"),
                         new DaoIndex("{readers:1,_id:1}"),
                         new DaoIndex("{name:1}"))
-                ));
+        ));
 
         legacyDomainDao.ensureCollectionIndex("annotation",
                 asList(
@@ -148,13 +148,13 @@ public class DbMaintainer {
      * keep the flags updated with the state of the filesystem.
      * TODO: this also performs surreptitious migration to the new schema. Can be removed later once all TmSamples
      * are migrated.
+     *
      * @throws Exception
      */
     void refreshTmSampleSync() throws Exception {
         // Walk all TmSamples in the database
         for (TmSample sample : legacyDomainDao.getDomainObjects(null, TmSample.class)) {
             boolean dirty = migrateTmSample(sample);
-            dirty |= refreshTmSampleSync(sample);
             if (dirty) {
                 // Persist the sample if anything changed
                 legacyDomainDao.save(sample.getOwnerKey(), sample);
@@ -165,92 +165,61 @@ public class DbMaintainer {
     /**
      * Migrates the given TmSample from the deprecated filepath attribute to the 3-way filepaths.
      * Returns true if the TmSample has changed and should be persisted.
+     *
      * @param sample
      * @return true if changes were made
      */
     private boolean migrateTmSample(TmSample sample) {
 
-        if (sample.getFiles().isEmpty() && sample.getFilepath()!=null) {
+        if (sample.getFiles().isEmpty() && StringUtils.isNotBlank(sample.getFilepath())) {
             // Forward migration
             LOG.info("Performing migration on {}", sample);
 
-            String filepath = sample.getFilepath();
-            sample.setLargeVolumeOctreeFilepath(filepath);
-            LOG.info("  Setting Octree data path to {}", filepath);
+            String sampleFilepath = sample.getFilepath();
+            sample.setLargeVolumeOctreeFilepath(sampleFilepath);
+            LOG.info("  Setting Octree data path to {}", sampleFilepath);
 
-            if (exists(filepath)) {
-
-                // Find raw data
-                try {
-                    RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(filepath, sample.getOwnerKey(), null);
-                    RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
-                    RawVolData rawVolData = loader.loadRawVolumeData(rvl);
-                    if (rawVolData != null && !StringUtils.isBlank(rawVolData.getPath())) {
-                        if (exists(rawVolData.getPath())) {
-                            LOG.info("  Setting RAW data path to {}", rawVolData.getPath());
-                            DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, rawVolData.getPath());
-                        } else {
-                            LOG.info("  Directory listed in tilebase.cache.yml does not exist: {}", rawVolData.getPath());
-                        }
+            // we use jade location because that's how these paths will be typically accessed
+            RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getJadeVolumeLocation(sampleFilepath, sample.getOwnerKey(), null);
+            // Find raw data
+            try {
+                RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
+                RawVolData rawVolData = loader.loadRawVolumeData(rvl);
+                if (rawVolData != null && !StringUtils.isBlank(rawVolData.getPath())) {
+                    // verify that the location of the raw tiles is accessible
+                    if (rvl.checkContentAtAbsolutePath(rawVolData.getPath())) {
+                        LOG.info("  Setting RAW data path to {}", rawVolData.getPath());
+                        DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, rawVolData.getPath());
                     } else {
-                        LOG.info("  Could not find RAW directory in tilebase.cache.yml");
+                        LOG.warn("  Directory listed in tilebase.cache.yml {} does not exist or is not accessible using {}", rawVolData.getPath(), rvl.getConnectionURI());
                     }
+                } else {
+                    LOG.info("  Could not find RAW directory in tilebase.cache.yml");
                 }
-                catch (Exception e) {
-                    LOG.info("  Error encountered while looking for raw data at "+filepath, e);
-                }
-            }
-            else {
-                LOG.warn("  Could not find Octree directory at {}", filepath);
+            } catch (Exception e) {
+                LOG.info("  Error encountered while looking for raw data at {}", sampleFilepath, e);
             }
 
             // Find KTX octree at relative location
-            String ktxDir = Paths.get(filepath, "ktx").toString();
-            if (exists(ktxDir)) {
-                LOG.info("  Setting KTX data path to {}", ktxDir);
-                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxDir);
-            }
-            else {
-                LOG.warn("  Could not find KTX directory at {}", ktxDir);
+            String ktxRelativeDir = "ktx";
+            String ktxFulPath = StringUtils.appendIfMissing(sampleFilepath, "/") + ktxRelativeDir;
+            if (rvl.checkContentAtRelativePath(ktxRelativeDir)) {
+                LOG.info("  Setting KTX data path to {}", ktxFulPath);
+                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFulPath);
+            } else {
+                LOG.warn("  Could not find KTX directory for sample {} at {}", sample, ktxFulPath);
             }
 
             return true;
-        }
 
-        return false;
-    }
-
-    /**
-     * Refresh the filesystemSync parameter for the given TmSample.
-     * Returns true if the TmSample has changed and should be persisted.
-     * @param sample
-     * @return true if changes were made
-     */
-    public boolean refreshTmSampleSync(TmSample sample) {
-
-        LOG.info("Checking {}", sample);
-
-        boolean sync = true;
-        for (String filepath : sample.getFiles().values()) {
-            boolean filepathExists = exists(filepath);
-            LOG.info("  {} {}", filepath, filepathExists?"exists":"does not exist");
-            if (!filepathExists) {
-                sync = false;
-            }
-        }
-
-        if (sample.isFilesystemSync()!=sync) {
-            LOG.info("  Updating {} with sync={}", sample, sync);
-            sample.setFilesystemSync(sync);
+        } else if (StringUtils.isBlank(sample.getFilepath())) {
+            LOG.warn("  There is no information where the sample rendered volume is located in order to perform the migration of sample {}", sample);
+            return false;
+        } else {
+            // most likely the sample has been migrated
+            LOG.info("  Sample {} has already been migrated - currently set files are {}", sample, sample.getFiles());
             return true;
         }
-
-        return false;
     }
 
-    private boolean exists(String filepath) {
-        // TODO: this existence check should use JADE
-        File file = new File(filepath);
-        return file.exists();
-    }
 }

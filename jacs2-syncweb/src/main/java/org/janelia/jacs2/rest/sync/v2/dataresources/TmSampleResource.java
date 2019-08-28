@@ -38,7 +38,6 @@ import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.maintenanceservices.DbMaintainer;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
@@ -91,8 +90,6 @@ public class TmSampleResource {
     private TmSampleDao tmSampleDao;
     @Inject
     private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
-    @Inject
-    private DbMaintainer dbMaintainer;
 
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
@@ -302,8 +299,6 @@ public class TmSampleResource {
     @Path("sample")
     public TmSample updateTmSample(@ApiParam DomainQuery query) {
         LOG.trace("updateTmSample({})", query);
-        TmSample sample = query.getDomainObjectAs(TmSample.class);
-        dbMaintainer.refreshTmSampleSync(sample);
         return tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
     }
 
