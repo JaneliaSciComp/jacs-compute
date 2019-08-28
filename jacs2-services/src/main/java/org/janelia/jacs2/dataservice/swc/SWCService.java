@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.swc;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
+import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.IdSource;
@@ -34,7 +35,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class SWCService {
 
@@ -123,9 +127,40 @@ public class SWCService {
                         swcPath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(swcFolderName)).toString();
                     }
                     LOG.info("List swc entries on {} : {}", vsInfo, swcPath);
-                    return storageService.listStorageContent(vsInfo.getVolumeStorageURI(), swcPath, null, null, 3).stream();
+
+                    Spliterator<Stream<StorageEntryInfo>> storageContentSupplier = new Spliterator<Stream<StorageEntryInfo>>() {
+                        long offset = 0L;
+                        long defaultLength = 32768L;
+                        @Override
+                        public boolean tryAdvance(Consumer<? super Stream<StorageEntryInfo>> action) {
+                            List<StorageEntryInfo> storageEntries = storageService.listStorageContent(vsInfo.getVolumeStorageURI(), swcPath, null, null, 3, offset, defaultLength);
+                            if (storageEntries.isEmpty()) {
+                                return false;
+                            } else {
+                                action.accept(storageEntries.stream());
+                                return true;
+                            }
+                        }
+
+                        @Override
+                        public Spliterator<Stream<StorageEntryInfo>> trySplit() {
+                            return null;
+                        }
+
+                        @Override
+                        public long estimateSize() {
+                            return Long.MAX_VALUE;
+                        }
+
+                        @Override
+                        public int characteristics() {
+                            return ORDERED;
+                        }
+                    };
+                    return StreamSupport.stream(storageContentSupplier, true);
                 })
                 .orElseGet(() -> Stream.of())
+                .flatMap(s -> s)
                 .filter(storageEntryInfo -> storageEntryInfo.getEntryRelativePath().endsWith(".swc"))
                 .forEach(swcEntry ->{
                     LOG.info("Read swcEntry {} from {}", swcEntry, swcEntry.getEntryURL());
