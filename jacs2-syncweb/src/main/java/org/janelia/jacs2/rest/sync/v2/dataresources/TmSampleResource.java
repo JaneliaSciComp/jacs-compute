@@ -1,9 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,7 +49,6 @@ import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.rendering.RenderedVolumeLoader;
-import org.janelia.rendering.RenderedVolumeLoaderImpl;
 import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.ymlrepr.RawVolData;
 import org.slf4j.Logger;
@@ -88,6 +85,8 @@ public class TmSampleResource {
     @AsyncIndex
     @Inject
     private TmSampleDao tmSampleDao;
+    @Inject
+    private RenderedVolumeLoader renderedVolumeLoader;
     @Inject
     private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
 
@@ -232,20 +231,13 @@ public class TmSampleResource {
         TmSample sample = query.getDomainObjectAs(TmSample.class);
 
         String samplePath = sample.getLargeVolumeOctreeFilepath();
-        LOG.info("Creating new TmSample with path {}", samplePath);
-
-        File octreeDir = new File(samplePath);
-        if (!octreeDir.exists()) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new ErrorResponse("Directory does not exist: " + octreeDir))
-                    .build();
-        }
+        LOG.info("Creating new TmSample {} with path {}", sample.getName(), samplePath);
 
         String subjectKey = query.getSubjectKey();
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(samplePath, subjectKey, null);
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getJadeVolumeLocation(samplePath, subjectKey, null);
 
         Map<String, Object> constants = getConstants(rvl);
-        if (constants==null) {
+        if (constants == null) {
             LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath);
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Error reading transform.txt from " + samplePath))
@@ -255,27 +247,25 @@ public class TmSampleResource {
         populateConstants(sample, constants);
         LOG.info("Found {} levels in octree", sample.getNumImageryLevels());
 
-        if (sample.getLargeVolumeKTXFilepath()==null) {
-            LOG.info("KTX data path not provided. Attempting to find it relative to the octree...");
-            File ktxDir = Paths.get(samplePath, "ktx").toFile();
-            if (ktxDir.exists()) {
-                LOG.info("Setting KTX data path to {}", ktxDir);
-                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxDir.getAbsolutePath());
-            }
-            else {
-                LOG.warn("Could not find KTX directory at {}", ktxDir);
+        if (StringUtils.isBlank(sample.getLargeVolumeKTXFilepath())) {
+            LOG.info("KTX data path not provided for {}. Attempting to find it relative to the octree...", sample.getName());
+            String ktxFullPath = StringUtils.appendIfMissing(samplePath, "/") + "ktx";
+            if (rvl.checkContentAtRelativePath("ktx")) {
+                LOG.info("Setting KTX data path to {}", ktxFullPath);
+                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
+            } else {
+                LOG.warn("Could not find KTX directory for sample {} at {}", sample.getName(), ktxFullPath);
             }
         }
 
-        if (DomainUtils.getFilepath(sample, FileType.TwoPhotonAcquisition)==null) {
-            LOG.info("RAW data path not provided. Attempting to read it from the tilebase.cache.yml...");
-            RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
-            RawVolData rawVolData = loader.loadRawVolumeData(rvl);
-            if (!StringUtils.isBlank(rawVolData.getPath())) {
+        if (StringUtils.isBlank(DomainUtils.getFilepath(sample, FileType.TwoPhotonAcquisition))) {
+            LOG.info("RAW data path not provided for {}. Attempting to read it from the tilebase.cache.yml...", sample.getName());
+            RawVolData rawVolData = renderedVolumeLoader.loadRawVolumeData(rvl);
+            if (rawVolData != null && StringUtils.isNotBlank(rawVolData.getPath())) {
                 LOG.info("Setting RAW data path to {}", rawVolData.getPath());
                 DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, rawVolData.getPath());
             } else {
-                LOG.warn("Could not find RAW directory in tilebase.cache.yml");
+                LOG.warn("Could not find RAW directory {} in tilebase.cache.yml for sample {}", samplePath, sample.getName());
             }
         }
 

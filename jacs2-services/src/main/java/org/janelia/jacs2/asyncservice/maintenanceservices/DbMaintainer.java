@@ -1,8 +1,5 @@
 package org.janelia.jacs2.asyncservice.maintenanceservices;
 
-import java.io.File;
-import java.nio.file.Paths;
-
 import javax.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
@@ -201,13 +198,12 @@ public class DbMaintainer {
             }
 
             // Find KTX octree at relative location
-            String ktxRelativeDir = "ktx";
-            String ktxFulPath = StringUtils.appendIfMissing(sampleFilepath, "/") + ktxRelativeDir;
-            if (rvl.checkContentAtRelativePath(ktxRelativeDir)) {
-                LOG.info("  Setting KTX data path to {}", ktxFulPath);
-                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFulPath);
+            String ktxFullPath = StringUtils.appendIfMissing(sampleFilepath, "/") + "ktx";
+            if (rvl.checkContentAtRelativePath("ktx")) {
+                LOG.info("  Setting KTX data path to {}", ktxFullPath);
+                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
             } else {
-                LOG.warn("  Could not find KTX directory for sample {} at {}", sample, ktxFulPath);
+                LOG.warn("  Could not find KTX directory for sample {} at {}", sample, ktxFullPath);
             }
 
             return true;
