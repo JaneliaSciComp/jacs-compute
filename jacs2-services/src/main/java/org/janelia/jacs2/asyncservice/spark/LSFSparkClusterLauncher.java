@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobFuture;
@@ -318,9 +319,10 @@ public class LSFSparkClusterLauncher {
 
     private List<String> createNativeSpec(String billingAccount, String nodeType, int userSpecifiedClusterTimeoutInMins) {
         List<String> spec = new ArrayList<>();
-        spec.add("-a " + String.format("%s(%s,%s)", lsfApplication, nodeType, sparkVersion)); // spark32(master,2.3.1) or spark32(worker,2.3.1)
-        if (lsfAdditionalSpec!=null) {
-            spec.add(lsfAdditionalSpec);
+        spec.add("-a ");
+        spec.add(String.format("%s(%s,%s)", lsfApplication, nodeType, sparkVersion)); // spark32(master,2.3.1) or spark32(worker,2.3.1)
+        if (StringUtils.isNotBlank(lsfAdditionalSpec)) {
+            spec.addAll(Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(lsfAdditionalSpec));
         }
         int sparkClusterTimeoutInMins;
         if (userSpecifiedClusterTimeoutInMins > 0) {
