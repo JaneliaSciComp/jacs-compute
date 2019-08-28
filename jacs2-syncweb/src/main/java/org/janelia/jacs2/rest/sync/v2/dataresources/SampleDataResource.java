@@ -1,7 +1,12 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -24,7 +29,16 @@ import io.swagger.annotations.SwaggerDefinition;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.domain.DomainUtils;
+import org.janelia.model.domain.enums.FileType;
+import org.janelia.model.domain.interfaces.HasRelativeFiles;
+import org.janelia.model.domain.sample.FileGroup;
 import org.janelia.model.domain.sample.LSMImage;
+import org.janelia.model.domain.sample.ObjectiveSample;
+import org.janelia.model.domain.sample.Sample;
+import org.janelia.model.domain.sample.SamplePipelineRun;
+import org.janelia.model.domain.sample.SamplePostProcessingResult;
+import org.janelia.model.domain.sample.SampleProcessingResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +58,7 @@ import org.slf4j.LoggerFactory;
         }
 )
 @RequireAuthentication
+@ApplicationScoped
 @Path("/data")
 public class SampleDataResource {
     private static final Logger LOG = LoggerFactory.getLogger(SampleDataResource.class);
@@ -93,4 +108,235 @@ public class SampleDataResource {
         }
     }
 
+    @ApiOperation(value = "Gets the secondary data files for an LSM within a sample",
+            notes = "Uses the sample ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully got LSM secondary data files", response = Map.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal Server Error getting LSM secondary data files")
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/sample/lsm")
+    public Response getLSMByNameForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                          @ApiParam @QueryParam("sampleId") final Long sampleId,
+                                          @ApiParam @QueryParam("lsmName") final String lsmName) {
+        LOG.trace("Start getLSMByNameForSample({}, {}, {})", subjectKey, sampleId, lsmName);
+        try {
+            for (LSMImage lsmImage : legacyDomainDao.getActiveLsmsBySampleId(subjectKey, sampleId)) {
+                if (lsmImage.getName().startsWith(lsmName) || lsmName.startsWith(lsmImage.getName())) {
+                    Map<FileType, String> files = getAbsoluteFiles(lsmImage);
+                    return Response
+                            .ok(new GenericEntity<Map<FileType, String>>(files){})
+                            .build();
+                }
+            }
+
+            return getBadRequest("LSM with name "+lsmName+" not found in Sample#"+sampleId);
+
+        } catch (Exception e) {
+            LOG.error("Error occurred getting sample {} lsm for {}", sampleId, subjectKey, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error retrieving sample " + sampleId + " lsm"))
+                    .build();
+        } finally {
+            LOG.trace("Finished getLSMByNameForSample({}, {})", subjectKey, sampleId);
+        }
+    }
+
+    @ApiOperation(value = "Gets the alignment data files for a result within a sample",
+            notes = "Uses the sample ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully got alignment files", response = Map.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal Server Error getting alignment files")
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/sample/alignment")
+    public Response getAlignmentForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                              @ApiParam @QueryParam("sampleId") final Long sampleId,
+                                              @ApiParam @QueryParam("objective") final String objective,
+                                              @ApiParam @QueryParam("area") final String area,
+                                              @ApiParam @QueryParam("alignmentSpace") final String alignmentSpace) {
+        LOG.trace("Start getAlignmentForSample({}, {}, {}, {}, {})", subjectKey, sampleId, objective, area, alignmentSpace);
+        try {
+            Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);
+            if (sample==null) {
+                LOG.error("Sample {} not found for {}", sampleId, subjectKey);
+                return getBadRequest("Sample "+sampleId+" not found");
+            }
+
+            ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
+            if (objectiveSample==null) {
+                return getBadRequest("Objective "+objective+" not found in "+sample);
+            }
+
+            SamplePipelineRun latestSuccessfulRun = objectiveSample.getLatestSuccessfulRun();
+            if (latestSuccessfulRun==null) {
+                return getBadRequest("No processing results found for objective "+objective+" in "+sample);
+            }
+
+            List<Map<FileType, String>> results = latestSuccessfulRun.getAlignmentResults().stream()
+                    .filter(s -> s.getAnatomicalArea().equals(area) && (alignmentSpace == null || s.getAlignmentSpace().equals(alignmentSpace)))
+                    .map(this::getAbsoluteFiles)
+                    .collect(Collectors.toList());
+
+            return Response
+                    .ok(new GenericEntity<List<Map<FileType, String>>>(results){})
+                    .build();
+
+        } catch (Exception e) {
+            LOG.error("Error occurred getting sample {} secondary data for {}", sampleId, subjectKey, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error retrieving sample " + sampleId + " secondary data"))
+                    .build();
+        } finally {
+            LOG.trace("Finished getAlignmentForSample({}, {})", subjectKey, sampleId);
+        }
+    }
+
+    @ApiOperation(value = "Gets the primary alignment data files for a result within a sample",
+            notes = "Uses the sample ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully got primary alignment files", response = FileType.class,
+                    responseContainer = "Map"),
+            @ApiResponse(code = 500, message = "Internal Server Error getting primary alignment files")
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/sample/alignment/primary")
+    public Response getPrimaryAlignmentForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                          @ApiParam @QueryParam("sampleId") final Long sampleId,
+                                          @ApiParam @QueryParam("objective") final String objective,
+                                          @ApiParam @QueryParam("area") final String area) {
+        LOG.trace("Start getPrimaryAlignmentForSample({}, {}, {}, {})", subjectKey, sampleId, objective, area);
+        try {
+            Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);
+            if (sample==null) {
+                LOG.error("Sample {} not found for {}", sampleId, subjectKey);
+                return getBadRequest("Sample "+sampleId+" not found");
+            }
+
+            ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
+            if (objectiveSample==null) {
+                return getBadRequest("Objective "+objective+" not found in "+sample);
+            }
+
+            SamplePipelineRun latestSuccessfulRun = objectiveSample.getLatestSuccessfulRun();
+            if (latestSuccessfulRun==null) {
+                return getBadRequest("No processing results found for objective "+objective+" in "+sample);
+            }
+
+            Map<FileType, String> results = latestSuccessfulRun.getAlignmentResults().stream()
+                    .filter(s -> s.getAnatomicalArea().equals(area) && s.getBridgeParentAlignmentId()==null)
+                    .map(this::getAbsoluteFiles)
+                    .findFirst().orElse(Collections.emptyMap());
+
+            return Response
+                    .ok(new GenericEntity<Map<FileType, String>>(results){})
+                    .build();
+
+        } catch (Exception e) {
+            LOG.error("Error occurred getting sample {} secondary data for {}", sampleId, subjectKey, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error retrieving sample " + sampleId + " secondary data"))
+                    .build();
+        } finally {
+            LOG.trace("Finished getAlignmentForSample({}, {})", subjectKey, sampleId);
+        }
+    }
+
+    @ApiOperation(value = "Gets the secondary data files for a result within a sample",
+            notes = "Uses the sample ID and result filepath"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully got secondary data", response = FileType.class,
+                    responseContainer = "Map"),
+            @ApiResponse(code = 500, message = "Internal Server Error getting secondary data")
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/sample/secondary")
+    public Response getSecondaryDataForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                     @ApiParam @QueryParam("sampleId") final Long sampleId,
+                                     @ApiParam @QueryParam("objective") final String objective,
+                                     @ApiParam @QueryParam("area") final String area,
+                                     @ApiParam @QueryParam("tile") final String tile) {
+        LOG.trace("Start getSecondaryDataForSample({}, {}, {}, {}, {})", subjectKey, sampleId, objective, area, tile);
+        try {
+            Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);
+            if (sample==null) {
+                LOG.error("Sample {} not found for {}", sampleId, subjectKey);
+                return getBadRequest("Sample "+sampleId+" not found");
+            }
+
+            ObjectiveSample objectiveSample = sample.getObjectiveSample(objective);
+            if (objectiveSample==null) {
+                return getBadRequest("Objective "+objective+" not found in "+sample);
+            }
+
+            SamplePipelineRun latestSuccessfulRun = objectiveSample.getLatestSuccessfulRun();
+            if (latestSuccessfulRun==null) {
+                return getBadRequest("No processing results found for objective "+objective+" in "+sample);
+            }
+
+            SamplePostProcessingResult latestResultOfType = latestSuccessfulRun.getLatestResultOfType(SamplePostProcessingResult.class);
+            if (latestResultOfType==null) {
+                return getBadRequest("No post processing results found in "+sample);
+            }
+
+            FileGroup group;
+
+            if (tile!=null) {
+                group = latestResultOfType.getGroup(tile);
+                if (group==null) {
+                    return getBadRequest("No post processing results found for tile "+tile+" in "+sample);
+                }
+            }
+            else {
+                group = latestResultOfType.getGroup(area);
+                if (group==null) {
+                    return getBadRequest("No post processing results found for area "+area+" in "+sample);
+                }
+                // user wants secondary data for a stitched result, let's add the stack as well for convenience
+                SampleProcessingResult result = latestSuccessfulRun.getSampleProcessingResults().stream()
+                        .filter(s -> s.getAnatomicalArea().equals(area)).findFirst().orElse(null);
+                if (result != null) {
+                    group.getFiles().put(FileType.VisuallyLosslessStack, DomainUtils.getFilepath(result, FileType.VisuallyLosslessStack));
+                }
+            }
+
+            Map<FileType, String> files = getAbsoluteFiles(group);
+            return Response
+                    .ok(new GenericEntity<Map<FileType, String>>(files){})
+                    .build();
+
+        } catch (Exception e) {
+            LOG.error("Error occurred getting sample {} secondary data for {}", sampleId, subjectKey, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error retrieving sample " + sampleId + " secondary data"))
+                    .build();
+        } finally {
+            LOG.trace("Finished getSecondaryDataForSample({}, {})", subjectKey, sampleId);
+        }
+    }
+
+    private Map<FileType, String> getAbsoluteFiles(HasRelativeFiles hasRelativeFiles) {
+        Map<FileType, String> absoluteFiles = new HashMap<>();
+        for (FileType fileType : hasRelativeFiles.getFiles().keySet()) {
+            absoluteFiles.put(fileType, DomainUtils.getFilepath(hasRelativeFiles, fileType));
+        }
+        return absoluteFiles;
+    }
+
+
+    private Response getBadRequest(String message) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity(new ErrorResponse(message))
+                .build();
+    }
 }

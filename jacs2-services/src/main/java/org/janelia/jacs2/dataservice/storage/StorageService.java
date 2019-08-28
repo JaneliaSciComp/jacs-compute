@@ -228,7 +228,9 @@ public class StorageService {
                                                      String storagePath,
                                                      String subject,
                                                      String authToken,
-                                                     int level) {
+                                                     int level,
+                                                     long offset,
+                                                     long length) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI).path("list");
@@ -237,6 +239,12 @@ public class StorageService {
             }
             if (level > 0) {
                 target = target.queryParam("depth", level);
+            }
+            if (offset > 0) {
+                target = target.queryParam("offset", offset);
+            }
+            if (length > 0) {
+                target = target.queryParam("length", length);
             }
             Invocation.Builder requestBuilder = createRequestWithCredentials(
                     target.request(MediaType.APPLICATION_JSON), subject, authToken);

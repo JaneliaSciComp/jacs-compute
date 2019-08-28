@@ -1,5 +1,7 @@
 package org.janelia.jacs2.rest.sync.testrest;
 
+import java.util.concurrent.ExecutorService;
+
 import org.janelia.jacs2.asyncservice.maintenanceservices.DbMaintainer;
 import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.auth.PasswordProvider;
@@ -73,6 +75,7 @@ public class TestResourceDependenciesProducer {
     private IndexingService indexingService = mock(IndexingService.class);
     private SampleDataService sampleDataService = mock(SampleDataService.class);
     private SageDataService sageDataService = mock(SageDataService.class);
+    private ExecutorService indexingExecutorService = mock(ExecutorService.class);
     private DbMaintainer dbMaintainer = mock(DbMaintainer.class);
 
     @Produces
@@ -225,6 +228,12 @@ public class TestResourceDependenciesProducer {
     @Produces
     public SageDataService getSageDataService() {
         return sageDataService;
+    }
+
+    @AsyncIndex
+    @Produces
+    public ExecutorService getIndexingExecutorService() {
+        return indexingExecutorService;
     }
 
     @Produces

@@ -38,7 +38,6 @@ import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.maintenanceservices.DbMaintainer;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
@@ -91,8 +90,6 @@ public class TmSampleResource {
     private TmSampleDao tmSampleDao;
     @Inject
     private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
-    @Inject
-    private DbMaintainer dbMaintainer;
 
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
@@ -206,7 +203,7 @@ public class TmSampleResource {
                     .build();
         }
         String authSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath, subjectKey, null);
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(samplePath, subjectKey, null);
         Map<String, Object> constants = getConstants(rvl);
         if (constants==null) {
             LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath);
@@ -245,7 +242,7 @@ public class TmSampleResource {
         }
 
         String subjectKey = query.getSubjectKey();
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(samplePath, subjectKey, null);
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(samplePath, subjectKey, null);
 
         Map<String, Object> constants = getConstants(rvl);
         if (constants==null) {
@@ -277,8 +274,7 @@ public class TmSampleResource {
             if (!StringUtils.isBlank(rawVolData.getPath())) {
                 LOG.info("Setting RAW data path to {}", rawVolData.getPath());
                 DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, rawVolData.getPath());
-            }
-            else {
+            } else {
                 LOG.warn("Could not find RAW directory in tilebase.cache.yml");
             }
         }
@@ -303,8 +299,6 @@ public class TmSampleResource {
     @Path("sample")
     public TmSample updateTmSample(@ApiParam DomainQuery query) {
         LOG.trace("updateTmSample({})", query);
-        TmSample sample = query.getDomainObjectAs(TmSample.class);
-        dbMaintainer.refreshTmSampleSync(sample);
         return tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
     }
 
@@ -327,12 +321,12 @@ public class TmSampleResource {
         // read and process transform.txt file in Sample path
         // this is intended to be a one-time process and data returned will be stored in TmSample upon creation
         return rvl.getTransformData()
-                .map(streamableTransform -> {
+                .consume(transformStream -> {
                     try {
                         Map<String, Object> constants = new HashMap<>();
                         Map<String, Integer> origin = new HashMap<>();
                         Map<String, Double> scaling = new HashMap<>();
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(streamableTransform.getStream()));
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(transformStream));
                         String line;
                         Map<String, Double> values = new HashMap<>();
                         while ((line = reader.readLine()) != null) {
@@ -356,10 +350,10 @@ public class TmSampleResource {
                         LOG.error("Error reading transform constants", e);
                         return null;
                     } finally {
-                        IOUtils.closeQuietly(streamableTransform);
+                        IOUtils.closeQuietly(transformStream);
                     }
-                })
-                .orElse(null);
+                }, (constantsMap, l) -> (long) constantsMap.size())
+                .getContent();
     }
 
     private void populateConstants(TmSample sample, Map<String, Object> constants) {

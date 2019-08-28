@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.rendering.FileBasedRenderedVolumeLocation;
 import org.janelia.rendering.JADEBasedRenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.utils.HttpClientProvider;
@@ -11,6 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
@@ -30,7 +34,20 @@ public class RenderedVolumeLocationFactory {
         this.storageServiceApiKey = storageServiceApiKey;
     }
 
-    public RenderedVolumeLocation getVolumeLocation(String samplePath, String subjectKey, String authToken) {
+    public RenderedVolumeLocation getVolumeLocationWithLocalCheck(String samplePath,
+                                                                  String subjectKey,
+                                                                  String authToken) {
+        Path sampleLocalPath = Paths.get(samplePath);
+        if (Files.exists(sampleLocalPath)) {
+            return new FileBasedRenderedVolumeLocation(Paths.get(samplePath));
+        } else {
+            return getJadeVolumeLocation(samplePath, subjectKey, authToken);
+        }
+    }
+
+    public RenderedVolumeLocation getJadeVolumeLocation(String samplePath,
+                                                        String subjectKey,
+                                                        String authToken) {
         Preconditions.checkArgument(StringUtils.isNotBlank(samplePath));
         return storageService.lookupDataStorage(null, null, null, samplePath, subjectKey, authToken)
                 .map(dsInfo -> Optional.<RenderedVolumeLocation>of(new JADEBasedRenderedVolumeLocation(dsInfo.getConnectionURL(), dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, httpClientProvider)))
@@ -51,7 +68,10 @@ public class RenderedVolumeLocationFactory {
                                         storageServiceApiKey,
                                         httpClientProvider);
                             }))
-                .orElseThrow(() -> new IllegalArgumentException("No volume location could be created for sample at " + samplePath))
+                .orElseThrow(() -> {
+                    LOG.info("No volume location could be created for sample at {}", samplePath);
+                    return new IllegalArgumentException("No volume location could be created for sample at " + samplePath);
+                })
                 ;
     }
 

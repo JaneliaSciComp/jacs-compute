@@ -108,6 +108,6 @@ public class AsyncDomainObjectIndexerTest {
     }
 
     private AsyncDomainObjectIndexer createIndexer(MessageSender messageSender) {
-        return new AsyncDomainObjectIndexer(messageSender);
+        return new AsyncDomainObjectIndexer(messageSender, null);
     }
 }

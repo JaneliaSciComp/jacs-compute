@@ -12,6 +12,7 @@ import org.janelia.rendering.RawImage;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeMetadata;
+import org.janelia.rendering.Streamable;
 import org.slf4j.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -31,6 +32,8 @@ import java.nio.file.Files;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import com.google.common.io.ByteStreams;
 
 @ApplicationScoped
 @Produces("application/json")
@@ -62,7 +65,7 @@ public class TmFolderBasedStreamingResource {
                     .build();
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(baseFolderName,
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getJadeVolumeLocation(baseFolderName,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null))
                 .map(rv -> Response.ok(rv).build())
@@ -98,7 +101,7 @@ public class TmFolderBasedStreamingResource {
         int zVoxel = zVoxelParam == null ? 0 : zVoxelParam;
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
         return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
-                renderedVolumeLocationFactory.getVolumeLocation(baseFolderName,
+                renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(baseFolderName,
                         JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                         null),
                 xVoxel, yVoxel, zVoxel)
@@ -143,30 +146,28 @@ public class TmFolderBasedStreamingResource {
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(baseFolderName,
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(baseFolderName,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null);
-        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
+        Streamable<byte[]> rawImageContent = renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
                 rvl,
                 xVoxel, yVoxel, zVoxel)
-                .map(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz)
-                        .map(rawImageBytes -> {
-                            StreamingOutput rawImageBytesStream = output -> {
-                                output.write(rawImageBytes);
-                            };
-                            return Response
-                                    .ok(rawImageBytesStream, MediaType.APPLICATION_OCTET_STREAM)
-                                    .build();
-
-                        })
-                        .orElseGet(() -> Response
-                                .noContent()
-                                .build()))
-                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderName + " with ("
-                                + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))
-                        .build())
-                ;
+                .map(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz))
+                .orElse(Streamable.empty());
+        if (rawImageContent.getContent() == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderName + " with ("
+                            + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))
+                    .build();
+        } else {
+            StreamingOutput outputStreaming = output -> {
+                output.write(rawImageContent.getContent());
+            };
+            return Response
+                    .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Length", rawImageContent.getSize())
+                    .build();
+        }
     }
 
     @ApiOperation(value = "Get sample tile", notes = "Returns the requested TM sample tile at the specified zoom level")

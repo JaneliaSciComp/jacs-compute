@@ -18,6 +18,7 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.support.SearchType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * A SOLR indexer.
@@ -79,8 +80,13 @@ public class IndexingService {
     }
 
     private int indexDocumentsOfType(DomainObjectIndexer domainObjectIndexer, Class<? extends DomainObject> domainClass) {
-        LOG.info("Indexing objects of type {}", domainClass.getName());
-        return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass));
+        MDC.put("serviceName", domainClass.getSimpleName());
+        try {
+            LOG.info("Indexing objects of type {}", domainClass.getName());
+            return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass));
+        } finally {
+            MDC.remove("serviceName");
+        }
     }
 
     private void swapCores(String currentCoreName, String otherCoreName) {

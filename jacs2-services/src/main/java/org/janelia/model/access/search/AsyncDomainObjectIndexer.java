@@ -9,14 +9,17 @@ import org.janelia.model.domain.DomainObject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
 
-    private final MessageSender messageSender;
+    private final DomainObjectIndexer indexer;
+    private final ExecutorService indexingExecutor;
 
-    public AsyncDomainObjectIndexer(MessageSender messageSender) {
-        this.messageSender = messageSender;
+    public AsyncDomainObjectIndexer(MessageSender messageSender, ExecutorService indexingExecutor) {
+        this.indexer = new DomainObjectIndexSender(messageSender);
+        this.indexingExecutor = indexingExecutor;
     }
 
     @Override
@@ -26,37 +29,42 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
 
     @Override
     public boolean indexDocument(DomainObject domainObject) {
-        if (isEnabled()) {
-            Map<String, Object> messageHeaders = new LinkedHashMap<>();
-            messageHeaders.put("msgType", "UPDATE_DOC");
-            messageHeaders.put("objectId", domainObject.getId());
-            messageHeaders.put("objectClass", domainObject.getClass().getName());
-            messageSender.sendMessage(messageHeaders, null);
-            return true;
+        if (indexingExecutor != null) {
+            indexingExecutor.submit(() -> indexer.indexDocument(domainObject));
+            return false; // the actual result is in the future but there's no need to wait for it
+        } else {
+            return indexer.indexDocument(domainObject);
         }
-        return false;
     }
 
     @Override
     public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
-        return (int) domainObjectStream.map(this::indexDocument).filter(r -> r).count();
+        if (indexingExecutor != null) {
+            indexingExecutor.submit(() -> indexer.indexDocumentStream(domainObjectStream));
+            return 0; // the actual result is in the future but there's no need to wait for it
+        } else {
+            return indexer.indexDocumentStream(domainObjectStream);
+        }
     }
 
     @Override
     public boolean removeDocument(Long docId) {
-        if (isEnabled()) {
-            Map<String, Object> messageHeaders = new LinkedHashMap<>();
-            messageHeaders.put("msgType", "DELETE_DOC");
-            messageHeaders.put("objectId", docId);
-            messageSender.sendMessage(messageHeaders, null);
-            return true;
+        if (indexingExecutor != null) {
+            indexingExecutor.submit(() -> indexer.removeDocument(docId));
+            return false; // the actual result is in the future but there's no need to wait for it
+        } else {
+            return indexer.removeDocument(docId);
         }
-        return false;
     }
 
     @Override
     public int removeDocumentStream(Stream<Long> docIdsStream) {
-        return (int) docIdsStream.map(this::removeDocument).filter(r -> r).count();
+        if (indexingExecutor != null) {
+            indexingExecutor.submit(() -> indexer.removeDocumentStream(docIdsStream));
+            return 0; // the actual result is in the future but there's no need to wait for it
+        } else {
+            return indexer.removeDocumentStream(docIdsStream);
+        }
     }
 
     @Override
@@ -66,18 +74,10 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
 
     @Override
     public void updateDocsAncestors(Set<Long> docIds, Long ancestorId) {
-        if (isEnabled()) {
-            Map<String, Object> messageHeaders = new LinkedHashMap<>();
-            messageHeaders.put("msgType", "ADD_ANCESTOR");
-            messageHeaders.put("ancestorId", ancestorId);
-            docIds.forEach(docId -> {
-                messageHeaders.put("objectId", docId);
-                messageSender.sendMessage(messageHeaders, null);
-            });
+        if (indexingExecutor != null) {
+            indexingExecutor.submit(() -> indexer.updateDocsAncestors(docIds, ancestorId));
+        } else {
+            indexer.updateDocsAncestors(docIds, ancestorId);
         }
-    }
-
-    private boolean isEnabled() {
-        return messageSender != null && messageSender.isConnected();
     }
 }

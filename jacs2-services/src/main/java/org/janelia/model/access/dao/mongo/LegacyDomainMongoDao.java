@@ -675,8 +675,8 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public void setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception {
-        DomainObject affectedDomainObject = dao.setPermissions(ownerKey, className, id, grantee, read, write, forceChildUpdates);
-        domainObjectIndexer.indexDocument(affectedDomainObject);
+        Collection<? extends DomainObject> affectedDomainObjects = dao.setPermissions(ownerKey, className, id, grantee, read, write, forceChildUpdates);
+        domainObjectIndexer.indexDocumentStream(affectedDomainObjects.stream());
     }
 
     @Override

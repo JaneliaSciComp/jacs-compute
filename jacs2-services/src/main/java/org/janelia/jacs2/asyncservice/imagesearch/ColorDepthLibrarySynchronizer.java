@@ -107,19 +107,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ColorDepthLibrarySynchronizer.SyncArgs());
     }
 
-    private void walkChildDirs(File dir, Consumer<File> action) {
-        if (!dir.isDirectory()) return;
-        logger.info("Discovering files in {}", dir);
-        File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    action.accept(file);
-                }
-            }
-        }
-    }
-
     private void runDiscovery(ColorDepthLibrarySynchronizer.SyncArgs args) {
 
         logger.info("Running discovery with parameters:");
@@ -131,6 +118,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         for (ColorDepthLibrary library : dao.getDomainObjects(null, ColorDepthLibrary.class)) {
             libraryMap.put(library.getIdentifier(), library);
         }
+
+        Set<String> updatedLibraries = new HashSet<>();
 
         // Walk the relevant alignment directories
         walkChildDirs(rootPath.toFile(), alignmentDir -> {
@@ -217,6 +206,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     try {
                         library = dao.save(library.getOwnerKey(), library);
                         libraryMap.put(libraryIdentifier, library);
+                        updatedLibraries.add(libraryIdentifier);
                         logger.debug("  Saved color depth library {} with count {}", libraryIdentifier, total);
                     }
                     catch (Exception e) {
@@ -224,10 +214,33 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 }
             });
-
         });
 
+        // Update counts for the constructed libraries
+        for (ColorDepthLibrary library : libraryMap.values()) {
+            if (updatedLibraries.contains(library.getIdentifier())) continue;
+
+            Map<String, Integer> colorDepthCounts = new HashMap<>();
+
+            // TODO: update
+
+        }
+
+
         logger.info("Completed color depth library synchronization. Imported {} images in total.", totalCreated);
+    }
+
+    private void walkChildDirs(File dir, Consumer<File> action) {
+        if (!dir.isDirectory()) return;
+        logger.info("Discovering files in {}", dir);
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    action.accept(file);
+                }
+            }
+        }
     }
 
     /**

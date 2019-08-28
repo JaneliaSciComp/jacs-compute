@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.cluster.JobFuture;
@@ -61,7 +62,6 @@ public class LSFSparkClusterLauncher {
     private final ServiceComputationFactory computationFactory;
     private final JobManager jobMgr;
     private final boolean requiresAccountInfo;
-    private final int nodeSlots;
     private final int sparkWorkerCores;
     private final String sparkVersion;
     private final String sparkHomeDir;
@@ -81,7 +81,6 @@ public class LSFSparkClusterLauncher {
     public LSFSparkClusterLauncher(ServiceComputationFactory computationFactory,
                                    MonitoredJobManager monitoredJobManager,
                                    @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
-                                   @IntPropertyValue(name = "service.spark.nodeSlots", defaultValue = 32) int nodeSlots,
                                    @IntPropertyValue(name = "service.spark.workerCores", defaultValue = 30) int sparkWorkerCores,
                                    @StrPropertyValue(name = "service.spark.sparkVersion", defaultValue = "2.3.1") String sparkVersion,
                                    @StrPropertyValue(name = "service.spark.sparkHomeDir", defaultValue = "/misc/local/spark-2.3.1") String sparkHomeDir,
@@ -100,7 +99,6 @@ public class LSFSparkClusterLauncher {
         this.computationFactory = computationFactory;
         this.jobMgr = monitoredJobManager.getJobMgr();
         this.requiresAccountInfo = requiresAccountInfo;
-        this.nodeSlots = nodeSlots;
         this.sparkWorkerCores = sparkWorkerCores;
         this.sparkVersion = sparkVersion;
         this.sparkHomeDir = sparkHomeDir;
@@ -169,9 +167,6 @@ public class LSFSparkClusterLauncher {
                 // "Initial job has not accepted any resources; check your cluster UI to ensure that workers are registered and have sufficient resources"
                 // These types of warnings normally wouldn't matter much, except that Janelia's start worker script waits
                 // 2 minutes to retry if the worker fails to start because it can't connect to the master
-//                .thenSuspendUntil(masterJobInfo -> new ContinuationCond.Cond<>(masterJobInfo, checkIfMasterIsReady(masterJobInfo)),
-//                        1000L,
-//                        60000L)
 
                 // Now we're ready to spawn the workers and have them connect back to the master
                 .thenCompose(masterJobInfo -> {
@@ -417,9 +412,9 @@ public class LSFSparkClusterLauncher {
 
     private List<String> createNativeSpec(String billingAccount, String nodeType, int userSpecifiedClusterTimeoutInMins) {
         List<String> spec = new ArrayList<>();
-        spec.add("-a " + String.format("%s(%s,%s)", lsfApplication, nodeType, sparkVersion)); // spark32(master,2.3.1) or spark32(worker,2.3.1)
-        if (lsfAdditionalSpec!=null) {
-            spec.add(lsfAdditionalSpec);
+        spec.add(String.format("-a %s(%s,%s)", lsfApplication, nodeType, sparkVersion)); // spark32(master,2.3.1) or spark32(worker,2.3.1)
+        if (StringUtils.isNotBlank(lsfAdditionalSpec)) {
+            spec.addAll(Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(lsfAdditionalSpec));
         }
         int sparkClusterTimeoutInMins;
         if (userSpecifiedClusterTimeoutInMins > 0) {

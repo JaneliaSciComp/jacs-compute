@@ -1,5 +1,27 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -26,32 +48,11 @@ import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
-import org.janelia.model.security.dto.AuthenticationRequest;
 import org.janelia.model.security.UserGroupRole;
+import org.janelia.model.security.dto.AuthenticationRequest;
 import org.janelia.model.security.util.SubjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.Default;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -69,6 +70,7 @@ import java.util.Set;
         }
 )
 @RequireAuthentication
+@ApplicationScoped
 @Path("/data")
 public class UserResource {
     private static final Logger LOG = LoggerFactory.getLogger(UserResource.class);

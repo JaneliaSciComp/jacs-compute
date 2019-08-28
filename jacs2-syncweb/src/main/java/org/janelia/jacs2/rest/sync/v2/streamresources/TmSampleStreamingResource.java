@@ -13,6 +13,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
+import com.google.common.io.ByteStreams;
+
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -27,6 +29,7 @@ import org.janelia.rendering.RenderedVolumeLoader;
 import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeMetadata;
 import org.janelia.rendering.RenderingType;
+import org.janelia.rendering.Streamable;
 import org.slf4j.Logger;
 
 @ApplicationScoped
@@ -67,7 +70,7 @@ public class TmSampleStreamingResource {
                     .entity(new ErrorResponse("No rendering path set for " + sampleId))
                     .build();
         }
-        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getVolumeLocation(filepath,
+        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getJadeVolumeLocation(filepath,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null))
                 .map(rv -> Response.ok(rv).build())
@@ -117,30 +120,28 @@ public class TmSampleStreamingResource {
         int sy = syParam == null ? -1 : syParam;
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocation(filepath,
+        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(filepath,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 null);
-        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
+        Streamable<byte[]> rawImageContent = renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
                 rvl,
                 xVoxel, yVoxel, zVoxel)
-                .map(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz)
-                        .map(rawImageBytes -> {
-                            StreamingOutput rawImageBytesStream = output -> {
-                                output.write(rawImageBytes);
-                            };
-                            return Response
-                                    .ok(rawImageBytesStream, MediaType.APPLICATION_OCTET_STREAM)
-                                    .build();
-
-                        })
-                        .orElseGet(() -> Response
-                                .noContent()
-                                .build()))
-                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("Error retrieving raw tile file info for sample " + sampleId + " with ("
-                                + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))
-                        .build())
-                ;
+                .map(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz))
+                .orElse(Streamable.empty());
+        if (rawImageContent.getContent() == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Error retrieving raw tile file info for sample " + sampleId + " with ("
+                            + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))
+                    .build();
+        } else {
+            StreamingOutput outputStreaming = output -> {
+                output.write(rawImageContent.getContent());
+            };
+            return Response
+                    .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Length", rawImageContent.getSize())
+                    .build();
+        }
     }
 
     @ApiOperation(value = "Get sample tile", notes = "Returns the requested TM sample tile at the specified zoom level")

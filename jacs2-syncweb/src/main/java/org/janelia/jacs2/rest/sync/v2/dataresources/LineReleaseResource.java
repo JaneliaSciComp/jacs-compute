@@ -2,6 +2,7 @@ package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.util.List;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -54,6 +55,7 @@ import org.slf4j.LoggerFactory;
         }
 )
 @RequireAuthentication
+@ApplicationScoped
 @Path("/process")
 public class LineReleaseResource {
     private static final Logger LOG = LoggerFactory.getLogger(LineReleaseResource.class);
