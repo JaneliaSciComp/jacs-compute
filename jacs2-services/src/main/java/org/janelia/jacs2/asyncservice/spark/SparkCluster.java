@@ -124,11 +124,12 @@ public class SparkCluster {
                                                int appParallelism,
                                                String appOutputDir,
                                                String appErrorDir,
+                                               String appStackSize,
                                                Long appIntervalCheck,
                                                Long appTimeout,
                                                List<String> appArgs) {
         String[] appArgsArr = appArgs.toArray(new String[0]);
-        return runApp(appResource, appEntryPoint, appParallelism, appOutputDir, appErrorDir, appIntervalCheck, appTimeout, appArgsArr);
+        return runApp(appResource, appEntryPoint, appParallelism, appOutputDir, appErrorDir, appStackSize, appIntervalCheck, appTimeout, appArgsArr);
     }
 
     /**
@@ -140,6 +141,7 @@ public class SparkCluster {
      * @param appParallelism
      * @param appOutputDir
      * @param appErrorDir
+     * @param appStackSize
      * @param appArgs
      * @return
      * @throws Exception
@@ -149,6 +151,7 @@ public class SparkCluster {
                                                 int appParallelism,
                                                 String appOutputDir,
                                                 String appErrorDir,
+                                                String appStackSize,
                                                 Long appIntervalCheck,
                                                 Long appTimeout,
                                                 String... appArgs) {
@@ -183,6 +186,13 @@ public class SparkCluster {
             sparkErrorFile = null;
         }
 
+        String stackSizeParam;
+        if (StringUtils.isBlank(appStackSize)) {
+            stackSizeParam = "";
+        } else {
+            stackSizeParam = "-Xss" + appStackSize + " ";
+        }
+
         sparkLauncher.setAppResource(appResource)
                 .setMaster(masterURI)
                 .setSparkHome(sparkHomeDir)
@@ -196,7 +206,8 @@ public class SparkCluster {
                 .setConf("spark.default.parallelism", "" + parallelism)
                 .setConf(SparkLauncher.EXECUTOR_EXTRA_JAVA_OPTIONS, "-Dlog4j.configuration=file://" + sparkLogConfigFile)
                 .addSparkArg("--driver-java-options",
-                        "-Dlog4j.configuration=file://" + sparkLogConfigFile +
+                        stackSizeParam +
+                                "-Dlog4j.configuration=file://" + sparkLogConfigFile +
                                 " -Dhadoop.home.dir=" + hadoopHomeDir +
                                 " -Djava.library.path=" + hadoopHomeDir +"/lib/native"
                 )

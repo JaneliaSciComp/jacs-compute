@@ -121,6 +121,7 @@ public class SparkAppProcessorTest {
                 0,
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
+                "128M",
                 appIntervalCheckInMillis,
                 appTimeoutInMillis,
                 testAppArgs)
@@ -141,6 +142,7 @@ public class SparkAppProcessorTest {
                             0,
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
+                            "128M",
                             appIntervalCheckInMillis,
                             appTimeoutInMillis,
                             testAppArgs);
@@ -166,6 +168,7 @@ public class SparkAppProcessorTest {
                 .setAuthKey(owner)
                 .addArgs("-appLocation", testApp)
                 .addArgs("-appArgs").addArgs(appArgs.stream().reduce((a1, a2) -> a1 + "," + a2).orElse(""))
+                .addResource("sparkAppStackSize", "128M")
                 .addResource("sparkNumNodes", String.valueOf(numNodes))
                 .addResource("minSparkWorkers", String.valueOf(minRequiredWorkers))
                 .addResource("sparkDriverMemory", driverMemory)

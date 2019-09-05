@@ -123,6 +123,7 @@ public class ColorDepthFileSearchTest {
                 0,
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
+                null,
                 (long) SEARCH_INTERVAL_CHECK_IN_MILLIS,
                 SEARCH_TIMEOUT_IN_SECONDS * 1000L,
                 ImmutableList.of(
@@ -155,6 +156,7 @@ public class ColorDepthFileSearchTest {
                             0,
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
+                            null,
                             (long) SEARCH_INTERVAL_CHECK_IN_MILLIS,
                             SEARCH_TIMEOUT_IN_SECONDS * 1000L,
                             ImmutableList.of(
