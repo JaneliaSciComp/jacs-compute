@@ -112,12 +112,14 @@ public class SparkCluster {
      * Run the default main class in the specified jar file on the currently running cluster.
      * @param appResource absolute path to a jar file containing the app with dependencies or a python script
      * @param appEntryPoint nullable entry point - application main class
-     * @param appParallelism
-     * @param appOutputDir
-     * @param appErrorDir
-     * @param appArgs
-     * @return
-     * @throws Exception
+     * @param appParallelism application parallelism
+     * @param appOutputDir output directory
+     * @param appErrorDir error directory
+     * @param appStackSize stack size if not null - if null no specific stack size is set
+     * @param appIntervalCheck - interval for checking whether the application has completed or not
+     * @param appTimeout - application timeout
+     * @param appArgs - arguments specific to the application
+     * @return a computation for the spark application
      */
     public ServiceComputation<SparkApp> runApp(String appResource,
                                                @Nullable String appEntryPoint,
@@ -138,13 +140,14 @@ public class SparkCluster {
      * through via appArgs arguments.
      * @param appResource absolute path to a jar file containing the app with dependencies or a python script
      * @param appEntryPoint application entry point (main class for a java application)
-     * @param appParallelism
-     * @param appOutputDir
-     * @param appErrorDir
-     * @param appStackSize
-     * @param appArgs
-     * @return
-     * @throws Exception
+     * @param appParallelism application parallelism
+     * @param appOutputDir output directory
+     * @param appErrorDir error directory
+     * @param appStackSize stack size if not null - if null no specific stack size is set
+     * @param appIntervalCheck - interval for checking whether the application has completed or not
+     * @param appTimeout - application timeout
+     * @param appArgs - arguments specific to the application
+     * @return a computation for the spark application
      */
     private ServiceComputation<SparkApp> runApp(String appResource,
                                                 String appEntryPoint,
