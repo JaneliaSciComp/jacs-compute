@@ -227,9 +227,13 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/neuron/metadata")
     public List<TmNeuronMetadata> getWorkspaceNeuronMetadata(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                                             @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
-        LOG.info("getWorkspaceNeuronMetadata({})", workspaceId);
-        return tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(subjectKey, workspaceId);
+                                                             @ApiParam @QueryParam("workspaceId") final Long workspaceId,
+                                                             @ApiParam @QueryParam("workspaceId") final Long offsetParam,
+                                                             @ApiParam @QueryParam("workspaceId") final Integer lengthParam) {
+        LOG.info("getWorkspaceNeuronMetadata({}, {}, {})", workspaceId, offsetParam, lengthParam);
+        long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
+        int length = lengthParam == null || lengthParam < 0 ? -1 : lengthParam;
+        return tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(subjectKey, workspaceId, offset, length);
     }
 
     @ApiOperation(value = "Gets the neurons for a workspace",
@@ -246,8 +250,10 @@ public class TmResource {
     })
     @Path("/workspace/neuron")
     public Response getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                        @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
-        LOG.info("getWorkspaceNeurons({}, workspaceId={})", subjectKey, workspaceId);
+                                        @ApiParam @QueryParam("workspaceId") final Long workspaceId,
+                                        @ApiParam @QueryParam("workspaceId") final Long offsetParam,
+                                        @ApiParam @QueryParam("workspaceId") final Integer lengthParam) {
+        LOG.info("getWorkspaceNeurons({}, workspaceId={}, offset={}, length={})", subjectKey, workspaceId, offsetParam, lengthParam);
         MultiPart multiPartEntity = new MultiPart();
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdAccessibleBySubjectKey(workspaceId, subjectKey);
         if (workspace == null) {
@@ -258,7 +264,9 @@ public class TmResource {
                     .build();
         }
         try {
-            List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, workspace);
+            long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
+            int length = lengthParam == null || lengthParam < 0 ? -1 : lengthParam;
+            List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, workspace, offset, length);
             if (neuronPairs.isEmpty()) {
                 multiPartEntity.bodyPart(new BodyPart("Empty", MediaType.TEXT_PLAIN_TYPE));
             } else {
