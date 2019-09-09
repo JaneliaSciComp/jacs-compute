@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceDataManager;
 import org.janelia.jacs2.auth.JacsServiceAccessDataUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.data.NamedData;
 import org.janelia.model.domain.enums.SubjectRole;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.page.PageRequest;
@@ -263,16 +264,17 @@ public class ServiceInfoResource {
                 try {
                     jacsServiceDataManager.streamServiceStdOutput(serviceData)
                             .forEach(isProvider -> {
-                                InputStream is;
+                                NamedData<InputStream> namedStream;
                                 try {
-                                    is = isProvider.get();
+                                    namedStream = isProvider.get();
                                     try {
-                                        ByteStreams.copy(is, output);
+                                        output.write((namedStream.getName() + "\n").getBytes());
+                                        ByteStreams.copy(namedStream.getData(), output);
                                     } catch (IOException ioex) {
                                         logger.error("Error while streaming service {} standard output", serviceData, ioex);
                                     } finally {
                                         try {
-                                            is.close();
+                                            namedStream.getData().close();
                                         } catch (IOException ignore) {
                                         }
                                     }
@@ -319,16 +321,17 @@ public class ServiceInfoResource {
                 try {
                     jacsServiceDataManager.streamServiceStdError(serviceData)
                             .forEach(isProvider -> {
-                                InputStream is;
+                                NamedData<InputStream> namedStream;
                                 try {
-                                    is = isProvider.get();
+                                    namedStream = isProvider.get();
                                     try {
-                                        ByteStreams.copy(is, output);
+                                        output.write((namedStream.getName() + "\n").getBytes());
+                                        ByteStreams.copy(namedStream.getData(), output);
                                     } catch (IOException ioex) {
                                         logger.error("Error while streaming service {} standard error", serviceData, ioex);
                                     } finally {
                                         try {
-                                            is.close();
+                                            namedStream.getData().close();
                                         } catch (IOException ignore) {
                                         }
                                     }

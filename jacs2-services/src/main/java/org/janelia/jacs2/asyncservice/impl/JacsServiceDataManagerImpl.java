@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.lob.ReaderInputStream;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.data.NamedData;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
@@ -98,20 +99,20 @@ public class JacsServiceDataManagerImpl implements JacsServiceDataManager {
     }
 
     @Override
-    public Stream<Supplier<InputStream>> streamServiceStdOutput(JacsServiceData serviceData) {
+    public Stream<Supplier<NamedData<InputStream>>> streamServiceStdOutput(JacsServiceData serviceData) {
         return streamServiceOutputFiles(serviceData.getOutputPath());
     }
 
     @Override
-    public Stream<Supplier<InputStream>> streamServiceStdError(JacsServiceData serviceData) {
+    public Stream<Supplier<NamedData<InputStream>>> streamServiceStdError(JacsServiceData serviceData) {
         return streamServiceOutputFiles(serviceData.getErrorPath());
     }
 
-    private Stream<Supplier<InputStream>> streamServiceOutputFiles(String outputDir) {
+    private Stream<Supplier<NamedData<InputStream>>> streamServiceOutputFiles(String outputDir) {
         return streamOutputDir(outputDir)
                 .map(outputPath -> () -> {
                     try {
-                        return new ReaderInputStream(Files.newBufferedReader(outputPath));
+                        return new NamedData<>(outputPath.toString(), new ReaderInputStream(Files.newBufferedReader(outputPath)));
                     } catch (IOException e) {
                         LOG.error("Error streaming {}", outputPath, e);
                         throw new UncheckedIOException(e);
