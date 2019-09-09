@@ -228,8 +228,8 @@ public class TmResource {
     @Path("/workspace/neuron/metadata")
     public List<TmNeuronMetadata> getWorkspaceNeuronMetadata(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                              @ApiParam @QueryParam("workspaceId") final Long workspaceId,
-                                                             @ApiParam @QueryParam("workspaceId") final Long offsetParam,
-                                                             @ApiParam @QueryParam("workspaceId") final Integer lengthParam) {
+                                                             @ApiParam @QueryParam("offset") final Long offsetParam,
+                                                             @ApiParam @QueryParam("length") final Integer lengthParam) {
         LOG.info("getWorkspaceNeuronMetadata({}, {}, {})", workspaceId, offsetParam, lengthParam);
         long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
         int length = lengthParam == null || lengthParam < 0 ? -1 : lengthParam;
@@ -251,8 +251,8 @@ public class TmResource {
     @Path("/workspace/neuron")
     public Response getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                         @ApiParam @QueryParam("workspaceId") final Long workspaceId,
-                                        @ApiParam @QueryParam("workspaceId") final Long offsetParam,
-                                        @ApiParam @QueryParam("workspaceId") final Integer lengthParam) {
+                                        @ApiParam @QueryParam("offset") final Long offsetParam,
+                                        @ApiParam @QueryParam("length") final Integer lengthParam) {
         LOG.info("getWorkspaceNeurons({}, workspaceId={}, offset={}, length={})", subjectKey, workspaceId, offsetParam, lengthParam);
         MultiPart multiPartEntity = new MultiPart();
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdAccessibleBySubjectKey(workspaceId, subjectKey);
