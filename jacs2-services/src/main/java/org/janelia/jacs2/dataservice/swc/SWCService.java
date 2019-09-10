@@ -130,7 +130,7 @@ public class SWCService {
 
                     Spliterator<Stream<StorageEntryInfo>> storageContentSupplier = new Spliterator<Stream<StorageEntryInfo>>() {
                         volatile long offset = 0L;
-                        long defaultLength = 100000L;
+                        int defaultLength = 100000;
                         @Override
                         public boolean tryAdvance(Consumer<? super Stream<StorageEntryInfo>> action) {
                             List<StorageEntryInfo> storageEntries = storageService.listStorageContent(vsInfo.getVolumeStorageURI(), swcPath, null, null, 3, offset, defaultLength);
@@ -141,7 +141,7 @@ public class SWCService {
                             } else {
                                 offset = lastEntryOffset;
                                 action.accept(storageEntries.stream());
-                                return true;
+                                return storageEntries.size() == defaultLength;
                             }
                         }
 

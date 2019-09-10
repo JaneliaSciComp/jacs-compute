@@ -230,7 +230,7 @@ public class StorageService {
                                                      String authToken,
                                                      int level,
                                                      long offset,
-                                                     long length) {
+                                                     int length) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI).path("list");
