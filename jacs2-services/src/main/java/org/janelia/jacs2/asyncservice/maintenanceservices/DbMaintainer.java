@@ -177,9 +177,9 @@ public class DbMaintainer {
             LOG.info("  Setting Octree data path to {}", sampleFilepath);
 
             // we use jade location because that's how these paths will be typically accessed
-            RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getJadeVolumeLocation(sampleFilepath, sample.getOwnerKey(), null);
-            // Find raw data
             try {
+                RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getJadeVolumeLocation(sampleFilepath, sample.getOwnerKey(), null);
+                // Find raw data
                 RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
                 RawVolData rawVolData = loader.loadRawVolumeData(rvl);
                 if (rawVolData != null && !StringUtils.isBlank(rawVolData.getPath())) {
@@ -193,17 +193,18 @@ public class DbMaintainer {
                 } else {
                     LOG.info("  Could not find RAW directory in tilebase.cache.yml");
                 }
+                // Find KTX octree at relative location
+                String ktxFullPath = StringUtils.appendIfMissing(sampleFilepath, "/") + "ktx";
+                if (rvl.checkContentAtRelativePath("ktx")) {
+                    LOG.info("  Setting KTX data path to {}", ktxFullPath);
+                    DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
+                } else {
+                    LOG.warn("  Could not find KTX directory for sample {} at {}", sample, ktxFullPath);
+                }
+
             } catch (Exception e) {
                 LOG.info("  Error encountered while looking for raw data at {}", sampleFilepath, e);
-            }
-
-            // Find KTX octree at relative location
-            String ktxFullPath = StringUtils.appendIfMissing(sampleFilepath, "/") + "ktx";
-            if (rvl.checkContentAtRelativePath("ktx")) {
-                LOG.info("  Setting KTX data path to {}", ktxFullPath);
-                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
-            } else {
-                LOG.warn("  Could not find KTX directory for sample {} at {}", sample, ktxFullPath);
+                return false;
             }
 
             return true;
