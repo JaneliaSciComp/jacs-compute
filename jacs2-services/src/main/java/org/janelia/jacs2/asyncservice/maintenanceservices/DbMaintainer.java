@@ -167,20 +167,45 @@ public class DbMaintainer {
      * @return true if changes were made
      */
     private boolean migrateTmSample(TmSample sample) {
-
-        if (sample.getFiles().isEmpty() && StringUtils.isNotBlank(sample.getFilepath())) {
+        String sampleFilepath;
+        if (StringUtils.startsWith(sample.getFilepath(), "//")) {
+            sampleFilepath = sample.getFilepath().substring(1);
+        } else {
+            sampleFilepath = sample.getFilepath();
+        }
+        if (sample.getFiles().isEmpty() && StringUtils.isNotBlank(sampleFilepath)) {
             // Forward migration
             LOG.info("Performing migration on {}", sample);
-
-            String sampleFilepath = sample.getFilepath();
-            sample.setLargeVolumeOctreeFilepath(sampleFilepath);
+            sample.setLargeVolumeOctreeFilepath( sampleFilepath);
             LOG.info("  Setting Octree data path to {}", sampleFilepath);
 
-            // we use jade location because that's how these paths will be typically accessed
+            RenderedVolumeLocation rvl;
             try {
-                RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getJadeVolumeLocation(sampleFilepath, sample.getOwnerKey(), null);
-                // Find raw data
-                RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
+                rvl = renderedVolumeLocationFactory.getJadeVolumeLocation(sampleFilepath, sample.getOwnerKey(), null);
+            } catch (Exception e) {
+                // no rendered volume location could be obtained so stop here
+                LOG.info("  Error encountered while checking the sample volume path {}", sampleFilepath, e);
+                return false;
+            }
+
+            RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
+            // we use jade location because that's how these paths will be typically accessed
+
+            // Check KTX octree at relative location
+            String ktxFullPath = StringUtils.appendIfMissing(sampleFilepath, "/") + "ktx";
+            try {
+                if (rvl.checkContentAtRelativePath("ktx")) {
+                    LOG.info("  Setting KTX data path to {}", ktxFullPath);
+                    DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
+                } else {
+                    LOG.warn("  Could not find KTX directory for sample {} at {}", sample, ktxFullPath);
+                }
+            } catch (Exception e) {
+                LOG.info("  Error encountered while checking the sample KTX path {}", ktxFullPath, e);
+            }
+
+            // Check raw data
+            try {
                 RawVolData rawVolData = loader.loadRawVolumeData(rvl);
                 if (rawVolData != null && !StringUtils.isBlank(rawVolData.getPath())) {
                     // verify that the location of the raw tiles is accessible
@@ -193,18 +218,8 @@ public class DbMaintainer {
                 } else {
                     LOG.info("  Could not find RAW directory in tilebase.cache.yml");
                 }
-                // Find KTX octree at relative location
-                String ktxFullPath = StringUtils.appendIfMissing(sampleFilepath, "/") + "ktx";
-                if (rvl.checkContentAtRelativePath("ktx")) {
-                    LOG.info("  Setting KTX data path to {}", ktxFullPath);
-                    DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
-                } else {
-                    LOG.warn("  Could not find KTX directory for sample {} at {}", sample, ktxFullPath);
-                }
-
             } catch (Exception e) {
                 LOG.info("  Error encountered while looking for raw data at {}", sampleFilepath, e);
-                return false;
             }
 
             return true;
