@@ -15,6 +15,8 @@ import org.janelia.model.access.domain.search.SolrBasedDomainObjectIndexer;
 import org.janelia.model.access.search.AsyncDomainObjectIndexer;
 import org.janelia.model.domain.DomainObjectGetter;
 import org.janelia.model.domain.ontology.DomainAnnotationGetter;
+import org.janelia.model.domain.workspace.AllNodeAncestorsGetter;
+import org.janelia.model.domain.workspace.DirectNodeAncestorsGetter;
 import org.janelia.model.domain.workspace.NodeAncestorsGetter;
 
 @ApplicationScoped
@@ -28,13 +30,18 @@ public class IndexingProducer {
     }
 
     @Produces
-    public DomainObjectIndexerProvider<SolrServer> createSolrBasedDomainObjectIndexerProvider(NodeAncestorsGetter nodeAncestorsGetter,
+    public NodeAncestorsGetter createAllNodeAncestorsGetter(DirectNodeAncestorsGetter directNodeAncestorsGetter) {
+        return new AllNodeAncestorsGetter(directNodeAncestorsGetter);
+    }
+
+    @Produces
+    public DomainObjectIndexerProvider<SolrServer> createSolrBasedDomainObjectIndexerProvider(NodeAncestorsGetter allNodeAncestorsGetter,
                                                                                               DomainAnnotationGetter nodeAnnotationGetter,
                                                                                               DomainObjectGetter objectGetter,
                                                                                               @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
                                                                                               @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
         return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,
-                nodeAncestorsGetter,
+                allNodeAncestorsGetter,
                 nodeAnnotationGetter,
                 objectGetter,
                 solrBatchSize,
