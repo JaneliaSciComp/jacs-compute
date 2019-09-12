@@ -126,7 +126,7 @@ public class DataAnnotationResource {
             if (CollectionUtils.isEmpty(query.getReferences())) {
                 return Collections.emptyList();
             } else {
-                return annotationDao.findEntitiesByIdsAccessibleBySubjectKey(query.getReferences().stream().map(r -> r.getTargetId()).collect(Collectors.toList()), query.getSubjectKey());
+                return annotationDao.findAnnotationsByTargetsAccessibleBySubjectKey(query.getReferences(), query.getSubjectKey());
             }
         } catch (Exception e) {
             LOG.error("Error occurred getting annotations using {}", query, e);
