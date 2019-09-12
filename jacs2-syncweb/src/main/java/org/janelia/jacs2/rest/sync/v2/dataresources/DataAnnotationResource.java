@@ -9,6 +9,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
+import org.apache.commons.collections.CollectionUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -31,7 +32,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -57,8 +61,6 @@ public class DataAnnotationResource {
     @AsyncIndex
     @Inject
     private AnnotationDao annotationDao;
-    @Inject
-    private LegacyDomainDao legacyDomainDao;
 
     @ApiOperation(value = "Creates an annotation",
             notes = "creates a new annotation from the DomainObject parameter and assigns ownership to the SubjectKey parameter"
@@ -74,7 +76,7 @@ public class DataAnnotationResource {
     public Annotation createAnnotation(@ApiParam DomainQuery query) {
         LOG.trace("Start createAnnotation({})", query);
         try {
-            return legacyDomainDao.save(query.getSubjectKey(), query.getDomainObjectAs(Annotation.class));
+            return annotationDao.saveBySubjectKey(query.getDomainObjectAs(Annotation.class), query.getSubjectKey());
         } catch (Exception e) {
             LOG.error("Error occurred creating annotations for {}", query, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -97,7 +99,7 @@ public class DataAnnotationResource {
     public Annotation updateAnnotation(@ApiParam DomainQuery query) {
         LOG.trace("Start updateAnnotation({})", query);
         try {
-            return legacyDomainDao.save(query.getSubjectKey(), query.getDomainObjectAs(Annotation.class));
+            return annotationDao.saveBySubjectKey(query.getDomainObjectAs(Annotation.class), query.getSubjectKey());
         } catch (Exception e) {
             LOG.error("Error occurred updating annotations {}", query, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -121,7 +123,11 @@ public class DataAnnotationResource {
     public List<Annotation> getAnnotations(@ApiParam DomainQuery query) {
         LOG.trace("Start getAnnotations({})", query);
         try {
-            return legacyDomainDao.getAnnotations(query.getSubjectKey(), query.getReferences());
+            if (CollectionUtils.isEmpty(query.getReferences())) {
+                return Collections.emptyList();
+            } else {
+                return annotationDao.findEntitiesByIdsAccessibleBySubjectKey(query.getReferences().stream().map(r -> r.getTargetId()).collect(Collectors.toList()), query.getSubjectKey());
+            }
         } catch (Exception e) {
             LOG.error("Error occurred getting annotations using {}", query, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
