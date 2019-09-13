@@ -48,8 +48,8 @@ public class StorageService {
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
-                LOG.warn("Request {} returned status {}", target, responseStatus);
-                return Optional.empty();
+                LOG.warn("Request {} returned status {} while trying to retrieved the quota for {} on {}", target, responseStatus, userKey, volumeName);
+                throw new IllegalStateException("Request " + target.getUri() + " returned an invalid response while trying to get the quota for " + userKey + " on " + volumeName);
             } else {
                 List<QuotaUsage> quotaReport = response.readEntity(new GenericType<List<QuotaUsage>>(){});
                 return quotaReport.stream().findFirst();
@@ -91,8 +91,8 @@ public class StorageService {
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
-                LOG.warn("Request {} returned status {}", target, responseStatus);
-                return Optional.empty();
+                LOG.warn("Request {} returned status {} while trying to get the storage for storageId = {}, storageName={}, storagePath={}", target, responseStatus, storageId, storageName, storagePath);
+                throw new IllegalStateException("Invalid response received from " + target.getUri() + " while trying to request the storage URL");
             } else {
                 PageResult<DataStorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<DataStorageInfo>>(){});
                 if (storageInfoResult.getResultList().size() > 1) {
