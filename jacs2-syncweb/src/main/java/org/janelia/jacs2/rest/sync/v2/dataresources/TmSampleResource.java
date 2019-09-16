@@ -276,13 +276,16 @@ public class TmSampleResource {
                 .map(dl -> true)
                 .orElseGet(() -> {
                     LOG.warn("Could not find any storage for KTX directory for sample {} at {}", sample.getName(), ktxFullPath);
-                    sample.setFilesystemSync(false); // set file system sync to false because ktx directory does not exist
                     return false;
                 })
                 ;
-        if (ktxFound && StringUtils.isBlank(ktxFullPath)) {
-            LOG.info("Setting KTX data path to {}", ktxFullPath);
-            DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
+        if (ktxFound) {
+            if (StringUtils.isBlank(ktxFullPath)) {
+                LOG.info("Setting KTX data path to {}", ktxFullPath);
+                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
+            }
+        } else {
+            sample.setFilesystemSync(false); // set file system sync to false because ktx directory does not exist
         }
 
         String acquisitionPath;
@@ -298,22 +301,22 @@ public class TmSampleResource {
         } else {
             acquisitionPath = sample.getTwoPhotonAcquisitionFilepath();
         }
-        boolean acquisitionPathFound;
         if (StringUtils.isNotBlank(acquisitionPath)) {
-            acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
+            boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
                     .map(dl -> true)
                     .orElseGet(() -> {
                         LOG.warn("Could not find any storage for acquisition path for sample {} at {}", sample.getName(), acquisitionPath);
-                        sample.setFilesystemSync(false); // set file system sync to false because the acquisition directory is not accessible
                         return false;
                     })
                     ;
-        } else {
-            acquisitionPathFound = false;
-        }
-        if (acquisitionPathFound && StringUtils.isBlank(sample.getTwoPhotonAcquisitionFilepath())) {
-            LOG.info("Setting RAW data path to {}", acquisitionPath);
-            DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, acquisitionPath);
+            if (acquisitionPathFound) {
+                if (StringUtils.isBlank(sample.getTwoPhotonAcquisitionFilepath())) {
+                    LOG.info("Setting RAW data path to {}", acquisitionPath);
+                    DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, acquisitionPath);
+                }
+            } else {
+                sample.setFilesystemSync(false); // set file system sync to false because the acquisition directory is not accessible
+            }
         }
 
         TmSample savedSample = tmSampleDao.createTmSample(query.getSubjectKey(), sample);
@@ -345,6 +348,54 @@ public class TmSampleResource {
     @Path("sample")
     public TmSample updateTmSample(@ApiParam DomainQuery query) {
         LOG.trace("updateTmSample({})", query);
+        String subjectKey = query.getSubjectKey();
+        TmSample tmSample = query.getDomainObjectAs(TmSample.class);
+
+        String samplePath = tmSample.getLargeVolumeOctreeFilepath();
+        LOG.info("Verifying sample path {} for sample {}", samplePath, tmSample);
+
+        boolean samplePathFound = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null)
+                .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
+                .flatMap(rvl -> getConstants(rvl))
+                .map(constants -> true)
+                .orElse(false)
+                ;
+        if (!samplePathFound) {
+            tmSample.setFilesystemSync(false);
+        }
+
+        String ktxFullPath;
+        if (StringUtils.isBlank(tmSample.getLargeVolumeKTXFilepath())) {
+            ktxFullPath = StringUtils.appendIfMissing(samplePath, "/") + "ktx";
+        } else {
+            ktxFullPath = tmSample.getLargeVolumeKTXFilepath();
+        }
+        // check if the ktx location is accessible
+        boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null)
+                .map(dl -> true)
+                .orElseGet(() -> {
+                    LOG.warn("Could not find any storage for KTX directory {} for sample {}", ktxFullPath, tmSample);
+                    return false;
+                })
+                ;
+        if (!ktxFound) {
+            tmSample.setFilesystemSync(false);
+        }
+
+        String acquisitionPath = tmSample.getTwoPhotonAcquisitionFilepath();
+        if (StringUtils.isNotBlank(acquisitionPath)) {
+            // for update only check the acquision path if set - don't try to read the tile yaml file
+            boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
+                    .map(dl -> true)
+                    .orElseGet(() -> {
+                        LOG.warn("Could not find any storage for acquisition path for sample {} at {}", tmSample.getName(), acquisitionPath);
+                        return false;
+                    })
+            ;
+            if (!acquisitionPathFound) {
+                tmSample.setFilesystemSync(false);
+            }
+        }
         return tmSampleDao.updateTmSample(query.getSubjectKey(), query.getDomainObjectAs(TmSample.class));
     }
 
