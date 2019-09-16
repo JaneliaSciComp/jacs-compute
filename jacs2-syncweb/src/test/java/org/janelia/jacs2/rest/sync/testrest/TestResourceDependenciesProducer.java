@@ -11,7 +11,7 @@ import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
+import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.dataservice.search.IndexingService;
@@ -58,7 +58,7 @@ public class TestResourceDependenciesProducer {
     private JWTProvider jwtProvider = mock(JWTProvider.class);
     private LegacyDomainDao legacyDomainDao = mock(LegacyDomainDao.class);
     private ObjectMapperFactory objectMapperFactory = ObjectMapperFactory.instance();
-    private RenderedVolumeLocationFactory volumeLocationFactory = mock(RenderedVolumeLocationFactory.class);
+    private DataStorageLocationFactory volumeLocationFactory = mock(DataStorageLocationFactory.class);
     private OntologyDao ontologyDao = mock(OntologyDao.class);
     private RenderedVolumeLoader renderedVolumeLoader = mock(RenderedVolumeLoader.class);
     private SummaryDao summaryDao = mock(SummaryDao.class);
@@ -135,7 +135,7 @@ public class TestResourceDependenciesProducer {
     }
 
     @Produces
-    public RenderedVolumeLocationFactory getVolumeLocationFactory() {
+    public DataStorageLocationFactory getVolumeLocationFactory() {
         return volumeLocationFactory;
     }
 

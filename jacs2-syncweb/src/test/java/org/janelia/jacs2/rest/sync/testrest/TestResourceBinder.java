@@ -13,7 +13,7 @@ import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
+import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.dataservice.search.IndexingService;
@@ -91,7 +91,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getLineReleaseSearchableDao()).to(LineReleaseDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getLegacyDomainDao()).to(LegacyDomainDao.class);
         bind(dependenciesProducer.getObjectMapperFactory()).to(ObjectMapperFactory.class);
-        bind(dependenciesProducer.getVolumeLocationFactory()).to(RenderedVolumeLocationFactory.class);
+        bind(dependenciesProducer.getVolumeLocationFactory()).to(DataStorageLocationFactory.class);
         bind(dependenciesProducer.getJwtProvider()).to(JWTProvider.class);
         bind(dependenciesProducer.getOntologySearchableDao()).to(OntologyDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getRenderedVolumeLoader()).to(RenderedVolumeLoader.class);

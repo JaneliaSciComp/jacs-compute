@@ -3,7 +3,7 @@ package org.janelia.jacs2.asyncservice.maintenanceservices;
 import javax.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
+import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.dao.LegacyDomainDao.DaoIndex;
 import org.janelia.model.domain.DomainUtils;
@@ -23,12 +23,12 @@ public class DbMaintainer {
     private static final Logger LOG = LoggerFactory.getLogger(DbMaintainer.class);
 
     private final LegacyDomainDao legacyDomainDao;
-    private final RenderedVolumeLocationFactory renderedVolumeLocationFactory;
+    private final DataStorageLocationFactory dataStorageLocationFactory;
 
     @Inject
-    public DbMaintainer(LegacyDomainDao legacyDomainDao, RenderedVolumeLocationFactory renderedVolumeLocationFactory) {
+    public DbMaintainer(LegacyDomainDao legacyDomainDao, DataStorageLocationFactory dataStorageLocationFactory) {
         this.legacyDomainDao = legacyDomainDao;
-        this.renderedVolumeLocationFactory = renderedVolumeLocationFactory;
+        this.dataStorageLocationFactory = dataStorageLocationFactory;
     }
 
     void ensureIndexes() {
@@ -173,57 +173,84 @@ public class DbMaintainer {
         } else {
             sampleFilepath = sample.getFilepath();
         }
+        boolean prevSyncFlag = sample.isFilesystemSync();
+        sample.setFilesystemSync(true); // assume everything is OK until it's not
         if (sample.getFiles().isEmpty() && StringUtils.isNotBlank(sampleFilepath)) {
             // Forward migration
             LOG.info("Performing migration on {}", sample);
-            sample.setLargeVolumeOctreeFilepath( sampleFilepath);
             LOG.info("  Setting Octree data path to {}", sampleFilepath);
-
             RenderedVolumeLocation rvl;
             try {
-                rvl = renderedVolumeLocationFactory.getJadeVolumeLocation(sampleFilepath, sample.getOwnerKey(), null);
-            } catch (Exception e) {
-                // no rendered volume location could be obtained so stop here
-                LOG.info("  Error encountered while checking the sample volume path {}", sampleFilepath, e);
-                return false;
-            }
-
-            RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
-            // we use jade location because that's how these paths will be typically accessed
-
-            // Check KTX octree at relative location
-            String ktxFullPath = StringUtils.appendIfMissing(sampleFilepath, "/") + "ktx";
-            try {
-                if (rvl.checkContentAtRelativePath("ktx")) {
-                    LOG.info("  Setting KTX data path to {}", ktxFullPath);
-                    DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
+                rvl = dataStorageLocationFactory.lookupJadeDataLocation(sampleFilepath, sample.getOwnerKey(), null)
+                        .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
+                        .orElseGet(() -> {
+                            LOG.info("No storage location could be found for {}", sampleFilepath);
+                            return null;
+                        });
+                if (rvl != null) {
+                    sample.setLargeVolumeOctreeFilepath(sampleFilepath);
                 } else {
-                    LOG.warn("  Could not find KTX directory for sample {} at {}", sample, ktxFullPath);
+                    sample.setFilesystemSync(false);
                 }
             } catch (Exception e) {
+                // no rendered volume location could be obtained so stop here
+                sample.setFilesystemSync(false);
+                LOG.info("  Error encountered while checking the sample volume path {}", sampleFilepath, e);
+                return prevSyncFlag != sample.isFilesystemSync(); // return true only if sync flag changed
+            }
+
+            // Check KTX octree at relative location
+            String ktxFullPath;
+            if (StringUtils.isNotBlank(sample.getLargeVolumeKTXFilepath())) {
+                ktxFullPath = sample.getLargeVolumeKTXFilepath();
+            } else {
+                ktxFullPath = StringUtils.appendIfMissing(sampleFilepath, "/") + "ktx";
+                LOG.info("  Setting KTX data path to {}", ktxFullPath);
+                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
+            }
+            try {
+                boolean ktxNotFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, sample.getOwnerKey(), null)
+                        .map(dl -> false)
+                        .orElse(true);
+                if (ktxNotFound) {
+                    LOG.warn("  Could not find KTX directory for sample {} at {}", sample, ktxFullPath);
+                    sample.setFilesystemSync(false);
+                }
+            } catch (Exception e) {
+                sample.setFilesystemSync(false);
                 LOG.info("  Error encountered while checking the sample KTX path {}", ktxFullPath, e);
             }
 
-            // Check raw data
             try {
-                RawVolData rawVolData = loader.loadRawVolumeData(rvl);
-                if (rawVolData != null && !StringUtils.isBlank(rawVolData.getPath())) {
-                    // verify that the location of the raw tiles is accessible
-                    if (rvl.checkContentAtAbsolutePath(rawVolData.getPath())) {
+                // Check raw data
+                String acquisionPath;
+                if (StringUtils.isNotBlank(sample.getTwoPhotonAcquisitionFilepath())) {
+                    acquisionPath = sample.getTwoPhotonAcquisitionFilepath();
+                } else {
+                    RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
+                    RawVolData rawVolData = loader.loadRawVolumeData(rvl);
+                    if (rawVolData != null && !StringUtils.isBlank(rawVolData.getPath())) {
+                        acquisionPath = rawVolData.getPath();
                         LOG.info("  Setting RAW data path to {}", rawVolData.getPath());
                         DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, rawVolData.getPath());
                     } else {
-                        LOG.warn("  Directory listed in tilebase.cache.yml {} does not exist or is not accessible using {}", rawVolData.getPath(), rvl.getConnectionURI());
+                        acquisionPath = null;
                     }
-                } else {
-                    LOG.info("  Could not find RAW directory in tilebase.cache.yml");
+                }
+                if (StringUtils.isNotBlank(acquisionPath)) {
+                    boolean acquisitionPathNotFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisionPath, sample.getOwnerKey(), null)
+                            .map(dl -> false)
+                            .orElse(true);
+                    if (acquisitionPathNotFound) {
+                        LOG.info("  Could not find the storage for tile acquisition path {}", acquisionPath);
+                        sample.setFilesystemSync(false);
+                    }
                 }
             } catch (Exception e) {
                 LOG.info("  Error encountered while looking for raw data at {}", sampleFilepath, e);
+                sample.setFilesystemSync(false);
             }
-
             return true;
-
         } else if (StringUtils.isBlank(sample.getFilepath())) {
             LOG.warn("  There is no information where the sample rendered volume is located in order to perform the migration of sample {}", sample);
             return false;

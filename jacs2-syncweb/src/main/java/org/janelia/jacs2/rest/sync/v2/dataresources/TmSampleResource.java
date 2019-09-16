@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -38,7 +39,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
+import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -48,6 +49,7 @@ import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
+import org.janelia.rendering.DataLocation;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.ymlrepr.RawVolData;
@@ -88,7 +90,7 @@ public class TmSampleResource {
     @Inject
     private RenderedVolumeLoader renderedVolumeLoader;
     @Inject
-    private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
+    private DataStorageLocationFactory dataStorageLocationFactory;
 
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
@@ -202,17 +204,18 @@ public class TmSampleResource {
                     .build();
         }
         String authSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(samplePath, subjectKey, null);
-        Map<String, Object> constants = getConstants(rvl);
-        if (constants==null) {
-            LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath);
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("Error reading transform.txt from " + samplePath))
-                    .build();
-        }
-        return Response.ok()
-                .entity(new GenericEntity<Map<String, Object>>(constants){})
-                .build();
+        return dataStorageLocationFactory.lookupJadeDataLocation(samplePath, authSubjectKey, null)
+                .flatMap(this::getConstants)
+                .map(constants -> Response.ok()
+                        .entity(new GenericEntity<Map<String, Object>>(constants){})
+                        .build())
+                .orElseGet(() -> {
+                    LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath);
+                    return Response.status(Response.Status.NOT_FOUND)
+                            .entity(new ErrorResponse("Error reading transform.txt from " + samplePath))
+                            .build();
+                })
+                ;
     }
 
     @ApiOperation(value = "Creates a new TmSample",
@@ -234,39 +237,83 @@ public class TmSampleResource {
         LOG.info("Creating new TmSample {} with path {}", sample.getName(), samplePath);
 
         String subjectKey = query.getSubjectKey();
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getJadeVolumeLocation(samplePath, subjectKey, null);
-
-        Map<String, Object> constants = getConstants(rvl);
-        if (constants == null) {
+        RenderedVolumeLocation rvl = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null)
+                .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
+                .orElse(null)
+                ;
+        if (rvl == null) {
+            LOG.error("Error accessing sample path {} while trying to create sample {} for user {}", samplePath, sample.getName(), subjectKey);
+            // if transform.txt cannot be located at the sample path then don't even create the sample
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Error accessing sample path " + samplePath + " while trying to create sample " + sample.getName()))
+                    .build();
+        }
+        boolean transformFound = getConstants(rvl)
+                .map(constants -> {
+                    populateConstants(sample, constants);
+                    LOG.info("Found {} levels in octree", sample.getNumImageryLevels());
+                    return true;
+                })
+                .orElse(false);
+        if (!transformFound) {
             LOG.error("Error reading transform constants for {} from {}", subjectKey, samplePath);
+            // if transform.txt cannot be located at the sample path then don't even create the sample
             return Response.status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Error reading transform.txt from " + samplePath))
                     .build();
         }
 
-        populateConstants(sample, constants);
-        LOG.info("Found {} levels in octree", sample.getNumImageryLevels());
-
+        String ktxFullPath;
         if (StringUtils.isBlank(sample.getLargeVolumeKTXFilepath())) {
             LOG.info("KTX data path not provided for {}. Attempting to find it relative to the octree...", sample.getName());
-            String ktxFullPath = StringUtils.appendIfMissing(samplePath, "/") + "ktx";
-            if (rvl.checkContentAtRelativePath("ktx")) {
-                LOG.info("Setting KTX data path to {}", ktxFullPath);
-                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
-            } else {
-                LOG.warn("Could not find KTX directory for sample {} at {}", sample.getName(), ktxFullPath);
-            }
+            ktxFullPath = StringUtils.appendIfMissing(samplePath, "/") + "ktx";
+        } else {
+            ktxFullPath = sample.getLargeVolumeKTXFilepath();
         }
 
+        // check if the ktx location is accessible
+        boolean ktxFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, subjectKey, null)
+                .map(dl -> true)
+                .orElseGet(() -> {
+                    LOG.warn("Could not find any storage for KTX directory for sample {} at {}", sample.getName(), ktxFullPath);
+                    sample.setFilesystemSync(false); // set file system sync to false because ktx directory does not exist
+                    return false;
+                })
+                ;
+        if (ktxFound && StringUtils.isBlank(ktxFullPath)) {
+            LOG.info("Setting KTX data path to {}", ktxFullPath);
+            DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
+        }
+
+        String acquisitionPath;
         if (StringUtils.isBlank(DomainUtils.getFilepath(sample, FileType.TwoPhotonAcquisition))) {
             LOG.info("RAW data path not provided for {}. Attempting to read it from the tilebase.cache.yml...", sample.getName());
-            RawVolData rawVolData = renderedVolumeLoader.loadRawVolumeData(rvl);
-            if (rawVolData != null && StringUtils.isNotBlank(rawVolData.getPath())) {
-                LOG.info("Setting RAW data path to {}", rawVolData.getPath());
-                DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, rawVolData.getPath());
+            RawVolData rawVolData = readRawVolumeData(rvl);
+            if (rawVolData != null) {
+                acquisitionPath = rawVolData.getPath();
             } else {
-                LOG.warn("Could not find RAW directory {} in tilebase.cache.yml for sample {}", samplePath, sample.getName());
+                acquisitionPath = null;
+                sample.setFilesystemSync(false); // set file system sync to false because there is something wrong with the acquisition path
             }
+        } else {
+            acquisitionPath = sample.getTwoPhotonAcquisitionFilepath();
+        }
+        boolean acquisitionPathFound;
+        if (StringUtils.isNotBlank(acquisitionPath)) {
+            acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
+                    .map(dl -> true)
+                    .orElseGet(() -> {
+                        LOG.warn("Could not find any storage for acquisition path for sample {} at {}", sample.getName(), acquisitionPath);
+                        sample.setFilesystemSync(false); // set file system sync to false because the acquisition directory is not accessible
+                        return false;
+                    })
+                    ;
+        } else {
+            acquisitionPathFound = false;
+        }
+        if (acquisitionPathFound && StringUtils.isBlank(sample.getTwoPhotonAcquisitionFilepath())) {
+            LOG.info("Setting RAW data path to {}", acquisitionPath);
+            DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, acquisitionPath);
         }
 
         TmSample savedSample = tmSampleDao.createTmSample(query.getSubjectKey(), sample);
@@ -274,6 +321,15 @@ public class TmSampleResource {
         return Response.created(UriBuilder.fromMethod(this.getClass(), "getTmSample").build(savedSample.getId()))
                 .entity(savedSample)
                 .build();
+    }
+
+    private RawVolData readRawVolumeData(RenderedVolumeLocation rvl) {
+        try {
+            return renderedVolumeLoader.loadRawVolumeData(rvl);
+        } catch (Exception e) {
+            LOG.error("Error reading raw volume data from {}/{}", rvl.getBaseStorageLocationURI(), RenderedVolumeLoader.DEFAULT_TILED_VOL_BASE_FILE_NAME);
+        }
+        return null;
     }
 
     @ApiOperation(value = "Updates an existing TmSample",
@@ -307,10 +363,11 @@ public class TmSampleResource {
         tmSampleDao.removeTmSample(subjectKey, sampleId);
     }
 
-    private  Map<String, Object> getConstants(RenderedVolumeLocation rvl) {
+    private Optional<Map<String, Object>> getConstants(DataLocation rvl) {
         // read and process transform.txt file in Sample path
         // this is intended to be a one-time process and data returned will be stored in TmSample upon creation
-        return rvl.getTransformData()
+        LOG.info("Reading {} from {}", RenderedVolumeLoader.DEFAULT_TRANSFORM_FILE_NAME, rvl.getBaseStorageLocationURI());
+        return rvl.getContentFromRelativePath(RenderedVolumeLoader.DEFAULT_TRANSFORM_FILE_NAME)
                 .consume(transformStream -> {
                     try {
                         Map<String, Object> constants = new HashMap<>();
@@ -343,7 +400,8 @@ public class TmSampleResource {
                         IOUtils.closeQuietly(transformStream);
                     }
                 }, (constantsMap, l) -> (long) constantsMap.size())
-                .getContent();
+                .asOptional()
+                ;
     }
 
     private void populateConstants(TmSample sample, Map<String, Object> constants) {

@@ -8,43 +8,8 @@ package org.janelia.jacs2.dataservice.swc;
  */
 public class SWCNode {
 
-    public enum SegmentType {
-        undefined(0),
-        soma(1),
-        axon(2),
-        dendrite(3),
-        apical_dendrite(4),
-        fork_point(5),
-        end_point(6),
-        custom(7);
-
-        private int decodeNum;
-
-        SegmentType(int decodeNum) {
-            this.decodeNum = decodeNum;
-        }
-
-        public int decode() {
-            return decodeNum;
-        }
-
-        public static SegmentType fromNumValue(int num) {
-            for (SegmentType st : values()) {
-                if (st.decodeNum == num) {
-                    return st;
-                }
-            }
-            throw new IllegalArgumentException("Invalid segnebt type value: " + num);
-        }
-
-        @Override
-        public String toString() {
-            return this.name().replaceAll("_", " ");
-        }
-    }
-
     private final int index;
-    private final SegmentType segmentType;
+    private final int segmentType;
     private final double x, y, z;
     private final double radius;
     private final int parentIndex;
@@ -56,7 +21,7 @@ public class SWCNode {
      * @param radius      = radius at node
      * @param parentIndex = index of parent node (-1 = no parent)
      */
-    SWCNode(int index, SegmentType segmentType, double x, double y, double z,
+    SWCNode(int index, int segmentType, double x, double y, double z,
             double radius, int parentIndex) {
 
         this.index = index;
@@ -91,7 +56,7 @@ public class SWCNode {
     String toSWCline() {
         return String.format("%d %d %f %f %f %f %d",
                 index,
-                segmentType.decode(),
+                segmentType,
                 x, y, z,
                 radius,
                 parentIndex);
@@ -101,7 +66,7 @@ public class SWCNode {
         return index;
     }
 
-    public SegmentType getSegmentType() {
+    public int getSegmentType() {
         return segmentType;
     }
 
