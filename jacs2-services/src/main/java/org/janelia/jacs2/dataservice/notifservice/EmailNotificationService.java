@@ -35,7 +35,7 @@ public class EmailNotificationService {
     public EmailNotificationService(@PropertyValue(name = "service.email.senderEmail") String senderEmail,
                                     @PropertyValue(name = "service.email.senderPassword") String senderPassword,
                                     @BoolPropertyValue(name = "service.email.authRequired") Boolean authRequired,
-                                    @PropertyValue(name = "service.email.enableTLS") Boolean enableTLS,
+                                    @PropertyValue(name = "service.email.enableTLS") boolean enableTLS,
                                     @PropertyValue(name = "service.email.smtpHost") String smtpHost,
                                     @IntPropertyValue(name = "service.email.smtpPort", defaultValue = 25) Integer smtpPort) {
         this.senderEmail = senderEmail;
@@ -43,7 +43,7 @@ public class EmailNotificationService {
         this.authRequired = authRequired;
         this.disabled = StringUtils.isBlank(smtpHost);
         emailProperties.put("mail.smtp.auth", authRequired.toString());
-        emailProperties.put("mail.smtp.starttls.enable", enableTLS.toString());
+        emailProperties.put("mail.smtp.starttls.enable", String.valueOf(enableTLS));
         emailProperties.put("mail.smtp.host", smtpHost);
         emailProperties.put("mail.smtp.port", smtpPort == null ? "" : smtpPort.toString());
     }
