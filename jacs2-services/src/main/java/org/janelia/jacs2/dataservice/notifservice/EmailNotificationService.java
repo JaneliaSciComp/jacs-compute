@@ -30,12 +30,12 @@ public class EmailNotificationService {
     private final Boolean authRequired;
 
     @Inject
-    public EmailNotificationService(@StrPropertyValue(name = "service.email.senderEmail") String senderEmail,
-                                    @StrPropertyValue(name = "service.email.senderPassword") String senderPassword,
-                                    @StrPropertyValue(name = "service.email.authRequired") Boolean authRequired,
-                                    @StrPropertyValue(name = "service.email.enableTLS") Boolean enableTLS,
-                                    @StrPropertyValue(name = "service.email.smtpHost") String smtpHost,
-                                    @StrPropertyValue(name = "service.email.smtpPort", defaultValue = "25") Integer smtpPort) {
+    public EmailNotificationService(@PropertyValue(name = "service.email.senderEmail") String senderEmail,
+                                    @PropertyValue(name = "service.email.senderPassword") String senderPassword,
+                                    @PropertyValue(name = "service.email.authRequired") Boolean authRequired,
+                                    @PropertyValue(name = "service.email.enableTLS") Boolean enableTLS,
+                                    @PropertyValue(name = "service.email.smtpHost") String smtpHost,
+                                    @PropertyValue(name = "service.email.smtpPort") Integer smtpPort) {
         this.senderEmail = senderEmail;
         this.senderPassword = senderPassword;
         this.authRequired = authRequired;
