@@ -22,6 +22,9 @@ dependencies {
         GUAVA_LIB = "com.google.guava:guava:27.0.1-jre"
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
+        // Mail
+        JAVAMAIL_LIB = "com.sun.mail:javax.mail:1.6.2"
+
         // database
         MONGODB_VERSION = "3.10.0"
         MONGODB_DRIVER_LIB = "org.mongodb:mongo-java-driver:${MONGODB_VERSION}"

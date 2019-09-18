@@ -16,6 +16,7 @@ import org.janelia.model.jacs2.domain.support.MongoMapping;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -62,6 +63,7 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private String workspace;
     private Number parentServiceId;
     private Number rootServiceId;
+    // accessId is used for implementing an optimistic locking mechanism for updating service data
     private int accessId;
     private List<JacsServiceEvent> events;
     private Date processStartTime = new Date();
@@ -69,6 +71,8 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
     private Date modificationDate = new Date();
     private RegisteredJacsNotification processingNotification;
     private Map<String, RegisteredJacsNotification> processingStagedNotifications = new HashMap<>();
+    private Set<String> successEmailNotifications = new LinkedHashSet<>();
+    private Set<String> failureEmailNotifications = new LinkedHashSet<>();
     @JsonIgnore
     private JacsServiceData parentService;
     @JsonIgnore
@@ -447,6 +451,30 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         Preconditions.checkArgument(StringUtils.isNotBlank(processingStage));
         Preconditions.checkArgument(notification != null);
         processingStagedNotifications.put(processingStage, notification);
+    }
+
+    public Set<String> getSuccessEmailNotifications() {
+        return successEmailNotifications;
+    }
+
+    public void setSuccessEmailNotifications(Set<String> successEmailNotifications) {
+        this.successEmailNotifications = successEmailNotifications;
+    }
+
+    public void addSuccessEmailNotifications(Collection<String> successEmailNotifications) {
+        this.successEmailNotifications.addAll(successEmailNotifications);
+    }
+
+    public Set<String> getFailureEmailNotifications() {
+        return failureEmailNotifications;
+    }
+
+    public void setFailureEmailNotifications(Set<String> failureEmailNotifications) {
+        this.failureEmailNotifications = failureEmailNotifications;
+    }
+
+    public void addFailureEmailNotifications(Collection<String> failureEmailNotifications) {
+        this.failureEmailNotifications.addAll(failureEmailNotifications);
     }
 
     public Object getSerializableResult() {

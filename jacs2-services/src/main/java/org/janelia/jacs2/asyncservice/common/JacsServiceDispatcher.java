@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.common;
 
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
+import org.janelia.jacs2.dataservice.notifservice.EmailNotificationService;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
@@ -29,6 +30,7 @@ public class JacsServiceDispatcher {
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private JacsNotificationDao jacsNotificationDao;
     private JacsServiceEngine jacsServiceEngine;
+    private EmailNotificationService emailNotificationService;
     private Logger logger;
 
     JacsServiceDispatcher() {
@@ -41,12 +43,14 @@ public class JacsServiceDispatcher {
                                  JacsServiceDataPersistence jacsServiceDataPersistence,
                                  JacsNotificationDao jacsNotificationDao,
                                  JacsServiceEngine jacsServiceEngine,
+                                 EmailNotificationService emailNotificationService,
                                  Logger logger) {
         this.serviceComputationFactory = serviceComputationFactory;
         this.jacsServiceQueue = jacsServiceQueue;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.jacsNotificationDao = jacsNotificationDao;
         this.jacsServiceEngine = jacsServiceEngine;
+        this.emailNotificationService = emailNotificationService;
         this.logger = logger;
     }
 
@@ -143,9 +147,6 @@ public class JacsServiceDispatcher {
             logger.warn("No Service not found for {} - probably it was already archived", serviceData);
             return;
         }
-        if (latestServiceData.hasCompletedUnsuccessfully()) {
-            logger.warn("Attempted to overwrite failed state with success for {}", latestServiceData);
-        }
         if (latestServiceData.hasCompletedSuccessfully()) {
             // nothing to do
             logger.debug("Service {} has already been marked as successful", latestServiceData);
@@ -156,6 +157,12 @@ public class JacsServiceDispatcher {
                     JacsServiceData.createServiceEvent(JacsServiceEventTypes.COMPLETED, "Completed successfully"));
         }
         sendNotification(latestServiceData, JacsServiceLifecycleStage.SUCCESSFUL_PROCESSING);
+        emailNotificationService.sendNotification(
+                String.format("Service %s#%d completed successfully", serviceData.getName(), serviceData.getId()),
+                String.format("Service %s#%d - %s completed successfully", serviceData.getName(), serviceData.getId(), serviceData.getArgs()),
+                serviceData.getSuccessEmailNotifications()
+        );
+
         if (!latestServiceData.hasParentServiceId()) {
             finalizeRootService(latestServiceData);
         }
@@ -181,11 +188,13 @@ public class JacsServiceDispatcher {
                 // in this case only suspend it if it has not been completed
                 jacsServiceDataPersistence.updateServiceState(latestServiceData, JacsServiceState.SUSPENDED, JacsServiceEvent.NO_EVENT);
                 sendNotification(latestServiceData, JacsServiceLifecycleStage.SUSPEND_PROCESSING);
+                emailNotificationService.sendNotification(
+                        String.format("Service %s#%d processing has been suspended %s", serviceData.getName(), serviceData.getId(), serviceData.getState()),
+                        String.format("Service %s#%d - %s has been suspended %s", serviceData.getName(), serviceData.getId(), serviceData.getArgs(), serviceData.getState()),
+                        serviceData.getFailureEmailNotifications()
+                );
             }
         } else {
-            if (latestServiceData.hasCompletedSuccessfully()) {
-                logger.warn("Service {} has failed after has already been marked as successful", latestServiceData);
-            }
             if (latestServiceData.hasCompletedUnsuccessfully()) {
                 // nothing to do
                 logger.debug("Service {} has already been marked as failed", latestServiceData);
@@ -196,6 +205,11 @@ public class JacsServiceDispatcher {
                         JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, String.format("Failed: %s", exc.getMessage())));
             }
             sendNotification(latestServiceData, JacsServiceLifecycleStage.FAILED_PROCESSING);
+            emailNotificationService.sendNotification(
+                    String.format("Service %s#%d processing %s", serviceData.getName(), serviceData.getId(), serviceData.getState()),
+                    String.format("Service %s#%d - %s has failed: %s", serviceData.getName(), serviceData.getId(), serviceData.getArgs(), serviceData.getState()),
+                    serviceData.getFailureEmailNotifications()
+            );
         }
         return new JacsServiceResult<>(serviceData, exc);
     }

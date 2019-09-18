@@ -3,8 +3,10 @@ package org.janelia.model.service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.model.domain.entityannotations.EntityId;
@@ -32,6 +34,8 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
     private Date lastStartTime; // last time this scheduled service was started
     private Date nextStartTime; // next time this scheduled service needs to run
     private boolean disabled; // quick disable flag
+    private Set<String> successEmailNotifications = new LinkedHashSet<>();
+    private Set<String> failureEmailNotifications = new LinkedHashSet<>();
 
     @Override
     public Number getId() {
@@ -163,6 +167,22 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
         this.disabled = disabled;
     }
 
+    public Set<String> getSuccessEmailNotifications() {
+        return successEmailNotifications;
+    }
+
+    public void setSuccessEmailNotifications(Set<String> successEmailNotifications) {
+        this.successEmailNotifications = successEmailNotifications;
+    }
+
+    public Set<String> getFailureEmailNotifications() {
+        return failureEmailNotifications;
+    }
+
+    public void setFailureEmailNotifications(Set<String> failureEmailNotifications) {
+        this.failureEmailNotifications = failureEmailNotifications;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
@@ -194,6 +214,8 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
                 .addArgs(serviceArgs)
                 .setDictionaryArgs(serviceDictionaryArgs)
                 .addResources(serviceResources)
+                .addSuccessEmailNotifications(successEmailNotifications)
+                .addFailureEmailNotifications(failureEmailNotifications)
                 .build();
         serviceData.setQueueId(serviceQueueId);
         serviceData.setPriority(servicePriority);

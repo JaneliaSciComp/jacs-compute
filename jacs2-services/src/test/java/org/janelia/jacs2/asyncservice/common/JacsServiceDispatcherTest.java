@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.asyncservice.impl.JacsServiceEngineImpl;
+import org.janelia.jacs2.dataservice.notifservice.EmailNotificationService;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.jacs2.SetFieldValueHandler;
@@ -56,6 +57,7 @@ public class JacsServiceDispatcherTest {
     private JacsServiceQueue jacsServiceQueue;
     private JacsServiceEngine jacsServiceEngine;
     private ServiceRegistry serviceRegistry;
+    private EmailNotificationService emailNotificationService;
     private Logger logger;
     private JacsServiceDispatcher testDispatcher;
 
@@ -71,11 +73,13 @@ public class JacsServiceDispatcherTest {
         serviceRegistry = mock(ServiceRegistry.class);
         jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, TEST_QUEUE_NAME, 10, logger);
         jacsServiceEngine = new JacsServiceEngineImpl(jacsServiceDataPersistence, jacsServiceQueue, serviceRegistrarSource, 10, TEST_QUEUE_NAME, logger);
+        emailNotificationService = mock(EmailNotificationService.class);
         testDispatcher = new JacsServiceDispatcher(serviceComputationFactory,
                 jacsServiceQueue,
                 jacsServiceDataPersistence,
                 jacsNotificationDao,
                 jacsServiceEngine,
+                emailNotificationService,
                 logger);
         when(serviceRegistrarSource.get()).thenReturn(serviceRegistry);
         Answer<Void> saveServiceData = invocation -> {
