@@ -29,20 +29,20 @@ public class EmailNotificationService {
     private final Properties emailProperties = new Properties();
     private final String senderEmail;
     private final String senderPassword;
-    private final Boolean authRequired;
+    private final boolean authRequired;
 
     @Inject
     public EmailNotificationService(@PropertyValue(name = "service.email.senderEmail") String senderEmail,
                                     @PropertyValue(name = "service.email.senderPassword") String senderPassword,
-                                    @BoolPropertyValue(name = "service.email.authRequired") Boolean authRequired,
-                                    @PropertyValue(name = "service.email.enableTLS") boolean enableTLS,
+                                    @BoolPropertyValue(name = "service.email.authRequired") boolean authRequired,
+                                    @BoolPropertyValue(name = "service.email.enableTLS") boolean enableTLS,
                                     @PropertyValue(name = "service.email.smtpHost") String smtpHost,
                                     @IntPropertyValue(name = "service.email.smtpPort", defaultValue = 25) Integer smtpPort) {
         this.senderEmail = senderEmail;
         this.senderPassword = senderPassword;
         this.authRequired = authRequired;
         this.disabled = StringUtils.isBlank(smtpHost);
-        emailProperties.put("mail.smtp.auth", authRequired.toString());
+        emailProperties.put("mail.smtp.auth", String.valueOf(authRequired));
         emailProperties.put("mail.smtp.starttls.enable", String.valueOf(enableTLS));
         emailProperties.put("mail.smtp.host", smtpHost);
         emailProperties.put("mail.smtp.port", smtpPort == null ? "" : smtpPort.toString());
