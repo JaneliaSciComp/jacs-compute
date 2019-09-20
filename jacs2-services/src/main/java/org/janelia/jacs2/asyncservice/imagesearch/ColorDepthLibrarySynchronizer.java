@@ -160,7 +160,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         String ownerName = libraryIdentifier.split("_")[0];
                         Subject subject = dao.getSubjectByName(ownerName);
                         if (subject != null) {
-                            logger.warn("Falling back on owner encoded in library identifier: {}", subject.getKey());
+                            logger.warn("No corresponding data set found. Falling back on owner encoded in library identifier: {}", subject.getKey());
                             library.setOwnerKey(subject.getKey());
                         }
                         else {
@@ -307,7 +307,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 }
             }
             catch (ParseException e) {
-                logger.warn("  Accepting non-standard filename: {}", filepath);
+                logger.debug("  Accepting non-standard filename: {}", filepath);
             }
 
             ColorDepthImage image = new ColorDepthImage();

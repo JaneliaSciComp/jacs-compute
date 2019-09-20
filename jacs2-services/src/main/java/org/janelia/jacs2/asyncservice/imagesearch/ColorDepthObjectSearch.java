@@ -188,9 +188,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
             serviceArgList.add(new ServiceArg("-mirrorMask"));
         }
 
-        if (search.getPctPositivePixels() != null) {
-            serviceArgList.add(new ServiceArg("-pctPositivePixels", search.getPctPositivePixels()));
-        }
+        // KR: ignoring this parameter, per Hideo's suggestion, and just returning top 200 results
+//        if (search.getPctPositivePixels() != null) {
+//            serviceArgList.add(new ServiceArg("-pctPositivePixels", search.getPctPositivePixels()));
+//        }
 
         return colorDepthFileSearch.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
