@@ -83,6 +83,11 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
+    public JacsServiceDataBuilder setVersion(String version) {
+        serviceData.setVersion(version);
+        return this;
+    }
+
     public JacsServiceDataBuilder setServiceTimeout(Long serviceTimeout) {
         serviceData.setServiceTimeout(serviceTimeout);
         return this;

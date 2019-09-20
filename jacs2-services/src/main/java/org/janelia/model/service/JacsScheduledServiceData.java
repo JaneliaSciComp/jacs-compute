@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.model.domain.entityannotations.EntityId;
 import org.janelia.model.jacs2.BaseEntity;
@@ -208,9 +209,11 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
     public JacsServiceData createServiceInstance() {
         JacsServiceData serviceData = new JacsServiceDataBuilder(null)
                 .setName(serviceName)
+                .setDescription("Triggered by " + name + "#" + id + (StringUtils.isNotBlank(description) ? ": " + description : ""))
                 .setOwnerKey(runServiceAs)
                 .setAuthKey(runServiceAs)
                 .setProcessingLocation(serviceProcessingLocation)
+                .setVersion(serviceVersion)
                 .addArgs(serviceArgs)
                 .setDictionaryArgs(serviceDictionaryArgs)
                 .addResources(serviceResources)
@@ -219,7 +222,7 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
                 .build();
         serviceData.setQueueId(serviceQueueId);
         serviceData.setPriority(servicePriority);
-        serviceData.addTags(name, name + "#" + id);
+        serviceData.addTags(name + "#" + id);
         return serviceData;
     }
 }
