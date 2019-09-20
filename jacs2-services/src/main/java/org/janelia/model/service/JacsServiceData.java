@@ -658,7 +658,6 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         return this.serviceHierarchyStream().collect(Collectors.toMap(sd -> sd, sd -> sd.priority() + priorityDiff));
     }
 
-
     public void updateServicePriority(int newPriority) {
         Map<JacsServiceData, Integer> newPriorities = getNewServiceHierarchyPriorities(newPriority);
         newPriorities.entrySet().forEach(sdpEntry -> {
