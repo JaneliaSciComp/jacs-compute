@@ -775,9 +775,6 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
         MongoCollection mongoCollection = dao.getCollectionByName(collectionName);
         log.info("Creating indexes on {}", collectionName);
         for (DaoIndex index : indexes) {
-            // drop the index
-            mongoCollection.dropIndex(index.getKeys());
-            // recreate it
             if (StringUtils.isBlank(index.getOptions())) {
                 mongoCollection.ensureIndex(index.getKeys());
             } else {
