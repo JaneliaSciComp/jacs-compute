@@ -280,22 +280,6 @@ public class TmResource {
         LOG.info("updateTmNeurons({}, numNeurons={})", subjectKey, neuron);
 
         TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
-
-        /* List<TmNeuronMetadata> list = new ArrayList<>();
-        if (neurons.size()==0)
-            return null;
-        for (int i = 0; i < neurons.size(); i += 2) {
-            TmNeuronMetadata neuron = neurons.get(i);
-            TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
-            list.add(updatedNeuron);
-        }
-        if (list.size() > 1) {
-            LOG.trace("{} updated {} neurons in workspace {}",
-                    subjectKey, list.size(), list.stream().map(TmNeuronMetadata::getWorkspaceId).collect(Collectors.toSet()));
-        } else if (list.size() == 1) {
-            LOG.trace("{} updated neuron {} in workspace {}",
-                    subjectKey, list.get(0).getId(), list.get(0).getWorkspaceId());
-        }*/
         return updatedNeuron;
     }
 
