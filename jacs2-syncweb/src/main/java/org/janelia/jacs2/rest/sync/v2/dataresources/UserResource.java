@@ -100,6 +100,7 @@ public class UserResource {
     @Path("/user/password")
     public User changePassword(AuthenticationRequest authenticationMessage, @Context ContainerRequestContext containerRequestContext) {
         LOG.info("changePassword({})", authenticationMessage.getUsername());
+        LOG.info("changePassword({})", authenticationMessage.getPassword());
         try {
             boolean isAllowed = checkAdministrationPrivileges(authenticationMessage.getUsername(), containerRequestContext);
             if (!isAllowed) {
@@ -271,6 +272,7 @@ public class UserResource {
             }
         }
         catch (Exception e) {
+            e.printStackTrace();
             LOG.error("Error trying to update user for {}", userKey, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error trying to update user roles " + userKey))

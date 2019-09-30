@@ -224,9 +224,10 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
     })
     @GET
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/workspace/neuron/metadata")
-    public List<TmNeuronMetadata> getWorkspaceNeuronMetadata(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+    @Path("/workspace/neuron")
+    public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                              @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                                              @ApiParam @QueryParam("offset") final Long offsetParam,
                                                              @ApiParam @QueryParam("length") final Integer lengthParam) {
@@ -234,55 +235,6 @@ public class TmResource {
         long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
         int length = lengthParam == null || lengthParam < 0 ? -1 : lengthParam;
         return tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(subjectKey, workspaceId, offset, length);
-    }
-
-    @ApiOperation(value = "Gets the neurons for a workspace",
-            notes = "Returns a list of neurons contained in a given workspace"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched neurons"),
-            @ApiResponse(code = 500, message = "Error occurred while occurred while fetching the neurons")
-    })
-    @GET
-    @Produces({
-            MultiPartMediaTypes.MULTIPART_MIXED,
-            MediaType.APPLICATION_JSON
-    })
-    @Path("/workspace/neuron")
-    public Response getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                        @ApiParam @QueryParam("workspaceId") final Long workspaceId,
-                                        @ApiParam @QueryParam("offset") final Long offsetParam,
-                                        @ApiParam @QueryParam("length") final Integer lengthParam) {
-        LOG.info("getWorkspaceNeurons({}, workspaceId={}, offset={}, length={})", subjectKey, workspaceId, offsetParam, lengthParam);
-        MultiPart multiPartEntity = new MultiPart();
-        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdAccessibleBySubjectKey(workspaceId, subjectKey);
-        if (workspace == null) {
-            LOG.error("No workspace found for {} accessible by {}", workspaceId, subjectKey);
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("Error getting the workspace " + workspaceId + " for " + subjectKey))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-        try {
-            long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
-            int length = lengthParam == null || lengthParam < 0 ? -1 : lengthParam;
-            List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, workspace, offset, length);
-            if (neuronPairs.isEmpty()) {
-                multiPartEntity.bodyPart(new BodyPart("Empty", MediaType.TEXT_PLAIN_TYPE));
-            } else {
-                for (Pair<TmNeuronMetadata, InputStream> neuronPair : neuronPairs) {
-                    multiPartEntity.bodyPart(new BodyPart(neuronPair.getLeft(), MediaType.APPLICATION_JSON_TYPE));
-                    multiPartEntity.bodyPart(new BodyPart(neuronPair.getRight(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
-                }
-            }
-            return Response.ok().entity(multiPartEntity).type(MultiPartMediaTypes.MULTIPART_MIXED).build();
-        } catch (Exception e) {
-            LOG.error("Error getting neurons from workspace {}", workspace, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new ErrorResponse("Error getting neuorons from workspace " + workspaceId + " for " + subjectKey))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
     }
 
     @ApiOperation(value = "Creates a new neuron",
@@ -293,23 +245,20 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while creating a TmNeuron")
     })
     @PUT
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/neuron")
-    public Response createTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                   @ApiParam @FormDataParam("neuronMetadata") TmNeuronMetadata neuron,
-                                   @ApiParam @FormDataParam("protobufBytes") InputStream neuronPointsStream) {
-        LOG.debug("createTmNeuron({}, {})", subjectKey, neuron);
+    public TmNeuronMetadata createTmNeuron(DomainQuery query) {
+        TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
+        String subjectKey = query.getSubjectKey();
+        LOG.info("createTmNeuron({}, {})", subjectKey, neuron);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdAccessibleBySubjectKey(neuron.getWorkspaceId(), subjectKey);
         if (workspace == null) {
-            LOG.error("No workspace found for {} accessible by {}", neuron.getWorkspaceId(), subjectKey);
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("Error getting the workspace for neuron " + neuron.toString()))
-                    .build();
+            LOG.info("No workspace found for {} accessible by {}", neuron.getWorkspaceId(), subjectKey);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
         } else {
-            TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace, neuronPointsStream);
-            return Response.ok(newNeuron)
-                    .build();
+            TmNeuronMetadata newNeuron = tmNeuronMetadataDao.createTmNeuronInWorkspace(subjectKey, neuron, workspace);
+            return newNeuron;
         }
     }
 
@@ -321,29 +270,23 @@ public class TmResource {
             @ApiResponse(code = 500, message = "Error occurred while updating TmNeurons")
     })
     @POST
-    @Consumes(MultiPartMediaTypes.MULTIPART_MIXED)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/neuron")
-    public List<TmNeuronMetadata> updateTmNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                                  @ApiParam MultiPart multiPart) {
-        int numParts = multiPart.getBodyParts().size();
-        if (numParts % 2 != 0) {
-            throw new IllegalArgumentException("Number of body parts is " + multiPart.getBodyParts().size() + " instead of a multiple of 2");
-        }
-        LOG.trace("updateTmNeurons({}, numNeurons={})", subjectKey, numParts / 2);
-        List<TmNeuronMetadata> list = new ArrayList<>();
-        for (int i = 0; i < numParts; i += 2) {
-            BodyPart part0 = multiPart.getBodyParts().get(i);
-            BodyPart part1 = multiPart.getBodyParts().get(i + 1);
-            TmNeuronMetadata neuron = part0.getEntityAs(TmNeuronMetadata.class);
-            InputStream protoBufStream;
-            if (part1.getMediaType().equals(MediaType.APPLICATION_OCTET_STREAM_TYPE)) {
-                protoBufStream = ((BodyPartEntity) part1.getEntity()).getInputStream();
-            } else {
-                protoBufStream = null;
-            }
+    public TmNeuronMetadata updateTmNeuron(DomainQuery query) {
+        TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
+        String subjectKey = query.getSubjectKey();
+
+        LOG.info("updateTmNeurons({}, numNeurons={})", subjectKey, neuron);
+
+        TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
+
+        /* List<TmNeuronMetadata> list = new ArrayList<>();
+        if (neurons.size()==0)
+            return null;
+        for (int i = 0; i < neurons.size(); i += 2) {
+            TmNeuronMetadata neuron = neurons.get(i);
             TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
-            tmNeuronMetadataDao.updateNeuronPoints(updatedNeuron, protoBufStream);
             list.add(updatedNeuron);
         }
         if (list.size() > 1) {
@@ -352,8 +295,8 @@ public class TmResource {
         } else if (list.size() == 1) {
             LOG.trace("{} updated neuron {} in workspace {}",
                     subjectKey, list.get(0).getId(), list.get(0).getWorkspaceId());
-        }
-        return list;
+        }*/
+        return updatedNeuron;
     }
 
     @ApiOperation(value = "Gets neuron metadata given a neuronId",
