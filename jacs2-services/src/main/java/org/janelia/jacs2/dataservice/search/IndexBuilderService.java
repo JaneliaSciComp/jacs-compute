@@ -65,10 +65,12 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
 
     private int indexDocumentsOfType(DomainObjectIndexer domainObjectIndexer, Class<? extends DomainObject> domainClass) {
         MDC.put("serviceName", domainClass.getSimpleName());
+        Stopwatch stopwatch = Stopwatch.createStarted();
         try {
             LOG.info("Indexing objects of type {}", domainClass.getName());
             return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass).parallel());
         } finally {
+            LOG.info("Completed indexing objects of type {} in {}s", domainClass.getName(), stopwatch.elapsed(TimeUnit.SECONDS));
             MDC.remove("serviceName");
         }
     }
