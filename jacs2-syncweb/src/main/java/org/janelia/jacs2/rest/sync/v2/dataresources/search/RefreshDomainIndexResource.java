@@ -1,6 +1,10 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources.search;
 
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -17,10 +21,14 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.collections4.CollectionUtils;
 import org.glassfish.jersey.server.ManagedAsync;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
@@ -57,6 +65,7 @@ public class RefreshDomainIndexResource {
     @Path("searchIndex")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     public void refreshDocumentsIndex(@QueryParam("clearIndex") Boolean clearIndex,
+                                      @QueryParam("indexedClasses") List<String> indexedClassnamesParam,
                                       @Context ContainerRequestContext containerRequestContext,
                                       @Suspended AsyncResponse asyncResponse) {
         asyncTaskExecutor.submit(() -> {
@@ -73,7 +82,16 @@ public class RefreshDomainIndexResource {
                     asyncResponse.resume(new WebApplicationException(Response.Status.FORBIDDEN));
                     return;
                 }
-                int nDocs = indexBuilderService.indexAllDocuments(clearIndex != null && clearIndex);
+                Predicate<Class> indexedClassesFilter;
+                if (CollectionUtils.isEmpty(indexedClassnamesParam)) {
+                    indexedClassesFilter = clazz -> true;
+                } else {
+                    Set<String> indexedClassnames = indexedClassnamesParam.stream()
+                            .flatMap(cn -> Splitter.on(',').omitEmptyStrings().trimResults().splitToList(cn).stream())
+                            .collect(Collectors.toSet());
+                    indexedClassesFilter = clazz -> indexedClassnames.contains(clazz.getName()) || indexedClassnames.contains(clazz.getSimpleName());
+                }
+                int nDocs = indexBuilderService.indexAllDocuments(clearIndex != null && clearIndex, indexedClassesFilter);
                 asyncResponse.resume(nDocs);
             } catch (Exception e) {
                 LOG.error("Error occurred while deleting document index", e);

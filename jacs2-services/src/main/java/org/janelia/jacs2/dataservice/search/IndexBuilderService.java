@@ -1,6 +1,7 @@
 package org.janelia.jacs2.dataservice.search;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.inject.Inject;
 
@@ -33,7 +34,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
     }
 
     @SuppressWarnings("unchecked")
-    public int indexAllDocuments(boolean clearIndex) {
+    public int indexAllDocuments(boolean clearIndex, Predicate<Class> domainObjectClassFilter) {
         String solrRebuildCore = solrConfig.getSolrBuildCore();
         SolrServer solrServer = createSolrBuilder()
                 .setSolrCore(solrRebuildCore)
@@ -46,6 +47,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         Set<Class<?>> searcheableClasses = DomainUtils.getDomainClassesAnnotatedWith(SearchType.class);
         int result = searcheableClasses.stream()
                 .parallel()
+                .filter(domainObjectClassFilter)
                 .filter(clazz -> DomainObject.class.isAssignableFrom(clazz))
                 .map(clazz -> (Class<? extends DomainObject>) clazz)
                 .map(domainClass -> indexDocumentsOfType(domainObjectIndexer, domainClass))
