@@ -1,6 +1,5 @@
 package org.janelia.jacs2.dataservice.search;
 
-import java.util.List;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -8,13 +7,11 @@ import javax.inject.Inject;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.common.params.CoreAdminParams;
+import org.janelia.model.access.cdi.WithCache;
 import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.search.DocumentSearchParams;
-import org.janelia.model.access.domain.search.DocumentSearchResults;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainUtils;
-import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.support.SearchType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,33 +22,14 @@ import org.slf4j.MDC;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class IndexingService {
-    private static final Logger LOG = LoggerFactory.getLogger(IndexingService.class);
-
-    private final LegacyDomainDao legacyDomainDao;
-    private final DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider;
-    private final SolrConfig solrConfig;
+public class IndexBuilderService extends AbstractIndexingServiceSupport {
+    private static final Logger LOG = LoggerFactory.getLogger(IndexBuilderService.class);
 
     @Inject
-    IndexingService(LegacyDomainDao legacyDomainDao,
-                    SolrConfig solrConfig,
-                    DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider) {
-        this.legacyDomainDao = legacyDomainDao;
-        this.solrConfig = solrConfig;
-        this.domainObjectIndexerProvider = domainObjectIndexerProvider;
-    }
-
-    public int indexDocuments(List<Reference> domainObjectReferences) {
-        List<DomainObject> domainObjects = legacyDomainDao.getDomainObjectsAs(domainObjectReferences, DomainObject.class);
-        DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
-                createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
-        return domainObjectIndexer.indexDocumentStream(domainObjects.stream());
-    }
-
-    public boolean indexDocument(DomainObject domainObject) {
-        DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
-                createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
-        return domainObjectIndexer.indexDocument(domainObject);
+    IndexBuilderService(LegacyDomainDao legacyDomainDao,
+                        SolrConfig solrConfig,
+                        @WithCache DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider) {
+        super(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
     }
 
     @SuppressWarnings("unchecked")
@@ -67,9 +45,9 @@ public class IndexingService {
         }
         Set<Class<?>> searcheableClasses = DomainUtils.getDomainClassesAnnotatedWith(SearchType.class);
         int result = searcheableClasses.stream()
+                .parallel()
                 .filter(clazz -> DomainObject.class.isAssignableFrom(clazz))
                 .map(clazz -> (Class<? extends DomainObject>) clazz)
-                .parallel()
                 .map(domainClass -> indexDocumentsOfType(domainObjectIndexer, domainClass))
                 .reduce(0, (r1, r2) -> r1 + r2);
         LOG.info("Completed indexing "+result+" objects");
@@ -83,7 +61,7 @@ public class IndexingService {
         MDC.put("serviceName", domainClass.getSimpleName());
         try {
             LOG.info("Indexing objects of type {}", domainClass.getName());
-            return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass));
+            return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass).parallel());
         } finally {
             MDC.remove("serviceName");
         }
@@ -122,33 +100,4 @@ public class IndexingService {
                 createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
         domainObjectIndexer.removeIndex();
     }
-
-    public boolean removeDocument(Long id) {
-        DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
-                createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
-        return domainObjectIndexer.removeDocument(id);
-    }
-
-    public int removeDocuments(List<Long> ids) {
-        DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
-                createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
-        return domainObjectIndexer.removeDocumentStream(ids.stream());
-    }
-
-    public DocumentSearchResults searchIndex(DocumentSearchParams searchParams) {
-        DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
-                createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
-        return domainObjectIndexer.searchIndex(searchParams);
-    }
-
-    public void updateDocsAncestors(Set<Long> docIds, Long ancestorId) {
-        DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
-                createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
-        domainObjectIndexer.updateDocsAncestors(docIds, ancestorId);
-    }
-
-    private SolrBuilder createSolrBuilder() {
-        return solrConfig.builder();
-    }
-
 }
