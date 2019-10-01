@@ -1,9 +1,12 @@
 package org.janelia.jacs2.dataservice.search;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import javax.inject.Inject;
+
+import com.google.common.base.Stopwatch;
 
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
@@ -35,6 +38,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
 
     @SuppressWarnings("unchecked")
     public int indexAllDocuments(boolean clearIndex, Predicate<Class> domainObjectClassFilter) {
+        Stopwatch stopwatch = Stopwatch.createStarted();
         String solrRebuildCore = solrConfig.getSolrBuildCore();
         SolrServer solrServer = createSolrBuilder()
                 .setSolrCore(solrRebuildCore)
@@ -52,10 +56,10 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
                 .map(clazz -> (Class<? extends DomainObject>) clazz)
                 .map(domainClass -> indexDocumentsOfType(domainObjectIndexer, domainClass))
                 .reduce(0, (r1, r2) -> r1 + r2);
-        LOG.info("Completed indexing "+result+" objects");
+        LOG.info("Completed indexing {} objects after {}s", result, stopwatch.elapsed(TimeUnit.SECONDS));
         optimize(solrServer);
         swapCores(solrRebuildCore, solrConfig.getSolrMainCore());
-        LOG.info("The new SOLR index is now live.");
+        LOG.info("The new SOLR index is now live (after {}s)", stopwatch.elapsed(TimeUnit.SECONDS));
         return result;
     }
 
