@@ -43,7 +43,7 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
         }
     }
 
-    private final IndexBuilderService indexBuilderService;
+    private final Instance<IndexBuilderService> indexBuilderServiceProvider;
     private final JacsNotificationDao jacsNotificationDao;
 
     @Inject
@@ -51,11 +51,11 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
                        JacsServiceDataPersistence jacsServiceDataPersistence,
                        @Any Instance<ExternalProcessRunner> serviceRunners,
                        @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                       IndexBuilderService indexBuilderService,
+                       Instance<IndexBuilderService> indexBuilderServiceProvider,
                        JacsNotificationDao jacsNotificationDao,
                        Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.indexBuilderService = indexBuilderService;
+        this.indexBuilderServiceProvider = indexBuilderServiceProvider;
         this.jacsNotificationDao = jacsNotificationDao;
     }
 
@@ -77,6 +77,7 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
                     .collect(Collectors.toSet());
             indexedClassesFilter = clazz -> indexedClassnames.contains(clazz.getName()) || indexedClassnames.contains(clazz.getSimpleName());
         }
+        IndexBuilderService indexBuilderService = indexBuilderServiceProvider.get();
         int nDocs = indexBuilderService.indexAllDocuments(args.clearIndex, indexedClassesFilter);
         logger.info("Indexed {} documents", nDocs);
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, nDocs));
