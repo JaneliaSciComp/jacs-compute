@@ -45,8 +45,8 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
                            JacsServiceDataPersistence jacsServiceDataPersistence,
                            @Any Instance<ExternalProcessRunner> serviceRunners,
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                           JacsNotificationDao jacsNotificationDao,
                            DbMaintainer dbMainainer,
+                           JacsNotificationDao jacsNotificationDao,
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.jacsNotificationDao = jacsNotificationDao;
@@ -58,7 +58,6 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
         return ServiceArgs.getMetadata(DbMaintenanceProcessor.class, new DbMaintenanceArgs());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         DbMaintenanceArgs args = getArgs(jacsServiceData);
