@@ -25,6 +25,7 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
     private String serviceName; // service to be run
     private String serviceVersion;
     private Integer servicePriority = 0; // service priority
+    private String ownerKey; // who created the job
     private String runServiceAs; // whom should this service run as
     private ProcessingLocation serviceProcessingLocation; // service processing location
     private String serviceQueueId;
@@ -86,6 +87,14 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
 
     public void setServicePriority(Integer servicePriority) {
         this.servicePriority = servicePriority;
+    }
+
+    public String getOwnerKey() {
+        return ownerKey;
+    }
+
+    public void setOwnerKey(String ownerKey) {
+        this.ownerKey = ownerKey;
     }
 
     public String getRunServiceAs() {
@@ -193,6 +202,7 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
                 .append("serviceName", serviceName)
                 .append("serviceVersion", serviceVersion)
                 .append("servicePriority", servicePriority)
+                .append("ownerKey", ownerKey)
                 .append("runServiceAs", runServiceAs)
                 .append("serviceProcessingLocation", serviceProcessingLocation)
                 .append("serviceQueueId", serviceQueueId)
@@ -210,7 +220,7 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
         JacsServiceData serviceData = new JacsServiceDataBuilder(null)
                 .setName(serviceName)
                 .setDescription("Triggered by " + name + "#" + id + (StringUtils.isNotBlank(description) ? ": " + description : ""))
-                .setOwnerKey(runServiceAs)
+                .setOwnerKey(ownerKey)
                 .setAuthKey(runServiceAs)
                 .setProcessingLocation(serviceProcessingLocation)
                 .setVersion(serviceVersion)

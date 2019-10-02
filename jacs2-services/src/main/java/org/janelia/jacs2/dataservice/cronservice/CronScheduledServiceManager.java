@@ -65,6 +65,7 @@ public class CronScheduledServiceManager {
                 .put("serviceResources", new SetFieldValueHandler<>(scheduledServiceData.getServiceResources()))
                 .put("servicePriority", new SetFieldValueHandler<>(scheduledServiceData.getServicePriority()))
                 .put("cronScheduleDescriptor", new SetFieldValueHandler<>(scheduledServiceData.getCronScheduleDescriptor()))
+                .put("ownerKey", new SetFieldValueHandler<>(scheduledServiceData.getOwnerKey()))
                 .put("runServiceAs", new SetFieldValueHandler<>(scheduledServiceData.getRunServiceAs()))
                 .put("serviceQueueId", new SetFieldValueHandler<>(scheduledServiceData.getServiceQueueId()))
                 .put("serviceProcessingLocation", new SetFieldValueHandler<>(scheduledServiceData.getServiceProcessingLocation()))
