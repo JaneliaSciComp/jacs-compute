@@ -56,6 +56,7 @@ public class EmailNotificationService {
         String recipients = recipientsCollection.stream().filter(r -> StringUtils.isNotBlank(r)).reduce((r1, r2) -> r1 + "," + r2).orElse("");
         if (StringUtils.isBlank(recipients)) {
             LOG.info("No recipients have been specified for message {}", subject);
+            return;
         }
         Session session;
         try {
@@ -79,6 +80,5 @@ public class EmailNotificationService {
         } catch (Exception e) {
             LOG.warn("Error sending {} to {} from {} using {}", textMessage, recipients, senderEmail, emailProperties);
         }
-
     }
 }

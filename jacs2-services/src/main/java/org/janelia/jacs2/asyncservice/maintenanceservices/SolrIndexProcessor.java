@@ -36,14 +36,14 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
     public static class SolrIndexArgs extends ServiceArgs {
         @Parameter(names = "-clearIndex", arity = 0, description = "Clear index")
         boolean clearIndex = false;
-        @Parameter(names = "-indexedClassnames", description = "Filter to index only the specified classes. If not defined then it indexes all indexable classes")
+        @Parameter(names = "-indexedClassnames", description = "Filter to index only the specified classes. If not defined then it indexes all searchable types.")
         List<String> indexedClassnamesFilter;
         SolrIndexArgs() {
             super("Solr index rebuild service.");
         }
     }
 
-    private final Instance<IndexBuilderService> indexBuilderServiceProvider;
+    private final IndexBuilderService indexBuilderService;
     private final JacsNotificationDao jacsNotificationDao;
 
     @Inject
@@ -51,11 +51,11 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
                        JacsServiceDataPersistence jacsServiceDataPersistence,
                        @Any Instance<ExternalProcessRunner> serviceRunners,
                        @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                       Instance<IndexBuilderService> indexBuilderServiceProvider,
+                       IndexBuilderService indexBuilderService,
                        JacsNotificationDao jacsNotificationDao,
                        Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.indexBuilderServiceProvider = indexBuilderServiceProvider;
+        this.indexBuilderService = indexBuilderService;
         this.jacsNotificationDao = jacsNotificationDao;
     }
 
@@ -77,7 +77,6 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
                     .collect(Collectors.toSet());
             indexedClassesFilter = clazz -> indexedClassnames.contains(clazz.getName()) || indexedClassnames.contains(clazz.getSimpleName());
         }
-        IndexBuilderService indexBuilderService = indexBuilderServiceProvider.get();
         int nDocs = indexBuilderService.indexAllDocuments(args.clearIndex, indexedClassesFilter);
         logger.info("Indexed {} documents", nDocs);
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, nDocs));

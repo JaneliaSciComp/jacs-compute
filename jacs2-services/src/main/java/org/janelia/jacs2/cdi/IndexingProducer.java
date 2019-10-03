@@ -3,6 +3,7 @@ package org.janelia.jacs2.cdi;
 import java.util.concurrent.ExecutorService;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 
 import org.apache.solr.client.solrj.SolrServer;
@@ -54,8 +55,8 @@ public class IndexingProducer {
      * For rebuilding the index we use an object indexer that uses temporary cached ancestors and annotation in order
      * to minimize the trips to the database.
      *
-     * @param allNodeAncestorsGetter
-     * @param nodeAnnotationGetter
+     * @param allNodeAncestorsGetterProvider
+     * @param nodeAnnotationGetterProvider
      * @param objectGetter
      * @param solrBatchSize
      * @param solrCommitSize
@@ -63,14 +64,14 @@ public class IndexingProducer {
      */
     @WithCache
     @Produces
-    public DomainObjectIndexerProvider<SolrServer> createIndexerProviderForIndexRebuild(@WithCache NodeAncestorsGetter allNodeAncestorsGetter,
-                                                                                        @WithCache DomainAnnotationGetter nodeAnnotationGetter,
+    public DomainObjectIndexerProvider<SolrServer> createIndexerProviderForIndexRebuild(@WithCache Instance<NodeAncestorsGetter> allNodeAncestorsGetterProvider,
+                                                                                        @WithCache Instance<DomainAnnotationGetter> nodeAnnotationGetterProvider,
                                                                                         DomainObjectGetter objectGetter,
                                                                                         @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
                                                                                         @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
         return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,
-                allNodeAncestorsGetter,
-                nodeAnnotationGetter,
+                allNodeAncestorsGetterProvider.get(),
+                nodeAnnotationGetterProvider.get(),
                 objectGetter,
                 solrBatchSize,
                 solrCommitSize)
