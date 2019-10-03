@@ -79,7 +79,7 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
         }
         int nDocs = indexBuilderService.indexAllDocuments(args.clearIndex, indexedClassesFilter);
         logger.info("Indexed {} documents", nDocs);
-        return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, nDocs));
+        return computationFactory.newCompletedComputation(updateServiceResult(jacsServiceData, nDocs));
     }
 
     private void logMaintenanceEvent(String maintenanceEvent, Number serviceId) {
