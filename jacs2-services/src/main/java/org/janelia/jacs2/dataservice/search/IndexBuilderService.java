@@ -68,7 +68,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
             LOG.info("Indexing objects of type {}", domainClass.getName());
-            return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass).parallel());
+            return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass));
         } finally {
             LOG.info("Completed indexing objects of type {} in {}s", domainClass.getName(), stopwatch.elapsed(TimeUnit.SECONDS));
             MDC.remove("serviceName");

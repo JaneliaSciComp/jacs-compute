@@ -66,7 +66,7 @@ public class IndexingProducer {
     @Produces
     public DomainObjectIndexerProvider<SolrServer> createIndexerProviderForIndexRebuild(@WithCache Instance<NodeAncestorsGetter> allNodeAncestorsGetterProvider,
                                                                                         @WithCache Instance<DomainAnnotationGetter> nodeAnnotationGetterProvider,
-                                                                                        DomainObjectGetter objectGetter,
+                                                                                        @WithCache DomainObjectGetter objectGetter,
                                                                                         @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
                                                                                         @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
         return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,

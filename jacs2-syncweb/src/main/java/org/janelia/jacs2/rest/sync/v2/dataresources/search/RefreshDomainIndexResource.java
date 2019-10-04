@@ -6,7 +6,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.PUT;
@@ -22,7 +21,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableSet;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -32,7 +30,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.glassfish.jersey.server.ManagedAsync;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
 import org.janelia.jacs2.dataservice.search.IndexBuilderService;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.security.Subject;
@@ -44,7 +41,6 @@ import org.slf4j.LoggerFactory;
 public class RefreshDomainIndexResource {
     private static final Logger LOG = LoggerFactory.getLogger(RefreshDomainIndexResource.class);
 
-    @RequestScoped
     @Inject
     private IndexBuilderService indexBuilderService;
 
