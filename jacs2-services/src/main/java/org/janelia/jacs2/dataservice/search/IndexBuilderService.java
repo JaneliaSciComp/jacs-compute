@@ -2,6 +2,7 @@ package org.janelia.jacs2.dataservice.search;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import javax.inject.Inject;
@@ -28,6 +29,7 @@ import org.slf4j.MDC;
  */
 public class IndexBuilderService extends AbstractIndexingServiceSupport {
     private static final Logger LOG = LoggerFactory.getLogger(IndexBuilderService.class);
+    private static AtomicBoolean IN_PROGRESS = new AtomicBoolean(false);
 
     @Inject
     IndexBuilderService(LegacyDomainDao legacyDomainDao,
@@ -36,8 +38,21 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         super(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
     }
 
-    @SuppressWarnings("unchecked")
     public int indexAllDocuments(boolean clearIndex, Predicate<Class> domainObjectClassFilter) {
+        if (!IN_PROGRESS.compareAndSet(false, true)) {
+            // there is full indexing already in progress so skip this
+            return -1;
+        }
+        try {
+            return execIndexAllDocuments(clearIndex, domainObjectClassFilter);
+        } finally {
+            IN_PROGRESS.set(false);
+        }
+    }
+
+
+    @SuppressWarnings("unchecked")
+    private int execIndexAllDocuments(boolean clearIndex, Predicate<Class> domainObjectClassFilter) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         String solrRebuildCore = solrConfig.getSolrBuildCore();
         SolrServer solrServer = createSolrBuilder()
@@ -52,7 +67,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         int result = searcheableClasses.stream()
                 .parallel()
                 .filter(domainObjectClassFilter)
-                .filter(clazz -> DomainObject.class.isAssignableFrom(clazz))
+                .filter(DomainObject.class::isAssignableFrom)
                 .map(clazz -> (Class<? extends DomainObject>) clazz)
                 .map(domainClass -> indexDocumentsOfType(domainObjectIndexer, domainClass))
                 .reduce(0, (r1, r2) -> r1 + r2);
