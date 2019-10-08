@@ -21,7 +21,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractEmptyServiceResultHandler;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.search.IndexBuilderService;
