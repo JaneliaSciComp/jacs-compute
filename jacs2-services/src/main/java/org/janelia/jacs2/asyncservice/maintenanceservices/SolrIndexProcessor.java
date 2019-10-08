@@ -20,6 +20,8 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractEmptyServiceResultHandler;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.search.IndexBuilderService;
@@ -62,6 +64,31 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
     @Override
     public ServiceMetaData getMetadata() {
         return ServiceArgs.getMetadata(SolrIndexProcessor.class, new SolrIndexArgs());
+    }
+
+    @Override
+    public ServiceResultHandler<Integer> getResultHandler() {
+        return new ServiceResultHandler<Integer>() {
+            @Override
+            public Integer collectResult(JacsServiceResult<?> depResults) {
+                return null;
+            }
+
+            @Override
+            public void updateServiceDataResult(JacsServiceData jacsServiceData, Integer result) {
+                jacsServiceData.setSerializableResult(result);
+            }
+
+            @Override
+            public Integer getServiceDataResult(JacsServiceData jacsServiceData) {
+                return jacsServiceData.getSerializableResult() == null ? null : (Integer) jacsServiceData.getSerializableResult();
+            }
+
+            @Override
+            public boolean isResultReady(JacsServiceResult depResults) {
+                return areAllDependenciesDone(depResults.getJacsServiceData());
+            }
+        };
     }
 
     @Override

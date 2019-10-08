@@ -41,6 +41,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
     public int indexAllDocuments(boolean clearIndex, Predicate<Class> domainObjectClassFilter) {
         if (!IN_PROGRESS.compareAndSet(false, true)) {
             // there is full indexing already in progress so skip this
+            LOG.info("Full indexing is already in progress");
             return -1;
         }
         try {
