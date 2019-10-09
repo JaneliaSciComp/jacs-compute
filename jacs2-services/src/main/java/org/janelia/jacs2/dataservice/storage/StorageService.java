@@ -111,7 +111,7 @@ public class StorageService {
         }
     }
 
-    public Optional<VolumeStorageInfo> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
+    public Optional<JadeStorageVolume> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(masterStorageServiceURL)
@@ -135,7 +135,7 @@ public class StorageService {
                 LOG.warn("Request {} returned status {}", target, responseStatus);
                 return Optional.empty();
             } else {
-                PageResult<VolumeStorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<VolumeStorageInfo>>(){});
+                PageResult<JadeStorageVolume> storageInfoResult = response.readEntity(new GenericType<PageResult<JadeStorageVolume>>(){});
                 if (storageInfoResult.getResultList().size() > 1) {
                     LOG.warn("Request {} returned more than one result {} please refine the query", target, storageInfoResult);
                     return storageInfoResult.getResultList().stream().findFirst();
