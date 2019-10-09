@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.function.Function;
 
 import javax.inject.Inject;
 
@@ -40,7 +41,7 @@ public class DataStorageLocationFactory {
     public DataLocation getDataLocationWithLocalCheck(String dataPath, String subjectKey, String authToken) {
         Path sampleLocalPath = Paths.get(dataPath);
         if (Files.exists(sampleLocalPath)) {
-            return new FileBasedRenderedVolumeLocation(Paths.get(dataPath));
+            return new FileBasedRenderedVolumeLocation(Paths.get(dataPath), Function.identity());
         } else {
             return lookupJadeDataLocation(dataPath, subjectKey, authToken)
                     .orElseThrow(() -> {
