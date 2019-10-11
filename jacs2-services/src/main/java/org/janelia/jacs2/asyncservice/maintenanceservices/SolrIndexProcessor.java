@@ -39,6 +39,8 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
         boolean clearIndex = false;
         @Parameter(names = "-indexedClassnames", description = "Filter to index only the specified classes. If not defined then it indexes all searchable types.")
         List<String> indexedClassnamesFilter;
+        @Parameter(names = "-excludedClassnames", description = "Classes that will not be indexed. If not defined then it indexes all searchable types.")
+        List<String> excludedClassnamesFilter;
         SolrIndexArgs() {
             super("Solr index rebuild service.");
         }
@@ -94,14 +96,23 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
     public ServiceComputation<JacsServiceResult<Integer>> process(JacsServiceData jacsServiceData) {
         SolrIndexArgs args = getArgs(jacsServiceData);
         logMaintenanceEvent("RefreshSolrIndex", jacsServiceData.getId());
-        Predicate<Class> indexedClassesFilter;
+        Predicate<Class> indexedClassesPredicate;
         if (CollectionUtils.isEmpty(args.indexedClassnamesFilter)) {
-            indexedClassesFilter = clazz -> true;
+            indexedClassesPredicate = clazz -> true;
         } else {
             Set<String> indexedClassnames = args.indexedClassnamesFilter.stream()
                     .flatMap(cn -> Splitter.on(',').omitEmptyStrings().trimResults().splitToList(cn).stream())
                     .collect(Collectors.toSet());
-            indexedClassesFilter = clazz -> indexedClassnames.contains(clazz.getName()) || indexedClassnames.contains(clazz.getSimpleName());
+            indexedClassesPredicate = clazz -> indexedClassnames.contains(clazz.getName()) || indexedClassnames.contains(clazz.getSimpleName());
+        }
+        Predicate<Class> indexedClassesFilter;
+        if (CollectionUtils.isNotEmpty(args.excludedClassnamesFilter)) {
+            Set<String> excludedClassnames = args.excludedClassnamesFilter.stream()
+                    .flatMap(cn -> Splitter.on(',').omitEmptyStrings().trimResults().splitToList(cn).stream())
+                    .collect(Collectors.toSet());
+            indexedClassesFilter = indexedClassesPredicate.and(clazz -> !excludedClassnames.contains(clazz.getName()) && !excludedClassnames.contains(clazz.getSimpleName()));
+        } else {
+            indexedClassesFilter = indexedClassesPredicate;
         }
         int nDocs = indexBuilderService.indexAllDocuments(args.clearIndex, indexedClassesFilter);
         logger.info("Indexed {} documents", nDocs);
