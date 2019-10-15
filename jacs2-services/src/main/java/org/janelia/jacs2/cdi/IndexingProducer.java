@@ -10,6 +10,7 @@ import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.dataservice.search.DomainObjectIndexerProvider;
 import org.janelia.messaging.core.MessageSender;
 import org.janelia.model.access.cdi.AsyncIndex;
+import org.janelia.model.access.cdi.WithCache;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.access.domain.search.SolrBasedDomainObjectIndexer;
 import org.janelia.model.access.search.AsyncDomainObjectIndexer;
@@ -35,11 +36,38 @@ public class IndexingProducer {
     }
 
     @Produces
-    public DomainObjectIndexerProvider<SolrServer> createSolrBasedDomainObjectIndexerProvider(NodeAncestorsGetter allNodeAncestorsGetter,
-                                                                                              DomainAnnotationGetter nodeAnnotationGetter,
-                                                                                              DomainObjectGetter objectGetter,
-                                                                                              @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
-                                                                                              @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
+    public DomainObjectIndexerProvider<SolrServer> createIndexerProviderForRealTimeIndexing(NodeAncestorsGetter allNodeAncestorsGetter,
+                                                                                            DomainAnnotationGetter nodeAnnotationGetter,
+                                                                                            DomainObjectGetter objectGetter,
+                                                                                            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
+                                                                                            @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
+        return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,
+                allNodeAncestorsGetter,
+                nodeAnnotationGetter,
+                objectGetter,
+                solrBatchSize,
+                solrCommitSize)
+                ;
+    }
+
+    /**
+     * For rebuilding the index we use an object indexer that uses temporary cached ancestors and annotation in order
+     * to minimize the trips to the database.
+     *
+     * @param allNodeAncestorsGetter
+     * @param nodeAnnotationGetter
+     * @param objectGetter
+     * @param solrBatchSize
+     * @param solrCommitSize
+     * @return
+     */
+    @WithCache
+    @Produces
+    public DomainObjectIndexerProvider<SolrServer> createIndexerProviderForIndexRebuild(@WithCache NodeAncestorsGetter allNodeAncestorsGetter,
+                                                                                        @WithCache DomainAnnotationGetter nodeAnnotationGetter,
+                                                                                        DomainObjectGetter objectGetter,
+                                                                                        @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
+                                                                                        @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
         return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,
                 allNodeAncestorsGetter,
                 nodeAnnotationGetter,

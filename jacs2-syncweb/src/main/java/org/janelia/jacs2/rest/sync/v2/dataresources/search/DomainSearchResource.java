@@ -7,7 +7,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.solr.common.SolrDocumentList;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.search.IndexingService;
+import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.search.DocumentSearchParams;
 import org.janelia.model.access.domain.search.DocumentSearchResults;
@@ -36,7 +36,7 @@ public class DomainSearchResource {
     private static final Logger LOG = LoggerFactory.getLogger(DomainSearchResource.class);
 
     @Inject
-    private IndexingService indexingService;
+    private DocumentIndexingService documentIndexingService;
     @Inject
     private LegacyDomainDao legacyDomainDao;
 
@@ -54,7 +54,7 @@ public class DomainSearchResource {
     public DocumentSearchResults searchSolrIndices(@ApiParam DocumentSearchParams searchParams) {
         LOG.trace("Start searchSolrIndices({})", searchParams);
         try {
-            DocumentSearchResults results = indexingService.searchIndex(searchParams);
+            DocumentSearchResults results = documentIndexingService.searchIndex(searchParams);
             LOG.debug("Document search found {} results, returning {}", results.getNumFound(), results.getResults().size());
             return results;
         } catch (Exception e) {
@@ -77,7 +77,7 @@ public class DomainSearchResource {
     public DocumentSearchResults searchDomainObjects(@ApiParam DocumentSearchParams searchParams) {
         LOG.trace("Start searchDomainObjects({})", searchParams);
         try {
-            DocumentSearchResults searchResults = indexingService.searchIndex(searchParams);
+            DocumentSearchResults searchResults = documentIndexingService.searchIndex(searchParams);
             LOG.debug("Solr search found {} results, returning {}", searchResults.getNumFound(), searchResults.getResults().size());
             SolrDocumentList docs = searchResults.getResults();
             List<DomainObject> details = legacyDomainDao.getDomainObjects(

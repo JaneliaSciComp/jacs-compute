@@ -1,24 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
-import org.apache.commons.collections.CollectionUtils;
-import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.access.cdi.AsyncIndex;
-import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.dao.AnnotationDao;
-import org.janelia.model.domain.dto.DomainQuery;
-import org.janelia.model.domain.ontology.Annotation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Collections;
+import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -33,9 +16,24 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiKeyAuthDefinition;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.SecurityDefinition;
+import io.swagger.annotations.SwaggerDefinition;
+import org.apache.commons.collections.CollectionUtils;
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
+import org.janelia.model.access.domain.dao.AnnotationDao;
+import org.janelia.model.domain.dto.DomainQuery;
+import org.janelia.model.domain.ontology.Annotation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(

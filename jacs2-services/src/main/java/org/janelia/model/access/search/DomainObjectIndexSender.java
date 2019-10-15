@@ -3,7 +3,6 @@ package org.janelia.model.access.search;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 import org.janelia.messaging.core.MessageSender;
@@ -39,11 +38,6 @@ class DomainObjectIndexSender implements DomainObjectIndexer {
     }
 
     @Override
-    public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
-        return (int) domainObjectStream.map(this::indexDocument).filter(r -> r).count();
-    }
-
-    @Override
     public boolean removeDocument(Long docId) {
         if (isEnabled()) {
             Map<String, Object> messageHeaders = new LinkedHashMap<>();
@@ -53,6 +47,11 @@ class DomainObjectIndexSender implements DomainObjectIndexer {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
+        return (int) domainObjectStream.map(this::indexDocument).filter(r -> r).count();
     }
 
     @Override
