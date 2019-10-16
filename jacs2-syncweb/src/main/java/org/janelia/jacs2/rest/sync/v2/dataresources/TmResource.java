@@ -270,7 +270,6 @@ public class TmResource {
     public TmNeuronMetadata updateTmNeuron(DomainQuery query) {
         TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
         String subjectKey = query.getSubjectKey();
-
         LOG.info("updateTmNeurons({}, numNeurons={})", subjectKey, neuron);
 
         TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
@@ -408,6 +407,7 @@ public class TmResource {
             List<TmWorkspace> workspaceList = tmWorkspaceDao.getAllTmWorkspaces(subjectKey);
             for (TmWorkspace workspace: workspaceList) {
                 migrateWorkspace (statsInfo, workspace.getId(), subjectKey);
+                LOG.info("Progress Status: Completed {} out of {} workspaces", statsInfo.size(),workspaceList.size());
             }
         } catch (Exception e) {
             LOG.error("Error occurred migrating full TmWorkspace collection from mysql", subjectKey, e);
@@ -441,6 +441,7 @@ public class TmResource {
             }
             offset += neuronPairs.size();
             List<TmNeuronMetadata> neurons = new ArrayList<>();
+            String workspaceOwner = workspace.getOwnerKey();
             for(Pair<TmNeuronMetadata, InputStream> pair : neuronPairs) {
                 currCount++;
                 if ((currCount%100)==0)
@@ -450,14 +451,15 @@ public class TmResource {
                     exchanger.deserializeNeuron(pair.getRight(), neuronMetadata);
                     totalNodes += neuronMetadata.getGeoAnnotationMap().values().size();
                     neurons.add(neuronMetadata);
-                    //tmNeuronMetadataDao.saveBySubjectKey(neuronMetadata, subjectKey);
+                    //tmNeuronMetadataDao.saveBySubjectKey(neuronMetadata, workspaceOwner);
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
                 }
             }
-            tmNeuronMetadataDao.insertTmNeurons(neurons);
+            tmNeuronMetadataDao.bulkReplaceNeuronsInWorkspace(workspaceId,neurons,workspaceOwner);
         }
         statsInfo.put(workspaceId.toString(), "totalNode: " + totalNodes + ",neurons count: " + offset);
+        LOG.info("workspace {} totalNode: {},neurons count: {}",workspaceId.toString(),totalNodes,offset);
     }
 
 

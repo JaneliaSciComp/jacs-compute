@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.swc;
 import java.awt.Color;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
@@ -24,11 +25,11 @@ import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.IdSource;
 import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
+import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmProtobufExchanger;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.util.MatrixUtilities;
@@ -47,36 +48,34 @@ public class SWCService {
     private final LegacyDomainDao domainDao;
     private final TmSampleDao tmSampleDao;
     private final TmWorkspaceDao tmWorkspaceDao;
-    private final TmNeuronBufferDao tmNeuronBufferDao;
+    private final TmNeuronMetadataDao tmNeuronMetadataDao;
     private final DataStorageLocationFactory dataStorageLocationFactory;
     private final RenderedVolumeLoader renderedVolumeLoader;
     private final SWCReader swcReader;
     private final Path defaultSWCLocation;
     private final IdSource neuronIdGenerator;
-    private final TmProtobufExchanger protobufExchanger;
+
 
     @Inject
     public SWCService(StorageService storageService,
                       LegacyDomainDao domainDao,
                       TmSampleDao tmSampleDao,
                       TmWorkspaceDao tmWorkspaceDao,
-                      TmNeuronBufferDao tmNeuronBufferDao,
+                      TmNeuronMetadataDao tmNeuronMetadataDao,
                       DataStorageLocationFactory dataStorageLocationFactory,
                       RenderedVolumeLoader renderedVolumeLoader,
                       SWCReader swcReader,
                       IdSource neuronIdGenerator,
-                      TmProtobufExchanger protobufExchanger,
                       @PropertyValue(name = "service.swcImport.DefaultLocation") String defaultSWCLocation) {
         this.storageService = storageService;
         this.domainDao = domainDao;
         this.tmSampleDao = tmSampleDao;
         this.tmWorkspaceDao = tmWorkspaceDao;
-        this.tmNeuronBufferDao = tmNeuronBufferDao;
+        this.tmNeuronMetadataDao = tmNeuronMetadataDao;
         this.dataStorageLocationFactory = dataStorageLocationFactory;
         this.renderedVolumeLoader = renderedVolumeLoader;
         this.swcReader = swcReader;
         this.neuronIdGenerator = neuronIdGenerator;
-        this.protobufExchanger = protobufExchanger;
         this.defaultSWCLocation = StringUtils.isNotBlank(defaultSWCLocation)
             ? Paths.get(defaultSWCLocation)
             : Paths.get("");
@@ -166,11 +165,11 @@ public class SWCService {
                 .filter(storageEntryInfo -> storageEntryInfo.getEntryRelativePath().endsWith(".swc"))
                 .forEach(swcEntry ->{
                     LOG.info("Read swcEntry {} from {}", swcEntry, swcEntry.getEntryURL());
-                    InputStream swcStream = storageService.getStorageContent(swcEntry.getEntryURL(), null, null);
+                    InputStream swcStream = storageService.getStorageContent(URLDecoder.decode(swcEntry.getEntryURL()), null, null);
                     TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getEntryRelativePath(), swcStream, neuronOwnerKey, tmWorkspace, externalToInternalConverter);
                     try {
-                        LOG.info("Create neuron points for swcEntry {} in workspace {} for sample {}", swcEntry, tmWorkspace, tmSample);
-                        tmNeuronBufferDao.createNeuronWorkspacePoints(neuronMetadata.getId(), tmWorkspace.getId(), new ByteArrayInputStream(protobufExchanger.serializeNeuron(neuronMetadata)));
+                        LOG.info("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
+                        tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                     } catch (Exception e) {
                         LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
                         throw new IllegalStateException(e);
