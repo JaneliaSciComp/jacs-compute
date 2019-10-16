@@ -663,20 +663,20 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public <T extends DomainObject> void deleteProperty(String ownerKey, Class<T> clazz, String propName) {
-        Collection<? extends DomainObject> affectedDomainObjects = dao.deleteProperty(ownerKey, clazz, propName);
-        domainObjectIndexer.indexDocumentStream(affectedDomainObjects.stream());
+        Stream<? extends DomainObject> affectedDomainObjects = dao.deleteProperty(ownerKey, clazz, propName);
+        domainObjectIndexer.indexDocumentStream(affectedDomainObjects);
     }
 
     @Override
     public void addPermissions(String ownerKey, String className, Long id, DomainObject permissionTemplate, boolean forceChildUpdates) throws Exception {
-        Collection<? extends DomainObject> affectedDomainObjects = dao.addPermissions(ownerKey, className, id, permissionTemplate, forceChildUpdates);
-        domainObjectIndexer.indexDocumentStream(affectedDomainObjects.stream());
+        Stream<? extends DomainObject> affectedDomainObjects = dao.addPermissions(ownerKey, className, id, permissionTemplate, forceChildUpdates);
+        domainObjectIndexer.indexDocumentStream(affectedDomainObjects);
     }
 
     @Override
     public void setPermissions(String ownerKey, String className, Long id, String grantee, boolean read, boolean write, boolean forceChildUpdates) throws Exception {
-        Collection<? extends DomainObject> affectedDomainObjects = dao.setPermissions(ownerKey, className, id, grantee, read, write, forceChildUpdates);
-        domainObjectIndexer.indexDocumentStream(affectedDomainObjects.stream());
+        Stream<? extends DomainObject> affectedDomainObjects = dao.setPermissions(ownerKey, className, id, grantee, read, write, forceChildUpdates);
+        domainObjectIndexer.indexDocumentStream(affectedDomainObjects);
     }
 
     @Override
