@@ -405,6 +405,7 @@ public class TmResource {
         Map<String,Object> statsInfo = new HashMap<>();
         try {
             List<TmWorkspace> workspaceList = tmWorkspaceDao.getAllTmWorkspaces(subjectKey);
+            workspaceList = workspaceList.subList(1982,workspaceList.size()-1);
             for (TmWorkspace workspace: workspaceList) {
                 migrateWorkspace (statsInfo, workspace.getId(), subjectKey);
                 LOG.info("Progress Status: Completed {} out of {} workspaces", statsInfo.size(),workspaceList.size());
