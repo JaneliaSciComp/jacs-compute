@@ -1,12 +1,12 @@
 package org.janelia.jacs2.dataservice.swc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SWCReader {
 
@@ -43,18 +43,24 @@ public class SWCReader {
 
         String[] items = line.split("\\s+");
         if (items.length != 7) {
+            LOG.warn("Wrong # of items - expected 7 but found {} on line: {}", items.length, line);
             return null;
         }
 
-        return new SWCNode(
-                Integer.parseInt(items[0]),
-                SWCNode.SegmentType.fromNumValue(Integer.parseInt(items[1])),
-                Double.parseDouble(items[2]),
-                Double.parseDouble(items[3]),
-                Double.parseDouble(items[4]),
-                Double.parseDouble(items[5]),
-                Integer.parseInt(items[6])
-        );
+        try {
+            return new SWCNode(
+                    Integer.parseInt(items[0]),
+                    Integer.parseInt(items[1]),
+                    Double.parseDouble(items[2]),
+                    Double.parseDouble(items[3]),
+                    Double.parseDouble(items[4]),
+                    Double.parseDouble(items[5]),
+                    Integer.parseInt(items[6])
+            );
+        } catch (Exception e) {
+            LOG.error("Error encountered while processing node line {}", line, e);
+            throw new IllegalArgumentException("Error processing node " + line, e);
+        }
     }
 
 

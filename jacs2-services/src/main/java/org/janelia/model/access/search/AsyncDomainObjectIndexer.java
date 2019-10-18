@@ -1,16 +1,14 @@
 package org.janelia.model.access.search;
 
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.stream.Stream;
+
 import org.janelia.messaging.core.MessageSender;
 import org.janelia.model.access.domain.search.DocumentSearchParams;
 import org.janelia.model.access.domain.search.DocumentSearchResults;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.DomainObject;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.stream.Stream;
 
 public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
 
@@ -38,22 +36,22 @@ public class AsyncDomainObjectIndexer implements DomainObjectIndexer {
     }
 
     @Override
-    public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
-        if (indexingExecutor != null) {
-            indexingExecutor.submit(() -> indexer.indexDocumentStream(domainObjectStream));
-            return 0; // the actual result is in the future but there's no need to wait for it
-        } else {
-            return indexer.indexDocumentStream(domainObjectStream);
-        }
-    }
-
-    @Override
     public boolean removeDocument(Long docId) {
         if (indexingExecutor != null) {
             indexingExecutor.submit(() -> indexer.removeDocument(docId));
             return false; // the actual result is in the future but there's no need to wait for it
         } else {
             return indexer.removeDocument(docId);
+        }
+    }
+
+    @Override
+    public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
+        if (indexingExecutor != null) {
+            indexingExecutor.submit(() -> indexer.indexDocumentStream(domainObjectStream));
+            return 0; // the actual result is in the future but there's no need to wait for it
+        } else {
+            return indexer.indexDocumentStream(domainObjectStream);
         }
     }
 

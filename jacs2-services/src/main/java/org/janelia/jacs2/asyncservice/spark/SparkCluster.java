@@ -112,23 +112,26 @@ public class SparkCluster {
      * Run the default main class in the specified jar file on the currently running cluster.
      * @param appResource absolute path to a jar file containing the app with dependencies or a python script
      * @param appEntryPoint nullable entry point - application main class
-     * @param appParallelism
-     * @param appOutputDir
-     * @param appErrorDir
-     * @param appArgs
-     * @return
-     * @throws Exception
+     * @param appParallelism application parallelism
+     * @param appOutputDir output directory
+     * @param appErrorDir error directory
+     * @param appStackSize stack size if not null - if null no specific stack size is set
+     * @param appIntervalCheck - interval for checking whether the application has completed or not
+     * @param appTimeout - application timeout
+     * @param appArgs - arguments specific to the application
+     * @return a computation for the spark application
      */
     public ServiceComputation<SparkApp> runApp(String appResource,
                                                @Nullable String appEntryPoint,
                                                int appParallelism,
                                                String appOutputDir,
                                                String appErrorDir,
+                                               String appStackSize,
                                                Long appIntervalCheck,
                                                Long appTimeout,
                                                List<String> appArgs) {
         String[] appArgsArr = appArgs.toArray(new String[0]);
-        return runApp(appResource, appEntryPoint, appParallelism, appOutputDir, appErrorDir, appIntervalCheck, appTimeout, appArgsArr);
+        return runApp(appResource, appEntryPoint, appParallelism, appOutputDir, appErrorDir, appStackSize, appIntervalCheck, appTimeout, appArgsArr);
     }
 
     /**
@@ -137,18 +140,21 @@ public class SparkCluster {
      * through via appArgs arguments.
      * @param appResource absolute path to a jar file containing the app with dependencies or a python script
      * @param appEntryPoint application entry point (main class for a java application)
-     * @param appParallelism
-     * @param appOutputDir
-     * @param appErrorDir
-     * @param appArgs
-     * @return
-     * @throws Exception
+     * @param appParallelism application parallelism
+     * @param appOutputDir output directory
+     * @param appErrorDir error directory
+     * @param appStackSize stack size if not null - if null no specific stack size is set
+     * @param appIntervalCheck - interval for checking whether the application has completed or not
+     * @param appTimeout - application timeout
+     * @param appArgs - arguments specific to the application
+     * @return a computation for the spark application
      */
     private ServiceComputation<SparkApp> runApp(String appResource,
                                                 String appEntryPoint,
                                                 int appParallelism,
                                                 String appOutputDir,
                                                 String appErrorDir,
+                                                String appStackSize,
                                                 Long appIntervalCheck,
                                                 Long appTimeout,
                                                 String... appArgs) {
@@ -183,6 +189,13 @@ public class SparkCluster {
             sparkErrorFile = null;
         }
 
+        String stackSizeParam;
+        if (StringUtils.isBlank(appStackSize)) {
+            stackSizeParam = "";
+        } else {
+            stackSizeParam = "-Xss" + appStackSize + " ";
+        }
+
         sparkLauncher.setAppResource(appResource)
                 .setMaster(masterURI)
                 .setSparkHome(sparkHomeDir)
@@ -196,7 +209,8 @@ public class SparkCluster {
                 .setConf("spark.default.parallelism", "" + parallelism)
                 .setConf(SparkLauncher.EXECUTOR_EXTRA_JAVA_OPTIONS, "-Dlog4j.configuration=file://" + sparkLogConfigFile)
                 .addSparkArg("--driver-java-options",
-                        "-Dlog4j.configuration=file://" + sparkLogConfigFile +
+                        stackSizeParam +
+                                "-Dlog4j.configuration=file://" + sparkLogConfigFile +
                                 " -Dhadoop.home.dir=" + hadoopHomeDir +
                                 " -Djava.library.path=" + hadoopHomeDir +"/lib/native"
                 )

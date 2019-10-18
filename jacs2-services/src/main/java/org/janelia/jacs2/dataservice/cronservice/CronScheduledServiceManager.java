@@ -65,10 +65,14 @@ public class CronScheduledServiceManager {
                 .put("serviceResources", new SetFieldValueHandler<>(scheduledServiceData.getServiceResources()))
                 .put("servicePriority", new SetFieldValueHandler<>(scheduledServiceData.getServicePriority()))
                 .put("cronScheduleDescriptor", new SetFieldValueHandler<>(scheduledServiceData.getCronScheduleDescriptor()))
+                .put("ownerKey", new SetFieldValueHandler<>(scheduledServiceData.getOwnerKey()))
                 .put("runServiceAs", new SetFieldValueHandler<>(scheduledServiceData.getRunServiceAs()))
                 .put("serviceQueueId", new SetFieldValueHandler<>(scheduledServiceData.getServiceQueueId()))
                 .put("serviceProcessingLocation", new SetFieldValueHandler<>(scheduledServiceData.getServiceProcessingLocation()))
-                .put("disabled", new SetFieldValueHandler<>(scheduledServiceData.isDisabled()));
+                .put("disabled", new SetFieldValueHandler<>(scheduledServiceData.isDisabled()))
+                .put("successEmailNotifications", new SetFieldValueHandler<>(scheduledServiceData.getSuccessEmailNotifications()))
+                .put("failureEmailNotifications", new SetFieldValueHandler<>(scheduledServiceData.getFailureEmailNotifications()))
+                ;
         if (scheduledServiceData.getNextStartTime() != null) {
             scheduledServiceUpdatesBuilder.put("nextStartTime", new SetFieldValueHandler<>(scheduledServiceData.getNextStartTime()));
         }

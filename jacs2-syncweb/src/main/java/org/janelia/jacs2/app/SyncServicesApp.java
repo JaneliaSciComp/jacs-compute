@@ -1,17 +1,17 @@
 package org.janelia.jacs2.app;
 
+import java.util.Collections;
+import java.util.EventListener;
+import java.util.List;
+
+import javax.enterprise.inject.se.SeContainer;
+import javax.ws.rs.core.Application;
+
 import org.janelia.jacs2.cdi.SeContainerFactory;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.se.SeContainer;
-import javax.enterprise.inject.se.SeContainerInitializer;
-import javax.ws.rs.core.Application;
-import java.util.Collections;
-import java.util.EventListener;
-import java.util.List;
 
 /**
  * This is the bootstrap application for synchronous services.

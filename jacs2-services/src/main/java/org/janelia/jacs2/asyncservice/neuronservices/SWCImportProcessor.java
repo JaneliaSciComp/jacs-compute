@@ -1,8 +1,15 @@
 package org.janelia.jacs2.asyncservice.neuronservices;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -18,11 +25,6 @@ import org.janelia.jacs2.dataservice.swc.SWCService;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 @Named("swcImport")
 public class SWCImportProcessor extends AbstractServiceProcessor<Long> {

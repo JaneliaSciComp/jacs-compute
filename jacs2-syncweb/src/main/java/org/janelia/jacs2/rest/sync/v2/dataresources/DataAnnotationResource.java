@@ -1,23 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
-import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.access.cdi.AsyncIndex;
-import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.dao.AnnotationDao;
-import org.janelia.model.domain.dto.DomainQuery;
-import org.janelia.model.domain.ontology.Annotation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Collections;
+import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -31,7 +15,25 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiKeyAuthDefinition;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.SecurityDefinition;
+import io.swagger.annotations.SwaggerDefinition;
+import org.apache.commons.collections.CollectionUtils;
+import org.janelia.jacs2.auth.annotations.RequireAuthentication;
+import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.cdi.AsyncIndex;
+import org.janelia.model.access.domain.dao.AnnotationDao;
+import org.janelia.model.domain.dto.DomainQuery;
+import org.janelia.model.domain.ontology.Annotation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -57,8 +59,6 @@ public class DataAnnotationResource {
     @AsyncIndex
     @Inject
     private AnnotationDao annotationDao;
-    @Inject
-    private LegacyDomainDao legacyDomainDao;
 
     @ApiOperation(value = "Creates an annotation",
             notes = "creates a new annotation from the DomainObject parameter and assigns ownership to the SubjectKey parameter"
@@ -74,7 +74,7 @@ public class DataAnnotationResource {
     public Annotation createAnnotation(@ApiParam DomainQuery query) {
         LOG.trace("Start createAnnotation({})", query);
         try {
-            return legacyDomainDao.save(query.getSubjectKey(), query.getDomainObjectAs(Annotation.class));
+            return annotationDao.saveBySubjectKey(query.getDomainObjectAs(Annotation.class), query.getSubjectKey());
         } catch (Exception e) {
             LOG.error("Error occurred creating annotations for {}", query, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -97,7 +97,7 @@ public class DataAnnotationResource {
     public Annotation updateAnnotation(@ApiParam DomainQuery query) {
         LOG.trace("Start updateAnnotation({})", query);
         try {
-            return legacyDomainDao.save(query.getSubjectKey(), query.getDomainObjectAs(Annotation.class));
+            return annotationDao.saveBySubjectKey(query.getDomainObjectAs(Annotation.class), query.getSubjectKey());
         } catch (Exception e) {
             LOG.error("Error occurred updating annotations {}", query, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -121,7 +121,11 @@ public class DataAnnotationResource {
     public List<Annotation> getAnnotations(@ApiParam DomainQuery query) {
         LOG.trace("Start getAnnotations({})", query);
         try {
-            return legacyDomainDao.getAnnotations(query.getSubjectKey(), query.getReferences());
+            if (CollectionUtils.isEmpty(query.getReferences())) {
+                return Collections.emptyList();
+            } else {
+                return annotationDao.findAnnotationsByTargetsAccessibleBySubjectKey(query.getReferences(), query.getSubjectKey());
+            }
         } catch (Exception e) {
             LOG.error("Error occurred getting annotations using {}", query, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

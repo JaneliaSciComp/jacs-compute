@@ -1,6 +1,11 @@
 package org.janelia.model.access.dao.mongo;
 
-import com.google.common.base.Preconditions;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+import javax.inject.Inject;
+
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -9,39 +14,14 @@ import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
-import org.apache.commons.collections4.CollectionUtils;
+
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.access.dao.JacsScheduledServiceDataDao;
-import org.janelia.model.access.dao.JacsServiceDataDao;
 import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
-import org.janelia.model.jacs2.DataInterval;
-import org.janelia.model.jacs2.EntityFieldValueHandler;
-import org.janelia.model.jacs2.SetFieldValueHandler;
-import org.janelia.model.jacs2.page.PageRequest;
-import org.janelia.model.jacs2.page.PageResult;
-import org.janelia.model.jacs2.page.SortCriteria;
 import org.janelia.model.service.JacsScheduledServiceData;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceState;
-
-import javax.inject.Inject;
-import javax.swing.text.html.Option;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.in;
 
 /**
  * Mongo based implementation of JacsServiceDataDao.

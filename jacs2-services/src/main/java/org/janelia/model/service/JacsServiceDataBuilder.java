@@ -4,6 +4,7 @@ import org.janelia.jacs2.asyncservice.common.ResourceHelper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class JacsServiceDataBuilder {
 
@@ -82,6 +83,11 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
+    public JacsServiceDataBuilder setVersion(String version) {
+        serviceData.setVersion(version);
+        return this;
+    }
+
     public JacsServiceDataBuilder setServiceTimeout(Long serviceTimeout) {
         serviceData.setServiceTimeout(serviceTimeout);
         return this;
@@ -144,5 +150,15 @@ public class JacsServiceDataBuilder {
 
     public JacsServiceData build() {
         return serviceData;
+    }
+
+    public JacsServiceDataBuilder addSuccessEmailNotifications(Set<String> successEmailNotifications) {
+        serviceData.addSuccessEmailNotifications(successEmailNotifications);
+        return this;
+    }
+
+    public JacsServiceDataBuilder addFailureEmailNotifications(Set<String> failureEmailNotifications) {
+        serviceData.addFailureEmailNotifications(failureEmailNotifications);
+        return this;
     }
 }

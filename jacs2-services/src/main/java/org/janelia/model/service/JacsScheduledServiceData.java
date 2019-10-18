@@ -3,9 +3,12 @@ package org.janelia.model.service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.model.domain.entityannotations.EntityId;
 import org.janelia.model.jacs2.BaseEntity;
@@ -22,6 +25,7 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
     private String serviceName; // service to be run
     private String serviceVersion;
     private Integer servicePriority = 0; // service priority
+    private String ownerKey; // who created the job
     private String runServiceAs; // whom should this service run as
     private ProcessingLocation serviceProcessingLocation; // service processing location
     private String serviceQueueId;
@@ -32,6 +36,8 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
     private Date lastStartTime; // last time this scheduled service was started
     private Date nextStartTime; // next time this scheduled service needs to run
     private boolean disabled; // quick disable flag
+    private Set<String> successEmailNotifications = new LinkedHashSet<>();
+    private Set<String> failureEmailNotifications = new LinkedHashSet<>();
 
     @Override
     public Number getId() {
@@ -81,6 +87,14 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
 
     public void setServicePriority(Integer servicePriority) {
         this.servicePriority = servicePriority;
+    }
+
+    public String getOwnerKey() {
+        return ownerKey;
+    }
+
+    public void setOwnerKey(String ownerKey) {
+        this.ownerKey = ownerKey;
     }
 
     public String getRunServiceAs() {
@@ -163,6 +177,22 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
         this.disabled = disabled;
     }
 
+    public Set<String> getSuccessEmailNotifications() {
+        return successEmailNotifications;
+    }
+
+    public void setSuccessEmailNotifications(Set<String> successEmailNotifications) {
+        this.successEmailNotifications = successEmailNotifications;
+    }
+
+    public Set<String> getFailureEmailNotifications() {
+        return failureEmailNotifications;
+    }
+
+    public void setFailureEmailNotifications(Set<String> failureEmailNotifications) {
+        this.failureEmailNotifications = failureEmailNotifications;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
@@ -172,6 +202,7 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
                 .append("serviceName", serviceName)
                 .append("serviceVersion", serviceVersion)
                 .append("servicePriority", servicePriority)
+                .append("ownerKey", ownerKey)
                 .append("runServiceAs", runServiceAs)
                 .append("serviceProcessingLocation", serviceProcessingLocation)
                 .append("serviceQueueId", serviceQueueId)
@@ -188,16 +219,20 @@ public class JacsScheduledServiceData implements BaseEntity, HasIdentifier {
     public JacsServiceData createServiceInstance() {
         JacsServiceData serviceData = new JacsServiceDataBuilder(null)
                 .setName(serviceName)
-                .setOwnerKey(runServiceAs)
+                .setDescription("Triggered by " + name + "#" + id + (StringUtils.isNotBlank(description) ? ": " + description : ""))
+                .setOwnerKey(ownerKey)
                 .setAuthKey(runServiceAs)
                 .setProcessingLocation(serviceProcessingLocation)
+                .setVersion(serviceVersion)
                 .addArgs(serviceArgs)
                 .setDictionaryArgs(serviceDictionaryArgs)
                 .addResources(serviceResources)
+                .addSuccessEmailNotifications(successEmailNotifications)
+                .addFailureEmailNotifications(failureEmailNotifications)
                 .build();
         serviceData.setQueueId(serviceQueueId);
         serviceData.setPriority(servicePriority);
-        serviceData.addTags(name, name + "#" + id);
+        serviceData.addTags(name + "#" + id);
         return serviceData;
     }
 }

@@ -1,19 +1,10 @@
 package org.janelia.jacs2.rest.sync.v2.streamresources;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.auth.JacsSecurityContextHelper;
-import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
-import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.rendering.Coordinate;
-import org.janelia.rendering.RawImage;
-import org.janelia.rendering.RenderedVolumeLoader;
-import org.janelia.rendering.RenderedVolumeLocation;
-import org.janelia.rendering.RenderedVolumeMetadata;
-import org.janelia.rendering.Streamable;
-import org.slf4j.Logger;
+import java.io.File;
+import java.nio.file.Files;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -27,13 +18,22 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import java.io.File;
-import java.nio.file.Files;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
-import com.google.common.io.ByteStreams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.auth.JacsSecurityContext;
+import org.janelia.jacs2.auth.JacsSecurityContextHelper;
+import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
+import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.rendering.Coordinate;
+import org.janelia.rendering.RawImage;
+import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.RenderedVolumeLocation;
+import org.janelia.rendering.RenderedVolumeMetadata;
+import org.janelia.rendering.Streamable;
+import org.slf4j.Logger;
 
 @ApplicationScoped
 @Produces("application/json")
@@ -41,12 +41,11 @@ import com.google.common.io.ByteStreams;
 public class TmFolderBasedStreamingResource {
 
     @Inject
-    private RenderedVolumeLocationFactory renderedVolumeLocationFactory;
+    private DataStorageLocationFactory dataStorageLocationFactory;
     @Inject
     private RenderedVolumeLoader renderedVolumeLoader;
     @Inject
     private Logger logger;
-
 
     @ApiOperation(value = "Get sample rendering info", notes = "Retrieve volume rendering info for the specified base folder")
     @ApiResponses(value = {
@@ -65,9 +64,9 @@ public class TmFolderBasedStreamingResource {
                     .build();
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.loadVolume(renderedVolumeLocationFactory.getJadeVolumeLocation(baseFolderName,
-                JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
-                null))
+        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderName, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null)
+                .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
+                .flatMap(rvl -> renderedVolumeLoader.loadVolume(rvl))
                 .map(rv -> Response.ok(rv).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Error retrieving rendering info from " + baseFolderName + " or no folder found"))
@@ -100,11 +99,9 @@ public class TmFolderBasedStreamingResource {
         int yVoxel = yVoxelParam == null ? 0 : yVoxelParam;
         int zVoxel = zVoxelParam == null ? 0 : zVoxelParam;
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        return renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
-                renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(baseFolderName,
-                        JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
-                        null),
-                xVoxel, yVoxel, zVoxel)
+        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderName, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null)
+                .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
+                .flatMap(rvl -> renderedVolumeLoader.findClosestRawImageFromVoxelCoord(rvl, xVoxel, yVoxel, zVoxel))
                 .map(rawTileImage -> Response.ok(rawTileImage).build())
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderName + " with ("
@@ -146,28 +143,24 @@ public class TmFolderBasedStreamingResource {
         int sz = szParam == null ? -1 : szParam;
         int channel = channelParam == null ? 0 : channelParam;
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(baseFolderName,
-                JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
-                null);
-        Streamable<byte[]> rawImageContent = renderedVolumeLoader.findClosestRawImageFromVoxelCoord(
-                rvl,
-                xVoxel, yVoxel, zVoxel)
-                .map(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz))
-                .orElse(Streamable.empty());
-        if (rawImageContent.getContent() == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderName + " with ("
-                            + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))
-                    .build();
-        } else {
-            StreamingOutput outputStreaming = output -> {
-                output.write(rawImageContent.getContent());
-            };
-            return Response
-                    .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
-                    .header("Content-Length", rawImageContent.getSize())
-                    .build();
-        }
+        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderName, JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext), null)
+                .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
+                .flatMap(rvl -> renderedVolumeLoader.findClosestRawImageFromVoxelCoord(rvl, xVoxel, yVoxel, zVoxel)
+                        .flatMap(rawTileImage -> renderedVolumeLoader.loadRawImageContentFromVoxelCoord(rvl, rawTileImage, channel, xVoxel, yVoxel, zVoxel, sx, sy, sz).asOptional()))
+                .map(rawImageContent -> {
+                    StreamingOutput outputStreaming = output -> {
+                        output.write(rawImageContent);
+                    };
+                    return Response
+                            .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
+                            .header("Content-Length", rawImageContent.length)
+                            .build();
+                })
+                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("Error retrieving raw tile file info from " + baseFolderName + " with ("
+                                + xVoxelParam + "," + yVoxelParam + "," + zVoxelParam + ")"))
+                        .build())
+                ;
     }
 
     @ApiOperation(value = "Get sample tile", notes = "Returns the requested TM sample tile at the specified zoom level")
@@ -186,7 +179,7 @@ public class TmFolderBasedStreamingResource {
             @QueryParam("z") Integer zParam,
             @Context ContainerRequestContext requestContext) {
         return TmStreamingResourceHelper.streamTileFromDirAndCoord(
-                renderedVolumeLocationFactory, renderedVolumeLoader,
+                dataStorageLocationFactory, renderedVolumeLoader,
                 JacsSecurityContextHelper.getAuthorizedSubjectKey(requestContext),
                 baseFolderParam, zoomParam, axisParam, xParam, yParam, zParam);
     }

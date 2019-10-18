@@ -67,17 +67,17 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
             String processingScript = jt.getRemoteCommand();
 
             int numJobs = externalConfigs.isEmpty() ? 1 : externalConfigs.size();
-            logger.info("Start {} for {} using  env {}", jt.getRemoteCommand(), serviceContext, env);
+            logger.info("Start {} {} for {} using  env {}", numJobs, jt.getRemoteCommand(), serviceContext, env);
             LsfJavaExeJobHandler lsfJobHandler = new LsfJavaExeJobHandler(processingScript, jobMgr, jt, numJobs);
 
             lsfJobHandler.start();
-            logger.info("Submitted job {} for {}", lsfJobHandler.getJobInfo(), serviceContext);
+            logger.info("Submitted job {}{} for {}", lsfJobHandler.getJobInfo(), numJobs > 1 ? String.format(" (1-%d)", numJobs) : "", serviceContext);
 
             jacsServiceDataPersistence.addServiceEvent(
                     serviceContext,
                     JacsServiceData.createServiceEvent(
                             JacsServiceEventTypes.CLUSTER_SUBMIT,
-                            String.format("Submitted job %s {%s} running: %s", serviceContext.getName(), lsfJobHandler.getJobInfo(), processingScript))
+                            String.format("Submitted %d jobs %s {%s} running: %s", numJobs, serviceContext.getName(), lsfJobHandler.getJobInfo(), processingScript))
             );
 
             return lsfJobHandler;

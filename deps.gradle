@@ -22,6 +22,9 @@ dependencies {
         GUAVA_LIB = "com.google.guava:guava:27.0.1-jre"
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
+        // Mail
+        JAVAMAIL_LIB = "com.sun.mail:javax.mail:1.6.2"
+
         // database
         MONGODB_VERSION = "3.10.0"
         MONGODB_DRIVER_LIB = "org.mongodb:mongo-java-driver:${MONGODB_VERSION}"
@@ -31,7 +34,7 @@ dependencies {
         HIBERNATE_LIB = "org.hibernate:hibernate:3.2.6.ga"
 
         // apache commons
-        COMMONS_LANG_VERSION = "3.8.1"
+        COMMONS_LANG_VERSION = "3.9"
         COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:${COMMONS_LANG_VERSION}"
         COMMONS_COLLECTIONS_VERSION = "4.2"
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:${COMMONS_COLLECTIONS_VERSION}"
@@ -97,7 +100,7 @@ dependencies {
 
         // Janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.0.4"
-        JACS_MODEL_VERSION = "2.10.1"
+        JACS_MODEL_VERSION = "2.15.0"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
         JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"

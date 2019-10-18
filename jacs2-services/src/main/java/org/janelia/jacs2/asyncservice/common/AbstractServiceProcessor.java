@@ -93,7 +93,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         return new DefaultServiceErrorChecker(logger);
     }
 
-    protected List<String> getErrors(JacsServiceData jacsServiceData) {
+    List<String> getErrors(JacsServiceData jacsServiceData) {
         return this.getErrorChecker().collectErrors(jacsServiceData);
     }
 

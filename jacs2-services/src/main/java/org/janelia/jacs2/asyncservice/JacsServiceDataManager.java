@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice;
 
+import org.janelia.jacs2.data.NamedData;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
@@ -16,7 +17,7 @@ public interface JacsServiceDataManager {
     PageResult<JacsServiceData> searchServices(JacsServiceData ref, DataInterval<Date> creationInterval, PageRequest pageRequest);
     long getServiceStdOutputSize(JacsServiceData serviceData);
     long getServiceStdErrorSize(JacsServiceData serviceData);
-    Stream<Supplier<InputStream>> streamServiceStdOutput(JacsServiceData serviceData);
-    Stream<Supplier<InputStream>> streamServiceStdError(JacsServiceData serviceData);
+    Stream<Supplier<NamedData<InputStream>>> streamServiceStdOutput(JacsServiceData serviceData);
+    Stream<Supplier<NamedData<InputStream>>> streamServiceStdError(JacsServiceData serviceData);
     JacsServiceData updateService(Number instanceId, JacsServiceData serviceData);
 }

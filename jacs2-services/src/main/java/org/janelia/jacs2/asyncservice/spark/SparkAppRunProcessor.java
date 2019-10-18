@@ -82,6 +82,7 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
                             getDefaultParallelism(jacsServiceData.getResources()),
                             jacsServiceData.getOutputPath(),
                             jacsServiceData.getErrorPath(),
+                            getSparkAppStackSize(jacsServiceData.getResources()),
                             getSparkAppIntervalCheckInMillis(jacsServiceData.getResources()),
                             getSparkAppTimeoutInMillis(jacsServiceData.getResources()),
                             args.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs()))

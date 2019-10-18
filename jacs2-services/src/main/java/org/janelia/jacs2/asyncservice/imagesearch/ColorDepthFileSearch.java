@@ -308,6 +308,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
                 parallelism,
                 jacsServiceData.getOutputPath(),
                 jacsServiceData.getErrorPath(),
+                null, // no special stack size is needed for color depth search
                 searchIntervalCheckInMillis, searchTimeoutInMillis,
                 appArgs);
     }

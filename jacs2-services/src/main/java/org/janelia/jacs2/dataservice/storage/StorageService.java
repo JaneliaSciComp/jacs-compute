@@ -48,8 +48,8 @@ public class StorageService {
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
-                LOG.warn("Request {} returned status {}", target, responseStatus);
-                return Optional.empty();
+                LOG.warn("Request {} returned status {} while trying to retrieved the quota for {} on {}", target, responseStatus, userKey, volumeName);
+                throw new IllegalStateException("Request " + target.getUri() + " returned an invalid response while trying to get the quota for " + userKey + " on " + volumeName);
             } else {
                 List<QuotaUsage> quotaReport = response.readEntity(new GenericType<List<QuotaUsage>>(){});
                 return quotaReport.stream().findFirst();
@@ -91,8 +91,8 @@ public class StorageService {
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
-                LOG.warn("Request {} returned status {}", target, responseStatus);
-                return Optional.empty();
+                LOG.warn("Request {} returned status {} while trying to get the storage for storageId = {}, storageName={}, storagePath={}", target, responseStatus, storageId, storageName, storagePath);
+                throw new IllegalStateException("Invalid response received from " + target.getUri() + " while trying to request the storage URL");
             } else {
                 PageResult<DataStorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<DataStorageInfo>>(){});
                 if (storageInfoResult.getResultList().size() > 1) {
@@ -111,7 +111,7 @@ public class StorageService {
         }
     }
 
-    public Optional<VolumeStorageInfo> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
+    public Optional<JadeStorageVolume> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(masterStorageServiceURL)
@@ -135,7 +135,7 @@ public class StorageService {
                 LOG.warn("Request {} returned status {}", target, responseStatus);
                 return Optional.empty();
             } else {
-                PageResult<VolumeStorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<VolumeStorageInfo>>(){});
+                PageResult<JadeStorageVolume> storageInfoResult = response.readEntity(new GenericType<PageResult<JadeStorageVolume>>(){});
                 if (storageInfoResult.getResultList().size() > 1) {
                     LOG.warn("Request {} returned more than one result {} please refine the query", target, storageInfoResult);
                     return storageInfoResult.getResultList().stream().findFirst();
@@ -230,7 +230,7 @@ public class StorageService {
                                                      String authToken,
                                                      int level,
                                                      long offset,
-                                                     long length) {
+                                                     int length) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI).path("list");

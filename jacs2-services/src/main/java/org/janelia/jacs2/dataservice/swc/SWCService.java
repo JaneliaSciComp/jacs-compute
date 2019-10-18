@@ -1,34 +1,9 @@
 package org.janelia.jacs2.dataservice.swc;
 
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
-import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
-import org.janelia.jacs2.dataservice.storage.StorageService;
-import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.IdSource;
-import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
-import org.janelia.model.access.domain.dao.TmSampleDao;
-import org.janelia.model.access.domain.dao.TmWorkspaceDao;
-import org.janelia.model.domain.DomainUtils;
-import org.janelia.model.domain.enums.FileType;
-import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmProtobufExchanger;
-import org.janelia.model.domain.tiledMicroscope.TmSample;
-import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
-import org.janelia.model.util.MatrixUtilities;
-import org.janelia.model.util.TmNeuronUtils;
-import org.janelia.rendering.RenderedVolumeLoader;
-import org.janelia.rendering.RenderedVolumeLocation;
-import org.janelia.rendering.RenderedVolumeMetadata;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
 import java.awt.Color;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
@@ -40,6 +15,31 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.inject.Inject;
+
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
+import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
+import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.IdSource;
+import org.janelia.model.access.domain.dao.TmNeuronBufferDao;
+import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
+import org.janelia.model.access.domain.dao.TmSampleDao;
+import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.tiledMicroscope.TmGeoAnnotation;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
+import org.janelia.model.domain.tiledMicroscope.TmSample;
+import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.util.MatrixUtilities;
+import org.janelia.model.util.TmNeuronUtils;
+import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.RenderedVolumeLocation;
+import org.janelia.rendering.RenderedVolumeMetadata;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class SWCService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SWCService.class);
@@ -48,36 +48,34 @@ public class SWCService {
     private final LegacyDomainDao domainDao;
     private final TmSampleDao tmSampleDao;
     private final TmWorkspaceDao tmWorkspaceDao;
-    private final TmNeuronBufferDao tmNeuronBufferDao;
-    private final RenderedVolumeLocationFactory renderedVolumeLocationFactory;
+    private final TmNeuronMetadataDao tmNeuronMetadataDao;
+    private final DataStorageLocationFactory dataStorageLocationFactory;
     private final RenderedVolumeLoader renderedVolumeLoader;
     private final SWCReader swcReader;
     private final Path defaultSWCLocation;
     private final IdSource neuronIdGenerator;
-    private final TmProtobufExchanger protobufExchanger;
+
 
     @Inject
     public SWCService(StorageService storageService,
                       LegacyDomainDao domainDao,
                       TmSampleDao tmSampleDao,
                       TmWorkspaceDao tmWorkspaceDao,
-                      TmNeuronBufferDao tmNeuronBufferDao,
-                      RenderedVolumeLocationFactory renderedVolumeLocationFactory,
+                      TmNeuronMetadataDao tmNeuronMetadataDao,
+                      DataStorageLocationFactory dataStorageLocationFactory,
                       RenderedVolumeLoader renderedVolumeLoader,
                       SWCReader swcReader,
                       IdSource neuronIdGenerator,
-                      TmProtobufExchanger protobufExchanger,
                       @PropertyValue(name = "service.swcImport.DefaultLocation") String defaultSWCLocation) {
         this.storageService = storageService;
         this.domainDao = domainDao;
         this.tmSampleDao = tmSampleDao;
         this.tmWorkspaceDao = tmWorkspaceDao;
-        this.tmNeuronBufferDao = tmNeuronBufferDao;
-        this.renderedVolumeLocationFactory = renderedVolumeLocationFactory;
+        this.tmNeuronMetadataDao = tmNeuronMetadataDao;
+        this.dataStorageLocationFactory = dataStorageLocationFactory;
         this.renderedVolumeLoader = renderedVolumeLoader;
         this.swcReader = swcReader;
         this.neuronIdGenerator = neuronIdGenerator;
-        this.protobufExchanger = protobufExchanger;
         this.defaultSWCLocation = StringUtils.isNotBlank(defaultSWCLocation)
             ? Paths.get(defaultSWCLocation)
             : Paths.get("");
@@ -106,11 +104,11 @@ public class SWCService {
             }
         });
         String sampleFilepath = tmSample.getLargeVolumeOctreeFilepath();
-        RenderedVolumeLocation volumeLocation = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(sampleFilepath, workspaceOwnerKey, null);
+        RenderedVolumeLocation volumeLocation = dataStorageLocationFactory.asRenderedVolumeLocation(dataStorageLocationFactory.getDataLocationWithLocalCheck(sampleFilepath, workspaceOwnerKey, null));
         RenderedVolumeMetadata renderedVolumeMetadata = renderedVolumeLoader.loadVolume(volumeLocation)
                 .orElseThrow(() -> {
-                    LOG.error("Could not load volume metadata for sample {} from {}", sampleId, volumeLocation.getVolumeLocation());
-                    return new IllegalStateException("Error loading volume metadata for sample " + sampleId + " from " + volumeLocation.getVolumeLocation());
+                    LOG.error("Could not load volume metadata for sample {} from {}", sampleId, volumeLocation.getBaseStorageLocationURI());
+                    return new IllegalStateException("Error loading volume metadata for sample " + sampleId + " from " + volumeLocation.getBaseStorageLocationURI());
                 });
 
         VectorOperator externalToInternalConverter = new JamaMatrixVectorOperator(
@@ -129,17 +127,19 @@ public class SWCService {
                     LOG.info("List swc entries on {} : {}", vsInfo, swcPath);
 
                     Spliterator<Stream<StorageEntryInfo>> storageContentSupplier = new Spliterator<Stream<StorageEntryInfo>>() {
-                        long offset = 0L;
-                        long defaultLength = 1000L;
+                        volatile long offset = 0L;
+                        int defaultLength = 100000;
                         @Override
                         public boolean tryAdvance(Consumer<? super Stream<StorageEntryInfo>> action) {
                             List<StorageEntryInfo> storageEntries = storageService.listStorageContent(vsInfo.getVolumeStorageURI(), swcPath, null, null, 3, offset, defaultLength);
-                            LOG.info("Retrieved {} entries from {} -> {}", storageEntries.size(), vsInfo.getVolumeStorageURI(), swcPath);
+                            long lastEntryOffset = offset + storageEntries.size();
+                            LOG.info("Retrieved {} entries ({} - {}) from {} -> {}", storageEntries.size(), offset, lastEntryOffset, vsInfo.getVolumeStorageURI(), swcPath);
                             if (storageEntries.isEmpty()) {
                                 return false;
                             } else {
+                                offset = lastEntryOffset;
                                 action.accept(storageEntries.stream());
-                                return true;
+                                return storageEntries.size() == defaultLength;
                             }
                         }
 
@@ -165,11 +165,11 @@ public class SWCService {
                 .filter(storageEntryInfo -> storageEntryInfo.getEntryRelativePath().endsWith(".swc"))
                 .forEach(swcEntry ->{
                     LOG.info("Read swcEntry {} from {}", swcEntry, swcEntry.getEntryURL());
-                    InputStream swcStream = storageService.getStorageContent(swcEntry.getEntryURL(), null, null);
+                    InputStream swcStream = storageService.getStorageContent(URLDecoder.decode(swcEntry.getEntryURL()), null, null);
                     TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getEntryRelativePath(), swcStream, neuronOwnerKey, tmWorkspace, externalToInternalConverter);
                     try {
-                        LOG.info("Create neuron points for swcEntry {} in workspace {} for sample {}", swcEntry, tmWorkspace, tmSample);
-                        tmNeuronBufferDao.createNeuronWorkspacePoints(neuronMetadata.getId(), tmWorkspace.getId(), new ByteArrayInputStream(protobufExchanger.serializeNeuron(neuronMetadata)));
+                        LOG.info("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
+                        tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                     } catch (Exception e) {
                         LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
                         throw new IllegalStateException(e);

@@ -1,28 +1,24 @@
 package org.janelia.jacs2.rest.sync.v2.streamresources;
 
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
-import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.rendering.Coordinate;
-import org.janelia.rendering.RenderedVolumeLoader;
-import org.janelia.rendering.RenderedVolumeLocation;
-import org.janelia.rendering.Streamable;
-import org.janelia.rendering.TileKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
-import com.google.common.io.ByteStreams;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
+import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.rendering.Coordinate;
+import org.janelia.rendering.RenderedVolumeLoader;
+import org.janelia.rendering.TileKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class TmStreamingResourceHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(TmStreamingResourceHelper.class);
 
     static Response streamTileFromDirAndCoord(
-            RenderedVolumeLocationFactory renderedVolumeLocationFactory,
+            DataStorageLocationFactory dataStorageLocationFactory,
             RenderedVolumeLoader renderedVolumeLoader,
             String subjectKey,
             String baseFolderParam,
@@ -39,33 +35,34 @@ class TmStreamingResourceHelper {
                     .build();
         }
         String baseFolderName = StringUtils.prependIfMissing(baseFolderParam, "/");
-        RenderedVolumeLocation rvl = renderedVolumeLocationFactory.getVolumeLocationWithLocalCheck(baseFolderName, subjectKey, null);
-        Streamable<byte[]> volumeSlice = renderedVolumeLoader.loadVolume(rvl)
-                .flatMap(rvm -> rvm.getTileInfo(axisParam)
-                        .map(tileInfo -> TileKey.fromRavelerTileCoord(
-                                xParam,
-                                yParam,
-                                zParam,
-                                zoomParam,
-                                axisParam,
-                                tileInfo))
-                        .map(tileKey -> {
-                            LOG.debug("Load tile {} ({}, {}, {}, {}, {}) from {}",
-                                    tileKey, zoomParam, axisParam, xParam, yParam, zParam, baseFolderName);
-                            return renderedVolumeLoader.loadSlice(rvl, rvm, tileKey);
-                        }))
-                .orElse(Streamable.empty());
-        if (volumeSlice.getContent() == null) {
-            return Response.status(Response.Status.NO_CONTENT).build();
-        } else {
-            StreamingOutput outputStreaming = output -> {
-                output.write(volumeSlice.getContent());
-            };
-            return Response
-                    .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
-                    .header("Content-Length", volumeSlice.getSize())
-                    .build();
-        }
+        return dataStorageLocationFactory.lookupJadeDataLocation(baseFolderName, subjectKey, null)
+                .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
+                .flatMap(rvl -> renderedVolumeLoader.loadVolume(rvl)
+                                .flatMap(rvm -> rvm.getTileInfo(axisParam)
+                                        .map(tileInfo -> TileKey.fromRavelerTileCoord(
+                                                xParam,
+                                                yParam,
+                                                zParam,
+                                                zoomParam,
+                                                axisParam,
+                                                tileInfo))
+                                        .flatMap(tileKey -> {
+                                            LOG.debug("Load tile {} ({}, {}, {}, {}, {}) from {}",
+                                                    tileKey, zoomParam, axisParam, xParam, yParam, zParam, baseFolderName);
+                                            return renderedVolumeLoader.loadSlice(rvl, rvm, tileKey).asOptional();
+                                        })))
+                .map(sliceBytes -> {
+                    StreamingOutput outputStreaming = output -> {
+                        output.write(sliceBytes);
+                    };
+                    return Response
+                            .ok(outputStreaming, MediaType.APPLICATION_OCTET_STREAM)
+                            .header("Content-Length", sliceBytes.length)
+                            .build();
+
+                })
+                .orElseGet(() -> Response.status(Response.Status.NO_CONTENT).build())
+                ;
     }
 
 }

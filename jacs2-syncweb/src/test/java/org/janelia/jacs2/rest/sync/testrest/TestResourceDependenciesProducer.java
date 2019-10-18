@@ -11,10 +11,11 @@ import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.jacs2.dataservice.rendering.RenderedVolumeLocationFactory;
+import org.janelia.jacs2.dataservice.search.IndexBuilderService;
+import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
-import org.janelia.jacs2.dataservice.search.IndexingService;
+import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -58,7 +59,7 @@ public class TestResourceDependenciesProducer {
     private JWTProvider jwtProvider = mock(JWTProvider.class);
     private LegacyDomainDao legacyDomainDao = mock(LegacyDomainDao.class);
     private ObjectMapperFactory objectMapperFactory = ObjectMapperFactory.instance();
-    private RenderedVolumeLocationFactory volumeLocationFactory = mock(RenderedVolumeLocationFactory.class);
+    private DataStorageLocationFactory volumeLocationFactory = mock(DataStorageLocationFactory.class);
     private OntologyDao ontologyDao = mock(OntologyDao.class);
     private RenderedVolumeLoader renderedVolumeLoader = mock(RenderedVolumeLoader.class);
     private SummaryDao summaryDao = mock(SummaryDao.class);
@@ -72,7 +73,8 @@ public class TestResourceDependenciesProducer {
     private PasswordProvider pwProvider = mock(PasswordProvider.class);
     private AuthProvider authProvider = mock(AuthProvider.class);
     private DomainObjectIndexer domainObjectIndexer = mock(DomainObjectIndexer.class);
-    private IndexingService indexingService = mock(IndexingService.class);
+    private DocumentIndexingService documentIndexingService = mock(DocumentIndexingService.class);
+    private IndexBuilderService indexBuilderService = mock(IndexBuilderService.class);
     private SampleDataService sampleDataService = mock(SampleDataService.class);
     private SageDataService sageDataService = mock(SageDataService.class);
     private ExecutorService indexingExecutorService = mock(ExecutorService.class);
@@ -135,7 +137,7 @@ public class TestResourceDependenciesProducer {
     }
 
     @Produces
-    public RenderedVolumeLocationFactory getVolumeLocationFactory() {
+    public DataStorageLocationFactory getVolumeLocationFactory() {
         return volumeLocationFactory;
     }
 
@@ -216,8 +218,13 @@ public class TestResourceDependenciesProducer {
     }
 
     @Produces
-    public IndexingService getIndexingService() {
-        return indexingService;
+    public DocumentIndexingService getDocumentIndexingService() {
+        return documentIndexingService;
+    }
+
+    @Produces
+    public IndexBuilderService getIndexBuilderService() {
+        return indexBuilderService;
     }
 
     @Produces

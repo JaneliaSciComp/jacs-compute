@@ -275,7 +275,7 @@ public class DataTreeLoadProcessorTest {
                     eq(testAuthToken),
                     eq(-1),
                     eq(0L),
-                    eq(-1L)
+                    eq(-1)
             );
             Mockito.verify(storageService).getStorageContent(
                     eq(testLocation + "/" + f1Path.getFileName()),
@@ -434,7 +434,7 @@ public class DataTreeLoadProcessorTest {
                             eq(testAuthToken),
                             eq(-1),
                             eq(0L),
-                            eq(-1L)
+                            eq(-1)
                     );
 
                     Mockito.verify(mipsConverterProcessor, never()).getMetadata();
@@ -562,7 +562,7 @@ public class DataTreeLoadProcessorTest {
                             eq(testAuthToken),
                             eq(-1),
                             eq(0L),
-                            eq(-1L)
+                            eq(-1)
                     );
                     Mockito.verify(storageService).getStorageContent(
                             eq(testLocation + "/" + f1Path.getFileName()),
@@ -736,7 +736,7 @@ public class DataTreeLoadProcessorTest {
                             eq(testAuthToken),
                             eq(-1),
                             eq(0L),
-                            eq(-1L)
+                            eq(-1)
                     );
                     Mockito.verify(storageService).getStorageContent(
                             eq(testLocation + "/" + f1Path.getFileName()),

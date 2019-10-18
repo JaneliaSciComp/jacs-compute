@@ -16,6 +16,7 @@ import org.apache.directory.ldap.client.api.DefaultPoolableLdapConnectionFactory
 import org.apache.directory.ldap.client.api.LdapConnection;
 import org.apache.directory.ldap.client.api.LdapConnectionConfig;
 import org.apache.directory.ldap.client.api.LdapConnectionPool;
+import org.apache.directory.ldap.client.api.NoVerificationTrustManager;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -54,22 +56,34 @@ public class LDAPAuthProvider implements AuthProvider {
             throw new IllegalArgumentException(e);
         }
 
-        int port = 389; // Default port
-        String[] urlParts = url.replace("ldap://", "").split(":");
-        String server = urlParts[0];
-        if (urlParts.length == 2) {
-            port = Integer.parseInt(urlParts[1]);
+        URI ldapURI = URI.create(url);
+        String server = ldapURI.getHost();
+        int ldapPort = ldapURI.getPort();
+        String scheme = ldapURI.getScheme();
+        int port;
+        boolean useSsl;
+        if (StringUtils.equalsIgnoreCase(scheme, "ldaps")) {
+            port = ldapPort == 0 ? 636 : ldapPort;
+            useSsl = true;
+        } else {
+            port = ldapPort == 0 ? 389 : ldapPort;
+            useSsl = false;
         }
 
         LOG.info("Configuring LDAP authentication with the following parameters:");
         LOG.info("  URL: {}", url);
         LOG.info("  Server: {}", server);
         LOG.info("  Port: {}", port);
+        LOG.info("  SSL: {}", useSsl);
         LOG.info("  Search base: {}", searchBase);
         LOG.info("  Search filter: {}", searchFilter);
 
         config.setLdapHost(server);
         config.setLdapPort(port);
+        if (useSsl) {
+            config.setUseSsl(true);
+            config.setTrustManagers(new NoVerificationTrustManager());
+        }
         if (timeout != null) {
             config.setTimeout(timeout);
         }

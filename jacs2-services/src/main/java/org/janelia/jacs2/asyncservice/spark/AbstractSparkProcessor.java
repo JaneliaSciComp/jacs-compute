@@ -68,6 +68,10 @@ abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor
         return serviceResources.get("sparkExecutorMemory");
     }
 
+    String getSparkAppStackSize(Map<String, String> serviceResources) {
+        return serviceResources.get("sparkAppStackSize");
+    }
+
     Long getSparkAppIntervalCheckInMillis(Map<String, String> serviceResources) {
         String intervalCheck = serviceResources.get("sparkAppIntervalCheckInMillis");
         if (StringUtils.isNotBlank(intervalCheck)) {
