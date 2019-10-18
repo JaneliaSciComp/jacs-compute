@@ -13,6 +13,7 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.service.JacsNotification;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -61,10 +62,18 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
     @Override
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
         DbMaintenanceArgs args = getArgs(jacsServiceData);
+        StringBuffer processingFailureMessage = new StringBuffer();
         if (args.refreshIndexes) {
             logger.info("Service {} perform database reindexing", jacsServiceData);
             logMaintenanceEvent("Reindexing", jacsServiceData.getId());
-            dbMainainer.ensureIndexes();
+            try {
+                dbMainainer.ensureIndexes();
+                jacsServiceDataPersistence.addServiceEvent(jacsServiceData, JacsServiceData.createServiceEvent(JacsServiceEventTypes.STEP_COMPLETED, "Completed database re-indexing refresh"));
+            } catch (Exception e) {
+                processingFailureMessage.append("database re-indexing failed - ").append(e.getMessage()).append(';');
+                logger.error("Database re-indexing failed", e);
+                jacsServiceDataPersistence.addServiceEvent(jacsServiceData, JacsServiceData.createServiceEvent(JacsServiceEventTypes.STE_FAILED, String.format("Database re-indexing failed: %s", e.getMessage())));
+            }
         } else {
             logger.info("Service {} skip database reindexing", jacsServiceData);
             logMaintenanceEvent("Skip reindexing", jacsServiceData.getId());
@@ -72,7 +81,14 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
         if (args.refreshPermissions) {
             logger.info("Service {} perform permission refresh", jacsServiceData);
             logMaintenanceEvent("Refresh permissions", jacsServiceData.getId());
-            dbMainainer.refreshPermissions();
+            try {
+                dbMainainer.refreshPermissions();
+                jacsServiceDataPersistence.addServiceEvent(jacsServiceData, JacsServiceData.createServiceEvent(JacsServiceEventTypes.STEP_COMPLETED, "Completed permissions refresh"));
+            } catch (Exception e) {
+                processingFailureMessage.append("permissions refresh failed - ").append(e.getMessage()).append(';');
+                logger.error("Permissions refresh failed", e);
+                jacsServiceDataPersistence.addServiceEvent(jacsServiceData, JacsServiceData.createServiceEvent(JacsServiceEventTypes.STE_FAILED, String.format("Refresh permissions failed: %s", e.getMessage())));
+            }
         } else {
             logger.info("Service {} skip permission refresh", jacsServiceData);
             logMaintenanceEvent("Skip permissions refresh", jacsServiceData.getId());
@@ -82,15 +98,21 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
             logMaintenanceEvent("Refresh TmSample filesystem sync", jacsServiceData.getId());
             try {
                 dbMainainer.refreshTmSampleSync();
-            }
-            catch (Exception e) {
-                throw new ComputationException(jacsServiceData, e);
+                jacsServiceDataPersistence.addServiceEvent(jacsServiceData, JacsServiceData.createServiceEvent(JacsServiceEventTypes.STEP_COMPLETED, "Completed TM sample sync"));
+            } catch (Exception e) {
+                processingFailureMessage.append("TM sample sync failed - ").append(e.getMessage()).append(';');
+                logger.error("TM sample sync failed", e);
+                jacsServiceDataPersistence.addServiceEvent(jacsServiceData, JacsServiceData.createServiceEvent(JacsServiceEventTypes.STE_FAILED, String.format("TM sample sync failed: %s", e.getMessage())));
             }
         } else {
             logger.info("Service {} skip TmSample filesystem sync refresh", jacsServiceData);
             logMaintenanceEvent("Skip TmSample filesystem sync refresh", jacsServiceData.getId());
         }
-        return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
+        if (processingFailureMessage.length() == 0) {
+            return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
+        } else {
+            return computationFactory.newFailedComputation(new ComputationException(jacsServiceData, processingFailureMessage.toString()));
+        }
     }
 
     private void logMaintenanceEvent(String maintenanceEvent, Number serviceId) {

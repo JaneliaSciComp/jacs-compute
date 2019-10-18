@@ -66,12 +66,12 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
     @Inject
     ColorDepthLibrarySynchronizer(ServiceComputationFactory computationFactory,
-                           JacsServiceDataPersistence jacsServiceDataPersistence,
-                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                           @StrPropertyValue(name = "service.colorDepthSearch.filepath") String rootPath,
-                           LegacyDomainDao dao,
-                           JacsNotificationDao jacsNotificationDao,
-                           Logger logger) {
+                                  JacsServiceDataPersistence jacsServiceDataPersistence,
+                                  @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                                  @StrPropertyValue(name = "service.colorDepthSearch.filepath") String rootPath,
+                                  LegacyDomainDao dao,
+                                  JacsNotificationDao jacsNotificationDao,
+                                  Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.rootPath = Paths.get(rootPath);
         this.dao = dao;
