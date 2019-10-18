@@ -57,15 +57,21 @@ public class LDAPAuthProvider implements AuthProvider {
         }
 
         URI ldapURI = URI.create(url);
-        String server = ldapURI.getHost();
+        String server;
         int ldapPort = ldapURI.getPort();
         String scheme = ldapURI.getScheme();
         int port;
         boolean useSsl;
-        if (StringUtils.equalsIgnoreCase(scheme, "ldaps")) {
+        if (scheme == null) {
+            server = ldapURI.getPath();
+            port = 0; // !!!!!
+            useSsl = false;
+        } else if (StringUtils.equalsIgnoreCase(scheme, "ldaps")) {
+            server = ldapURI.getHost();
             port = ldapPort == 0 ? 636 : ldapPort;
             useSsl = true;
         } else {
+            server = ldapURI.getHost();
             port = ldapPort == 0 ? 389 : ldapPort;
             useSsl = false;
         }
