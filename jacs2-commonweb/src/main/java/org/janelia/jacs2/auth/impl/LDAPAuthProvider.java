@@ -55,24 +55,24 @@ public class LDAPAuthProvider implements AuthProvider {
         } catch (LdapInvalidDnException e) {
             throw new IllegalArgumentException(e);
         }
-
-        URI ldapURI = URI.create(url);
+        URI ldapURI;
+        if (StringUtils.startsWithIgnoreCase(url, "ldap://") || StringUtils.startsWithIgnoreCase(url, "ldaps://")) {
+            ldapURI = URI.create(url);
+        } else {
+            ldapURI = URI.create(StringUtils.prependIfMissing(url,"ldap://"));
+        }
         String server;
         int ldapPort = ldapURI.getPort();
         String scheme = ldapURI.getScheme();
         int port;
         boolean useSsl;
-        if (scheme == null) {
-            server = ldapURI.getPath();
-            port = 0; // !!!!!
-            useSsl = false;
-        } else if (StringUtils.equalsIgnoreCase(scheme, "ldaps")) {
+        if (StringUtils.equalsIgnoreCase(scheme, "ldaps")) {
             server = ldapURI.getHost();
-            port = ldapPort == 0 ? 636 : ldapPort;
+            port = ldapPort <= 0 ? 636 : ldapPort; // use default ldpas port
             useSsl = true;
         } else {
             server = ldapURI.getHost();
-            port = ldapPort == 0 ? 389 : ldapPort;
+            port = ldapPort <= 0 ? 389 : ldapPort; // use default ldap port
             useSsl = false;
         }
 
