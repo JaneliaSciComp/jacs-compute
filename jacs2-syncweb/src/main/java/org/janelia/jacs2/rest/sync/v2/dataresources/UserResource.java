@@ -270,15 +270,12 @@ public class UserResource {
                 LOG.error("Could not update group roles for user {}", user);
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             LOG.error("Error trying to update user for {}", userKey, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error trying to update user roles " + userKey))
                     .build();
-        }
-        finally {
+        } finally {
             LOG.trace("Finished updateUserRoles({})", userKey);
         }
     }
@@ -306,14 +303,12 @@ public class UserResource {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                         .entity(new ErrorResponse("Error trying to create new group " + groupKey))
                         .build();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOG.error("Error trying to create new group {}", groupKey, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error trying to create new group " + groupKey))
                     .build();
-        }
-        finally {
+        } finally {
             LOG.trace("Finished createGroup({})", groupKey);
         }
     }
