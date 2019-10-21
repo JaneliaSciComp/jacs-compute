@@ -3,8 +3,12 @@ package org.janelia.jacs2.dataservice.storage;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Optional;
 
 /**
@@ -46,6 +50,19 @@ public class StorageEntryInfo {
 
     public String getEntryURL() {
         return entryURL;
+    }
+
+    @JsonIgnore
+    public String getDecodedEntryURL() {
+        if (StringUtils.isEmpty(entryURL)) {
+            return entryURL;
+        } else {
+            try {
+                return URLDecoder.decode(entryURL, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
     }
 
     public String getStorageRootLocation() {

@@ -5,8 +5,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.asyncservice.common.ResourceHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -47,9 +49,9 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
     static class DataTreeLoadArgs extends CommonDataNodeArgs {
         @Parameter(names = {"-storageLocation", "-storageLocationURL"}, description = "Data storage location URL", required = true)
         String storageLocationURL;
-        @Parameter(names = "-dataLocationUrl", description = "Data location URL - if this is specified the content from this URL " +
+        @Parameter(names = "-dataLocationPath", description = "Data location URL - if this is specified the content from this URL " +
                 "will be uploaded to the location defined by the storageLocation and storagePath arguments")
-        String dataLocationURL;
+        String dataLocationPath;
         @Parameter(names = "-storagePath", description = "Data storage path relative to the storageURL")
         String storagePath;
         @Parameter(names = "-cleanLocalFilesWhenDone", description = "Clean up local files when all data loading is done")
@@ -152,10 +154,12 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
     }
 
     private ServiceComputation<JacsServiceData> uploadContentFromDataLocation(JacsServiceData jacsServiceData, DataTreeLoadArgs args) {
-        if (StringUtils.isNotBlank(args.dataLocationURL)) {
+        if (StringUtils.isNotBlank(args.dataLocationPath)) {
             // !!!!!!!!!!!!!!! FIXME
             return computationFactory.newCompletedComputation(jacsServiceData)
-                    .thenCompose(sd -> storageContentHelper.listContent(jacsServiceData, args.dataLocationURL, "")) // list the content from the data location
+                    .thenCompose(sd -> storageContentHelper.lookupStorage(args.dataLocationPath, sd.getOwnerKey(), ResourceHelper.getAuthToken(sd.getResources()))
+                                .map(jadeStorageVolume -> storageContentHelper.listContent(sd, jadeStorageVolume.getStorageServiceURL(), args.dataLocationPath))
+                                .orElseGet(() -> computationFactory.newFailedComputation(new ComputationException(sd, "No storage found for " + args.dataLocationPath)))) // list the content from the data location
                     .thenCompose(contentToUploadResult -> storageContentHelper.uploadContent(
                             contentToUploadResult.getJacsServiceData(),
                             args.storageLocationURL,

@@ -163,7 +163,7 @@ public class SWCService {
                 .filter(storageEntryInfo -> storageEntryInfo.getEntryRelativePath().endsWith(".swc"))
                 .forEach(swcEntry ->{
                     LOG.info("Read swcEntry {} from {}", swcEntry, swcEntry.getEntryURL());
-                    InputStream swcStream = storageService.getStorageContent(URLDecoder.decode(swcEntry.getEntryURL()), null, null);
+                    InputStream swcStream = storageService.getStorageContent(swcEntry.getDecodedEntryURL(), null, null);
                     TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getEntryRelativePath(), swcStream, neuronOwnerKey, tmWorkspace, externalToInternalConverter);
                     try {
                         LOG.info("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());

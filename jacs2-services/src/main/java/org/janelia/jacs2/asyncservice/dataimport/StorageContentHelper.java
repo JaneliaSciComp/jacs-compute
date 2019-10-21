@@ -7,6 +7,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.dataservice.storage.DataStorageInfo;
+import org.janelia.jacs2.dataservice.storage.JadeStorageVolume;
 import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.service.JacsServiceData;
@@ -21,6 +22,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,6 +50,10 @@ class StorageContentHelper {
                 .lookupDataStorage(storageServiceURL, storageId, storageName, null, ownerKey, authToken)
                 .orElseGet(() -> storageService.createStorage(storageServiceURL, storageName, storageTags, ownerKey, authToken))
                 ;
+    }
+
+    Optional<JadeStorageVolume> lookupStorage(String storagePath, String ownerKey, String authToken) {
+        return storageService.lookupStorageVolumes(null, null, storagePath, ownerKey, authToken);
     }
 
     ServiceComputation<JacsServiceResult<List<ContentStack>>> listContent(JacsServiceData jacsServiceData, String storageURL, String storagePath) {
