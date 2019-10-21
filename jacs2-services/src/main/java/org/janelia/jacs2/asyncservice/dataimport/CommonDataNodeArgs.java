@@ -12,6 +12,8 @@ class CommonDataNodeArgs extends ServiceArgs {
     String dataNodeName;
     @Parameter(names = {"-parentDataNodeId", "-parentFolderId"}, description = "Parent data node ID")
     Long parentDataNodeId;
+    @Parameter(names = {"-parentWorkspaceOwnerKey"}, description = "Parent workspace owner key")
+    String parentWorkspaceOwnerKey;
     @Parameter(names = {"-skipMIPS", "-noMIPS"}, description = "If set do not generate MIPs for the content")
     boolean skipMIPS = false;
     @Parameter(names = {"-standaloneMIPS"}, description = "If set the MIPS are created as images - otherwise they are added to the image stack of the source")

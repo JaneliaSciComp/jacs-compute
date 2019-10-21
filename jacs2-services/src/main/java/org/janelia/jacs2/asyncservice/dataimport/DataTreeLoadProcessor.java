@@ -2,6 +2,8 @@ package org.janelia.jacs2.asyncservice.dataimport;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -45,10 +47,11 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
     static class DataTreeLoadArgs extends CommonDataNodeArgs {
         @Parameter(names = {"-storageLocation", "-storageLocationURL"}, description = "Data storage location URL", required = true)
         String storageLocationURL;
+        @Parameter(names = "-dataLocationUrl", description = "Data location URL - if this is specified the content from this URL " +
+                "will be uploaded to the location defined by the storageLocation and storagePath arguments")
+        String dataLocationURL;
         @Parameter(names = "-storagePath", description = "Data storage path relative to the storageURL")
         String storagePath;
-        @Parameter(names = "-fileTypeOverride", description = "Override file type for all imported files", required = false)
-        FileType fileTypeOverride;
         @Parameter(names = "-cleanLocalFilesWhenDone", description = "Clean up local files when all data loading is done")
         boolean cleanLocalFilesWhenDone = false;
         @Parameter(names = "-cleanStorageOnFailure", description = "If this flag is set - clean up the storage if the indexing operation failed")
@@ -107,8 +110,9 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
     public ServiceComputation<JacsServiceResult<List<ContentStack>>> process(JacsServiceData jacsServiceData) {
         DataTreeLoadArgs args = getArgs(jacsServiceData);
         return computationFactory.newCompletedComputation(jacsServiceData)
+                .thenCompose(sd -> uploadContentFromDataLocation(sd, args))
                 .thenCompose(sd -> storageContentHelper.listContent(jacsServiceData, args.storageLocationURL, args.storagePath))
-                .thenCompose(storageContentResult -> generateContentMIPs(storageContentResult.getJacsServiceData(), storageContentResult.getResult()))
+                .thenCompose(storageContentResult -> generateContentMIPs(storageContentResult.getJacsServiceData(), args, storageContentResult.getResult()))
                 .thenCompose(mipsContentResult -> storageContentHelper.uploadContent(
                         mipsContentResult.getJacsServiceData(),
                         args.storageLocationURL,
@@ -127,7 +131,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                                 args.parentDataNodeId,
                                 FileType.Unclassified2d,
                                 storageContentResult.getResult()))
-                .thenCompose(storageContentResult -> cleanLocalContent(storageContentResult.getJacsServiceData(), storageContentResult.getResult()))
+                .thenCompose(storageContentResult -> cleanLocalContent(storageContentResult.getJacsServiceData(), args, storageContentResult.getResult()))
                 .thenApply(sr -> updateServiceResult(sr.getJacsServiceData(), sr.getResult()))
                 .whenComplete((r, exc) -> {
                     if (exc != null && args.cleanStorageOnFailure) {
@@ -147,8 +151,25 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new DataTreeLoadArgs());
     }
 
-    private ServiceComputation<JacsServiceResult<List<ContentStack>>> generateContentMIPs(JacsServiceData jacsServiceData, List<ContentStack> contentList) {
-        DataTreeLoadArgs args = getArgs(jacsServiceData);
+    private ServiceComputation<JacsServiceData> uploadContentFromDataLocation(JacsServiceData jacsServiceData, DataTreeLoadArgs args) {
+        if (StringUtils.isNotBlank(args.dataLocationURL)) {
+            // !!!!!!!!!!!!!!! FIXME
+            return computationFactory.newCompletedComputation(jacsServiceData)
+                    .thenCompose(sd -> storageContentHelper.listContent(jacsServiceData, args.dataLocationURL, "")) // list the content from the data location
+                    .thenCompose(contentToUploadResult -> storageContentHelper.uploadContent(
+                            contentToUploadResult.getJacsServiceData(),
+                            args.storageLocationURL,
+                            contentToUploadResult.getResult())
+                    )
+                    .thenApply(uploadedContentResult -> uploadedContentResult.getJacsServiceData())
+                    ;
+
+        } else {
+            return computationFactory.newCompletedComputation(jacsServiceData);
+        }
+    }
+
+    private ServiceComputation<JacsServiceResult<List<ContentStack>>> generateContentMIPs(JacsServiceData jacsServiceData, DataTreeLoadArgs args, List<ContentStack> contentList) {
         if (args.generateMIPS()) {
             JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
             Path localMIPSRootPath = serviceWorkingFolder.getServiceFolder("mips");
@@ -177,8 +198,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
         }
     }
 
-    private ServiceComputation<JacsServiceResult<List<ContentStack>>> cleanLocalContent(JacsServiceData jacsServiceData, List<ContentStack> contentList) {
-        DataTreeLoadArgs args = getArgs(jacsServiceData);
+    private ServiceComputation<JacsServiceResult<List<ContentStack>>> cleanLocalContent(JacsServiceData jacsServiceData, DataTreeLoadArgs args, List<ContentStack> contentList) {
         if (args.cleanLocalFilesWhenDone) {
             return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
                     .supply(() -> new JacsServiceResult<>(jacsServiceData, contentList.stream()
