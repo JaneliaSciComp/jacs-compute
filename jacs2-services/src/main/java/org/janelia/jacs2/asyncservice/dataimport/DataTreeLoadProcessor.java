@@ -161,7 +161,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                     .thenCompose(sd -> storageContentHelper.lookupStorage(args.dataLocationPath, sd.getOwnerKey(), ResourceHelper.getAuthToken(sd.getResources()))
                                 .map(jadeStorageVolume -> {
                                     String storagePath;
-                                    if (args.dataLocationPath.startsWith(jadeStorageVolume.getStorageVirtualPath())) {
+                                    if (StringUtils.startsWith(args.dataLocationPath, jadeStorageVolume.getStorageVirtualPath())) {
                                         storagePath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(args.dataLocationPath)).toString();
                                     } else {
                                         storagePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(args.dataLocationPath)).toString();
