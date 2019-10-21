@@ -35,6 +35,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -158,7 +159,15 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
             // !!!!!!!!!!!!!!! FIXME
             return computationFactory.newCompletedComputation(jacsServiceData)
                     .thenCompose(sd -> storageContentHelper.lookupStorage(args.dataLocationPath, sd.getOwnerKey(), ResourceHelper.getAuthToken(sd.getResources()))
-                                .map(jadeStorageVolume -> storageContentHelper.listContent(sd, jadeStorageVolume.getStorageServiceURL(), args.dataLocationPath))
+                                .map(jadeStorageVolume -> {
+                                    String storagePath;
+                                    if (args.dataLocationPath.startsWith(jadeStorageVolume.getStorageVirtualPath())) {
+                                        storagePath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(args.dataLocationPath)).toString();
+                                    } else {
+                                        storagePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(args.dataLocationPath)).toString();
+                                    }
+                                    return storageContentHelper.listContent(sd, jadeStorageVolume.getVolumeStorageURI(), storagePath);
+                                })
                                 .orElseGet(() -> computationFactory.newFailedComputation(new ComputationException(sd, "No storage found for " + args.dataLocationPath)))) // list the content from the data location
                     .thenCompose(contentToUploadResult -> storageContentHelper.uploadContent(
                             contentToUploadResult.getJacsServiceData(),
