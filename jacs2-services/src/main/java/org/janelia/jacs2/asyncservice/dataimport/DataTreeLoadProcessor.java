@@ -114,7 +114,6 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
         DataTreeLoadArgs args = getArgs(jacsServiceData);
         return computationFactory.newCompletedComputation(jacsServiceData)
                 .thenCompose(sd -> uploadContentFromDataLocation(sd, args))
-                .thenCompose(sd -> storageContentHelper.listContent(jacsServiceData, args.storageLocationURL, args.storagePath))
                 .thenCompose(storageContentResult -> generateContentMIPs(storageContentResult.getJacsServiceData(), args, storageContentResult.getResult()))
                 .thenCompose(mipsContentResult -> storageContentHelper.uploadContent(
                         mipsContentResult.getJacsServiceData(),
@@ -154,31 +153,40 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new DataTreeLoadArgs());
     }
 
-    private ServiceComputation<JacsServiceData> uploadContentFromDataLocation(JacsServiceData jacsServiceData, DataTreeLoadArgs args) {
+    private ServiceComputation<JacsServiceResult<List<ContentStack>>> uploadContentFromDataLocation(JacsServiceData jacsServiceData, DataTreeLoadArgs args) {
         if (StringUtils.isNotBlank(args.dataLocationPath)) {
             // !!!!!!!!!!!!!!! FIXME
             return computationFactory.newCompletedComputation(jacsServiceData)
                     .thenCompose(sd -> storageContentHelper.lookupStorage(args.dataLocationPath, sd.getOwnerKey(), ResourceHelper.getAuthToken(sd.getResources()))
                                 .map(jadeStorageVolume -> {
-                                    String storagePath;
+                                    String dataLocationPath;
                                     if (StringUtils.startsWith(args.dataLocationPath, jadeStorageVolume.getStorageVirtualPath())) {
-                                        storagePath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(args.dataLocationPath)).toString();
+                                        dataLocationPath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(args.dataLocationPath)).toString();
                                     } else {
-                                        storagePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(args.dataLocationPath)).toString();
+                                        dataLocationPath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(args.dataLocationPath)).toString();
                                     }
-                                    return storageContentHelper.listContent(sd, jadeStorageVolume.getVolumeStorageURI(), storagePath);
+                                    return storageContentHelper.listContent(sd, jadeStorageVolume.getVolumeStorageURI(), dataLocationPath); // list the content from the data location
                                 })
-                                .orElseGet(() -> computationFactory.newFailedComputation(new ComputationException(sd, "No storage found for " + args.dataLocationPath)))) // list the content from the data location
-                    .thenCompose(contentToUploadResult -> storageContentHelper.uploadContent(
-                            contentToUploadResult.getJacsServiceData(),
-                            args.storageLocationURL,
-                            contentToUploadResult.getResult())
-                    )
-                    .thenApply(uploadedContentResult -> uploadedContentResult.getJacsServiceData())
+                                .orElseGet(() -> computationFactory.newFailedComputation(new ComputationException(sd, "No storage found for " + args.dataLocationPath))))
+                    .thenCompose(contentToUploadResult -> storageContentHelper.lookupStorage(args.storagePath, contentToUploadResult.getJacsServiceData().getOwnerKey(), ResourceHelper.getAuthToken(contentToUploadResult.getJacsServiceData().getResources()))
+                                .map(jadeStorageVolume -> {
+                                    String storagePath;
+                                    if (StringUtils.startsWith(args.storagePath, jadeStorageVolume.getStorageVirtualPath())) {
+                                        storagePath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(args.storagePath)).toString();
+                                    } else {
+                                        storagePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(args.storagePath)).toString();
+                                    }
+                                    return storageContentHelper.uploadContent(
+                                            contentToUploadResult.getJacsServiceData(),
+                                            StringUtils.appendIfMissing(jadeStorageVolume.getVolumeStorageURI(), "/") + storagePath,
+                                            contentToUploadResult.getResult()
+                                    );
+                                })
+                                .orElseGet(() -> computationFactory.newFailedComputation(new ComputationException(contentToUploadResult.getJacsServiceData(), "No storage found for " + args.storagePath))))
                     ;
 
         } else {
-            return computationFactory.newCompletedComputation(jacsServiceData);
+            return storageContentHelper.listContent(jacsServiceData, args.storageLocationURL, args.storagePath);
         }
     }
 
