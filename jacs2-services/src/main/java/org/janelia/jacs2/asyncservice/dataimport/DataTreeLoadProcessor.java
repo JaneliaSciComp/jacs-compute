@@ -178,7 +178,8 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                                     }
                                     return storageContentHelper.copyContent(
                                             contentToUploadResult.getJacsServiceData(),
-                                            StringUtils.appendIfMissing(jadeStorageVolume.getVolumeStorageURI(), "/") + storagePath,
+                                            jadeStorageVolume.getVolumeStorageURI(),
+                                            storagePath,
                                             contentToUploadResult.getResult()
                                     );
                                 })

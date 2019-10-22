@@ -133,7 +133,7 @@ class StorageContentHelper {
                 ResourceHelper.getAuthToken(jacsServiceData.getResources()));
     }
 
-    ServiceComputation<JacsServiceResult<List<ContentStack>>> copyContent(JacsServiceData jacsServiceData, String storageURL, List<ContentStack> contentList) {
+    ServiceComputation<JacsServiceResult<List<ContentStack>>> copyContent(JacsServiceData jacsServiceData, String storageURL, String storagePath, List<ContentStack> contentList) {
         return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
                 .supply(() -> new JacsServiceResult<>(
                         jacsServiceData,
@@ -142,13 +142,13 @@ class StorageContentHelper {
                                     Stream.of(contentEntry.getMainRep())
                                             .filter(sci -> sci.getRemoteInfo().getEntryURL() != null)
                                             .filter(sci -> sci.getRemoteInfo().isNotCollection())
-                                            .forEach(sci -> copyContent(sci, storageURL, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources())));
+                                            .forEach(sci -> copyContent(sci, storageURL, storagePath, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources())));
                                 })
                                 .collect(Collectors.toList())
                 ));
     }
 
-    private void copyContent(StorageContentInfo storageContentInfo, String storageURL, String subjectKey, String authToken) {
+    private void copyContent(StorageContentInfo storageContentInfo, String storageURL, String storagePathParam, String subjectKey, String authToken) {
         InputStream inputStream = storageService.getStorageContent(
                 storageContentInfo.getRemoteInfo().getEntryURL(),
                 subjectKey,
@@ -156,10 +156,11 @@ class StorageContentHelper {
         );
         try {
             if (inputStream != null) {
-                logger.info("Copy {} to {}", storageContentInfo, storageURL);
+                logger.info("Copy {} to {} {}", storageContentInfo, storageURL, storagePathParam);
+                String storagePath = StringUtils.appendIfMissing(storagePathParam, "/");
                 storageContentInfo.setRemoteInfo(storageService.putStorageContent(
                         storageURL,
-                        storageContentInfo.getRemoteInfo().getStorageRootPathURI() + "/" + storageContentInfo.getRemoteInfo().getEntryRelativePath(),
+                        storagePath + storageContentInfo.getRemoteInfo().getEntryRelativePath(),
                         subjectKey,
                         authToken,
                         inputStream
