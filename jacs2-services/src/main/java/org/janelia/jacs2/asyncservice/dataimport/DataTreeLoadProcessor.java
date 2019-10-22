@@ -200,7 +200,15 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                     .collect(Collectors.toList());
             ServiceComputation<JacsServiceResult<List<ContentStack>>> prepareMipsComputation;
             if (args.mipsInPlace) {
-                prepareMipsComputation = computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, mipsInputList));
+                prepareMipsComputation = computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData,
+                        mipsInputList.stream()
+                                .map(contentEntry -> {
+                                    StorageContentInfo storageContentInfo = contentEntry.getMainRep();
+                                    contentEntry.getMainRep().setLocalBasePath(storageContentInfo.getRemoteInfo().getStorageRootLocation() + "/" + storageContentInfo.getRemoteInfo().getEntryRelativePath());
+                                    return contentEntry;
+                                })
+                                .collect(Collectors.toList())
+                ));
             } else {
                 prepareMipsComputation = storageContentHelper.downloadContent(jacsServiceData, localMIPSRootPath, mipsInputList); // only download the entries for which we need to generate MIPs
             }
