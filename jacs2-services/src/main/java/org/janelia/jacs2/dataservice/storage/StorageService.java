@@ -216,8 +216,10 @@ public class StorageService {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
         } catch (IllegalStateException e) {
+            LOG.error("Exception thrown while uploading content to {}, {}", storageURI, entryName, e);
             throw e;
         } catch (Exception e) {
+            LOG.error("Exception thrown while uploading content to {}, {}", storageURI, entryName, e);
             throw new IllegalStateException(e);
         } finally {
             httpclient.close();
