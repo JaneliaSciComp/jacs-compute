@@ -48,7 +48,7 @@ import java.util.stream.Stream;
 public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<ContentStack>> {
 
     static class DataTreeLoadArgs extends CommonDataNodeArgs {
-        @Parameter(names = {"-storageLocation", "-storageLocationURL"}, description = "Data storage location URL", required = true)
+        @Parameter(names = {"-storageLocation", "-storageLocationURL"}, description = "Data storage location URL, if no value is specified where possible will try to get the actual URL from JADE (master)")
         String storageLocationURL;
         @Parameter(names = "-dataLocationPath", description = "Data location URL - if this is specified the content from this URL " +
                 "will be uploaded to the location defined by the storageLocation and storagePath arguments")
