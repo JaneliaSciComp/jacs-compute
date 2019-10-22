@@ -2,10 +2,12 @@ package org.janelia.jacs2.dataservice.storage;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
 import org.janelia.model.domain.report.QuotaUsage;
 import org.janelia.model.jacs2.page.PageResult;
+import org.janelia.rendering.Streamable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -205,7 +207,7 @@ public class StorageService {
         try {
             WebTarget target = httpclient.target(storageURI).path("data_content").path(entryName);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
-            Response response = requestBuilder.put(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            Response response = requestBuilder.header("Content-Length", null).put(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
             String entryLocationUrl;
             if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
                 entryLocationUrl = response.getHeaderString("Location");
