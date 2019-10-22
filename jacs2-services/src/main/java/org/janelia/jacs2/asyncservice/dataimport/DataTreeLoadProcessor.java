@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
@@ -112,12 +113,31 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
     @Override
     public ServiceComputation<JacsServiceResult<List<ContentStack>>> process(JacsServiceData jacsServiceData) {
         DataTreeLoadArgs args = getArgs(jacsServiceData);
+        String storageLocationURL;
+        String storagePath;
+        if (StringUtils.isBlank(args.storageLocationURL)) {
+            ImmutablePair<String, String> storageInfo = storageContentHelper.lookupStorage(args.storagePath, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources()))
+                    .map(jadeStorageVolume -> {
+                        String sp;
+                        if (StringUtils.startsWith(args.storagePath, jadeStorageVolume.getStorageVirtualPath())) {
+                            sp = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(args.storagePath)).toString();
+                        } else {
+                            sp = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(args.storagePath)).toString();
+                        }
+                        return ImmutablePair.of(jadeStorageVolume.getVolumeStorageURI(), sp);
+                    }).orElseThrow(() -> new ComputationException(jacsServiceData, "Could not find any storage for path " + args.storagePath));
+            storageLocationURL = storageInfo.getLeft();
+            storagePath = storageInfo.getRight();
+        } else {
+            storageLocationURL = args.storageLocationURL;
+            storagePath = args.storagePath;
+        }
         return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenCompose(sd -> uploadContentFromDataLocation(sd, args))
+                .thenCompose(sd -> uploadContentFromDataLocation(sd, args, storageLocationURL, storagePath))
                 .thenCompose(storageContentResult -> generateContentMIPs(storageContentResult.getJacsServiceData(), args, storageContentResult.getResult()))
                 .thenCompose(mipsContentResult -> storageContentHelper.uploadContent(
                         mipsContentResult.getJacsServiceData(),
-                        args.storageLocationURL,
+                        storageLocationURL,
                         mipsContentResult.getResult())
                 )
                 .thenCompose(storageContentResult -> args.standaloneMIPS
@@ -153,7 +173,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new DataTreeLoadArgs());
     }
 
-    private ServiceComputation<JacsServiceResult<List<ContentStack>>> uploadContentFromDataLocation(JacsServiceData jacsServiceData, DataTreeLoadArgs args) {
+    private ServiceComputation<JacsServiceResult<List<ContentStack>>> uploadContentFromDataLocation(JacsServiceData jacsServiceData, DataTreeLoadArgs args, String storageLocationURL, String storagePath) {
         if (StringUtils.isNotBlank(args.dataLocationPath)) {
             return computationFactory.newCompletedComputation(jacsServiceData)
                     .thenCompose(sd -> storageContentHelper.lookupStorage(args.dataLocationPath, sd.getOwnerKey(), ResourceHelper.getAuthToken(sd.getResources()))
@@ -167,22 +187,12 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                                     return storageContentHelper.listContent(sd, jadeStorageVolume.getVolumeStorageURI(), dataLocationPath); // list the content from the data location
                                 })
                                 .orElseGet(() -> computationFactory.newFailedComputation(new ComputationException(sd, "No storage found for " + args.dataLocationPath))))
-                    .thenCompose(contentToUploadResult -> storageContentHelper.lookupStorage(args.storagePath, contentToUploadResult.getJacsServiceData().getOwnerKey(), ResourceHelper.getAuthToken(contentToUploadResult.getJacsServiceData().getResources()))
-                                .map(jadeStorageVolume -> {
-                                    String storagePath;
-                                    if (StringUtils.startsWith(args.storagePath, jadeStorageVolume.getStorageVirtualPath())) {
-                                        storagePath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(args.storagePath)).toString();
-                                    } else {
-                                        storagePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(args.storagePath)).toString();
-                                    }
-                                    return storageContentHelper.copyContent(
-                                            contentToUploadResult.getJacsServiceData(),
-                                            jadeStorageVolume.getVolumeStorageURI(),
-                                            storagePath,
-                                            contentToUploadResult.getResult()
-                                    );
-                                })
-                                .orElseGet(() -> computationFactory.newFailedComputation(new ComputationException(contentToUploadResult.getJacsServiceData(), "No storage found for " + args.storagePath))))
+                    .thenCompose(contentToUploadResult -> storageContentHelper.copyContent(
+                            contentToUploadResult.getJacsServiceData(),
+                            storageLocationURL,
+                            storagePath,
+                            contentToUploadResult.getResult()
+                    ))
                     ;
 
         } else {
