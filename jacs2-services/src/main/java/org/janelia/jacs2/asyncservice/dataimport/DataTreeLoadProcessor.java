@@ -155,7 +155,6 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
 
     private ServiceComputation<JacsServiceResult<List<ContentStack>>> uploadContentFromDataLocation(JacsServiceData jacsServiceData, DataTreeLoadArgs args) {
         if (StringUtils.isNotBlank(args.dataLocationPath)) {
-            // !!!!!!!!!!!!!!! FIXME
             return computationFactory.newCompletedComputation(jacsServiceData)
                     .thenCompose(sd -> storageContentHelper.lookupStorage(args.dataLocationPath, sd.getOwnerKey(), ResourceHelper.getAuthToken(sd.getResources()))
                                 .map(jadeStorageVolume -> {
@@ -199,7 +198,13 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
             List<ContentStack> mipsInputList = contentList.stream()
                     .filter((ContentStack entry) -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getMainRep().getRemoteInfo().getEntryRelativePath())))
                     .collect(Collectors.toList());
-            return storageContentHelper.downloadContent(jacsServiceData, localMIPSRootPath, mipsInputList) // only download the entries for which we need to generate MIPs
+            ServiceComputation<JacsServiceResult<List<ContentStack>>> prepareMipsComputation;
+            if (args.mipsInPlace) {
+                prepareMipsComputation = computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, mipsInputList));
+            } else {
+                prepareMipsComputation = storageContentHelper.downloadContent(jacsServiceData, localMIPSRootPath, mipsInputList); // only download the entries for which we need to generate MIPs
+            }
+            return prepareMipsComputation
                     .thenCompose((JacsServiceResult<List<ContentStack>> downloadedMipsInputsResult) -> mipsConverterProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                                     .description("Generate MIPs")
                                     .build(),
