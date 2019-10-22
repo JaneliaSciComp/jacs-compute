@@ -6,6 +6,7 @@ import org.janelia.jacs2.asyncservice.common.ResourceHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.storage.DataStorageInfo;
 import org.janelia.jacs2.dataservice.storage.JadeStorageVolume;
 import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
@@ -14,7 +15,9 @@ import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -130,6 +133,49 @@ class StorageContentHelper {
                 ResourceHelper.getAuthToken(jacsServiceData.getResources()));
     }
 
+    ServiceComputation<JacsServiceResult<List<ContentStack>>> copyContent(JacsServiceData jacsServiceData, String storageURL, List<ContentStack> contentList) {
+        return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
+                .supply(() -> new JacsServiceResult<>(
+                        jacsServiceData,
+                        contentList.stream()
+                                .peek(contentEntry -> {
+                                    Stream.of(contentEntry.getMainRep())
+                                            .filter(sci -> sci.getRemoteInfo().getEntryURL() != null)
+                                            .filter(sci -> sci.getRemoteInfo().isNotCollection())
+                                            .forEach(sci -> copyContent(sci, storageURL, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources())));
+                                })
+                                .collect(Collectors.toList())
+                ));
+    }
+
+    private void copyContent(StorageContentInfo storageContentInfo, String storageURL, String subjectKey, String authToken) {
+        InputStream inputStream = storageService.getStorageContent(
+                storageContentInfo.getRemoteInfo().getEntryURL(),
+                subjectKey,
+                authToken
+        );
+        try {
+            if (inputStream != null) {
+                logger.info("Copy {} to {}", storageContentInfo, storageURL);
+                storageContentInfo.setRemoteInfo(storageService.putStorageContent(
+                        storageURL,
+                        storageContentInfo.getRemoteInfo().getStorageRootPathURI() + "/" + storageContentInfo.getRemoteInfo().getEntryRelativePath(),
+                        subjectKey,
+                        authToken,
+                        inputStream
+                ));
+            }
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+        }
+    }
+
     ServiceComputation<JacsServiceResult<List<ContentStack>>> uploadContent(JacsServiceData jacsServiceData, String storageURL, List<ContentStack> contentList) {
         return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
                 .supply(() -> new JacsServiceResult<>(
@@ -142,6 +188,58 @@ class StorageContentHelper {
                                 })
                                 .collect(Collectors.toList())
                 ));
+    }
+
+    private void uploadContent(StorageContentInfo storageContentInfo, String storageURL, String subjectKey, String authToken) {
+        Path localPath = Paths.get(storageContentInfo.getLocalBasePath()).resolve(storageContentInfo.getLocalRelativePath());
+        InputStream inputStream = openLocalContent(localPath);
+        try {
+            if (inputStream != null) {
+                logger.info("Upload {}({}) to {}", storageContentInfo, localPath, storageURL);
+                if (StringUtils.isBlank(storageContentInfo.getRemoteInfo().getStorageId())) {
+                    // if the data is pushed directly to the volume because there's no bundle specified
+                    // use the full virtual path to push to "storage_path/data_content/{dataPath:.*}" endpoint
+                    storageContentInfo.setRemoteInfo(storageService.putStorageContent(
+                            storageURL,
+                            storageContentInfo.getRemoteInfo().getStorageRootPathURI() + "/" + storageContentInfo.getRemoteInfo().getEntryRelativePath(),
+                            subjectKey,
+                            authToken,
+                            inputStream
+                    ));
+                } else {
+                    // if the data is pushed to an existing bundle use the entry relative path
+                    // storageURL should reference the bundle and the content will be pushed to
+                    // "{dataBundleId}/data_content/{dataEntryPath:.*}" endpoint
+                    storageContentInfo.setRemoteInfo(storageService.putStorageContent(
+                            storageURL,
+                            storageContentInfo.getRemoteInfo().getEntryRelativePath(),
+                            subjectKey,
+                            authToken,
+                            inputStream
+                    ));
+                }
+            }
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+        }
+    }
+
+    private InputStream openLocalContent(Path localPath) {
+        if (Files.exists(localPath)) {
+            try {
+                return new FileInputStream(localPath.toFile());
+            } catch (FileNotFoundException e) {
+                throw new UncheckedIOException(e);
+            }
+        } else {
+            return null;
+        }
     }
 
     List<ContentStack> addContentMips(List<ContentStack> contentList, Path localMIPSRootPath, List<MIPsAndMoviesResult> contentMips) {
@@ -181,47 +279,4 @@ class StorageContentHelper {
         }
     }
 
-    private void uploadContent(StorageContentInfo storageContentInfo, String storageURL, String subjectKey, String authToken) {
-        FileInputStream inputStream = null;
-        try {
-            Path localPath = Paths.get(storageContentInfo.getLocalBasePath()).resolve(storageContentInfo.getLocalRelativePath());
-            if (Files.exists(localPath)) {
-                logger.info("Upload {}({}) to {}", storageContentInfo, localPath, storageURL);
-                inputStream = new FileInputStream(localPath.toFile());
-                if (StringUtils.isBlank(storageContentInfo.getRemoteInfo().getStorageId())) {
-                    // if the data is pushed directly to the volume because there's no bundle specified
-                    // use the full virtual path to push to "storage_path/file/{dataPath:.*}" endpoint
-                    storageContentInfo.setRemoteInfo(storageService.putStorageContent(
-                            storageURL,
-                            storageContentInfo.getRemoteInfo().getStorageRootPathURI() + "/" + storageContentInfo.getRemoteInfo().getEntryRelativePath(),
-                            subjectKey,
-                            authToken,
-                            inputStream
-                    ));
-                } else {
-                    // if the data is pushed to an existing bundle use the entry relative path
-                    // storageURL should reference the bundle and the content will be pushed to
-                    // "{dataBundleId}/file/{dataEntryPath:.*}" endpoint
-                    storageContentInfo.setRemoteInfo(storageService.putStorageContent(
-                            storageURL,
-                            storageContentInfo.getRemoteInfo().getEntryRelativePath(),
-                            subjectKey,
-                            authToken,
-                            inputStream
-                    ));
-                }
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    // ignore
-                }
-            }
-        }
-
-    }
 }
