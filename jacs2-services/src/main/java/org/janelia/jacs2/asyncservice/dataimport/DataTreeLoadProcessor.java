@@ -204,7 +204,8 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                         mipsInputList.stream()
                                 .map(contentEntry -> {
                                     StorageContentInfo storageContentInfo = contentEntry.getMainRep();
-                                    contentEntry.getMainRep().setLocalBasePath(storageContentInfo.getRemoteInfo().getStorageRootLocation() + "/" + storageContentInfo.getRemoteInfo().getEntryRelativePath());
+                                    contentEntry.getMainRep().setLocalBasePath(storageContentInfo.getRemoteInfo().getStorageRootLocation());
+                                    contentEntry.getMainRep().setLocalRelativePath(storageContentInfo.getRemoteInfo().getEntryRelativePath());
                                     return contentEntry;
                                 })
                                 .collect(Collectors.toList())

@@ -43,6 +43,8 @@ class StorageContentInfo {
             return null;
         } else if (StringUtils.isBlank(localBasePath)) {
             return Paths.get(localRelativePath);
+        } else if (StringUtils.isBlank(localRelativePath)) {
+            return Paths.get(localBasePath);
         } else {
             return Paths.get(localBasePath, localRelativePath);
         }
