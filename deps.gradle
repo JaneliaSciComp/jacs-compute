@@ -41,7 +41,7 @@ dependencies {
 
         // JAX-RS API
         JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.1"
-        JERSEY_VERSION = "2.28"
+        JERSEY_VERSION = "2.29.1"
         JAX_RS_JERSEY_CORE_LIB = "org.glassfish.jersey.core:jersey-common:${JERSEY_VERSION}"
         JAX_RS_JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
         JAX_RS_JERSEY_SERVER_LIB = "org.glassfish.jersey.core:jersey-server:${JERSEY_VERSION}"

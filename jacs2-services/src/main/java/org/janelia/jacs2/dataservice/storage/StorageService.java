@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.storage;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.glassfish.jersey.client.ClientProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
 import org.janelia.model.domain.report.QuotaUsage;
@@ -205,9 +206,13 @@ public class StorageService {
     public StorageEntryInfo putStorageContent(String storageURI, String entryName, String subject, String authToken, InputStream dataStream) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
-            WebTarget target = httpclient.target(storageURI).path("data_content").path(entryName);
+            WebTarget target = httpclient
+                    .target(storageURI).path("data_content")
+                    .property(ClientProperties.CHUNKED_ENCODING_SIZE, 1024*1024)
+                    .property(ClientProperties.REQUEST_ENTITY_PROCESSING, "CHUNKED")
+                    .path(entryName);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
-            Response response = requestBuilder.header("Content-Length", null).put(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            Response response = requestBuilder.put(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
             String entryLocationUrl;
             if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
                 entryLocationUrl = response.getHeaderString("Location");
