@@ -176,7 +176,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                                     } else {
                                         storagePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(args.storagePath)).toString();
                                     }
-                                    return storageContentHelper.uploadContent(
+                                    return storageContentHelper.copyContent(
                                             contentToUploadResult.getJacsServiceData(),
                                             StringUtils.appendIfMissing(jadeStorageVolume.getVolumeStorageURI(), "/") + storagePath,
                                             contentToUploadResult.getResult()
