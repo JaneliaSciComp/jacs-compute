@@ -54,6 +54,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
@@ -100,7 +101,7 @@ public class DataTreeLoadProcessorTest {
 
         ServiceProcessorTestHelper.prepareServiceProcessorMetadataAsRealCall(mipsConverterProcessor);
 
-        Mockito.when(folderService.getOrCreateFolder(any(Number.class), anyString(), anyString()))
+        Mockito.when(folderService.getOrCreateFolder(any(Number.class), nullable(String.class), anyString(), anyString()))
                 .then(invocation -> {
                     TreeNode dataFolder = new TreeNode();
                     dataFolder.setId(TEST_DATA_NODE_ID);
@@ -171,7 +172,7 @@ public class DataTreeLoadProcessorTest {
                     );
                     Mockito.verify(mipsConverterProcessor).getResultHandler();
 
-                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
+                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), nullable(String.class), eq(testFolder), eq(testOwner));
                     Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             argThat(argument -> argument.getFilepath().equals(testStoragePrefix) &&
                                     argument.getFiles().entrySet().stream()
@@ -316,7 +317,7 @@ public class DataTreeLoadProcessorTest {
                     eq(testAuthToken),
                     any(InputStream.class)
             );
-            Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
+            Mockito.verify(folderService).getOrCreateFolder(any(Number.class), nullable(String.class), eq(testFolder), eq(testOwner));
             Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                     argThat((Image argument) -> Stream.<Predicate<Image>>of(
                             (Image ti) -> ti.getFilepath().equals(testStoragePrefix),
@@ -444,7 +445,7 @@ public class DataTreeLoadProcessorTest {
                     );
                     Mockito.verify(mipsConverterProcessor, never()).getResultHandler();
 
-                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
+                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), nullable(String.class), eq(testFolder), eq(testOwner));
                     Mockito.verify(folderService).addImageStack(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             argThat((Image argument) -> Stream.<Predicate<Image>>of(
                                     (Image ti) -> ti.getFilepath().equals("jade://" + testStoragePrefix),
@@ -603,7 +604,7 @@ public class DataTreeLoadProcessorTest {
                             eq(testAuthToken),
                             any(InputStream.class)
                     );
-                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
+                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), nullable(String.class), eq(testFolder), eq(testOwner));
                     Mockito.verify(folderService).addImageFile(argThat(argument -> TEST_DATA_NODE_ID.equals(argument.getId())),
                             eq("f1.lsm"),
                             eq("jade://" + testStoragePrefix),
@@ -678,7 +679,7 @@ public class DataTreeLoadProcessorTest {
                         invocation.getArgument(1),
                         false));
 
-        Mockito.when(folderService.getOrCreateFolder(any(Number.class), anyString(), anyString())).thenThrow(IllegalStateException.class);
+        Mockito.when(folderService.getOrCreateFolder(any(Number.class), nullable(String.class), anyString(), anyString())).thenThrow(IllegalStateException.class);
 
         PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
@@ -778,7 +779,7 @@ public class DataTreeLoadProcessorTest {
                             any(InputStream.class)
                     );
 
-                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), eq(testFolder), eq(testOwner));
+                    Mockito.verify(folderService).getOrCreateFolder(any(Number.class), nullable(String.class), eq(testFolder), eq(testOwner));
                     Mockito.verify(storageService).removeStorageContent(testLocation,  null,  testOwner,  testAuthToken);
 
                     Mockito.verifyNoMoreInteractions(mipsConverterProcessor, storageService, folderService);

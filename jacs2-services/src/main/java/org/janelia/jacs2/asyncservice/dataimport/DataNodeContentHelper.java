@@ -40,10 +40,11 @@ class DataNodeContentHelper {
     ServiceComputation<JacsServiceResult<List<ContentStack>>> addContentStackToTreeNode(JacsServiceData jacsServiceData,
                                                                                         String dataNodeName,
                                                                                         Number parentDataNodeId,
+                                                                                        String parentWorkspaceOwnerKey,
                                                                                         FileType defaultFileType,
                                                                                         List<ContentStack> contentList) {
         if (StringUtils.isNotBlank(dataNodeName)) {
-            TreeNode dataFolder = folderService.getOrCreateFolder(parentDataNodeId, dataNodeName, jacsServiceData.getOwnerKey());
+            TreeNode dataFolder = folderService.getOrCreateFolder(parentDataNodeId, parentWorkspaceOwnerKey, dataNodeName, jacsServiceData.getOwnerKey());
             return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
                     .supply(() -> new JacsServiceResult<>(jacsServiceData, contentList.stream()
                             .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection())
@@ -87,10 +88,11 @@ class DataNodeContentHelper {
     ServiceComputation<JacsServiceResult<List<ContentStack>>> addStandaloneContentToTreeNode(JacsServiceData jacsServiceData,
                                                                                              String dataNodeName,
                                                                                              Number parentDataNodeId,
+                                                                                             String parentWorkspaceOwnerKey,
                                                                                              FileType defaultFileType,
                                                                                              List<ContentStack> contentList) {
         if (StringUtils.isNotBlank(dataNodeName)) {
-            TreeNode dataFolder = folderService.getOrCreateFolder(parentDataNodeId, dataNodeName, jacsServiceData.getOwnerKey());
+            TreeNode dataFolder = folderService.getOrCreateFolder(parentDataNodeId, parentWorkspaceOwnerKey, dataNodeName, jacsServiceData.getOwnerKey());
             return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
                     .supply(() -> new JacsServiceResult<>(jacsServiceData, contentList.stream()
                             .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection())

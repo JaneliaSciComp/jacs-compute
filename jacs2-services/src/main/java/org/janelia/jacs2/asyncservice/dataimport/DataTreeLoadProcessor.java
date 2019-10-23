@@ -146,12 +146,14 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                                 storageContentResult.getJacsServiceData(),
                                 args.dataNodeName,
                                 args.parentDataNodeId,
+                                args.parentWorkspaceOwnerKey,
                                 FileType.Unclassified2d,
                                 storageContentResult.getResult())
                         : dataNodeContentHelper.addContentStackToTreeNode(
                                 storageContentResult.getJacsServiceData(),
                                 args.dataNodeName,
                                 args.parentDataNodeId,
+                                args.parentWorkspaceOwnerKey,
                                 FileType.Unclassified2d,
                                 storageContentResult.getResult()))
                 .thenCompose(storageContentResult -> cleanLocalContent(storageContentResult.getJacsServiceData(), args, storageContentResult.getResult()))
