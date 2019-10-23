@@ -46,15 +46,6 @@ class StorageContentHelper {
         this.logger = logger;
     }
 
-    DataStorageInfo getOrCreateStorage(String storageServiceURL, String storageId,
-                                       String storageName, List<String> storageTags,
-                                       String ownerKey, String authToken) {
-        return storageService
-                .lookupDataStorage(storageServiceURL, storageId, storageName, null, ownerKey, authToken)
-                .orElseGet(() -> storageService.createStorage(storageServiceURL, storageName, storageTags, ownerKey, authToken))
-                ;
-    }
-
     Optional<JadeStorageVolume> lookupStorage(String storagePath, String ownerKey, String authToken) {
         return storageService.lookupStorageVolumes(null, null, storagePath, ownerKey, authToken);
     }
