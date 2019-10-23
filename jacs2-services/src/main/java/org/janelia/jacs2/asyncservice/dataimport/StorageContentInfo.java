@@ -38,16 +38,26 @@ class StorageContentInfo {
     }
 
     @JsonIgnore
-    public Path getLocalFullPath() {
-        if (StringUtils.isBlank(localBasePath) && StringUtils.isBlank(localRelativePath)) {
+    String getLocalFullPath() {
+        return buildFullPath(localBasePath, localRelativePath);
+    }
+
+    @JsonIgnore
+    String getRemoteFullPath() {
+        return buildFullPath(remoteInfo.getStorageRootLocation(), remoteInfo.getEntryRelativePath());
+    }
+
+    private String buildFullPath(String basePath, String relativePath) {
+        if (StringUtils.isBlank(basePath) && StringUtils.isBlank(relativePath)) {
             return null;
-        } else if (StringUtils.isBlank(localBasePath)) {
-            return Paths.get(localRelativePath);
-        } else if (StringUtils.isBlank(localRelativePath)) {
-            return Paths.get(localBasePath);
+        } else if (StringUtils.isBlank(basePath)) {
+            return Paths.get(relativePath).toString();
+        } else if (StringUtils.isBlank(relativePath)) {
+            return Paths.get(basePath).toString();
         } else {
-            return Paths.get(localBasePath, localRelativePath);
+            return Paths.get(basePath, relativePath).toString();
         }
+
     }
 
     @Override
