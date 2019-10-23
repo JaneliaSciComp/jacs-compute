@@ -252,24 +252,31 @@ class StorageContentHelper {
             if (inputStack != null) {
                 mipsAndMoviesResult.getFileList()
                         .forEach(mipsFile -> {
-                            StorageContentInfo mipsContentInfo = new StorageContentInfo();
-                            mipsContentInfo.setLocalBasePath(localMIPSRootPath.toString());
-                            mipsContentInfo.setLocalRelativePath(localMIPSRootPath.relativize(Paths.get(mipsFile)).toString());
-                            if (inputStack.getMainRep().getRemoteInfo() != null) {
-                                mipsContentInfo.setRemoteInfo(new StorageEntryInfo(
-                                        inputStack.getMainRep().getRemoteInfo().getStorageId(), // I want the MIPs in the same bundle if one exists
-                                        inputStack.getMainRep().getRemoteInfo().getStorageURL(),
-                                        null, // I don't know the entry URL yet
-                                        inputStack.getMainRep().getRemoteInfo().getStorageRootLocation(),
-                                        inputStack.getMainRep().getRemoteInfo().getStorageRootPathURI(),
-                                        constructStorageEntryPath(mipsContentInfo, "mips"),
-                                        false));
-                            }
-                            inputStack.addRepresentation(mipsContentInfo);
+                            addContentRepresentation(inputStack, localMIPSRootPath.toString(), localMIPSRootPath.relativize(Paths.get(mipsFile)).toString(), "mips");
                         });
             }
         });
         return contentList;
+    }
+
+    void addContentRepresentation(ContentStack contentStack, String localBasePath, String localRelativePath, String remotePathPrefix) {
+        StorageContentInfo newContentRepInfo = new StorageContentInfo();
+        newContentRepInfo.setLocalBasePath(localBasePath);
+        newContentRepInfo.setLocalRelativePath(localRelativePath);
+        StorageContentInfo mainRep = contentStack.getMainRep();
+        if (mainRep.getRemoteInfo() != null) {
+            // if the main representation has remote info copy it
+            newContentRepInfo.setRemoteInfo(new StorageEntryInfo(
+                    mainRep.getRemoteInfo().getStorageId(), // I want the MIPs in the same bundle if one exists
+                    mainRep.getRemoteInfo().getStorageURL(),
+                    null, // I don't know the entry URL yet
+                    mainRep.getRemoteInfo().getStorageRootLocation(),
+                    mainRep.getRemoteInfo().getStorageRootPathURI(),
+                    constructStorageEntryPath(newContentRepInfo, remotePathPrefix),
+                    false
+            ));
+        }
+        contentStack.addRepresentation(newContentRepInfo);
     }
 
     String constructStorageEntryPath(StorageContentInfo storageContentInfo, String pathPrefix) {

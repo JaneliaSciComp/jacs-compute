@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -234,9 +235,26 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                             new ServiceArg("-colorSpec", args.mipsColorSpec),
                             new ServiceArg("-options", args.mipsOptions))
                     )
-                    .thenApply(mipsResults -> new JacsServiceResult<>(
-                            jacsServiceData,
-                                    storageContentHelper.addContentMips(contentList, localMIPSRootPath, mipsResults.getResult())));
+                    .thenApply(mipsResults -> {
+                        Map<String, MIPsAndMoviesResult> indexedMIPsResults = mipsResults.getResult().stream()
+                                .collect(Collectors.toMap(mipsAndMoviesResult -> mipsAndMoviesResult.getFileInput(), miPsAndMoviesResult -> miPsAndMoviesResult));
+                        mipsInputList
+                                .stream()
+                                .map(contentEntry -> ImmutablePair.of(
+                                        contentEntry,
+                                        indexedMIPsResults.get(args.mipsInPlace ? contentEntry.getMainRep().getRemoteFullPath() : contentEntry.getMainRep().getLocalFullPath())))
+                                .filter(entryWithResult -> entryWithResult.getRight() != null)
+                                .forEach(entryWithResult -> {
+                                    ContentStack contentStackEntry = entryWithResult.getLeft();
+                                    MIPsAndMoviesResult mipsAndMoviesResult = entryWithResult.getRight();
+                                    mipsAndMoviesResult.getFileList()
+                                            .forEach(mipsFile -> {
+                                                storageContentHelper.addContentRepresentation(contentStackEntry, localMIPSRootPath.toString(), localMIPSRootPath.relativize(Paths.get(mipsFile)).toString(), "mips");
+                                            });
+                                })
+                                ;
+                        return new JacsServiceResult<>(jacsServiceData, contentList);
+                    });
         } else {
             return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, contentList));
         }
