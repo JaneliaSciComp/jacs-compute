@@ -259,12 +259,35 @@ class StorageContentHelper {
         return contentList;
     }
 
-    void addContentRepresentation(ContentStack contentStack, String localBasePath, String localRelativePath, String remotePathPrefix) {
+    void addContentRepresentation(ContentStack contentStack, String localBasePath, String localRelativePath, String remotePathPrefixParam) {
         StorageContentInfo newContentRepInfo = new StorageContentInfo();
         newContentRepInfo.setLocalBasePath(localBasePath);
         newContentRepInfo.setLocalRelativePath(localRelativePath);
         StorageContentInfo mainRep = contentStack.getMainRep();
         if (mainRep.getRemoteInfo() != null) {
+            String remotePathPrefix;
+            if (StringUtils.isNotBlank(mainRep.getRemoteInfo().getEntryRelativePath())) {
+                Path remoteEntryPath;
+                if (mainRep.getRemoteInfo().isCollection()) {
+                    remoteEntryPath = Paths.get(mainRep.getRemoteInfo().getEntryRelativePath());
+                } else {
+                    // for files take the file's parent folder
+                    Path remoteEntryParentPath = Paths.get(mainRep.getRemoteInfo().getEntryRelativePath()).getParent();
+                    if (remoteEntryParentPath == null) {
+                        remoteEntryPath = Paths.get("");
+                    } else {
+                        remoteEntryPath = remoteEntryParentPath;
+                    }
+                }
+                if (StringUtils.isBlank(remotePathPrefixParam)) {
+                            Paths.get(mainRep.getRemoteInfo().getEntryRelativePath());
+                    remotePathPrefix = remoteEntryPath.toString();
+                } else {
+                    remotePathPrefix = remoteEntryPath.resolve(remotePathPrefixParam).toString();
+                }
+            } else {
+                remotePathPrefix = remotePathPrefixParam;
+            }
             // if the main representation has remote info copy it
             newContentRepInfo.setRemoteInfo(new StorageEntryInfo(
                     mainRep.getRemoteInfo().getStorageId(), // I want the MIPs in the same bundle if one exists
