@@ -221,9 +221,9 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                             new ServiceArg("-inputFiles", downloadedMipsInputsResult.getResult().stream()
                                     .map(contentEntryInfo -> {
                                         if (args.mipsInPlace) {
-                                            return contentEntryInfo.getMainRep().getLocalFullPath();
-                                        } else {
                                             return contentEntryInfo.getMainRep().getRemoteFullPath();
+                                        } else {
+                                            return contentEntryInfo.getMainRep().getLocalFullPath();
                                         }
                                     })
                                     .filter(p -> p != null)
