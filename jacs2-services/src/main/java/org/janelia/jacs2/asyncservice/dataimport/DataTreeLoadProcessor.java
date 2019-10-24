@@ -24,6 +24,7 @@ import org.janelia.jacs2.asyncservice.imageservices.MultiInputMIPsAndMoviesProce
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
 import org.janelia.model.domain.enums.FileType;
@@ -55,6 +56,9 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
         @Parameter(names = "-dataLocationPath", description = "Data location URL - if this is specified the content from this URL " +
                 "will be uploaded to the location defined by the storageLocation and storagePath arguments")
         String dataLocationPath;
+        @Parameter(names = "-filenameFilter", description = "Filename filter for what to be transfered from the data location. " +
+                "This is considered only if dataLocationPath is specified")
+        String fileNameFilter;
         @Parameter(names = "-storagePath", description = "Data storage path relative to the storageURL")
         String storagePath;
         @Parameter(names = "-cleanLocalFilesWhenDone", description = "Clean up local files when all data loading is done")
@@ -81,8 +85,8 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                           Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.mipsConverterProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, mipsConverterProcessor);
-        this.storageContentHelper = new StorageContentHelper(computationFactory, storageService, logger);
-        this.dataNodeContentHelper = new DataNodeContentHelper(computationFactory, folderService, logger);
+        this.storageContentHelper = new StorageContentHelper(storageService);
+        this.dataNodeContentHelper = new DataNodeContentHelper(folderService);
     }
 
     @Override
@@ -114,55 +118,38 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
     @Override
     public ServiceComputation<JacsServiceResult<List<ContentStack>>> process(JacsServiceData jacsServiceData) {
         DataTreeLoadArgs args = getArgs(jacsServiceData);
-        String storageLocationURL;
-        String storagePath;
+        StorageEntryInfo storageInfo;
         if (StringUtils.isBlank(args.storageLocationURL)) {
-            ImmutablePair<String, String> storageInfo = storageContentHelper.lookupStorage(args.storagePath, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources()))
-                    .map(jadeStorageVolume -> {
-                        String sp;
-                        if (StringUtils.startsWith(args.storagePath, jadeStorageVolume.getStorageVirtualPath())) {
-                            sp = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(args.storagePath)).toString();
-                        } else {
-                            sp = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(args.storagePath)).toString();
-                        }
-                        return ImmutablePair.of(jadeStorageVolume.getVolumeStorageURI(), sp);
-                    }).orElseThrow(() -> new ComputationException(jacsServiceData, "Could not find any storage for path " + args.storagePath));
-            storageLocationURL = storageInfo.getLeft();
-            storagePath = storageInfo.getRight();
+            storageInfo = storageContentHelper
+                    .lookupStorage(args.storagePath, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources()))
+                    .orElseThrow(() -> new ComputationException(jacsServiceData, "Could not find any storage for path " + args.storagePath));
+        } else if (StringUtils.isNotBlank(args.storageLocationURL)) {
+            storageInfo = new StorageEntryInfo(
+                    null,
+                    args.storageLocationURL,
+                    null,
+                    null,
+                    null,
+                    args.storagePath,
+                    true // this really does not matter but assume the path is a directory
+            );
         } else {
-            storageLocationURL = args.storageLocationURL;
-            storagePath = args.storagePath;
+            throw new IllegalArgumentException("Either storage path or the storage URL must be provided");
         }
-        return computationFactory.newCompletedComputation(jacsServiceData)
-                .thenCompose(sd -> uploadContentFromDataLocation(sd, args, storageLocationURL, storagePath))
-                .thenCompose(storageContentResult -> generateContentMIPs(storageContentResult.getJacsServiceData(), args, storageContentResult.getResult()))
-                .thenCompose(mipsContentResult -> storageContentHelper.uploadContent(
-                        mipsContentResult.getJacsServiceData(),
-                        storageLocationURL,
-                        mipsContentResult.getResult())
-                )
-                .thenCompose(storageContentResult -> args.standaloneMIPS
-                        ? dataNodeContentHelper.addStandaloneContentToTreeNode(
-                                storageContentResult.getJacsServiceData(),
-                                args.dataNodeName,
-                                args.parentDataNodeId,
-                                args.parentWorkspaceOwnerKey,
-                                FileType.Unclassified2d,
-                                storageContentResult.getResult())
-                        : dataNodeContentHelper.addContentStackToTreeNode(
-                                storageContentResult.getJacsServiceData(),
-                                args.dataNodeName,
-                                args.parentDataNodeId,
-                                args.parentWorkspaceOwnerKey,
-                                FileType.Unclassified2d,
-                                storageContentResult.getResult()))
-                .thenCompose(storageContentResult -> cleanLocalContent(storageContentResult.getJacsServiceData(), args, storageContentResult.getResult()))
-                .thenApply(sr -> updateServiceResult(sr.getJacsServiceData(), sr.getResult()))
+        return computationFactory.<List<ContentStack>>newComputation()
+                .supply(() -> listContentOrCopyContentToTargetStorage(jacsServiceData, args, storageInfo))
+                .thenCompose(storageContent -> generateContentMIPs(jacsServiceData, args, storageContent))
+                .thenApply(mipsContentResult -> storageContentHelper.uploadContent(mipsContentResult.getResult(), storageInfo.getStorageURL(), jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources())))
+                .thenApply(storageContent -> args.standaloneMIPS
+                        ? dataNodeContentHelper.addStandaloneContentToTreeNode(storageContent, args.dataNodeName, args.parentDataNodeId, args.parentWorkspaceOwnerKey, FileType.Unclassified2d, jacsServiceData.getOwnerKey())
+                        : dataNodeContentHelper.addContentStackToTreeNode(storageContent, args.dataNodeName, args.parentDataNodeId, args.parentWorkspaceOwnerKey, FileType.Unclassified2d, jacsServiceData.getOwnerKey()))
+                .thenApply(storageContent -> args.cleanLocalFilesWhenDone ? storageContentHelper.removeLocalContent(storageContent) : storageContent)
+                .thenApply(storageContent -> updateServiceResult(jacsServiceData, storageContent))
                 .whenComplete((r, exc) -> {
                     if (exc != null && args.cleanStorageOnFailure) {
                         logger.info("Remove storage data from {} due to processing error", args.storageLocationURL, exc);
                         // in case of a failure remove the content
-                        storageContentHelper.removeContent(jacsServiceData, args.storageLocationURL, args.storagePath);
+                        storageContentHelper.removeRemoteContent(storageInfo.getStorageURL(), storageInfo.getEntryRelativePath(), jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources()));
                         jacsServiceDataPersistence.addServiceEvent(
                                 jacsServiceData,
                                 JacsServiceData.createServiceEvent(JacsServiceEventTypes.REMOVE_DATA,
@@ -176,30 +163,19 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new DataTreeLoadArgs());
     }
 
-    private ServiceComputation<JacsServiceResult<List<ContentStack>>> uploadContentFromDataLocation(JacsServiceData jacsServiceData, DataTreeLoadArgs args, String storageLocationURL, String storagePath) {
+    private List<ContentStack> listContentOrCopyContentToTargetStorage(JacsServiceData jacsServiceData, DataTreeLoadArgs args, StorageEntryInfo targetStorageInfo) {
+        String ownerKey = jacsServiceData.getOwnerKey();
+        String authToken = ResourceHelper.getAuthToken(jacsServiceData.getResources());
         if (StringUtils.isNotBlank(args.dataLocationPath)) {
-            return computationFactory.newCompletedComputation(jacsServiceData)
-                    .thenCompose(sd -> storageContentHelper.lookupStorage(args.dataLocationPath, sd.getOwnerKey(), ResourceHelper.getAuthToken(sd.getResources()))
-                                .map(jadeStorageVolume -> {
-                                    String dataLocationPath;
-                                    if (StringUtils.startsWith(args.dataLocationPath, jadeStorageVolume.getStorageVirtualPath())) {
-                                        dataLocationPath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(args.dataLocationPath)).toString();
-                                    } else {
-                                        dataLocationPath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(args.dataLocationPath)).toString();
-                                    }
-                                    return storageContentHelper.listContent(sd, jadeStorageVolume.getVolumeStorageURI(), dataLocationPath); // list the content from the data location
-                                })
-                                .orElseGet(() -> computationFactory.newFailedComputation(new ComputationException(sd, "No storage found for " + args.dataLocationPath))))
-                    .thenCompose(contentToUploadResult -> storageContentHelper.copyContent(
-                            contentToUploadResult.getJacsServiceData(),
-                            storageLocationURL,
-                            storagePath,
-                            contentToUploadResult.getResult()
-                    ))
+            // list source content that needs to be copied to the target storage
+            List<ContentStack> dataContentList = storageContentHelper.lookupStorage(args.dataLocationPath, ownerKey, authToken)
+                    .map(srcStorageInfo -> storageContentHelper.listContent(srcStorageInfo.getStorageURL(), srcStorageInfo.getEntryRelativePath(), ownerKey, authToken))
+                    .orElseThrow(() -> new IllegalArgumentException("No storage location found for " + args.dataLocationPath))
                     ;
-
+            // copy top the target
+            return storageContentHelper.copyContent(dataContentList, targetStorageInfo.getStorageURL(), targetStorageInfo.getEntryRelativePath(), ownerKey, authToken);
         } else {
-            return storageContentHelper.listContent(jacsServiceData, args.storageLocationURL, args.storagePath);
+            return storageContentHelper.listContent(args.storageLocationURL, args.storagePath, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources()));
         }
     }
 
@@ -211,19 +187,14 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
             List<ContentStack> mipsInputList = contentList.stream()
                     .filter((ContentStack entry) -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getMainRep().getRemoteInfo().getEntryRelativePath())))
                     .collect(Collectors.toList());
-            ServiceComputation<JacsServiceResult<List<ContentStack>>> prepareMipsComputation;
-            if (args.mipsInPlace) {
-                prepareMipsComputation = computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, mipsInputList));
-            } else {
-                prepareMipsComputation = storageContentHelper.downloadContent(jacsServiceData, localMIPSRootPath, mipsInputList); // only download the entries for which we need to generate MIPs
-            }
-            return prepareMipsComputation
-                    .thenCompose((JacsServiceResult<List<ContentStack>> downloadedMipsInputsResult) -> mipsConverterProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
+            return computationFactory.<List<ContentStack>>newComputation()
+                    .supply(() -> storageContentHelper.downloadUnreachableContent(mipsInputList, localMIPSRootPath, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources())))
+                    .thenCompose((List<ContentStack> downloadedMipsInputs) -> mipsConverterProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                                     .description("Generate MIPs")
                                     .build(),
-                            new ServiceArg("-inputFiles", downloadedMipsInputsResult.getResult().stream()
+                            new ServiceArg("-inputFiles", downloadedMipsInputs.stream()
                                     .map(contentEntryInfo -> {
-                                        if (args.mipsInPlace) {
+                                        if (contentEntryInfo.getMainRep().isLocallyReachable()) {
                                             return contentEntryInfo.getMainRep().getRemoteFullPath();
                                         } else {
                                             return contentEntryInfo.getMainRep().getLocalFullPath();
@@ -244,7 +215,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                                 .stream()
                                 .map(contentEntry -> ImmutablePair.of(
                                         contentEntry,
-                                        indexedMIPsResults.get(args.mipsInPlace ? contentEntry.getMainRep().getRemoteFullPath() : contentEntry.getMainRep().getLocalFullPath())))
+                                        indexedMIPsResults.get(contentEntry.getMainRep().isLocallyReachable() ? contentEntry.getMainRep().getRemoteFullPath() : contentEntry.getMainRep().getLocalFullPath())))
                                 .filter(entryWithResult -> entryWithResult.getRight() != null)
                                 .forEach(entryWithResult -> {
                                     ContentStack contentStackEntry = entryWithResult.getLeft();
@@ -255,34 +226,11 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                                             });
                                 })
                                 ;
-                        return new JacsServiceResult<>(jacsServiceData, contentList);
+                        return new JacsServiceResult<>(mipsResults.getJacsServiceData(), contentList);
                     });
         } else {
             return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, contentList));
         }
     }
 
-    private ServiceComputation<JacsServiceResult<List<ContentStack>>> cleanLocalContent(JacsServiceData jacsServiceData, DataTreeLoadArgs args, List<ContentStack> contentList) {
-        if (args.cleanLocalFilesWhenDone) {
-            return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
-                    .supply(() -> new JacsServiceResult<>(jacsServiceData, contentList.stream()
-                            .peek((ContentStack contentEntry) -> {
-                                Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
-                                        .forEach(sci -> {
-                                            if (sci.getLocalRelativePath() != null) {
-                                                Path localContentPath = Paths.get(sci.getLocalFullPath());
-                                                logger.info("Clean local file {} ", localContentPath);
-                                                try {
-                                                    FileUtils.deletePath(localContentPath);
-                                                } catch (IOException e) {
-                                                    logger.warn("Error deleting {}", localContentPath, e);
-                                                }
-                                            }
-                                        });
-                            })
-                            .collect(Collectors.toList())));
-        } else {
-            return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, contentList));
-        }
-    }
 }

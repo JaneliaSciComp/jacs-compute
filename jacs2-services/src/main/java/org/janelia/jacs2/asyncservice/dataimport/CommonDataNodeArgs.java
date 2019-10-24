@@ -20,8 +20,6 @@ class CommonDataNodeArgs extends ServiceArgs {
     boolean skipMIPS = false;
     @Parameter(names = {"-standaloneMIPS"}, description = "If set the MIPS are created as images - otherwise they are added to the image stack of the source")
     boolean standaloneMIPS = false;
-    @Parameter(names = {"-mipsInPlace"}, description = "If set then files that require mips are no longer downloaded to the working space and the input is based on the location of the file")
-    boolean mipsInPlace = false;
     @Parameter(names = "-mipsExtensions", description = "list of extensions for which to generate mips")
     List<String> mipsExtensions = new ArrayList<>(ImmutableList.of(
             ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd", ".nrrd"

@@ -1,39 +1,40 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
+import java.nio.file.Paths;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 class StorageContentInfo {
     private StorageEntryInfo remoteInfo;
     private String localBasePath;
     private String localRelativePath;
+    private boolean locallyReachable;
 
-    public StorageEntryInfo getRemoteInfo() {
+    StorageEntryInfo getRemoteInfo() {
         return remoteInfo;
     }
 
-    public void setRemoteInfo(StorageEntryInfo remoteInfo) {
+    void setRemoteInfo(StorageEntryInfo remoteInfo) {
         this.remoteInfo = remoteInfo;
     }
 
-    public String getLocalBasePath() {
+    String getLocalBasePath() {
         return localBasePath;
     }
 
-    public void setLocalBasePath(String localBasePath) {
+    void setLocalBasePath(String localBasePath) {
         this.localBasePath = localBasePath;
     }
 
-    public String getLocalRelativePath() {
+    String getLocalRelativePath() {
         return localRelativePath;
     }
 
-    public void setLocalRelativePath(String localRelativePath) {
+    void setLocalRelativePath(String localRelativePath) {
         this.localRelativePath = localRelativePath;
     }
 
@@ -45,6 +46,14 @@ class StorageContentInfo {
     @JsonIgnore
     String getRemoteFullPath() {
         return buildFullPath(remoteInfo.getStorageRootLocation(), remoteInfo.getEntryRelativePath());
+    }
+
+    boolean isLocallyReachable() {
+        return locallyReachable;
+    }
+
+    void setLocallyReachable(boolean locallyReachable) {
+        this.locallyReachable = locallyReachable;
     }
 
     private String buildFullPath(String basePath, String relativePath) {

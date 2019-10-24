@@ -10,9 +10,11 @@ import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.storage.DataStorageInfo;
 import org.janelia.jacs2.dataservice.storage.JadeStorageVolume;
 import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
+import org.janelia.jacs2.dataservice.storage.StoragePathURI;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -34,78 +36,87 @@ import java.util.stream.Stream;
  */
 class StorageContentHelper {
 
-    private final ServiceComputationFactory computationFactory;
+    private static final Logger LOG = LoggerFactory.getLogger(StorageContentHelper.class);
+
     private final StorageService storageService;
-    private final Logger logger;
 
-    StorageContentHelper(ServiceComputationFactory computationFactory,
-                         StorageService storageService,
-                         Logger logger) {
-        this.computationFactory = computationFactory;
+    StorageContentHelper(StorageService storageService) {
         this.storageService = storageService;
-        this.logger = logger;
     }
 
-    Optional<JadeStorageVolume> lookupStorage(String storagePath, String ownerKey, String authToken) {
-        return storageService.lookupStorageVolumes(null, null, storagePath, ownerKey, authToken);
-    }
-
-    ServiceComputation<JacsServiceResult<List<ContentStack>>> listContent(JacsServiceData jacsServiceData, String storageURL, String storagePath) {
-        return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
-                .supply(() -> {
-                    List<StorageEntryInfo> contentToLoad = storageService.listStorageContent(
-                            storageURL,
-                            storagePath,
-                            jacsServiceData.getOwnerKey(),
-                            ResourceHelper.getAuthToken(jacsServiceData.getResources()),
-                            -1,
-                            0,
-                            -1);
-                    return new JacsServiceResult<>(jacsServiceData,
-                            contentToLoad.stream()
-                                    .map(entry -> {
-                                        StorageContentInfo storageContentInfo = new StorageContentInfo();
-                                        storageContentInfo.setRemoteInfo(entry);
-                                        return new ContentStack(storageContentInfo);
-                                    })
-                                    .collect(Collectors.toList())
+    Optional<StorageEntryInfo> lookupStorage(String storagePath, String ownerKey, String authToken) {
+        LOG.info("Lookup storage for {}", storagePath);
+        return storageService.lookupStorageVolumes(null, null, storagePath, ownerKey, authToken)
+                .map(jadeStorageVolume -> {
+                    String relativeStoragePath;
+                    if (StringUtils.startsWith(storagePath, jadeStorageVolume.getStorageVirtualPath())) {
+                        relativeStoragePath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(storagePath)).toString();
+                    } else {
+                        relativeStoragePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(storagePath)).toString();
+                    }
+                    LOG.info("Found {} for {}; the new path relative to the volume's root is {}", jadeStorageVolume, storagePath, relativeStoragePath);
+                    return new StorageEntryInfo(
+                            jadeStorageVolume.getId(),
+                            jadeStorageVolume.getVolumeStorageURI(),
+                            jadeStorageVolume.getStorageServiceURL() + "/" + relativeStoragePath,
+                            jadeStorageVolume.getStorageVirtualPath(),
+                            new StoragePathURI(relativeStoragePath),
+                            relativeStoragePath,
+                            true // this really does not matter but assume the path is a directory
                     );
-                })
-                ;
+                });
     }
 
-    ServiceComputation<JacsServiceResult<List<ContentStack>>> downloadContent(JacsServiceData jacsServiceData,
-                                                                              Path localBasePath,
-                                                                              List<ContentStack> contentList) {
-        return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
-                .supply(() -> new JacsServiceResult<>(
-                        jacsServiceData,
-                        contentList.stream()
-                                .peek(contentEntry -> {
-                                    try {
-                                        String entryRelativePathName = contentEntry.getMainRep().getRemoteInfo().getEntryRelativePath();
-                                        Path entryRelativePath = Paths.get(sanitizeFileName(entryRelativePathName));
-                                        Path localEntryFullPath = localBasePath.resolve(entryRelativePath);
-                                        if (Files.notExists(localEntryFullPath) || Files.size(localEntryFullPath) == 0) {
-                                            // no local copy found - so download it
-                                            Files.createDirectories(localEntryFullPath.getParent());
-                                            Files.copy(
-                                                    storageService.getStorageContent(
-                                                            contentEntry.getMainRep().getRemoteInfo().getEntryURL(),
-                                                            jacsServiceData.getOwnerKey(),
-                                                            ResourceHelper.getAuthToken(jacsServiceData.getResources())),
-                                                    localEntryFullPath,
-                                                    StandardCopyOption.REPLACE_EXISTING);
-                                        }
-                                        // set local path info
-                                        contentEntry.getMainRep().setLocalBasePath(localBasePath.toString());
-                                        contentEntry.getMainRep().setLocalRelativePath(entryRelativePath.toString());
-                                    } catch (IOException e) {
-                                        throw new UncheckedIOException(e);
-                                    }
-                                })
-                                .collect(Collectors.toList())
-                ));
+    List<ContentStack> listContent(String storageURL, String storagePath, String ownerKey, String authToken) {
+        LOG.info("List content of {} from {}", storagePath, storageURL);
+        return storageService.listStorageContent(storageURL, storagePath, ownerKey, authToken, -1, 0, -1).stream()
+                .map(entry -> {
+                    StorageContentInfo storageContentInfo = new StorageContentInfo();
+                    storageContentInfo.setRemoteInfo(entry);
+                    return new ContentStack(storageContentInfo);
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Download content from the contentList to the given downloadLocation only if it cannot be reached.
+     *
+     * @param contentList
+     * @param downloadLocation
+     * @param ownerKey
+     * @param authToken
+     * @return
+     */
+    List<ContentStack> downloadUnreachableContent(List<ContentStack> contentList, Path downloadLocation, String ownerKey, String authToken) {
+        return contentList.stream()
+                .peek(contentEntry -> {
+                    try {
+                        Path remoteEntryPath = Paths.get(contentEntry.getMainRep().getRemoteFullPath());
+                        if (Files.notExists(remoteEntryPath)) {
+                            contentEntry.getMainRep().setLocallyReachable(false);
+                            // if the content is not accessible using the storageRoot then try to download it to the download location (if it's not already there)
+                            String entryRelativePathName = contentEntry.getMainRep().getRemoteInfo().getEntryRelativePath();
+                            Path entryRelativePath = Paths.get(sanitizeFileName(entryRelativePathName));
+                            Path entryFullPath = downloadLocation.resolve(entryRelativePath);
+                            if (Files.notExists(entryFullPath) || Files.size(entryFullPath) == 0) {
+                                // no local copy found - so download it
+                                Files.createDirectories(entryFullPath.getParent());
+                                Files.copy(
+                                        storageService.getStorageContent(contentEntry.getMainRep().getRemoteInfo().getEntryURL(), ownerKey, authToken),
+                                        entryFullPath,
+                                        StandardCopyOption.REPLACE_EXISTING);
+                            }
+                            // set local path info
+                            contentEntry.getMainRep().setLocalBasePath(downloadLocation.toString());
+                            contentEntry.getMainRep().setLocalRelativePath(entryRelativePath.toString());
+                        } else {
+                            contentEntry.getMainRep().setLocallyReachable(true);
+                        }
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     private String sanitizeFileName(String fname) {
@@ -116,43 +127,60 @@ class StorageContentHelper {
         }
     }
 
-    void removeContent(JacsServiceData jacsServiceData, String storageURL, String storagePath) {
-        storageService.removeStorageContent(
-                storageURL,
-                storagePath,
-                jacsServiceData.getOwnerKey(),
-                ResourceHelper.getAuthToken(jacsServiceData.getResources()));
+    void removeRemoteContent(String storageURL, String storagePath, String ownerKey, String authToken) {
+        storageService.removeStorageContent(storageURL, storagePath, ownerKey, authToken);
     }
 
-    ServiceComputation<JacsServiceResult<List<ContentStack>>> copyContent(JacsServiceData jacsServiceData, String storageURL, String storagePath, List<ContentStack> contentList) {
-        return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
-                .supply(() -> new JacsServiceResult<>(
-                        jacsServiceData,
-                        contentList.stream()
-                                .peek(contentEntry -> {
-                                    Stream.of(contentEntry.getMainRep())
-                                            .filter(sci -> sci.getRemoteInfo().getEntryURL() != null)
-                                            .filter(sci -> sci.getRemoteInfo().isNotCollection())
-                                            .forEach(sci -> copyContent(sci, storageURL, storagePath, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources())));
-                                })
-                                .collect(Collectors.toList())
-                ));
+    List<ContentStack> removeLocalContent(List<ContentStack> contentList) {
+        return contentList.stream()
+                .peek((ContentStack contentEntry) -> {
+                    Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
+                            .forEach(sci -> {
+                                if (sci.getLocalRelativePath() != null) {
+                                    Path localContentPath = Paths.get(sci.getLocalFullPath());
+                                    LOG.info("Clean local file {} ", localContentPath);
+                                    try {
+                                        FileUtils.deletePath(localContentPath);
+                                    } catch (IOException e) {
+                                        LOG.warn("Error deleting {}", localContentPath, e);
+                                    }
+                                }
+                            });
+                })
+                .collect(Collectors.toList());
     }
 
-    private void copyContent(StorageContentInfo storageContentInfo, String storageURL, String storagePathParam, String subjectKey, String authToken) {
-        InputStream inputStream = storageService.getStorageContent(
-                storageContentInfo.getRemoteInfo().getEntryURL(),
-                subjectKey,
-                authToken
-        );
+    /**
+     * Copy contentList to the location identified by storageURL and storagePath.
+     *
+     * @param contentList
+     * @param storageURL
+     * @param storagePath
+     * @param ownerKey
+     * @param authToken
+     * @return
+     */
+    List<ContentStack> copyContent(List<ContentStack> contentList, String storageURL, String storagePath, String ownerKey, String authToken) {
+        return contentList.stream()
+                .peek(contentEntry -> {
+                    Stream.of(contentEntry.getMainRep())
+                            .filter(sci -> sci.getRemoteInfo().getEntryURL() != null)
+                            .filter(sci -> sci.getRemoteInfo().isNotCollection())
+                            .forEach(sci -> copyContent(sci, storageURL, storagePath, ownerKey, authToken));
+                })
+                .collect(Collectors.toList());
+    }
+
+    private void copyContent(StorageContentInfo storageContentInfo, String storageURL, String storagePathParam, String ownerKey, String authToken) {
+        InputStream inputStream = storageService.getStorageContent(storageContentInfo.getRemoteInfo().getEntryURL(), ownerKey, authToken);
         try {
             if (inputStream != null) {
-                logger.info("Copy {} to {} {}", storageContentInfo, storageURL, storagePathParam);
+                LOG.info("Copy {} to {} {}", storageContentInfo, storageURL, storagePathParam);
                 String storagePath = StringUtils.appendIfMissing(storagePathParam, "/");
                 storageContentInfo.setRemoteInfo(storageService.putStorageContent(
                         storageURL,
                         storagePath + storageContentInfo.getRemoteInfo().getEntryRelativePath(),
-                        subjectKey,
+                        ownerKey,
                         authToken,
                         inputStream
                 ));
@@ -168,18 +196,24 @@ class StorageContentHelper {
         }
     }
 
-    ServiceComputation<JacsServiceResult<List<ContentStack>>> uploadContent(JacsServiceData jacsServiceData, String storageURL, List<ContentStack> contentList) {
-        return computationFactory.<JacsServiceResult<List<ContentStack>>>newComputation()
-                .supply(() -> new JacsServiceResult<>(
-                        jacsServiceData,
-                        contentList.stream()
-                                .peek(contentEntry -> {
-                                    Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
-                                            .filter(sci -> sci.getRemoteInfo().getEntryURL() == null) // only upload the ones that don't have a storageEntryURL, i.e., not there yet
-                                            .forEach(sci -> uploadContent(sci, storageURL, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources())));
-                                })
-                                .collect(Collectors.toList())
-                ));
+    /**
+     * Upload contentList to the URL location.
+     *
+     * @param contentList
+     * @param storageURL
+     * @param ownerKey
+     * @param authToken
+     * @return
+     */
+    List<ContentStack> uploadContent(List<ContentStack> contentList, String storageURL, String ownerKey, String authToken) {
+        return contentList.stream()
+                .peek(contentEntry -> {
+                    Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
+                            .filter(sci -> sci.getRemoteInfo().getEntryURL() == null) // only upload the ones that don't have a storageEntryURL, i.e., not there yet
+                            .forEach(sci -> uploadContent(sci, storageURL, ownerKey, authToken));
+                })
+                .collect(Collectors.toList())
+                ;
     }
 
     private void uploadContent(StorageContentInfo storageContentInfo, String storageURL, String subjectKey, String authToken) {
@@ -187,7 +221,7 @@ class StorageContentHelper {
         InputStream inputStream = openLocalContent(localPath);
         try {
             if (inputStream != null) {
-                logger.info("Upload {}({}) to {}", storageContentInfo, localPath, storageURL);
+                LOG.info("Upload {}({}) to {}", storageContentInfo, localPath, storageURL);
                 storageContentInfo.setRemoteInfo(storageService.putStorageContent(
                         storageURL,
                         storageContentInfo.getRemoteInfo().getEntryRelativePath(),
@@ -217,22 +251,6 @@ class StorageContentHelper {
         } else {
             return null;
         }
-    }
-
-    List<ContentStack> addContentMips(List<ContentStack> contentList, Path localMIPSRootPath, List<MIPsAndMoviesResult> contentMips) {
-        Map<String, ContentStack> indexedContent = contentList.stream()
-                .filter(contentEntry -> contentEntry.getMainRep().getLocalFullPath() != null)
-                .collect(Collectors.toMap(contentEntry -> contentEntry.getMainRep().getLocalFullPath().toString(), contentEntry -> contentEntry));
-        contentMips.forEach(mipsAndMoviesResult -> {
-            ContentStack inputStack = indexedContent.get(mipsAndMoviesResult.getFileInput());
-            if (inputStack != null) {
-                mipsAndMoviesResult.getFileList()
-                        .forEach(mipsFile -> {
-                            addContentRepresentation(inputStack, localMIPSRootPath.toString(), localMIPSRootPath.relativize(Paths.get(mipsFile)).toString(), "mips");
-                        });
-            }
-        });
-        return contentList;
     }
 
     void addContentRepresentation(ContentStack contentStack, String localBasePath, String localRelativePath, String remotePathPrefixParam) {
