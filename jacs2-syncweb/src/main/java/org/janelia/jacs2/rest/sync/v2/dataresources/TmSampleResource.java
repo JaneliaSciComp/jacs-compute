@@ -181,7 +181,7 @@ public class TmSampleResource {
     @Path("sample/{sampleId}")
     public TmSample getTmSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                 @ApiParam @PathParam("sampleId") final Long sampleId) {
-        return tmSampleDao.findEntityByIdAccessibleBySubjectKey(sampleId, subjectKey);
+        return tmSampleDao.findEntityByIdReadableBySubjectKey(sampleId, subjectKey);
    }
 
     @ApiOperation(value = "Gets a calculated origin by Sample path",

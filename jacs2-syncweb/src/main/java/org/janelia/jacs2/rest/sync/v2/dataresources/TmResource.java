@@ -137,7 +137,7 @@ public class TmResource {
     public TmWorkspace getTmWorkspace(@ApiParam @QueryParam("subjectKey") String subjectKey,
                                       @ApiParam @PathParam("workspaceId") Long workspaceId) {
         LOG.debug("getTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
-        return tmWorkspaceDao.findEntityByIdAccessibleBySubjectKey(workspaceId, subjectKey);
+        return tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
     }
 
     @ApiOperation(value = "Creates a new TmWorkspace",
@@ -244,7 +244,7 @@ public class TmResource {
 
         String subjectKey = query.getSubjectKey();
         LOG.info("createTmNeuron({}, {})", subjectKey, neuron);
-        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdAccessibleBySubjectKey(neuron.getWorkspaceId(), subjectKey);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(neuron.getWorkspaceId(), subjectKey);
         if (workspace == null) {
             LOG.info("No workspace found for {} accessible by {}", neuron.getWorkspaceId(), subjectKey);
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
@@ -287,7 +287,7 @@ public class TmResource {
     public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                                       @ApiParam @QueryParam("neuronIds") final List<Long> neuronIds) {
         LOG.info("getNeuronMetadata({}, neuronIds={})", subjectKey, neuronIds);
-        return tmNeuronMetadataDao.findEntitiesByIdsAccessibleBySubjectKey(neuronIds, subjectKey);
+        return tmNeuronMetadataDao.findEntitiesByIdsReadableBySubjectKey(neuronIds, subjectKey);
     }
 
     @ApiOperation(value = "Bulk update neuron styles",
@@ -425,7 +425,7 @@ public class TmResource {
         long totalNodes = 0;
         boolean continueMigration = true;
 
-        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdAccessibleBySubjectKey(workspaceId, subjectKey);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null) {
             LOG.error("No workspace found for workspace id {}", workspaceId);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

@@ -113,7 +113,7 @@ public class DatasetResource {
                                    @Context SecurityContext securityContext) {
         LOG.trace("Start getDatasetById({}) by {}", id, securityContext.getUserPrincipal());
         try {
-            DataSet dataset = datasetDao.findEntityByIdAccessibleBySubjectKey(id, securityContext.getUserPrincipal().getName());
+            DataSet dataset = datasetDao.findEntityByIdReadableBySubjectKey(id, securityContext.getUserPrincipal().getName());
             if (dataset != null) {
                 return Response
                         .ok(dataset)

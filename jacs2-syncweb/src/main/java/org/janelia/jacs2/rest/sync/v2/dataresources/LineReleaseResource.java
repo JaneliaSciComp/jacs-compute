@@ -105,7 +105,7 @@ public class LineReleaseResource {
                                        @Context SecurityContext securityContext) {
         LOG.trace("Start getReleaseInfoById({}) by {}", releaseId, securityContext.getUserPrincipal());
         try {
-            LineRelease lineRelease = lineReleaseDao.findEntityByIdAccessibleBySubjectKey(releaseId, securityContext.getUserPrincipal().getName());
+            LineRelease lineRelease = lineReleaseDao.findEntityByIdReadableBySubjectKey(releaseId, securityContext.getUserPrincipal().getName());
             if (lineRelease != null) {
                 return Response
                         .ok(lineRelease)

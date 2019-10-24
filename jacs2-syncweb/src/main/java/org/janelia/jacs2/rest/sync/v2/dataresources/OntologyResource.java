@@ -81,7 +81,7 @@ public class OntologyResource {
         LOG.trace("Start getOntologyById({})", ontologyId);
         try {
             String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
-            Ontology ontology = ontologyDao.findEntityByIdAccessibleBySubjectKey(ontologyId, authorizedSubjectKey);
+            Ontology ontology = ontologyDao.findEntityByIdReadableBySubjectKey(ontologyId, authorizedSubjectKey);
             if (ontology != null) {
                 return Response.ok()
                         .entity(ontology)

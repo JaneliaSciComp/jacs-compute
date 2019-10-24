@@ -83,7 +83,7 @@ public class SWCService {
                                        String workspaceName, String workspaceOwnerKey,
                                        String neuronOwnerKey,
                                        List<String> accessUsers) {
-        TmSample tmSample = tmSampleDao.findEntityByIdAccessibleBySubjectKey(sampleId, workspaceOwnerKey);
+        TmSample tmSample = tmSampleDao.findEntityByIdReadableBySubjectKey(sampleId, workspaceOwnerKey);
         if (tmSample == null) {
             LOG.error("Sample {} either does not exist or user {} has no access to it", sampleId, workspaceOwnerKey);
             throw new IllegalArgumentException("Sample " + sampleId + " either does not exist or is not accessible");
