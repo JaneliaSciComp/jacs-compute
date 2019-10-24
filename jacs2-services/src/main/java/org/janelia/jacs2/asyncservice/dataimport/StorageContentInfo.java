@@ -3,14 +3,18 @@ package org.janelia.jacs2.asyncservice.dataimport;
 import java.nio.file.Paths;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 
 class StorageContentInfo {
+    @JsonProperty
     private StorageEntryInfo remoteInfo;
+    @JsonProperty
     private String localBasePath;
+    @JsonProperty
     private String localRelativePath;
     private boolean locallyReachable;
 
@@ -38,12 +42,10 @@ class StorageContentInfo {
         this.localRelativePath = localRelativePath;
     }
 
-    @JsonIgnore
     String getLocalFullPath() {
         return buildFullPath(localBasePath, localRelativePath);
     }
 
-    @JsonIgnore
     String getRemoteFullPath() {
         return buildFullPath(remoteInfo.getStorageRootLocation(), remoteInfo.getEntryRelativePath());
     }
