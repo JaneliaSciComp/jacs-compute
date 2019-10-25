@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.janelia.jacs2.asyncservice.qualifier.LocalJob;
+import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.domain.IndexedReference;
@@ -29,7 +30,7 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
     private final ApplicationConfig applicationConfig;
 
     @Inject
-    public ExternalLocalProcessRunner(JacsServiceDataPersistence jacsServiceDataPersistence, ThrottledExeJobsQueue jobsQueue, ApplicationConfig applicationConfig, Logger logger) {
+    public ExternalLocalProcessRunner(JacsServiceDataPersistence jacsServiceDataPersistence, ThrottledExeJobsQueue jobsQueue, @ApplicationProperties ApplicationConfig applicationConfig, Logger logger) {
         super(jacsServiceDataPersistence, logger);
         this.jobsQueue = jobsQueue;
         this.applicationConfig = applicationConfig;
