@@ -1,9 +1,12 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
-import org.janelia.jacs2.asyncservice.common.ServiceComputation;
-import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.storage.StoragePathURI;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
@@ -11,15 +14,8 @@ import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.sample.Image;
 import org.janelia.model.domain.workspace.TreeNode;
-import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This is a helper class for creating the corresponding TreeNode entries for the provided storage content.
@@ -34,9 +30,10 @@ class DataNodeContentHelper {
     }
 
     List<ContentStack> addContentStackToTreeNode(List<ContentStack> contentList,
-                                                 String dataNodeName,
                                                  Number parentDataNodeId,
                                                  String parentWorkspaceOwnerKey,
+                                                 String dataNodeName,
+                                                 boolean mirrorSourceFolders,
                                                  FileType defaultFileType,
                                                  String ownerKey) {
         if (StringUtils.isNotBlank(dataNodeName)) {
@@ -44,7 +41,18 @@ class DataNodeContentHelper {
             return contentList.stream()
                     .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection()) // only upload files
                     .peek(contentEntry -> {
-                        LOG.info("Add {} to {}", contentEntry, dataFolder);
+                        TreeNode entryFolder;
+                        if (mirrorSourceFolders) {
+                            String entryFolderName = contentEntry.getMainRep().getRemoteInfo().getParentRelativePath();
+                            if (StringUtils.isNotBlank(entryFolderName)) {
+                                entryFolder = folderService.getOrCreateFolder(dataFolder.getId(), null, entryFolderName, ownerKey);
+                            } else {
+                                entryFolder = dataFolder;
+                            }
+                        } else {
+                            entryFolder = dataFolder;
+                        }
+                        LOG.info("Add {} to {}", contentEntry, entryFolder);
                         Image imageStack = new Image();
                         String entryRelativePath = contentEntry.getMainRep().getRemoteInfo().getEntryRelativePath();
                         String imageName = Paths.get(entryRelativePath).getFileName().toString();
@@ -70,8 +78,8 @@ class DataNodeContentHelper {
                                 fileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, ciStoragePathURI.toString()));
                             }
                         });
-                        folderService.addImageStack(dataFolder, imageStack, ownerKey);
-                        contentEntry.setDataNodeId(dataFolder.getId());
+                        folderService.addImageStack(entryFolder, imageStack, ownerKey);
+                        contentEntry.setDataNodeId(entryFolder.getId());
                     })
                     .collect(Collectors.toList());
         } else {
@@ -80,9 +88,10 @@ class DataNodeContentHelper {
     }
 
     List<ContentStack> addStandaloneContentToTreeNode(List<ContentStack> contentList,
-                                                      String dataNodeName,
                                                       Number parentDataNodeId,
                                                       String parentWorkspaceOwnerKey,
+                                                      String dataNodeName,
+                                                      boolean mirrorSourceFolders,
                                                       FileType defaultFileType,
                                                       String ownerKey) {
         if (StringUtils.isNotBlank(dataNodeName)) {
@@ -90,14 +99,25 @@ class DataNodeContentHelper {
             return contentList.stream()
                     .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection())
                     .peek(contentEntry -> {
+                        TreeNode entryFolder;
+                        if (mirrorSourceFolders) {
+                            String entryFolderName = contentEntry.getMainRep().getRemoteInfo().getParentRelativePath();
+                            if (StringUtils.isNotBlank(entryFolderName)) {
+                                entryFolder = folderService.getOrCreateFolder(dataFolder.getId(), null, entryFolderName, ownerKey);
+                            } else {
+                                entryFolder = dataFolder;
+                            }
+                        } else {
+                            entryFolder = dataFolder;
+                        }
                         Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
                                 .forEach(ci -> {
-                                    LOG.info("Add {} to {}", ci.getRemoteInfo(), dataFolder);
+                                    LOG.info("Add {} to {}", ci.getRemoteInfo(), entryFolder);
                                     StoragePathURI storagePathURI = ci.getRemoteInfo().getEntryPathURI()
                                             .orElseGet(() -> new StoragePathURI(ci.getRemoteInfo().getEntryRelativePath()));
                                     Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(storagePathURI.getStoragePath());
                                     if (fileTypes.isEmpty()) {
-                                        folderService.addImageFile(dataFolder,
+                                        folderService.addImageFile(entryFolder,
                                                 FileUtils.getFileName(storagePathURI.getStoragePath()),
                                                 storagePathURI.getParent().map(spURI -> spURI.toString()).orElse(""),
                                                 storagePathURI.toString(),
@@ -106,7 +126,7 @@ class DataNodeContentHelper {
                                                 ownerKey
                                         );
                                     } else {
-                                        fileTypes.forEach(ft -> folderService.addImageFile(dataFolder,
+                                        fileTypes.forEach(ft -> folderService.addImageFile(entryFolder,
                                                 FileUtils.getFileName(storagePathURI.getStoragePath()),
                                                 storagePathURI.getParent().map(spURI -> spURI.toString()).orElse(""),
                                                 storagePathURI.toString(),
@@ -116,7 +136,7 @@ class DataNodeContentHelper {
                                         ));
                                     }
                                 });
-                        contentEntry.setDataNodeId(dataFolder.getId());
+                        contentEntry.setDataNodeId(entryFolder.getId());
                     })
                     .collect(Collectors.toList());
         } else {

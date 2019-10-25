@@ -9,6 +9,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 /**
@@ -78,6 +80,15 @@ public class StorageEntryInfo {
 
     public String getEntryRelativePath() {
         return entryRelativePath;
+    }
+
+    public String getParentRelativePath() {
+        if (StringUtils.isBlank(entryRelativePath)) {
+            return "";
+        } else {
+            Path parentPath = Paths.get(entryRelativePath).getParent();
+            return parentPath == null ? "" : parentPath.toString().replace('\\', '/');
+        }
     }
 
     public Optional<StoragePathURI> getEntryPathURI() {

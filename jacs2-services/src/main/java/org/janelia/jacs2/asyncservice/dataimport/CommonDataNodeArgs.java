@@ -10,6 +10,8 @@ import java.util.List;
 class CommonDataNodeArgs extends ServiceArgs {
     @Parameter(names = {"-dataNodeName", "-folderName"}, description = "Data node name")
     String dataNodeName;
+    @Parameter(names = "-mirrorFolders", description = "If used it will try to mirror source folders under the specifid folderName")
+    boolean mirrorSourceFolders;
     @Parameter(names = {"-reuseDataNodeName", "-reuseFolderName"}, description = "Don't create a new data node if one already exists with the specified name under the specified parent node")
     boolean reuseDataNodeIfFound = false;
     @Parameter(names = {"-parentDataNodeId", "-parentFolderId"}, description = "Parent data node ID")

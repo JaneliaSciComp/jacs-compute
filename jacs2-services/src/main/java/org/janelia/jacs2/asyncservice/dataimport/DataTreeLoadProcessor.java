@@ -145,8 +145,8 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                 .thenCompose(storageContent -> generateContentMIPs(jacsServiceData, args, storageContent))
                 .thenApply(mipsContentResult -> storageContentHelper.uploadContent(mipsContentResult.getResult(), storageInfo.getStorageURL(), jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources())))
                 .thenApply(storageContent -> args.standaloneMIPS
-                        ? dataNodeContentHelper.addStandaloneContentToTreeNode(storageContent, args.dataNodeName, args.parentDataNodeId, args.parentWorkspaceOwnerKey, FileType.Unclassified2d, jacsServiceData.getOwnerKey())
-                        : dataNodeContentHelper.addContentStackToTreeNode(storageContent, args.dataNodeName, args.parentDataNodeId, args.parentWorkspaceOwnerKey, FileType.Unclassified2d, jacsServiceData.getOwnerKey()))
+                        ? dataNodeContentHelper.addStandaloneContentToTreeNode(storageContent, args.parentDataNodeId, args.parentWorkspaceOwnerKey, args.dataNodeName, args.mirrorSourceFolders, FileType.Unclassified2d, jacsServiceData.getOwnerKey())
+                        : dataNodeContentHelper.addContentStackToTreeNode(storageContent, args.parentDataNodeId, args.parentWorkspaceOwnerKey, args.dataNodeName, args.mirrorSourceFolders, FileType.Unclassified2d, jacsServiceData.getOwnerKey()))
                 .thenApply(storageContent -> args.cleanLocalFilesWhenDone ? storageContentHelper.removeLocalContent(storageContent) : storageContent)
                 .thenApply(storageContent -> updateServiceResult(jacsServiceData, storageContent))
                 .whenComplete((r, exc) -> {
