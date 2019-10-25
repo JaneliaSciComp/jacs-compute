@@ -30,11 +30,12 @@ public class JacsSecurityContextHelper {
         return jacsSecurityContext == null ? null : (S) jacsSecurityContext.getAuthorizedSubject();
     }
 
-    private static JacsSecurityContext getSecurityContext(ContainerRequestContext containerRequestContext) {
+    public static JacsSecurityContext getSecurityContext(ContainerRequestContext containerRequestContext) {
         SecurityContext securityContext = containerRequestContext.getSecurityContext();
         if (securityContext instanceof JacsSecurityContext) {
             return (JacsSecurityContext) containerRequestContext.getSecurityContext();
+        } else {
+            return JacsSecurityContext.UNAUTHENTICATED;
         }
-        return null;
     }
 }

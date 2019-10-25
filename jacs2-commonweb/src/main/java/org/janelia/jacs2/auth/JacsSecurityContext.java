@@ -2,12 +2,15 @@ package org.janelia.jacs2.auth;
 
 import com.google.common.base.Preconditions;
 import org.janelia.model.security.Subject;
+import org.janelia.model.security.User;
 import org.janelia.model.security.util.SubjectUtils;
 
 import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
 
 public class JacsSecurityContext implements SecurityContext {
+
+    static JacsSecurityContext UNAUTHENTICATED = new JacsSecurityContext();
 
     private final Subject authenticatedSubject;
     private final Subject authorizedSubject;
@@ -20,6 +23,13 @@ public class JacsSecurityContext implements SecurityContext {
         this.authorizedSubject = authorizedSubject != null ? authorizedSubject : authenticatedSubject;
         this.secure = secure;
         this.authScheme = authScheme;
+    }
+
+    private JacsSecurityContext() {
+        this.authenticatedSubject = null;
+        this.authorizedSubject = null;
+        this.secure = false;
+        this.authScheme = null;
     }
 
     @Override
@@ -42,11 +52,23 @@ public class JacsSecurityContext implements SecurityContext {
         return authScheme;
     }
 
-    public Subject getAuthenticatedSubject() {
+    Subject getAuthenticatedSubject() {
         return authenticatedSubject;
     }
 
-    public Subject getAuthorizedSubject() {
+    public String getAuthenticatedSubjectKey() {
+        return authenticatedSubject == null ? null : authenticatedSubject.getKey();
+    }
+
+    public boolean hasAdminPrivileges() {
+        return SubjectUtils.isAdmin(authenticatedSubject);
+    }
+
+    Subject getAuthorizedSubject() {
         return authorizedSubject;
+    }
+
+    public String getAuthorizedSubjectKey() {
+        return authorizedSubject == null ? null : authorizedSubject.getKey();
     }
 }

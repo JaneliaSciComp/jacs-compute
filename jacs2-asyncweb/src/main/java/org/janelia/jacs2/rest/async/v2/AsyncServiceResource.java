@@ -4,11 +4,14 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
+import org.janelia.jacs2.auth.JacsSecurityContext;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.model.domain.enums.SubjectRole;
+import org.janelia.model.security.Subject;
 import org.janelia.model.service.JacsServiceData;
 
 import javax.enterprise.context.RequestScoped;
@@ -66,10 +69,19 @@ public class AsyncServiceResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{service-name}")
     public Response createAsyncService(@PathParam("service-name") String serviceName, JacsServiceData si, @Context ContainerRequestContext containerRequestContext) {
-        String authenticatedSubjectKey = JacsSecurityContextHelper.getAuthenticatedSubjectKey(containerRequestContext);
-        String authorizedSubjectKey = JacsSecurityContextHelper.getAuthorizedSubjectKey(containerRequestContext);
+        JacsSecurityContext securityContext = JacsSecurityContextHelper.getSecurityContext(containerRequestContext);
+        String authenticatedSubjectKey = securityContext.getAuthenticatedSubjectKey();
+        String authorizedSubjectKey = securityContext.getAuthorizedSubjectKey();
         si.setAuthKey(authenticatedSubjectKey);
-        si.setOwnerKey(authorizedSubjectKey);
+        if (securityContext.hasAdminPrivileges()) {
+            // if the authenticated user has admin privileges
+            // let him set a different owner
+            if (StringUtils.isBlank(si.getOwnerKey())) {
+                si.setOwnerKey(authorizedSubjectKey);
+            }
+        } else {
+            si.setOwnerKey(authenticatedSubjectKey);
+        }
         si.setName(serviceName);
         JacsServiceData newJacsServiceData = jacsServiceEngine.submitSingleService(si);
         return Response
