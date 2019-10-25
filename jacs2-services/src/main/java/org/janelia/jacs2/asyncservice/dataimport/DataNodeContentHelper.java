@@ -152,7 +152,7 @@ class DataNodeContentHelper {
             String entryURL = storageEntryInfo.getEntryURL();
             if (StringUtils.startsWith(entryURL, relativizeToDataLocation)) {
                 String entryNameRelativeToDataLocation = StringUtils.removeStart(
-                        StringUtils.replaceChars(entryURL, relativizeToDataLocation, ""),
+                        StringUtils.replace(entryURL, relativizeToDataLocation, ""),
                         "/"
                 );
                 int separatorIndex = entryNameRelativeToDataLocation.lastIndexOf('/');
