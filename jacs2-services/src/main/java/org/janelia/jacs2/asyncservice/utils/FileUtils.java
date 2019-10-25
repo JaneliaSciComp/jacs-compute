@@ -1,19 +1,25 @@
 package org.janelia.jacs2.asyncservice.utils;
 
-import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.model.jacs2.domain.IndexedReference;
-
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import com.google.common.collect.ImmutableList;
+
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.jacs2.domain.IndexedReference;
 
 public class FileUtils {
 
@@ -176,7 +182,7 @@ public class FileUtils {
         return id == null ? Collections.emptyList() : getTreePathComponentsForId(id.toString());
     }
 
-    public static List<String> getTreePathComponentsForId(String id) {
+    private static List<String> getTreePathComponentsForId(String id) {
         if (StringUtils.isBlank(id)) {
             return Collections.emptyList();
         }

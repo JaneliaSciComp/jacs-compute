@@ -62,6 +62,7 @@ class StorageContentHelper {
                             jadeStorageVolume.getStorageVirtualPath(),
                             new StoragePathURI(relativeStoragePath),
                             relativeStoragePath,
+                            null, // size is not known
                             true // this really does not matter but assume the path is a directory
                     );
                 });
@@ -73,6 +74,7 @@ class StorageContentHelper {
                 .map(entry -> {
                     StorageContentInfo storageContentInfo = new StorageContentInfo();
                     storageContentInfo.setRemoteInfo(entry);
+                    storageContentInfo.setSize(entry.getSize());
                     return new ContentStack(storageContentInfo);
                 })
                 .collect(Collectors.toList());
@@ -109,8 +111,10 @@ class StorageContentHelper {
                             // set local path info
                             contentEntry.getMainRep().setLocalBasePath(downloadLocation.toString());
                             contentEntry.getMainRep().setLocalRelativePath(entryRelativePath.toString());
+                            contentEntry.getMainRep().setSize(Files.size(entryFullPath));
                         } else {
                             contentEntry.getMainRep().setLocallyReachable(true);
+                            contentEntry.getMainRep().setSize(Files.size(remoteEntryPath));
                         }
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
@@ -163,12 +167,11 @@ class StorageContentHelper {
     List<ContentStack> copyContent(List<ContentStack> contentList, String storageURL, String storagePath, String ownerKey, String authToken) {
         return contentList
                 .stream()
-                .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection()) // from now on we are only interested in files
                 .peek(contentEntry -> {
                     StorageContentInfo sci = contentEntry.getMainRep();
                     // if entryURL is there it means that we already have the content on the specified storage
-                    // so we transfer it only if the content is not already on the storage
-                    if (sci.getRemoteInfo().getEntryURL() != null) {
+                    // we transfer it only if the content is a file and is not already on the storage
+                    if (sci.getRemoteInfo().isNotCollection() && sci.getRemoteInfo().getEntryURL() != null) {
                         copyContent(sci, storageURL, storagePath, ownerKey, authToken);
                     }
                 })
@@ -257,10 +260,11 @@ class StorageContentHelper {
         }
     }
 
-    void addContentRepresentation(ContentStack contentStack, String localBasePath, String localRelativePath, String remotePathPrefixParam) {
+    void addContentRepresentation(ContentStack contentStack, String localBasePath, String localRelativePath, Long size, String remotePathPrefixParam) {
         StorageContentInfo newContentRepInfo = new StorageContentInfo();
         newContentRepInfo.setLocalBasePath(localBasePath);
         newContentRepInfo.setLocalRelativePath(localRelativePath);
+        newContentRepInfo.setSize(size);
         StorageContentInfo mainRep = contentStack.getMainRep();
         if (mainRep.getRemoteInfo() != null) {
             String remotePathPrefix;
@@ -294,6 +298,7 @@ class StorageContentHelper {
                     mainRep.getRemoteInfo().getStorageRootLocation(),
                     mainRep.getRemoteInfo().getStorageRootPathURI(),
                     constructStorageEntryPath(newContentRepInfo, remotePathPrefix),
+                    size,
                     false
             ));
         }

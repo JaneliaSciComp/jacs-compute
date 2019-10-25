@@ -16,6 +16,8 @@ class StorageContentInfo {
     private String localBasePath;
     @JsonProperty
     private String localRelativePath;
+    @JsonProperty
+    private Long size;
     private boolean locallyReachable;
 
     StorageEntryInfo getRemoteInfo() {
@@ -48,6 +50,14 @@ class StorageContentInfo {
 
     String getRemoteFullPath() {
         return buildFullPath(remoteInfo.getStorageRootLocation(), remoteInfo.getEntryRelativePath());
+    }
+
+    Long getSize() {
+        return size;
+    }
+
+    void setSize(Long size) {
+        this.size = size;
     }
 
     boolean isLocallyReachable() {

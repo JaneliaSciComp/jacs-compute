@@ -21,6 +21,7 @@ public class StorageEntryInfo {
     private final String storageRootLocation;
     private final StoragePathURI storageRootPathURI;
     private final String entryRelativePath;
+    private final Long size;
     private final boolean collectionFlag;
 
     @JsonCreator
@@ -30,6 +31,7 @@ public class StorageEntryInfo {
                             @JsonProperty("storageRootLocation") String storageRootLocation,
                             @JsonProperty("storageRootPathURI") StoragePathURI storageRootPathURI,
                             @JsonProperty("nodeRelativePath") String entryRelativePath,
+                            @JsonProperty("size") Long size,
                             @JsonProperty("collectionFlag") boolean collectionFlag) {
         this.storageId = storageId;
         this.storageURL = storageURL;
@@ -37,6 +39,7 @@ public class StorageEntryInfo {
         this.storageRootLocation = storageRootLocation;
         this.storageRootPathURI = storageRootPathURI;
         this.entryRelativePath = entryRelativePath;
+        this.size = size;
         this.collectionFlag = collectionFlag;
     }
 
@@ -79,6 +82,10 @@ public class StorageEntryInfo {
 
     public Optional<StoragePathURI> getEntryPathURI() {
         return storageRootPathURI.resolve(entryRelativePath);
+    }
+
+    public Long getSize() {
+        return size;
     }
 
     boolean isCollectionFlag() {

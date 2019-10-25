@@ -1,5 +1,7 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -7,6 +9,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -131,6 +134,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                     null,
                     null,
                     args.storagePath,
+                    null, // size is not known
                     true // this really does not matter but assume the path is a directory
             );
         } else {
@@ -234,7 +238,9 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                                     MIPsAndMoviesResult mipsAndMoviesResult = entryWithResult.getRight();
                                     mipsAndMoviesResult.getFileList()
                                             .forEach(mipsFile -> {
-                                                storageContentHelper.addContentRepresentation(contentStackEntry, localMIPSRootPath.toString(), localMIPSRootPath.relativize(Paths.get(mipsFile)).toString(), "mips");
+                                                Path mipsPath = Paths.get(mipsFile);
+                                                Long mipsSize = getFileSize(mipsPath);
+                                                storageContentHelper.addContentRepresentation(contentStackEntry, localMIPSRootPath.toString(), localMIPSRootPath.relativize(mipsPath).toString(), mipsSize, "mips");
                                             });
                                 })
                                 ;
@@ -242,6 +248,18 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                     });
         } else {
             return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, contentList));
+        }
+    }
+
+    /**
+     * @param p
+     * @return null if there's any error retrieving file's size
+     */
+    private @Nullable Long getFileSize(Path p) {
+        try {
+            return Files.size(p);
+        } catch (IOException e) {
+            return null;
         }
     }
 

@@ -50,6 +50,7 @@ class DataNodeContentHelper {
                         String imageName = Paths.get(entryRelativePath).getFileName().toString();
                         imageStack.setName(imageName);
                         imageStack.setUserDataFlag(true);
+                        imageStack.setFileSize(contentEntry.getMainRep().getSize());
                         StoragePathURI mainRepPathURI = contentEntry.getMainRep().getRemoteInfo().getEntryPathURI()
                                 .orElseGet(() -> new StoragePathURI(contentEntry.getMainRep().getRemoteInfo().getEntryRelativePath()));
                         imageStack.setFilepath(mainRepPathURI.getParent().map(spURI -> spURI.toString()).orElse(""));
