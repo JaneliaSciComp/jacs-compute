@@ -58,7 +58,7 @@ class StorageContentHelper {
                     return new StorageEntryInfo(
                             jadeStorageVolume.getId(),
                             jadeStorageVolume.getVolumeStorageURI(),
-                            jadeStorageVolume.getStorageServiceURL() + "/" + relativeStoragePath,
+                            jadeStorageVolume.getVolumeStorageURI() + "/" + relativeStoragePath,
                             jadeStorageVolume.getStorageVirtualPath(),
                             new StoragePathURI(relativeStoragePath),
                             relativeStoragePath,

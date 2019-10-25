@@ -130,7 +130,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
             storageInfo = new StorageEntryInfo(
                     null,
                     args.storageLocationURL,
-                    null,
+                    args.storageLocationURL,
                     null,
                     null,
                     args.storagePath,
@@ -144,9 +144,19 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                 .supply(() -> listContentOrCopyContentToTargetStorage(jacsServiceData, args, storageInfo))
                 .thenCompose(storageContent -> generateContentMIPs(jacsServiceData, args, storageContent))
                 .thenApply(mipsContentResult -> storageContentHelper.uploadContent(mipsContentResult.getResult(), storageInfo.getStorageURL(), jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources())))
-                .thenApply(storageContent -> args.standaloneMIPS
-                        ? dataNodeContentHelper.addStandaloneContentToTreeNode(storageContent, args.parentDataNodeId, args.parentWorkspaceOwnerKey, args.dataNodeName, args.mirrorSourceFolders, FileType.Unclassified2d, jacsServiceData.getOwnerKey())
-                        : dataNodeContentHelper.addContentStackToTreeNode(storageContent, args.parentDataNodeId, args.parentWorkspaceOwnerKey, args.dataNodeName, args.mirrorSourceFolders, FileType.Unclassified2d, jacsServiceData.getOwnerKey()))
+                .thenApply(storageContent -> {
+                    String relativizeTo;
+                    if (args.mirrorSourceFolders) {
+                        relativizeTo = storageInfo.getEntryURL();
+                    } else {
+                        relativizeTo = null;
+                    }
+                    if (args.standaloneMIPS) {
+                        return dataNodeContentHelper.addStandaloneContentToTreeNode(storageContent, args.parentDataNodeId, args.parentWorkspaceOwnerKey, args.dataNodeName, relativizeTo, FileType.Unclassified2d, jacsServiceData.getOwnerKey());
+                    } else {
+                        return dataNodeContentHelper.addContentStackToTreeNode(storageContent, args.parentDataNodeId, args.parentWorkspaceOwnerKey, args.dataNodeName, relativizeTo, FileType.Unclassified2d, jacsServiceData.getOwnerKey());
+                    }
+                })
                 .thenApply(storageContent -> args.cleanLocalFilesWhenDone ? storageContentHelper.removeLocalContent(storageContent) : storageContent)
                 .thenApply(storageContent -> updateServiceResult(jacsServiceData, storageContent))
                 .whenComplete((r, exc) -> {

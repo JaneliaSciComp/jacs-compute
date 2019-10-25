@@ -33,7 +33,7 @@ class DataNodeContentHelper {
                                                  Number parentDataNodeId,
                                                  String parentWorkspaceOwnerKey,
                                                  String dataNodeName,
-                                                 boolean mirrorSourceFolders,
+                                                 String relativizeTo,
                                                  FileType defaultFileType,
                                                  String ownerKey) {
         if (StringUtils.isNotBlank(dataNodeName)) {
@@ -42,7 +42,7 @@ class DataNodeContentHelper {
                     .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection()) // only upload files
                     .peek(contentEntry -> {
                         TreeNode entryFolder;
-                        if (mirrorSourceFolders) {
+                        if (StringUtils.isNotBlank(relativizeTo)) {
                             String entryFolderName = contentEntry.getMainRep().getRemoteInfo().getParentRelativePath();
                             if (StringUtils.isNotBlank(entryFolderName)) {
                                 entryFolder = folderService.getOrCreateFolder(dataFolder.getId(), null, entryFolderName, ownerKey);
@@ -91,7 +91,7 @@ class DataNodeContentHelper {
                                                       Number parentDataNodeId,
                                                       String parentWorkspaceOwnerKey,
                                                       String dataNodeName,
-                                                      boolean mirrorSourceFolders,
+                                                      String relativizeTo,
                                                       FileType defaultFileType,
                                                       String ownerKey) {
         if (StringUtils.isNotBlank(dataNodeName)) {
@@ -100,7 +100,7 @@ class DataNodeContentHelper {
                     .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection())
                     .peek(contentEntry -> {
                         TreeNode entryFolder;
-                        if (mirrorSourceFolders) {
+                        if (StringUtils.isNotBlank(relativizeTo)) {
                             String entryFolderName = contentEntry.getMainRep().getRemoteInfo().getParentRelativePath();
                             if (StringUtils.isNotBlank(entryFolderName)) {
                                 entryFolder = folderService.getOrCreateFolder(dataFolder.getId(), null, entryFolderName, ownerKey);
