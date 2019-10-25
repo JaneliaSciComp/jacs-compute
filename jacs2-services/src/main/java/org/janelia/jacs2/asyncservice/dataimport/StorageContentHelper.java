@@ -161,12 +161,16 @@ class StorageContentHelper {
      * @return
      */
     List<ContentStack> copyContent(List<ContentStack> contentList, String storageURL, String storagePath, String ownerKey, String authToken) {
-        return contentList.stream()
+        return contentList
+                .stream()
+                .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection()) // from now on we are only interested in files
                 .peek(contentEntry -> {
-                    Stream.of(contentEntry.getMainRep())
-                            .filter(sci -> sci.getRemoteInfo().getEntryURL() != null)
-                            .filter(sci -> sci.getRemoteInfo().isNotCollection())
-                            .forEach(sci -> copyContent(sci, storageURL, storagePath, ownerKey, authToken));
+                    StorageContentInfo sci = contentEntry.getMainRep();
+                    // if entryURL is there it means that we already have the content on the specified storage
+                    // so we transfer it only if the content is not already on the storage
+                    if (sci.getRemoteInfo().getEntryURL() != null) {
+                        copyContent(sci, storageURL, storagePath, ownerKey, authToken);
+                    }
                 })
                 .collect(Collectors.toList());
     }

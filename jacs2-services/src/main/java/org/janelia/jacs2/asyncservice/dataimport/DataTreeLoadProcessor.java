@@ -1,5 +1,15 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -32,16 +42,6 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This service creates a TreeNode for the given storage content. Optionally it can also generate and register the MIPs
@@ -172,10 +172,22 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                     .map(srcStorageInfo -> storageContentHelper.listContent(srcStorageInfo.getStorageURL(), srcStorageInfo.getEntryRelativePath(), ownerKey, authToken))
                     .orElseThrow(() -> new IllegalArgumentException("No storage location found for " + args.dataLocationPath))
                     ;
-            // copy top the target
-            return storageContentHelper.copyContent(dataContentList, targetStorageInfo.getStorageURL(), targetStorageInfo.getEntryRelativePath(), ownerKey, authToken);
+            // copy to the target
+            return storageContentHelper.copyContent(filterContentToUpload(dataContentList, args.fileNameFilter), targetStorageInfo.getStorageURL(), targetStorageInfo.getEntryRelativePath(), ownerKey, authToken);
         } else {
             return storageContentHelper.listContent(args.storageLocationURL, args.storagePath, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources()));
+        }
+    }
+
+    private List<ContentStack> filterContentToUpload(List<ContentStack> contentList, String fileNameFilter) {
+        if (StringUtils.isBlank(fileNameFilter)) {
+            return contentList;
+        } else {
+            Pattern fileNamePattern = Pattern.compile(fileNameFilter + "$");
+            return contentList.stream()
+                    .filter(contentEntry -> fileNamePattern.matcher(contentEntry.getMainRep().getRemoteInfo().getEntryRelativePath()).find())
+                    .collect(Collectors.toList())
+                    ;
         }
     }
 
