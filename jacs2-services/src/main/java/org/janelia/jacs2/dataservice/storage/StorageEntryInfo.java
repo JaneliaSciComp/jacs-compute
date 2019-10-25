@@ -82,15 +82,6 @@ public class StorageEntryInfo {
         return entryRelativePath;
     }
 
-    public String getParentRelativePath() {
-        if (StringUtils.isBlank(entryRelativePath)) {
-            return "";
-        } else {
-            Path parentPath = Paths.get(entryRelativePath).getParent();
-            return parentPath == null ? "" : parentPath.toString().replace('\\', '/');
-        }
-    }
-
     public Optional<StoragePathURI> getEntryPathURI() {
         return storageRootPathURI.resolve(entryRelativePath);
     }

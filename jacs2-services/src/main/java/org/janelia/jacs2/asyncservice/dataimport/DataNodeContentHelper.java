@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StoragePathURI;
 import org.janelia.jacs2.dataservice.workspace.FolderService;
 import org.janelia.model.domain.DomainUtils;
@@ -33,7 +34,7 @@ class DataNodeContentHelper {
                                                  Number parentDataNodeId,
                                                  String parentWorkspaceOwnerKey,
                                                  String dataNodeName,
-                                                 String relativizeTo,
+                                                 String relativizeToDataLocation,
                                                  FileType defaultFileType,
                                                  String ownerKey) {
         if (StringUtils.isNotBlank(dataNodeName)) {
@@ -42,8 +43,8 @@ class DataNodeContentHelper {
                     .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection()) // only upload files
                     .peek(contentEntry -> {
                         TreeNode entryFolder;
-                        if (StringUtils.isNotBlank(relativizeTo)) {
-                            String entryFolderName = contentEntry.getMainRep().getRemoteInfo().getParentRelativePath();
+                        if (StringUtils.isNotBlank(relativizeToDataLocation)) {
+                            String entryFolderName = getEntryFolderName(contentEntry.getMainRep().getRemoteInfo(), relativizeToDataLocation);
                             if (StringUtils.isNotBlank(entryFolderName)) {
                                 entryFolder = folderService.getOrCreateFolder(dataFolder.getId(), null, entryFolderName, ownerKey);
                             } else {
@@ -91,7 +92,7 @@ class DataNodeContentHelper {
                                                       Number parentDataNodeId,
                                                       String parentWorkspaceOwnerKey,
                                                       String dataNodeName,
-                                                      String relativizeTo,
+                                                      String relativizeToDataLocation,
                                                       FileType defaultFileType,
                                                       String ownerKey) {
         if (StringUtils.isNotBlank(dataNodeName)) {
@@ -100,8 +101,8 @@ class DataNodeContentHelper {
                     .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection())
                     .peek(contentEntry -> {
                         TreeNode entryFolder;
-                        if (StringUtils.isNotBlank(relativizeTo)) {
-                            String entryFolderName = contentEntry.getMainRep().getRemoteInfo().getParentRelativePath();
+                        if (StringUtils.isNotBlank(relativizeToDataLocation)) {
+                            String entryFolderName = getEntryFolderName(contentEntry.getMainRep().getRemoteInfo(), relativizeToDataLocation);
                             if (StringUtils.isNotBlank(entryFolderName)) {
                                 entryFolder = folderService.getOrCreateFolder(dataFolder.getId(), null, entryFolderName, ownerKey);
                             } else {
@@ -144,4 +145,25 @@ class DataNodeContentHelper {
         }
     }
 
+    private String getEntryFolderName(StorageEntryInfo storageEntryInfo, String relativizeToDataLocation) {
+        if (StringUtils.isBlank(relativizeToDataLocation)) {
+            return "";
+        } else {
+            String entryURL = storageEntryInfo.getEntryURL();
+            if (StringUtils.startsWith(entryURL, relativizeToDataLocation)) {
+                String entryNameRelativeToDataLocation = StringUtils.removeStart(
+                        StringUtils.replaceChars(entryURL, relativizeToDataLocation, ""),
+                        "/"
+                );
+                int separatorIndex = entryNameRelativeToDataLocation.lastIndexOf('/');
+                if (separatorIndex == -1) {
+                    return "";
+                } else {
+                    return entryNameRelativeToDataLocation.substring(0, separatorIndex);
+                }
+            } else {
+                return ""; // don't put it in any subfolders
+            }
+        }
+    }
 }

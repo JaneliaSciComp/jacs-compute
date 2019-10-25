@@ -296,6 +296,10 @@ public class StorageService {
         }
     }
 
+    public String getEntryURI(String storageURI, String entryName) {
+        return StringUtils.appendIfMissing(storageURI, "/") + "data_content/" + entryName;
+    }
+
     private Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, String jacsPrincipal, String authToken) {
         Invocation.Builder requestWithCredentialsBuilder = requestBuilder;
         if (StringUtils.isNotBlank(authToken)) {
