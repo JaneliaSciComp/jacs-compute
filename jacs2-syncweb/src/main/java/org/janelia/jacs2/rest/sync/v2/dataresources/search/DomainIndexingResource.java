@@ -3,6 +3,7 @@ package org.janelia.jacs2.rest.sync.v2.dataresources.search;
 import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -23,6 +24,7 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
+import org.janelia.model.access.cdi.WithCache;
 import org.janelia.model.domain.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,10 @@ public class DomainIndexingResource {
     private static final Logger LOG = LoggerFactory.getLogger(DomainIndexingResource.class);
 
     @Inject
-    private DocumentIndexingService documentIndexingService;
+    private Instance<DocumentIndexingService> documentIndexingServiceSource;
+    @WithCache
+    @Inject
+    private Instance<DocumentIndexingService> documentIndexingServiceSourceWithCachedData;
 
     @ApiOperation(value = "Add document to index")
     @ApiResponses(value = {
@@ -48,6 +53,12 @@ public class DomainIndexingResource {
     public Response indexDocuments(@ApiParam List<Reference> domainObjectReferences) {
         LOG.trace("Start indexDocument({})", domainObjectReferences);
         try {
+            DocumentIndexingService documentIndexingService;
+            if (domainObjectReferences.size() > 10) {
+                documentIndexingService = documentIndexingServiceSourceWithCachedData.get();
+            } else {
+                documentIndexingService = documentIndexingServiceSource.get();
+            }
             documentIndexingService.indexDocuments(domainObjectReferences);
             return Response.ok().build();
         } catch (Exception e) {
@@ -71,6 +82,7 @@ public class DomainIndexingResource {
         LOG.trace("Start addAncestorIdToAllDocs({}, {})", ancestorId, descendantIds);
         try {
             if (CollectionUtils.isNotEmpty(descendantIds)) {
+                DocumentIndexingService documentIndexingService = documentIndexingServiceSourceWithCachedData.get();
                 documentIndexingService.updateDocsAncestors(ImmutableSet.copyOf(descendantIds), ancestorId);
             }
             return Response.ok().build();
@@ -95,6 +107,7 @@ public class DomainIndexingResource {
     public Response deleteDocumentsFromIndex(List<Long> docIds) {
         LOG.trace("Start deleteDocumentsFromIndex({})", docIds);
         try {
+            DocumentIndexingService documentIndexingService = documentIndexingServiceSourceWithCachedData.get();
             documentIndexingService.removeDocuments(docIds);
             return Response.noContent().build();
         } catch (Exception e) {

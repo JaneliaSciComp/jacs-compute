@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.search;
 import java.util.List;
 import java.util.Set;
 
+import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 
 import org.apache.solr.client.solrj.SolrServer;
@@ -20,10 +21,9 @@ import org.janelia.model.domain.Reference;
  */
 public class DocumentIndexingService extends AbstractIndexingServiceSupport {
 
-    @Inject
-    DocumentIndexingService(LegacyDomainDao legacyDomainDao,
-                            SolrConfig solrConfig,
-                            DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider) {
+    public DocumentIndexingService(LegacyDomainDao legacyDomainDao,
+                                   SolrConfig solrConfig,
+                                   DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider) {
         super(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
     }
 

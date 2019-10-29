@@ -40,7 +40,6 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         return execIndexAllDocuments(clearIndex, domainObjectClassFilter);
     }
 
-
     @SuppressWarnings("unchecked")
     private int execIndexAllDocuments(boolean clearIndex, Predicate<Class> domainObjectClassFilter) {
         Stopwatch stopwatch = Stopwatch.createStarted();
