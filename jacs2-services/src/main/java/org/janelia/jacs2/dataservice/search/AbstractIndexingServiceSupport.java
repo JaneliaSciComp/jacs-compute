@@ -1,7 +1,5 @@
 package org.janelia.jacs2.dataservice.search;
 
-import javax.inject.Inject;
-
 import org.apache.solr.client.solrj.SolrServer;
 import org.janelia.model.access.dao.LegacyDomainDao;
 
@@ -16,7 +14,6 @@ abstract class AbstractIndexingServiceSupport {
     final DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider;
     final SolrConfig solrConfig;
 
-    @Inject
     AbstractIndexingServiceSupport(LegacyDomainDao legacyDomainDao,
                                    SolrConfig solrConfig,
                                    DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider) {
@@ -28,4 +25,5 @@ abstract class AbstractIndexingServiceSupport {
     SolrBuilder createSolrBuilder() {
         return solrConfig.builder();
     }
+
 }

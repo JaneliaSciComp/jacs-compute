@@ -8,10 +8,13 @@ import javax.enterprise.inject.Produces;
 
 import org.apache.solr.client.solrj.SolrServer;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
+import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
 import org.janelia.jacs2.dataservice.search.DomainObjectIndexerProvider;
+import org.janelia.jacs2.dataservice.search.SolrConfig;
 import org.janelia.messaging.core.MessageSender;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.cdi.WithCache;
+import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.access.domain.search.SolrBasedDomainObjectIndexer;
 import org.janelia.model.access.search.AsyncDomainObjectIndexer;
@@ -77,4 +80,20 @@ public class IndexingProducer {
                 solrCommitSize)
                 ;
     }
+
+    @Produces
+    public DocumentIndexingService createDocumentIndexService(LegacyDomainDao legacyDomainDao,
+                                                              SolrConfig solrConfig,
+                                                              DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider) {
+        return new DocumentIndexingService(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
+    }
+
+    @WithCache
+    @Produces
+    public DocumentIndexingService createDocumentIndexServiceWithCachedData(LegacyDomainDao legacyDomainDao,
+                                                                            SolrConfig solrConfig,
+                                                                            @WithCache DomainObjectIndexerProvider<SolrServer> domainObjectIndexerProvider) {
+        return new DocumentIndexingService(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
+    }
+
 }
