@@ -10,12 +10,12 @@ public class JacsSecurityContextHelper {
 
     public static String getAuthenticatedSubjectKey(ContainerRequestContext containerRequestContext) {
         JacsSecurityContext jacsSecurityContext = getSecurityContext(containerRequestContext);
-        return jacsSecurityContext == null ? null : jacsSecurityContext.getAuthenticatedSubject().getKey();
+        return jacsSecurityContext == null ? null : jacsSecurityContext.getAuthenticatedSubjectKey();
     }
 
     public static String getAuthorizedSubjectKey(ContainerRequestContext containerRequestContext) {
         JacsSecurityContext jacsSecurityContext = getSecurityContext(containerRequestContext);
-        return jacsSecurityContext == null ? null : jacsSecurityContext.getAuthorizedSubject().getKey();
+        return jacsSecurityContext == null ? null : jacsSecurityContext.getAuthorizedSubjectKey();
     }
 
     @SuppressWarnings("unchecked")
