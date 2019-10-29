@@ -53,7 +53,6 @@ public class SWCService {
     private final Path defaultSWCLocation;
     private final IdSource neuronIdGenerator;
 
-
     @Inject
     public SWCService(StorageService storageService,
                       LegacyDomainDao domainDao,

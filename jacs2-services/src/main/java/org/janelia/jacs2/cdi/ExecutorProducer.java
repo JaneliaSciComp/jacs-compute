@@ -49,7 +49,8 @@ public class ExecutorProducer {
     }
 
     @ApplicationScoped
-    @Produces @AsyncIndex
+    @AsyncIndex
+    @Produces
     public ExecutorService createIndexingExecutorService() {
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("JACS-INDEXING-%03d")
