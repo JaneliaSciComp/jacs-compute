@@ -222,9 +222,13 @@ public class TmResource {
                                                              @ApiParam @QueryParam("offset") final Long offsetParam,
                                                              @ApiParam @QueryParam("length") final Integer lengthParam) {
         LOG.info("getWorkspaceNeuronMetadata({}, {}, {})", workspaceId, offsetParam, lengthParam);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
+        if (workspace==null)
+            return null;
         long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
         int length = lengthParam == null || lengthParam < 0 ? -1 : lengthParam;
-        List<TmNeuronMetadata> neuronList = tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(subjectKey, workspaceId, offset, length);
+        List<TmNeuronMetadata> neuronList = tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(workspace,
+                subjectKey, offset, length);
         return neuronList;
     }
 
@@ -268,9 +272,11 @@ public class TmResource {
     public TmNeuronMetadata updateTmNeuron(DomainQuery query) {
         TmNeuronMetadata neuron = query.getDomainObjectAs(TmNeuronMetadata.class);
         String subjectKey = query.getSubjectKey();
-        LOG.info("updateTmNeurons({}, numNeurons={})", subjectKey, neuron);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(neuron.getWorkspaceId(), subjectKey);
 
-        TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveBySubjectKey(neuron, subjectKey);
+        LOG.info("updateTmNeurons({}, numNeurons={})", subjectKey, neuron);
+        TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron,
+                subjectKey);
         return updatedNeuron;
     }
 
@@ -285,9 +291,12 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/neuron/metadata")
     public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                                      @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                                       @ApiParam @QueryParam("neuronIds") final List<Long> neuronIds) {
-        LOG.info("getNeuronMetadata({}, neuronIds={})", subjectKey, neuronIds);
-        return tmNeuronMetadataDao.findEntitiesByIdsReadableBySubjectKey(neuronIds, subjectKey);
+        LOG.info("getNeuronMetadata({}, neuronIds={}, workspace={})", subjectKey, neuronIds, workspaceId);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
+        return tmNeuronMetadataDao.getTmNeuronMetadataByNeuronIds(workspace,
+                neuronIds);
     }
 
     @ApiOperation(value = "Bulk update neuron styles",
@@ -302,13 +311,15 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/neuronStyle")
     public Response updateNeuronStyles(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                       @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                        @ApiParam final BulkNeuronStyleUpdate bulkNeuronStyleUpdate) {
         LOG.debug("updateNeuronStyles({}, {})", subjectKey, bulkNeuronStyleUpdate);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (bulkNeuronStyleUpdate.getVisible() == null && StringUtils.isNotBlank(bulkNeuronStyleUpdate.getColorHex())) {
             LOG.warn("Cannot have both visible and colorhex unset");
             return Response.status(Response.Status.BAD_REQUEST).build();
         } else {
-            tmNeuronMetadataDao.updateNeuronStyles(bulkNeuronStyleUpdate, subjectKey);
+            tmNeuronMetadataDao.updateNeuronStyles(bulkNeuronStyleUpdate, workspace, subjectKey);
             return Response.ok("DONE").build();
         }
     }
@@ -323,10 +334,12 @@ public class TmResource {
     @DELETE
     @Path("/workspace/neuron")
     public void removeTmNeuron(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                               @ApiParam @QueryParam("neuronId") final Boolean isLarge,
+                               @ApiParam @QueryParam("workspaceId") final Long workspaceId,
+                               @ApiParam @QueryParam("isLarge") final Boolean isLarge,
                                @ApiParam @QueryParam("neuronId") final Long neuronId) {
         LOG.debug("removeTmNeuron({}, neuronId={})", subjectKey, neuronId);
-        tmNeuronMetadataDao.removeTmNeuron(neuronId, isLarge, subjectKey);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
+        tmNeuronMetadataDao.removeTmNeuron(neuronId, isLarge, workspace, subjectKey);
     }
 
     @ApiOperation(value = "Add or remove tags",
@@ -343,7 +356,9 @@ public class TmResource {
     public Response addNeuronTags(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("tags") final String tags,
                                   @ApiParam @QueryParam("tagState") final boolean tagState,
+                                  @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                   @ApiParam final List<Long> neuronIds) {
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         List<String> tagList = Arrays.asList(StringUtils.split(tags, ","));
         LOG.debug("addNeuronTag({}, neuronIds={}, tag={}, tagState={})",
                 subjectKey, DomainUtils.abbr(neuronIds), DomainUtils.abbr(tagList), tagState);
@@ -355,7 +370,7 @@ public class TmResource {
             LOG.warn("Tag list cannot be empty");
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
-        tmNeuronMetadataDao.updateNeuronTagsTagsForNeurons(neuronIds, tagList, tagState, subjectKey);
+        tmNeuronMetadataDao.updateNeuronTagsForNeurons(workspace, neuronIds, tagList, tagState, subjectKey);
         return Response.ok("DONE").build();
     }
 
@@ -403,7 +418,6 @@ public class TmResource {
         Map<String,Object> statsInfo = new HashMap<>();
         try {
             List<TmWorkspace> workspaceList = tmWorkspaceDao.getAllTmWorkspaces(subjectKey);
-            workspaceList = workspaceList.subList(1982,workspaceList.size()-1);
             for (TmWorkspace workspace: workspaceList) {
                 migrateWorkspace (statsInfo, workspace.getId(), subjectKey);
                 LOG.info("Progress Status: Completed {} out of {} workspaces", statsInfo.size(),workspaceList.size());
@@ -434,7 +448,8 @@ public class TmResource {
         int currCount = 0;
         while (continueMigration) {
             LOG.info("getting next batch using offset {} and length {}",offset,MAX_BLOCK);
-            List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(subjectKey, workspace, offset, MAX_BLOCK);
+            List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(workspace,
+                    subjectKey, offset, MAX_BLOCK);
             if (neuronPairs.isEmpty() || neuronPairs.size()<MAX_BLOCK) {
                 continueMigration = false;
             }
@@ -455,7 +470,7 @@ public class TmResource {
                     throw new IllegalStateException(e);
                 }
             }
-            tmNeuronMetadataDao.bulkReplaceNeuronsInWorkspace(workspaceId,neurons,workspaceOwner);
+            tmNeuronMetadataDao.bulkMigrateNeuronsInWorkspace(workspace,neurons,workspaceOwner);
         }
         statsInfo.put(workspaceId.toString(), "totalNode: " + totalNodes + ",neurons count: " + offset);
         LOG.info("workspace {} totalNode: {},neurons count: {}",workspaceId.toString(),totalNodes,offset);
