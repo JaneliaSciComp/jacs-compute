@@ -132,6 +132,7 @@ public class SWCService {
                     } else {
                         swcPath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(swcFolderName)).toString();
                     }
+                    String swcStorageFolderURL = storageService.getEntryURI(vsInfo.getVolumeStorageURI(), swcPath);
                     LOG.info("Retrieve swc content from {} : {}", vsInfo, swcPath);
 
                     Spliterator<NamedData<InputStream>> storageContentSupplier = new Spliterator<NamedData<InputStream>>() {
@@ -142,7 +143,6 @@ public class SWCService {
 
                         @Override
                         public boolean tryAdvance(Consumer<? super NamedData<InputStream>> action) {
-                            String swcStorageFolderURL = vsInfo.getVolumeStorageURI() + "/" + swcPath;
                             try {
                                 for (; ;) {
                                     if (archiveInputStream == null) {
