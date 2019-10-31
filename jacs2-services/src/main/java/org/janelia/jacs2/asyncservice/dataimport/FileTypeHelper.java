@@ -1,13 +1,11 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.model.domain.enums.FileType;
 
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 
 class FileTypeHelper {
@@ -18,6 +16,10 @@ class FileTypeHelper {
 
     private static final Set<String> UNCLASSIFIED_2D_EXTENSIONS = ImmutableSet.of(
             ".png", ".jpg", ".tif", ".img", ".gif"
+    );
+
+    private static final Set<String> VISUALLYLOSSLESS_IMAGE_EXTENSIONS = ImmutableSet.of(
+            ".h5j", ".nrrd"
     );
 
     /**
@@ -57,11 +59,16 @@ class FileTypeHelper {
         } else if (StringUtils.isNotBlank(fileArtifactExt)) {
             if (LOSSLESS_IMAGE_EXTENSIONS.contains(fileArtifactExt.toLowerCase())) {
                 return EnumSet.of(FileType.LosslessStack);
+            } else if (VISUALLYLOSSLESS_IMAGE_EXTENSIONS.contains(fileArtifactExt.toLowerCase())) {
+                return EnumSet.of(FileType.VisuallyLosslessStack);
             } else if (UNCLASSIFIED_2D_EXTENSIONS.contains(fileArtifactExt.toLowerCase())) {
                 return EnumSet.of(FileType.Unclassified2d);
+            } else {
+                return EnumSet.noneOf(FileType.class);
             }
+        } else {
+            return EnumSet.noneOf(FileType.class);
         }
-        return EnumSet.noneOf(FileType.class);
     }
 
 }

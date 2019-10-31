@@ -152,9 +152,9 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                         relativizeTo = null;
                     }
                     if (args.standaloneMIPS) {
-                        return dataNodeContentHelper.addStandaloneContentToTreeNode(storageContent, args.parentDataNodeId, args.parentWorkspaceOwnerKey, args.dataNodeName, relativizeTo, FileType.Unclassified2d, jacsServiceData.getOwnerKey());
+                        return dataNodeContentHelper.addStandaloneContentToTreeNode(storageContent, args.parentDataNodeId, args.parentWorkspaceOwnerKey, args.dataNodeName, relativizeTo, FileType.Unclassified3d, jacsServiceData.getOwnerKey());
                     } else {
-                        return dataNodeContentHelper.addContentStackToTreeNode(storageContent, args.parentDataNodeId, args.parentWorkspaceOwnerKey, args.dataNodeName, relativizeTo, FileType.Unclassified2d, jacsServiceData.getOwnerKey());
+                        return dataNodeContentHelper.addContentStackToTreeNode(storageContent, args.parentDataNodeId, args.parentWorkspaceOwnerKey, args.dataNodeName, relativizeTo, FileType.Unclassified3d, jacsServiceData.getOwnerKey());
                     }
                 })
                 .thenApply(storageContent -> args.cleanLocalFilesWhenDone ? storageContentHelper.removeLocalContent(storageContent) : storageContent)
