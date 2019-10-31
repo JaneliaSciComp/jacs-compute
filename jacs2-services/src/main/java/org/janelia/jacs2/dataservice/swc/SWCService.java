@@ -1,7 +1,10 @@
 package org.janelia.jacs2.dataservice.swc;
 
 import java.awt.Color;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,8 +19,13 @@ import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
+import com.google.common.io.ByteStreams;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.data.NamedData;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StorageService;
@@ -37,6 +45,7 @@ import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.reflect.ScalaLongSignature;
 
 public class SWCService {
 
@@ -81,7 +90,9 @@ public class SWCService {
     public TmWorkspace importSWCFolder(String swcFolderName, Long sampleId,
                                        String workspaceName, String workspaceOwnerKey,
                                        String neuronOwnerKey,
-                                       List<String> accessUsers) {
+                                       List<String> accessUsers,
+                                       long firstEntryOffset,
+                                       boolean orderSWCs) {
         TmSample tmSample = tmSampleDao.findEntityByIdReadableBySubjectKey(sampleId, workspaceOwnerKey);
         if (tmSample == null) {
             LOG.error("Sample {} either does not exist or user {} has no access to it", sampleId, workspaceOwnerKey);
@@ -121,27 +132,63 @@ public class SWCService {
                     } else {
                         swcPath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(swcFolderName)).toString();
                     }
-                    LOG.info("List swc entries on {} : {}", vsInfo, swcPath);
+                    LOG.info("Retrieve swc content from {} : {}", vsInfo, swcPath);
 
-                    Spliterator<Stream<StorageEntryInfo>> storageContentSupplier = new Spliterator<Stream<StorageEntryInfo>>() {
-                        volatile long offset = 0L;
+                    Spliterator<NamedData<InputStream>> storageContentSupplier = new Spliterator<NamedData<InputStream>>() {
+                        long offset = firstEntryOffset;
                         int defaultLength = 100000;
+                        TarArchiveInputStream archiveInputStream = null;
+                        TarArchiveEntry currentEntry = null;
+
                         @Override
-                        public boolean tryAdvance(Consumer<? super Stream<StorageEntryInfo>> action) {
-                            List<StorageEntryInfo> storageEntries = storageService.listStorageContent(vsInfo.getVolumeStorageURI(), swcPath, null, null, 3, offset, defaultLength);
-                            long lastEntryOffset = offset + storageEntries.size();
-                            LOG.info("Retrieved {} entries ({} - {}) from {} -> {}", storageEntries.size(), offset, lastEntryOffset, vsInfo.getVolumeStorageURI(), swcPath);
-                            if (storageEntries.isEmpty()) {
-                                return false;
-                            } else {
-                                offset = lastEntryOffset;
-                                action.accept(storageEntries.stream());
-                                return storageEntries.size() == defaultLength;
+                        public boolean tryAdvance(Consumer<? super NamedData<InputStream>> action) {
+                            String swcStorageFolderURL = vsInfo.getVolumeStorageURI() + "/" + swcPath;
+                            try {
+                                for (; ;) {
+                                    if (archiveInputStream == null) {
+                                        LOG.info("Retrieve entries ({} - {}) from {}", offset, offset + defaultLength, swcStorageFolderURL);
+                                        InputStream swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, defaultLength, orderSWCs, null, null);
+                                        if (swcDataStream == null) {
+                                            return false;
+                                        }
+                                        archiveInputStream = new TarArchiveInputStream(new ByteArrayInputStream(ByteStreams.toByteArray(swcDataStream)));
+                                        swcDataStream.close();
+
+                                        currentEntry = archiveInputStream.getNextTarEntry();
+                                        if (currentEntry == null) {
+                                            archiveInputStream.close();
+                                            return false;
+                                        }
+                                        offset = offset + defaultLength; // prepare the offset for the next set of records
+                                    }
+
+                                    // consume until a non folder entry is found
+                                    for (; currentEntry != null && currentEntry.isDirectory(); currentEntry = archiveInputStream.getNextTarEntry());
+
+                                    if (currentEntry == null) {
+                                        archiveInputStream = null;
+                                        continue; // try the next set
+                                    }
+
+                                    NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), ByteStreams.limit(archiveInputStream, currentEntry.getSize()));
+                                    // advance the entry
+                                    currentEntry = archiveInputStream.getNextTarEntry();
+                                    if (currentEntry == null) {
+                                        // if this was the last entry from the archive stream close the archive stream
+                                        archiveInputStream.close();
+                                        archiveInputStream = null;
+                                    }
+                                    action.accept(entryData);
+                                    return true; // even if this archive stream is done, there might be others
+                                }
+                            } catch (IOException e) {
+                                LOG.error("Error reading or reading from swc archive from {} ({}) offset: {}, length: {}", swcStorageFolderURL, swcFolderName, offset, defaultLength, defaultLength, e);
+                                throw new UncheckedIOException(e);
                             }
                         }
 
                         @Override
-                        public Spliterator<Stream<StorageEntryInfo>> trySplit() {
+                        public Spliterator<NamedData<InputStream>> trySplit() {
                             return null;
                         }
 
@@ -158,12 +205,10 @@ public class SWCService {
                     return StreamSupport.stream(storageContentSupplier, true);
                 })
                 .orElseGet(() -> Stream.of())
-                .flatMap(s -> s)
-                .filter(storageEntryInfo -> storageEntryInfo.getEntryRelativePath().endsWith(".swc"))
                 .forEach(swcEntry ->{
-                    LOG.info("Read swcEntry {} from {}", swcEntry, swcEntry.getEntryURL());
-                    InputStream swcStream = storageService.getStorageContent(swcEntry.getDecodedEntryURL(), null, null);
-                    TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getEntryRelativePath(), swcStream, neuronOwnerKey, tmWorkspace, externalToInternalConverter);
+                    LOG.debug("Read swcEntry {} from {}", swcEntry.getName(), swcFolderName);
+                    InputStream swcStream = swcEntry.getData();
+                    TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getName(), swcStream, neuronOwnerKey, tmWorkspace, externalToInternalConverter);
                     try {
                         LOG.info("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
                         tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);

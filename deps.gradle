@@ -38,6 +38,8 @@ dependencies {
         COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:${COMMONS_LANG_VERSION}"
         COMMONS_COLLECTIONS_VERSION = "4.2"
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:${COMMONS_COLLECTIONS_VERSION}"
+        COMMONS_COMPRMPRESS_LIB_VERSION = "1.15"
+        COMMOCOMPRESS_LIB = "org.apache.commons:commons-compress:${COMMONS_COMPRMPRESS_LIB_VERSION}"
 
         // JAX-RS API
         JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.1"

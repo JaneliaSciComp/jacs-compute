@@ -203,6 +203,29 @@ public class StorageService {
         }
     }
 
+    public InputStream getStorageFolderContent(String storageURI, long offset, long size, boolean sortedContent, String subject, String authToken) {
+        Client httpclient = HttpUtils.createHttpClient();
+        try {
+            WebTarget target = httpclient.target(storageURI)
+                    .queryParam("alwaysArchive", true)
+                    .queryParam("useNaturalSort", sortedContent)
+                    .queryParam("startEntryIndex", offset)
+                    .queryParam("entriesCount", size);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
+            Response response = requestBuilder.get();
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                throw new IllegalStateException(storageURI + " returned with " + response.getStatus());
+            }
+            return response.readEntity(InputStream.class);
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            httpclient.close();
+        }
+    }
+
     public StorageEntryInfo putStorageContent(String storageURI, String entryName, String subject, String authToken, InputStream dataStream) {
         Client httpclient = HttpUtils.createHttpClient();
         try {

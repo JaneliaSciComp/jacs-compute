@@ -162,7 +162,6 @@ public class TestResourceDependenciesProducer {
         return storageService;
     }
 
-    @AsyncIndex
     @Produces
     public TmNeuronMetadataDao getTmNeuronMetadataSearchableDao() {
         return tmNeuronMetadataDao;

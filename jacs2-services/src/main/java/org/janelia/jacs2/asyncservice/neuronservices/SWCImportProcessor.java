@@ -40,6 +40,10 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
         String workspaceOwnerKey;
         @Parameter(names = "-neuronsOwner", description = "If not set the neurons owner is the service caller")
         String neuronsOwnerKey;
+        @Parameter(names = "-firstSWCFile", description = "The index of the first SWC file to be imported")
+        long firsSWCFile = 0;
+        @Parameter(names = "-orderSWCs", description = "If set, import SWCs in order", arity = 1)
+        boolean orderSWCs = false;
         SWCImportArgs() {
             super("Service that imports an SWC file into a workspace");
         }
@@ -105,7 +109,10 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
         accessUsers.remove(workspaceOwnerKey); // if the neuron owner and the workspace owner are the same there's no need for this
         return computationFactory
                 .newCompletedComputation(swcService.importSWCFolder(args.swcDirName,
-                        args.sampleId, args.workspace, workspaceOwnerKey, neuronOwnerKey, ImmutableList.copyOf(accessUsers)))
+                        args.sampleId, args.workspace,
+                        workspaceOwnerKey, neuronOwnerKey,
+                        ImmutableList.copyOf(accessUsers),
+                        args.firsSWCFile, args.orderSWCs))
                 .thenApply(tmWorkspace -> updateServiceResult(jacsServiceData, tmWorkspace.getId()));
     }
 
