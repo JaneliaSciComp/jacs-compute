@@ -159,12 +159,21 @@ public class SWCService {
                                         archiveInputStream = new TarArchiveInputStream(pipedInputStream);
 
                                         Thread thread1 = new Thread(new Runnable() {
+                                            long start = offset;
+                                            long end = offset + defaultLength;
                                             @Override
                                             public void run() {
                                                 try {
                                                     ByteStreams.copy(swcDataStream, pipedOutputStream);
                                                 } catch (IOException e) {
+                                                } finally {
+                                                    try {
+                                                        swcDataStream.close();
+                                                        pipedOutputStream.close();
+                                                    } catch (IOException ignore) {
+                                                    }
                                                 }
+                                                LOG.info("Done entries ({} - {}) from {}", start, end, swcStorageFolderURL);
                                             }
                                         });
                                         thread1.start();
