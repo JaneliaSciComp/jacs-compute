@@ -151,7 +151,7 @@ public class SWCService {
                                         if (swcDataStream == null) {
                                             return false;
                                         }
-                                        archiveInputStream = new TarArchiveInputStream(new ByteArrayInputStream(ByteStreams.toByteArray(swcDataStream)));
+                                        archiveInputStream = new TarArchiveInputStream(swcDataStream);
                                         swcDataStream.close();
 
                                         currentEntry = archiveInputStream.getNextTarEntry();
@@ -166,6 +166,7 @@ public class SWCService {
                                     for (; currentEntry != null && currentEntry.isDirectory(); currentEntry = archiveInputStream.getNextTarEntry());
 
                                     if (currentEntry == null) {
+                                        archiveInputStream.close();
                                         archiveInputStream = null;
                                         continue; // try the next set
                                     }
