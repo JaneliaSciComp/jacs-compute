@@ -22,7 +22,7 @@ class CommonDataNodeArgs extends ServiceArgs {
     boolean standaloneMIPS = false;
     @Parameter(names = "-mipsExtensions", description = "list of extensions for which to generate mips")
     List<String> mipsExtensions = new ArrayList<>(ImmutableList.of(
-            ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd", ".nrrd"
+            ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd", ".nrrd", ".h5j"
     ));
     @Parameter(names = "-mipsChanSpec", description = "MIPS channel spec - all files must have the same channel spec")
     String mipsChanSpec = "r"; // default to a single reference channel

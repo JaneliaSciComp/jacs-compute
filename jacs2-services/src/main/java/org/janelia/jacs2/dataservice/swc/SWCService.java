@@ -201,6 +201,7 @@ public class SWCService {
                                     entriesCount.incrementAndGet();
                                     // advance the entry
                                     currentEntry = archiveInputStream.getNextTarEntry();
+                                    action.accept(entryData);
                                     if (currentEntry == null) {
                                         // if this was the last entry from the archive stream close the archive stream
                                         archiveInputStream.close();
@@ -209,7 +210,6 @@ public class SWCService {
                                         if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
                                         entriesCount.set(0L);
                                     }
-                                    action.accept(entryData);
                                     return true; // even if this archive stream is done, there might be others
                                 }
                             } catch (IOException e) {
@@ -263,10 +263,11 @@ public class SWCService {
 
             executorService.submit(() -> {
                 try {
-                    BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(pipedOutputStream);
-                    ByteStreams.copy(swcDataStream, bufferedOutputStream);
-                    bufferedOutputStream.flush();
+                    long nbytes = ByteStreams.copy(swcDataStream, pipedOutputStream);
+                    pipedOutputStream.flush();
+                    LOG.info("Done retrieving entries ({} - {}) from {} ({} bytes)", offset, offset + length, swcStorageFolderURL, nbytes);
                 } catch (IOException e) {
+                    LOG.error("Error copying {} bytes from {} starting at {}", length, swcStorageFolderURL, offset, e);
                 } finally {
                     try {
                         swcDataStream.close();
@@ -277,7 +278,6 @@ public class SWCService {
                     } catch (IOException ignore) {
                     }
                 }
-                LOG.info("Done retrieving entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL);
             });
             return pipedInputStream;
         } catch (IOException e) {
