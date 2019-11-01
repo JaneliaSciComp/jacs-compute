@@ -4,6 +4,9 @@ import java.awt.Color;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.PushbackInputStream;
 import java.io.UncheckedIOException;
 import java.net.URLDecoder;
 import java.nio.file.Path;
@@ -151,8 +154,25 @@ public class SWCService {
                                         if (swcDataStream == null) {
                                             return false;
                                         }
-                                        archiveInputStream = new TarArchiveInputStream(swcDataStream);
-                                        swcDataStream.close();
+                                        PipedOutputStream pipedOutputStream = new PipedOutputStream();
+                                        PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream);
+                                        archiveInputStream = new TarArchiveInputStream(pipedInputStream);
+
+                                        Thread thread1 = new Thread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                try {
+                                                    ByteStreams.copy(swcDataStream, pipedOutputStream);
+                                                } catch (IOException e) {
+                                                } finally {
+                                                    try {
+                                                        swcDataStream.close();
+                                                    } catch (IOException ignore) {
+                                                    }
+                                                }
+                                            }
+                                        });
+                                        thread1.start();
 
                                         currentEntry = archiveInputStream.getNextTarEntry();
                                         if (currentEntry == null) {
