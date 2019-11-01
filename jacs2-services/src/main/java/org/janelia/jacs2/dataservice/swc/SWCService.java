@@ -167,9 +167,11 @@ public class SWCService {
                                             LOG.info("Processed a total of {} from {} ({})", totalEntriesCount, swcStorageFolderURL, swcFolderName);
                                             return false;
                                         }
+                                        // the swcDataStream is expected to be a TAR
                                         archiveInputStream = new TarArchiveInputStream(swcDataStream);
-                                        currentEntry = archiveInputStream.getNextTarEntry();
+                                        currentEntry = archiveInputStream.getNextTarEntry(); // retrieve the first entry
                                         if (currentEntry == null) {
+                                            // if there are no entries then we are done
                                             archiveInputStream.close();
                                             totalEntriesCount.addAndGet(entriesCount.get());
                                             if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
@@ -180,10 +182,13 @@ public class SWCService {
                                         offset.addAndGet(defaultLength); // prepare the offset for the next set of records
                                     }
 
-                                    // consume until a non folder entry is found
-                                    for (; currentEntry != null && currentEntry.isDirectory(); currentEntry = archiveInputStream.getNextTarEntry());
+                                    // just in case some folders got through - ignore them
+                                    for (; currentEntry != null && currentEntry.isDirectory(); currentEntry = archiveInputStream.getNextTarEntry()) {
+                                        // skip directories
+                                    }
 
                                     if (currentEntry == null) {
+                                        // if it read only directories until it reached the end then close this and move to the next batch
                                         archiveInputStream.close();
                                         archiveInputStream = null;
                                         totalEntriesCount.addAndGet(entriesCount.get());
@@ -193,6 +198,7 @@ public class SWCService {
                                     }
 
                                     NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), ByteStreams.limit(archiveInputStream, currentEntry.getSize()));
+                                    entriesCount.incrementAndGet();
                                     // advance the entry
                                     currentEntry = archiveInputStream.getNextTarEntry();
                                     if (currentEntry == null) {
@@ -203,7 +209,6 @@ public class SWCService {
                                         if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
                                         entriesCount.set(0L);
                                     }
-                                    entriesCount.incrementAndGet();
                                     action.accept(entryData);
                                     return true; // even if this archive stream is done, there might be others
                                 }
@@ -248,7 +253,7 @@ public class SWCService {
 
     private InputStream openSWCDataStream(String swcStorageFolderURL, long offset, long length, boolean orderSWCs) {
         LOG.info("Retrieve entries ({} - {}) from {}", offset, offset + length, swcStorageFolderURL);
-        InputStream swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, length, orderSWCs, null, null);
+        InputStream swcDataStream = storageService.getStorageFolderContent(swcStorageFolderURL, offset, length, orderSWCs, "\\.swc$", null, null);
         if (swcDataStream == null) {
             return null;
         }

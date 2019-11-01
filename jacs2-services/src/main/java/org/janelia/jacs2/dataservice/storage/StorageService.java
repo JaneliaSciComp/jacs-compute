@@ -203,13 +203,14 @@ public class StorageService {
         }
     }
 
-    public InputStream getStorageFolderContent(String storageURI, long offset, long size, boolean sortedContent, String subject, String authToken) {
+    public InputStream getStorageFolderContent(String storageURI, long offset, long size, boolean sortedContent, String filter, String subject, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(storageURI)
                     .queryParam("alwaysArchive", true)
                     .queryParam("useNaturalSort", sortedContent)
                     .queryParam("startEntryIndex", offset)
+                    .queryParam("entryPattern", filter)
                     .queryParam("entriesCount", size);
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
             Response response = requestBuilder.get();
