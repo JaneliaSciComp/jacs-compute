@@ -101,12 +101,14 @@ public class SWCService {
                                        List<String> accessUsers,
                                        long firstEntryOffset,
                                        boolean orderSWCs) {
+        LOG.info("Import SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
         TmSample tmSample = tmSampleDao.findEntityByIdReadableBySubjectKey(sampleId, workspaceOwnerKey);
         if (tmSample == null) {
             LOG.error("Sample {} either does not exist or user {} has no access to it", sampleId, workspaceOwnerKey);
             throw new IllegalArgumentException("Sample " + sampleId + " either does not exist or is not accessible");
         }
         TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(workspaceOwnerKey, createWorkspace(swcFolderName, sampleId, workspaceName));
+        LOG.info("Created workspace {} for SWC folder {} for sample {} into workspace {} for user {} - neuron owner is {}", tmWorkspace, swcFolderName, sampleId, workspaceName, workspaceOwnerKey, neuronOwnerKey);
         accessUsers.forEach(accessUserKey -> {
             try {
                 domainDao.setPermissions(workspaceOwnerKey, TmWorkspace.class.getName(), tmWorkspace.getId(), accessUserKey, true, true, true);
