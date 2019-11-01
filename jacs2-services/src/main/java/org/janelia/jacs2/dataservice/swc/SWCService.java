@@ -164,11 +164,6 @@ public class SWCService {
                                                 try {
                                                     ByteStreams.copy(swcDataStream, pipedOutputStream);
                                                 } catch (IOException e) {
-                                                } finally {
-                                                    try {
-                                                        swcDataStream.close();
-                                                    } catch (IOException ignore) {
-                                                    }
                                                 }
                                             }
                                         });
@@ -231,7 +226,7 @@ public class SWCService {
                     InputStream swcStream = swcEntry.getData();
                     TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getName(), swcStream, neuronOwnerKey, tmWorkspace, externalToInternalConverter);
                     try {
-                        LOG.info("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
+                        LOG.debug("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
                         tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                     } catch (Exception e) {
                         LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
