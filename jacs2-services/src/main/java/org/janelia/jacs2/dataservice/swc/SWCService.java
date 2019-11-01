@@ -296,7 +296,6 @@ public class SWCService {
         TmNeuronMetadata neuronMetadata = new TmNeuronMetadata(tmWorkspace, neuronName);
         neuronMetadata.setReaders(tmWorkspace.getReaders());
         neuronMetadata.setWriters(tmWorkspace.getWriters());
-        neuronMetadata.setId(neuronIdGenerator.next());
 
         Map<Integer, Integer> nodeParentLinkage = new HashMap<>();
         Map<Integer, TmGeoAnnotation> annotations = new HashMap<>();
