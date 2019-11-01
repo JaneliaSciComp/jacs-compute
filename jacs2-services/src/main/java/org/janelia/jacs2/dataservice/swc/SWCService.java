@@ -1,6 +1,7 @@
 package org.janelia.jacs2.dataservice.swc;
 
 import java.awt.Color;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -161,6 +162,7 @@ public class SWCService {
                                         InputStream swcDataStream = openSWCDataStream(swcStorageFolderURL, offset.get(), defaultLength, orderSWCs);
                                         if (swcDataStream == null) {
                                             totalEntriesCount.addAndGet(entriesCount.get());
+                                            if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
                                             entriesCount.set(0L);
                                             LOG.info("Processed a total of {} from {} ({})", totalEntriesCount, swcStorageFolderURL, swcFolderName);
                                             return false;
@@ -170,6 +172,7 @@ public class SWCService {
                                         if (currentEntry == null) {
                                             archiveInputStream.close();
                                             totalEntriesCount.addAndGet(entriesCount.get());
+                                            if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
                                             entriesCount.set(0L);
                                             LOG.info("Processed a total of {} from {} ({})", totalEntriesCount, swcStorageFolderURL, swcFolderName);
                                             return false;
@@ -184,6 +187,7 @@ public class SWCService {
                                         archiveInputStream.close();
                                         archiveInputStream = null;
                                         totalEntriesCount.addAndGet(entriesCount.get());
+                                        if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
                                         entriesCount.set(0L);
                                         continue; // try the next set
                                     }
@@ -195,13 +199,16 @@ public class SWCService {
                                         // if this was the last entry from the archive stream close the archive stream
                                         archiveInputStream.close();
                                         archiveInputStream = null;
+                                        totalEntriesCount.addAndGet(entriesCount.get());
+                                        if (entriesCount.get() > 0) LOG.info("Imported a batch of {} entries from {} ({})", entriesCount, swcStorageFolderURL, swcFolderName);
+                                        entriesCount.set(0L);
                                     }
                                     entriesCount.incrementAndGet();
                                     action.accept(entryData);
                                     return true; // even if this archive stream is done, there might be others
                                 }
                             } catch (IOException e) {
-                                LOG.error("Error reading or reading from swc archive from {} ({}) offset: {}, length: {}", swcStorageFolderURL, swcFolderName, offset, defaultLength, defaultLength, e);
+                                LOG.error("Error reading or reading from swc archive from {} ({}) offset: {}, length: {}", swcStorageFolderURL, swcFolderName, offset, defaultLength, e);
                                 throw new UncheckedIOException(e);
                             }
                         }
@@ -251,7 +258,9 @@ public class SWCService {
 
             executorService.submit(() -> {
                 try {
-                    ByteStreams.copy(swcDataStream, pipedOutputStream);
+                    BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(pipedOutputStream);
+                    ByteStreams.copy(swcDataStream, bufferedOutputStream);
+                    bufferedOutputStream.flush();
                 } catch (IOException e) {
                 } finally {
                     try {
