@@ -682,20 +682,20 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public void giveOwnerReadWriteToAllFromCollection(String collectionName) {
         Class<?> baseClass = DomainUtils.getBaseClass(collectionName);
-        List<DomainObject> toIndex = new LinkedList<>();
         if (DomainObject.class.isAssignableFrom(baseClass)) {
             MongoCollection mongoCollection = dao.getCollectionByName(collectionName);
             Iterable<?> iterable = mongoCollection.find().as(baseClass);
             if (iterable != null) {
                 for (Object obj : iterable) {
                     DomainObject domainObject = (DomainObject) obj;
-                    toIndex.add(domainObject);
                     String ownerKey = domainObject.getOwnerKey();
                     if (StringUtils.isNotBlank(ownerKey)) {
                         mongoCollection.update("{_id:#}", domainObject.getId()).with("{$addToSet:{readers:#,writers:#}}", ownerKey, ownerKey);
+                        domainObject.getReaders().add(ownerKey);
+                        domainObject.getWriters().add(ownerKey);
+                        domainObjectIndexer.indexDocument(domainObject);
                     }
                 }
-                domainObjectIndexer.indexDocumentStream(toIndex.stream());
             }
         }
     }
