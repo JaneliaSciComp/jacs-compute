@@ -3,12 +3,13 @@ package org.janelia.jacs2.asyncservice.lvtservices;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.Reference;
@@ -31,43 +32,32 @@ import java.util.List;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@Named("lvtDataImport")
-public class LVTDataImport extends AbstractServiceProcessor<File> {
+@Named("lvDataImport")
+public class LVDataImport extends AbstractServiceProcessor<File> {
 
-    static class LVTDataImportArgs extends ServiceArgs {
-        @Parameter(names = "-input", description = "Input directory containing TIFF files", required = true)
-        String input;
-        @Parameter(names = "-output", description = "Output directory for octree and ktx tiles", required = true)
-        String output;
-        @Parameter(names = "-levels", description = "Number of octree levels", required = false)
-        Integer levels = 3;
+    static class LVDataImportArgs extends LVArgs {
         @Parameter(names = "-voxelSize", description = "Voxel size (in 'x,y,z' format)", required = true)
         String voxelSize;
-        @Parameter(names = "-sampleName", description = "Name of sample in the Workstation. If null, no sample will be created.", required = false)
-        String sampleName;
     }
 
     private final WrappedServiceProcessor<OctreeCreator, List<File>> octreeCreator;
     private final WrappedServiceProcessor<KTXCreator,List<File>> ktxCreator;
-    private final LegacyDomainDao legacyDomainDao;
 
     @Inject
-    LVTDataImport(ServiceComputationFactory computationFactory,
-                            JacsServiceDataPersistence jacsServiceDataPersistence,
-                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                            OctreeCreator octreeCreator,
-                            KTXCreator ktxCreator,
-                            LegacyDomainDao legacyDomainDao,
-                            Logger logger) {
+    LVDataImport(ServiceComputationFactory computationFactory,
+                 JacsServiceDataPersistence jacsServiceDataPersistence,
+                 @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                 OctreeCreator octreeCreator,
+                 KTXCreator ktxCreator,
+                 Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.octreeCreator = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, octreeCreator);
         this.ktxCreator = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, ktxCreator);
-        this.legacyDomainDao = legacyDomainDao;
     }
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(LVTDataImport.class, new LVTDataImportArgs());
+        return ServiceArgs.getMetadata(LVDataImport.class, new LVDataImportArgs());
     }
 
     @Override
@@ -92,59 +82,38 @@ public class LVTDataImport extends AbstractServiceProcessor<File> {
 
     @Override
     public ServiceComputation<JacsServiceResult<File>> process(JacsServiceData jacsServiceData) {
-        LVTDataImportArgs args = getArgs(jacsServiceData);
+        LVDataImportArgs args = getArgs(jacsServiceData);
 
-        final String inputTiffDir = args.input;
-        final String octreeDir = args.output;
-        final String ktxDir = args.output+"/ktx";
+        final String inputTiffDir = args.inputDir;
+        final String octreeDir = args.outputDir;
+        final String ktxDir = StringUtils.appendIfMissing(octreeDir, "/") + "ktx";
         final int levels = args.levels;
         final String voxelSize = args.voxelSize;
-        final String sampleName = args.sampleName;
 
         return octreeCreator.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                     .description("Create octree")
                     .build(),
-                new ServiceArg("-input", inputTiffDir),
-                new ServiceArg("-output", octreeDir),
+                new ServiceArg("-inputDir", inputTiffDir),
+                new ServiceArg("-outputDir", octreeDir),
                 new ServiceArg("-levels", levels),
                 new ServiceArg("-voxelSize", voxelSize))
-            .thenCompose((JacsServiceResult<List<File>> fileResult) ->
+            .thenCompose((JacsServiceResult<List<File>> octreeResult) ->
                 ktxCreator.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                     .description("Create ktx tiles")
+                        .waitFor(octreeResult.getJacsServiceData())
                     .build(),
-                new ServiceArg("-input", octreeDir),
-                new ServiceArg("-output", ktxDir),
+                new ServiceArg("-inputDir", octreeDir),
+                new ServiceArg("-outputDir", ktxDir),
                 new ServiceArg("-levels", levels)))
             .thenApply((JacsServiceResult<List<File>> fileResult) ->
                 new JacsServiceResult<>(jacsServiceData, new File(octreeDir)))
-            .thenApply((JacsServiceResult<File> result) -> {
-                if (sampleName != null) {
-                    try {
-                        createTmSample(jacsServiceData.getOwnerKey(), result.getResult().getAbsolutePath(), sampleName);
-                    } catch (Exception e) {
-                        throw new UncheckedExecutionException("Error creating sample", e);
-                    }
-                }
-                return result;
-            });
+            ;
     }
 
-    // TODO: This is copy and pasted from JACSv1's TiledMicroscopeDAO. When that DAO gets ported over, it should be used instead.
-    public TmSample createTmSample(String subjectKey, String filepath, String sampleName) throws Exception {
-        logger.debug("createTmSample({}, {})",subjectKey,sampleName);
-        TmSample sample = new TmSample();
-        sample.setName(sampleName);
-        DomainUtils.setFilepath(sample, FileType.LargeVolumeOctree, filepath);
-        DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, filepath+"/ktx");
-        sample = legacyDomainDao.save(subjectKey, sample);
-        TreeNode folder = legacyDomainDao.getOrCreateDefaultTreeNodeFolder(subjectKey, DomainConstants.NAME_TM_SAMPLE_FOLDER);
-        legacyDomainDao.addChildren(subjectKey, folder, Arrays.asList(Reference.createFor(sample)));
-        return sample;
-    }
 
-    private LVTDataImportArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LVTDataImportArgs());
+    private LVDataImportArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LVDataImportArgs());
     }
 }

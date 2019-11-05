@@ -131,9 +131,10 @@ public class DbMaintainer {
                 ));
     }
 
-    void refreshPermissions() {
+    void refreshPermissions(boolean includeFragments, boolean includeNeurons) {
         DomainUtils.getCollectionNames().stream()
-                .filter(collectionName -> !collectionName.equals("tmNeuron"))
+                .filter(collectionName -> !collectionName.equals("tmNeuron") || includeNeurons)
+                .filter(collectionName -> !collectionName.equals("fragment") || includeFragments)
                 .forEach(collectionName -> {
                     LOG.info("Refresh permissions on collection {}", collectionName);
                     legacyDomainDao.giveOwnerReadWriteToAllFromCollection(collectionName);

@@ -31,6 +31,10 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
         boolean refreshIndexes = false;
         @Parameter(names = "-refreshPermissions", arity = 0, description = "Refresh permissions")
         boolean refreshPermissions = false;
+        @Parameter(names = "-refreshPermissionsForNeurons", arity = 0, description = "If refreshing permissions, include neurons as well, otherwise ignore the neurons")
+        boolean refreshPermissionsForNeurons = false;
+        @Parameter(names = "-refreshPermissionsFor", arity = 0, description = "If refreshing permissions, include fragments as well, otherwise ignore the fragments")
+        boolean refreshPermissionsForFragments = false;
         @Parameter(names = "-refreshTmSampleSync", arity = 0, description = "Refresh filesystem synchronization for TmSamples")
         boolean refreshTmSampleSync = false;
         DbMaintenanceArgs() {
@@ -82,7 +86,7 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
             logger.info("Service {} perform permission refresh", jacsServiceData);
             logMaintenanceEvent("Refresh permissions", jacsServiceData.getId());
             try {
-                dbMainainer.refreshPermissions();
+                dbMainainer.refreshPermissions(args.refreshPermissionsForFragments, args.refreshPermissionsForNeurons);
                 jacsServiceDataPersistence.addServiceEvent(jacsServiceData, JacsServiceData.createServiceEvent(JacsServiceEventTypes.STEP_COMPLETED, "Completed permissions refresh"));
             } catch (Exception e) {
                 processingFailureMessage.append("permissions refresh failed - ").append(e.getMessage()).append(';');

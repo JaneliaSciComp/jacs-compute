@@ -11,6 +11,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
+import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularityContainerProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
@@ -43,41 +44,25 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Named("ktxCreator")
-public class KTXCreator extends AbstractExeBasedServiceProcessor<List<File>> {
+public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, List<File>> {
 
-    static class KTXCreatorArgs extends ServiceArgs {
-        @Parameter(names = "-input", description = "Input directory containing octree", required = true)
-        String input;
-        @Parameter(names = "-output", description = "Output directory for octree", required = true)
-        String output;
-        @Parameter(names = "-levels", description = "Number of tree levels", required = false)
-        Integer levels = 3;
+    static class KTXCreatorArgs extends LVTArgs {
     }
-
-    private final String ktxSrcDir;
-    private final String executable;
-    private final String anacondaDir;
 
     @Inject
     KTXCreator(ServiceComputationFactory computationFactory,
                JacsServiceDataPersistence jacsServiceDataPersistence,
                @Any Instance<ExternalProcessRunner> serviceRunners,
                @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-               @PropertyValue(name = "KTX.Src.Path") String ktxSrcDir,
-               @PropertyValue(name = "KTX.Script.Path") String executable,
-               @PropertyValue(name = "Anaconda.Bin.Path") String anacondaDir,
-               JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
-               @ApplicationProperties ApplicationConfig applicationConfig,
+               PullAndRunSingularityContainerProcessor pullAndRunContainerProcessor,
+               @PropertyValue(name = "service.ktxCreator.containerImage") String defaultContainerImage,
                Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
-        this.ktxSrcDir = ktxSrcDir;
-        this.executable = executable;
-        this.anacondaDir = anacondaDir;
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, pullAndRunContainerProcessor, defaultContainerImage, logger);
     }
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(KTXCreator.class, new KTXCreatorArgs());
+        return ServiceArgs.getMetadata(KTXCreator.class, createToolArgs());
     }
 
     @Override
@@ -109,7 +94,7 @@ public class KTXCreator extends AbstractExeBasedServiceProcessor<List<File>> {
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                File outputDir = new File(getArgs(depResults.getJacsServiceData()).output);
+                File outputDir = new File(getArgs(depResults.getJacsServiceData()).outputDir);
                 if (!outputDir.exists()) return false;
                 if (!verifyOctree(outputDir)) return false;
                 return true;
@@ -127,105 +112,8 @@ public class KTXCreator extends AbstractExeBasedServiceProcessor<List<File>> {
     }
 
     @Override
-    protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
-        KTXCreatorArgs args = getArgs(jacsServiceData);
-        ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
-        ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
-        createScript(args, externalScriptWriter);
-        externalScriptWriter.close();
-        return externalScriptCode;
+    KTXCreatorArgs createToolArgs() {
+        return new KTXCreatorArgs();
     }
 
-    private void createScript(KTXCreatorArgs args, ScriptWriter scriptWriter) {
-        scriptWriter.read("INPUT");
-        scriptWriter.read("OUTPUT");
-        scriptWriter.read("SUBTREE_PATH");
-        scriptWriter.read("SUBTREE_DEPTH");
-
-        scriptWriter.exportVar("PATH", getFullExecutableName(anacondaDir)+":$PATH");
-        scriptWriter.exportVar("KTXSRC", getFullExecutableName(ktxSrcDir));
-        scriptWriter.exportVar("PYTHONPATH", getFullExecutableName(ktxSrcDir));
-
-        scriptWriter.add("source activate pyktx");
-
-        scriptWriter.addWithArgs("python"); // use the default python in the pyktx conda environment
-        scriptWriter.addArg(getFullExecutableName(executable));
-        scriptWriter.addArg("$INPUT");
-        scriptWriter.addArg("$OUTPUT");
-        scriptWriter.addArg(StringUtils.wrap("$SUBTREE_PATH", '"'));
-        scriptWriter.addArg("$SUBTREE_DEPTH");
-        scriptWriter.endArgs();
-    }
-
-    @Override
-    protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
-        KTXCreatorArgs args = getArgs(jacsServiceData);
-        List<ExternalCodeBlock> blocks = new ArrayList<>();
-        recurseOctree(blocks, args, args.input, 1);
-        return blocks;
-    }
-
-    /**
-     * Walks the input octree and generates a number of scripts to process it. This was simply
-     * transliterated from the Python version (ktx/src/tools/cluster/create_cluster_scripts.py),
-     * which was intended for very large MouseLight data. It may not be optimal for smaller data.
-     */
-    private void recurseOctree(List<ExternalCodeBlock> blocks, KTXCreatorArgs args, String folder, int level) {
-
-        File file = new File(folder);
-        if (!file.exists()) return;
-
-        logger.trace("recurse_octree(folder={},level={})", folder, level);
-
-        if (level==1 || level % args.levels == 2) {
-
-            Integer levels;
-            List<String> subtree0;
-            if (level == 1) {
-                subtree0 = Collections.emptyList();
-                levels = 1;
-            }
-            else {
-                List<String> path = Arrays.asList(folder.split("\\/"));
-                int num = level-1;
-                logger.trace("  path={}, pathSize={}, num={}", path, path.size(), num);
-                subtree0 = path.subList(path.size() - num, path.size());
-                levels = args.levels;
-            }
-
-            String subtree = String.join("/", subtree0);
-            logger.info("  Creating script for subtree: {} (levels={})", subtree, levels);
-
-            ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
-            ScriptWriter scriptWriter = externalScriptCode.getCodeWriter();
-            scriptWriter.add(args.input);
-            scriptWriter.add(args.output);
-            scriptWriter.add(subtree);
-            scriptWriter.add(levels.toString());
-            scriptWriter.close();
-
-            blocks.add(externalScriptCode);
-        }
-
-        for(int i=0; i<8; i++) {
-            String subfolder = folder + "/" + (i+1);
-            recurseOctree(blocks, args, subfolder, level + 1);
-        }
-    }
-
-    @Override
-    protected void prepareResources(JacsServiceData jacsServiceData) {
-        // This doesn't need much memory, because it only processes a single tile at a time.
-        ProcessorHelper.setRequiredSlots(jacsServiceData.getResources(),1);
-        ProcessorHelper.setSoftJobDurationLimitInSeconds(jacsServiceData.getResources(), 5*60); // 5 minutes
-        ProcessorHelper.setHardJobDurationLimitInSeconds(jacsServiceData.getResources(), 60*60); // 1 hour
-    }
-
-    private KTXCreatorArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new KTXCreatorArgs());
-    }
-
-    private Path getOutputDir(KTXCreatorArgs args) {
-        return Paths.get(args.output).toAbsolutePath();
-    }
 }

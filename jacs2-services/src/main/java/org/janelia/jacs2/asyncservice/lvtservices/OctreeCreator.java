@@ -11,6 +11,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
+import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularityContainerProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
@@ -40,32 +41,22 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Named("octreeCreator")
-public class OctreeCreator extends AbstractExeBasedServiceProcessor<List<File>> {
+public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCreatorArgs, List<File>> {
 
-    static class OctreeCreatorArgs extends ServiceArgs {
-        @Parameter(names = "-input", description = "Input directory containing TIFF files", required = true)
-        String input;
-        @Parameter(names = "-output", description = "Output directory for octree", required = true)
-        String output;
-        @Parameter(names = "-levels", description = "Number of octree levels", required = false)
-        Integer levels = 3;
+    static class OctreeCreatorArgs extends LVTArgs {
         @Parameter(names = "-voxelSize", description = "Voxel size (in 'x,y,z' format)", required = true)
         String voxelSize;
     }
-
-    private final String executable;
 
     @Inject
     OctreeCreator(ServiceComputationFactory computationFactory,
                   JacsServiceDataPersistence jacsServiceDataPersistence,
                   @Any Instance<ExternalProcessRunner> serviceRunners,
                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                  @PropertyValue(name = "Octree.Bin.Path") String executable,
-                  JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
-                  @ApplicationProperties ApplicationConfig applicationConfig,
+                  PullAndRunSingularityContainerProcessor pullAndRunContainerProcessor,
+                  @PropertyValue(name = "service.octreeCreator.containerImage") String defaultContainerImage,
                   Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, jacsJobInstanceInfoDao, applicationConfig, logger);
-        this.executable = executable;
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, pullAndRunContainerProcessor, defaultContainerImage, logger);
     }
 
     @Override
@@ -103,7 +94,7 @@ public class OctreeCreator extends AbstractExeBasedServiceProcessor<List<File>> 
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                File outputDir = new File(getArgs(depResults.getJacsServiceData()).output);
+                File outputDir = new File(getArgs(depResults.getJacsServiceData()).outputDir);
                 if (!outputDir.exists()) return false;
                 if (!verifyOctree(outputDir)) return false;
                 return true;
@@ -121,60 +112,13 @@ public class OctreeCreator extends AbstractExeBasedServiceProcessor<List<File>> 
     }
 
     @Override
-    protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
-        OctreeCreatorArgs args = getArgs(jacsServiceData);
-        ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
-        ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
-        createScript(args, externalScriptWriter);
-        externalScriptWriter.close();
-        return externalScriptCode;
-    }
-
-    private void createScript(OctreeCreatorArgs args, ScriptWriter scriptWriter) {
-        scriptWriter.read("INPUT");
-        scriptWriter.read("OUTPUT");
-        scriptWriter.read("LEVELS");
-        scriptWriter.read("VOXEL_SIZE");
-        scriptWriter.addWithArgs(getFullExecutableName(executable));
-        scriptWriter.addArg("$INPUT");
-        scriptWriter.addArg("$OUTPUT");
-        scriptWriter.addArg("$LEVELS");
-        scriptWriter.addArg("$VOXEL_SIZE");
-        scriptWriter.endArgs();
+    OctreeCreatorArgs createToolArgs() {
+        return new OctreeCreatorArgs();
     }
 
     @Override
-    protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
-        OctreeCreatorArgs args = getArgs(jacsServiceData);
-        ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
-        ScriptWriter scriptWriter = externalScriptCode.getCodeWriter();
-        scriptWriter.add(args.input);
-        scriptWriter.add(args.output);
-        scriptWriter.add(args.levels.toString());
-        scriptWriter.add(args.voxelSize);
-        scriptWriter.close();
-        return Arrays.asList(externalScriptCode);
-    }
-
-    @Override
-    protected void prepareResources(JacsServiceData jacsServiceData) {
-        String cpuType = ProcessorHelper.getCPUType(jacsServiceData.getResources());
-        if (StringUtils.isBlank(cpuType)) {
-            ProcessorHelper.setCPUType(jacsServiceData.getResources(), "broadwell");
-        }
-        // This should be based on input file size, but we don't currently have enough examples to generalize this.
-        // Examples:
-        // 12G input -> 66G
-        ProcessorHelper.setRequiredMemoryInGB(jacsServiceData.getResources(), 128);
-        ProcessorHelper.setSoftJobDurationLimitInSeconds(jacsServiceData.getResources(), 2*60*60); // 2 hours
-        ProcessorHelper.setHardJobDurationLimitInSeconds(jacsServiceData.getResources(), 4*60*60); // 4 hours
-    }
-
-    private OctreeCreatorArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new OctreeCreatorArgs());
-    }
-
-    private Path getOutputDir(OctreeCreatorArgs args) {
-        return Paths.get(args.output).toAbsolutePath();
+    StringBuilder serializeToolArgs(OctreeCreatorArgs args) {
+        return super.serializeToolArgs(args).append(',')
+                .append("-voxelSize").append(',').append('\'').append(args.voxelSize).append('\'');
     }
 }
