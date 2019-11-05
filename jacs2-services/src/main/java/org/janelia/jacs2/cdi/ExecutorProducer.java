@@ -56,7 +56,7 @@ public class ExecutorProducer {
                 .setNameFormat("JACS-INDEXING-%03d")
                 .setDaemon(true)
                 .build();
-        return Executors.newCachedThreadPool(threadFactory);
+        return Executors.newFixedThreadPool(threadPoolSize, threadFactory);
     }
 
     public void shutdownIndexingExecutor(@Disposes @AsyncIndex ExecutorService executorService) throws InterruptedException {
