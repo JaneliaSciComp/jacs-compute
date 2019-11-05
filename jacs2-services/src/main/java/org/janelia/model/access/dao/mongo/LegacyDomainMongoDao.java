@@ -64,7 +64,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LegacyDomainMongoDao implements LegacyDomainDao {
 
-    private static final Logger log = LoggerFactory.getLogger(LegacyDomainMongoDao.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LegacyDomainMongoDao.class);
 
     private final DomainDAO dao;
     private final DomainObjectIndexer domainObjectIndexer;
@@ -683,6 +683,7 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     public void giveOwnerReadWriteToAllFromCollection(String collectionName) {
         Class<?> baseClass = DomainUtils.getBaseClass(collectionName);
         if (DomainObject.class.isAssignableFrom(baseClass)) {
+            long numberOfIndexedObjects = 0L;
             MongoCollection mongoCollection = dao.getCollectionByName(collectionName);
             Iterable<?> iterable = mongoCollection.find().as(baseClass);
             if (iterable != null) {
@@ -694,9 +695,13 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
                         domainObject.getReaders().add(ownerKey);
                         domainObject.getWriters().add(ownerKey);
                         domainObjectIndexer.indexDocument(domainObject);
+                        numberOfIndexedObjects++;
                     }
                 }
+                LOG.info("Updated permissions for {} entities of type {} from collection {}", numberOfIndexedObjects, baseClass, collectionName);
             }
+        } else {
+            LOG.warn("Class {} is not a super class of {}", baseClass, DomainObject.class);
         }
     }
 
@@ -773,20 +778,20 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public void ensureCollectionIndex(String collectionName, List<DaoIndex> indexes) {
         MongoCollection mongoCollection = dao.getCollectionByName(collectionName);
-        log.info("Creating indexes on {}", collectionName);
+        LOG.info("Creating indexes on {}", collectionName);
         for (DaoIndex index : indexes) {
             if (StringUtils.isBlank(index.getOptions())) {
                 mongoCollection.ensureIndex(index.getKeys());
             } else {
                 mongoCollection.ensureIndex(index.getKeys(), index.getOptions());
             }
-            if (log.isInfoEnabled()) {
+            if (LOG.isInfoEnabled()) {
                 StringBuilder sb = new StringBuilder();
                 sb.append(index.getKeys());
                 if (index.getOptions() != null) {
                     sb.append(", ").append(index.getOptions());
                 }
-                log.info("  {}", sb);
+                LOG.info("  {}", sb);
             }
         }
     }
