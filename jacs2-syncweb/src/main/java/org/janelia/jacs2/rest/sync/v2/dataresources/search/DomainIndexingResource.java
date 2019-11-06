@@ -70,7 +70,7 @@ public class DomainIndexingResource {
                 }
                 int nDocs = documentIndexingService.indexDocuments(domainObjectReferences);
                     asyncResponse.resume(nDocs);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 LOG.error("Error occurred while adding {} to index", domainObjectReferences, e);
                 asyncResponse.resume(e);
             } finally {
