@@ -28,10 +28,9 @@ public class DocumentIndexingService extends AbstractIndexingServiceSupport {
     }
 
     public int indexDocuments(List<Reference> domainObjectReferences) {
-        List<DomainObject> domainObjects = legacyDomainDao.getDomainObjectsAs(domainObjectReferences, DomainObject.class);
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
                 createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
-        return domainObjectIndexer.indexDocumentStream(domainObjects.stream());
+        return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainObjectReferences));
     }
 
     public int removeDocuments(List<Long> ids) {

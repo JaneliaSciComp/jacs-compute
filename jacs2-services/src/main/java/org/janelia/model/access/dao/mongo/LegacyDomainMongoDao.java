@@ -1,11 +1,9 @@
 package org.janelia.model.access.dao.mongo;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,9 +15,12 @@ import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
 import com.mongodb.DBCursor;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -229,6 +230,59 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     @Override
     public List<TreeNode> getTreeNodeContainers(String subjectKey, Collection<Reference> references) throws Exception {
         return dao.getTreeNodeContainers(subjectKey, references);
+    }
+
+    @Override
+    public Stream<? extends DomainObject> iterateDomainObjects(Collection<Reference> references) {
+        Multimap<Class<? extends DomainObject>, Long> groupedReferences = HashMultimap.create();
+        for (Reference ref : references) {
+            Class<? extends DomainObject> refClass = DomainUtils.getObjectClassByName(ref.getTargetClassName());
+            groupedReferences.put(refClass, ref.getTargetId());
+        }
+        return groupedReferences.asMap().entrySet().stream()
+                .flatMap(entry -> iterateDomainObjects(entry.getKey(), entry.getValue()))
+                ;
+    }
+
+    private <T extends DomainObject> Stream<T> iterateDomainObjects(Class<T> domainClass, Collection<Long> ids) {
+        Spliterator<T> iterator = new Spliterator<T>() {
+            Iterator<T> cursor;
+            {
+                setCursor();
+            }
+
+            private void setCursor() {
+                cursor = dao.getCollectionByClass(domainClass).find(
+                        "{class:#, _id: {$in:#}}", domainClass.getName(), ids)
+                        .with((DBCursor cursor) -> cursor.noCursorTimeout(true))
+                        .as(domainClass)
+                ;
+            }
+
+            @Override
+            public boolean tryAdvance(Consumer<? super T> action) {
+                if (cursor.hasNext()) {
+                    action.accept(cursor.next());
+                }
+                return cursor.hasNext();
+            }
+
+            @Override
+            public Spliterator<T> trySplit() {
+                return null;
+            }
+
+            @Override
+            public long estimateSize() {
+                return ids.size();
+            }
+
+            @Override
+            public int characteristics() {
+                return 0;
+            }
+        };
+        return StreamSupport.stream(iterator, false);
     }
 
     @Override

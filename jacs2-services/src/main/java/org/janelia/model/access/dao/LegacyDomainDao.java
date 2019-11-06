@@ -182,6 +182,8 @@ public interface LegacyDomainDao {
 
     List<TreeNode> getTreeNodeContainers(String subjectKey, Collection<Reference> references) throws Exception;
 
+    Stream<? extends DomainObject> iterateDomainObjects(Collection<Reference> references);
+
     <T extends DomainObject> Stream<T> iterateDomainObjects(Class<T> domainClass);
 
     /**
