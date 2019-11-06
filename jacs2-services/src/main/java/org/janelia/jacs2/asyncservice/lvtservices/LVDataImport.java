@@ -40,7 +40,7 @@ public class LVDataImport extends AbstractServiceProcessor<File> {
         String voxelSize;
     }
 
-    private final WrappedServiceProcessor<OctreeCreator, List<File>> octreeCreator;
+    private final WrappedServiceProcessor<OctreeCreator, File> octreeCreator;
     private final WrappedServiceProcessor<KTXCreator,List<File>> ktxCreator;
 
     @Inject
@@ -98,12 +98,12 @@ public class LVDataImport extends AbstractServiceProcessor<File> {
                 new ServiceArg("-outputDir", octreeDir),
                 new ServiceArg("-levels", levels),
                 new ServiceArg("-voxelSize", voxelSize))
-            .thenCompose((JacsServiceResult<List<File>> octreeResult) ->
+            .thenCompose((JacsServiceResult<File> octreeResult) ->
                 ktxCreator.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
-                    .description("Create ktx tiles")
+                        .description("Create ktx tiles")
                         .waitFor(octreeResult.getJacsServiceData())
-                    .build(),
+                        .build(),
                 new ServiceArg("-inputDir", octreeDir),
                 new ServiceArg("-outputDir", ktxDir),
                 new ServiceArg("-levels", levels)))
