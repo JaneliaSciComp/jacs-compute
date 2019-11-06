@@ -53,33 +53,24 @@ public class DomainIndexingResource {
             @ApiResponse(code = 200, message = "Successfully added new document to SOLR index"),
             @ApiResponse(code = 500, message = "Internal Server Error while adding document to SOLR index")
     })
-    @ManagedAsync
     @POST
     @Path("searchIndex")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
-    public void indexDocuments(@ApiParam List<Reference> domainObjectReferences,
-                                   @Suspended AsyncResponse asyncResponse) {
-        asyncTaskExecutor.submit(() -> {
-            LOG.trace("Start indexDocument({})", domainObjectReferences);
-            try {
-                DocumentIndexingService documentIndexingService;
-                if (domainObjectReferences.size() > 10) {
-                    documentIndexingService = documentIndexingServiceSourceWithCachedData.get();
-                } else {
-                    documentIndexingService = documentIndexingServiceSource.get();
-                }
-                int nDocs = documentIndexingService.indexDocuments(domainObjectReferences);
-                asyncResponse.resume(nDocs);
-            } catch (Exception e) {
-                LOG.error("Error occurred while adding {} to index", domainObjectReferences, e);
-                asyncResponse.resume(e);
-            } finally {
-                LOG.trace("Finished indexDocument({})", domainObjectReferences);
+    public Response indexDocuments(@ApiParam List<Reference> domainObjectReferences) {
+        LOG.trace("Start indexDocument({})", domainObjectReferences);
+        try {
+            DocumentIndexingService documentIndexingService;
+            if (domainObjectReferences.size() > 10) {
+                documentIndexingService = documentIndexingServiceSourceWithCachedData.get();
+            } else {
+                documentIndexingService = documentIndexingServiceSource.get();
             }
-
-        });
-
+            int nDocs = documentIndexingService.indexDocuments(domainObjectReferences);
+            return Response.ok().entity(nDocs).build();
+        } finally {
+            LOG.trace("Finished indexDocument({})", domainObjectReferences);
+        }
     }
 
     @ApiOperation(value = "Update the ancestor ids for the list of childrens specified in the body of the request")
