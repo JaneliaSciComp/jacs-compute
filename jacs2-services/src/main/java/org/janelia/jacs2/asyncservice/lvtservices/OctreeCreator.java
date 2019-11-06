@@ -11,6 +11,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
 import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularityContainerProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
@@ -41,7 +42,9 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Named("octreeCreator")
-public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCreatorArgs, List<File>> {
+public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCreatorArgs, File> {
+
+    private static final String TRANSFORM_FILENAME = "transform.txt";
 
     static class OctreeCreatorArgs extends LVTArgs {
         @Parameter(names = "-voxelSize", description = "Voxel size (in 'x,y,z' format)", required = true)
@@ -65,48 +68,21 @@ public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCrea
     }
 
     @Override
-    public ServiceResultHandler<List<File>> getResultHandler() {
-        return new AbstractFileListServiceResultHandler() {
+    public ServiceResultHandler<File> getResultHandler() {
+        return new AbstractSingleFileServiceResultHandler() {
 
-            private boolean verifyOctree(File dir) {
-
-                boolean checkChanFile = false;
-                for(File file : dir.listFiles((FileFilter)null)) {
-                    if (file.isDirectory()) {
-                        try {
-                            int index = Integer.parseInt(file.getName());
-                            if (!verifyOctree(file)) return false;
-                        }
-                        catch (NumberFormatException e) {
-                            // Ignore dirs which are not numbers
-                        }
-                    }
-                    else {
-                        // TODO: should check for one file for each channel in the input
-                        if ("default.0.tif".equals(file.getName())) {
-                            checkChanFile = true;
-                        }
-                    }
-                }
-                if (!checkChanFile) return false;
-                return true;
-            }
 
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
                 File outputDir = new File(getArgs(depResults.getJacsServiceData()).outputDir);
                 if (!outputDir.exists()) return false;
-                if (!verifyOctree(outputDir)) return false;
-                return true;
+                File transformFile = new File(outputDir, TRANSFORM_FILENAME);
+                return transformFile.exists();
             }
 
             @Override
-            public List<File> collectResult(JacsServiceResult<?> depResults) {
-                OctreeCreatorArgs args = getArgs(depResults.getJacsServiceData());
-                Path outputDir = getOutputDir(args);
-                return FileUtils.lookupFiles(outputDir, 1, "glob:**/transform.txt")
-                        .map(Path::toFile)
-                        .collect(Collectors.toList());
+            public File collectResult(JacsServiceResult<?> depResults) {
+                return new File(getArgs(depResults.getJacsServiceData()).outputDir, TRANSFORM_FILENAME);
             }
         };
     }
