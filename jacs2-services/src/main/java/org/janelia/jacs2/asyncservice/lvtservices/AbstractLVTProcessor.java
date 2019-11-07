@@ -56,7 +56,9 @@ abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServic
                         .description("Pull container image " + containerLocation)
                         .build(),
                 new ServiceArg("-containerLocation", containerLocation),
-                new ServiceArg("-appArgs", serializeToolArgs(args).toString())
+                new ServiceArg("-appArgs", serializeToolArgs(args).toString()),
+                new ServiceArg("-bindPaths", args.inputDir),
+                new ServiceArg("-bindPaths", args.outputDir + ":" + args.outputDir + ":rw")
         );
     }
 
@@ -70,12 +72,6 @@ abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServic
         return Paths.get(args.outputDir).toAbsolutePath();
     }
 
-    StringBuilder serializeToolArgs(A args) {
-        return new StringBuilder()
-                .append("-inputDir").append(',').append(args.inputDir).append(',')
-                .append("-outputDir").append(',').append(args.outputDir).append(',')
-                .append("-levels").append(',').append(args.levels).append(',')
-                ;
-    }
+    abstract StringBuilder serializeToolArgs(A args);
 
 }

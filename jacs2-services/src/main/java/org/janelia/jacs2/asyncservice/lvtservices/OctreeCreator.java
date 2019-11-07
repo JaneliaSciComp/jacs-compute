@@ -47,6 +47,10 @@ public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCrea
     private static final String TRANSFORM_FILENAME = "transform.txt";
 
     static class OctreeCreatorArgs extends LVTArgs {
+        @Parameter(names = "-inputFilename", description = "Input file name relative to inputDir", required = true)
+        String inputFilename;
+        @Parameter(names = "-channel", description = "Channel number (Default = 0) used mainly for formatting the output")
+        Integer channel = 0;
         @Parameter(names = "-voxelSize", description = "Voxel size (in 'x,y,z' format)", required = true)
         String voxelSize;
     }
@@ -94,7 +98,17 @@ public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCrea
 
     @Override
     StringBuilder serializeToolArgs(OctreeCreatorArgs args) {
-        return super.serializeToolArgs(args).append(',')
-                .append("-voxelSize").append(',').append('\'').append(args.voxelSize).append('\'');
+        return new StringBuilder()
+                .append(getInputFileName(args)).append(',')
+                .append(args.outputDir).append(',')
+                .append(args.levels).append(',')
+                .append(args.channel).append(',')
+                .append('\'').append(args.voxelSize).append('\'')
+                ;
     }
+
+    private String getInputFileName(OctreeCreatorArgs args) {
+        return Paths.get(args.inputDir, args.inputFilename).toString();
+    }
+
 }

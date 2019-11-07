@@ -116,4 +116,8 @@ public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, 
         return new KTXCreatorArgs();
     }
 
+    @Override
+    StringBuilder serializeToolArgs(KTXCreatorArgs args) {
+        return new StringBuilder(); // !!!!! FIXME
+    }
 }
