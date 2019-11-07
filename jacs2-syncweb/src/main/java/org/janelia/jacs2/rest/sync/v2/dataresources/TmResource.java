@@ -70,7 +70,6 @@ public class TmResource {
     @AsyncIndex
     @Inject
     private TmWorkspaceDao tmWorkspaceDao;
-    @AsyncIndex
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
 
