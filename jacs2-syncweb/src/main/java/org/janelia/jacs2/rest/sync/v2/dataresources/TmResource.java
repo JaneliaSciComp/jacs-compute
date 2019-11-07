@@ -1,11 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -40,11 +36,9 @@ import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.dto.DomainQuery;
-import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmProtobufExchanger;
-import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.domain.tiledMicroscope.*;
 import org.janelia.model.domain.workspace.Workspace;
+import org.janelia.model.access.domain.dao.mongo.GridFSMongoDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,6 +70,7 @@ public class TmResource {
     @AsyncIndex
     @Inject
     private TmWorkspaceDao tmWorkspaceDao;
+    @AsyncIndex
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
 
@@ -223,12 +218,12 @@ public class TmResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/neuron")
     public List<TmNeuronMetadata> getWorkspaceNeurons(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                                      @ApiParam @QueryParam("workspaceId") final Long workspaceId,
-                                                      @ApiParam @QueryParam("offset") final Long offsetParam,
-                                                      @ApiParam @QueryParam("length") final Integer lengthParam) {
+                                                             @ApiParam @QueryParam("workspaceId") final Long workspaceId,
+                                                             @ApiParam @QueryParam("offset") final Long offsetParam,
+                                                             @ApiParam @QueryParam("length") final Integer lengthParam) {
         LOG.info("getWorkspaceNeuronMetadata({}, {}, {})", workspaceId, offsetParam, lengthParam);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
-        if (workspace == null)
+        if (workspace==null)
             return null;
         long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
         int length = lengthParam == null || lengthParam < 0 ? -1 : lengthParam;
@@ -390,12 +385,12 @@ public class TmResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/workspace/migrate/{workspaceId}")
-    public Map<String, Object> migrateWorkspace(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                                @ApiParam @PathParam("workspaceId") Long workspaceId) {
+    public Map<String,Object> migrateWorkspace(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                               @ApiParam @PathParam("workspaceId") Long workspaceId) {
         // generate some stats
-        Map<String, Object> statsInfo = new HashMap<>();
+        Map<String,Object> statsInfo = new HashMap<>();
         try {
-            migrateWorkspace(statsInfo, workspaceId, subjectKey);
+            migrateWorkspace (statsInfo, workspaceId, subjectKey);
         } catch (Exception e) {
             LOG.error("Error occurred migrating full TmWorkspace collection from mysql", subjectKey, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -418,14 +413,16 @@ public class TmResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/database/migrate")
-    public Map<String, Object> migrateAllWorkspaces(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
+    public Map<String,Object> migrateAllWorkspaces(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
         // generate some stats
-        Map<String, Object> statsInfo = new HashMap<>();
+        Map<String,Object> statsInfo = new HashMap<>();
         try {
             List<TmWorkspace> workspaceList = tmWorkspaceDao.getAllTmWorkspaces(subjectKey);
-            for (TmWorkspace workspace : workspaceList) {
-                migrateWorkspace(statsInfo, workspace.getId(), subjectKey);
-                LOG.info("Progress Status: Completed {} out of {} workspaces", statsInfo.size(), workspaceList.size());
+            for (TmWorkspace workspace: workspaceList) {
+                if (!workspace.getNeuronCollection().equals("tmNeuron"))
+                    continue;
+                migrateWorkspace (statsInfo, workspace.getId(), subjectKey);
+                LOG.info("Progress Status: Completed {} out of {} workspaces", statsInfo.size(),workspaceList.size());
             }
         } catch (Exception e) {
             LOG.error("Error occurred migrating full TmWorkspace collection from mysql", subjectKey, e);
@@ -437,34 +434,103 @@ public class TmResource {
         return statsInfo;
     }
 
-    private void migrateWorkspace(Map<String, Object> statsInfo, Long workspaceId, String subjectKey) {
+    @ApiOperation(value = "validate migration",
+            notes = "double checks Node count for mysql data store vs new per workspace vs."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully bulk loaded collection"),
+            @ApiResponse(code = 500, message = "Error occurred while bulk migrating neurons")
+    })
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/database/validate")
+    public Map<String,Object> validateMigration(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                                @ApiParam @QueryParam("startIndex") final Integer startIndex,
+                                                @ApiParam @QueryParam("endIndex") final Integer endIndex) {
+        // generate some stats
+        Map<String,Object> statsInfo = new HashMap<>();
         TmProtobufExchanger exchanger = new TmProtobufExchanger();
-        int MAX_BLOCK = 100000;
+        Map<String,Object> mismatches = new HashMap<>();
+
+        try {
+            List<TmWorkspace> workspaceList = tmWorkspaceDao.getAllTmWorkspaces(subjectKey);
+            int currCount = 0;
+            workspaceList = workspaceList.subList(startIndex,endIndex);
+            for (TmWorkspace workspace: workspaceList) {
+                currCount++;
+                if ((currCount%100)==0)
+                    LOG.info("{} workspaces have been validated", currCount);
+                long sourceNodeCount = 0;
+                long targetNodeCount = 0;
+
+                // source nodes
+                List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(workspace,
+                        subjectKey, 0, 1000000);
+                for (Pair<TmNeuronMetadata, InputStream> pair : neuronPairs) {
+                    TmNeuronMetadata neuronMetadata = pair.getLeft();
+                    try {
+                        exchanger.deserializeNeuron(pair.getRight(), neuronMetadata);
+                        sourceNodeCount += neuronMetadata.getGeoAnnotationMap().values().size();
+                    } catch (Exception e) {
+                        throw new IllegalStateException(e);
+                    }
+                }
+
+                // target nodes
+                List<TmNeuronMetadata> targetNeurons = tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(workspace,
+                        subjectKey, 0, 1000000);
+                if (targetNeurons!=null && targetNeurons.size()>0) {
+                    for (TmNeuronMetadata targetNeuron: targetNeurons) {
+                        targetNodeCount+= targetNeuron.getGeoAnnotationMap().size();
+                    }
+                }
+
+                if (sourceNodeCount!=targetNodeCount) {
+                    LOG.info("Discrepancy found for {} - {}", workspace.getId(), workspace.getName());
+                    mismatches.put(workspace.getId().toString(), "source Nodes: " + sourceNodeCount + ",target Nodes: " + targetNodeCount);
+                }
+
+            }
+        } catch (Exception e) {
+            LOG.error("Error occurred migrating full TmWorkspace collection from mysql", subjectKey, e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            LOG.trace("Finished migrating all workspaces");
+        }
+
+        return statsInfo;
+    }
+
+
+    private void migrateWorkspace (Map<String,Object> statsInfo, Long workspaceId, String subjectKey) {
+        TmProtobufExchanger exchanger = new TmProtobufExchanger();
+        int MAX_BLOCK = 1000000;
         int offset = 0;
         long totalNodes = 0;
         boolean continueMigration = true;
 
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
-        if (workspace == null) {
+        if (workspace==null) {
             LOG.error("No workspace found for workspace id {}", workspaceId);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
 
         int currCount = 0;
-        while (continueMigration) {
-            LOG.info("getting next batch using offset {} and length {}", offset, MAX_BLOCK);
+        //while (continueMigration) {
+            LOG.info("getting next batch using offset {} and length {}",offset,MAX_BLOCK);
             List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(workspace,
                     subjectKey, offset, MAX_BLOCK);
-            if (neuronPairs.isEmpty() || neuronPairs.size() < MAX_BLOCK) {
+            if (neuronPairs.isEmpty() || neuronPairs.size()<MAX_BLOCK) {
                 continueMigration = false;
             }
             offset += neuronPairs.size();
             List<TmNeuronMetadata> neurons = new ArrayList<>();
             String workspaceOwner = workspace.getOwnerKey();
-            for (Pair<TmNeuronMetadata, InputStream> pair : neuronPairs) {
+            for(Pair<TmNeuronMetadata, InputStream> pair : neuronPairs) {
                 currCount++;
-                if ((currCount % 100) == 0)
-                    LOG.info("{} have been processed", currCount);
+                if ((currCount%100)==0)
+                    LOG.info("{} have been processed",currCount);
                 TmNeuronMetadata neuronMetadata = pair.getLeft();
                 try {
                     exchanger.deserializeNeuron(pair.getRight(), neuronMetadata);
@@ -475,10 +541,10 @@ public class TmResource {
                     throw new IllegalStateException(e);
                 }
             }
-            tmNeuronMetadataDao.bulkMigrateNeuronsInWorkspace(workspace, neurons, workspaceOwner);
-        }
+            tmNeuronMetadataDao.bulkMigrateNeuronsInWorkspace(workspace,neurons,workspaceOwner);
+       // }
         statsInfo.put(workspaceId.toString(), "totalNode: " + totalNodes + ",neurons count: " + offset);
-        LOG.info("workspace {} totalNode: {},neurons count: {}", workspaceId.toString(), totalNodes, offset);
+        LOG.info("workspace {} totalNode: {},neurons count: {}",workspaceId.toString(),totalNodes,offset);
     }
 
 
