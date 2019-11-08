@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCreatorArgs, File> {
 
     private static final String TRANSFORM_FILENAME = "transform.txt";
+    private static final String OUTPUT_FILENAME_PATTERN = "default.%d.tif";
 
     static class OctreeCreatorArgs extends LVTArgs {
         @Parameter(names = "-inputFilename", description = "Input file name relative to inputDir", required = true)
@@ -74,14 +75,14 @@ public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCrea
     @Override
     public ServiceResultHandler<File> getResultHandler() {
         return new AbstractSingleFileServiceResultHandler() {
-
-
             @Override
             public boolean isResultReady(JacsServiceResult<?> depResults) {
-                File outputDir = new File(getArgs(depResults.getJacsServiceData()).outputDir);
+                OctreeCreatorArgs args = getArgs(depResults.getJacsServiceData());
+                File outputDir = new File(args.outputDir);
                 if (!outputDir.exists()) return false;
                 File transformFile = new File(outputDir, TRANSFORM_FILENAME);
-                return transformFile.exists();
+                File outputFile = new File(outputDir, String.format(OUTPUT_FILENAME_PATTERN, args.channel));
+                return transformFile.exists() && outputFile.exists();
             }
 
             @Override

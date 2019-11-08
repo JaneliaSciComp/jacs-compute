@@ -59,7 +59,7 @@ abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServic
                 new ServiceArg("-appArgs", serializeToolArgs(args).toString()),
                 new ServiceArg("-bindPaths", args.inputDir),
                 new ServiceArg("-bindPaths", args.outputDir + ":" + args.outputDir + ":rw")
-        );
+        ).thenApply(containerRunResult -> new JacsServiceResult<>(jacsServiceData));
     }
 
     A getArgs(JacsServiceData jacsServiceData) {
