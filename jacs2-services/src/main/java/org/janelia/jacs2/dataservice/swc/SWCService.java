@@ -1,6 +1,8 @@
 package org.janelia.jacs2.dataservice.swc;
 
 import java.awt.Color;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
@@ -191,8 +193,10 @@ public class SWCService {
                                         entriesCount.set(0L);
                                         continue; // try the next set
                                     }
-
-                                    NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), ByteStreams.limit(archiveInputStream, currentEntry.getSize()));
+                                    // consume the entry
+                                    ByteArrayOutputStream entryStream = new ByteArrayOutputStream();
+                                    ByteStreams.copy(ByteStreams.limit(archiveInputStream, currentEntry.getSize()), entryStream);
+                                    NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), new ByteArrayInputStream(entryStream.toByteArray()));
                                     entriesCount.incrementAndGet();
                                     // advance the entry
                                     currentEntry = archiveInputStream.getNextTarEntry();
