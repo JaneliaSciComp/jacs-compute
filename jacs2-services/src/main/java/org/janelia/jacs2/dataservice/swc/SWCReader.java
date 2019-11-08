@@ -23,7 +23,8 @@ public class SWCReader {
                         if (l.startsWith("#")) {
                             swcData.addHeader(l);
                         } else {
-                            swcData.addNode(parseSWCNodeLine(l));
+                            SWCNode swcNode = parseSWCNodeLine(l);
+                            if (swcNode != null) swcData.addNode(swcNode);
                         }
                     });
             return swcData;
