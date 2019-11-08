@@ -30,6 +30,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.data.NamedData;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.IdSource;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
@@ -66,8 +67,8 @@ public class SWCService {
     @Inject
     public SWCService(StorageService storageService,
                       LegacyDomainDao domainDao,
-                      TmSampleDao tmSampleDao,
-                      TmWorkspaceDao tmWorkspaceDao,
+                      @AsyncIndex TmSampleDao tmSampleDao,
+                      @AsyncIndex TmWorkspaceDao tmWorkspaceDao,
                       TmNeuronMetadataDao tmNeuronMetadataDao,
                       DataStorageLocationFactory dataStorageLocationFactory,
                       RenderedVolumeLoader renderedVolumeLoader,
