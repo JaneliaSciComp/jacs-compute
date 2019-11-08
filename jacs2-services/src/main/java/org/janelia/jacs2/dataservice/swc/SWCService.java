@@ -1,15 +1,13 @@
 package org.janelia.jacs2.dataservice.swc;
 
 import java.awt.Color;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.io.PushbackInputStream;
 import java.io.UncheckedIOException;
-import java.net.URLDecoder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
@@ -33,8 +31,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.data.NamedData;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
-import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.IdSource;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
@@ -51,7 +49,6 @@ import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.reflect.ScalaLongSignature;
 
 public class SWCService {
 
@@ -72,8 +69,8 @@ public class SWCService {
     @Inject
     public SWCService(StorageService storageService,
                       LegacyDomainDao domainDao,
-                      TmSampleDao tmSampleDao,
-                      TmWorkspaceDao tmWorkspaceDao,
+                      @AsyncIndex TmSampleDao tmSampleDao,
+                      @AsyncIndex TmWorkspaceDao tmWorkspaceDao,
                       TmNeuronMetadataDao tmNeuronMetadataDao,
                       DataStorageLocationFactory dataStorageLocationFactory,
                       RenderedVolumeLoader renderedVolumeLoader,
@@ -196,8 +193,10 @@ public class SWCService {
                                         entriesCount.set(0L);
                                         continue; // try the next set
                                     }
-
-                                    NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), ByteStreams.limit(archiveInputStream, currentEntry.getSize()));
+                                    // consume the entry
+                                    ByteArrayOutputStream entryStream = new ByteArrayOutputStream();
+                                    ByteStreams.copy(ByteStreams.limit(archiveInputStream, currentEntry.getSize()), entryStream);
+                                    NamedData<InputStream> entryData = new NamedData<>(currentEntry.getName(), new ByteArrayInputStream(entryStream.toByteArray()));
                                     entriesCount.incrementAndGet();
                                     // advance the entry
                                     currentEntry = archiveInputStream.getNextTarEntry();
