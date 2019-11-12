@@ -125,7 +125,8 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    protected void prepareProcessing(JacsServiceData jacsServiceData) {
+        super.prepareProcessing(jacsServiceData);
         AlignmentArgs args = getArgs(jacsServiceData);
         AlignmentInput firstInput = getAlignmentFirstInput(args);
         if (firstInput.isEmpty()) {
@@ -137,7 +138,6 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
         } catch (IOException e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
     }
 
     @Override

@@ -111,7 +111,8 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    protected void prepareProcessing(JacsServiceData jacsServiceData) {
+        super.prepareProcessing(jacsServiceData);
         try {
             VideoConverterArgs args = getArgs(jacsServiceData);
             if (StringUtils.isBlank(args.input)) {
@@ -126,7 +127,6 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
         } catch (Exception e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
     }
 
     @Override

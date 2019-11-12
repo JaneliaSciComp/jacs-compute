@@ -1,11 +1,33 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.*;
+import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
+import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
+import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
@@ -17,19 +39,6 @@ import org.janelia.model.jacs2.domain.IndexedReference;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Named("vaa3dMip")
 public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<File>> {
@@ -102,7 +111,8 @@ public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    protected void prepareProcessing(JacsServiceData jacsServiceData) {
+        super.prepareProcessing(jacsServiceData);
         try {
             Vaa3MipCmdArgs args = getArgs(jacsServiceData);
             List<Vaa3dMipArgs> inputArgsList = getInputArgs(args);
@@ -126,7 +136,6 @@ public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<
         } catch (Exception e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
     }
 
     @Override

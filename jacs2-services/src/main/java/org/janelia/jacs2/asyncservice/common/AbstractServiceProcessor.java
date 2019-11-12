@@ -98,12 +98,16 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     }
 
     protected JacsServiceFolder getWorkingDirectory(JacsServiceData jacsServiceData) {
-        if (StringUtils.isNotBlank(jacsServiceData.getWorkspace())) {
-            return new JacsServiceFolder(null, Paths.get(jacsServiceData.getWorkspace()), jacsServiceData);
-        } else if (StringUtils.isNotBlank(defaultWorkingDir)) {
-            return new JacsServiceFolder(getServicePath(defaultWorkingDir, jacsServiceData), null, jacsServiceData);
-        } else {
-            return new JacsServiceFolder(getServicePath(System.getProperty("java.io.tmpdir"), jacsServiceData), null, jacsServiceData);
+        try {
+            if (StringUtils.isNotBlank(jacsServiceData.getWorkspace())) {
+                return new JacsServiceFolder(null, Paths.get(jacsServiceData.getWorkspace()), jacsServiceData);
+            } else if (StringUtils.isNotBlank(defaultWorkingDir)) {
+                return new JacsServiceFolder(getServicePath(defaultWorkingDir, jacsServiceData), null, jacsServiceData);
+            } else {
+                return new JacsServiceFolder(getServicePath(System.getProperty("java.io.tmpdir"), jacsServiceData), null, jacsServiceData);
+            }
+        } catch (Exception e) {
+            throw new ComputationException(jacsServiceData, e);
         }
     }
 

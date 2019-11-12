@@ -1,21 +1,8 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
-import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
-import org.janelia.model.service.JacsJobInstanceInfo;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceEventTypes;
-import org.janelia.model.service.JacsServiceState;
-import org.janelia.model.service.ProcessingLocation;
-import org.slf4j.Logger;
-
-import javax.enterprise.inject.Instance;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -26,8 +13,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.enterprise.inject.Instance;
+
+import com.google.common.collect.ImmutableMap;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
+import org.janelia.jacs2.asyncservice.lsmfileservices.LsmFileMetadataProcessor;
+import org.janelia.jacs2.config.ApplicationConfig;
+import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
+import org.janelia.model.service.JacsJobInstanceInfo;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
+import org.janelia.model.service.JacsServiceState;
+import org.janelia.model.service.ProcessingLocation;
+import org.slf4j.Logger;
+
 @MdcContext
-public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicLifeCycleServiceProcessor<R, Void> {
+public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractServiceProcessor<R> {
 
     protected static final String DY_LIBRARY_PATH_VARNAME = "LD_LIBRARY_PATH";
     protected static final String LIBPATH_SEPARATOR = ":";
@@ -53,23 +59,19 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
         this.jobIntervalCheck = applicationConfig.getIntegerPropertyValue("service.exejob.checkIntervalInMillis", 0);
     }
 
-    @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
-        JacsServiceData jacsServiceDataHierarchy = super.prepareProcessing(jacsServiceData);
-        updateOutputAndErrorPaths(jacsServiceDataHierarchy);
-        return jacsServiceDataHierarchy;
+    protected void prepareProcessing(JacsServiceData jacsServiceData) {
+        updateOutputAndErrorPaths(jacsServiceData);
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) {
-        ExeJobHandler jobHandler = runExternalProcess(depsResult.getJacsServiceData());
-        return computationFactory.newCompletedComputation(depsResult)
-                .thenSuspendUntil(previousStepsResult -> new ContinuationCond.Cond<>(previousStepsResult, hasJobFinished(previousStepsResult.getJacsServiceData(), jobHandler)),
+    public ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData) {
+        prepareProcessing(jacsServiceData);
+        ExeJobHandler jobHandler = runExternalProcess(jacsServiceData);
+        return computationFactory.newCompletedComputation(jacsServiceData)
+                .thenSuspendUntil(sd -> new ContinuationCond.Cond<>(sd, hasJobFinished(sd, jobHandler)),
                         (long) jobIntervalCheck,
                         null)
-                .thenApply(pd -> {
-                    JacsServiceData jacsServiceData = pd.getJacsServiceData();
-
+                .thenApply(sd -> {
                     // Persist all final job instance metadata
                     Collection<JacsJobInstanceInfo> completedJobInfos = jobHandler.getJobInstances();
                     if (!completedJobInfos.isEmpty()) {
@@ -96,8 +98,9 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
                                 JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, errorMessage));
                         throw new ComputationException(jacsServiceData, errorMessage);
                     }
-                    return pd;
-                });
+                    return updateServiceResult(sd, getResultHandler().collectResult(sd));
+                })
+                .thenApply(sr -> postProcessing(sr));
     }
 
     private boolean hasJobFinished(JacsServiceData jacsServiceData, ExeJobHandler jobHandler) {
@@ -234,6 +237,10 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractBasicL
             }
         }
         throw new IllegalArgumentException("Unsupported runner: " + location);
+    }
+
+    protected JacsServiceResult<R> postProcessing(JacsServiceResult<R> sr) {
+        return sr;
     }
 
 }

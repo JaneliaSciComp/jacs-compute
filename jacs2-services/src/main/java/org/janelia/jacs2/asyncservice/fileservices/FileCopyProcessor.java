@@ -92,7 +92,8 @@ public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<File> {
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    protected void prepareProcessing(JacsServiceData jacsServiceData) {
+        super.prepareProcessing(jacsServiceData);
         try {
             FileCopyArgs args = getArgs(jacsServiceData);
             if (StringUtils.isBlank(args.sourceFilename)) {
@@ -108,7 +109,6 @@ public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<File> {
         } catch (Exception e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
     }
 
     @Override

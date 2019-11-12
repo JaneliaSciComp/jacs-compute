@@ -84,7 +84,8 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    protected void prepareProcessing(JacsServiceData jacsServiceData) {
+        super.prepareProcessing(jacsServiceData);
         try {
             FijiMacroArgs args = getArgs(jacsServiceData);
             Path temporaryOutput = getTemporaryDir(args);
@@ -94,7 +95,6 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
         } catch (Exception e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
     }
 
     @Override

@@ -1,7 +1,17 @@
 package org.janelia.jacs2.asyncservice.fileservices;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
-import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
+
+import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -12,16 +22,8 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 @Named("fileRemove")
-public class FileRemoveProcessor extends AbstractBasicLifeCycleServiceProcessor<Void, Void> {
+public class FileRemoveProcessor extends AbstractServiceProcessor<Void> {
 
     public static class FileRemoveArgs extends ServiceArgs {
         @Parameter(names = {"-file"}, description = "File name", required = true)
@@ -42,20 +44,17 @@ public class FileRemoveProcessor extends AbstractBasicLifeCycleServiceProcessor<
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
-        return computationFactory.newCompletedComputation(depResults)
-                .thenApply(pd -> {
-                    try {
-                        FileRemoveArgs args = getArgs(pd.getJacsServiceData());
-                        Path filePath = getFile(args);
-                        if (Files.exists(filePath)) {
-                            Files.delete(filePath);
-                        }
-                        return pd;
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
+    public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
+        try {
+            FileRemoveArgs args = getArgs(jacsServiceData);
+            Path filePath = getFile(args);
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+            }
+            return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private FileRemoveArgs getArgs(JacsServiceData jacsServiceData) {

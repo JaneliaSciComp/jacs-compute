@@ -96,7 +96,7 @@ public class AbstractExeBasedServiceProcessorTest {
         Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
         @SuppressWarnings("unchecked")
         Consumer<Throwable> failure = mock(Consumer.class);
-        testProcessor.processing(new JacsServiceResult<>(testServiceData))
+        testProcessor.process(testServiceData)
             .whenComplete((r, e) -> {
                 if (e == null) {
                     successful.accept(r);
@@ -123,7 +123,7 @@ public class AbstractExeBasedServiceProcessorTest {
         Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
         @SuppressWarnings("unchecked")
         Consumer<Throwable> failure = mock(Consumer.class);
-        testProcessor.processing(new JacsServiceResult<>(testServiceData))
+        testProcessor.process(testServiceData)
                 .whenComplete((r, e) -> {
                     if (e == null) {
                         successful.accept(r);
@@ -150,7 +150,7 @@ public class AbstractExeBasedServiceProcessorTest {
         Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
         @SuppressWarnings("unchecked")
         Consumer<Throwable> failure = mock(Consumer.class);
-        testProcessor.processing(new JacsServiceResult<>(testServiceData))
+        testProcessor.process(testServiceData)
                 .whenComplete((r, e) -> {
                     if (e == null) {
                         successful.accept(r);

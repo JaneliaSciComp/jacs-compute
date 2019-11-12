@@ -130,7 +130,8 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Fil
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    protected void prepareProcessing(JacsServiceData jacsServiceData) {
+        super.prepareProcessing(jacsServiceData);
         try {
             ChannelMergeArgs args = getArgs(jacsServiceData);
             Path outputFile = getOutputFile(args);
@@ -140,38 +141,6 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Fil
         } catch (IOException e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
-    }
-
-    @Override
-    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depsResult) {
-        ChannelMergeArgs args = getArgs(depsResult.getJacsServiceData());
-        Path outputFile = getOutputFile(args);
-        Path outputDir = outputFile.getParent();
-        Path mergeDir = getMergeDir(outputFile);
-        Path tmpMergeFile = getMergeDir(mergeDir).resolve(DEFAULT_MERGE_RESULT_FILE_NAME);
-        /**
-         * The underlying script creates merged.v3draw in the temporary merge directory and that has to be moved over.
-         */
-        return super.processing(depsResult)
-                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, tmpMergeFile.toFile().exists()))
-                .thenApply(pd -> {
-                    try {
-                        Path source;
-                        if (mergeDir.toAbsolutePath().toString().equals(outputFile.toAbsolutePath().toString())) {
-                            // the output file has no extension
-                            Path tmpDir = outputDir.resolve(RandomStringUtils.random(6, true, true));
-                            Files.move(mergeDir, tmpDir, StandardCopyOption.ATOMIC_MOVE);
-                            source = tmpDir.resolve(DEFAULT_MERGE_RESULT_FILE_NAME);
-                        } else {
-                            source = tmpMergeFile;
-                        }
-                        Files.move(source, outputFile, StandardCopyOption.REPLACE_EXISTING);
-                        return pd;
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
     }
 
     @Override
@@ -187,6 +156,30 @@ public class MergeChannelsProcessor extends AbstractExeBasedServiceProcessor<Fil
         createScript(jacsServiceData, args, externalScriptWriter);
         externalScriptWriter.close();
         return externalScriptCode;
+    }
+
+    @Override
+    protected JacsServiceResult<File> postProcessing(JacsServiceResult<File> sr) {
+        ChannelMergeArgs args = getArgs(sr.getJacsServiceData());
+        Path outputFile = getOutputFile(args);
+        Path outputDir = outputFile.getParent();
+        Path mergeDir = getMergeDir(outputFile);
+        Path tmpMergeFile = getMergeDir(mergeDir).resolve(DEFAULT_MERGE_RESULT_FILE_NAME);
+        try {
+            Path source;
+            if (mergeDir.toAbsolutePath().toString().equals(outputFile.toAbsolutePath().toString())) {
+                // the output file has no extension
+                Path tmpDir = outputDir.resolve(RandomStringUtils.random(6, true, true));
+                Files.move(mergeDir, tmpDir, StandardCopyOption.ATOMIC_MOVE);
+                source = tmpDir.resolve(DEFAULT_MERGE_RESULT_FILE_NAME);
+            } else {
+                source = tmpMergeFile;
+            }
+            Files.move(source, outputFile, StandardCopyOption.REPLACE_EXISTING);
+            return sr;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private void createScript(JacsServiceData jacsServiceData, ChannelMergeArgs args, ScriptWriter scriptWriter) {

@@ -111,7 +111,8 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<F
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    protected void prepareProcessing(JacsServiceData jacsServiceData) {
+        super.prepareProcessing(jacsServiceData);
         try {
             LsmFileMetadataArgs args = getArgs(jacsServiceData);
             if (StringUtils.isBlank(args.inputLSMFile)) {
@@ -125,7 +126,6 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<F
         } catch (IOException e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
     }
 
     @Override

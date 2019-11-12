@@ -135,7 +135,8 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    protected void prepareProcessing(JacsServiceData jacsServiceData) {
+        super.prepareProcessing(jacsServiceData);
         try {
             ImageConverterArgs args = getArgs(jacsServiceData);
             List<Pair<Path, Path>> converterArgs = getConverterArgs(args)
@@ -158,7 +159,6 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
         } catch (Exception e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
     }
 
     @Override

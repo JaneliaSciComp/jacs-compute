@@ -1,8 +1,6 @@
 package org.janelia.jacs2.asyncservice.fileservices;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -14,7 +12,7 @@ import javax.inject.Named;
 import com.beust.jcommander.Parameter;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -33,7 +31,7 @@ import org.slf4j.Logger;
  * then the processor fails otherwise it simply overwrites it.
  */
 @Named("linkData")
-public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
+public class LinkDataProcessor extends AbstractServiceProcessor<File> {
 
     public static class LinkDataArgs extends ServiceArgs {
         @Parameter(names = {"-input", "-source"}, description = "Source name", required = true)
@@ -73,7 +71,7 @@ public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<Fi
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<File>> process(JacsServiceData jacsServiceData) {
         try {
             LinkDataArgs args = getArgs(jacsServiceData);
             if (StringUtils.isBlank(args.source)) {
@@ -81,40 +79,26 @@ public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<Fi
             } else if (StringUtils.isBlank(args.target)) {
                 throw new ComputationException(jacsServiceData, "Target file name must be specified");
             } else {
-                Path targetFile = getTargetFile(args);
-                Files.createDirectories(targetFile.getParent());
+                Path targetPath = getTargetFile(args);
+                Files.createDirectories(targetPath.getParent());
+                Path sourcePath = getSourceFile(args);
+                if (!sourcePath.toAbsolutePath().startsWith(targetPath.toAbsolutePath())) {
+                    if (Files.exists(targetPath, LinkOption.NOFOLLOW_LINKS)) {
+                        if (args.errorIfExists) {
+                            throw new ComputationException(jacsServiceData, "Link " + targetPath + " already exists");
+                        } else {
+                            Files.deleteIfExists(targetPath);
+                        }
+                    }
+                    Files.createSymbolicLink(targetPath, sourcePath);
+                }
+                return computationFactory.newCompletedComputation(updateServiceResult(jacsServiceData, targetPath.toFile()));
             }
         } catch (ComputationException e) {
             throw e;
         } catch (Exception e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
-    }
-
-    @Override
-    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
-        return computationFactory.newCompletedComputation(depResults)
-                .thenApply(pd -> {
-                    try {
-                        LinkDataArgs args = getArgs(pd.getJacsServiceData());
-                        Path sourcePath = getSourceFile(args);
-                        Path targetPath = getTargetFile(args);
-                        if (!sourcePath.toAbsolutePath().startsWith(targetPath.toAbsolutePath())) {
-                            if (Files.exists(targetPath, LinkOption.NOFOLLOW_LINKS)) {
-                                if (args.errorIfExists) {
-                                    throw new ComputationException(pd.getJacsServiceData(), "Link " + targetPath + " already exists");
-                                } else {
-                                    Files.deleteIfExists(targetPath);
-                                }
-                            }
-                            Files.createSymbolicLink(targetPath, sourcePath);
-                        }
-                        return pd;
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                });
     }
 
     private LinkDataArgs getArgs(JacsServiceData jacsServiceData) {

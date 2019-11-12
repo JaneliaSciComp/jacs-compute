@@ -1,5 +1,21 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -17,21 +33,6 @@ import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Named("pullSingularityContainer")
 public class PullSingularityContainerProcessor extends AbstractSingularityContainerProcessor<File> {
@@ -72,13 +73,13 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
-        PullSingularityContainerArgs args = getArgs(depResults.getJacsServiceData());
+    public ServiceComputation<JacsServiceResult<File>> process(JacsServiceData jacsServiceData) {
+        PullSingularityContainerArgs args = getArgs(jacsServiceData);
         ContainerImage localContainerImage = getLocalContainerImage(args);
         if (localContainerImage.localImageExists()) {
-            return computationFactory.newCompletedComputation(depResults);
+            return computationFactory.newCompletedComputation(updateServiceResult(jacsServiceData, getResultHandler().collectResult(jacsServiceData)));
         } else if (localContainerImage.requiresPull()) {
-            return super.processing(depResults);
+            return super.process(jacsServiceData);
         } else {
             return computationFactory.newCompletedComputation(localContainerImage.localPath.resolve(localContainerImage.imageName + ".tmp"))
                     .thenApply(tempImagePath -> writeLocalImage(args, tempImagePath))
@@ -86,7 +87,7 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
                         try {
                             // this should copy to the same filesystem
                             Files.move(tempImagePath, localContainerImage.getLocalImagePath());
-                            return new JacsServiceResult<>(depResults.getJacsServiceData());
+                            return updateServiceResult(jacsServiceData, getResultHandler().collectResult(jacsServiceData));
                         } catch (IOException e) {
                             logger.error("Error renaming temporary image {} to {}",
                                     tempImagePath, localContainerImage.getLocalImagePath(), e);

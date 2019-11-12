@@ -1,5 +1,14 @@
 package org.janelia.jacs2.asyncservice.neuronservices;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -12,14 +21,6 @@ import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @Named("neuronSeparation")
 public class NeuronSeparationProcessor extends AbstractNeuronSeparationProcessor {
@@ -43,7 +44,8 @@ public class NeuronSeparationProcessor extends AbstractNeuronSeparationProcessor
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    protected void prepareProcessing(JacsServiceData jacsServiceData) {
+        super.prepareProcessing(jacsServiceData);
         NeuronSeparationArgs args = getArgs(jacsServiceData);
         try {
             Path outputDir = getOutputDir(args);
@@ -51,7 +53,6 @@ public class NeuronSeparationProcessor extends AbstractNeuronSeparationProcessor
         } catch (IOException e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
     }
 
     protected NeuronSeparationArgs getArgs(JacsServiceData jacsServiceData) {

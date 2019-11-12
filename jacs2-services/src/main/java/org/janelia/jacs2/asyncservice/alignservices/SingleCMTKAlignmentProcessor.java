@@ -161,7 +161,8 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    protected void prepareProcessing(JacsServiceData jacsServiceData) {
+        super.prepareProcessing(jacsServiceData);
         CMTKAlignmentArgs args = getArgs(jacsServiceData);
         if (StringUtils.isBlank(args.inputDir) && CollectionUtils.isEmpty(args.inputImageFileNames)) {
             throw new IllegalArgumentException("No input has been specified");
@@ -174,7 +175,6 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
         } catch (IOException e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
     }
 
     @Override

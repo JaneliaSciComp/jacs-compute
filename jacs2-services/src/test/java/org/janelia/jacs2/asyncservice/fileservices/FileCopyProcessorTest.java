@@ -116,7 +116,7 @@ public class FileCopyProcessorTest {
                         .build());
    }
 
-    private void verifyCompletionWithException(JacsServiceData testServiceData) throws ExecutionException, InterruptedException {
+    private void verifyCompletionWithException(JacsServiceData testServiceData) {
         expectedException.expect(ComputationException.class);
         fileCopyProcessor.prepareProcessing(testServiceData);
     }
