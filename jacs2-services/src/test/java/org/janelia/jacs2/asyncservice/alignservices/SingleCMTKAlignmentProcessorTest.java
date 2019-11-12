@@ -101,7 +101,7 @@ public class SingleCMTKAlignmentProcessorTest {
     public void collectResults() {
         JacsServiceData testServiceData = createTestServiceData(TEST_SERVICE_ID, ImmutableList.of("i1_01.nrrd", "i1_02.nrrd"));
         ServiceResultHandler<CMTKAlignmentResultFiles> cmtkResultHandler = singleCMTKAlignmentProcessor.getResultHandler();
-        CMTKAlignmentResultFiles cmtkResult = cmtkResultHandler.collectResult(new JacsServiceResult<>(testServiceData));
+        CMTKAlignmentResultFiles cmtkResult = cmtkResultHandler.collectResult(testServiceData);
         assertEquals(testDirectory.toString(), cmtkResult.getResultDir());
         List<Path> reformattedFiles = cmtkResult.getReformattedFiles().stream().map(rf -> Paths.get(rf)).collect(Collectors.toList());
         Path affineRegistrationResultsDir = Paths.get(cmtkResult.getAffineRegistrationResultsDir());

@@ -57,14 +57,14 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
             final String resultsPattern = "glob:**/*.{png,avi,mp4}";
 
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
                 // don't count the files because this locks if there are no results
-                return areAllDependenciesDone(depResults.getJacsServiceData());
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override
-            public MIPsAndMoviesResult collectResult(JacsServiceResult<?> depResults) {
-                MIPsAndMoviesArgs args = getArgs(depResults.getJacsServiceData());
+            public MIPsAndMoviesResult collectResult(JacsServiceData jacsServiceData) {
+                MIPsAndMoviesArgs args = getArgs(jacsServiceData);
                 MIPsAndMoviesResult result = new MIPsAndMoviesResult(args.imageFile);
                 result.setResultsDir(getResultsDir(args).toString());
                 FileUtils.lookupFiles(getResultsDir(args), 1, resultsPattern)
@@ -112,7 +112,7 @@ public abstract class AbstractMIPsAndMoviesProcessor extends AbstractServiceProc
                                     .map(fcr -> fcr.getResult()).collect(Collectors.toList())));
                 })
                 .thenSuspendUntil(this.suspendCondition(jacsServiceData))
-                .thenApply(mpegResults -> this.updateServiceResult(jacsServiceData, this.getResultHandler().collectResult(new JacsServiceResult<Void>(jacsServiceData))))
+                .thenApply(mpegResults -> this.updateServiceResult(jacsServiceData, this.getResultHandler().collectResult(jacsServiceData)))
                 .thenApply(this::removeTempDir)
                 ;
     }

@@ -34,8 +34,8 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<R, S> extends Abstr
                         jacsServiceDataPersistence,
                         logger).negate())
                 .thenCompose(pd -> this.processing(pd))
-                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, this.isResultReady(pd)))
-                .thenApply(pd -> this.updateServiceResult(pd))
+                .thenSuspendUntil(pd -> new ContinuationCond.Cond<>(pd, this.isResultReady(jacsServiceData)))
+                .thenApply(pd -> this.updateServiceResult(jacsServiceData))
                 .thenApply(this::postProcessing)
                 ;
     }
@@ -59,17 +59,16 @@ public abstract class AbstractBasicLifeCycleServiceProcessor<R, S> extends Abstr
 
     protected abstract ServiceComputation<JacsServiceResult<S>> processing(JacsServiceResult<S> depsResult);
 
-    protected boolean isResultReady(JacsServiceResult<S> depsResults) {
-        if (getResultHandler().isResultReady(depsResults)) {
+    protected boolean isResultReady(JacsServiceData jacsServiceData) {
+        if (getResultHandler().isResultReady(jacsServiceData)) {
             return true;
         }
-        verifyAndFailIfTimeOut(depsResults.getJacsServiceData());
+        verifyAndFailIfTimeOut(jacsServiceData);
         return false;
     }
 
-    protected JacsServiceResult<R> updateServiceResult(JacsServiceResult<S> depsResult) {
-        R r = this.getResultHandler().collectResult(depsResult);
-        JacsServiceData jacsServiceData = depsResult.getJacsServiceData();
+    protected JacsServiceResult<R> updateServiceResult(JacsServiceData jacsServiceData) {
+        R r = this.getResultHandler().collectResult(jacsServiceData);
         return updateServiceResult(jacsServiceData, r);
     }
 

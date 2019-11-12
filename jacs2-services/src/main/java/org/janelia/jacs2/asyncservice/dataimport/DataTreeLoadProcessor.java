@@ -101,19 +101,12 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
     public ServiceResultHandler<List<ContentStack>> getResultHandler() {
         return new AbstractAnyServiceResultHandler<List<ContentStack>>() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
-            }
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public List<ContentStack> collectResult(JacsServiceResult<?> depResults) {
-                JacsServiceResult<List<ContentStack>> intermediateResult = (JacsServiceResult<List<ContentStack>>)depResults;
-                return intermediateResult.getResult();
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             public List<ContentStack> getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<StorageContentInfo>>() {});
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<ContentStack>>() {});
             }
         };
     }

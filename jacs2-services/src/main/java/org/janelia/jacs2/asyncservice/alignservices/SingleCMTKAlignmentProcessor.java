@@ -1,14 +1,29 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
@@ -25,20 +40,6 @@ import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Named("singleCmtkAlignment")
 public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcessor<CMTKAlignmentResultFiles> {
@@ -76,14 +77,13 @@ public class SingleCMTKAlignmentProcessor extends AbstractExeBasedServiceProcess
     public ServiceResultHandler<CMTKAlignmentResultFiles> getResultHandler() {
         return new AbstractAnyServiceResultHandler<CMTKAlignmentResultFiles>() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override
-            public CMTKAlignmentResultFiles collectResult(JacsServiceResult<?> depResults) {
+            public CMTKAlignmentResultFiles collectResult(JacsServiceData jacsServiceData) {
                 CMTKAlignmentResultFiles result = new CMTKAlignmentResultFiles();
-                JacsServiceData jacsServiceData = depResults.getJacsServiceData();
                 CMTKAlignmentArgs args = getArgs(jacsServiceData);
                 String resultsDir = getProcessDirName(args);
                 result.setResultDir(resultsDir);

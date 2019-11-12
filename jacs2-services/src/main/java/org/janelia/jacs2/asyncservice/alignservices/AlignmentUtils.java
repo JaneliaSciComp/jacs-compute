@@ -1,11 +1,5 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
-import com.google.common.base.Splitter;
-import org.apache.commons.lang3.StringUtils;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -17,6 +11,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringJoiner;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+
+import com.google.common.base.Splitter;
+
+import org.apache.commons.lang3.StringUtils;
 
 public class AlignmentUtils {
 
@@ -66,7 +68,7 @@ public class AlignmentUtils {
         return coord;
     }
 
-    public static AlignmentInput parseInput(String inputStr) {
+    static AlignmentInput parseInput(String inputStr) {
         AlignmentInput alignmentInput = new AlignmentInput();
 
         if (StringUtils.isBlank(inputStr)) return alignmentInput;
@@ -90,7 +92,7 @@ public class AlignmentUtils {
         return alignmentInput;
     }
 
-    public static String formatInput(AlignmentInput alignmentInput) {
+    static String formatInput(AlignmentInput alignmentInput) {
         StringJoiner joiner = new StringJoiner(",");
         joiner.add(StringUtils.defaultIfBlank(alignmentInput.name, ""));
         joiner.add(StringUtils.defaultIfBlank(alignmentInput.channels, ""));

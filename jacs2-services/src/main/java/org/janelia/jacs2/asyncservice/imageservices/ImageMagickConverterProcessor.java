@@ -1,8 +1,25 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -12,7 +29,6 @@ import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
@@ -28,21 +44,6 @@ import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Create a square montage from given PNGs assuming a tile pattern with the given number of tiles per side. If the number of tiles per side is not specified
@@ -91,8 +92,8 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
         return new AbstractFileListServiceResultHandler() {
 
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                ImageConverterArgs args = getArgs(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                ImageConverterArgs args = getArgs(jacsServiceData);
                 return getConverterArgs(args)
                         .map(converterArgs -> Files.exists(converterArgs.getRight()))
                         .reduce((f1, f2) -> f1 && f2)
@@ -100,8 +101,8 @@ public class ImageMagickConverterProcessor extends AbstractExeBasedServiceProces
             }
 
             @Override
-            public List<File> collectResult(JacsServiceResult<?> depResults) {
-                ImageConverterArgs args = getArgs(depResults.getJacsServiceData());
+            public List<File> collectResult(JacsServiceData jacsServiceData) {
+                ImageConverterArgs args = getArgs(jacsServiceData);
                 return getConverterArgs(args)
                         .map(converterArgs -> converterArgs.getRight().toFile())
                         .collect(Collectors.toList());

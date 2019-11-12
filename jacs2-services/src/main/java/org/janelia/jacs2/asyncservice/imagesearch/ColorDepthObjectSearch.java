@@ -84,13 +84,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
     public ServiceResultHandler<Boolean> getResultHandler() {
         return new AbstractAnyServiceResultHandler<Boolean>() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return true;
-            }
-
-            @Override
-            public Boolean collectResult(JacsServiceResult<?> depResults) {
-                throw new UnsupportedOperationException();
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override

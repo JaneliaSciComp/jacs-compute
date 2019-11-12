@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.imageservices;
 import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -11,6 +12,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -26,7 +28,7 @@ import java.nio.file.Paths;
 import java.util.StringJoiner;
 
 @Named("distortionCorrection")
-public class DistortionCorrectionProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
+public class DistortionCorrectionProcessor extends AbstractServiceProcessor<File> {
 
     static class DistortionCorrectionArgs extends ServiceArgs {
         @Parameter(names = "-inputFile", description = "Input file", required = true)
@@ -38,7 +40,7 @@ public class DistortionCorrectionProcessor extends AbstractBasicLifeCycleService
     }
 
     private final String distortionCorrectionMacro;
-    private final FijiMacroProcessor fijiMacroProcessor;
+    private final WrappedServiceProcessor<FijiMacroProcessor, Void> fijiMacroProcessor;
 
     @Inject
     DistortionCorrectionProcessor(ServiceComputationFactory computationFactory,
@@ -49,7 +51,7 @@ public class DistortionCorrectionProcessor extends AbstractBasicLifeCycleService
                                   Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.distortionCorrectionMacro = distortionCorrectionMacro;
-        this.fijiMacroProcessor = fijiMacroProcessor;
+        this.fijiMacroProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, fijiMacroProcessor);
     }
 
     @Override
@@ -61,39 +63,28 @@ public class DistortionCorrectionProcessor extends AbstractBasicLifeCycleService
     public ServiceResultHandler<File> getResultHandler() {
         return new AbstractSingleFileServiceResultHandler() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile().exists();
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return getOutputFile(getArgs(jacsServiceData)).toFile().exists();
             }
 
             @Override
-            public File collectResult(JacsServiceResult<?> depResults) {
-                return getOutputFile(getArgs(depResults.getJacsServiceData())).toFile();
+            public File collectResult(JacsServiceData jacsServiceData) {
+                return getOutputFile(getArgs(jacsServiceData)).toFile();
             }
         };
     }
 
-    @Override
-    public ServiceErrorChecker getErrorChecker() {
-        return fijiMacroProcessor.getErrorChecker();
-    }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
-        DistortionCorrectionArgs args = getArgs(depResults.getJacsServiceData());
-        JacsServiceData fijiService = createFijiService(args, depResults.getJacsServiceData());
-        return fijiMacroProcessor.process(fijiService)
-                .thenApply(voidResult -> depResults);
-    }
-
-    private JacsServiceData createFijiService(DistortionCorrectionArgs args, JacsServiceData jacsServiceData) {
-        return fijiMacroProcessor.createServiceData(
-                new ServiceExecutionContext.Builder(jacsServiceData)
+    public ServiceComputation<JacsServiceResult<File>> process(JacsServiceData jacsServiceData) {
+        DistortionCorrectionArgs args = getArgs(jacsServiceData);
+        return fijiMacroProcessor.process(new ServiceExecutionContext.Builder(jacsServiceData)
                         .build(),
                 new ServiceArg("-macro", distortionCorrectionMacro),
                 new ServiceArg("-macroArgs", getMacroArgs(args)),
                 new ServiceArg("-finalOutput", getOutputDir(args).toString()),
                 new ServiceArg("-resultsPatterns", new File(args.outputFile).getName())
-        );
+        ).thenApply(voidResult -> updateServiceResult(jacsServiceData, getResultHandler().collectResult(jacsServiceData)));
     }
 
     private String getMacroArgs(DistortionCorrectionArgs args) {

@@ -1,6 +1,20 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
+
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -22,18 +36,6 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Service for searching color depth mask projections at scale by using a Spark service. Multiple directories can be
@@ -125,11 +127,12 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
     public ServiceResultHandler<List<File>> getResultHandler() {
         return new AbstractFileListServiceResultHandler() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return true;
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
+
             @Override
-            public List<File> collectResult(JacsServiceResult<?> depResults) {
+            public List<File> collectResult(JacsServiceData jacsServiceData) {
                 throw new UnsupportedOperationException();
             }
         };

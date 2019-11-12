@@ -71,15 +71,8 @@ public class SWCImportProcessor extends AbstractServiceProcessor<Long> {
         return new AbstractAnyServiceResultHandler<Long>() {
 
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
-            }
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public Long collectResult(JacsServiceResult<?> depResults) {
-                JacsServiceResult<Long> result = (JacsServiceResult<Long>)depResults;
-                return result.getResult();
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override

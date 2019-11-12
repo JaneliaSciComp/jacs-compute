@@ -1,15 +1,25 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Map;
+
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.CoreDumpServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
@@ -26,15 +36,6 @@ import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Map;
 
 @Named("mpegConverter")
 public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProcessor<FileConverterResult> {
@@ -85,15 +86,15 @@ public class VideoFormatConverterProcessor extends AbstractExeBasedServiceProces
         return new AbstractAnyServiceResultHandler<FileConverterResult>() {
 
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                VideoConverterArgs args = getArgs(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                VideoConverterArgs args = getArgs(jacsServiceData);
                 File outputFile = getOutputFile(args);
                 return outputFile.exists();
             }
 
             @Override
-            public FileConverterResult collectResult(JacsServiceResult<?> depResults) {
-                VideoConverterArgs args = getArgs(depResults.getJacsServiceData());
+            public FileConverterResult collectResult(JacsServiceData jacsServiceData) {
+                VideoConverterArgs args = getArgs(jacsServiceData);
                 return new FileConverterResult(args.input, args.getOutputName());
             }
 

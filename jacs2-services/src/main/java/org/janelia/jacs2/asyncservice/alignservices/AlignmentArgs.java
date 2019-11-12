@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
 import com.beust.jcommander.Parameter;
+
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 
 class AlignmentArgs extends ServiceArgs {

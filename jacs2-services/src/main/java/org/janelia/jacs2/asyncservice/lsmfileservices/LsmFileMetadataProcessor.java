@@ -78,8 +78,7 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<F
         return new AbstractSingleFileServiceResultHandler() {
 
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                JacsServiceData jacsServiceData = depResults.getJacsServiceData();
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
                 LsmFileMetadataArgs args = getArgs(jacsServiceData);
                 File outputFile = getOutputFile(args);
                 File workingOutputFile = getWorkingOutputFile(jacsServiceData, args);
@@ -105,8 +104,8 @@ public class LsmFileMetadataProcessor extends AbstractExeBasedServiceProcessor<F
             }
 
             @Override
-            public File collectResult(JacsServiceResult<?> depResults) {
-                return getOutputFile(getArgs(depResults.getJacsServiceData()));
+            public File collectResult(JacsServiceData jacsServiceData) {
+                return getOutputFile(getArgs(jacsServiceData));
             }
         };
     }

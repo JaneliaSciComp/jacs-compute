@@ -122,15 +122,8 @@ public class LSMImportProcessor extends AbstractServiceProcessor<List<LSMImportR
     public ServiceResultHandler<List<LSMImportResult>> getResultHandler() {
         return new AbstractAnyServiceResultHandler<List<LSMImportResult>>() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
-            }
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public List<LSMImportResult> collectResult(JacsServiceResult<?> depResults) {
-                JacsServiceResult<List<LSMImportResult>> intermediateResult = (JacsServiceResult<List<LSMImportResult>>)depResults;
-                return intermediateResult.getResult();
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override

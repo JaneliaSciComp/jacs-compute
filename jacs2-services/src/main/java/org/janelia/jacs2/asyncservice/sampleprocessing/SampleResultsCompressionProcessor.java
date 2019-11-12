@@ -1,12 +1,19 @@
 package org.janelia.jacs2.asyncservice.sampleprocessing;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.janelia.model.jacs2.domain.DomainConstants;
-import org.janelia.model.jacs2.domain.enums.FileType;
-import org.janelia.model.jacs2.domain.sample.ObjectiveSample;
-import org.janelia.model.jacs2.domain.sample.PipelineResult;
-import org.janelia.model.jacs2.domain.sample.SamplePipelineRun;
+
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -23,20 +30,15 @@ import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
+import org.janelia.model.jacs2.domain.DomainConstants;
+import org.janelia.model.jacs2.domain.enums.FileType;
+import org.janelia.model.jacs2.domain.sample.ObjectiveSample;
+import org.janelia.model.jacs2.domain.sample.PipelineResult;
+import org.janelia.model.jacs2.domain.sample.SamplePipelineRun;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.RegisteredJacsNotification;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 @Named("sampleResultsCompression")
 public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<List<PipelineResult>> {
@@ -82,15 +84,8 @@ public class SampleResultsCompressionProcessor extends AbstractServiceProcessor<
     public ServiceResultHandler<List<PipelineResult>> getResultHandler() {
         return new AbstractAnyServiceResultHandler<List<PipelineResult>>() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
-            }
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public List<PipelineResult> collectResult(JacsServiceResult<?> depResults) {
-                JacsServiceResult<List<PipelineResult>> intermediateResult = (JacsServiceResult<List<PipelineResult>>)depResults;
-                return intermediateResult.getResult();
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override

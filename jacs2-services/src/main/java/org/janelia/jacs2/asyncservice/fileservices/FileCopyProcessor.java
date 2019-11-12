@@ -1,7 +1,19 @@
 package org.janelia.jacs2.asyncservice.fileservices;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.util.Map;
+
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -20,19 +32,8 @@ import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.ProcessingLocation;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.util.Map;
 
 @Named("fileCopy")
 public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<File> {
@@ -75,15 +76,15 @@ public class FileCopyProcessor extends AbstractExeBasedServiceProcessor<File> {
     public ServiceResultHandler<File> getResultHandler() {
         return new AbstractSingleFileServiceResultHandler() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                FileCopyArgs args = getArgs(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                FileCopyArgs args = getArgs(jacsServiceData);
                 File targetFile = getTargetFile(args);
                 return targetFile.exists() && targetFile.length() > 0;
             }
 
             @Override
-            public File collectResult(JacsServiceResult<?> depResults) {
-                FileCopyArgs args = getArgs(depResults.getJacsServiceData());
+            public File collectResult(JacsServiceData jacsServiceData) {
+                FileCopyArgs args = getArgs(jacsServiceData);
                 File targetFile = getTargetFile(args);
                 return targetFile;
             }

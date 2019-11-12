@@ -1,8 +1,15 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import java.nio.file.Paths;
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
+
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -19,13 +26,6 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.temporal.TemporalUnit;
-import java.util.List;
 
 @Named("startSparkCluster")
 public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClusterStartProcessor.SparkJobInfo> {
@@ -87,15 +87,8 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
     public ServiceResultHandler<SparkJobInfo> getResultHandler() {
         return new AbstractAnyServiceResultHandler<SparkJobInfo>() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
-            }
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public SparkJobInfo collectResult(JacsServiceResult<?> depResults) {
-                JacsServiceResult<SparkJobInfo> intermediateResult = (JacsServiceResult<SparkJobInfo>)depResults;
-                return intermediateResult.getResult();
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override

@@ -1,13 +1,21 @@
 package org.janelia.jacs2.asyncservice.neuronservices;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+
+import javax.enterprise.inject.Instance;
+
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
@@ -21,13 +29,6 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Instance;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
 
 public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBasedServiceProcessor<NeuronSeparationFiles> {
 
@@ -69,13 +70,13 @@ public abstract class AbstractNeuronSeparationProcessor extends AbstractExeBased
             final String resultsPattern = "glob:**/{archive,maskChan,fastLoad,Consolidated,Reference,SeparationResult,neuronSeparatorPipeline.PR.neuron,maskChan/neuron_,maskChan/ref}*";
 
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override
-            public NeuronSeparationFiles collectResult(JacsServiceResult<?> depResults) {
-                NeuronSeparationArgs args = getArgs(depResults.getJacsServiceData());
+            public NeuronSeparationFiles collectResult(JacsServiceData jacsServiceData) {
+                NeuronSeparationArgs args = getArgs(jacsServiceData);
                 NeuronSeparationFiles result = new NeuronSeparationFiles();
                 Path resultDir = getOutputDir(args);
                 result.setResultDir(resultDir.toString());

@@ -59,15 +59,8 @@ public class CMTKAlignmentProcessor extends AbstractServiceProcessor<List<String
     public ServiceResultHandler<List<String>> getResultHandler() {
         return new AbstractAnyServiceResultHandler<List<String>>() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
-            }
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public List<String> collectResult(JacsServiceResult<?> depResults) {
-                JacsServiceResult<List<String>> intermediateResult = (JacsServiceResult<List<String>>)depResults;
-                return intermediateResult.getResult();
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override

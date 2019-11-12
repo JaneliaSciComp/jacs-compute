@@ -1,13 +1,12 @@
 package org.janelia.jacs2.asyncservice.common.resulthandlers;
 
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.model.service.JacsServiceData;
 
 public abstract class AbstractEmptyServiceResultHandler<T> implements ServiceResultHandler<T> {
 
     @Override
-    public T collectResult(JacsServiceResult<?> depResults) {
+    public T collectResult(JacsServiceData jacsServiceData) {
         return null;
     }
 

@@ -60,13 +60,13 @@ public class ArchivedLsmMetadataProcessor extends AbstractServiceProcessor<File>
     public ServiceResultHandler<File> getResultHandler() {
         return new AbstractSingleFileServiceResultHandler() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override
-            public File collectResult(JacsServiceResult<?> depResults) {
-                ArchivedLsmMetadataArgs args = getArgs(depResults.getJacsServiceData());
+            public File collectResult(JacsServiceData jacsServiceData) {
+                ArchivedLsmMetadataArgs args = getArgs(jacsServiceData);
                 return getOutputFile(args);
             }
         };

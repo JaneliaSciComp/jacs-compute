@@ -162,8 +162,8 @@ public class FlirtProcessor extends AbstractExeBasedServiceProcessor<List<File>>
         return new AbstractFileListServiceResultHandler() {
 
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                FlirtArgs args = getArgs(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                FlirtArgs args = getArgs(jacsServiceData);
                 Path outputAffine = getOutputAffine(args);
                 if (outputAffine != null && !outputAffine.toFile().exists()) {
                     return false;
@@ -176,8 +176,8 @@ public class FlirtProcessor extends AbstractExeBasedServiceProcessor<List<File>>
             }
 
             @Override
-            public List<File> collectResult(JacsServiceResult<?> depResults) {
-                FlirtArgs args = getArgs(depResults.getJacsServiceData());
+            public List<File> collectResult(JacsServiceData jacsServiceData) {
+                FlirtArgs args = getArgs(jacsServiceData);
                 List<File> results = new LinkedList<>();
                 Path outputAffine = getOutputAffine(args);
                 if (outputAffine != null) {

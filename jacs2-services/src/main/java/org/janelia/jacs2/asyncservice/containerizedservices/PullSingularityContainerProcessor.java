@@ -58,14 +58,14 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
     public ServiceResultHandler<File> getResultHandler() {
         return new AbstractSingleFileServiceResultHandler() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                PullSingularityContainerArgs args = getArgs(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                PullSingularityContainerArgs args = getArgs(jacsServiceData);
                 return getLocalContainerImage(args).localImageExists();
             }
 
             @Override
-            public File collectResult(JacsServiceResult<?> depResults) {
-                PullSingularityContainerArgs args = getArgs(depResults.getJacsServiceData());
+            public File collectResult(JacsServiceData jacsServiceData) {
+                PullSingularityContainerArgs args = getArgs(jacsServiceData);
                 return getLocalContainerImage(args).getLocalImagePath().toFile();
             }
         };

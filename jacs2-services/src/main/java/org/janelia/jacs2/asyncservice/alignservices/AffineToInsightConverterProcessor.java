@@ -1,7 +1,15 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
-import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
+
+import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
@@ -14,14 +22,8 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 @Named("afine2InsightConverter")
-public class AffineToInsightConverterProcessor extends AbstractBasicLifeCycleServiceProcessor<File, Void> {
+public class AffineToInsightConverterProcessor extends AbstractServiceProcessor<File> {
 
     static class AfineToInsightConverterArgs extends ServiceArgs {
         @Parameter(names = "-input", description = "Input file", required = true)
@@ -48,24 +50,24 @@ public class AffineToInsightConverterProcessor extends AbstractBasicLifeCycleSer
         return new AbstractSingleFileServiceResultHandler() {
 
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                AfineToInsightConverterArgs args = getArgs(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                AfineToInsightConverterArgs args = getArgs(jacsServiceData);
                 return getOutput(args).toFile().exists();
             }
 
             @Override
-            public File collectResult(JacsServiceResult<?> depResults) {
-                AfineToInsightConverterArgs args = getArgs(depResults.getJacsServiceData());
+            public File collectResult(JacsServiceData jacsServiceData) {
+                AfineToInsightConverterArgs args = getArgs(jacsServiceData);
                 return getOutput(args).toFile();
             }
         };
     }
 
     @Override
-    protected ServiceComputation<JacsServiceResult<Void>> processing(JacsServiceResult<Void> depResults) {
-        AfineToInsightConverterArgs args = getArgs(depResults.getJacsServiceData());
+    public ServiceComputation<JacsServiceResult<File>> process(JacsServiceData jacsServiceData) {
+        AfineToInsightConverterArgs args = getArgs(jacsServiceData);
         AlignmentUtils.convertAffineMatToInsightMat(getInput(args), getOutput(args));
-        return computationFactory.newCompletedComputation(depResults);
+        return computationFactory.newCompletedComputation(updateServiceResult(jacsServiceData, this.getResultHandler().collectResult(jacsServiceData)));
     }
 
     private AfineToInsightConverterArgs getArgs(JacsServiceData jacsServiceData) {

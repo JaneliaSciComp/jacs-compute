@@ -1,15 +1,24 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+
+import javax.enterprise.inject.Instance;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.DefaultServiceErrorChecker;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
@@ -24,14 +33,6 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Instance;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
 
 public abstract class AbstractAlignmentProcessor extends AbstractExeBasedServiceProcessor<AlignmentResultFiles> {
 
@@ -70,13 +71,13 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
             final String resultsPattern = "glob:**/{Align,QiScore,rotations,Affine,ccmi,VerifyMovie}*";
 
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override
-            public AlignmentResultFiles collectResult(JacsServiceResult<?> depResults) {
-                AlignmentArgs args = getArgs(depResults.getJacsServiceData());
+            public AlignmentResultFiles collectResult(JacsServiceData jacsServiceData) {
+                AlignmentArgs args = getArgs(jacsServiceData);
                 AlignmentResultFiles result = new AlignmentResultFiles();
                 Path resultDir = getOutputDir(args);
                 result.setAlgorithm(args.alignmentAlgorithm);
@@ -194,7 +195,7 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new AlignmentArgs());
     }
 
-    protected AlignmentInput getAlignmentFirstInput(AlignmentArgs args) {
+    private AlignmentInput getAlignmentFirstInput(AlignmentArgs args) {
         AlignmentInput alignmentInput;
         if (StringUtils.isNotBlank(args.input1File)) {
             alignmentInput = mapArgsToAlignmentInput(args.input1File, args.input1Channels, args.input1Ref, args.input1Res, args.input1Dims);
@@ -218,15 +219,15 @@ public abstract class AbstractAlignmentProcessor extends AbstractExeBasedService
         return Paths.get(args.outputDir);
     }
 
-    protected String getToolsDir() {
+    private String getToolsDir() {
         return getFullExecutableName(toolsDir);
     }
 
-    protected String getAlignmentTemplatesDir() {
+    private String getAlignmentTemplatesDir() {
         return getFullExecutableName(alignmentTemplatesDir);
     }
 
-    protected String getAlignmentConfigDir() {
+    private String getAlignmentConfigDir() {
         return getFullExecutableName(alignmentConfigDir);
     }
 

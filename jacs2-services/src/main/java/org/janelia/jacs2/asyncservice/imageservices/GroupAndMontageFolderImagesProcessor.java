@@ -7,6 +7,7 @@ import com.google.common.collect.Multimap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -17,6 +18,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -29,6 +31,8 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
@@ -45,17 +49,15 @@ import java.util.stream.Collectors;
  * Create a square montage from PNGs in a given directory.
  */
 @Named("groupAndMontageImages")
-public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycleServiceProcessor<Map<String, String>, List<GroupAndMontageFolderImagesProcessor.MontageFolderIntermediateResult>> {
+public class GroupAndMontageFolderImagesProcessor extends AbstractServiceProcessor<Map<String, String>> {
 
     static class MontageFolderIntermediateResult {
-        private final Number montageServiceId;
-        private final String groupedFilesType;
-        private final String montageName;
+        final String groupedFilesType;
+        final String montageResult;
 
-        public MontageFolderIntermediateResult(Number montageServiceId, String groupedFilesType, String montageName) {
-            this.montageServiceId = montageServiceId;
+        MontageFolderIntermediateResult(String groupedFilesType, String montageResult) {
             this.groupedFilesType = groupedFilesType;
-            this.montageName = montageName;
+            this.montageResult = montageResult;
         }
     }
 
@@ -70,7 +72,7 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
         String imageFilePattern = "glob:**/*.png";
     }
 
-    private final MontageImagesProcessor montageImagesProcessor;
+    private final WrappedServiceProcessor<MontageImagesProcessor, File> montageImagesProcessor;
 
     @Inject
     GroupAndMontageFolderImagesProcessor(ServiceComputationFactory computationFactory,
@@ -80,7 +82,7 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
                                          MontageImagesProcessor montageImagesProcessor,
                                          Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.montageImagesProcessor = montageImagesProcessor;
+        this.montageImagesProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, montageImagesProcessor);
     }
 
     @Override
@@ -93,15 +95,8 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
         return new AbstractAnyServiceResultHandler<Map<String, String>>() {
 
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
-            }
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public Map<String, String> collectResult(JacsServiceResult<?> depResults) {
-                List<MontageFolderIntermediateResult> results = (List<MontageFolderIntermediateResult>) depResults.getResult();
-                return results.stream().collect(Collectors.toMap(r -> r.groupedFilesType, r -> r.montageName));
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override
@@ -112,44 +107,41 @@ public class GroupAndMontageFolderImagesProcessor extends AbstractBasicLifeCycle
     }
 
     @Override
-    protected JacsServiceData prepareProcessing(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<Map<String, String>>> process(JacsServiceData jacsServiceData) {
+        MontageFolderImagesArgs args = getArgs(jacsServiceData);
         try {
-            MontageFolderImagesArgs args = getArgs(jacsServiceData);
             Path outputDir = getOutputDir(args);
             Files.createDirectories(outputDir);
         } catch (Exception e) {
             throw new ComputationException(jacsServiceData, e);
         }
-        return super.prepareProcessing(jacsServiceData);
-    }
-
-    @Override
-    protected JacsServiceResult<List<MontageFolderIntermediateResult>> submitServiceDependencies(JacsServiceData jacsServiceData) {
-        MontageFolderImagesArgs args = getArgs(jacsServiceData);
-
         List<Path> inputFiles = getInputFiles(args.inputDir, args.imageFilePattern);
         Multimap<String, Path> imageGroups = groupFilesBySuffix(inputFiles);
         int tilesPerSide = getMaxTilesPerSide(imageGroups);
-        List<MontageFolderIntermediateResult> montageServiceResults = imageGroups.asMap().entrySet().stream()
+        List<ServiceComputation<?>> montageComputations = imageGroups.asMap().entrySet().stream()
                 .map(group -> {
                     Path montageOutput = getMontageOutput(args, group.getKey());
-                    JacsServiceData montageServiceRef = montageImagesProcessor.createServiceData(
+                    return montageImagesProcessor.process(
                             new ServiceExecutionContext.Builder(jacsServiceData)
                                     .build(),
                             new ServiceArg("-inputFiles", group.getValue().stream().map(p -> p.toString()).collect(Collectors.joining(","))),
                             new ServiceArg("-tilesPerSide", tilesPerSide),
                             new ServiceArg("-output", montageOutput.toString())
-                    );
-                    JacsServiceData montageService = submitDependencyIfNotFound(montageServiceRef);
-                    return new MontageFolderIntermediateResult(montageService.getId(), group.getKey(), montageOutput.toString());
+                    ).thenApply(montageResult -> new JacsServiceResult<>(montageResult.getJacsServiceData(), new MontageFolderIntermediateResult(group.getKey(), montageResult.getResult().getAbsolutePath())));
                 })
-                .collect(Collectors.toList());
-        return new JacsServiceResult<>(jacsServiceData, montageServiceResults);
-    }
-
-    @Override
-    protected ServiceComputation<JacsServiceResult<List<MontageFolderIntermediateResult>>> processing(JacsServiceResult<List<MontageFolderIntermediateResult>> depResults) {
-        return computationFactory.newCompletedComputation(depResults);
+                .collect(Collectors.toList())
+                ;
+        return computationFactory.newCompletedComputation(jacsServiceData)
+                .thenCombineAll(montageComputations, (sd, montageComputationsResults) -> {
+                    List<JacsServiceResult<MontageFolderIntermediateResult>> montageResults = (List<JacsServiceResult<MontageFolderIntermediateResult>>) montageComputationsResults;
+                    return montageResults.stream()
+                            .map(JacsServiceResult::getResult)
+                            .collect(Collectors.toMap(
+                                    mr -> mr.groupedFilesType,
+                                    mr -> mr.montageResult));
+                })
+                .thenApply(montageResults -> updateServiceResult(jacsServiceData, montageResults))
+                ;
     }
 
     private MontageFolderImagesArgs getArgs(JacsServiceData jacsServiceData) {

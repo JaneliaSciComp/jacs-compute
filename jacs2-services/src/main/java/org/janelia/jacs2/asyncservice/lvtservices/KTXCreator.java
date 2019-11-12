@@ -1,6 +1,8 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
@@ -9,7 +11,9 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
 import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularityContainerProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -44,7 +48,7 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Named("ktxCreator")
-public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, List<File>> {
+public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, OctreeResult> {
 
     static class KTXCreatorArgs extends LVTArgs {
     }
@@ -66,47 +70,15 @@ public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, 
     }
 
     @Override
-    public ServiceResultHandler<List<File>> getResultHandler() {
-        return new AbstractFileListServiceResultHandler() {
-
-            private boolean verifyOctree(File dir) {
-
-                boolean checkChanFile = false;
-                for(File file : dir.listFiles((FileFilter)null)) {
-                    if (file.isDirectory()) {
-                        try {
-                            Integer.parseInt(file.getName());
-                            if (!verifyOctree(file)) return false;
-                        }
-                        catch (NumberFormatException e) {
-                            // Ignore dirs which are not numbers
-                        }
-                    }
-                    else {
-                        if (file.getName().startsWith("block") && file.getName().endsWith(".ktx")) {
-                            checkChanFile = true;
-                        }
-                    }
-                }
-                if (!checkChanFile) return false;
-                return true;
+    public ServiceResultHandler<OctreeResult> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<OctreeResult>() {
+            @Override
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
 
-            @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                File outputDir = new File(getArgs(depResults.getJacsServiceData()).outputDir);
-                if (!outputDir.exists()) return false;
-                if (!verifyOctree(outputDir)) return false;
-                return true;
-            }
-
-            @Override
-            public List<File> collectResult(JacsServiceResult<?> depResults) {
-                KTXCreatorArgs args = getArgs(depResults.getJacsServiceData());
-                Path outputDir = getOutputDir(args);
-                return FileUtils.lookupFiles(outputDir, 100, "glob:**/*.ktx")
-                        .map(Path::toFile)
-                        .collect(Collectors.toList());
+            public OctreeResult getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<OctreeResult>() {});
             }
         };
     }
@@ -118,6 +90,20 @@ public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, 
 
     @Override
     StringBuilder serializeToolArgs(KTXCreatorArgs args) {
-        return new StringBuilder(); // !!!!! FIXME
+        // !!!!!!!! FIXME
+        return new StringBuilder()
+                .append(args.outputDir).append(',')
+                .append(args.levels).append(',')
+                ;
     }
+
+    @Override
+    OctreeResult collectResult(JacsServiceData jacsServiceData) {
+        KTXCreatorArgs args = getArgs(jacsServiceData);
+        OctreeResult octreeResult = new OctreeResult();
+        octreeResult.setBasePath(args.outputDir);
+        octreeResult.setLevels(args.levels);
+        return octreeResult;
+    }
+
 }

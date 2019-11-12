@@ -41,7 +41,7 @@ abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServic
             throw new IllegalArgumentException("No tool container has been configured or specified in the service arguments");
         }
         return invokeLVTool(jacsServiceData)
-                .thenApply(sr -> updateServiceResult(jacsServiceData, this.getResultHandler().collectResult(sr)))
+                .thenApply(sr -> updateServiceResult(jacsServiceData, collectResult(jacsServiceData)))
                 ;
     }
 
@@ -74,4 +74,5 @@ abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServic
 
     abstract StringBuilder serializeToolArgs(A args);
 
+    abstract R collectResult(JacsServiceData jacsServiceData);
 }

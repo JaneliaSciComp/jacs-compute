@@ -1,12 +1,13 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
-import org.slf4j.Logger;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.slf4j.Logger;
 
 public class AlignmentServiceBuilderFactory {
     private final Instance<AlignmentServiceBuilder> anyArgBuilderSource;

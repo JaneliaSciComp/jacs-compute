@@ -1,11 +1,20 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableMap;
+
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
@@ -18,14 +27,6 @@ import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Create a square montage from given PNGs assuming a tile pattern with the given number of tiles per side. If the number of tiles per side is not specified
@@ -74,13 +75,13 @@ public class MontageImagesProcessor extends AbstractExeBasedServiceProcessor<Fil
         return new AbstractSingleFileServiceResultHandler() {
 
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return getMontageOutput(getArgs(depResults.getJacsServiceData())).exists();
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return getMontageOutput(getArgs(jacsServiceData)).exists();
             }
 
             @Override
-            public File collectResult(JacsServiceResult<?> depResults) {
-                return getMontageOutput(getArgs(depResults.getJacsServiceData()));
+            public File collectResult(JacsServiceData jacsServiceData) {
+                return getMontageOutput(getArgs(jacsServiceData));
             }
         };
     }

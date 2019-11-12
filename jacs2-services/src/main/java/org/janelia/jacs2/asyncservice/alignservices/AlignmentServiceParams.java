@@ -1,12 +1,12 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
-import org.janelia.jacs2.asyncservice.common.ServiceArg;
-import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.janelia.jacs2.asyncservice.common.ServiceArg;
+import org.janelia.jacs2.asyncservice.neuronservices.NeuronSeparationFiles;
+import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 
 public class AlignmentServiceParams {
 
@@ -17,7 +17,7 @@ public class AlignmentServiceParams {
     private final List<ServiceArg> alignmentServiceArgs;
     private final Map<String, String> resources = new LinkedHashMap<>();
 
-    public AlignmentServiceParams(String alignmentAlgorithm, String alignmentResultName, SampleProcessorResult sampleProcessorResult, NeuronSeparationFiles neuronSeparationFiles, List<ServiceArg> alignmentServiceArgs) {
+    AlignmentServiceParams(String alignmentAlgorithm, String alignmentResultName, SampleProcessorResult sampleProcessorResult, NeuronSeparationFiles neuronSeparationFiles, List<ServiceArg> alignmentServiceArgs) {
         this.alignmentResultName = alignmentResultName;
         this.alignmentAlgorithm = alignmentAlgorithm;
         this.sampleProcessorResult = sampleProcessorResult;

@@ -1,6 +1,18 @@
 package org.janelia.jacs2.asyncservice.fileservices;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractBasicLifeCycleServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -15,16 +27,6 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * LinkDataProcessor creates a soft link for the specified input. If a link already exists and the errorIfExists is on
@@ -59,13 +61,13 @@ public class LinkDataProcessor extends AbstractBasicLifeCycleServiceProcessor<Fi
     public ServiceResultHandler<File> getResultHandler() {
         return new AbstractSingleFileServiceResultHandler() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                return getTargetFile(getArgs(depResults.getJacsServiceData())).toFile().exists();
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return getTargetFile(getArgs(jacsServiceData)).toFile().exists();
             }
 
             @Override
-            public File collectResult(JacsServiceResult<?> depResults) {
-                return getTargetFile(getArgs(depResults.getJacsServiceData())).toFile();
+            public File collectResult(JacsServiceData jacsServiceData) {
+                return getTargetFile(getArgs(jacsServiceData)).toFile();
             }
         };
     }

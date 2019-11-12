@@ -1,8 +1,18 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
+import java.io.File;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
@@ -19,14 +29,6 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.io.File;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Named("deconvolution")
 public class DeconvolutionProcessor extends AbstractServiceProcessor<List<File>> {
@@ -55,8 +57,8 @@ public class DeconvolutionProcessor extends AbstractServiceProcessor<List<File>>
     public ServiceResultHandler<List<File>> getResultHandler() {
         return new AbstractFileListServiceResultHandler() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                DeconvolutionArgs args = getArgs(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                DeconvolutionArgs args = getArgs(jacsServiceData);
                 return args.tileChannelConfigurationFiles.stream()
                         .map(channelInput -> getResultNameForChannel(channelInput))
                         .map(channelResult -> FileUtils.fileExists(channelResult))
@@ -66,8 +68,8 @@ public class DeconvolutionProcessor extends AbstractServiceProcessor<List<File>>
             }
 
             @Override
-            public List<File> collectResult(JacsServiceResult<?> depResults) {
-                DeconvolutionArgs args = getArgs(depResults.getJacsServiceData());
+            public List<File> collectResult(JacsServiceData jacsServiceData) {
+                DeconvolutionArgs args = getArgs(jacsServiceData);
                 return args.tileChannelConfigurationFiles.stream()
                         .map(channelInput -> getResultNameForChannel(channelInput))
                         .map(channelResult -> Paths.get(channelResult).toFile())
@@ -89,28 +91,25 @@ public class DeconvolutionProcessor extends AbstractServiceProcessor<List<File>>
                 new ServiceArg("-n", args.nIterationsPerChannel.stream().map(Object::toString).reduce((f1, f2) -> f1 + "," + f2).orElse("")),
                 new ServiceArg("-v", args.backgroundValue),
                 new ServiceArg("-c", args.coresPerTask))
-                .thenApply(r -> {
-                    List<File> channelDeconvolutionResultFiles = args.tileChannelConfigurationFiles.stream()
-                            .map(channelConfigFile -> {
-                                List<Map<String, Object>> channelTileConfigs = deconvolutionHelper.loadJsonConfiguration(channelConfigFile,
-                                        new TypeReference<List<Map<String, Object>>>() {}).orElseGet(() -> ImmutableList.of());
-                                String deconvOutputDir = deconvolutionHelper.mapToDeconvOutputDir(channelConfigFile);
-                                List<Map<String, Object>> channelDeconvConfigs = channelTileConfigs.stream()
-                                        .map(tileConfig -> {
-                                            String tileDeconvolutionFile = deconvolutionHelper.getTileDeconvFile(tileConfig, deconvOutputDir);
-                                            tileConfig.put("file", tileDeconvolutionFile);
-                                            return tileConfig;
-                                        })
-                                        .collect(Collectors.toList());
+                .thenApply(r -> args.tileChannelConfigurationFiles.stream()
+                        .map(channelConfigFile -> {
+                            List<Map<String, Object>> channelTileConfigs = deconvolutionHelper.loadJsonConfiguration(channelConfigFile,
+                                    new TypeReference<List<Map<String, Object>>>() {}).orElseGet(() -> ImmutableList.of());
+                            String deconvOutputDir = deconvolutionHelper.mapToDeconvOutputDir(channelConfigFile);
+                            List<Map<String, Object>> channelDeconvConfigs = channelTileConfigs.stream()
+                                    .map(tileConfig -> {
+                                        String tileDeconvolutionFile = deconvolutionHelper.getTileDeconvFile(tileConfig, deconvOutputDir);
+                                        tileConfig.put("file", tileDeconvolutionFile);
+                                        return tileConfig;
+                                    })
+                                    .collect(Collectors.toList());
 
-                                String channelDeconvResultFile = getResultNameForChannel(channelConfigFile);
-                                deconvolutionHelper.saveJsonConfiguration(channelDeconvConfigs, channelDeconvResultFile);
-                                return new File(channelDeconvResultFile);
-                            })
-                            .collect(Collectors.toList());
-                    return updateServiceResult(jacsServiceData, channelDeconvolutionResultFiles);
-                })
-                .thenApply(r -> updateServiceResult(jacsServiceData, getResultHandler().collectResult(r)))
+                            String channelDeconvResultFile = getResultNameForChannel(channelConfigFile);
+                            deconvolutionHelper.saveJsonConfiguration(channelDeconvConfigs, channelDeconvResultFile);
+                            return new File(channelDeconvResultFile);
+                        })
+                        .collect(Collectors.toList()))
+                .thenApply(channelDeconvolutionResultFiles -> updateServiceResult(jacsServiceData, channelDeconvolutionResultFiles))
                 ;
     }
 

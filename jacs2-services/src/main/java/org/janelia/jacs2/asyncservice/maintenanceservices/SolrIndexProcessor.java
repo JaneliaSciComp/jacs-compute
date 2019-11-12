@@ -71,7 +71,12 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
     public ServiceResultHandler<Integer> getResultHandler() {
         return new ServiceResultHandler<Integer>() {
             @Override
-            public Integer collectResult(JacsServiceResult<?> depResults) {
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
+            }
+
+            @Override
+            public Integer collectResult(JacsServiceData jacsServiceData) {
                 return null;
             }
 
@@ -83,11 +88,6 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
             @Override
             public Integer getServiceDataResult(JacsServiceData jacsServiceData) {
                 return jacsServiceData.getSerializableResult() == null ? null : (Integer) jacsServiceData.getSerializableResult();
-            }
-
-            @Override
-            public boolean isResultReady(JacsServiceResult depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
             }
         };
     }

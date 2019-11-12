@@ -82,8 +82,8 @@ public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<
     public ServiceResultHandler<List<File>> getResultHandler() {
         return new AbstractFileListServiceResultHandler() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                Vaa3MipCmdArgs args = getArgs(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                Vaa3MipCmdArgs args = getArgs(jacsServiceData);
                 return getOutputList(args).stream()
                         .map(ofn -> new File(ofn))
                         .map(of -> of.exists())
@@ -92,8 +92,8 @@ public class Vaa3dMipCmdProcessor extends AbstractExeBasedServiceProcessor<List<
             }
 
             @Override
-            public List<File> collectResult(JacsServiceResult<?> depResults) {
-                Vaa3MipCmdArgs args = getArgs(depResults.getJacsServiceData());
+            public List<File> collectResult(JacsServiceData jacsServiceData) {
+                Vaa3MipCmdArgs args = getArgs(jacsServiceData);
                 return getOutputList(args).stream()
                         .map(ofn -> new File(ofn))
                         .collect(Collectors.toList());

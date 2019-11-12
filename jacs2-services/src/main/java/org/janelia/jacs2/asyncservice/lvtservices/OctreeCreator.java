@@ -1,6 +1,8 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
@@ -9,10 +11,13 @@ import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractSingleFileServiceResultHandler;
 import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularityContainerProcessor;
+import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
@@ -42,7 +47,7 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Named("octreeCreator")
-public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCreatorArgs, File> {
+public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCreatorArgs, OctreeResult> {
 
     private static final String TRANSFORM_FILENAME = "transform.txt";
     private static final String OUTPUT_FILENAME_PATTERN = "default.%d.tif";
@@ -73,11 +78,11 @@ public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCrea
     }
 
     @Override
-    public ServiceResultHandler<File> getResultHandler() {
-        return new AbstractSingleFileServiceResultHandler() {
+    public ServiceResultHandler<OctreeResult> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<OctreeResult>() {
             @Override
-            public boolean isResultReady(JacsServiceResult<?> depResults) {
-                OctreeCreatorArgs args = getArgs(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                OctreeCreatorArgs args = getArgs(jacsServiceData);
                 File outputDir = new File(args.outputDir);
                 if (!outputDir.exists()) return false;
                 File transformFile = new File(outputDir, TRANSFORM_FILENAME);
@@ -85,9 +90,8 @@ public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCrea
                 return transformFile.exists() && outputFile.exists();
             }
 
-            @Override
-            public File collectResult(JacsServiceResult<?> depResults) {
-                return new File(getArgs(depResults.getJacsServiceData()).outputDir, TRANSFORM_FILENAME);
+            public OctreeResult getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<OctreeResult>() {});
             }
         };
     }
@@ -106,6 +110,15 @@ public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCrea
                 .append(args.channel).append(',')
                 .append('\'').append(args.voxelSize).append('\'')
                 ;
+    }
+
+    @Override
+    OctreeResult collectResult(JacsServiceData jacsServiceData) {
+        OctreeCreatorArgs args = getArgs(jacsServiceData);
+        OctreeResult octreeResult = new OctreeResult();
+        octreeResult.setBasePath(args.outputDir);
+        octreeResult.setLevels(args.levels);
+        return octreeResult;
     }
 
     private String getInputFileName(OctreeCreatorArgs args) {

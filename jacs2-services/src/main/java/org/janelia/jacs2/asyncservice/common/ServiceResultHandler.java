@@ -5,17 +5,17 @@ import org.janelia.model.service.JacsServiceData;
 public interface ServiceResultHandler<R> {
     /**
      * Check if the service result is available.
-     * @param depResults an intermediate result based on dependencies results
+     * @param jacsServiceData service data
      * @return true if the result is available.
      */
-    boolean isResultReady(JacsServiceResult<?> depResults);
+    boolean isResultReady(JacsServiceData jacsServiceData);
 
     /**
      * Collect the service result.
-     * @param depResults an intermediate result based on dependencies results
+     * @param jacsServiceData service data
      * @return the service result.
      */
-    R collectResult(JacsServiceResult<?> depResults);
+    R collectResult(JacsServiceData jacsServiceData);
 
     /**
      * Updates service data with the given result

@@ -82,8 +82,8 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     public ServiceResultHandler<R> getResultHandler() {
         return new AbstractEmptyServiceResultHandler<R>() {
             @Override
-            public boolean isResultReady(JacsServiceResult depResults) {
-                return areAllDependenciesDone(depResults.getJacsServiceData());
+            public boolean isResultReady(JacsServiceData jacsServiceData) {
+                return areAllDependenciesDone(jacsServiceData);
             }
         };
     }
