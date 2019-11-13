@@ -1,45 +1,36 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
-import com.beust.jcommander.Parameter;
-import com.fasterxml.jackson.core.type.TypeReference;
-
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
-import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
-import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
-import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
-import org.janelia.jacs2.asyncservice.common.ServiceArgs;
-import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
-import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
-import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularityContainerProcessor;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
-import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
-import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.ServiceMetaData;
-import org.slf4j.Logger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.File;
-import java.io.FileFilter;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+
+import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
+import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
+import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularityContainerProcessor;
+import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceDataBuilder;
+import org.janelia.model.service.ServiceMetaData;
+import org.slf4j.Logger;
+import scala.math.Ordering;
 
 /**
  * Service for creating a KTX representation of an image stack which is represented as an octree,
@@ -51,12 +42,13 @@ import java.util.stream.Collectors;
 public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, OctreeResult> {
 
     static class KTXCreatorArgs extends LVTArgs {
+        @Parameter(names = "-subtreeLengthForSubjobSplitting", description = "The subtree length considered for job splitting")
+        Integer subtreeLengthForSubjobSplitting = 5;
     }
 
     @Inject
     KTXCreator(ServiceComputationFactory computationFactory,
                JacsServiceDataPersistence jacsServiceDataPersistence,
-               @Any Instance<ExternalProcessRunner> serviceRunners,
                @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                PullAndRunSingularityContainerProcessor pullAndRunContainerProcessor,
                @PropertyValue(name = "service.ktxCreator.containerImage") String defaultContainerImage,
@@ -89,11 +81,47 @@ public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, 
     }
 
     @Override
-    StringBuilder serializeToolArgs(KTXCreatorArgs args) {
-        // !!!!!!!! FIXME
+    String getAppArgs(KTXCreatorArgs args) {
         return new StringBuilder()
-                .append(args.outputDir).append(',')
-                .append(args.levels).append(',')
+                .append(args.inputDir).append(',')
+                .append(args.outputDir)
+                .toString()
+                ;
+    }
+
+    @Override
+    String getAppBatchArgs(KTXCreatorArgs args) {
+        // traverse the octree and for each instance pass the octree path and how many levels deep to go
+        List<String> startupNodes = new ArrayList<>();
+
+        List<String> currentNodes = Collections.singletonList("");
+        startupNodes.addAll(currentNodes);
+
+        for (int currentLevel = 0; currentLevel + args.subtreeLengthForSubjobSplitting < args.levels; currentLevel += args.subtreeLengthForSubjobSplitting) {
+            List<String> nextNodes = currentNodes.stream()
+                    .flatMap(n -> recurseOctree(n, args.subtreeLengthForSubjobSplitting))
+                    .collect(Collectors.toList());
+                    ;
+            startupNodes.addAll(nextNodes);
+            currentNodes = nextNodes;
+        }
+        StringBuilder batchArgsBuilder = startupNodes.stream()
+                .map(p -> "'" + p + "'" + " " + args.subtreeLengthForSubjobSplitting)
+                .reduce(new StringBuilder(),
+                        (b, a) -> b.length() == 0 ? b.append(a) : b.append(',').append(a),
+                        (b1, b2) -> b1.length() == 0 ? b1.append(b2) : b1.append(',').append(b2))
+                ;
+        return batchArgsBuilder.toString();
+    }
+
+    private Stream<String> recurseOctree(String octreePath, int nlevels) {
+        if (nlevels == 0) {
+            return Stream.of(octreePath);
+        }
+        return IntStream.range(0, 8)
+                .boxed()
+                .map(n -> n + 1)
+                .flatMap(n -> recurseOctree(StringUtils.isBlank(octreePath) ? n.toString() : octreePath + "/" + n, nlevels - 1))
                 ;
     }
 
@@ -105,5 +133,4 @@ public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, 
         octreeResult.setLevels(args.levels);
         return octreeResult;
     }
-
 }

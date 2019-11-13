@@ -36,6 +36,8 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
     static class LVDataImportArgs extends LVArgs {
         @Parameter(names = "-voxelSize", description = "Voxel size (in 'x,y,z' format)", required = true)
         String voxelSize;
+        @Parameter(names = "-subtreeLengthForSubjobSplitting", description = "The subtree length considered for job splitting")
+        Integer subtreeLengthForSubjobSplitting = 5;
     }
 
     private final WrappedServiceProcessor<OctreeCreator, OctreeResult> octreeCreator;
@@ -90,22 +92,24 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
                 new ServiceArg("-outputDir", octreeDir),
                 new ServiceArg("-levels", levels),
                 new ServiceArg("-voxelSize", voxelSize))
-            .thenCompose((JacsServiceResult<OctreeResult> octreeResult) ->
-                ktxCreator.process(new ServiceExecutionContext.Builder(jacsServiceData)
-                        .description("Create ktx tiles")
-                        .waitFor(octreeResult.getJacsServiceData())
-                        .build(),
-                new ServiceArg("-inputDir", octreeDir),
-                new ServiceArg("-outputDir", ktxDir),
-                new ServiceArg("-levels", levels)))
-            .thenApply((JacsServiceResult<OctreeResult> ktxResult) -> {
-                LVResult lvResult = new LVResult();
-                lvResult.setBaseTiffPath(octreeDir);
-                lvResult.setBaseKtxPath(ktxDir);
-                lvResult.setLevels(levels);
-                return updateServiceResult(jacsServiceData, lvResult);
-            })
-            ;
+                .thenCompose((JacsServiceResult<OctreeResult> octreeResult) ->
+                        ktxCreator.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                                .description("Create ktx tiles")
+                                .waitFor(octreeResult.getJacsServiceData())
+                                .build(),
+                        new ServiceArg("-inputDir", octreeDir),
+                        new ServiceArg("-outputDir", ktxDir),
+                        new ServiceArg("-levels", levels),
+                        new ServiceArg("-subtreeLengthForSubjobSplitting", args.subtreeLengthForSubjobSplitting.toString())
+                ))
+                .thenApply((JacsServiceResult<OctreeResult> ktxResult) -> {
+                    LVResult lvResult = new LVResult();
+                    lvResult.setBaseTiffPath(octreeDir);
+                    lvResult.setBaseKtxPath(ktxDir);
+                    lvResult.setLevels(levels);
+                    return updateServiceResult(jacsServiceData, lvResult);
+                })
+                ;
     }
 
 

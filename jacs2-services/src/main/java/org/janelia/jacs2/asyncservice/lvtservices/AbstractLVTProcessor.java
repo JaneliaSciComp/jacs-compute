@@ -56,9 +56,10 @@ abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServic
                         .description("Pull container image " + containerLocation)
                         .build(),
                 new ServiceArg("-containerLocation", containerLocation),
-                new ServiceArg("-appArgs", serializeToolArgs(args).toString()),
+                new ServiceArg("-appArgs", getAppArgs(args)),
                 new ServiceArg("-bindPaths", args.inputDir),
-                new ServiceArg("-bindPaths", args.outputDir + ":" + args.outputDir + ":rw")
+                new ServiceArg("-bindPaths", args.outputDir + ":" + args.outputDir + ":rw"),
+                new ServiceArg("-batchJobArgs", getAppBatchArgs(args))
         ).thenApply(containerRunResult -> new JacsServiceResult<>(jacsServiceData));
     }
 
@@ -68,11 +69,11 @@ abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServic
 
     abstract A createToolArgs();
 
-    Path getOutputDir(A args) {
-        return Paths.get(args.outputDir).toAbsolutePath();
-    }
+    abstract String getAppArgs(A args);
 
-    abstract StringBuilder serializeToolArgs(A args);
+    String getAppBatchArgs(A args) {
+        return null;
+    }
 
     abstract R collectResult(JacsServiceData jacsServiceData);
 }

@@ -64,7 +64,6 @@ public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCrea
     @Inject
     OctreeCreator(ServiceComputationFactory computationFactory,
                   JacsServiceDataPersistence jacsServiceDataPersistence,
-                  @Any Instance<ExternalProcessRunner> serviceRunners,
                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                   PullAndRunSingularityContainerProcessor pullAndRunContainerProcessor,
                   @PropertyValue(name = "service.octreeCreator.containerImage") String defaultContainerImage,
@@ -102,13 +101,14 @@ public class OctreeCreator extends AbstractLVTProcessor<OctreeCreator.OctreeCrea
     }
 
     @Override
-    StringBuilder serializeToolArgs(OctreeCreatorArgs args) {
+    String getAppArgs(OctreeCreatorArgs args) {
         return new StringBuilder()
                 .append(getInputFileName(args)).append(',')
                 .append(args.outputDir).append(',')
                 .append(args.levels).append(',')
                 .append(args.channel).append(',')
                 .append('\'').append(args.voxelSize).append('\'')
+                .toString()
                 ;
     }
 
