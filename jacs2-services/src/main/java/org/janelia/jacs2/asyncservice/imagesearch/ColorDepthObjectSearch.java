@@ -31,6 +31,7 @@ import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMaskResult;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMatch;
+import org.janelia.model.domain.gui.cdmip.ColorDepthParameters;
 import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
 import org.janelia.model.domain.gui.cdmip.ColorDepthSearch;
 import org.janelia.model.service.JacsServiceData;
@@ -52,6 +53,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
     static class IntegratedColorDepthSearchArgs extends ServiceArgs {
         @Parameter(names = "-searchId", description = "GUID of the ColorDepthSearch object to use", required = true)
         Long searchId;
+        @Parameter(names = "-maskId", description = "GUID of the ColorDepthMask object to use. If this is empty, all listed masks are searched.", required = false)
+        Long maskId;
     }
 
     private final WrappedServiceProcessor<ColorDepthFileSearch, List<File>> colorDepthFileSearch;
@@ -100,7 +103,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         IntegratedColorDepthSearchArgs args = getArgs(jacsServiceData);
 
         Stopwatch sparkAppWatch = Stopwatch.createStarted();
-        logger.info("Executing ColorDepthSearch#{}", args.searchId);
+        logger.info("Executing ColorDepthSearch#{} with ColorDepthMask#{}", args.searchId, args.maskId);
 
         ColorDepthSearch search = dao.getDomainObject(jacsServiceData.getOwnerKey(),
                 ColorDepthSearch.class, args.searchId);
@@ -117,6 +120,14 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
         if (masks.isEmpty()) {
             throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" has no masks defined");
+        }
+
+        ColorDepthParameters searchParameters = search.getParameters();
+        if (args.maskId != null) {
+            // Filter down to just the selected mask
+            masks = masks.stream().filter(m -> m.getId().equals(args.maskId)).collect(Collectors.toList());
+            // Update search parameters which are saved into the result
+            searchParameters.setMasks(masks.stream().map(Reference::createFor).collect(Collectors.toList()));
         }
 
         Map<String, ColorDepthMask> maskMap =
@@ -201,7 +212,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
                 try {
                     ColorDepthResult colorDepthResult = new ColorDepthResult();
-                    colorDepthResult.setParameters(search.getParameters());
+                    colorDepthResult.setParameters(searchParameters);
 
                     for (File resultsFile : result.getResult()) {
 
