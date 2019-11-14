@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +31,7 @@ import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 /**
- * The LVT (Large Volume Tools) Data Import first converts the input data into an Octree using OctreeCreator
+ * The LV (Large Volume) Data Import first converts the input data into an Octree using OctreeCreator
  * and then runs KTXCreator to create the KTX tiles for Horta.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
@@ -41,6 +40,10 @@ import org.slf4j.Logger;
 public class LVDataImport extends AbstractServiceProcessor<LVResult> {
 
     static class LVDataImportArgs extends LVArgs {
+        @Parameter(names = "-tiffOctreeOutputDir", description = "Output directory for octree")
+        String tiffOctreeOutputDir;
+        @Parameter(names = "-ktxOctreeOutputDir", description = "Output directory for octree")
+        String ktxOctreeOutputDir;
         @Parameter(names = "-voxelSize", description = "Voxel size (in 'x,y,z' format)")
         String voxelSize = "1,1,1";
         @Parameter(names = "-channels", description = "Channel number (Default = 0, 1) used mainly for formatting the output")
@@ -104,8 +107,8 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
             inputChannels = args.channels;
         }
         final String inputTiffDir = args.inputDir;
-        final String octreeDir = args.outputDir;
-        final String ktxDir = StringUtils.appendIfMissing(octreeDir, "/") + "ktx";
+        final String octreeDir = StringUtils.defaultIfBlank(args.tiffOctreeOutputDir, args.outputDir);
+        final String ktxDir = StringUtils.defaultIfBlank(args.ktxOctreeOutputDir, StringUtils.appendIfMissing(octreeDir, "/") + "ktx");
         final int levels = args.levels;
         final String voxelSize = args.voxelSize;
 
