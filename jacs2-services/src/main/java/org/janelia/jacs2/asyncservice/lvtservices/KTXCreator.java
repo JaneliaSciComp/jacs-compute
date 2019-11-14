@@ -106,7 +106,7 @@ public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, 
             currentNodes = nextNodes;
         }
         StringBuilder batchArgsBuilder = startupNodes.stream()
-                .map(p -> "'" + p + "'" + " " + args.subtreeLengthForSubjobSplitting)
+                .map(p -> "\"" + p + "\"" + " " + args.subtreeLengthForSubjobSplitting)
                 .reduce(new StringBuilder(),
                         (b, a) -> b.length() == 0 ? b.append(a) : b.append(',').append(a),
                         (b1, b2) -> b1.length() == 0 ? b1.append(b2) : b1.append(',').append(b2))
