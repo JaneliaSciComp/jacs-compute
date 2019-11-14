@@ -50,7 +50,7 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
                 required = true)
         String intputFileNamePattern;
         @Parameter(names = "-subtreeLengthForSubjobSplitting", description = "The subtree length considered for job splitting")
-        Integer subtreeLengthForSubjobSplitting = 5;
+        Integer subtreeLengthForSubjobSplitting;
         @Parameter(names = "-tiffOctreeContainerImage", description = "Name of the container image for generating the TIFF octree")
         String tiffOctreeContainerImage;
         @Parameter(names = "-ktxOctreeContainerImage", description = "Name of the container image for generating the KTX octree")
@@ -132,7 +132,7 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
                             new ServiceArg("-inputDir", octreeDir),
                             new ServiceArg("-outputDir", ktxDir),
                             new ServiceArg("-levels", levels),
-                            new ServiceArg("-subtreeLengthForSubjobSplitting", args.subtreeLengthForSubjobSplitting.toString()),
+                            new ServiceArg("-subtreeLengthForSubjobSplitting", args.subtreeLengthForSubjobSplitting != null ? args.subtreeLengthForSubjobSplitting.toString() : null),
                             new ServiceArg("-toolContainerImage", args.ktxOctreeContainerImage));
                 })
                 .thenApply(ktxResult -> {
