@@ -1,16 +1,14 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import org.janelia.model.service.JacsServiceData;
-import org.slf4j.Logger;
-
 import java.util.List;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
 
 /**
  * FutureBasedServiceComputation is an implementation of a ServiceComputation.

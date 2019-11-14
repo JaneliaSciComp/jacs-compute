@@ -1,11 +1,18 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableList;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -34,10 +41,20 @@ import org.slf4j.Logger;
 public class LVDataImport extends AbstractServiceProcessor<LVResult> {
 
     static class LVDataImportArgs extends LVArgs {
-        @Parameter(names = "-voxelSize", description = "Voxel size (in 'x,y,z' format)", required = true)
-        String voxelSize;
+        @Parameter(names = "-voxelSize", description = "Voxel size (in 'x,y,z' format)")
+        String voxelSize = "1,1,1";
+        @Parameter(names = "-channels", description = "Channel number (Default = 0, 1) used mainly for formatting the output")
+        List<Integer> channels = Arrays.asList(0, 1);
+        @Parameter(names = "-inputFilenamePattern",
+                description = "Input file name pattern. The pattern must contain a string {channel} that will be replaced with actual channel number",
+                required = true)
+        String intputFileNamePattern;
         @Parameter(names = "-subtreeLengthForSubjobSplitting", description = "The subtree length considered for job splitting")
         Integer subtreeLengthForSubjobSplitting = 5;
+        @Parameter(names = "-tiffOctreeContainerImage", description = "Name of the container image for generating the TIFF octree")
+        String tiffOctreeContainerImage;
+        @Parameter(names = "-ktxOctreeContainerImage", description = "Name of the container image for generating the KTX octree")
+        String ktxOctreeContainerImage;
     }
 
     private final WrappedServiceProcessor<OctreeCreator, OctreeResult> octreeCreator;
@@ -75,34 +92,50 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<LVResult>> process(JacsServiceData jacsServiceData) {
         LVDataImportArgs args = getArgs(jacsServiceData);
 
+        List<Integer> inputChannels;
+        if (CollectionUtils.isEmpty(args.channels)) {
+            inputChannels = ImmutableList.of(0);
+        } else {
+            inputChannels = args.channels;
+        }
         final String inputTiffDir = args.inputDir;
         final String octreeDir = args.outputDir;
         final String ktxDir = StringUtils.appendIfMissing(octreeDir, "/") + "ktx";
         final int levels = args.levels;
         final String voxelSize = args.voxelSize;
 
-        return octreeCreator.process(new ServiceExecutionContext.Builder(jacsServiceData)
-                        .description("Create octree")
-                        .build(),
-                new ServiceArg("-inputDir", inputTiffDir),
-                new ServiceArg("-outputDir", octreeDir),
-                new ServiceArg("-levels", levels),
-                new ServiceArg("-voxelSize", voxelSize))
-                .thenCompose((JacsServiceResult<OctreeResult> octreeResult) ->
-                        ktxCreator.process(new ServiceExecutionContext.Builder(jacsServiceData)
-                                .description("Create ktx tiles")
-                                .waitFor(octreeResult.getJacsServiceData())
+        List<ServiceComputation<?>> octreeComputations = inputChannels.stream()
+                .map(channelNo -> String.valueOf(channelNo))
+                .map(channel -> octreeCreator.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                                .description("Create octree")
                                 .build(),
-                        new ServiceArg("-inputDir", octreeDir),
-                        new ServiceArg("-outputDir", ktxDir),
+                        new ServiceArg("-inputDir", inputTiffDir),
+                        new ServiceArg("-outputDir", octreeDir),
                         new ServiceArg("-levels", levels),
-                        new ServiceArg("-subtreeLengthForSubjobSplitting", args.subtreeLengthForSubjobSplitting.toString())
-                ))
-                .thenApply((JacsServiceResult<OctreeResult> ktxResult) -> {
+                        new ServiceArg("-voxelSize", voxelSize),
+                        new ServiceArg("-channel", channel),
+                        new ServiceArg("-inputFilename", args.intputFileNamePattern.replace("{channel}", channel)),
+                        new ServiceArg("-toolContainerImage", args.tiffOctreeContainerImage)))
+                .collect(Collectors.toList());
+        return computationFactory.newCompletedComputation(jacsServiceData)
+                .thenComposeAll(octreeComputations, (sd, results) -> {
+                    List<JacsServiceResult<OctreeResult>> octreeResults = (List<JacsServiceResult<OctreeResult>>) results;
+                    return ktxCreator.process(new ServiceExecutionContext.Builder(jacsServiceData)
+                                    .description("Create ktx tiles")
+                                    .waitFor(octreeResults.stream().map(r -> r.getJacsServiceData()).collect(Collectors.toList()))
+                                    .build(),
+                            new ServiceArg("-inputDir", octreeDir),
+                            new ServiceArg("-outputDir", ktxDir),
+                            new ServiceArg("-levels", levels),
+                            new ServiceArg("-subtreeLengthForSubjobSplitting", args.subtreeLengthForSubjobSplitting.toString()),
+                            new ServiceArg("-toolContainerImage", args.ktxOctreeContainerImage));
+                })
+                .thenApply(ktxResult -> {
                     LVResult lvResult = new LVResult();
                     lvResult.setBaseTiffPath(octreeDir);
                     lvResult.setBaseKtxPath(ktxDir);
@@ -111,7 +144,6 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
                 })
                 ;
     }
-
 
     private LVDataImportArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new LVDataImportArgs());
