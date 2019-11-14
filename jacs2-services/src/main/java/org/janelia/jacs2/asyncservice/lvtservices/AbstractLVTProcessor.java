@@ -1,8 +1,5 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;

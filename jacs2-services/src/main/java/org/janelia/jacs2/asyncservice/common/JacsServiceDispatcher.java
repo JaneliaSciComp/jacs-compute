@@ -1,5 +1,11 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import java.util.Map;
+import java.util.function.Function;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.dataservice.notifservice.EmailNotificationService;
@@ -14,11 +20,6 @@ import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.RegisteredJacsNotification;
 import org.slf4j.Logger;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.util.Map;
-import java.util.function.Function;
 
 @ApplicationScoped
 public class JacsServiceDispatcher {

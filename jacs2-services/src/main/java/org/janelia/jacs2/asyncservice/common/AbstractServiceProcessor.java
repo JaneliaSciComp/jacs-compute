@@ -143,7 +143,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         if (jacsServiceData.getActualArgs() == null) {
             new ServiceArgsHandler(jacsServiceDataPersistence).updateServiceArgs(getMetadata(), jacsServiceData);
         }
-        return jacsServiceData.getActualArgs().toArray(new String[jacsServiceData.getActualArgs().size()]);
+        return jacsServiceData.getActualArgs().toArray(new String[0]);
     }
 
     private Path getServicePath(String baseDir, JacsServiceData jacsServiceData) {
@@ -159,10 +159,6 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         return Paths.get(baseDir, pathElemsBuilder.build().toArray(new String[0])).toAbsolutePath();
     }
 
-    protected JacsServiceData submitDependencyIfNotFound(JacsServiceData dependency) {
-        return jacsServiceDataPersistence.createServiceIfNotFound(dependency);
-    }
-
     protected <S> ContinuationCond<S> suspendCondition(JacsServiceData jacsServiceData) {
         return new WaitingForDependenciesContinuationCond<>(
                 new ServiceDependenciesCompletedContinuationCond(dependenciesGetterFunc(), jacsServiceDataPersistence, logger),
@@ -173,7 +169,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         ).negate();
     }
 
-    protected Function<JacsServiceData, Stream<JacsServiceData>> dependenciesGetterFunc() {
+    private Function<JacsServiceData, Stream<JacsServiceData>> dependenciesGetterFunc() {
         return (JacsServiceData serviceData) -> jacsServiceDataPersistence.findDirectServiceDependencies(serviceData).stream();
     }
 

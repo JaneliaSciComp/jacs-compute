@@ -3,13 +3,10 @@ package org.janelia.jacs2.asyncservice.lvtservices;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -17,7 +14,6 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
@@ -27,10 +23,8 @@ import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularit
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceDataBuilder;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-import scala.math.Ordering;
 
 /**
  * Service for creating a KTX representation of an image stack which is represented as an octree,
