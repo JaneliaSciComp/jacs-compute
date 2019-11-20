@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -735,25 +736,22 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
     @Override
     public void giveOwnerReadWriteToAllFromCollection(String collectionName) {
-        Class<?> baseClass = DomainUtils.getBaseClass(collectionName);
-        if (DomainObject.class.isAssignableFrom(baseClass)) {
-            long numberOfIndexedObjects = 0L;
+        Class<? extends DomainObject> baseClass = DomainUtils.getBaseClass(collectionName);
+        if (baseClass != null) {
+            AtomicLong numberOfIndexedObjects = new AtomicLong(0L);
             MongoCollection mongoCollection = dao.getCollectionByName(collectionName);
-            Iterable<?> iterable = mongoCollection.find().as(baseClass);
-            if (iterable != null) {
-                for (Object obj : iterable) {
-                    DomainObject domainObject = (DomainObject) obj;
-                    String ownerKey = domainObject.getOwnerKey();
-                    if (StringUtils.isNotBlank(ownerKey)) {
-                        mongoCollection.update("{_id:#}", domainObject.getId()).with("{$addToSet:{readers:#,writers:#}}", ownerKey, ownerKey);
-                        domainObject.getReaders().add(ownerKey);
-                        domainObject.getWriters().add(ownerKey);
-                        domainObjectIndexer.indexDocument(domainObject);
-                        numberOfIndexedObjects++;
-                    }
-                }
-                LOG.info("Updated permissions for {} entities of type {} from collection {}", numberOfIndexedObjects, baseClass, collectionName);
-            }
+            dao.streamFindResult(mongoCollection.find(), baseClass)
+                    .forEach(domainObject -> {
+                        String ownerKey = domainObject.getOwnerKey();
+                        if (StringUtils.isNotBlank(ownerKey)) {
+                            mongoCollection.update("{_id:#}", domainObject.getId()).with("{$addToSet:{readers:#,writers:#}}", ownerKey, ownerKey);
+                            domainObject.getReaders().add(ownerKey);
+                            domainObject.getWriters().add(ownerKey);
+                            domainObjectIndexer.indexDocument(domainObject);
+                            numberOfIndexedObjects.incrementAndGet();
+                        }
+                    });
+            LOG.info("Updated permissions for {} entities of type {} from collection {}", numberOfIndexedObjects, baseClass, collectionName);
         } else {
             LOG.warn("Class {} is not a super class of {}", baseClass, DomainObject.class);
         }
