@@ -57,7 +57,6 @@ import org.slf4j.LoggerFactory;
                 @Authorization("runAs")
         }
 )
-@RequireAuthentication
 @ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data")
@@ -298,6 +297,23 @@ public class TmResource {
                 neuronIds);
     }
 
+    @ApiOperation(value = "Gets a count of the neurons in a workspace",
+            notes = "Returns a the number of neurons giving a workspace id"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully fetched neuron counts", response = List.class),
+            @ApiResponse(code = 500, message = "Error occurred while occurred while processing the neuron count")
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/neurons/totals")
+    public Long getWorkspaceNeuronCount(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                                      @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
+        LOG.info("getNeuronCountsForWorkspace({}, neuronIds={}, workspace={})", subjectKey, workspaceId);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
+        return tmNeuronMetadataDao.getNeuronCountsForWorkspace(workspace, subjectKey);
+    }
+
     @ApiOperation(value = "Bulk update neuron styles",
             notes = "Update style for a list of neurons"
     )
@@ -516,18 +532,25 @@ public class TmResource {
         }
 
         int currCount = 0;
-        //while (continueMigration) {
+       // while (continueMigration) {
             LOG.info("getting next batch using offset {} and length {}",offset,MAX_BLOCK);
             List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(workspace,
                     subjectKey, offset, MAX_BLOCK);
             if (neuronPairs.isEmpty() || neuronPairs.size()<MAX_BLOCK) {
                 continueMigration = false;
             }
+            LOG.info("neuronPairs size {} to be processed",neuronPairs.size());
             offset += neuronPairs.size();
             List<TmNeuronMetadata> neurons = new ArrayList<>();
             String workspaceOwner = workspace.getOwnerKey();
             for(Pair<TmNeuronMetadata, InputStream> pair : neuronPairs) {
                 currCount++;
+                if ((currCount%100000)==0) {
+                    tmNeuronMetadataDao.bulkMigrateNeuronsInWorkspace(workspace,neurons,workspaceOwner);
+                    neurons = new ArrayList<>();
+                    LOG.info("BIG BATCH WILL NOW BE PROCESSED");
+                }
+
                 if ((currCount%100)==0)
                     LOG.info("{} have been processed",currCount);
                 TmNeuronMetadata neuronMetadata = pair.getLeft();
@@ -535,12 +558,13 @@ public class TmResource {
                     exchanger.deserializeNeuron(pair.getRight(), neuronMetadata);
                     totalNodes += neuronMetadata.getGeoAnnotationMap().values().size();
                     neurons.add(neuronMetadata);
-                    //tmNeuronMetadataDao.saveBySubjectKey(neuronMetadata, workspaceOwner);
+   //                 tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron, subjectKey).saveBySubjectKey(neuronMetadata, workspaceOwner);
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
                 }
+
             }
-            tmNeuronMetadataDao.bulkMigrateNeuronsInWorkspace(workspace,neurons,workspaceOwner);
+        tmNeuronMetadataDao.bulkMigrateNeuronsInWorkspace(workspace,neurons,workspaceOwner);
        // }
         statsInfo.put(workspaceId.toString(), "totalNode: " + totalNodes + ",neurons count: " + offset);
         LOG.info("workspace {} totalNode: {},neurons count: {}",workspaceId.toString(),totalNodes,offset);
