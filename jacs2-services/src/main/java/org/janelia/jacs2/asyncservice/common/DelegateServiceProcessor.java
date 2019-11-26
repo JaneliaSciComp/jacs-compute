@@ -7,6 +7,12 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ServiceMetaData;
 
+/**
+ * DelegatedServiceProcessor is a replace in place computation where the current computation
+ * is delegated to the enclosed processor without persisting new service data.
+ * @param <S>
+ * @param <T>
+ */
 @MdcContext
 public class DelegateServiceProcessor<S extends ServiceProcessor<T>, T> implements ServiceProcessor<T> {
 

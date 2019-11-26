@@ -132,6 +132,7 @@ public class ServiceExecutionContext {
         if (parentService == null || parentService.hasId()) {
             this.parentService = parentService;
         } else {
+            // this is the case when service processing is delegated to another processor without persisting the corresponding service data
             this.parentService = parentService.getParentService();
         }
         if (parentService != null) {
