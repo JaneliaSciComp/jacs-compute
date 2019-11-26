@@ -94,8 +94,8 @@ public class SimpleRunSingularityContainerProcessor extends AbstractContainerPro
             scriptWriter.addArg("${INSTANCE_ARGS}");
         }
         if (!expandedArgsAtRuntime.isEmpty()) {
-            if (StringUtils.isNotBlank(args.argsExpandedAtRuntime.expandedArgFlag)) {
-                scriptWriter.addArg(args.argsExpandedAtRuntime.expandedArgFlag);
+            if (StringUtils.isNotBlank(args.expandedArgFlag)) {
+                scriptWriter.addArg(args.expandedArgFlag);
             }
             scriptWriter.addArg("${EXPANDED_ARG}");
         }

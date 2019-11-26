@@ -1,16 +1,18 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParametersDelegate;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.ServiceArgs;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 
 class RunContainerArgs extends AbstractContainerArgs {
     @Parameter(names = "-appName", description = "Containerized application Name")
@@ -21,10 +23,21 @@ class RunContainerArgs extends AbstractContainerArgs {
     List<BindPath> bindPaths = new ArrayList<>();
     @Parameter(names = "-appArgs", description = "Containerized application arguments", splitter = ServiceArgSplitter.class)
     List<String> appArgs = new ArrayList<>();
+    @Parameter(names = "-expandDir", description = "Name of the expanded directory")
+    String expandedDir;
+    @Parameter(names = "-expandDepth", description = "The depth of the expanded directory")
+    int expandedDepth = 1;
+    @Parameter(names = "-expandPattern", description = "Expanded pattern")
+    String expandedPattern = "glob:**/*";
+    @Parameter(names = "-expandedArgFlag", description = "Optional expanded argument flag")
+    String expandedArgFlag;
+    @Parameter(names = "-expandedArgList", description = "Already expanded argument list")
+    List<String> expandedArgList = new ArrayList<>();
+    @Parameter(names = "-cancelIfEmptyExpansion", description = "If set and the expanded argument list is empty do not run the service at all, " +
+            "otherwise run it once with the other provided arguments")
+    boolean cancelIfEmptyExpansion;
     @Parameter(names = "-batchJobArgs", description = "Containerized application arguments when running a batch", splitter = ServiceArgSplitter.class)
     List<String> batchJobArgs = new ArrayList<>();
-    @ParametersDelegate
-    ArgsExpandedAtRuntime argsExpandedAtRuntime = new ArgsExpandedAtRuntime();
 
     RunContainerArgs(String description) {
         super(description);
@@ -39,14 +52,23 @@ class RunContainerArgs extends AbstractContainerArgs {
     }
 
     boolean hasRuntimeExpandedArgs() {
-        return argsExpandedAtRuntime.hasRuntimeExpandedArgs();
+        return StringUtils.isNotBlank(expandedArgFlag);
     }
 
     boolean getCancelIfNoExpandedArgs() {
-        return argsExpandedAtRuntime.cancelIfEmptyExpansion;
+        return cancelIfEmptyExpansion;
     }
 
     List<String> getExpandedArgsAtRuntime() {
-        return argsExpandedAtRuntime.expandArguments();
+        Stream<String> expandedArgsStream;
+        if (StringUtils.isNotBlank(expandedDir)) {
+            expandedArgsStream = FileUtils.lookupFiles(Paths.get(expandedDir), expandedDepth, expandedPattern)
+                    .filter(p -> Files.isRegularFile(p))
+                    .map(Path::toString);
+        } else {
+            expandedArgsStream = Stream.of();
+        }
+        return Stream.concat(expandedArgsStream, expandedArgList.stream())
+                .collect(Collectors.toList());
     }
 }
