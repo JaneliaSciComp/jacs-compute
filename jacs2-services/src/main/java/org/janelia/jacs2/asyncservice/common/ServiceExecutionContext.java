@@ -129,7 +129,11 @@ public class ServiceExecutionContext {
     private final Map<String, RegisteredJacsNotification> processingStageNotifications = new HashMap<>();
 
     private ServiceExecutionContext(JacsServiceData parentService) {
-        this.parentService = parentService;
+        if (parentService == null || parentService.hasId()) {
+            this.parentService = parentService;
+        } else {
+            this.parentService = parentService.getParentService();
+        }
         if (parentService != null) {
             ResourceHelper.setAuthToken(resources, ResourceHelper.getAuthToken(parentService.getResources()));
         }
