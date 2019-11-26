@@ -103,7 +103,7 @@ public class PipelineServiceProcessor extends AbstractServiceProcessor<Void> {
                                 .addResources(getServiceResources(serviceConfig))
                                 .build(),
                         new ServiceArg("-serviceName", stepServiceName),
-                        new ServiceArg("", getServiceArgs(serviceConfig)) // pass in service args exactly as they are
+                        new ServiceArg(getServiceArgs(serviceConfig)) // pass in service args exactly as they are
                 ));
                 index++;
             }

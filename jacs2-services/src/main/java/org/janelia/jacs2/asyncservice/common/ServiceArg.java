@@ -51,13 +51,17 @@ public class ServiceArg {
         System.arraycopy(values, 0, this.values, 1, values.length);
     }
 
-    public ServiceArg(String flag, List<String> values) {
+    /**
+     * Constructor for building remaining values
+     * @param values
+     */
+    public ServiceArg(List<String> values) {
         if (CollectionUtils.isEmpty(values)) {
             this.flag = null;
             this.arity = 0;
             this.values = null;
         } else {
-            this.flag = flag;
+            this.flag = ""; // there's no flag here
             this.arity = values.size();
             String[] valueArr = new String[values.size()];
             this.values = values.toArray(valueArr);

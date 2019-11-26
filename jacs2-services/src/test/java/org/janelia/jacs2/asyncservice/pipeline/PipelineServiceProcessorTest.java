@@ -87,17 +87,17 @@ public class PipelineServiceProcessorTest {
                     Mockito.verify(genericAsyncServiceProcessor).process(
                             any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-serviceName", "s1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("", Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
+                            argThat(new ServiceArgMatcher(new ServiceArg(Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
                     );
                     Mockito.verify(genericAsyncServiceProcessor).process(
                             any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-serviceName", "s2"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("", Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
+                            argThat(new ServiceArgMatcher(new ServiceArg(Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
                     );
                     Mockito.verify(genericAsyncServiceProcessor).process(
                             any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-serviceName", "s3"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("", Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
+                            argThat(new ServiceArgMatcher(new ServiceArg(Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
                     );
                     Mockito.verify(genericAsyncServiceProcessor, times(3)).process(any(JacsServiceData.class));
                     return r;
@@ -125,17 +125,17 @@ public class PipelineServiceProcessorTest {
                     Mockito.verify(genericAsyncServiceProcessor).process(
                             any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-serviceName", "s1"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("", Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
+                            argThat(new ServiceArgMatcher(new ServiceArg(Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
                     );
                     Mockito.verify(genericAsyncServiceProcessor, never()).process(
                             any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-serviceName", "s2"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("", Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
+                            argThat(new ServiceArgMatcher(new ServiceArg(Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
                     );
                     Mockito.verify(genericAsyncServiceProcessor).process(
                             any(ServiceExecutionContext.class),
                             argThat(new ServiceArgMatcher(new ServiceArg("-serviceName", "s3"))),
-                            argThat(new ServiceArgMatcher(new ServiceArg("", Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
+                            argThat(new ServiceArgMatcher(new ServiceArg(Arrays.asList("-f1", "v1", "-f2", "'v2.1,v2.2,v2.3'", "-f3", "v3.1, v3.2"))))
                     );
                     Mockito.verify(genericAsyncServiceProcessor, times(2)).process(any(JacsServiceData.class));
                     return r;

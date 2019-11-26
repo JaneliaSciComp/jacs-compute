@@ -91,7 +91,7 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
                         new ServiceArg("-cancelIfEmptyExpansion", args.cancelIfEmptyExpansion),
                         new ServiceArg("-appArgs", args.appArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
                         new ServiceArg("-batchJobArgs", args.batchJobArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
-                        new ServiceArg("", args.getRemainingArgs())
+                        new ServiceArg(args.getRemainingArgs())
                         ))
                 .thenApply(r -> new JacsServiceResult<>(jacsServiceData))
                 ;

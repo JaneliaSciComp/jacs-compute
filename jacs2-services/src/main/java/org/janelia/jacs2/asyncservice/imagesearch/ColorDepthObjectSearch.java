@@ -139,10 +139,11 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                 .reduce((p1, p2) -> p1 + "," + p2)
                 .orElse("");
 
-        List<String> maskThresholds = masks.stream()
+        String maskThresholdsArg = masks.stream()
                 .map(ColorDepthMask::getMaskThreshold)
                 .map(Object::toString)
-                .collect(Collectors.toList());
+                .reduce((s1, s2) -> s1 + "," + s2).orElse("")
+                ;
 
         List<String> pathsToSearch = new ArrayList<>();
 
@@ -175,7 +176,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         List<ServiceArg> serviceArgList = new ArrayList<>();
         serviceArgList.add(new ServiceArg("-inputFiles", inputFiles));
         serviceArgList.add(new ServiceArg("-searchDirs", colorDepthPaths.getAbsolutePath()));
-        serviceArgList.add(new ServiceArg("-maskThresholds", maskThresholds));
+        serviceArgList.add(new ServiceArg("-maskThresholds", maskThresholdsArg));
         serviceArgList.add(new ServiceArg("-numNodes", numNodes));
 
         if (search.getDataThreshold() != null) {

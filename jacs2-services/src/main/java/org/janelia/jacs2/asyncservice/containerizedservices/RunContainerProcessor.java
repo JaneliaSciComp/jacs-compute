@@ -90,11 +90,11 @@ public class RunContainerProcessor extends AbstractServiceProcessor<Void> {
                 new ServiceArg("-expandDepth", args.expandedDepth),
                 new ServiceArg("-expandPattern", args.expandedPattern),
                 new ServiceArg("-expandedArgFlag", args.expandedArgFlag),
-                new ServiceArg("-expandedArgList", args.expandedArgList),
+                new ServiceArg("-expandedArgList", args.expandedArgList.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
                 new ServiceArg("-cancelIfEmptyExpansion", args.cancelIfEmptyExpansion),
                 new ServiceArg("-appArgs", args.appArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
                 new ServiceArg("-batchJobArgs", args.batchJobArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
-                new ServiceArg("", args.getRemainingArgs())
+                new ServiceArg(args.getRemainingArgs())
             );
     }
 
