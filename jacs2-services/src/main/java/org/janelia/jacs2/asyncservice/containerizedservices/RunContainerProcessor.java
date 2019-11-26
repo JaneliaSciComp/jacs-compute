@@ -66,12 +66,12 @@ public class RunContainerProcessor extends AbstractServiceProcessor<Void> {
         this.singularityContainerProcessor = new DelegateServiceProcessor<>(singularityContainerProcessor, jacsServiceData -> {
             ContainerArgs args = getArgs(jacsServiceData);
             return ImmutableList.<ServiceArg>builder()
-                    .addAll(mapCommonArgs(args))
                     .add(new ServiceArg("-containerImagesDir", args.containerImagesDirectory))
                     .add(new ServiceArg("-enableHttps", args.enableHttps))
                     .add(new ServiceArg("-overlay", args.overlay))
                     .add(new ServiceArg("-enableNV", args.enableNV))
                     .add(new ServiceArg("-initialPwd", args.initialPwd))
+                    .addAll(mapCommonArgs(args))
                     .build();
         });
         this.dockerContainerProcessor = new DelegateServiceProcessor<>(dockerContainerProcessor, jacsServiceData -> {
