@@ -1,5 +1,6 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -51,10 +52,16 @@ public class ServiceArg {
     }
 
     public ServiceArg(String flag, List<String> values) {
-        this.flag = flag;
-        this.arity = values.size();
-        String[] valueArr = new String[values.size()];
-        this.values = values.toArray(valueArr);
+        if (CollectionUtils.isEmpty(values)) {
+            this.flag = null;
+            this.arity = 0;
+            this.values = null;
+        } else {
+            this.flag = flag;
+            this.arity = values.size();
+            String[] valueArr = new String[values.size()];
+            this.values = values.toArray(valueArr);
+        }
     }
 
     public ServiceArg(String flag, boolean value) {
