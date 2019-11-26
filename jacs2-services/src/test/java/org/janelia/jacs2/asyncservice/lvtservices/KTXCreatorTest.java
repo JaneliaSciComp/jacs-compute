@@ -7,7 +7,7 @@ import com.google.common.base.Splitter;
 
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularityContainerProcessor;
+import org.janelia.jacs2.asyncservice.containerizedservices.RunContainerProcessor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
@@ -30,9 +30,9 @@ public class KTXCreatorTest {
         Logger logger = mock(Logger.class);
         ServiceComputationFactory serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
-        PullAndRunSingularityContainerProcessor pullAndRunSingularityContainerProcessor = mock(PullAndRunSingularityContainerProcessor.class);
+        RunContainerProcessor runContainerProcessor = mock(RunContainerProcessor.class);
 
-        ktxCreator = new KTXCreator(serviceComputationFactory, jacsServiceDataPersistence, TEST_WORKING_DIR, pullAndRunSingularityContainerProcessor, KTX_CONTAINER_IMAGE, logger);
+        ktxCreator = new KTXCreator(serviceComputationFactory, jacsServiceDataPersistence, TEST_WORKING_DIR, runContainerProcessor, KTX_CONTAINER_IMAGE, logger);
     }
 
     @Test

@@ -5,6 +5,7 @@ import java.io.File;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableSet;
 
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
@@ -23,6 +24,21 @@ import org.slf4j.Logger;
 
 @Named("runSingularityContainer")
 public class PullAndRunSingularityContainerProcessor extends AbstractServiceProcessor<Void> {
+
+    private static class SingularityContainerArgs extends SingularityRunContainerArgs {
+        @Parameter(names = "-enableHttps", description = "Enable HTTPS for retrieving the container image")
+        boolean enableHttps;
+        @Parameter(names = "-containerImagesDir", description = "Local container images directory")
+        String containerImagesDirectory;
+
+        SingularityContainerArgs() {
+            this("Service that pulls and runs a singularity container");
+        }
+
+        SingularityContainerArgs(String description) {
+            super(description);
+        }
+    }
 
     private final WrappedServiceProcessor<PullSingularityContainerProcessor, File> pullContainerProcessor;
     private final WrappedServiceProcessor<SimpleRunSingularityContainerProcessor, Void> runContainerProcessor;
@@ -67,9 +83,15 @@ public class PullAndRunSingularityContainerProcessor extends AbstractServiceProc
                         new ServiceArg("-overlay", args.overlay),
                         new ServiceArg("-enableNV", args.enableNV),
                         new ServiceArg("-initialPwd", args.initialPwd),
-                        new ServiceArg("-appArgs", args.appArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
-                        new ServiceArg("-batchJobArgs", args.batchJobArgs.stream().reduce((s1, s2) -> s1 + "," + s2).orElse("")),
-                        new ServiceArg("", args.getRemainingArgs().stream().reduce((s1, s2) -> s1 + "," + s2).orElse(""))
+                        new ServiceArg("-expandDir", args.argsExpandedAtRuntime.expandedDir),
+                        new ServiceArg("-expandDepth", args.argsExpandedAtRuntime.expandedDepth),
+                        new ServiceArg("-expandPattern", args.argsExpandedAtRuntime.expandedPattern),
+                        new ServiceArg("-expandedArgFlag", args.argsExpandedAtRuntime.expandedArgFlag),
+                        new ServiceArg("-expandedArgList", args.argsExpandedAtRuntime.expandedArgList),
+                        new ServiceArg("-cancelIfEmptyExpansion", args.argsExpandedAtRuntime.cancelIfEmptyExpansion),
+                        new ServiceArg("-appArgs", args.appArgs),
+                        new ServiceArg("-batchJobArgs", args.batchJobArgs),
+                        new ServiceArg("", args.getRemainingArgs())
                         ))
                 .thenApply(r -> new JacsServiceResult<>(jacsServiceData))
                 ;

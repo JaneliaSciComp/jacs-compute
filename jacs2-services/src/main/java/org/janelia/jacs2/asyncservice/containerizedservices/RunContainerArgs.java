@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,7 @@ class RunContainerArgs extends AbstractContainerArgs {
         super(description);
     }
 
-    String bindPathsAsString(Set<BindPath> bindPathSet) {
+    String bindPathsAsString(Collection<BindPath> bindPathSet) {
         return bindPathSet.stream()
                 .filter(BindPath::isNotEmpty)
                 .map(BindPath::asString)

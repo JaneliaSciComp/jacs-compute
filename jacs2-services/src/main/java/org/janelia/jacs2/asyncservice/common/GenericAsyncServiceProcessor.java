@@ -1,6 +1,15 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
 import com.beust.jcommander.Parameter;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -10,13 +19,6 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This is a generic async service wrapper which can be used to wrap other service processing.
@@ -95,9 +97,5 @@ public class GenericAsyncServiceProcessor extends AbstractServiceProcessor<Void>
         } else {
             throw new ComputationException(refreshServiceData, "Service " + refreshServiceData.toString() + " completed unsuccessfully");
         }
-    }
-
-    private ProcessingArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ProcessingArgs());
     }
 }

@@ -20,6 +20,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularityContainerProcessor;
+import org.janelia.jacs2.asyncservice.containerizedservices.RunContainerProcessor;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
@@ -44,10 +45,10 @@ public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, 
     KTXCreator(ServiceComputationFactory computationFactory,
                JacsServiceDataPersistence jacsServiceDataPersistence,
                @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-               PullAndRunSingularityContainerProcessor pullAndRunContainerProcessor,
+               RunContainerProcessor runContainerProcessor,
                @PropertyValue(name = "service.ktxCreator.containerImage") String defaultContainerImage,
                Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, pullAndRunContainerProcessor, defaultContainerImage, logger);
+        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, runContainerProcessor, defaultContainerImage, logger);
     }
 
     @Override

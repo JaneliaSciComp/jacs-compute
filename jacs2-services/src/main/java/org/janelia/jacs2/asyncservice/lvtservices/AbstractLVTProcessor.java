@@ -10,23 +10,24 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularityContainerProcessor;
+import org.janelia.jacs2.asyncservice.containerizedservices.RunContainerProcessor;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
 abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServiceProcessor<R> {
 
-    private final WrappedServiceProcessor<PullAndRunSingularityContainerProcessor, Void> pullAndRunContainerProcessor;
+    private final WrappedServiceProcessor<RunContainerProcessor, Void> runContainerProcessor;
     private final String defaultContainerImage;
 
     AbstractLVTProcessor(ServiceComputationFactory computationFactory,
                          JacsServiceDataPersistence jacsServiceDataPersistence,
                          String defaultWorkingDir,
-                         PullAndRunSingularityContainerProcessor pullAndRunContainerProcessor,
+                         RunContainerProcessor runContainerProcessor,
                          String defaultContainerImage,
                          Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.pullAndRunContainerProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, pullAndRunContainerProcessor);
+        this.runContainerProcessor = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, runContainerProcessor);
         this.defaultContainerImage = defaultContainerImage;
     }
 
@@ -48,10 +49,11 @@ abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServic
         if (StringUtils.isBlank(containerLocation)) {
             throw new IllegalArgumentException("No tool container has been configured or specified in the service arguments");
         }
-        return pullAndRunContainerProcessor.process(
+        return runContainerProcessor.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Pull container image " + containerLocation)
                         .build(),
+                new ServiceArg("-containerProcessor", args.containerProcessor),
                 new ServiceArg("-containerLocation", containerLocation),
                 new ServiceArg("-appArgs", getAppArgs(args)),
                 new ServiceArg("-bindPaths", args.inputDir),
