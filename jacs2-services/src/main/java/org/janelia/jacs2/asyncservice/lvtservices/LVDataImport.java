@@ -40,6 +40,8 @@ import org.slf4j.Logger;
 public class LVDataImport extends AbstractServiceProcessor<LVResult> {
 
     static class LVDataImportArgs extends LVArgs {
+        @Parameter(names = "-containerProcessor", description = "Container processor: docker or singularity")
+        String containerProcessor;
         @Parameter(names = "-tiffOctreeOutputDir", description = "Output directory for octree")
         String tiffOctreeOutputDir;
         @Parameter(names = "-ktxOctreeOutputDir", description = "Output directory for octree")
@@ -117,6 +119,7 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
                 .map(channel -> octreeCreator.process(new ServiceExecutionContext.Builder(jacsServiceData)
                                 .description("Create octree")
                                 .build(),
+                        new ServiceArg("-containerProcessor", args.containerProcessor),
                         new ServiceArg("-inputDir", inputTiffDir),
                         new ServiceArg("-outputDir", octreeDir),
                         new ServiceArg("-levels", levels),
@@ -132,6 +135,7 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
                                     .description("Create ktx tiles")
                                     .waitFor(octreeResults.stream().map(r -> r.getJacsServiceData()).collect(Collectors.toList()))
                                     .build(),
+                            new ServiceArg("-containerProcessor", args.containerProcessor),
                             new ServiceArg("-inputDir", octreeDir),
                             new ServiceArg("-outputDir", ktxDir),
                             new ServiceArg("-levels", levels),
