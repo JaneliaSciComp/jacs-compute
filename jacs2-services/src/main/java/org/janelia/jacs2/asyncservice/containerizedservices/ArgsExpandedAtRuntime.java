@@ -1,12 +1,19 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
-import com.beust.jcommander.Parameter;
-import org.apache.commons.lang3.StringUtils;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-class ExpandedRunSingularityContainerArgs extends RunSingularityContainerArgs {
+import com.beust.jcommander.Parameter;
+
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
+
+class ArgsExpandedAtRuntime {
     @Parameter(names = "-expandDir", description = "Name of the expanded directory")
     String expandedDir;
     @Parameter(names = "-expandDepth", description = "The depth of the expanded directory")
@@ -21,11 +28,21 @@ class ExpandedRunSingularityContainerArgs extends RunSingularityContainerArgs {
             "otherwise run it once with the other provided arguments")
     boolean cancelIfEmptyExpansion;
 
-    ExpandedRunSingularityContainerArgs() {
-        super("Service that runs a singularity container for each expanded argument");
-    }
-
-    boolean hasExpandedArgFlag() {
+    boolean hasRuntimeExpandedArgs() {
         return StringUtils.isNotBlank(expandedArgFlag);
     }
+
+    List<String> expandArguments() {
+        Stream<String> expandedArgsStream;
+        if (StringUtils.isNotBlank(expandedDir)) {
+            expandedArgsStream = FileUtils.lookupFiles(Paths.get(expandedDir), expandedDepth, expandedPattern)
+                    .filter(p -> Files.isRegularFile(p))
+                    .map(Path::toString);
+        } else {
+            expandedArgsStream = Stream.of();
+        }
+        return Stream.concat(expandedArgsStream, expandedArgList.stream())
+                .collect(Collectors.toList());
+    }
+
 }

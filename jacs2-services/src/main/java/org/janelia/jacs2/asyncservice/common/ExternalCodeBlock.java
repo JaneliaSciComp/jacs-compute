@@ -8,6 +8,29 @@ import java.io.Writer;
 public class ExternalCodeBlock {
     private final StringBuilder cmdsBuffer = new StringBuilder();
 
+    public static class Builder {
+        private final ExternalCodeBlock codeBlock;
+        private final ScriptWriter codeBlockWriter;
+
+        private Builder() {
+            this.codeBlock = new ExternalCodeBlock();
+            this.codeBlockWriter = this.codeBlock.getCodeWriter();
+        }
+
+        public ExternalCodeBlock build() {
+            return codeBlock;
+        }
+
+        public Builder add(String line) {
+            codeBlockWriter.add(line);
+            return this;
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public boolean isEmpty() {
         return cmdsBuffer.length() == 0;
     }

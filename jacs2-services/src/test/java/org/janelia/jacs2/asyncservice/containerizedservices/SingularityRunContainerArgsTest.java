@@ -11,15 +11,15 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertThat;
 
-public class RunSingularityContainerArgsTest {
+public class SingularityRunContainerArgsTest {
 
     @Test
     public void bindPathArgs() {
         class TestData {
             private final String[] sargs;
-            private final Matcher<RunSingularityContainerArgs> checker;
+            private final Matcher<SingularityRunContainerArgs> checker;
 
-            private TestData(String[] sargs, Matcher<RunSingularityContainerArgs> checker) {
+            private TestData(String[] sargs, Matcher<SingularityRunContainerArgs> checker) {
                 this.sargs = sargs;
                 this.checker = checker;
             }
@@ -30,9 +30,9 @@ public class RunSingularityContainerArgsTest {
                                 "-containerLocation", "shub://location",
                                 "-bindPaths", "/op1"
                         },
-                        new TypeSafeMatcher<RunSingularityContainerArgs>() {
+                        new TypeSafeMatcher<SingularityRunContainerArgs>() {
                             @Override
-                            protected boolean matchesSafely(RunSingularityContainerArgs item) {
+                            protected boolean matchesSafely(SingularityRunContainerArgs item) {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 1 &&
                                         "/op1".equals(item.bindPaths.get(0).asString());
@@ -47,9 +47,9 @@ public class RunSingularityContainerArgsTest {
                                 "-containerLocation", "shub://location",
                                 "-bindPaths", "/op1:/ip1"
                         },
-                        new TypeSafeMatcher<RunSingularityContainerArgs>() {
+                        new TypeSafeMatcher<SingularityRunContainerArgs>() {
                             @Override
-                            protected boolean matchesSafely(RunSingularityContainerArgs item) {
+                            protected boolean matchesSafely(SingularityRunContainerArgs item) {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 1 &&
                                         "/op1:/ip1".equals(item.bindPaths.get(0).asString());
@@ -65,9 +65,9 @@ public class RunSingularityContainerArgsTest {
                                 "-containerLocation", "shub://location",
                                 "-bindPaths", "/op1:/ip1:rw,/op2:/ip2:ro,/op3"
                         },
-                        new TypeSafeMatcher<RunSingularityContainerArgs>() {
+                        new TypeSafeMatcher<SingularityRunContainerArgs>() {
                             @Override
-                            protected boolean matchesSafely(RunSingularityContainerArgs item) {
+                            protected boolean matchesSafely(SingularityRunContainerArgs item) {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 3 &&
                                         "/op1:/ip1:rw".equals(item.bindPaths.get(0).asString()) &&
@@ -85,9 +85,9 @@ public class RunSingularityContainerArgsTest {
                                 "-containerLocation", "shub://location",
                                 "-bindPaths", "/op1::rw,/op2::ro,/op3::"
                         },
-                        new TypeSafeMatcher<RunSingularityContainerArgs>() {
+                        new TypeSafeMatcher<SingularityRunContainerArgs>() {
                             @Override
-                            protected boolean matchesSafely(RunSingularityContainerArgs item) {
+                            protected boolean matchesSafely(SingularityRunContainerArgs item) {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 3 &&
                                         "/op1::rw".equals(item.bindPaths.get(0).asString()) &&
@@ -106,9 +106,9 @@ public class RunSingularityContainerArgsTest {
                                 "-bindPaths", "",
                                 "other1", "other2"
                         },
-                        new TypeSafeMatcher<RunSingularityContainerArgs>() {
+                        new TypeSafeMatcher<SingularityRunContainerArgs>() {
                             @Override
-                            protected boolean matchesSafely(RunSingularityContainerArgs item) {
+                            protected boolean matchesSafely(SingularityRunContainerArgs item) {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 1 && item.bindPaths.get(0).isEmpty() &&
                                         item.appArgs.size() == 0 &&
@@ -125,9 +125,9 @@ public class RunSingularityContainerArgsTest {
                                 "-containerLocation", "shub://location",
                                 "other1,other2", "other3", "other4,other5"
                         },
-                        new TypeSafeMatcher<RunSingularityContainerArgs>() {
+                        new TypeSafeMatcher<SingularityRunContainerArgs>() {
                             @Override
-                            protected boolean matchesSafely(RunSingularityContainerArgs item) {
+                            protected boolean matchesSafely(SingularityRunContainerArgs item) {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 0 &&
                                         item.appArgs.size() == 0 &&
@@ -141,7 +141,7 @@ public class RunSingularityContainerArgsTest {
                 )
         };
         for (TestData td : testData) {
-            RunSingularityContainerArgs args = new RunSingularityContainerArgs();
+            SingularityRunContainerArgs args = new SingularityRunContainerArgs();
             JCommander.newBuilder()
                     .addObject(args)
                     .args(td.sargs)

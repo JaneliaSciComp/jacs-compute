@@ -192,6 +192,9 @@ public abstract class AbstractExeBasedServiceProcessor<R> extends AbstractServic
     private ExeJobHandler runExternalProcess(JacsServiceData jacsServiceData) {
         List<ExternalCodeBlock> externalConfigs = prepareConfigurationFiles(jacsServiceData);
         ExternalCodeBlock script = prepareExternalScript(jacsServiceData);
+        if (script == null) {
+            return new NoOpJobHandler("No op for " + jacsServiceData.toString());
+        }
         Map<String, String> runtimeEnv = new LinkedHashMap<>();
         runtimeEnv.putAll(prepareEnvironment(jacsServiceData));
         if (MapUtils.isNotEmpty(jacsServiceData.getEnv())) {

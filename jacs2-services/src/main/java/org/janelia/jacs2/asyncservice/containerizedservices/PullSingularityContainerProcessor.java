@@ -7,6 +7,8 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Optional;
 
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
@@ -15,6 +17,8 @@ import javax.inject.Named;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
+
+import com.google.common.collect.ImmutableMap;
 
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -35,7 +39,9 @@ import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 @Named("pullSingularityContainer")
-public class PullSingularityContainerProcessor extends AbstractSingularityContainerProcessor<File> {
+public class PullSingularityContainerProcessor extends AbstractContainerProcessor<PullSingularityContainerArgs, File> {
+
+    private final String localSingularityImagesPath;
 
     @Inject
     PullSingularityContainerProcessor(ServiceComputationFactory computationFactory,
@@ -47,7 +53,8 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
                                       JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                                       @ApplicationProperties ApplicationConfig applicationConfig,
                                       Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, singularityExecutable, localSingularityImagesPath, jacsJobInstanceInfoDao, applicationConfig, logger);
+        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, singularityExecutable, jacsJobInstanceInfoDao, applicationConfig, logger);
+        this.localSingularityImagesPath = localSingularityImagesPath;
     }
 
     @Override
@@ -97,7 +104,7 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
         }
     }
 
-    private Path writeLocalImage(AbstractSingularityContainerArgs args, Path imagePath) {
+    private Path writeLocalImage(AbstractContainerArgs args, Path imagePath) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(args.containerLocation);
@@ -117,6 +124,15 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
         }
     }
 
+    @Override
+    protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
+        PullSingularityContainerArgs args = getArgs(jacsServiceData);
+        if (args.noHttps()) {
+            return ImmutableMap.of("SINGULARITY_NOHTTPS", "True");
+        } else {
+            return ImmutableMap.of();
+        }
+    }
 
     @Override
     protected Path getProcessDir(JacsServiceData jacsServiceData) {
@@ -124,17 +140,27 @@ public class PullSingularityContainerProcessor extends AbstractSingularityContai
         return getLocalImagesDir(args).map(p -> Paths.get(p)).orElseGet(() -> super.getProcessDir(jacsServiceData));
     }
 
+    private Optional<String> getLocalImagesDir(PullSingularityContainerArgs args) {
+        return SingularityContainerHelper.getLocalImagesDir(args, localSingularityImagesPath);
+    }
+
     @Override
-    void createScript(JacsServiceData jacsServiceData, AbstractSingularityContainerArgs args, ScriptWriter scriptWriter) {
+    boolean createScript(JacsServiceData jacsServiceData, PullSingularityContainerArgs args, ScriptWriter scriptWriter) {
         scriptWriter
                 .addWithArgs(getRuntime((args)))
                 .addArg("pull")
                 .addArgs("--name", getLocalContainerImage(args).imageName)
                 .addArgs(args.containerLocation)
                 .endArgs();
+        return true;
     }
 
     PullSingularityContainerArgs getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new PullSingularityContainerArgs());
     }
+
+    private ContainerImage getLocalContainerImage(PullSingularityContainerArgs args) {
+        return SingularityContainerHelper.getLocalContainerImageMapper().apply(args, localSingularityImagesPath);
+    }
+
 }

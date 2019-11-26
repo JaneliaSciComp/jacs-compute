@@ -1,6 +1,16 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.google.common.collect.ImmutableSet;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
@@ -14,43 +24,30 @@ import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.ProcessingLocation;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-@Named("simpleRunSingularityContainer")
-public class SimpleRunSingularityContainerProcessor extends AbstractContainerProcessor<SingularityRunContainerArgs, Void> {
+@Named("simpleRunDockerContainer")
+public class SimpleRunDockerContainerProcessor extends AbstractContainerProcessor<RunContainerArgs, Void> {
 
     @Inject
-    SimpleRunSingularityContainerProcessor(ServiceComputationFactory computationFactory,
-                                           JacsServiceDataPersistence jacsServiceDataPersistence,
-                                           @Any Instance<ExternalProcessRunner> serviceRunners,
-                                           @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                           @PropertyValue(name = "Singularity.Bin.Path") String singularityExecutable,
-                                           JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
-                                           @ApplicationProperties ApplicationConfig applicationConfig,
-                                           Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, singularityExecutable, jacsJobInstanceInfoDao, applicationConfig, logger);
+    SimpleRunDockerContainerProcessor(ServiceComputationFactory computationFactory,
+                                      JacsServiceDataPersistence jacsServiceDataPersistence,
+                                      @Any Instance<ExternalProcessRunner> serviceRunners,
+                                      @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                                      @PropertyValue(name = "Docker.Executable") String dockerExecutable,
+                                      JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
+                                      @ApplicationProperties ApplicationConfig applicationConfig,
+                                      Logger logger) {
+        super(computationFactory, jacsServiceDataPersistence, serviceRunners, defaultWorkingDir, dockerExecutable, jacsJobInstanceInfoDao, applicationConfig, logger);
     }
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(SimpleRunSingularityContainerProcessor.class, new SingularityRunContainerArgs());
+        return ServiceArgs.getMetadata(SimpleRunDockerContainerProcessor.class, createArgs());
     }
 
-    @Override
-    boolean createScript(JacsServiceData jacsServiceData, SingularityRunContainerArgs args, ScriptWriter scriptWriter) {
+    boolean createScript(JacsServiceData jacsServiceData, RunContainerArgs args, ScriptWriter scriptWriter) {
         List<String> expandedArgsAtRuntime = args.getExpandedArgsAtRuntime();
         if (args.getCancelIfNoExpandedArgs() && expandedArgsAtRuntime.isEmpty()) {
             return false;
@@ -65,9 +62,6 @@ public class SimpleRunSingularityContainerProcessor extends AbstractContainerPro
         scriptWriter
                 .addWithArgs(getRuntime((args)))
                 .addArg("run");
-        if (StringUtils.isNotBlank(args.appName)) {
-            scriptWriter.addArgs("--app", args.appName);
-        }
         String scratchDir = serviceScratchDir(jacsServiceData);
         String bindPaths = args.bindPathsAsString(
                 ImmutableSet.<BindPath>builder()
@@ -75,18 +69,12 @@ public class SimpleRunSingularityContainerProcessor extends AbstractContainerPro
                         .add(new BindPath().setSrcPath(scratchDir))
                         .build());
         if (StringUtils.isNotBlank(bindPaths)) {
-            scriptWriter.addArgs("--bind", bindPaths);
-        }
-        if (StringUtils.isNotBlank(args.overlay)) {
-            scriptWriter.addArgs("--overlay", args.overlay);
-        }
-        if (args.enableNV) {
-            scriptWriter.addArg("--nv");
-        }
-        if (StringUtils.isNotBlank(args.initialPwd)) {
-            scriptWriter.addArgs("--pwd", args.initialPwd);
+            scriptWriter.addArgs("-v", bindPaths);
         }
         scriptWriter.addArg(args.containerLocation);
+        if (StringUtils.isNotBlank(args.appName)) {
+            scriptWriter.addArg(args.appName);
+        }
         if (CollectionUtils.isNotEmpty(args.appArgs)) {
             args.appArgs.forEach(scriptWriter::addArg);
         }
@@ -109,7 +97,7 @@ public class SimpleRunSingularityContainerProcessor extends AbstractContainerPro
 
     @Override
     protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
-        SingularityRunContainerArgs args = getArgs(jacsServiceData);
+        RunContainerArgs args = getArgs(jacsServiceData);
         List<String> expandedArgsAtRuntime = args.getExpandedArgsAtRuntime();
         return args.batchJobArgs.stream()
                 .flatMap(instanceArgs -> {
@@ -123,7 +111,12 @@ public class SimpleRunSingularityContainerProcessor extends AbstractContainerPro
                 .collect(Collectors.toList());
     }
 
-    SingularityRunContainerArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SingularityRunContainerArgs());
+
+    RunContainerArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), createArgs());
+    }
+
+    private RunContainerArgs createArgs() {
+        return new RunContainerArgs("Service that runs a docker container");
     }
 }

@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.containerizedservices;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
+import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.cdi.ApplicationConfigProvider;
@@ -23,7 +24,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
-public class AbstractSingularityContainerProcessorTest {
+public class AbstractContainerProcessorTest {
 
     private final static String TEST_WORKING_DIR = "testDir";
     private final static String TEST_CONTAINER_IMAGES_DIR = TEST_WORKING_DIR + "/containerImages";
@@ -79,20 +80,6 @@ public class AbstractSingularityContainerProcessorTest {
                 ),
                 new TestData(
                         ImmutableList.of(
-                                "-containerLocation", "shub://collection/c1:1.0",
-                                "-containerName", "cname"
-                        ),
-                        Paths.get(TEST_CONTAINER_IMAGES_DIR, "cname")
-                ),
-                new TestData(
-                        ImmutableList.of(
-                                "-containerLocation", "shub://collection/c1:1.0",
-                                "-containerName", "cpath/cname"
-                        ),
-                        Paths.get(TEST_CONTAINER_IMAGES_DIR, "cname")
-                ),
-                new TestData(
-                        ImmutableList.of(
                                 "-containerLocation", "docker://image:1.0"
                         ),
                         Paths.get(TEST_CONTAINER_IMAGES_DIR, "image-1.0.simg")
@@ -107,15 +94,19 @@ public class AbstractSingularityContainerProcessorTest {
                 new TestData(
                         ImmutableList.of(
                                 "-containerLocation", "/my/local/path/image.simg",
-                                "-containerImagesDir", TEST_WORKING_DIR,
-                                "-containerName", "othername"
+                                "-containerImagesDir", TEST_WORKING_DIR
                         ),
                         Paths.get("/my/local/path/image.simg")
                 )
         };
         for (TestData td : testData) {
-            ContainerImage containerImage = testContainerProcessor.getLocalContainerImage(testContainerProcessor.getArgs(createTestService(td.inputArgs)));
+            ExternalCodeBlock codeBlock = new ExternalCodeBlock();
+            JacsServiceData testServiceData = createTestService(td.inputArgs);
+            PullSingularityContainerArgs testArgs = testContainerProcessor.getArgs(testServiceData);
+            ContainerImage containerImage = SingularityContainerHelper.getLocalContainerImageMapper().apply(testArgs, TEST_CONTAINER_IMAGES_DIR);
             assertEquals("Expected result for " + td.inputArgs + " - " + td.expectedResult, td.expectedResult, containerImage.getLocalImagePath());
+            testContainerProcessor.createScript(testServiceData, testArgs, codeBlock.getCodeWriter());
+            assertEquals("singularity pull --name " + containerImage.imageName + " " + testArgs.containerLocation, codeBlock.toString().trim());
         }
     }
 

@@ -2,17 +2,17 @@ package org.janelia.jacs2.asyncservice.containerizedservices;
 
 import com.beust.jcommander.Parameter;
 
-class PullSingularityContainerArgs extends AbstractContainerArgs {
+class SingularityContainerArgs extends SingularityRunContainerArgs {
     @Parameter(names = "-enableHttps", description = "Enable HTTPS for retrieving the container image")
     boolean enableHttps;
     @Parameter(names = "-containerImagesDir", description = "Local container images directory")
     String containerImagesDirectory;
 
-    PullSingularityContainerArgs() {
-        super("Service that pulls a singularity container image");
+    SingularityContainerArgs() {
+        this("Service that pulls and runs a singularity container");
     }
 
-    boolean noHttps() {
-        return !enableHttps;
+    SingularityContainerArgs(String description) {
+        super(description);
     }
 }

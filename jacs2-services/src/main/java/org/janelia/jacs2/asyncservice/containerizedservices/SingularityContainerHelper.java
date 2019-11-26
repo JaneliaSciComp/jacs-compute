@@ -1,9 +1,5 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Path;
@@ -12,43 +8,38 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+
 class SingularityContainerHelper {
 
     private static final String DEFAULT_IMAGE_EXT = ".simg";
 
-    static <A extends AbstractSingularityContainerArgs> BiFunction<A, String, ContainerImage> getLocalContainerImageMapper() {
+    static <A extends PullSingularityContainerArgs> BiFunction<A, String, ContainerImage> getLocalContainerImageMapper() {
         return (A args, String defaultContainerImagesDirPath) -> {
             ContainerImage containerImage = getLocalContainerImage(args.containerLocation);
             if (containerImage.isLocalImage()) {
                 // the configured container location is a local path so just return the container image
                 return containerImage;
             } else {
-                String containerName = getContainerNameFromArgs(args).orElse(containerImage.imageName);
                 return getLocalImagesDir(args, defaultContainerImagesDirPath)
                         .filter(containerImagePath -> StringUtils.isNotBlank(containerImagePath))
                         .map(containerImagePath -> new ContainerImage(containerImage.protocol,
                                 Paths.get(containerImagePath),
-                                containerName))
+                                containerImage.imageName))
                         .orElseGet(() -> new ContainerImage(containerImage.protocol,
                                 Paths.get(""),
-                                containerName));
+                                containerImage.imageName));
             }
         };
     }
 
-    static <A extends AbstractSingularityContainerArgs> Optional<String> getLocalImagesDir(A args, String defaultContainerImagesDir) {
+    static Optional<String> getLocalImagesDir(PullSingularityContainerArgs args, String defaultContainerImagesDir) {
         if (StringUtils.isNotBlank(args.containerImagesDirectory)) {
             return Optional.of(args.containerImagesDirectory);
         } else if (StringUtils.isNotBlank(defaultContainerImagesDir)) {
             return Optional.of(defaultContainerImagesDir);
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    private static <A extends AbstractSingularityContainerArgs> Optional<String> getContainerNameFromArgs(AbstractSingularityContainerArgs args) {
-        if (StringUtils.isNotBlank(args.containerName)) {
-            return Optional.of(Paths.get(args.containerName).getFileName().toString());
         } else {
             return Optional.empty();
         }
@@ -139,14 +130,6 @@ class SingularityContainerHelper {
             String component = s.substring(separatorPos + 1);
             String remaining = s.substring(0, separatorPos);
             return ImmutablePair.of(component, remaining);
-        }
-    }
-
-    static Optional<String> getRuntime(AbstractSingularityContainerArgs args) {
-        if (StringUtils.isNotBlank(args.singularityRuntime)) {
-            return Optional.of(args.singularityRuntime);
-        } else {
-            return Optional.empty();
         }
     }
 }
