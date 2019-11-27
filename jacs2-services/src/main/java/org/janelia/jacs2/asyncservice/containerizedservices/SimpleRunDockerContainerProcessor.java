@@ -9,8 +9,6 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.google.common.collect.ImmutableSet;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
@@ -35,7 +33,7 @@ public class SimpleRunDockerContainerProcessor extends AbstractContainerProcesso
                                       JacsServiceDataPersistence jacsServiceDataPersistence,
                                       @Any Instance<ExternalProcessRunner> serviceRunners,
                                       @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                                      @PropertyValue(name = "Docker.Executable") String dockerExecutable,
+                                      @PropertyValue(name = "Docker.Bin.Path") String dockerExecutable,
                                       JacsJobInstanceInfoDao jacsJobInstanceInfoDao,
                                       @ApplicationProperties ApplicationConfig applicationConfig,
                                       Logger logger) {
@@ -63,14 +61,10 @@ public class SimpleRunDockerContainerProcessor extends AbstractContainerProcesso
                 .addWithArgs(getRuntime((args)))
                 .addArg("run");
         String scratchDir = serviceScratchDir(jacsServiceData);
-        String bindPaths = args.bindPathsAsString(
-                ImmutableSet.<BindPath>builder()
-                        .addAll(args.bindPaths)
-                        .add(new BindPath().setSrcPath(scratchDir))
-                        .build());
-        if (StringUtils.isNotBlank(bindPaths)) {
-            scriptWriter.addArgs("-v", bindPaths);
-        }
+        Stream.concat(args.bindPaths.stream(), Stream.of(new BindPath().setSrcPath(scratchDir)))
+                .filter(BindPath::isNotEmpty)
+                .map(bindPath -> bindPath.asString(true)) // docker volume bindings always have both source and target
+                .forEach(bindPath -> scriptWriter.addArgs("-v", bindPath));
         scriptWriter.addArg(args.containerLocation);
         if (StringUtils.isNotBlank(args.appName)) {
             scriptWriter.addArg(args.appName);

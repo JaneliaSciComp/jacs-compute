@@ -48,8 +48,8 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
         String ktxOctreeOutputDir;
         @Parameter(names = "-voxelSize", description = "Voxel size (in 'x,y,z' format)")
         String voxelSize = "1,1,1";
-        @Parameter(names = "-channels", description = "Channel number (Default = 0, 1) used mainly for formatting the output")
-        List<Integer> channels = Arrays.asList(0, 1);
+        @Parameter(names = "-channels", description = "Channel number (Default = 0) used mainly for formatting the output")
+        List<Integer> channels;
         @Parameter(names = "-inputFilenamePattern",
                 description = "Input file name pattern. The pattern must contain a string {channel} that will be replaced with actual channel number",
                 required = true)

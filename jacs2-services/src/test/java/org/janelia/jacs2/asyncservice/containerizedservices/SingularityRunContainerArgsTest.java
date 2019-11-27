@@ -35,7 +35,7 @@ public class SingularityRunContainerArgsTest {
                             protected boolean matchesSafely(SingularityRunContainerArgs item) {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 1 &&
-                                        "/op1".equals(item.bindPaths.get(0).asString());
+                                        "/op1".equals(item.bindPaths.get(0).asString(false));
                             }
                             @Override
                             public void describeTo(Description description) {
@@ -52,7 +52,7 @@ public class SingularityRunContainerArgsTest {
                             protected boolean matchesSafely(SingularityRunContainerArgs item) {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 1 &&
-                                        "/op1:/ip1".equals(item.bindPaths.get(0).asString());
+                                        "/op1:/ip1".equals(item.bindPaths.get(0).asString(false));
                             }
                             @Override
                             public void describeTo(Description description) {
@@ -70,9 +70,9 @@ public class SingularityRunContainerArgsTest {
                             protected boolean matchesSafely(SingularityRunContainerArgs item) {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 3 &&
-                                        "/op1:/ip1:rw".equals(item.bindPaths.get(0).asString()) &&
-                                        "/op2:/ip2:ro".equals(item.bindPaths.get(1).asString()) &&
-                                        "/op3".equals(item.bindPaths.get(2).asString());
+                                        "/op1:/ip1:rw".equals(item.bindPaths.get(0).asString(false)) &&
+                                        "/op2:/ip2:ro".equals(item.bindPaths.get(1).asString(false)) &&
+                                        "/op3".equals(item.bindPaths.get(2).asString(false));
                             }
                             @Override
                             public void describeTo(Description description) {
@@ -90,9 +90,9 @@ public class SingularityRunContainerArgsTest {
                             protected boolean matchesSafely(SingularityRunContainerArgs item) {
                                 return "shub://location".equals(item.containerLocation) &&
                                         item.bindPaths.size() == 3 &&
-                                        "/op1::rw".equals(item.bindPaths.get(0).asString()) &&
-                                        "/op2::ro".equals(item.bindPaths.get(1).asString()) &&
-                                        "/op3".equals(item.bindPaths.get(2).asString());
+                                        "/op1:/op1:rw".equals(item.bindPaths.get(0).asString(false)) &&
+                                        "/op2:/op2:ro".equals(item.bindPaths.get(1).asString(false)) &&
+                                        "/op3".equals(item.bindPaths.get(2).asString(false));
                             }
                             @Override
                             public void describeTo(Description description) {
