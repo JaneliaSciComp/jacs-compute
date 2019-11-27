@@ -27,12 +27,12 @@ class BindPath {
         return this;
     }
 
-    String asString() {
+    String asString(boolean alwaysHasTarget) {
         StringBuilder specBuilder = new StringBuilder();
         specBuilder.append(srcPath);
-        if (StringUtils.isNotBlank(targetPath) || StringUtils.isNotBlank(mountOpts)) {
+        if (StringUtils.isNotBlank(targetPath) || StringUtils.isNotBlank(mountOpts) || alwaysHasTarget) {
             specBuilder.append(':');
-            specBuilder.append(targetPath);
+            specBuilder.append(StringUtils.defaultIfBlank(targetPath, srcPath));
             if (StringUtils.isNotBlank(mountOpts)) {
                 specBuilder.append(':');
                 specBuilder.append(mountOpts);
@@ -67,6 +67,6 @@ class BindPath {
 
     @Override
     public String toString() {
-        return asString();
+        return asString(false);
     }
 }

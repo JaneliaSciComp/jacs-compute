@@ -46,7 +46,7 @@ class RunContainerArgs extends AbstractContainerArgs {
     String bindPathsAsString(Collection<BindPath> bindPathSet) {
         return bindPathSet.stream()
                 .filter(BindPath::isNotEmpty)
-                .map(BindPath::asString)
+                .map(bindPath -> bindPath.asString(false))
                 .reduce((s1, s2) -> s1.trim() + "," + s2.trim())
                 .orElse("");
     }

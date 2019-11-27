@@ -155,6 +155,8 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         pathElemsBuilder.add(jacsServiceData.getName());
         if (jacsServiceData.hasId()) {
             pathElemsBuilder.addAll(FileUtils.getTreePathComponentsForId(jacsServiceData.getId()));
+        } else if (jacsServiceData.hasParentServiceId()) {
+            pathElemsBuilder.addAll(FileUtils.getTreePathComponentsForId(jacsServiceData.getParentServiceId()));
         }
         return Paths.get(baseDir, pathElemsBuilder.build().toArray(new String[0])).toAbsolutePath();
     }
