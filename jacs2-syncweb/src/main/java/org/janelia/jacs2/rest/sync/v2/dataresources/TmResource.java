@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
                 @Authorization("runAs")
         }
 )
+@RequireAuthentication
 @ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data")
