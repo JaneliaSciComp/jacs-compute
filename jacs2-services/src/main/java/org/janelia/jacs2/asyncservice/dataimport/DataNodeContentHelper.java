@@ -38,6 +38,7 @@ class DataNodeContentHelper {
                                                  FileType defaultFileType,
                                                  String ownerKey) {
         if (StringUtils.isNotBlank(dataNodeName)) {
+            LOG.info("Add {} to node {}/{} for {}", contentList, parentDataNodeId, dataNodeName, ownerKey);
             TreeNode dataFolder = folderService.getOrCreateFolder(parentDataNodeId, parentWorkspaceOwnerKey, dataNodeName, ownerKey);
             return contentList.stream()
                     .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection()) // only upload files
@@ -65,18 +66,26 @@ class DataNodeContentHelper {
                         imageStack.setFilepath(mainRepPathURI.getParent().map(spURI -> spURI.toString()).orElse(""));
                         Set<FileType> mainRepFileTypes = FileTypeHelper.getFileTypeByExtension(mainRepPathURI.getStoragePath());
                         if (mainRepFileTypes.isEmpty()) {
+                            LOG.info("Add main file {} of default type ({}) to {}", mainRepPathURI, defaultFileType, imageStack);
                             DomainUtils.setFilepath(imageStack, defaultFileType, mainRepPathURI.toString());
                         } else {
-                            mainRepFileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, mainRepPathURI.toString()));
+                            mainRepFileTypes.forEach(ft -> {
+                                LOG.info("Add main file {} of type {} to {}", mainRepPathURI, ft, imageStack);
+                                DomainUtils.setFilepath(imageStack, ft, mainRepPathURI.toString());
+                            });
                         }
                         contentEntry.getAdditionalReps().forEach(ci -> {
                             StoragePathURI ciStoragePathURI = ci.getRemoteInfo().getEntryPathURI()
                                     .orElseGet(() -> new StoragePathURI(ci.getRemoteInfo().getEntryRelativePath()));
                             Set<FileType> fileTypes = FileTypeHelper.getFileTypeByExtension(ciStoragePathURI.getStoragePath());
                             if (fileTypes.isEmpty()) {
+                                LOG.info("Add file {} of default type ({}) to {}", ciStoragePathURI, defaultFileType, imageStack);
                                 DomainUtils.setFilepath(imageStack, defaultFileType, ciStoragePathURI.toString());
                             } else {
-                                fileTypes.forEach(ft -> DomainUtils.setFilepath(imageStack, ft, ciStoragePathURI.toString()));
+                                fileTypes.forEach(ft -> {
+                                    LOG.info("Add file {} of type {} to {}", ciStoragePathURI, ft, imageStack);
+                                    DomainUtils.setFilepath(imageStack, ft, ciStoragePathURI.toString());
+                                });
                             }
                         });
                         folderService.addImageStack(entryFolder, imageStack, ownerKey);
@@ -96,6 +105,7 @@ class DataNodeContentHelper {
                                                       FileType defaultFileType,
                                                       String ownerKey) {
         if (StringUtils.isNotBlank(dataNodeName)) {
+            LOG.info("Add {} to node {}/{} for {}", contentList, parentDataNodeId, dataNodeName, ownerKey);
             TreeNode dataFolder = folderService.getOrCreateFolder(parentDataNodeId, parentWorkspaceOwnerKey, dataNodeName, ownerKey);
             return contentList.stream()
                     .filter(contentEntry -> contentEntry.getMainRep().getRemoteInfo().isNotCollection())
