@@ -1,11 +1,13 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
-import com.beust.jcommander.Parameter;
-import com.google.common.collect.ImmutableList;
-import org.janelia.jacs2.asyncservice.common.ServiceArgs;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.beust.jcommander.Parameter;
+import com.google.common.collect.ImmutableList;
+
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 
 class CommonDataNodeArgs extends ServiceArgs {
     @Parameter(names = {"-dataNodeName", "-folderName"}, description = "Data node name")
@@ -22,7 +24,7 @@ class CommonDataNodeArgs extends ServiceArgs {
     boolean standaloneMIPS = false;
     @Parameter(names = "-mipsExtensions", description = "list of extensions for which to generate mips")
     List<String> mipsExtensions = new ArrayList<>(ImmutableList.of(
-            ".lsm", ".tif", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd", ".nrrd", ".h5j"
+            ".lsm", ".tif", "tiff", ".raw", ".v3draw", ".vaa3draw", ".v3dpbd", ".pbd", ".nrrd", ".h5j"
     ));
     @Parameter(names = "-mipsChanSpec", description = "MIPS channel spec - all files must have the same channel spec")
     String mipsChanSpec = "r"; // default to a single reference channel
@@ -37,5 +39,9 @@ class CommonDataNodeArgs extends ServiceArgs {
 
     boolean generateMIPS() {
         return !skipMIPS;
+    }
+
+    boolean isMipsSupported(String ext) {
+        return StringUtils.isNotBlank(ext) && mipsExtensions.contains(ext.toLowerCase());
     }
 }

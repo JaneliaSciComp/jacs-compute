@@ -91,6 +91,7 @@ public class FolderService {
 
     public void addImageStack(TreeNode folder, Image imageStack, String subjectKey) {
         try {
+            LOG.info("Add image stack {} to {} for {}", imageStack, folder, subjectKey);
             legacyDomainDao.save(subjectKey, imageStack);
             legacyDomainDao.addChildren(subjectKey, folder, ImmutableList.of(Reference.createFor(imageStack)));
         } catch (Exception e) {

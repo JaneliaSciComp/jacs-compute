@@ -204,7 +204,7 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
             Path localMIPSRootPath = serviceWorkingFolder.getServiceFolder("mips");
             // for the mips inputs it only check if the extension matches the one that require mips - it does not check if the MIPs already exist.
             List<ContentStack> mipsInputList = contentList.stream()
-                    .filter((ContentStack entry) -> args.mipsExtensions.contains(FileUtils.getFileExtensionOnly(entry.getMainRep().getRemoteInfo().getEntryRelativePath())))
+                    .filter((ContentStack entry) -> args.isMipsSupported(FileUtils.getFileExtensionOnly(entry.getMainRep().getRemoteInfo().getEntryRelativePath())))
                     .collect(Collectors.toList());
             return computationFactory.<List<ContentStack>>newComputation()
                     .supply(() -> storageContentHelper.downloadUnreachableContent(mipsInputList, localMIPSRootPath, jacsServiceData.getOwnerKey(), ResourceHelper.getAuthToken(jacsServiceData.getResources())))

@@ -213,6 +213,7 @@ class StorageContentHelper {
      * @return
      */
     List<ContentStack> uploadContent(List<ContentStack> contentList, String storageURL, String ownerKey, String authToken) {
+        LOG.info("Upload content stack {} to {} for {}", contentList, storageURL, ownerKey);
         return contentList.stream()
                 .peek(contentEntry -> {
                     Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
@@ -228,7 +229,7 @@ class StorageContentHelper {
         InputStream inputStream = openLocalContent(localPath);
         try {
             if (inputStream != null) {
-                LOG.info("Upload {}({}) to {}", storageContentInfo, localPath, storageURL);
+                LOG.info("Upload {}({}) to {} for {}", storageContentInfo, localPath, storageURL, subjectKey);
                 storageContentInfo.setRemoteInfo(storageService.putStorageContent(
                         storageURL,
                         storageContentInfo.getRemoteInfo().getEntryRelativePath(),

@@ -84,20 +84,6 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
     }
 
     @Override
-    protected void prepareProcessing(JacsServiceData jacsServiceData) {
-        super.prepareProcessing(jacsServiceData);
-        try {
-            FijiMacroArgs args = getArgs(jacsServiceData);
-            Path temporaryOutput = getTemporaryDir(args);
-            if (temporaryOutput != null) {
-                Files.createDirectories(temporaryOutput);
-            }
-        } catch (Exception e) {
-            throw new ComputationException(jacsServiceData, e);
-        }
-    }
-
-    @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
         FijiMacroArgs args = getArgs(jacsServiceData);
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
@@ -110,9 +96,6 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
     private void createScript(JacsServiceData jacsServiceData, FijiMacroArgs args, ScriptWriter scriptWriter) {
         try {
             boolean headless = args.headless || getApplicationConfig().getBooleanPropertyValue("Fiji.RunHeadless");
-            if (StringUtils.isNotBlank(args.temporaryOutput)) {
-                Files.createDirectories(Paths.get(args.temporaryOutput));
-            }
             if (StringUtils.isNotBlank(args.finalOutput)) {
                 Files.createDirectories(Paths.get(args.finalOutput));
             }
@@ -128,7 +111,6 @@ public class FijiMacroProcessor extends AbstractExeBasedServiceProcessor<Void> {
                 scratchServiceFolder = new JacsServiceFolder(null, Paths.get(args.temporaryOutput), jacsServiceData);
             }
             Path scratchDir = scratchServiceFolder.getServiceFolder();
-            Files.createDirectories(scratchDir);
             ScriptUtils.createTempDir("cleanTemp", scratchDir.toString(), scriptWriter);
             // define the exit handlers
             scriptWriter
