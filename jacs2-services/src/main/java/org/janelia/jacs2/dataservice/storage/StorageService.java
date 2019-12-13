@@ -78,14 +78,24 @@ public class StorageService {
             if (!StringUtils.endsWith(storageURI, "/storage")) {
                 target = target.path("storage");
             }
+            StringBuilder storageIdentifiersBuilder = new StringBuilder();
             if (StringUtils.isNotBlank(storageId)) {
                 target = target.queryParam("id", storageId);
+                storageIdentifiersBuilder.append("storageId=").append(storageId).append(' ');
             }
             if (StringUtils.isNotBlank(storageName)) {
                 target = target.queryParam("name", storageName);
+                if (storageIdentifiersBuilder.length() > 0) {
+                    storageIdentifiersBuilder.append(',');
+                }
+                storageIdentifiersBuilder.append("storageName=").append(storageName).append(' ');
             }
             if (StringUtils.isNotBlank(storagePath)) {
                 target = target.queryParam("storagePath", storagePath);
+                if (storageIdentifiersBuilder.length() > 0) {
+                    storageIdentifiersBuilder.append(',');
+                }
+                storageIdentifiersBuilder.append("storagePath=").append(storagePath).append(' ');
             }
             if (StringUtils.isNotBlank(subjectKey)) {
                 target = target.queryParam("ownerKey", subjectKey);
@@ -94,8 +104,17 @@ public class StorageService {
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
-                LOG.warn("Request {} returned status {} while trying to get the storage for storageId = {}, storageName={}, storagePath={}", target, responseStatus, storageId, storageName, storagePath);
-                throw new IllegalStateException("Invalid response received from " + target.getUri() + " while trying to request the storage URL");
+                LOG.error("Lookup data storage request {} returned status {} while trying to get the storage for storageId = {}, storageName={}, storagePath={}", target, responseStatus, storageId, storageName, storagePath);
+                StringBuilder messageBuilder = new StringBuilder("Cannot locate any storage ");
+                if (storageIdentifiersBuilder.length() > 0) {
+                    messageBuilder.append("for ")
+                            .append(storageIdentifiersBuilder);
+                }
+                messageBuilder.append("at ").append(target.getUri())
+                        .append(". The attempt to connect to the storage server returned with an invalid status code")
+                        .append('(').append(responseStatus).append(')');
+                ;
+                throw new IllegalStateException(messageBuilder.toString());
             } else {
                 PageResult<DataStorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<DataStorageInfo>>(){});
                 if (storageInfoResult.getResultList().size() > 1) {
@@ -135,7 +154,7 @@ public class StorageService {
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
-                LOG.warn("Request {} returned status {}", target, responseStatus);
+                LOG.error("Lookup storage volume request {} returned status {} while trying to get the storage for storageId = {}, storageName={}, storagePath={}", target, responseStatus, storageId, storageName, storagePath);
                 return Optional.empty();
             } else {
                 PageResult<JadeStorageVolume> storageInfoResult = response.readEntity(new GenericType<PageResult<JadeStorageVolume>>(){});
