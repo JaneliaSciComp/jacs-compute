@@ -241,7 +241,12 @@ public class TmResource {
                 public void write(OutputStream os) throws IOException, WebApplicationException {
                     Writer writer = new BufferedWriter(new OutputStreamWriter(os));
                     while (foo.hasNext()) {
-                        mapper.writeValue(os, foo.next());
+                        TmNeuronMetadata nextNeuron = foo.next();
+                        if (nextNeuron.isLargeNeuron()) {
+                            // rehyrdate the large neuron
+                            nextNeuron = tmNeuronMetadataDao.getTmNeuronMetadata(subjectKey, workspace, nextNeuron.getId());
+                        }
+                        mapper.writeValue(os, nextNeuron);
                     }
                     writer.flush();
                 }
