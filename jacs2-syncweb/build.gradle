@@ -8,11 +8,12 @@ mainClassName = 'org.janelia.jacs2.app.SyncServicesApp'
 
 project(":jacs2-syncweb") {
     dependencies {
-        compile project(":jacs2-commonweb"),
-                CDI_SE_CORE_LIB,
-                JACKSON_JAXRS_XML_PROVIDER
+        implementation project(":jacs2-commonweb"),
+                       CDI_SE_CORE_LIB,
+                       JACKSON_JAXRS_XML_PROVIDER,
+                       SOLR_SEARCH_LIB
 
-        testCompile project(path: ":jacs2-commonweb", configuration: "testArtifacts")
+        testImplementation project(path: ":jacs2-commonweb", configuration: "testArtifacts")
     }
 
     distributions {

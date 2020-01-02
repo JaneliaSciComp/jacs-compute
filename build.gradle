@@ -3,7 +3,7 @@ plugins {
 }
 
 allprojects {
-    apply plugin: 'java'
+    apply plugin: 'java-library'
     apply plugin: 'idea'
     apply plugin: 'eclipse'
     group = 'org.janelia.jacs2'
@@ -15,7 +15,29 @@ project.ext {
 }
 
 subprojects {
+    configurations {
+        provided
+        implementation.extendsFrom(provided)
+        testArtifacts.extendsFrom(testImplementation)
+        integrationTestCompileOnly.extendsFrom(testCompileOnly)
+        integrationTestImplementation.extendsFrom(testImplementation)
+        integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+    }
+
     apply from: "${rootDir}/deps.gradle"
+
+    sourceSets {
+        integrationTest {
+            java {
+                compileClasspath += main.output + test.output
+                runtimeClasspath += main.output + test.output
+                srcDir file('src/integrationTest/java')
+            }
+            resources {
+                srcDir file('src/integrationTest/resources')
+            }
+        }
+    }
 
     afterEvaluate {
         repositories {
@@ -29,27 +51,6 @@ subprojects {
             }
             flatDir {
                 dirs "${rootDir}/projectrepository"
-            }
-        }
-
-        configurations {
-            provided
-            testArtifacts.extendsFrom(testCompile)
-            integrationTestCompile.extendsFrom(testCompile)
-            integrationTestRuntime.extendsFrom(testRuntime)
-        }
-    
-    
-        sourceSets {
-            integrationTest {
-                java {
-                    compileClasspath += main.output + test.output
-                    runtimeClasspath += main.output + test.output
-                    srcDir file('src/integrationTest/java')
-                }
-                resources {
-                    srcDir file('src/integrationTest/resources')
-                }
             }
         }
 
@@ -96,8 +97,8 @@ subprojects {
                 downloadSources = true
                 downloadJavadoc = true
                 scopes.TEST.plus += [
-                    configurations.integrationTestCompile,
-                    configurations.integrationTestRuntime
+                    configurations.integrationTestCompileClasspath,
+                    configurations.integrationTestRuntimeClasspath
                 ]
             }
         }
@@ -109,12 +110,12 @@ subprojects {
 
         downloadLicenses {
             includeProjectDependencies = true
-            dependencyConfiguration = 'compile'
+            dependencyConfiguration = 'implementation'
         }
 
         task testJar(type: Jar) {
             from sourceSets.test.output
-            classifier = "test"
+            archiveClassifier = "test"
         }
 
         task integrationTest(type: Test) {
@@ -124,7 +125,6 @@ subprojects {
     
         artifacts {
             testArtifacts testJar
-            archives testJar
         }
     }
     

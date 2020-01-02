@@ -8,10 +8,10 @@ mainClassName = 'org.janelia.jacs2.app.AsyncServicesApp'
 
 project(":jacs2-asyncweb") {
     dependencies {
-        compile project(":jacs2-commonweb"),
-                CDI_SE_CORE_LIB
+        implementation project(":jacs2-commonweb"),
+                       CDI_SE_CORE_LIB
 
-        testCompile project(path: ":jacs2-commonweb", configuration: "testArtifacts")
+        testImplementation project(path: ":jacs2-commonweb", configuration: "testArtifacts")
     }
 
     distributions {

@@ -1,8 +1,13 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import java.io.*;
-import java.util.*;
-import java.util.stream.Stream;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -21,6 +26,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -31,8 +37,6 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.bson.Document;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -41,9 +45,10 @@ import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.dto.DomainQuery;
-import org.janelia.model.domain.tiledMicroscope.*;
+import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
+import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Workspace;
-import org.janelia.model.access.domain.dao.mongo.GridFSMongoDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

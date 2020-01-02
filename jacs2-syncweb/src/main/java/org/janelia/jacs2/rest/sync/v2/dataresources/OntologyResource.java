@@ -30,7 +30,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;

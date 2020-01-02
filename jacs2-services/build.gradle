@@ -1,48 +1,53 @@
 project(":jacs2-services") {
     dependencies {
-        compile CDI_API_LIB,
-                CMDLINE_ARG_LIB,
-                COMMOCOMPRESS_LIB,
-                CRON_UTILS_LIB,
-                DBCP_LIB,
-                HTTP_CLIENT_LIB,
-                HTTP_MIME_LIB,
-                JACKSON_ANNOTATIONS_LIB,
-                JACKSON_CORE_LIB,
-                JACKSON_DATABIND_LIB,
-                JACKSON_DATATYPE_JODA_LIB,
-                JAMA_LIB,
-                JAX_RS_JERSEY_CLIENT_LIB,
-                JAX_RS_JERSEY_MEDIA_LIB,
-                JAX_RS_JERSEY_MEDIA_JSON_LIB,
-                JAVA_EXP_IMPL_LIB,
-                JAVA_LSF_LIB,
-                JAVAMAIL_LIB,
-                MONGODB_DRIVER_LIB,
-                REFLECTIONS_LIB,
-                SOLR_SEARCH_LIB,
-                SPARK_LAUNCHER
+        api CDI_API_LIB
 
-        compile (JONGO_LIB) {
+        api (JACS_MODEL_ACCESS_LIB) {
             exclude group: 'com.fasterxml.jackson.core'
         }
 
-        compile (JACS_MODEL_ACCESS_LIB) {
+        api (JACS_MODEL_CORE_LIB) {
             exclude group: 'com.fasterxml.jackson.core'
         }
 
-        compile (JACS_MODEL_CORE_LIB) {
+        api JACS_MODEL_RENDERING_LIB,
+            JACS_MESSAGING_CORE_LIB
+
+        implementation CMDLINE_ARG_LIB,
+                       COMMOCOMPRESS_LIB,
+                       CRON_UTILS_LIB,
+                       DBCP_LIB,
+                       HTTP_CLIENT_LIB,
+                       HTTP_MIME_LIB,
+                       JACKSON_ANNOTATIONS_LIB,
+                       JACKSON_CORE_LIB,
+                       JACKSON_DATABIND_LIB,
+                       JACKSON_DATATYPE_JODA_LIB,
+                       JAMA_LIB,
+                       JAX_RS_JERSEY_CLIENT_LIB,
+                       JAX_RS_JERSEY_MEDIA_LIB,
+                       JAX_RS_JERSEY_MEDIA_JSON_LIB,
+                       JAVA_EXP_IMPL_LIB,
+                       JAVA_LSF_LIB,
+                       JAVAMAIL_LIB,
+                       MONGODB_DRIVER_LIB,
+                       REFLECTIONS_LIB,
+                       SOLR_SEARCH_LIB,
+                       SPARK_LAUNCHER
+
+        implementation (JONGO_LIB) {
             exclude group: 'com.fasterxml.jackson.core'
         }
 
-        compile JACS_MODEL_RENDERING_LIB
-
-        compile JACS_MESSAGING_CORE_LIB
-
-        compile (HIBERNATE_LIB) {
+        implementation (HIBERNATE_LIB) {
             exclude group: 'javax.transaction'
         }
 
-        runtime MARIADB_DRIVER_LIB
+        runtimeOnly MARIADB_DRIVER_LIB
     }
+
+    processIntegrationTestResources {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+
 }

@@ -19,7 +19,7 @@ dependencies {
         LDAP_CLIENT_LIB = "org.apache.directory.api:api-ldap-client-all:2.0.0.AM2"
 
         // utilities
-        GUAVA_LIB = "com.google.guava:guava:27.0.1-jre"
+        GUAVA_LIB = "com.google.guava:guava:28.1-jre"
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // Mail
@@ -102,7 +102,7 @@ dependencies {
 
         // Janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.0.4"
-        JACS_MODEL_VERSION = "2.19.8"
+        JACS_MODEL_VERSION = "2.20.0"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
         JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
@@ -124,22 +124,21 @@ dependencies {
         HAMCREST_LIB = "org.hamcrest:java-hamcrest:${HAMCREST_VERSION}"
         MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
         POWERMOCK_JUNIT4_LIB = "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}"
-        POWERMOCK_MOCKITO_API_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
+        POWERMOCK_API_MOCKITO_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
     }
 
     // Included in ALL projects
-    compile SLF4J_LIB,
-            LOGBACK_CORE_LIB,
-            LOGBACK_CLASSIC_LIB,
-            COMMONS_LANG_LIB,
-            COMMONS_COLLECTIONS_LIB,
-            GUAVA_LIB
+    implementation COMMONS_COLLECTIONS_LIB,
+                   COMMONS_LANG_LIB,
+                   GUAVA_LIB,
+                   LOGBACK_CLASSIC_LIB,
+                   LOGBACK_CORE_LIB,
+                   SLF4J_LIB
 
-    testCompile ASSERTJ_LIB,
-                HAMCREST_LIB,
-                JUNIT_LIB,
-                MOCKITO_LIB,
-                POWERMOCK_JUNIT4_LIB,
-                POWERMOCK_MOCKITO_API_LIB
-
+    testImplementation ASSERTJ_LIB,
+                       HAMCREST_LIB,
+                       JUNIT_LIB,
+                       MOCKITO_LIB,
+                       POWERMOCK_API_MOCKITO_LIB,
+                       POWERMOCK_JUNIT4_LIB
 }
