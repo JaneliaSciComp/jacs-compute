@@ -198,13 +198,8 @@ public class UserResource {
 
                 if (blankUser != null) {
                     LOG.info("Created new user({}, {})", blankUser.getId(), blankUser.getKey());
-
                     // create home folder for user
-                    Workspace newHomeWorkspace = new Workspace();
-                    newHomeWorkspace.setName("Home");
-                    newHomeWorkspace.setOwnerKey(blankUser.getKey());
-                    LOG.info("Creating Home Folder for user {}", blankUser.getKey());
-                    workspaceNodeDao.saveBySubjectKey(newHomeWorkspace, blankUser.getKey());
+                    legacyDomainDao.createWorkspace(blankUser.getKey());
 
                     // assign
                     return Response.ok(blankUser).build();
