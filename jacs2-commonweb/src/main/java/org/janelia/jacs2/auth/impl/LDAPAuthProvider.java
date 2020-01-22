@@ -4,8 +4,10 @@ import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
+import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.exception.LdapInvalidAttributeValueException;
 import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
 import org.apache.directory.api.ldap.model.message.BindRequestImpl;
 import org.apache.directory.api.ldap.model.message.BindResponse;
@@ -174,13 +176,12 @@ public class LDAPAuthProvider implements AuthProvider {
                 }
                 Entry entry = cursor.get();
                 User newUser = new User();
-                newUser.setEmail(entry.get("mail").getString());
+                newUser.setEmail(getLdapStringAttribute(entry, "mail"));
                 newUser.setFullName(entry.get("givenName").getString() + " " + entry.get("sn").getString());
                 newUser.setUserGroupRole(Subject.USERS_KEY, GroupRole.Reader);
                 newUser.setKey("user:" + username);
                 newUser.setName(username);
-                String userDN = entry.get("distinguishedname").getString();
-                ldapUser = new LdapUser(userDN, newUser);
+                ldapUser = new LdapUser(getLdapStringAttribute(entry, "distinguishedname"), newUser);
             }
 
             return ldapUser;
@@ -188,6 +189,21 @@ public class LDAPAuthProvider implements AuthProvider {
             throw new LdapException(e);
         } finally {
             if (cursor != null) closeLdapTraverseCursor(cursor);
+        }
+    }
+
+    private String getLdapStringAttribute(Entry ldapEntry, String attributeName) {
+        Attribute attr = ldapEntry.get(attributeName);
+        if (attr != null) {
+            try {
+                return attr.getString();
+            } catch (LdapInvalidAttributeValueException e) {
+                LOG.warn("Invalid value for attribute {} in {}", attributeName, ldapEntry, e);
+                return null;
+            }
+        } else {
+            LOG.info("Attribute {} not found in {}", attributeName, ldapEntry);
+            return null;
         }
     }
 

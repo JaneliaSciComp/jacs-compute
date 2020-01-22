@@ -57,7 +57,7 @@ dependencies {
         JAX_RS_JERSEY_TEST_PROVIDER_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
 
         // command line args
-        CMDLINE_ARG_LIB = "com.beust:jcommander:1.72"
+        CMDLINE_ARG_LIB = "com.beust:jcommander:1.78"
 
         // servlet engine
         JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:4.0.1"
