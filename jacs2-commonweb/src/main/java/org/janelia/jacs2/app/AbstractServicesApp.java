@@ -35,7 +35,7 @@ public abstract class AbstractServicesApp {
 
     static <A extends AppArgs> void displayAppUsage(A appArgs, StringBuilder output) {
         JCommander cmdline = new JCommander(appArgs);
-        cmdline.usage(output);
+        cmdline.getUsageFormatter().usage(output);
     }
 
     protected void start(AppArgs appArgs, ApplicationConfig applicationConfig) throws Exception {
