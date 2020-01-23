@@ -20,6 +20,7 @@ import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.OntologyDao;
@@ -55,6 +56,7 @@ public class TestResourceDependenciesProducer {
             .build();
     private AnnotationDao annotationDao = mock(AnnotationDao.class);
     private DatasetDao datasetDao = mock(DatasetDao.class);
+    private ColorDepthImageDao colorDepthImageDao = mock(ColorDepthImageDao.class);
     private LineReleaseDao lineReleaseDao = mock(LineReleaseDao.class);
     private JWTProvider jwtProvider = mock(JWTProvider.class);
     private LegacyDomainDao legacyDomainDao = mock(LegacyDomainDao.class);
@@ -113,6 +115,11 @@ public class TestResourceDependenciesProducer {
     @Produces
     public DatasetDao getDatasetDao() {
         return datasetDao;
+    }
+
+    @Produces
+    public ColorDepthImageDao getColorDepthImageDao() {
+        return colorDepthImageDao;
     }
 
     @AsyncIndex
