@@ -134,12 +134,12 @@ public class ColorDepthResource {
                                               @ApiParam @QueryParam("libraryName") List<String> libraryNames,
                                               @ApiParam @QueryParam("name") List<String> names,
                                               @ApiParam @QueryParam("filepath") List<String> filepaths,
-                                              @ApiParam @QueryParam("offset") Integer offsetParam,
-                                              @ApiParam @QueryParam("length") Integer lengthParam) {
+                                              @ApiParam @QueryParam("offset") String offsetParam,
+                                              @ApiParam @QueryParam("length") String lengthParam) {
         LOG.trace("Start getColorDepthMipsByLibrary({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
         try {
-            int offset = offsetParam != null ? offsetParam : 0;
-            int length = lengthParam != null ? lengthParam : -1;
+            int offset = parseIntegerParam("offset", offsetParam, 0);
+            int length = parseIntegerParam("length", lengthParam, -1);
             Stream<ColorDepthImage> cdmStream = colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace,
                     extractMultiValueParams(libraryNames),
                     extractMultiValueParams(names),
@@ -201,6 +201,15 @@ public class ColorDepthResource {
                     .flatMap(param -> Splitter.on(',').trimResults().omitEmptyStrings().splitToList(param).stream())
                     .collect(Collectors.toList())
                     ;
+        }
+    }
+
+    private Integer parseIntegerParam(String paramName, String paramValue, Integer defaultValue) {
+        try {
+            return StringUtils.isNotBlank(paramValue) ? Integer.parseInt(paramValue) : defaultValue;
+        } catch (NumberFormatException e) {
+
+            throw new IllegalArgumentException("Invalid numeric value " + paramName + "->" + paramValue, e);
         }
     }
 }
