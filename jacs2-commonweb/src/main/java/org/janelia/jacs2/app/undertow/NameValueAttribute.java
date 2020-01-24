@@ -22,32 +22,39 @@ import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.ReadOnlyAttributeException;
 import io.undertow.server.HttpServerExchange;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Name value attribute
  */
 public class NameValueAttribute implements ExchangeAttribute {
 
+    private static final Logger LOG = LoggerFactory.getLogger(NameValueAttribute.class);
+
     private final String name;
     private final ExchangeAttribute valueAttr;
+    private final boolean displayOnlyWhenTracing;
     private final boolean ignoreIfEmpty;
 
     NameValueAttribute(String name, ExchangeAttribute valueAttr) {
         this.name = name;
         this.valueAttr = valueAttr;
+        this.displayOnlyWhenTracing = false;
         this.ignoreIfEmpty = false;
     }
 
-    NameValueAttribute(String name, ExchangeAttribute valueAttr, boolean ignoreIfEmpty) {
+    NameValueAttribute(String name, ExchangeAttribute valueAttr, boolean displayOnlyWhenTracing, boolean ignoreIfEmpty) {
         this.name = name;
         this.valueAttr = valueAttr;
+        this.displayOnlyWhenTracing = displayOnlyWhenTracing;
         this.ignoreIfEmpty = ignoreIfEmpty;
     }
 
     @Override
     public String readAttribute(HttpServerExchange exchange) {
         String val = valueAttr.readAttribute(exchange);
-        if (ignoreIfEmpty && StringUtils.isBlank(val)) {
+        if (ignoreIfEmpty && StringUtils.isBlank(val) && (!displayOnlyWhenTracing || !LOG.isTraceEnabled()) ) {
             return null;
         } else {
             return name + "=" + val;
