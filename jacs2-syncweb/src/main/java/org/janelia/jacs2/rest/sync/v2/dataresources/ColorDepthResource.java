@@ -125,16 +125,18 @@ public class ColorDepthResource {
                                               @ApiParam @QueryParam("alignmentSpace") String alignmentSpace,
                                               @ApiParam @QueryParam("name") List<String> names,
                                               @ApiParam @QueryParam("filepath") List<String> filepaths,
-                                              @ApiParam @QueryParam("offset") Integer offset,
-                                              @ApiParam @QueryParam("length") Integer length) {
-        LOG.trace("Start getColorDepthMipsByLibrary({}, {}, {}, {}, {}, {}, {})", ownerKey, libraryName, alignmentSpace, names, filepaths, offset, length);
+                                              @ApiParam @QueryParam("offset") Integer offsetParam,
+                                              @ApiParam @QueryParam("length") Integer lengthParam) {
+        LOG.trace("Start getColorDepthMipsByLibrary({}, {}, {}, {}, {}, {}, {})", ownerKey, libraryName, alignmentSpace, names, filepaths, offsetParam, lengthParam);
         try {
+            int offset = offsetParam != null ? offsetParam : 0;
+            int length = lengthParam != null ? lengthParam : -1;
             Stream<ColorDepthImage> cdmStream = colorDepthImageDao.streamColorDepthMIPs(ownerKey, libraryName, alignmentSpace, names, filepaths, offset, length);
             return Response
                     .ok(new GenericEntity<List<ColorDepthImage>>(cdmStream.collect(Collectors.toList())){})
                     .build();
         } finally {
-            LOG.trace("Finished getColorDepthMipsByLibrary({}, {}, {}, {}, {}, {}, {})", ownerKey, libraryName, alignmentSpace, names, filepaths, offset, length);
+            LOG.trace("Finished getColorDepthMipsByLibrary({}, {}, {}, {}, {}, {}, {})", ownerKey, libraryName, alignmentSpace, names, filepaths, offsetParam, lengthParam);
         }
     }
 
