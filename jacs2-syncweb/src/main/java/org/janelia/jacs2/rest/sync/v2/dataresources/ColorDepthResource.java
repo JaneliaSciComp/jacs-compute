@@ -1,5 +1,6 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,6 +18,8 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.google.common.base.Splitter;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -26,6 +29,8 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
@@ -102,7 +107,11 @@ public class ColorDepthResource {
                                                  @ApiParam @QueryParam("filepath") List<String> filepaths) {
         LOG.trace("Start countColorDepthMipsByLibrary({}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths);
         try {
-            long colorDepthMIPsCount = colorDepthImageDao.countColorDepthMIPs(ownerKey, alignmentSpace, libraryNames, names, filepaths);
+            long colorDepthMIPsCount = colorDepthImageDao.countColorDepthMIPs(ownerKey, alignmentSpace,
+                    extractMultiValueParams(libraryNames),
+                    extractMultiValueParams(names),
+                    extractMultiValueParams(filepaths)
+            );
             return Response
                     .ok(colorDepthMIPsCount)
                     .build();
@@ -131,7 +140,13 @@ public class ColorDepthResource {
         try {
             int offset = offsetParam != null ? offsetParam : 0;
             int length = lengthParam != null ? lengthParam : -1;
-            Stream<ColorDepthImage> cdmStream = colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace, libraryNames, names, filepaths, offset, length);
+            Stream<ColorDepthImage> cdmStream = colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace,
+                    extractMultiValueParams(libraryNames),
+                    extractMultiValueParams(names),
+                    extractMultiValueParams(filepaths),
+                    offset,
+                    length
+            );
             return Response
                     .ok(new GenericEntity<List<ColorDepthImage>>(cdmStream.collect(Collectors.toList())){})
                     .build();
@@ -177,4 +192,15 @@ public class ColorDepthResource {
         }
     }
 
+    private List<String> extractMultiValueParams(List<String> params) {
+        if (CollectionUtils.isEmpty(params)) {
+            return Collections.emptyList();
+        } else {
+            return params.stream()
+                    .filter(StringUtils::isNotBlank)
+                    .flatMap(param -> Splitter.on(',').trimResults().omitEmptyStrings().splitToList(param).stream())
+                    .collect(Collectors.toList())
+                    ;
+        }
+    }
 }
