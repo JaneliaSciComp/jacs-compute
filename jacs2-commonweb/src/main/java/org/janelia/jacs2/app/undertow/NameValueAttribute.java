@@ -54,10 +54,14 @@ public class NameValueAttribute implements ExchangeAttribute {
     @Override
     public String readAttribute(HttpServerExchange exchange) {
         String val = valueAttr.readAttribute(exchange);
-        if (ignoreIfEmpty && StringUtils.isBlank(val) && (!displayOnlyWhenTracing || !LOG.isTraceEnabled()) ) {
+        if (ignoreIfEmpty && StringUtils.isBlank(val)) {
             return null;
         } else {
-            return name + "=" + val;
+            if (displayOnlyWhenTracing && !LOG.isTraceEnabled()) {
+                return null;
+            } else {
+                return name + "=" + val;
+            }
         }
     }
 

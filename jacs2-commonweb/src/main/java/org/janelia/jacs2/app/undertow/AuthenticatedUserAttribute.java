@@ -18,11 +18,17 @@
 
 package org.janelia.jacs2.app.undertow;
 
+import java.util.Optional;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.ReadOnlyAttributeException;
 import io.undertow.security.api.SecurityContext;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderValues;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.model.security.util.SubjectUtils;
 
 /**
@@ -30,9 +36,12 @@ import org.janelia.model.security.util.SubjectUtils;
  */
 public class AuthenticatedUserAttribute implements ExchangeAttribute {
 
+    private static final String AUTHORIZATION_ATTRIBUTE = "Authorization";
     private static final String USERNAME_ATTRIBUTE = "Username";
     private static final String RUNAS_ATTRIBUTE = "RunAsUser";
     private static final String JACS_SUBJECT_ATTRIBUTE = "JacsSubject";
+
+    private static final String BEARER_PREFIX = "Bearer ";
 
     @Override
     public String readAttribute(HttpServerExchange exchange) {
@@ -43,21 +52,37 @@ public class AuthenticatedUserAttribute implements ExchangeAttribute {
             authenticatedUser = sc.getAuthenticatedAccount().getPrincipal().getName();
         }
         else {
-            HeaderValues usernameHeader = exchange.getRequestHeaders().get(USERNAME_ATTRIBUTE);
-            if (usernameHeader == null || usernameHeader.size() == 0) {
-                HeaderValues subjectHeader = exchange.getRequestHeaders().get(JACS_SUBJECT_ATTRIBUTE);
-                if (subjectHeader == null || subjectHeader.size() == 0) {
-                    authenticatedUser = "unknown";
-                }
-                else {
-                    authenticatedUser = subjectHeader.getFirst();
-                }
-            }
-            else {
-                authenticatedUser = usernameHeader.getFirst();
-            }
-        }
+            authenticatedUser = getHeaderValue(exchange, USERNAME_ATTRIBUTE)
+                    .orElseGet(() -> getHeaderValue(exchange, JACS_SUBJECT_ATTRIBUTE)
+                            .orElseGet(() -> getHeaderValue(exchange, AUTHORIZATION_ATTRIBUTE)
+                                    .flatMap(authorization -> {
+                                        if (StringUtils.startsWithIgnoreCase(authorization, BEARER_PREFIX)) {
+                                            return Optional.of(authorization.substring(BEARER_PREFIX.length()).trim());
+                                        } else {
+                                            return Optional.empty();
+                                        }
+                                    })
+                                    .filter(StringUtils::isNotBlank)
+                                    .flatMap(token -> {
+                                        String[] s = token.split("\\.");
 
+                                        if (s.length < 3) {
+                                            return Optional.empty();
+                                        }
+                                        // take only the payload and decode it
+                                        Claims body = Jwts.parser().parseClaimsJwt("." + token.split("\\.")[1] + ".").getBody();
+                                        // then try to get the username from the claims body
+                                        Object usernameClaim = body.get(JWTProvider.USERNAME_CLAIM);
+                                        if (usernameClaim != null) {
+                                            return Optional.of((String) usernameClaim);
+                                        } else {
+                                            return Optional.empty();
+                                        }
+                                    })
+                                    .orElse("unknown"))
+                    )
+            ;
+        }
         // By default, the authenticated user is used as the authorized user
         String authorizedUser = authenticatedUser;
 
@@ -74,4 +99,12 @@ public class AuthenticatedUserAttribute implements ExchangeAttribute {
         throw new ReadOnlyAttributeException("Authenticated user", newValue);
     }
 
+    private Optional<String> getHeaderValue(HttpServerExchange exchange, String attributeName) {
+        HeaderValues headerValues = exchange.getRequestHeaders().get(attributeName);
+        if (headerValues != null && headerValues.size() > 0) {
+            return Optional.of(headerValues.getFirst());
+        } else {
+            return Optional.empty();
+        }
+    }
 }
