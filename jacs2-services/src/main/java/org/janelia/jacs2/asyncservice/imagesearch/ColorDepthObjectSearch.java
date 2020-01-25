@@ -4,10 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -55,6 +52,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         Long searchId;
         @Parameter(names = "-maskId", description = "GUID of the ColorDepthMask object to use. If this is empty, all listed masks are searched.", required = false)
         Long maskId;
+        @Parameter(names = "-runMasksWithoutResults", description = "If a mask id is provided, should other masks also be run if they don't have results yet?")
+        boolean runMasksWithoutResults = true;
     }
 
     private final WrappedServiceProcessor<ColorDepthFileSearch, List<File>> colorDepthFileSearch;
@@ -124,8 +123,23 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
         ColorDepthParameters searchParameters = search.getParameters();
         if (args.maskId != null) {
-            // Filter down to just the selected mask
-            masks = masks.stream().filter(m -> m.getId().equals(args.maskId)).collect(Collectors.toList());
+
+            Set<Long> maskIdsToRun = new HashSet<>();
+            maskIdsToRun.add(args.maskId);
+
+            if (args.runMasksWithoutResults) {
+                Set<Long> masksWithoutResults =
+                        search.getMasks().stream().map(r -> r.getTargetId()).collect(Collectors.toSet());
+                for (ColorDepthResult result : dao.getDomainObjectsAs(search.getResults(), ColorDepthResult.class)) {
+                    for (ColorDepthMaskResult maskResult : result.getMaskResults()) {
+                        masksWithoutResults.remove(maskResult.getMaskRef());
+                    }
+                }
+                maskIdsToRun.addAll(masksWithoutResults);
+            }
+
+            // Filter down to just the selected masks
+            masks = masks.stream().filter(m -> maskIdsToRun.contains(m.getId())).collect(Collectors.toList());
             // Update search parameters which are saved into the result
             searchParameters.setMasks(masks.stream().map(Reference::createFor).collect(Collectors.toList()));
         }
