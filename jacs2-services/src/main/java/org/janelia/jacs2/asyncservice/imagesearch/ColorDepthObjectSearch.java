@@ -1,16 +1,5 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Stopwatch;
@@ -20,20 +9,21 @@ import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceRe
 import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
-import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
-import org.janelia.model.domain.gui.cdmip.ColorDepthMaskResult;
-import org.janelia.model.domain.gui.cdmip.ColorDepthMatch;
-import org.janelia.model.domain.gui.cdmip.ColorDepthParameters;
-import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
-import org.janelia.model.domain.gui.cdmip.ColorDepthSearch;
+import org.janelia.model.domain.gui.cdmip.*;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Wraps the ColorDepthFileSearch service with integration with the Workstation via the domain model.
@@ -45,12 +35,11 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
     private final int minNodes;
     private final int maxNodes;
-    private final int maxResultsPerMask;
 
     static class IntegratedColorDepthSearchArgs extends ServiceArgs {
         @Parameter(names = "-searchId", description = "GUID of the ColorDepthSearch object to use", required = true)
         Long searchId;
-        @Parameter(names = "-maskId", description = "GUID of the ColorDepthMask object to use. If this is empty, all listed masks are searched.", required = false)
+        @Parameter(names = "-maskId", description = "GUID of the ColorDepthMask object to use. If this is empty, all listed masks are searched.")
         Long maskId;
         @Parameter(names = "-runMasksWithoutResults", description = "If a mask id is provided, should other masks also be run if they don't have results yet?")
         boolean runMasksWithoutResults = true;
@@ -66,14 +55,12 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                            LegacyDomainDao dao,
                            @IntPropertyValue(name = "service.colorDepthSearch.minNodes", defaultValue = 1) Integer minNodes,
                            @IntPropertyValue(name = "service.colorDepthSearch.maxNodes", defaultValue = 8) Integer maxNodes,
-                           @IntPropertyValue(name = "service.colorDepthSearch.maxResultsPerMask", defaultValue = 100) Integer maxResultsPerMask,
                            ColorDepthFileSearch colorDepthFileSearch,
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.dao = dao;
         this.minNodes = minNodes;
         this.maxNodes = maxNodes;
-        this.maxResultsPerMask = maxResultsPerMask;
         this.colorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, colorDepthFileSearch);
     }
 
@@ -129,10 +116,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
             if (args.runMasksWithoutResults) {
                 Set<Long> masksWithoutResults =
-                        search.getMasks().stream().map(r -> r.getTargetId()).collect(Collectors.toSet());
+                        search.getMasks().stream().map(Reference::getTargetId).collect(Collectors.toSet());
                 for (ColorDepthResult result : dao.getDomainObjectsAs(search.getResults(), ColorDepthResult.class)) {
                     for (ColorDepthMaskResult maskResult : result.getMaskResults()) {
-                        masksWithoutResults.remove(maskResult.getMaskRef());
+                        masksWithoutResults.remove(maskResult.getMaskRef().getTargetId());
                     }
                 }
                 maskIdsToRun.addAll(masksWithoutResults);
@@ -209,11 +196,6 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
             serviceArgList.add(new ServiceArg("-mirrorMask"));
         }
 
-        // KR: ignoring this parameter, per Hideo's suggestion, and just returning top 200 results
-//        if (search.getPctPositivePixels() != null) {
-//            serviceArgList.add(new ServiceArg("-pctPositivePixels", search.getPctPositivePixels()));
-//        }
-
         return colorDepthFileSearch.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                     .description("Color depth search")
@@ -266,8 +248,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                     maskResult.addMatch(match);
                                 }
 
-                                if (++i>=maxResultsPerMask) {
-                                    logger.warn("Too many results returned, truncating at {}", maxResultsPerMask);
+                                if (++i>=search.getParameters().getMaxResultsPerMask()) {
+                                    logger.warn("Too many results returned, truncating at {}", search.getParameters().getMaxResultsPerMask());
                                     break;
                                 }
                             }
