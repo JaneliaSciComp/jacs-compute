@@ -196,6 +196,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
             serviceArgList.add(new ServiceArg("-mirrorMask"));
         }
 
+        // Fallback for older searches without max results
+        final Integer maxResultsPerMask = search.getParameters().getMaxResultsPerMask() == null
+                ? 200 : search.getParameters().getMaxResultsPerMask();
+
         return colorDepthFileSearch.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                     .description("Color depth search")
@@ -248,8 +252,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                     maskResult.addMatch(match);
                                 }
 
-                                if (++i>=search.getParameters().getMaxResultsPerMask()) {
-                                    logger.warn("Too many results returned, truncating at {}", search.getParameters().getMaxResultsPerMask());
+                                if (++i>=maxResultsPerMask) {
+                                    logger.warn("Too many results returned, truncating at {}", maxResultsPerMask);
                                     break;
                                 }
                             }
