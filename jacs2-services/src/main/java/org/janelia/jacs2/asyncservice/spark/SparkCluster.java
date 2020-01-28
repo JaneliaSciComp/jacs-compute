@@ -231,7 +231,7 @@ public class SparkCluster {
                     SparkAppHandle.State sparkAppState = sparkAppHandle.getState();
                     logger.info("Spark application state changed: {}", sparkAppState);
                     if (sparkAppState.isFinal()) {
-                        long seconds = sparkAppWatch.stop().elapsed().getSeconds();
+                        long seconds = sparkAppWatch.elapsed().getSeconds();
                         logger.info("Spark application completed after {} seconds [{}]", seconds, sparkAppState);
                         if (sparkAppState != SparkAppHandle.State.FINISHED) {
                             logger.warn("Spark application {} finished with an error state {}", sparkApp.getAppId(), sparkAppState);
