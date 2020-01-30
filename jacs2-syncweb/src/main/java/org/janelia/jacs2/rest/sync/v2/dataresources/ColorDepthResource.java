@@ -2,6 +2,8 @@ package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,6 +20,7 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Splitter;
 
 import io.swagger.annotations.Api;
@@ -33,8 +36,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
+import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.domain.sample.Sample;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,8 +65,25 @@ import org.slf4j.LoggerFactory;
 public class ColorDepthResource {
     private static final Logger LOG = LoggerFactory.getLogger(ColorDepthResource.class);
 
+    static class CdmipWithSample {
+        @JsonProperty
+        private final String id;
+        @JsonProperty
+        private final ColorDepthImage cdmip;
+        @JsonProperty
+        private final Sample sample;
+
+        CdmipWithSample(String id, ColorDepthImage cdmip, Sample sample) {
+            this.id = id;
+            this.cdmip = cdmip;
+            this.sample = sample;
+        }
+    }
+
     @Inject
     private ColorDepthImageDao colorDepthImageDao;
+    @Inject
+    private LegacyDomainDao legacyDomainDao;
 
     @ApiOperation(value = "Gets all color depth mips that match the given parameters")
     @ApiResponses(value = {
@@ -152,6 +175,46 @@ public class ColorDepthResource {
                     .build();
         } finally {
             LOG.trace("Finished getColorDepthMipsByLibrary({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
+        }
+    }
+
+    @ApiOperation(value = "Gets all color depth mips that match the given parameters with the corresponding samples")
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully fetched the list of color depth mips",  response = CdmipWithSample.class,
+                    responseContainer = "List" ),
+            @ApiResponse( code = 500, message = "Internal Server Error fetching the color depth mips" )
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("colorDepthMIPsWithSamples")
+    public Response getMatchingColorDepthMipsWithSample(@ApiParam @QueryParam("ownerKey") String ownerKey,
+                                                        @ApiParam @QueryParam("alignmentSpace") String alignmentSpace,
+                                                        @ApiParam @QueryParam("libraryName") List<String> libraryNames,
+                                                        @ApiParam @QueryParam("name") List<String> names,
+                                                        @ApiParam @QueryParam("filepath") List<String> filepaths,
+                                                        @ApiParam @QueryParam("offset") String offsetParam,
+                                                        @ApiParam @QueryParam("length") String lengthParam) {
+        LOG.trace("Start getMatchingColorDepthMipsWithSample({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
+        try {
+            int offset = parseIntegerParam("offset", offsetParam, 0);
+            int length = parseIntegerParam("length", lengthParam, -1);
+            List<ColorDepthImage> cdmList = colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace,
+                    extractMultiValueParams(libraryNames),
+                    extractMultiValueParams(names),
+                    extractMultiValueParams(filepaths),
+                    offset,
+                    length
+            ).collect(Collectors.toList());
+
+            List<Reference> sampleRefs =  cdmList.stream().map(cdmip -> cdmip.getSampleRef()).filter(sref -> sref != null).collect(Collectors.toList());
+
+            Map<Reference, Sample> samples = legacyDomainDao.getDomainObjectsAs(sampleRefs, Sample.class).stream().collect(Collectors.toMap(s -> Reference.createFor(s), s -> s));
+
+            return Response
+                    .ok(new GenericEntity<List<CdmipWithSample>>(cdmList.stream().map(cdmip -> new CdmipWithSample(cdmip.getId().toString(), cdmip, samples.get(cdmip.getSampleRef()))).collect(Collectors.toList())){})
+                    .build();
+        } finally {
+            LOG.trace("Finished getMatchingColorDepthMipsWithSample({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
         }
     }
 
