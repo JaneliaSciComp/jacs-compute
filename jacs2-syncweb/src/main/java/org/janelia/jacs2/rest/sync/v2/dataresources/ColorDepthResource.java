@@ -206,7 +206,7 @@ public class ColorDepthResource {
                     length
             ).collect(Collectors.toList());
 
-            List<Reference> sampleRefs =  cdmList.stream().map(cdmip -> cdmip.getSampleRef()).filter(sref -> sref != null).collect(Collectors.toList());
+            List<Reference> sampleRefs =  cdmList.stream().map(cdmip -> cdmip.getSampleRef()).filter(sref -> sref != null).distinct().collect(Collectors.toList());
 
             Map<Reference, Sample> samples = legacyDomainDao.getDomainObjectsAs(sampleRefs, Sample.class).stream().collect(Collectors.toMap(s -> Reference.createFor(s), s -> s));
 
