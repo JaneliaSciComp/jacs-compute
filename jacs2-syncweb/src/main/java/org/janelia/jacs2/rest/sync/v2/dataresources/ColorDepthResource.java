@@ -107,7 +107,7 @@ public class ColorDepthResource {
             @ApiResponse( code = 500, message = "Internal Server Error fetching the color depth mips" )
     })
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @Path("colorDepthMIPsCount")
     public Response countColorDepthMipsByLibrary(@ApiParam @QueryParam("ownerKey") String ownerKey,
                                                  @ApiParam @QueryParam("alignmentSpace") String alignmentSpace,
