@@ -40,6 +40,7 @@ import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.domain.gui.cdmip.ColorDepthImageWithSampleBuilder;
 import org.janelia.model.domain.sample.Sample;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -197,7 +198,7 @@ public class ColorDepthResource {
 
             return Response
                     .ok(new GenericEntity<List<ColorDepthImage>>(cdmList.stream()
-                            .peek(cdmip -> cdmip.setSample(samples.get(cdmip.getSampleRef())))
+                            .map(cdmip -> new ColorDepthImageWithSampleBuilder(cdmip).withSample(samples.get(cdmip.getSampleRef())).build())
                             .collect(Collectors.toList())){})
                     .build();
         } finally {
