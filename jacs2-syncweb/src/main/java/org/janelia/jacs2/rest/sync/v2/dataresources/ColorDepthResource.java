@@ -65,21 +65,6 @@ import org.slf4j.LoggerFactory;
 public class ColorDepthResource {
     private static final Logger LOG = LoggerFactory.getLogger(ColorDepthResource.class);
 
-    static class CdmipWithSample {
-        @JsonProperty
-        private final String id;
-        @JsonProperty
-        private final ColorDepthImage cdmip;
-        @JsonProperty
-        private final Sample sample;
-
-        CdmipWithSample(String id, ColorDepthImage cdmip, Sample sample) {
-            this.id = id;
-            this.cdmip = cdmip;
-            this.sample = sample;
-        }
-    }
-
     @Inject
     private ColorDepthImageDao colorDepthImageDao;
     @Inject
@@ -180,7 +165,7 @@ public class ColorDepthResource {
 
     @ApiOperation(value = "Gets all color depth mips that match the given parameters with the corresponding samples")
     @ApiResponses(value = {
-            @ApiResponse( code = 200, message = "Successfully fetched the list of color depth mips",  response = CdmipWithSample.class,
+            @ApiResponse( code = 200, message = "Successfully fetched the list of color depth mips",  response = ColorDepthImage.class,
                     responseContainer = "List" ),
             @ApiResponse( code = 500, message = "Internal Server Error fetching the color depth mips" )
     })
@@ -211,7 +196,9 @@ public class ColorDepthResource {
             Map<Reference, Sample> samples = legacyDomainDao.getDomainObjectsAs(sampleRefs, Sample.class).stream().collect(Collectors.toMap(s -> Reference.createFor(s), s -> s));
 
             return Response
-                    .ok(new GenericEntity<List<CdmipWithSample>>(cdmList.stream().map(cdmip -> new CdmipWithSample(cdmip.getId().toString(), cdmip, samples.get(cdmip.getSampleRef()))).collect(Collectors.toList())){})
+                    .ok(new GenericEntity<List<ColorDepthImage>>(cdmList.stream()
+                            .peek(cdmip -> cdmip.setSample(samples.get(cdmip.getSampleRef())))
+                            .collect(Collectors.toList())){})
                     .build();
         } finally {
             LOG.trace("Finished getMatchingColorDepthMipsWithSample({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
