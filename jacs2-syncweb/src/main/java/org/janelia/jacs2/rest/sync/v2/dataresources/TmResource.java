@@ -67,7 +67,7 @@ import org.slf4j.LoggerFactory;
                 @Authorization("runAs")
         }
 )
-@RequireAuthentication
+
 @ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data")
@@ -364,7 +364,7 @@ public class TmResource {
                                        @ApiParam final BulkNeuronStyleUpdate bulkNeuronStyleUpdate) {
         LOG.debug("updateNeuronStyles({}, {})", subjectKey, bulkNeuronStyleUpdate);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
-        if (bulkNeuronStyleUpdate.getVisible() == null && StringUtils.isNotBlank(bulkNeuronStyleUpdate.getColorHex())) {
+        if (bulkNeuronStyleUpdate.getVisible() == null && !StringUtils.isNotBlank(bulkNeuronStyleUpdate.getColorHex())) {
             LOG.warn("Cannot have both visible and colorhex unset");
             return Response.status(Response.Status.BAD_REQUEST).build();
         } else {
