@@ -13,6 +13,7 @@ import org.janelia.model.access.domain.search.DocumentSearchResults;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.sample.NeuronFragment;
 
 /**
  * A SOLR indexer.
@@ -30,7 +31,10 @@ public class DocumentIndexingService extends AbstractIndexingServiceSupport {
     public int indexDocuments(List<Reference> domainObjectReferences) {
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
                 createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
-        return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainObjectReferences));
+        return domainObjectIndexer.indexDocumentStream(
+                legacyDomainDao.iterateDomainObjects(domainObjectReferences)
+                        .filter(d -> d instanceof NeuronFragment) // skip NeuronFragment references from indexing
+        );
     }
 
     public int removeDocuments(List<Long> ids) {

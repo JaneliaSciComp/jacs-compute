@@ -297,7 +297,7 @@ public class LSFSparkClusterLauncher {
         jt.setJobEnvironment(ImmutableMap.of(
                 "SPARK_LOG_DIR", jobOutputPath.toString(), // the startup script uses this to set the logdir path
                 "SPARK_WORKER_DIR", jobOutputPath.toString(),
-                "SPARK_WORKER_LOG_DIR", jobOutputPath.toString())); 
+                "SPARK_WORKER_LOG_DIR", jobOutputPath.toString()));
         return jt;
     }
 
