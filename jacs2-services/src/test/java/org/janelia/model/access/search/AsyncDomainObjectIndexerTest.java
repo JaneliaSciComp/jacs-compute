@@ -8,14 +8,23 @@ import java.util.stream.LongStream;
 
 import org.janelia.messaging.core.MessageSender;
 import org.janelia.model.domain.DomainObject;
+import org.janelia.model.domain.DomainUtils;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.times;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({
+        DomainUtils.class,
+})
 public class AsyncDomainObjectIndexerTest {
     private static class TestData {
         private final MessageSender messageSender;
@@ -35,13 +44,8 @@ public class AsyncDomainObjectIndexerTest {
         MessageSender unconnectedMessageSender = Mockito.mock(MessageSender.class);
         Mockito.when(unconnectedMessageSender.isConnected()).thenReturn(false);
 
-        List<DomainObject> domainObjects = LongStream.rangeClosed(1, 10)
-                .mapToObj(i -> {
-                    DomainObject dObj = Mockito.mock(DomainObject.class);
-                    Mockito.when(dObj.getId()).thenReturn(i);
-                    return dObj;
-                })
-                .collect(Collectors.toList());
+        List<DomainObject> domainObjects = prepareDocumentsForIndexing(true);
+
         TestData[] testData = new TestData[] {
                 new TestData(null, 0),
                 new TestData(unconnectedMessageSender, 0),
@@ -54,6 +58,37 @@ public class AsyncDomainObjectIndexerTest {
                 Mockito.verify(td.messageSender, times(td.expectedMessages)).sendMessage(anyMap(), isNull());
             }
         }
+    }
+
+    @Test
+    public void skipIndexingNonSearchableDocuments() {
+
+        MessageSender connectedMessageSender = Mockito.mock(MessageSender.class);
+        Mockito.when(connectedMessageSender.isConnected()).thenReturn(true);
+
+        List<DomainObject> domainObjects = prepareDocumentsForIndexing(false);
+
+        TestData[] testData = new TestData[] {
+                new TestData(connectedMessageSender, 0)
+        };
+        for (TestData td : testData) {
+            AsyncDomainObjectIndexer indexer = createIndexer(td.messageSender);
+            assertEquals(td.expectedMessages, indexer.indexDocumentStream(domainObjects.stream()));
+            Mockito.verify(td.messageSender, times(td.expectedMessages)).sendMessage(anyMap(), isNull());
+        }
+    }
+
+    private List<DomainObject> prepareDocumentsForIndexing(boolean searchable) {
+        PowerMockito.mockStatic(DomainUtils.class);
+
+        return LongStream.rangeClosed(1, 10)
+                .mapToObj(i -> {
+                    DomainObject dObj = Mockito.mock(DomainObject.class);
+                    Mockito.when(dObj.getId()).thenReturn(i);
+                    Mockito.when(DomainUtils.isSearcheableType(dObj.getClass())).thenReturn(searchable);
+                    return dObj;
+                })
+                .collect(Collectors.toList());
     }
 
     @Test

@@ -10,6 +10,8 @@ import org.janelia.model.access.domain.search.DocumentSearchParams;
 import org.janelia.model.access.domain.search.DocumentSearchResults;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.DomainObject;
+import org.janelia.model.domain.DomainUtils;
+import org.janelia.model.domain.sample.NeuronFragment;
 
 class DomainObjectIndexSender implements DomainObjectIndexer {
 
@@ -26,7 +28,7 @@ class DomainObjectIndexSender implements DomainObjectIndexer {
 
     @Override
     public boolean indexDocument(DomainObject domainObject) {
-        if (isEnabled()) {
+        if (isEnabled() && DomainUtils.isSearcheableType(domainObject.getClass())) {
             Map<String, Object> messageHeaders = new LinkedHashMap<>();
             messageHeaders.put("msgType", "UPDATE_DOC");
             messageHeaders.put("objectId", domainObject.getId());
@@ -51,7 +53,7 @@ class DomainObjectIndexSender implements DomainObjectIndexer {
 
     @Override
     public int indexDocumentStream(Stream<? extends DomainObject> domainObjectStream) {
-        return (int) domainObjectStream.map(this::indexDocument).filter(r -> r).count();
+        return (int) domainObjectStream.filter(d -> DomainUtils.isSearcheableType(d.getClass())).map(this::indexDocument).filter(r -> r).count();
     }
 
     @Override

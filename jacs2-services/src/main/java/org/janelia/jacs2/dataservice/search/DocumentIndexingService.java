@@ -3,17 +3,12 @@ package org.janelia.jacs2.dataservice.search;
 import java.util.List;
 import java.util.Set;
 
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
-
 import org.apache.solr.client.solrj.SolrServer;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.search.DocumentSearchParams;
 import org.janelia.model.access.domain.search.DocumentSearchResults;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
-import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.sample.NeuronFragment;
 
 /**
  * A SOLR indexer.
@@ -31,10 +26,7 @@ public class DocumentIndexingService extends AbstractIndexingServiceSupport {
     public int indexDocuments(List<Reference> domainObjectReferences) {
         DomainObjectIndexer domainObjectIndexer = domainObjectIndexerProvider.createDomainObjectIndexer(
                 createSolrBuilder().setSolrCore(solrConfig.getSolrMainCore()).build());
-        return domainObjectIndexer.indexDocumentStream(
-                legacyDomainDao.iterateDomainObjects(domainObjectReferences)
-                        .filter(d -> d instanceof NeuronFragment) // skip NeuronFragment references from indexing
-        );
+        return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainObjectReferences));
     }
 
     public int removeDocuments(List<Long> ids) {
