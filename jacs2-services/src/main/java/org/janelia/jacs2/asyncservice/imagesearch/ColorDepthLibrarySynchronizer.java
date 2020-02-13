@@ -46,6 +46,8 @@ import org.slf4j.Logger;
 @Named("colorDepthLibrarySync")
 public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void> {
 
+    private static final String DEFAULT_OWNER = "group:flylight";
+
     public static class SyncArgs extends ServiceArgs {
         @Parameter(names = "-alignmentSpace", description = "Alignment space")
         String alignmentSpace;
@@ -59,7 +61,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private final Path rootPath;
     private final LegacyDomainDao dao;
     private final JacsNotificationDao jacsNotificationDao;
-    private final String DEFAULT_OWNER = "group:flylight";
     private int existing = 0;
     private int created = 0;
     private int totalCreated = 0;
@@ -225,7 +226,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             // TODO: update
 
         }
-
 
         logger.info("Completed color depth library synchronization. Imported {} images in total.", totalCreated);
     }
