@@ -86,9 +86,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
     @Override
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
-
         logger.info("Service {} perform color depth library sync", jacsServiceData);
-        logMaintenanceEvent("ColorDepthLibrarySync", jacsServiceData.getId());
+        logCDLibSyncMaintenanceEvent(jacsServiceData.getId());
 
         ColorDepthLibrarySynchronizer.SyncArgs args = getArgs(jacsServiceData);
         runDiscovery(args);
@@ -96,9 +95,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
     }
 
-    private void logMaintenanceEvent(String maintenanceEvent, Number serviceId) {
+    private void logCDLibSyncMaintenanceEvent(Number serviceId) {
         JacsNotification jacsNotification = new JacsNotification();
-        jacsNotification.setEventName(maintenanceEvent);
+        jacsNotification.setEventName("ColorDepthLibrarySync");
         jacsNotification.addNotificationData("serviceInstance", serviceId.toString());
         jacsNotification.setNotificationStage(JacsServiceLifecycleStage.PROCESSING);
         jacsNotificationDao.save(jacsNotification);
@@ -109,7 +108,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private void runDiscovery(ColorDepthLibrarySynchronizer.SyncArgs args) {
-
         logger.info("Running discovery with parameters:");
         logger.info("  alignmentSpace={}", args.alignmentSpace);
         logger.info("  library={}", args.library);
