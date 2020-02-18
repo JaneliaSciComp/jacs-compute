@@ -17,6 +17,7 @@ import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.jacs2.user.UserManager;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
@@ -81,6 +82,7 @@ public class TestResourceDependenciesProducer {
     private SageDataService sageDataService = mock(SageDataService.class);
     private ExecutorService indexingExecutorService = mock(ExecutorService.class);
     private DbMaintainer dbMaintainer = mock(DbMaintainer.class);
+    private UserManager userManager = mock(UserManager.class);
 
     @Produces
     public Logger getLogger() {
@@ -252,5 +254,10 @@ public class TestResourceDependenciesProducer {
     @Produces
     public DbMaintainer getDbMaintainer() {
         return dbMaintainer;
+    }
+
+    @Produces
+    public UserManager getUserManager() {
+        return userManager;
     }
 }
