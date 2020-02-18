@@ -64,5 +64,7 @@ public class WorkstationMailingList {
             log.debug("Response from ListServ website:\n{}", body);
             throw new Exception("ListServ responded with invalid body");
         }
+
+        log.info("Automatically subscribed user to the mailing list: {}", email);
     }
 }

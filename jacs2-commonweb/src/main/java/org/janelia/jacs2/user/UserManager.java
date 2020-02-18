@@ -180,7 +180,6 @@ public class UserManager {
             else {
                 try {
                     workstationMailingList.subscribe(user.getEmail(), user.getFullName());
-                    log.info("Automatically subscribed user to the mailing list: {}", user.getKey());
                 }
                 catch (Exception e) {
                     log.warn("Error subscribing user to mailing list: {}", user.getKey(), e);
