@@ -1,7 +1,5 @@
 package org.janelia.jacs2.auth.impl;
 
-import java.util.Map;
-
 import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.Subject;
@@ -49,38 +47,10 @@ public class LocalAuthProvider implements AuthProvider {
     }
 
     @Override
-    public User createUser(String username) {
-        // Local authentication implementation cannot create users based on external data
-        return null;
-    }
-
-    @Override
-    public User addUser(Map<String,Object> userProperties) {
-        try {
-            if (userProperties!=null && userProperties.containsKey("name")) {
-                String username = (String) userProperties.get("name");
-                LOG.info("Attempting to Add User {} to Local MongoDB", username);
-
-                // double-check this user doesn't exist
-                Subject subject = subjectDao.findByName(username);
-                if (subject != null)
-                    return null;
-                User newUser = new User();
-                newUser.setEmail((String) userProperties.get("email"));
-                newUser.setKey("user:" + username);
-                newUser.setName(username);
-                newUser.setFullName((String) userProperties.get("fullname"));
-
-                subjectDao.save(newUser);
-
-                subject = subjectDao.findByName(username);
-                if (subject!=null)
-                    return (User)subject;
-            }
-            return null;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
+    public User generateUserInfo(String username) {
+        User user = new User();
+        user.setName(username);
+        user.setKey("user:"+username);
+        return user;
     }
 }

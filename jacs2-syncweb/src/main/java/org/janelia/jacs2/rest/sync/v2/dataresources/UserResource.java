@@ -1,50 +1,17 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.annotations.*;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.auth.impl.AuthProvider;
 import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.access.cdi.AsyncIndex;
+import org.janelia.jacs2.user.UserManager;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
-import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.domain.Preference;
 import org.janelia.model.domain.dto.DomainQuery;
-import org.janelia.model.domain.workspace.Workspace;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
@@ -53,6 +20,19 @@ import org.janelia.model.security.dto.AuthenticationRequest;
 import org.janelia.model.security.util.SubjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.*;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -63,7 +43,7 @@ import org.slf4j.LoggerFactory;
         )
 )
 @Api(
-        value = "Janelia Workstation Domain Data",
+        value = "Janelia Workstation User Management",
         authorizations = {
                 @Authorization("user"),
                 @Authorization("runAs")
@@ -84,10 +64,71 @@ public class UserResource {
     @Inject
     private PasswordProvider pwProvider;
     @Inject
-    private AuthProvider authProvider;
-    @AsyncIndex
-    @Inject
-    private WorkspaceNodeDao workspaceNodeDao;
+    private UserManager userManager;
+
+    @ApiOperation(value = "Gets a user by their subject key",
+            notes = ""
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully attempted user retrieval", response = User.class),
+            @ApiResponse(code = 500, message = "Internal Server Error trying to get or create user")
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user")
+    public Response getUser(@QueryParam("subjectKey") String subjectKey) {
+        LOG.trace("Start getUser({})", subjectKey);
+        if (StringUtils.isBlank(subjectKey)) {
+            LOG.error("Invalid subject key ({}) provided to getUser", subjectKey);
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Invalid subject key " + subjectKey))
+                    .build();
+        }
+        try {
+            Subject existingUser = subjectDao.findByNameOrKey(subjectKey);
+            if (existingUser == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            } else {
+                return Response.ok(existingUser).build();
+            }
+        } catch (Exception e) {
+            LOG.error("Error trying to get user {}", subjectKey, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error getting user " + subjectKey))
+                    .build();
+        } finally {
+            LOG.trace("Finished getOrCreateUser({})", subjectKey);
+        }
+    }
+
+    @ApiOperation(value = "Creates a User",
+            notes = "The users's name must be populated."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully created new user", response = User.class),
+            @ApiResponse(code = 500, message = "Internal Server Error trying to create new user")
+    })
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/user")
+    public Response createUser(@ApiParam User user) {
+        String userName = user.getName();
+        LOG.trace("Start createUser({})", user.getName());
+        try {
+            User newUser = userManager.createUser(user);
+            return Response.ok(newUser).build();
+        }
+        catch (Exception e) {
+            LOG.error("Error trying to create new user {}", userName, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error trying to create new user " + userName))
+                    .build();
+        }
+        finally {
+            LOG.trace("Finished createUser({})", userName);
+        }
+    }
 
     @ApiOperation(value = "Changes a user's password")
     @ApiResponses(value = {
@@ -124,6 +165,9 @@ public class UserResource {
         }
     }
 
+    /**
+     * @deprecated use getUser/createUser instead of this.
+     */
     @ApiOperation(value = "Gets a user, creating the user if necessary",
             notes = "The authenticated user must be the same as the user being retrieved"
     )
@@ -134,6 +178,7 @@ public class UserResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/user/getorcreate")
+    @Deprecated
     public Response getOrCreateUser(@QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getOrCreateUser({})", subjectKey);
         if (StringUtils.isBlank(subjectKey)) {
@@ -146,7 +191,9 @@ public class UserResource {
             String username = SubjectUtils.getSubjectName(subjectKey);
             Subject existingUser = subjectDao.findByNameOrKey(subjectKey);
             if (existingUser == null) {
-                User user = authProvider.createUser(username);
+                User user = new User();
+                user.setName(username);
+                user = userManager.createUser(user);
                 if (user!=null) {
                     return Response.ok(user).build();
                 }
@@ -192,22 +239,10 @@ public class UserResource {
             }
 
             User dbUser = (User) subjectDao.findByNameOrKey(username);
-            // create new user
             if (dbUser == null) {
-                User blankUser = authProvider.addUser(userProperties);
-
-                if (blankUser != null) {
-                    LOG.info("Created new user({}, {})", blankUser.getId(), blankUser.getKey());
-                    // create home folder for user
-                    legacyDomainDao.createWorkspace(blankUser.getKey());
-
-                    // assign
-                    return Response.ok(blankUser).build();
-                }
-                else {
-                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-                }
-            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            else {
                 // existing user
                 boolean emailR = subjectDao.updateUserProperty(dbUser, "email", (String) userProperties.get("email"));
                 boolean fullNameR = subjectDao.updateUserProperty(dbUser, "fullName", (String) userProperties.get("fullname"));
@@ -275,9 +310,8 @@ public class UserResource {
         }
     }
 
-
     @ApiOperation(value = "Creates a Group",
-            notes = "values given are the group's relevant properties"
+            notes = "The group's name and fullName attributes must be populated."
     )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully created new group", response = Group.class),
@@ -288,23 +322,20 @@ public class UserResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/group")
     public Response createGroup(@ApiParam Group group) {
-        String groupKey = group.getKey();
-        LOG.trace("Start CreateGroup({})", groupKey);
+        String groupName = group.getName();
+        LOG.trace("Start CreateGroup({})", group.getName());
         try {
-            Group newGroup = legacyDomainDao.createGroup(group.getName(), group.getFullName());
-            if (newGroup!=null)
-                return Response.ok(newGroup).build();
-            else
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                        .entity(new ErrorResponse("Error trying to create new group " + groupKey))
-                        .build();
-        } catch (Exception e) {
-            LOG.error("Error trying to create new group {}", groupKey, e);
+            Group newGroup = userManager.createGroup(group);
+            return Response.ok(newGroup).build();
+        }
+        catch (Exception e) {
+            LOG.error("Error trying to create new group {}", groupName, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new ErrorResponse("Error trying to create new group " + groupKey))
+                    .entity(new ErrorResponse("Error trying to create new group " + groupName))
                     .build();
-        } finally {
-            LOG.trace("Finished createGroup({})", groupKey);
+        }
+        finally {
+            LOG.trace("Finished createGroup({})", groupName);
         }
     }
 
@@ -500,6 +531,9 @@ public class UserResource {
         }
     }
 
+    /**
+     * TODO: move this to DatasetResource
+     */
     @ApiOperation(value = "Get a list of data sets a given group has access to read")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully got list of datasets", response = HashMap.class,

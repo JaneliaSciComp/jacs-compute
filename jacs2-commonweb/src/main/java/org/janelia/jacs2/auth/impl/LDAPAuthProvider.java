@@ -1,6 +1,5 @@
 package org.janelia.jacs2.auth.impl;
 
-import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
@@ -14,23 +13,13 @@ import org.apache.directory.api.ldap.model.message.BindResponse;
 import org.apache.directory.api.ldap.model.message.ResultCodeEnum;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
-import org.apache.directory.ldap.client.api.DefaultPoolableLdapConnectionFactory;
-import org.apache.directory.ldap.client.api.LdapConnection;
-import org.apache.directory.ldap.client.api.LdapConnectionConfig;
-import org.apache.directory.ldap.client.api.LdapConnectionPool;
-import org.apache.directory.ldap.client.api.NoVerificationTrustManager;
-import org.janelia.model.access.domain.dao.SubjectDao;
-import org.janelia.model.security.GroupRole;
-import org.janelia.model.security.Subject;
+import org.apache.directory.ldap.client.api.*;
 import org.janelia.model.security.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
-
 
 /**
  * LDAP-based authentication implementation.
@@ -42,38 +31,51 @@ public class LDAPAuthProvider implements AuthProvider {
     private static final Logger LOG = LoggerFactory.getLogger(LDAPAuthProvider.class);
     private static final String USERNAME_PLACEHOLDER = "{{username}}";
 
-    private SubjectDao subjectDao;
     private final Dn baseDN;
-    private final LdapConnectionPool pool;
     private final String searchFilter;
+    private final LdapConnectionPool pool;
 
-    LDAPAuthProvider(SubjectDao subjectDao, String url, String searchBase, String searchFilter,
-                     String bindDN, String bindCredentials, Integer timeout) {
-        this.subjectDao = subjectDao;
-        LdapConnectionConfig config = new LdapConnectionConfig();
+    private final String firstNameAttr;
+    private final String lastNameAttr;
+    private final String emailAttr;
+    private final String dnAttr;
+
+    LDAPAuthProvider(String url, String searchBase, String searchFilter,
+                     String bindDN, String bindCredentials, Integer timeout,
+                     String firstNameAttr, String lastNameAttr, String emailAttr, String dnAttr) {
+
+        this.searchFilter = searchFilter;
+        this.firstNameAttr = firstNameAttr;
+        this.lastNameAttr = lastNameAttr;
+        this.emailAttr = emailAttr;
+        this.dnAttr = dnAttr;
+
         try {
             this.baseDN = new Dn(searchBase);
-            this.searchFilter = searchFilter;
-        } catch (LdapInvalidDnException e) {
+        }
+        catch (LdapInvalidDnException e) {
             throw new IllegalArgumentException(e);
         }
+
         URI ldapURI;
-        if (StringUtils.startsWithIgnoreCase(url, "ldap://") || StringUtils.startsWithIgnoreCase(url, "ldaps://")) {
+        if (StringUtils.startsWithIgnoreCase(url, "ldap://")
+                || StringUtils.startsWithIgnoreCase(url, "ldaps://")) {
             ldapURI = URI.create(url);
-        } else {
+        }
+        else {
             ldapURI = URI.create(StringUtils.prependIfMissing(url,"ldap://"));
         }
-        String server;
+
+        String server = ldapURI.getHost();
         int ldapPort = ldapURI.getPort();
         String scheme = ldapURI.getScheme();
         int port;
         boolean useSsl;
         if (StringUtils.equalsIgnoreCase(scheme, "ldaps")) {
-            server = ldapURI.getHost();
-            port = ldapPort <= 0 ? 636 : ldapPort; // use default ldpas port
+            port = ldapPort <= 0 ? 636 : ldapPort; // use default ldaps port
             useSsl = true;
-        } else {
-            server = ldapURI.getHost();
+        }
+        else {
             port = ldapPort <= 0 ? 389 : ldapPort; // use default ldap port
             useSsl = false;
         }
@@ -86,6 +88,7 @@ public class LDAPAuthProvider implements AuthProvider {
         LOG.info("  Search base: {}", searchBase);
         LOG.info("  Search filter: {}", searchFilter);
 
+        LdapConnectionConfig config = new LdapConnectionConfig();
         config.setLdapHost(server);
         config.setLdapPort(port);
         if (useSsl) {
@@ -101,6 +104,7 @@ public class LDAPAuthProvider implements AuthProvider {
             config.setName(bindDN);
             config.setCredentials(bindCredentials);
         }
+
         this.pool = new LdapConnectionPool(new DefaultPoolableLdapConnectionFactory(config));
     }
 
@@ -119,17 +123,18 @@ public class LDAPAuthProvider implements AuthProvider {
                 LOG.info("User failed authentication against LDAP: {}", username);
                 return null;
             }
-            // Ensure user exists in Mongo
-            return getPersistedUser(ldapUser.getUserInfo());
-        } catch (LdapException e) {
+            return ldapUser.getUserInfo();
+        }
+        catch (LdapException e) {
             throw new RuntimeException(e);
-        } finally {
+        }
+        finally {
             closeLdapConnection(connection);
         }
     }
 
     @Override
-    public User createUser(String username) {
+    public User generateUserInfo(String username) {
         LdapConnection connection = openLdapConnection();
         try {
             // DN resolution
@@ -138,22 +143,14 @@ public class LDAPAuthProvider implements AuthProvider {
                 LOG.info("User not found in LDAP: {}", username);
                 return null;
             }
-            // Ensure user exists in Mongo
-            return getPersistedUser(ldapUser.getUserInfo());
-        } catch (LdapException e) {
+            return ldapUser.getUserInfo();
+        }
+        catch (LdapException e) {
             throw new RuntimeException(e);
-        } finally {
+        }
+        finally {
             closeLdapConnection(connection);
         }
-    }
-
-    @Override
-    public User addUser(Map<String, Object> userProperties) {
-        // for now this is just a passthrough... we'll re-examine whether the logic needs to be different
-        // in the future
-        if (userProperties != null && userProperties.containsKey("name"))
-            return createUser((String) userProperties.get("name"));
-        return null;
     }
 
     /**
@@ -176,18 +173,19 @@ public class LDAPAuthProvider implements AuthProvider {
                 }
                 Entry entry = cursor.get();
                 User newUser = new User();
-                newUser.setEmail(getLdapStringAttribute(entry, "mail"));
-                newUser.setFullName(entry.get("givenName").getString() + " " + entry.get("sn").getString());
-                newUser.setUserGroupRole(Subject.USERS_KEY, GroupRole.Reader);
-                newUser.setKey("user:" + username);
                 newUser.setName(username);
-                ldapUser = new LdapUser(getLdapStringAttribute(entry, "distinguishedname"), newUser);
+                newUser.setKey("user:" + username);
+                newUser.setEmail(getOptionalLdapStringAttribute(entry, emailAttr));
+                newUser.setFullName(entry.get(firstNameAttr).getString() + " " + entry.get(lastNameAttr).getString());
+                ldapUser = new LdapUser(getLdapStringAttribute(entry, dnAttr), newUser);
             }
 
             return ldapUser;
-        } catch (CursorException e) {
+        }
+        catch (CursorException e) {
             throw new LdapException(e);
-        } finally {
+        }
+        finally {
             if (cursor != null) closeLdapTraverseCursor(cursor);
         }
     }
@@ -197,12 +195,29 @@ public class LDAPAuthProvider implements AuthProvider {
         if (attr != null) {
             try {
                 return attr.getString();
-            } catch (LdapInvalidAttributeValueException e) {
+            }
+            catch (LdapInvalidAttributeValueException e) {
+                throw new RuntimeException("Invalid value for attribute "+attributeName+" in "+ldapEntry, e);
+            }
+        }
+        else {
+            throw new RuntimeException("Attribute "+attributeName+" not found in "+ ldapEntry);
+        }
+    }
+
+    private String getOptionalLdapStringAttribute(Entry ldapEntry, String attributeName) {
+        Attribute attr = ldapEntry.get(attributeName);
+        if (attr != null) {
+            try {
+                return attr.getString();
+            }
+            catch (LdapInvalidAttributeValueException e) {
                 LOG.warn("Invalid value for attribute {} in {}", attributeName, ldapEntry, e);
                 return null;
             }
-        } else {
-            LOG.info("Attribute {} not found in {}", attributeName, ldapEntry);
+        }
+        else {
+            LOG.warn("Attribute {} not found in {}", attributeName, ldapEntry);
             return null;
         }
     }
@@ -243,28 +258,11 @@ public class LDAPAuthProvider implements AuthProvider {
         return connection.isAuthenticated();
     }
 
-    /**
-     * Takes unpersisted user info and checks to see if the same user already exists in the database. If so, the
-     * persisted user is returned. Otherwise, the provided userInfo is persisted into the database, and the
-     * persisted record is returned.
-     *
-     * @param userInfo unpersisted user populated with user's information
-     * @return persisted User object
-     */
-    private User getPersistedUser(User userInfo) {
-        Subject existingUser = subjectDao.findByKey(userInfo.getKey());
-        if (existingUser != null) {
-            return (User) existingUser;
-        }
-        subjectDao.save(userInfo);
-        LOG.info("Created new user based on LDAP information: {}", userInfo);
-        return userInfo;
-    }
-
     private LdapConnection openLdapConnection() {
         try {
             return pool.getConnection();
-        } catch (LdapException e) {
+        }
+        catch (LdapException e) {
             LOG.error("Error opening LDAP connection", e);
             throw new IllegalStateException(e);
         }
@@ -273,12 +271,14 @@ public class LDAPAuthProvider implements AuthProvider {
     private void closeLdapConnection(LdapConnection conn) {
         try {
             conn.unBind();
-        } catch (LdapException e) {
+        }
+        catch (LdapException e) {
             LOG.error("Error unbinding the LDAP connection {}", conn, e);
         }
         try {
             pool.releaseConnection(conn);
-        } catch (LdapException e) {
+        }
+        catch (LdapException e) {
             LOG.error("Problems releasing LDAP connection {}", conn, e);
         }
     }
@@ -286,7 +286,8 @@ public class LDAPAuthProvider implements AuthProvider {
     private void closeLdapTraverseCursor(EntryCursor cursor) {
         try {
             cursor.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             LOG.error("Error closing LDAP cursor", e);
         }
     }

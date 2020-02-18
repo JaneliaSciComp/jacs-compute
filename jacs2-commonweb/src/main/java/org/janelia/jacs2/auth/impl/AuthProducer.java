@@ -32,12 +32,18 @@ public class AuthProducer {
                                 @PropertyValue(name = "LDAP.SearchFilter") String ldapSearchFilter,
                                 @PropertyValue(name = "LDAP.BindDN") String ldapBindDN,
                                 @PropertyValue(name = "LDAP.BindCredentials") String ldapBindCredentials,
-                                @PropertyValue(name = "LDAP.TimeOut") Integer ldapTimeout) {
+                                @PropertyValue(name = "LDAP.TimeOut") Integer ldapTimeout,
+                                @PropertyValue(name = "LDAP.AttributeFirstName") String firstNameAttr,
+                                @PropertyValue(name = "LDAP.AttributeLastName") String lastNameAttr,
+                                @PropertyValue(name = "LDAP.AttributeEmail") String emailAttr,
+                                @PropertyValue(name = "LDAP.AttributeDistinguishedName") String dnAttr
+                                ) {
         if (StringUtils.isAnyEmpty(ldapUrl, ldapSearchBase, ldapSearchFilter)) {
             LOG.info("No LDAP configuration found. Defaulting to local auth implementation.");
             return new LocalAuthProvider(subjectDao, pwProvider);
         }
-        return new LDAPAuthProvider(subjectDao, ldapUrl, ldapSearchBase,
-                ldapSearchFilter, ldapBindDN, ldapBindCredentials, ldapTimeout);
+        return new LDAPAuthProvider(ldapUrl, ldapSearchBase,
+                ldapSearchFilter, ldapBindDN, ldapBindCredentials, ldapTimeout,
+                firstNameAttr, lastNameAttr, emailAttr, dnAttr);
     }
 }
