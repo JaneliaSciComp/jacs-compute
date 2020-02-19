@@ -32,11 +32,15 @@ jobs:
 
       - run: ./gradlew --no-daemon installDist test
 
-      - store_artifacts:
-          path: build/reports/tests/test
-          destination: test-results
+      - store_test_results:
+          path: jacs2-services/build/reports/tests/test
 
       - store_test_results:
-          path: test-results
+          path: jacs2-commonweb/build/reports/tests/test
 
-      
+      - store_test_results:
+          path: jacs2-asyncweb/build/reports/tests/test
+
+      - store_test_results:
+          path: jacs2-syncweb/build/reports/tests/test
+
