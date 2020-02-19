@@ -33,7 +33,7 @@ jobs:
       - run: ./gradlew --no-daemon installDist test
 
       - store_test_results:
-          paths: 
+          path:
             - jacs2-services/build/reports/tests/test
             - jacs2-commonweb/build/reports/tests/test
             - jacs2-asyncweb/build/reports/tests/test
