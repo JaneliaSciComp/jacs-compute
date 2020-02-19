@@ -18,6 +18,7 @@ import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.jacs2.user.UserManager;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
@@ -112,6 +113,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getSampleDataService()).to(SampleDataService.class);
         bind(dependenciesProducer.getSageDataService()).to(SageDataService.class);
         bind(dependenciesProducer.getIndexingExecutorService()).to(ExecutorService.class).qualifiedBy(asyncIndexAnnotation);
+        bind(dependenciesProducer.getUserManager()).to(UserManager.class);
         bind(dependenciesProducer.getDbMaintainer()).to(DbMaintainer.class);
         bind(PropertyResolver.class)
                 .to(new TypeLiteral<InjectionResolver<PropertyValue>>() {})
