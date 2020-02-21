@@ -26,6 +26,8 @@ import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.OntologyDao;
+import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
+import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.access.domain.dao.SummaryDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
@@ -115,6 +117,8 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getIndexingExecutorService()).to(ExecutorService.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getUserManager()).to(UserManager.class);
         bind(dependenciesProducer.getDbMaintainer()).to(DbMaintainer.class);
+        bind(dependenciesProducer.getSampleDao()).to(SampleDao.class);
+        bind(dependenciesProducer.getReferenceDao()).to(ReferenceDomainObjectReadDao.class);
         bind(PropertyResolver.class)
                 .to(new TypeLiteral<InjectionResolver<PropertyValue>>() {})
                 .in(Singleton.class);

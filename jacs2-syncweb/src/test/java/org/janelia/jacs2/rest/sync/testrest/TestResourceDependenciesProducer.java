@@ -25,6 +25,8 @@ import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.OntologyDao;
+import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
+import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.access.domain.dao.SummaryDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
@@ -44,6 +46,10 @@ import com.google.common.collect.ImmutableMap;
 
 import static org.mockito.Mockito.mock;
 
+/**
+ * This class is responsible for creating mock objects to be injected  in the test resources. However jersey injection
+ * mechanism also requires the binding for the class to the object generated here to be defined in {@link TestResourceBinder}.
+ */
 public class TestResourceDependenciesProducer {
 
     private Logger logger = LoggerFactory.getLogger(TestResourceDependenciesProducer.class);
@@ -80,6 +86,8 @@ public class TestResourceDependenciesProducer {
     private IndexBuilderService indexBuilderService = mock(IndexBuilderService.class);
     private SampleDataService sampleDataService = mock(SampleDataService.class);
     private SageDataService sageDataService = mock(SageDataService.class);
+    private SampleDao sampleDao = mock(SampleDao.class);
+    private ReferenceDomainObjectReadDao referenceDao = mock(ReferenceDomainObjectReadDao.class);
     private ExecutorService indexingExecutorService = mock(ExecutorService.class);
     private DbMaintainer dbMaintainer = mock(DbMaintainer.class);
     private UserManager userManager = mock(UserManager.class);
@@ -259,5 +267,15 @@ public class TestResourceDependenciesProducer {
     @Produces
     public UserManager getUserManager() {
         return userManager;
+    }
+
+    @Produces
+    public SampleDao getSampleDao() {
+        return sampleDao;
+    }
+
+    @Produces
+    public ReferenceDomainObjectReadDao getReferenceDao() {
+        return referenceDao;
     }
 }

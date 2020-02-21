@@ -134,41 +134,6 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public User createUser(String name, String fullName, String email) throws Exception {
-        return dao.createUser(name, fullName, email);
-    }
-
-    @Override
-    public Group createGroup(String name, String fullName) throws Exception {
-        return dao.createGroup(name, fullName);
-    }
-
-    @Override
-    public void remove(Subject subject) throws Exception {
-        dao.remove(subject);
-    }
-
-    @Override
-    public void removeUser(String userNameOrKey) throws Exception {
-        dao.removeUser(userNameOrKey);
-    }
-
-    @Override
-    public void removeGroup(String groupNameOrKey) throws Exception {
-        dao.removeGroup(groupNameOrKey);
-    }
-
-    @Override
-    public void addUserToGroup(String userNameOrKey, String groupNameOrKey, GroupRole role) throws Exception {
-        dao.addUserToGroup(userNameOrKey, groupNameOrKey, role);
-    }
-
-    @Override
-    public void removeUserFromGroup(String userNameOrKey, String groupNameOrKey) throws Exception {
-        dao.removeUserFromGroup(userNameOrKey, groupNameOrKey);
-    }
-
-    @Override
     public void createWorkspace(String ownerKey) throws Exception {
         dao.createWorkspace(ownerKey);
     }

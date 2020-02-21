@@ -3,6 +3,7 @@ package org.janelia.jacs2.rest.sync.v2.dataresources;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,6 +39,8 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
+import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
+import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImageWithSampleBuilder;
@@ -69,7 +72,9 @@ public class ColorDepthResource {
     @Inject
     private ColorDepthImageDao colorDepthImageDao;
     @Inject
-    private LegacyDomainDao legacyDomainDao;
+    private SampleDao sampleDao;
+    @Inject
+    private ReferenceDomainObjectReadDao referenceDao;
 
     @ApiOperation(value = "Gets all color depth mips that match the given parameters")
     @ApiResponses(value = {
@@ -113,19 +118,22 @@ public class ColorDepthResource {
                                                  @ApiParam @QueryParam("alignmentSpace") String alignmentSpace,
                                                  @ApiParam @QueryParam("libraryName") List<String> libraryNames,
                                                  @ApiParam @QueryParam("name") List<String> names,
-                                                 @ApiParam @QueryParam("filepath") List<String> filepaths) {
-        LOG.trace("Start countColorDepthMipsByLibrary({}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths);
+                                                 @ApiParam @QueryParam("filepath") List<String> filepaths,
+                                                 @ApiParam @QueryParam("dataset") List<String> datasets) {
+        LOG.trace("Start countColorDepthMipsByLibrary({}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, datasets);
         try {
+            List<String> sampleRefs = retrieveSamplesByDatasets(extractMultiValueParams(datasets)).stream().map(s -> Reference.createFor(s).toString()).collect(Collectors.toList());
             long colorDepthMIPsCount = colorDepthImageDao.countColorDepthMIPs(ownerKey, alignmentSpace,
                     extractMultiValueParams(libraryNames),
                     extractMultiValueParams(names),
-                    extractMultiValueParams(filepaths)
+                    extractMultiValueParams(filepaths),
+                    sampleRefs
             );
             return Response
                     .ok(colorDepthMIPsCount)
                     .build();
         } finally {
-            LOG.trace("Finished countColorDepthMipsByLibrary({}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths);
+            LOG.trace("Finished countColorDepthMipsByLibrary({}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, datasets);
         }
     }
 
@@ -143,16 +151,19 @@ public class ColorDepthResource {
                                               @ApiParam @QueryParam("libraryName") List<String> libraryNames,
                                               @ApiParam @QueryParam("name") List<String> names,
                                               @ApiParam @QueryParam("filepath") List<String> filepaths,
+                                              @ApiParam @QueryParam("dataset") List<String> datasets,
                                               @ApiParam @QueryParam("offset") String offsetParam,
                                               @ApiParam @QueryParam("length") String lengthParam) {
-        LOG.trace("Start getColorDepthMipsByLibrary({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
+        LOG.trace("Start getColorDepthMipsByLibrary({}, {}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, datasets, offsetParam, lengthParam);
         try {
             int offset = parseIntegerParam("offset", offsetParam, 0);
             int length = parseIntegerParam("length", lengthParam, -1);
+            List<String> sampleRefs = retrieveSamplesByDatasets(extractMultiValueParams(datasets)).stream().map(s -> Reference.createFor(s).toString()).collect(Collectors.toList());
             Stream<ColorDepthImage> cdmStream = colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace,
                     extractMultiValueParams(libraryNames),
                     extractMultiValueParams(names),
                     extractMultiValueParams(filepaths),
+                    sampleRefs,
                     offset,
                     length
             );
@@ -160,7 +171,7 @@ public class ColorDepthResource {
                     .ok(new GenericEntity<List<ColorDepthImage>>(cdmStream.collect(Collectors.toList())){})
                     .build();
         } finally {
-            LOG.trace("Finished getColorDepthMipsByLibrary({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
+            LOG.trace("Finished getColorDepthMipsByLibrary({}, {}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, datasets, offsetParam, lengthParam);
         }
     }
 
@@ -178,32 +189,48 @@ public class ColorDepthResource {
                                                         @ApiParam @QueryParam("libraryName") List<String> libraryNames,
                                                         @ApiParam @QueryParam("name") List<String> names,
                                                         @ApiParam @QueryParam("filepath") List<String> filepaths,
+                                                        @ApiParam @QueryParam("dataset") List<String> datasetParam,
                                                         @ApiParam @QueryParam("offset") String offsetParam,
                                                         @ApiParam @QueryParam("length") String lengthParam) {
         LOG.trace("Start getMatchingColorDepthMipsWithSample({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
         try {
             int offset = parseIntegerParam("offset", offsetParam, 0);
             int length = parseIntegerParam("length", lengthParam, -1);
+            Map<Reference, Sample> samplesIndexedByRef = retrieveSamplesByDatasets(extractMultiValueParams(datasetParam)).stream().collect(Collectors.toMap(Reference::createFor, s -> s));
             List<ColorDepthImage> cdmList = colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace,
                     extractMultiValueParams(libraryNames),
                     extractMultiValueParams(names),
                     extractMultiValueParams(filepaths),
+                    samplesIndexedByRef.keySet().stream().map(Reference::toString).collect(Collectors.toSet()),
                     offset,
                     length
             ).collect(Collectors.toList());
 
-            List<Reference> sampleRefs =  cdmList.stream().map(cdmip -> cdmip.getSampleRef()).filter(sref -> sref != null).distinct().collect(Collectors.toList());
+            if (samplesIndexedByRef.isEmpty()) {
+                return Response
+                        .ok(new GenericEntity<List<ColorDepthImage>>(updateCDMIPSample(cdmList, referenceDao.findByReferences(cdmList.stream().map(ColorDepthImage::getSampleRef).filter(Objects::nonNull).distinct().collect(Collectors.toList()))
+                                .stream()
+                                .map(d -> (Sample) d)
+                                .collect(Collectors.toMap(Reference::createFor, s -> s)))){})
+                        .build()
+                        ;
 
-            Map<Reference, Sample> samples = legacyDomainDao.getDomainObjectsAs(sampleRefs, Sample.class).stream().collect(Collectors.toMap(s -> Reference.createFor(s), s -> s));
-
-            return Response
-                    .ok(new GenericEntity<List<ColorDepthImage>>(cdmList.stream()
-                            .map(cdmip -> new ColorDepthImageWithSampleBuilder(cdmip).withSample(samples.get(cdmip.getSampleRef())).build())
-                            .collect(Collectors.toList())){})
-                    .build();
+            } else {
+                return Response
+                        .ok(new GenericEntity<List<ColorDepthImage>>(updateCDMIPSample(cdmList, samplesIndexedByRef)){})
+                        .build()
+                        ;
+            }
         } finally {
             LOG.trace("Finished getMatchingColorDepthMipsWithSample({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
         }
+    }
+
+    private List<ColorDepthImage> updateCDMIPSample(List<ColorDepthImage> cdmList, Map<Reference, Sample> samplesIndexedByRef) {
+        return cdmList.stream()
+                .map(cdmip -> new ColorDepthImageWithSampleBuilder(cdmip).withSample(samplesIndexedByRef.get(cdmip.getSampleRef())).build())
+                .collect(Collectors.toList())
+                ;
     }
 
     @ApiOperation(value = "Update public URLs for the color depth image")
@@ -259,8 +286,15 @@ public class ColorDepthResource {
         try {
             return StringUtils.isNotBlank(paramValue) ? Integer.parseInt(paramValue) : defaultValue;
         } catch (NumberFormatException e) {
-
             throw new IllegalArgumentException("Invalid numeric value " + paramName + "->" + paramValue, e);
+        }
+    }
+
+    private List<Sample> retrieveSamplesByDatasets(List<String> datasets) {
+        if (CollectionUtils.isEmpty(datasets)) {
+            return Collections.emptyList();
+        } else {
+            return sampleDao.findMatchingSample(datasets, null, 0, -1);
         }
     }
 }

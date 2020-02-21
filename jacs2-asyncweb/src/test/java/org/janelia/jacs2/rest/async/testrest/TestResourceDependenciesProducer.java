@@ -21,6 +21,10 @@ import com.google.common.collect.ImmutableMap;
 
 import static org.mockito.Mockito.mock;
 
+/**
+ * This class is responsible for creating mock objects to be injected  in the test resources. However jersey injection
+ * mechanism also requires the binding for the class to the object generated here to be defined in {@link TestResourceBinder}.
+ */
 public class TestResourceDependenciesProducer {
 
     private Logger logger = LoggerFactory.getLogger(TestResourceDependenciesProducer.class);

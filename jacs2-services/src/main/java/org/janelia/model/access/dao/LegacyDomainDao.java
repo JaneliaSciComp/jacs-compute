@@ -110,20 +110,6 @@ public interface LegacyDomainDao {
      */
     Group getGroupByNameOrKey(String subjectNameOrKey);
 
-    User createUser(String name, String fullName, String email) throws Exception;
-
-    Group createGroup(String name, String fullName) throws Exception;
-
-    void remove(Subject subject) throws Exception;
-
-    void removeUser(String userNameOrKey) throws Exception;
-
-    void removeGroup(String groupNameOrKey) throws Exception;
-
-    void addUserToGroup(String userNameOrKey, String groupNameOrKey, GroupRole role) throws Exception;
-
-    void removeUserFromGroup(String userNameOrKey, String groupNameOrKey) throws Exception;
-
     void createWorkspace(String ownerKey) throws Exception;
 
     List<Workspace> getWorkspaces(String subjectKey);
