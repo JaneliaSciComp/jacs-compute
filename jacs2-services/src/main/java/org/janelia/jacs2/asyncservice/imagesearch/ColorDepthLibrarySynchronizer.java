@@ -118,8 +118,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             libraryMap.put(library.getIdentifier(), library);
         }
 
-        Set<String> updatedLibraries = new HashSet<>();
-
         // Walk the relevant alignment directories
         walkChildDirs(rootPath.toFile(), alignmentDir -> {
             if (StringUtils.isNotBlank(args.alignmentSpace) && !alignmentDir.getName().equals(args.alignmentSpace)) return;
@@ -205,7 +203,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     try {
                         library = dao.save(library.getOwnerKey(), library);
                         libraryMap.put(libraryIdentifier, library);
-                        updatedLibraries.add(libraryIdentifier);
                         logger.debug("  Saved color depth library {} with count {}", libraryIdentifier, total);
                     }
                     catch (Exception e) {
@@ -215,14 +212,13 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             });
         });
 
-        // Update counts for the constructed libraries
-        for (ColorDepthLibrary library : libraryMap.values()) {
-            if (updatedLibraries.contains(library.getIdentifier())) continue;
-
-            Map<String, Integer> colorDepthCounts = new HashMap<>();
-
-            // TODO: update
-
+        // It's necessary to recalculate all the counts here, because some color depth images may be part of constructed
+        // libraries which are not represented explicitly on disk.
+        try {
+            dao.updateColorDepthCounts(dao.getColorDepthCounts());
+        }
+        catch (Exception e) {
+           logger.error("Failed to update color depth counts", e);
         }
 
         logger.info("Completed color depth library synchronization. Imported {} images in total.", totalCreated);

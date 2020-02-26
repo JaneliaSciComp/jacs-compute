@@ -788,6 +788,16 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
+    public Map<String,Map<String,Integer>> getColorDepthCounts() {
+        return dao.getColorDepthCounts();
+    }
+
+    @Override
+    public void updateColorDepthCounts(Map<String,Map<String,Integer>> counts) throws Exception {
+        dao.updateColorDepthCounts(counts);
+    }
+
+    @Override
     public <T extends DomainObject> List<T> fullTextSearch(String subjectKey, Class<T> domainClass, String text) {
         return dao.fullTextSearch(subjectKey, domainClass, text);
     }

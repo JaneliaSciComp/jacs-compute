@@ -437,6 +437,10 @@ public interface LegacyDomainDao {
 
     void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result);
 
+    public Map<String,Map<String,Integer>> getColorDepthCounts();
+
+    public void updateColorDepthCounts(Map<String,Map<String,Integer>> counts) throws Exception;
+
     <T extends DomainObject> List<T> fullTextSearch(String subjectKey, Class<T> domainClass, String text);
 
     void ensureCollectionIndex(String collectionName, List<DaoIndex> indexes);
