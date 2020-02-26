@@ -9,7 +9,7 @@ import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.domain.sample.DataSet;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.jacs2.dao.DatasetDao;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.janelia.model.jacs2.DomainModelUtils;
 
 import javax.inject.Inject;

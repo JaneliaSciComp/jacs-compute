@@ -21,7 +21,7 @@ import org.bson.conversions.Bson;
 import org.janelia.model.access.dao.AbstractDao;
 import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.ReadWriteDao;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.DomainModelUtils;

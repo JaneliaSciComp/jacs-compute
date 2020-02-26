@@ -14,7 +14,7 @@ import org.janelia.model.access.dao.mongo.MongoDaoHelper;
 import org.janelia.model.jacs2.dao.DomainObjectDao;
 import org.janelia.model.jacs2.domain.DomainObject;
 import org.janelia.model.jacs2.domain.Subject;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.jacs2.page.PageRequest;

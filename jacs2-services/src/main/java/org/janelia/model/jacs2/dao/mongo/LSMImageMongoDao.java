@@ -11,7 +11,7 @@ import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.domain.sample.LSMImage;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.jacs2.dao.LSMImageDao;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.janelia.model.jacs2.DomainModelUtils;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;

@@ -20,7 +20,7 @@ import org.bson.conversions.Bson;
 import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.access.dao.JacsScheduledServiceDataDao;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.janelia.model.service.JacsScheduledServiceData;
 
 /**

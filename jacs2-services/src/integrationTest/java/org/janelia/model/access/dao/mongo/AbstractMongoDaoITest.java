@@ -1,17 +1,14 @@
 package org.janelia.model.access.dao.mongo;
 
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
-import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacs2.AbstractITest;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.model.access.dao.ReadWriteDao;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoDBHelper;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.RegistryHelper;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.BeforeClass;
 

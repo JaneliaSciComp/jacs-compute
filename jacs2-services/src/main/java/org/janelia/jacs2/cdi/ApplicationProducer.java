@@ -14,7 +14,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.model.access.cdi.DaoObjectMapper;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 @ApplicationScoped
 public class ApplicationProducer {

@@ -15,7 +15,7 @@ import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.model.jacs2.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.jacs2.dao.SampleDao;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.DomainModelUtils;
 import org.janelia.model.jacs2.page.PageRequest;

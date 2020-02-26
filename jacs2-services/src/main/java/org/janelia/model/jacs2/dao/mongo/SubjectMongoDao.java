@@ -8,7 +8,7 @@ import org.janelia.model.access.dao.mongo.AbstractMongoDao;
 import org.janelia.model.access.dao.mongo.MongoDaoHelper;
 import org.janelia.model.jacs2.dao.SubjectDao;
 import org.janelia.model.jacs2.domain.Subject;
-import org.janelia.model.access.dao.mongo.utils.TimebasedIdentifierGenerator;
+import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 import java.util.List;
