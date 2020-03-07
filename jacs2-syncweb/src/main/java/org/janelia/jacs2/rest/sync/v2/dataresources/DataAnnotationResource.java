@@ -74,7 +74,9 @@ public class DataAnnotationResource {
     public Annotation createAnnotation(@ApiParam DomainQuery query) {
         LOG.trace("Start createAnnotation({})", query);
         try {
-            return annotationDao.saveBySubjectKey(query.getDomainObjectAs(Annotation.class), query.getSubjectKey());
+            Annotation annotation = annotationDao.saveBySubjectKey(query.getDomainObjectAs(Annotation.class), query.getSubjectKey());
+            LOG.info("{} created annotation {} on {}: {}={}", query.getSubjectKey(), annotation.getId(), annotation.getTarget(), annotation.getKey(), annotation.getValue());
+            return annotation;
         } catch (Exception e) {
             LOG.error("Error occurred creating annotations for {}", query, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -97,7 +99,9 @@ public class DataAnnotationResource {
     public Annotation updateAnnotation(@ApiParam DomainQuery query) {
         LOG.trace("Start updateAnnotation({})", query);
         try {
-            return annotationDao.saveBySubjectKey(query.getDomainObjectAs(Annotation.class), query.getSubjectKey());
+            Annotation annotation = annotationDao.saveBySubjectKey(query.getDomainObjectAs(Annotation.class), query.getSubjectKey());
+            LOG.info("{} updated annotation {} on {}: {}={}", query.getSubjectKey(), annotation.getId(), annotation.getTarget(), annotation.getKey(), annotation.getValue());
+            return annotation;
         } catch (Exception e) {
             LOG.error("Error occurred updating annotations {}", query, e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -107,7 +111,7 @@ public class DataAnnotationResource {
     }
 
     @ApiOperation(value = "gets a list of Annotations",
-            notes = "Gets a list of Annotations using the references paramter of the DomainQuery object"
+            notes = "Gets a list of Annotations using the references parameter of the DomainQuery object"
     )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully got the list of annotations", response = Annotation.class,
@@ -156,7 +160,14 @@ public class DataAnnotationResource {
                     .build();
         }
         try {
+            Annotation annotation = annotationDao.findById(annotationId);
+            if (annotation==null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("Could not find annotation with id " + annotationIdParam))
+                        .build();
+            }
             annotationDao.deleteByIdAndSubjectKey(annotationId, subjectKey);
+            LOG.info("{} deleted annotation {} on {}: {}={}", subjectKey, annotation.getId(), annotation.getTarget(), annotation.getKey(), annotation.getValue());
             return Response.noContent().build();
         } finally {
             LOG.trace("Finished removeAnnotations({},{})", subjectKey, annotationIdParam);
