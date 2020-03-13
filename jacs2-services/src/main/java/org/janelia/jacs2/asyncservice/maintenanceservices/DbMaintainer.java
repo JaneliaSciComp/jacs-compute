@@ -225,8 +225,8 @@ public class DbMaintainer {
             try {
                 // Check raw data
                 String acquisionPath;
-                if (StringUtils.isNotBlank(sample.getTwoPhotonAcquisitionFilepath())) {
-                    acquisionPath = sample.getTwoPhotonAcquisitionFilepath();
+                if (StringUtils.isNotBlank(sample.getAcquisitionFilepath())) {
+                    acquisionPath = sample.getAcquisitionFilepath();
                 } else {
                     RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
                     RawVolData rawVolData = loader.loadRawVolumeData(rvl);
