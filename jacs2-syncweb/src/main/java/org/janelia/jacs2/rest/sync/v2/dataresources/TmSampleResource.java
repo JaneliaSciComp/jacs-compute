@@ -78,7 +78,8 @@ import org.slf4j.LoggerFactory;
 @ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data")
-public class TmSampleResource {
+public class
+TmSampleResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(TmSampleResource.class);
 
@@ -299,7 +300,7 @@ public class TmSampleResource {
                 sample.setFilesystemSync(false); // set file system sync to false because there is something wrong with the acquisition path
             }
         } else {
-            acquisitionPath = sample.getTwoPhotonAcquisitionFilepath();
+            acquisitionPath = sample.getAcquisitionFilepath();
         }
         if (StringUtils.isNotBlank(acquisitionPath)) {
             boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
@@ -310,7 +311,7 @@ public class TmSampleResource {
                     })
                     ;
             if (acquisitionPathFound) {
-                if (StringUtils.isBlank(sample.getTwoPhotonAcquisitionFilepath())) {
+                if (StringUtils.isBlank(sample.getAcquisitionFilepath())) {
                     LOG.info("Setting RAW data path to {}", acquisitionPath);
                     DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, acquisitionPath);
                 }
@@ -382,7 +383,7 @@ public class TmSampleResource {
             tmSample.setFilesystemSync(false);
         }
 
-        String acquisitionPath = tmSample.getTwoPhotonAcquisitionFilepath();
+        String acquisitionPath = tmSample.getAcquisitionFilepath();
         if (StringUtils.isNotBlank(acquisitionPath)) {
             // for update only check the acquision path if set - don't try to read the tile yaml file
             boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
