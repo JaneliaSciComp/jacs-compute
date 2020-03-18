@@ -1,5 +1,10 @@
 package org.janelia.jacs2.asyncservice.lvtservices;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -35,6 +40,7 @@ abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServic
     public ServiceComputation<JacsServiceResult<R>> process(JacsServiceData jacsServiceData) {
         LVTArgs args = getArgs(jacsServiceData);
         String containerLocation = StringUtils.defaultIfBlank(args.toolContainerImage, defaultContainerImage);
+        createOutputDir(args.outputDir);
         if (StringUtils.isBlank(containerLocation)) {
             throw new IllegalArgumentException("No tool container has been configured or specified in the service arguments");
         }
@@ -64,6 +70,14 @@ abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServic
 
     A getArgs(JacsServiceData jacsServiceData) {
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), createToolArgs());
+    }
+
+    private void createOutputDir(String outputDir) {
+        try {
+            Files.createDirectories(Paths.get(outputDir));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     abstract A createToolArgs();
