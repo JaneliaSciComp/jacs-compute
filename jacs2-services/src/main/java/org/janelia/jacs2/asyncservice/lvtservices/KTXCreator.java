@@ -19,7 +19,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.containerizedservices.PullAndRunSingularityContainerProcessor;
 import org.janelia.jacs2.asyncservice.containerizedservices.RunContainerProcessor;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -65,7 +64,8 @@ public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, 
             }
 
             public OctreeResult getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<OctreeResult>() {});
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<OctreeResult>() {
+                });
             }
         };
     }
@@ -96,7 +96,7 @@ public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, 
             List<String> nextNodes = currentNodes.stream()
                     .flatMap(n -> recurseOctree(n, args.subtreeLengthForSubjobSplitting))
                     .collect(Collectors.toList());
-                    ;
+            ;
             startupNodes.addAll(nextNodes);
             currentNodes = nextNodes;
         }
@@ -104,8 +104,7 @@ public class KTXCreator extends AbstractLVTProcessor<KTXCreator.KTXCreatorArgs, 
                 .map(p -> "\"" + p + "\"" + " " + args.subtreeLengthForSubjobSplitting)
                 .reduce(new StringBuilder(),
                         (b, a) -> b.length() == 0 ? b.append(a) : b.append(',').append(a),
-                        (b1, b2) -> b1.length() == 0 ? b1.append(b2) : b1.append(',').append(b2))
-                ;
+                        (b1, b2) -> b1.length() == 0 ? b1.append(b2) : b1.append(',').append(b2));
         return batchArgsBuilder.toString();
     }
 
