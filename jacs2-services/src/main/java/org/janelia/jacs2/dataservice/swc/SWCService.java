@@ -340,13 +340,7 @@ public class SWCService {
             Color color = new Color(colorArr[0], colorArr[1], colorArr[2]);
             neuronMetadata.setColor(color);
         }
-
-        try {
-            return domainDao.createWithPrepopulatedId(neuronOwnerKey, neuronMetadata);
-        } catch (Exception e) {
-            LOG.error("Error while trying to persist {}", neuronMetadata, e);
-            throw new IllegalStateException(e);
-        }
+        return neuronMetadata;
     }
 
 }
