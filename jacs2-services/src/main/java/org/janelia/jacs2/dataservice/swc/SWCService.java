@@ -241,6 +241,7 @@ public class SWCService {
                     TmNeuronMetadata neuronMetadata = importSWCFile(swcEntry.getName(), swcStream, neuronOwnerKey, tmWorkspace, externalToInternalConverter);
                     try {
                         LOG.debug("Persist neuron {} in Workspace {}", neuronMetadata.getName(), tmWorkspace.getName());
+                        neuronMetadata.setOwnerKey(neuronOwnerKey);
                         tmNeuronMetadataDao.createTmNeuronInWorkspace(neuronOwnerKey, neuronMetadata, tmWorkspace);
                     } catch (Exception e) {
                         LOG.error("Error creating neuron points while importing {} into {}", swcEntry, neuronMetadata, e);
