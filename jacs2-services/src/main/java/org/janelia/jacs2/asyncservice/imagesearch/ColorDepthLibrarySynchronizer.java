@@ -3,17 +3,19 @@ package org.janelia.jacs2.asyncservice.imagesearch;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.ParseException;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import com.beust.jcommander.Parameter;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -26,7 +28,8 @@ import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.domain.gui.cdmip.ColorDepthFilepathParser;
+import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.gui.cdmip.ColorDepthFileComponents;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 import org.janelia.model.domain.sample.DataSet;
@@ -48,7 +51,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
     private static final String DEFAULT_OWNER = "group:flylight";
 
-    public static class SyncArgs extends ServiceArgs {
+    static class SyncArgs extends ServiceArgs {
         @Parameter(names = "-alignmentSpace", description = "Alignment space")
         String alignmentSpace;
         @Parameter(names = "-library", description = "Library identifier")
@@ -63,7 +66,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private final JacsNotificationDao jacsNotificationDao;
     private int existing = 0;
     private int created = 0;
+    private int deleted = 0;
     private int totalCreated = 0;
+    private int totalDeleted = 0;
 
     @Inject
     ColorDepthLibrarySynchronizer(ServiceComputationFactory computationFactory,
@@ -81,7 +86,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(ColorDepthLibrarySynchronizer.class, new ColorDepthLibrarySynchronizer.SyncArgs());
+        return ServiceArgs.getMetadata(ColorDepthLibrarySynchronizer.class, new SyncArgs());
     }
 
     @Override
@@ -89,7 +94,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         logger.info("Service {} perform color depth library sync", jacsServiceData);
         logCDLibSyncMaintenanceEvent(jacsServiceData.getId());
 
-        ColorDepthLibrarySynchronizer.SyncArgs args = getArgs(jacsServiceData);
+        SyncArgs args = getArgs(jacsServiceData);
         runDiscovery(args);
 
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
@@ -103,233 +108,306 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         jacsNotificationDao.save(jacsNotification);
     }
 
-    private ColorDepthLibrarySynchronizer.SyncArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ColorDepthLibrarySynchronizer.SyncArgs());
+    private SyncArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SyncArgs());
     }
 
-    private void runDiscovery(ColorDepthLibrarySynchronizer.SyncArgs args) {
+    private void runDiscovery(SyncArgs args) {
         logger.info("Running discovery with parameters:");
         logger.info("  alignmentSpace={}", args.alignmentSpace);
         logger.info("  library={}", args.library);
 
-        // Get all existing libraries
-        Map<String,ColorDepthLibrary> libraryMap = new HashMap<>();
-        for (ColorDepthLibrary library : dao.getDomainObjects(null, ColorDepthLibrary.class)) {
-            libraryMap.put(library.getIdentifier(), library);
-        }
+        // Get currently existing libraries
+        Map<String, ColorDepthLibrary> indexedLibraries = dao.getDomainObjects(null, ColorDepthLibrary.class).stream()
+                .collect(Collectors.toMap(ColorDepthLibrary::getIdentifier, Function.identity()));
 
         // Walk the relevant alignment directories
-        walkChildDirs(rootPath.toFile(), alignmentDir -> {
-            if (StringUtils.isNotBlank(args.alignmentSpace) && !alignmentDir.getName().equals(args.alignmentSpace)) return;
-
-            // Walk the relevant library directories
-            walkChildDirs(alignmentDir, libraryDir -> {
-                if (StringUtils.isNotBlank(args.library) && !libraryDir.getName().equals(args.library)) return;
-
-                logger.info("Discovering files in {}", libraryDir);
-                String alignmentSpace = alignmentDir.getName();
-                String libraryIdentifier = libraryDir.getName();
-
-                this.existing = 0;
-                this.created = 0;
-
-                // This prefetch is an optimization so that we can efficiency check which images already exist
-                // in the database without incurring a huge cost for each image.
-                Set<String> existingPaths = new HashSet<>(dao.getColorDepthPaths(null, libraryIdentifier, alignmentSpace));
-                if (!existingPaths.isEmpty()) {
-                    logger.info("  Found {} existing paths", existingPaths.size());
-                }
-                // Figure out the owner of the library and the images
-                ColorDepthLibrary library = libraryMap.get(libraryIdentifier);
-                if (library == null) {
-                    library = new ColorDepthLibrary();
-                    library.setIdentifier(libraryIdentifier);
-                    library.setName(libraryIdentifier);
-
-                    DataSet dataSet = dao.getDataSetByIdentifier(null, libraryIdentifier);
-                    if (dataSet!=null) {
-                        // Copy permissions from corresponding data set
-                        library.setOwnerKey(dataSet.getOwnerKey());
-                        library.setReaders(dataSet.getReaders());
-                        library.setWriters(dataSet.getWriters());
-                    }
-                    else {
-                        String ownerName = libraryIdentifier.split("_")[0];
-                        Subject subject = dao.getSubjectByName(ownerName);
-                        if (subject != null) {
-                            logger.warn("No corresponding data set found. Falling back on owner encoded in library identifier: {}", subject.getKey());
-                            library.setOwnerKey(subject.getKey());
-                        }
-                        else {
-                            logger.warn("Falling back on default owner: {}", DEFAULT_OWNER);
-                            library.setOwnerKey(DEFAULT_OWNER);
-                        }
-                    }
-                }
-
-                final ColorDepthLibrary finalLibrary = library;
-
-                // Walk all images within any structure
-                FileUtils.lookupFiles(
-                        libraryDir.toPath(), 4, "glob:**/*")
-                        .map(Path::toFile)
-                        .filter(file -> {
-                            if (file.isDirectory()) return false;
-                            String filepath = file.getAbsolutePath();
-                            if (!accepted(filepath)) {
-                                logger.warn("  File not accepted as color depth MIP: {}", filepath);
-                                return false;
-                            }
-                            if (existingPaths.contains(filepath)) {
-                                existing++;
-                                return false;
-                            }
-                            return true;
-                        })
-                        .forEach(file -> {
-                            if (createColorDepthImage(finalLibrary, file)) {
-                                created++;
-                            }
-                        });
-
-                logger.info("  Verified {} existing images, created {} images", existing, created);
-
-                int total = existing + created;
-                totalCreated += created;
-
-                if (library.getId()!=null || total > 0) {
-                    // If the library exists already, or should be created
-                    library.getColorDepthCounts().put(alignmentSpace, total);
-                    try {
-                        library = dao.save(library.getOwnerKey(), library);
-                        libraryMap.put(libraryIdentifier, library);
-                        logger.debug("  Saved color depth library {} with count {}", libraryIdentifier, total);
-                    }
-                    catch (Exception e) {
-                        logger.error("Could not update library file counts for: " + libraryIdentifier, e);
-                    }
-                }
-            });
-        });
+        walkChildDirs(rootPath.toFile())
+                .filter(alignmentDir -> StringUtils.isBlank(args.alignmentSpace) || alignmentDir.getName().equals(args.alignmentSpace))
+                .flatMap(alignmentDir -> walkChildDirs(alignmentDir))
+                .filter(libraryDir -> StringUtils.isBlank(args.library) || libraryDir.getName().equals(args.library))
+                .forEach(libraryDir -> processLibraryDir(libraryDir, libraryDir.getParentFile().getName(), null, indexedLibraries));
 
         // It's necessary to recalculate all the counts here, because some color depth images may be part of constructed
         // libraries which are not represented explicitly on disk.
         try {
             dao.updateColorDepthCounts(dao.getColorDepthCounts());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
            logger.error("Failed to update color depth counts", e);
         }
 
-        logger.info("Completed color depth library synchronization. Imported {} images in total.", totalCreated);
+        logger.info("Completed color depth library synchronization. Imported {} images in total - deleted {}.", totalCreated, totalDeleted);
     }
 
-    private void walkChildDirs(File dir, Consumer<File> action) {
-        if (!dir.isDirectory()) return;
-        logger.info("Discovering files in {}", dir);
-        File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    action.accept(file);
-                }
+    private void processLibraryDir(File libraryDir, String alignmentSpace, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries) {
+        logger.info("Discovering files in {}", libraryDir);
+        String libraryIdentifier = parentLibrary == null ? libraryDir.getName() : parentLibrary.getIdentifier() + '_' + libraryDir.getName();
+        String libraryVersion = parentLibrary == null ? null : libraryDir.getName();
+
+        // This prefetch is an optimization so that we can efficiency check which images already exist
+        // in the database without incurring a huge cost for each image.
+        // Figure out the owner of the library and the images
+        ColorDepthLibrary library;
+        if (indexedLibraries.get(libraryIdentifier) == null) {
+            library = createNewLibrary(libraryIdentifier, libraryVersion, parentLibrary);
+        } else {
+            library = indexedLibraries.get(libraryIdentifier);
+        }
+
+        processLibraryFiles(libraryDir, alignmentSpace, library);
+
+        logger.info("  Verified {} existing images, created {} images", existing, created);
+
+        int total = existing + created - deleted;
+        totalCreated += created;
+        totalDeleted += deleted;
+
+        if (library.getId() != null || total > 0) {
+            // If the library exists already, or should be created
+            library.getColorDepthCounts().put(alignmentSpace, total);
+            try {
+                indexedLibraries.put(libraryIdentifier, dao.save(library.getOwnerKey(), library));
+                logger.debug("  Saved color depth library {} with count {}", libraryIdentifier, total);
+            } catch (Exception e) {
+                logger.error("Could not update library file counts for: {}", libraryIdentifier, e);
             }
         }
+
+        processLibraryVersions(libraryDir, alignmentSpace, library, indexedLibraries);
+    }
+
+    private Stream<File> walkChildDirs(File dir) {
+        if (!dir.isDirectory()) {
+            return Stream.of();
+        }
+        logger.info("Discovering files in {}", dir);
+        File[] files = dir.listFiles();
+        if (files == null) {
+            return Stream.of();
+        } else {
+            return Arrays.stream(files).filter(File::isDirectory);
+        }
+    }
+
+    private ColorDepthLibrary createNewLibrary(String libraryIdentifier, String libraryVersion, ColorDepthLibrary parentLibrary) {
+        ColorDepthLibrary library = new ColorDepthLibrary();
+        library.setIdentifier(libraryIdentifier);
+        library.setName(libraryIdentifier);
+        library.setVersion(libraryVersion);
+        library.setParentLibraryRef(parentLibrary == null ? null : Reference.createFor(parentLibrary));
+
+        DataSet dataSet = dao.getDataSetByIdentifier(null, libraryIdentifier);
+        if (dataSet != null) {
+            // Copy permissions from corresponding data set
+            library.setOwnerKey(dataSet.getOwnerKey());
+            library.setReaders(dataSet.getReaders());
+            library.setWriters(dataSet.getWriters());
+        } else {
+            String ownerName = libraryIdentifier.split("_")[0];
+            Subject subject = dao.getSubjectByName(ownerName);
+            if (subject != null) {
+                logger.warn("No corresponding data set found. Falling back on owner encoded in library identifier: {}", subject.getKey());
+                library.setOwnerKey(subject.getKey());
+            } else {
+                logger.warn("Falling back on default owner: {}", DEFAULT_OWNER);
+                library.setOwnerKey(DEFAULT_OWNER);
+            }
+        }
+        return library;
+    }
+
+    private void processLibraryFiles(File libraryDir, String alignmentSpace, ColorDepthLibrary library) {
+        // reset the counters
+        this.existing = 0;
+        this.created = 0;
+        this.deleted = 0;
+
+        Map<String, Set<ColorDepthFileComponents>> existingColorDepthFiles = dao.getColorDepthPaths(null, library.getIdentifier(), alignmentSpace).stream()
+                .map(this::parseColorDepthFileComponents)
+                .collect(Collectors.groupingBy(cdf -> {
+                    if (cdf.getSampleRef() == null) {
+                        return cdf.getFile().getAbsolutePath();
+                    } else {
+                        return cdf.getSampleRef().getTargetId().toString();
+                    }
+                }, Collectors.toSet()));
+
+        if (!existingColorDepthFiles.isEmpty()) {
+            logger.info("  Found mips for {} samples", existingColorDepthFiles.size());
+        }
+        // Walk all images within any structure
+        FileUtils.lookupFiles(
+                libraryDir.toPath(), 1, "glob:**/*")
+                .map(Path::toFile)
+                .filter(f -> f.isFile())
+                .filter(f -> {
+                    if (accepted(f.getAbsolutePath())) {
+                        return true;
+                    } else {
+                        logger.warn("  File not accepted as color depth MIP: {}", f);
+                        return false;
+                    }
+                })
+                .map(f -> parseColorDepthFileComponents(f.getPath()))
+                .filter(cdf -> {
+                    if (cdf.getSampleRef() == null) {
+                        if (existingColorDepthFiles.containsKey(cdf.getFile().getAbsolutePath())) {
+                            // this file is already a MIP of this library so no need to do anything else for it
+                            existing++;
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    } else {
+                        String sampleId = cdf.getSampleRef().getTargetId().toString();
+                        if (existingColorDepthFiles.get(sampleId) == null) {
+                            return true;
+                        } else {
+                            if (existingColorDepthFiles.get(sampleId).contains(cdf)) {
+                                // the file exists but it is possible some clean up will be needed in the post phase
+                                // anyway for now mark it as existing and don't do anything for this file yet
+                                existing++;
+                                return false;
+                            } else {
+                                // the file is not found in the mips set
+                                // check if all other files are older
+                                Set<String> existingSampleNames = existingColorDepthFiles.get(sampleId).stream()
+                                        .map(ColorDepthFileComponents::getSampleName)
+                                        .filter(StringUtils::isNotBlank)
+                                        .collect(Collectors.toSet());
+                                if (existingSampleNames.contains(cdf.getSampleName())) {
+                                    // if the a sample with the same name is present in the existing set
+                                    // it is possible this is a different objective, area or channel
+                                    // so continue with the file
+                                    return true;
+                                } else {
+                                    // so the sample name in this cdf is not present in the list
+                                    // this is possible if some renaming was done so this is the case
+                                    // where we check if this file is newer than all the others
+                                    for (ColorDepthFileComponents existingCdf : existingColorDepthFiles.get(sampleId)) {
+                                        if (cdf.getObjective().equals(existingCdf.getObjective()) &&
+                                                cdf.getAnatomicalArea().equals(existingCdf.getAnatomicalArea()) &&
+                                                cdf.getChannelNumber().equals(existingCdf.getChannelNumber())) {
+                                            if (cdf.getFile().lastModified() < existingCdf.getFile().lastModified()) {
+                                                // the current file is older than one of the existing files
+                                                // for the same objective, area and channel so simply skip this
+                                                // without incrementing the existing counter
+                                                return false;
+                                            }
+                                        }
+                                    }
+                                    // no newer file with the same objective, area and channel was found so process this file
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                })
+                .forEach(cdf -> {
+                    if (createColorDepthImage(cdf, alignmentSpace, library)) {
+                        created++;
+                    }
+                });
+
+        // this post phase is for the case when files are already in the library and cleanup is needed.
+        dao.getColorDepthPaths(null, library.getIdentifier(), alignmentSpace).stream()
+                .map(filepath -> parseColorDepthFileComponents(filepath))
+                .filter(cdf -> cdf.getSampleRef() != null)
+                .collect(Collectors.groupingBy(cdf -> cdf.getSampleRef().getTargetId().toString(), Collectors.toSet()))
+                .entrySet()
+                .stream()
+                .filter(e -> {
+                    if (e.getValue().size() == 1) {
+                        return false;
+                    } else {
+                        Set<String> sampleNames = e.getValue().stream()
+                                .map(cdfc -> cdfc.getSampleName())
+                                .filter(sn -> StringUtils.isNotBlank(sn))
+                                .collect(Collectors.toSet());
+                        // if there are 2 or more entries with the same sample ID but different name
+                        // there is something wrong and some cleanup it's needed
+                        // a possible scenario is that the sample was renamed but the old mips are still there
+                        // so we need to "remove" the old mips from the library
+                        return sampleNames.size() > 1;
+                    }
+                })
+                .forEach(e -> {
+                    Map<String, Set<ColorDepthFileComponents>> cdfByObjectAreaChannel = e.getValue().stream()
+                            .collect(Collectors.groupingBy(cdf -> cdf.getObjective() + "-" + cdf.getAnatomicalArea() + "-" + cdf.getChannelNumber(), Collectors.toSet()));
+                    cdfByObjectAreaChannel.entrySet().stream().filter(eByOAC -> eByOAC.getValue().size() > 0)
+                            .forEach(eByOAC -> {
+                                ColorDepthFileComponents latestCDF = eByOAC.getValue().stream().max(Comparator.comparing(cdc -> cdc.getFile().lastModified())).orElse(null);
+                                for (ColorDepthFileComponents cdc : eByOAC.getValue()) {
+                                    if (cdc != latestCDF) {
+                                        // if this is not SAME as the max - remove it from the color depth mips collection
+                                        if (deleteColorDepthImage(cdc)) {
+                                            deleted++;
+                                            if (existingColorDepthFiles.get(cdc.getSampleRef().getTargetId().toString()) != null &&
+                                                !existingColorDepthFiles.get(cdc.getSampleRef().getTargetId().toString()).contains(cdc)) {
+                                                // this was a new file so decrement the created count
+                                                created--;
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                });
+
+    }
+
+    private void processLibraryVersions(File libraryDir, String alignmentSpace, ColorDepthLibrary library, Map<String, ColorDepthLibrary> indexedLibraries) {
+        // Walk subdirs of the libraryDir
+        walkChildDirs(libraryDir)
+                .forEach(libraryVersionDir -> processLibraryDir(libraryDir, alignmentSpace, library, indexedLibraries));
     }
 
     /**
      * Create a ColorDepthImage image for the given file on disk.
-     * @param file file within the rootPath filestore
+     * @param colorDepthImageFileComponents color depth file components
      * @return true if the image was created successfully
      */
-    private boolean createColorDepthImage(ColorDepthLibrary library, File file) {
-        String filepath = file.getPath();
-
+    private boolean createColorDepthImage(ColorDepthFileComponents colorDepthImageFileComponents, String alignmentSpace, ColorDepthLibrary library) {
         try {
-            /*
-                This assumes that the MIP files reside in a directory structure like this:
-                <anything>/ROOT_NAME/<alignmentSpace>/<library>/d1/d2/d3/<file>
-
-                Where "d1/d2/d3" can be any directory hierarchy, or none. This is done so that we can break up
-                large directories which are inefficient to access on NFS.
-             */
-            String rootName = rootPath.getFileName().toString();
-
-            boolean foundRoot = false;
-            String libraryIdentifier = null;
-            String alignmentSpace = null;
-
-            String[] parts = filepath.split("/");
-            for (String part : parts) {
-                if (libraryIdentifier!=null) {
-                    break;
-                }
-                else if (alignmentSpace != null) {
-                    libraryIdentifier = part;
-                }
-                else if (foundRoot) {
-                    alignmentSpace = part;
-                }
-                else if (rootName.equals(part)) {
-                    foundRoot = true;
-                }
-            }
-
-            if (!foundRoot) {
-                throw new IllegalStateException("Path does not contain root "+rootName+": "+filepath);
-            }
-
-            if (alignmentSpace == null) {
-                throw new IllegalStateException("Path does not contain alignment space: "+filepath);
-            }
-
-            if (libraryIdentifier == null) {
-                throw new IllegalStateException("Path does not contain library: "+filepath);
-            }
-
-            if (!library.getIdentifier().equals(libraryIdentifier)) {
-                throw new IllegalStateException("Library does not match path: ("
-                        +library.getIdentifier()+" != "+libraryIdentifier+")");
-            }
-
-            ColorDepthFilepathParser parser = null;
-            try {
-                parser = ColorDepthFilepathParser.parse(filepath);
-                if (!alignmentSpace.equals(parser.getAlignmentSpace())) {
-                    throw new IllegalStateException("Alignment space does not match path: ("
-                            +parser.getAlignmentSpace()+" != "+alignmentSpace+")");
-                }
-            }
-            catch (ParseException e) {
-                logger.debug("  Accepting non-standard filename: {}", filepath);
-            }
-
             ColorDepthImage image = new ColorDepthImage();
             image.getLibraries().add(library.getIdentifier());
-            image.setName(file.getName());
-            image.setFilepath(filepath);
-            image.setFileSize(file.length());
+            image.setName(colorDepthImageFileComponents.getFile().getName());
+            image.setFilepath(colorDepthImageFileComponents.getFile().getPath());
+            image.setFileSize(colorDepthImageFileComponents.getFile().length());
             image.setAlignmentSpace(alignmentSpace);
             image.setReaders(library.getReaders());
             image.setWriters(library.getWriters());
-            if (parser != null) {
-                image.setSampleRef(parser.getSampleRef());
-                image.setObjective(parser.getObjective());
-                image.setAnatomicalArea(parser.getAnatomicalArea());
-                image.setChannelNumber(parser.getChannelNumber());
+            if (colorDepthImageFileComponents.getSampleRef() == null && !alignmentSpace.equals(colorDepthImageFileComponents.getAlignmentSpace())) {
+                throw new IllegalStateException("Alignment space does not match path: ("
+                        +colorDepthImageFileComponents.getAlignmentSpace()+" != "+alignmentSpace+")");
             }
+            image.setSampleRef(colorDepthImageFileComponents.getSampleRef());
+            image.setObjective(colorDepthImageFileComponents.getObjective());
+            image.setAnatomicalArea(colorDepthImageFileComponents.getAnatomicalArea());
+            image.setChannelNumber(colorDepthImageFileComponents.getChannelNumber());
 
             dao.save(library.getOwnerKey(), image);
             return true;
+        } catch (Exception e) {
+            logger.warn("  Could not create image for: {}", colorDepthImageFileComponents.getFile());
         }
-        catch (Exception e) {
-            logger.warn("  Could not create image for: " + file.getPath());
-        }
-
         return false;
+    }
+
+    private boolean deleteColorDepthImage(ColorDepthFileComponents cdc) {
+        ColorDepthImage colorDepthImage = dao.getColorDepthImageByPath(null, cdc.getFile().getAbsolutePath());
+        if (colorDepthImage != null) {
+            dao.deleteDomainObject(null, colorDepthImage.getClass(), colorDepthImage.getId());
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private boolean accepted(String filepath) {
         return filepath.endsWith(".png") || filepath.endsWith(".tif");
+    }
+
+    private ColorDepthFileComponents parseColorDepthFileComponents(String filepath) {
+        return ColorDepthFileComponents.fromFilepath(filepath);
     }
 }
