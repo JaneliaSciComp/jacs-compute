@@ -1,6 +1,17 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.List;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+
 import com.google.common.collect.ImmutableList;
+
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -23,16 +34,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.util.List;
-import java.util.function.BiPredicate;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;

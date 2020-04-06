@@ -119,6 +119,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
         // Get currently existing libraries
         Map<String, ColorDepthLibrary> indexedLibraries = dao.getDomainObjects(null, ColorDepthLibrary.class).stream()
+                .filter(cdl -> StringUtils.isBlank(args.library) || StringUtils.equalsIgnoreCase(args.library, cdl.getIdentifier()))
                 .collect(Collectors.toMap(ColorDepthLibrary::getIdentifier, Function.identity()));
 
         // Walk the relevant alignment directories
