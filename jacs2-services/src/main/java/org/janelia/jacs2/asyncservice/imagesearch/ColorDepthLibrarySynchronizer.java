@@ -341,6 +341,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                 for (ColorDepthFileComponents cdc : eByOAC.getValue()) {
                                     if (cdc != latestCDF) {
                                         // if this is not SAME as the max - remove it from the color depth mips collection
+                                        logger.info("Delete color depth image {} created for sample {} - keeping {} for sample {} instead because the sample {} may have been renamed to {}",
+                                                cdc.getFile(), cdc.getSampleRef(), latestCDF.getFile(), latestCDF.getSampleRef(),
+                                                cdc.getSampleName(), latestCDF.getSampleName());
                                         if (deleteColorDepthImage(cdc)) {
                                             deleted++;
                                             if (existingColorDepthFiles.get(cdc.getSampleRef().getTargetId().toString()) != null &&
