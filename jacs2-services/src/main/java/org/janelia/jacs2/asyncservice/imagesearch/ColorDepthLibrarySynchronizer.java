@@ -1,9 +1,9 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
@@ -155,6 +155,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             library = indexedLibraries.get(libraryIdentifier);
         }
 
+        created = 0;
+        deleted = 0;
         processLibraryFiles(libraryDir, alignmentSpace, library);
 
         logger.info("  Verified {} existing images, created {} images", existing, created);
@@ -178,16 +180,17 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private Stream<File> walkChildDirs(File dir) {
-        if (!dir.isDirectory()) {
+        if (dir == null) {
+            return Stream.of();
+        }
+        Path dirPath = dir.toPath();
+        if (!Files.isDirectory(dirPath)) {
             return Stream.of();
         }
         logger.info("Discovering files in {}", dir);
-        File[] files = dir.listFiles();
-        if (files == null) {
-            return Stream.of();
-        } else {
-            return Arrays.stream(files).filter(File::isDirectory);
-        }
+        return FileUtils.lookupFiles(dirPath, 1, "glob:**/*")
+                .filter(p -> !p.toFile().equals(dir))
+                .filter(p -> Files.isDirectory(p)).map(Path::toFile);
     }
 
     private ColorDepthLibrary createNewLibrary(String libraryIdentifier, String libraryVersion, ColorDepthLibrary parentLibrary) {
@@ -239,8 +242,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         // Walk all images within any structure
         FileUtils.lookupFiles(
                 libraryDir.toPath(), 1, "glob:**/*")
+                .filter(p -> !p.toFile().equals(libraryDir))
                 .map(Path::toFile)
-                .filter(f -> f.isFile())
+                .filter(File::isFile)
                 .filter(f -> {
                     if (accepted(f.getAbsolutePath())) {
                         return true;
@@ -277,7 +281,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                         .filter(StringUtils::isNotBlank)
                                         .collect(Collectors.toSet());
                                 if (existingSampleNames.contains(cdf.getSampleName())) {
-                                    // if the a sample with the same name is present in the existing set
+                                    // if a sample with the same name is present in the existing set
                                     // it is possible this is a different objective, area or channel
                                     // so continue with the file
                                     return true;
@@ -293,6 +297,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                                 // the current file is older than one of the existing files
                                                 // for the same objective, area and channel so simply skip this
                                                 // without incrementing the existing counter
+                                                logger.info("Skipping {} because I found {} created for the same sample {} more recently",
+                                                        cdf.getFile(), existingCdf.getFile(), existingCdf.getSampleRef());
                                                 return false;
                                             }
                                         }
@@ -362,7 +368,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private void processLibraryVersions(File libraryDir, String alignmentSpace, ColorDepthLibrary library, Map<String, ColorDepthLibrary> indexedLibraries) {
         // Walk subdirs of the libraryDir
         walkChildDirs(libraryDir)
-                .forEach(libraryVersionDir -> processLibraryDir(libraryDir, alignmentSpace, library, indexedLibraries));
+                .forEach(libraryVersionDir -> processLibraryDir(libraryVersionDir, alignmentSpace, library, indexedLibraries));
     }
 
     /**
