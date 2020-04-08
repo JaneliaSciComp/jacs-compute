@@ -284,14 +284,12 @@ public class SparkCluster {
         } catch (Exception e) {
             logger.error("Error stopping master spark job {}", masterJobId, e);
         }
-        workerJobIds.forEach(jobId -> {
-                    try {
-                        logger.info("Kill spark worker job {} part of spark cluster {}", jobId, masterJobId);
-                        jobMgr.killJob(jobId);
-                    } catch (Exception e) {
-                        logger.error("Error stopping spark job {} part of {} cluster", jobId, masterJobId, e);
-                    }
-                });
+        try {
+            logger.info("Kill worker jobs for {}", masterJobId);
+            jobMgr.killJobWithName("W" + masterJobId);
+        } catch (Exception e) {
+            logger.error("Error stopping master spark job {}", masterJobId, e);
+        }
     }
 
     @Override
