@@ -56,6 +56,11 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         String alignmentSpace;
         @Parameter(names = "-library", description = "Library identifier")
         String library;
+        @Parameter(names = "-skipFileDiscovery", description = "If set skips the file system based discovery", arity = 1)
+        boolean skipFileSystemDiscovery = false;
+        @Parameter(names = "-skipPublishedDiscovery", description = "If set skips the published based discovery", arity = 1)
+        boolean skipPublishedDiscovery = false;
+
         SyncArgs() {
             super("Color depth library synchronization");
         }
@@ -95,7 +100,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         logCDLibSyncMaintenanceEvent(jacsServiceData.getId());
 
         SyncArgs args = getArgs(jacsServiceData);
-        runDiscovery(args);
+        if (!args.skipFileSystemDiscovery) runFileSystemBasedDiscovery(args);
+        if (!args.skipPublishedDiscovery) runPublishedLinesBasedDiscovery(args);
 
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
     }
@@ -112,7 +118,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SyncArgs());
     }
 
-    private void runDiscovery(SyncArgs args) {
+    private void runFileSystemBasedDiscovery(SyncArgs args) {
         logger.info("Running discovery with parameters:");
         logger.info("  alignmentSpace={}", args.alignmentSpace);
         logger.info("  library={}", args.library);
@@ -394,7 +400,35 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             image.setObjective(colorDepthImageFileComponents.getObjective());
             image.setAnatomicalArea(colorDepthImageFileComponents.getAnatomicalArea());
             image.setChannelNumber(colorDepthImageFileComponents.getChannelNumber());
-
+            ColorDepthLibrary sourceLibrary = findSourceLibrary(library);
+            if (sourceLibrary != null) {
+                Path libraryDir = rootPath.resolve(alignmentSpace).resolve(sourceLibrary.getIdentifier());
+                String sourceCDMName = ColorDepthFileComponents.createCDMName(
+                        colorDepthImageFileComponents.getSampleName(),
+                        colorDepthImageFileComponents.getObjective(),
+                        colorDepthImageFileComponents.getAnatomicalArea(),
+                        colorDepthImageFileComponents.getAlignmentSpace(),
+                        colorDepthImageFileComponents.getSampleRef(),
+                        colorDepthImageFileComponents.getChannelNumber(),
+                        null
+                );
+                String sourceMIPFileName = FileUtils.lookupFiles(libraryDir, 1,
+                        "glob:**/" + sourceCDMName + "*")
+                        .filter(p -> Files.isRegularFile(p))
+                        .findFirst()
+                        .map(p -> p.toString())
+                        .orElse(null);
+                if (sourceMIPFileName == null) {
+                    logger.warn("Invalid source MIP file name - no file found for {} in {} folder", sourceCDMName, libraryDir);
+                } else {
+                    ColorDepthImage sourceImage = dao.getColorDepthImageByPath(null, sourceMIPFileName);
+                    if (sourceImage != null) {
+                        image.setSourceImageRef(Reference.createFor(sourceImage));
+                    } else {
+                        logger.warn("No color depth image entity found for {}", sourceMIPFileName);
+                    }
+                }
+            }
             dao.save(library.getOwnerKey(), image);
             return true;
         } catch (Exception e) {
@@ -413,6 +447,20 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         }
     }
 
+    private ColorDepthLibrary findSourceLibrary(ColorDepthLibrary l) {
+        ColorDepthLibrary sourceLibrary = null;
+        for (ColorDepthLibrary currentLibrary = l; currentLibrary.hasVersion(); ) {
+            ColorDepthLibrary parentLibrary = dao.getDomainObject(null, ColorDepthLibrary.class, currentLibrary.getParentLibraryRef().getTargetId());
+            if (parentLibrary == null) {
+                logger.error("Invalid parent library reference in {} -> {}", currentLibrary, currentLibrary.getParentLibraryRef());
+                throw new IllegalArgumentException("Invalid parent library reference " + currentLibrary.getParentLibraryRef() + " in " + currentLibrary);
+            }
+            sourceLibrary = parentLibrary;
+            currentLibrary = parentLibrary;
+        }
+        return sourceLibrary;
+    }
+
     private boolean accepted(String filepath) {
         return filepath.endsWith(".png") || filepath.endsWith(".tif");
     }
@@ -420,4 +468,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private ColorDepthFileComponents parseColorDepthFileComponents(String filepath) {
         return ColorDepthFileComponents.fromFilepath(filepath);
     }
+
+    private void runPublishedLinesBasedDiscovery(SyncArgs args) {
+    }
+
+
 }

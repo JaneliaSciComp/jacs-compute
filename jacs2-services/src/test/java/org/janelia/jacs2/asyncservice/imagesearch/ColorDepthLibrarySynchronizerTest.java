@@ -6,13 +6,18 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -84,17 +89,21 @@ public class ColorDepthLibrarySynchronizerTest {
         Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
-        List<String> testFiles = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testLib,
-                new String[]{
+        Map<String, String[]> testFileNames = ImmutableMap.of(
+                testLib, new String[] {
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png",
                         // the next 2 file correspond to the same sample ID but they have different sample name so only 1 set of these two will survive
                         "GMR_86D05_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
                         "GMR_86D05_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png"
-                },
-                new String[]{});
+                }
+        );
+        Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testFileNames);
 
-        Mockito.when(legacyDao.getColorDepthPaths(null, testLib, testAlignmentSpace)).thenReturn(testFiles);
+        testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
+            Mockito.when(legacyDao.getColorDepthPaths(null, libId.replace('/', '_'), testAlignmentSpace))
+                    .thenReturn(libFiles);
+        });
 
         ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
                 jacsServiceDataPersistence,
@@ -137,19 +146,22 @@ public class ColorDepthLibrarySynchronizerTest {
         Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
-        List<String> testFiles = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testLib,
-                new String[]{
+        Map<String, String[]> testFileNames = ImmutableMap.of(
+                testLib, new String[] {
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png",
                         // the next 2 file correspond to the same sample ID but they have different sample name so only 1 set of these two will survive
                         "GMR_86D05_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
                         "GMR_86D05_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png"
-                },
-                new String[]{});
+                }
+        );
+        Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testFileNames);
 
-        Mockito.when(legacyDao.getColorDepthPaths(null, testLib, testAlignmentSpace))
-                .thenReturn(testFiles.stream().filter(fn -> fn.contains("GMR_83B04")).collect(Collectors.toList()))
-                .thenReturn(testFiles);
+        testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
+            Mockito.when(legacyDao.getColorDepthPaths(null, libId.replace('/', '_'), testAlignmentSpace))
+                    .thenReturn(libFiles.stream().filter(fn -> fn.contains("GMR_83B04")).collect(Collectors.toList()))
+                    .thenReturn(libFiles);
+        });
 
         ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
                 jacsServiceDataPersistence,
@@ -192,19 +204,21 @@ public class ColorDepthLibrarySynchronizerTest {
         Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
-        List<String> testFiles = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testLib,
-                new String[]{
+        Map<String, String[]> testFileNames = ImmutableMap.of(
+                testLib, new String[] {
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png",
                         // the next 2 file correspond to the same sample ID but they have different sample name so only 1 set of these two will survive
                         "GMR_86D05_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
                         "GMR_86D05_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png"
-                },
-                new String[]{});
+                }
+        );
+        Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testFileNames);
 
-        Mockito.when(legacyDao.getColorDepthPaths(null, testLib, testAlignmentSpace))
-                .thenReturn(testFiles.stream().filter(fn -> fn.contains("GMR_86D05")).collect(Collectors.toList())) // newer files exist in the mips
-                ;
+        testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
+            Mockito.when(legacyDao.getColorDepthPaths(null, libId.replace('/', '_'), testAlignmentSpace))
+                    .thenReturn(libFiles.stream().filter(fn -> fn.contains("GMR_86D05")).collect(Collectors.toList())); // newer files exist in the mips
+        });
 
         ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
                 jacsServiceDataPersistence,
@@ -247,22 +261,47 @@ public class ColorDepthLibrarySynchronizerTest {
         Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
-        String[] testFileNames = new String[] {
-                "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
-                "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png"
-        };
-        String[] testVersionNames = new String[] {
-                "ver1",
-                "ver2"
-        };
+        Map<String, String[]> testLibsWithFiles = ImmutableMap.of(
+                testLib, new String[] {
+                        "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
+                        "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png"
+                },
+                testLib + "/ver1", new String[] {
+                        "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1-ver1_CDM.png",
+                        "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2-ver1_CDM.png"
+                },
+                testLib + "/ver1/ver1_1", new String[] {
+                        "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1-ver1-ver1_1_CDM.png",
+                        "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2-ver1-ver1_1_CDM.png"
+                },
+                testLib + "/ver2", new String[] {
+                        "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1-ver2_CDM.png",
+                        "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2-ver2_CDM.png"
+                }
+        );
+        Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testLibsWithFiles);
 
-        List<String> testFiles = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testLib,
-                testFileNames,
-                testVersionNames);
+        testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
+            Mockito.when(legacyDao.getColorDepthPaths(null, libId.replace('/', '_'), testAlignmentSpace))
+                    .thenReturn(Collections.emptyList())
+                    .thenReturn(libFiles);
+        });
 
-        Mockito.when(legacyDao.getColorDepthPaths(null, testLib, testAlignmentSpace))
-                .thenReturn(testFiles)
-        ;
+        Map<Long, ColorDepthLibrary> createdCDLibraries = new HashMap<>();
+
+        try {
+            Mockito.when(legacyDao.save(ArgumentMatchers.argThat(argument -> true), ArgumentMatchers.any(ColorDepthLibrary.class)))
+                    .then(invocation -> {
+                        ColorDepthLibrary cdl = invocation.getArgument(1);
+                        cdl.setId(createdCDLibraries.size() + 1L);
+                        createdCDLibraries.put(cdl.getId(), cdl);
+                        return cdl;
+                    });
+            Mockito.when(legacyDao.getDomainObject(isNull(), eq(ColorDepthLibrary.class), anyLong()))
+                    .then(invocation -> createdCDLibraries.get(invocation.getArgument(2)));
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
 
         ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
                 jacsServiceDataPersistence,
@@ -280,8 +319,8 @@ public class ColorDepthLibrarySynchronizerTest {
                 .thenApply(r -> {
                     successful.accept(r);
                     try {
-                        Mockito.verify(legacyDao, Mockito.times(testVersionNames.length)).save(ArgumentMatchers.eq("group:flylight"), ArgumentMatchers.any(ColorDepthLibrary.class));
-                        Mockito.verify(legacyDao, Mockito.times(testVersionNames.length * testFileNames.length)).save(ArgumentMatchers.eq("group:flylight"), ArgumentMatchers.any(ColorDepthImage.class));
+                        Mockito.verify(legacyDao, Mockito.times(testLibsWithFiles.size())).save(ArgumentMatchers.argThat(arg -> true), ArgumentMatchers.any(ColorDepthLibrary.class));
+                        Mockito.verify(legacyDao, Mockito.times((int) testLibsWithFiles.entrySet().stream().flatMap(e -> Arrays.stream(e.getValue())).count())).save(ArgumentMatchers.argThat(arg -> true), ArgumentMatchers.any(ColorDepthImage.class));
                     } catch (Exception e) {
                         Assert.fail(e.toString());
                     }
@@ -313,27 +352,24 @@ public class ColorDepthLibrarySynchronizerTest {
         return testServiceData;
     }
 
-    private List<String> prepareColorDepthMIPsFiles(String context, String testAlignmentSpace, String testLib, String[] testFilenames, String[] testLibVersions) {
-        Path testLibDir = testDirectory.resolve(context).resolve(testAlignmentSpace).resolve(testLib);
+    private Map<String, List<String>> prepareColorDepthMIPsFiles(String context, String testAlignmentSpace, Map<String, String[]> testFilenames) {
+        Path alignmentSpaceDir = testDirectory.resolve(context).resolve(testAlignmentSpace);
         try {
-            Files.createDirectories(testLibDir);
+            Files.createDirectories(alignmentSpaceDir);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-
-        Stream.of(testLibVersions)
-                .forEach(libVersion -> {
-                    Path libVersionDir = testLibDir.resolve(libVersion);
+        return testFilenames.entrySet().stream()
+                .map(libFilesEntry -> {
+                    Path testLibDir = alignmentSpaceDir.resolve(libFilesEntry.getKey());
                     try {
-                        Files.createDirectories(libVersionDir);
+                        Files.createDirectories(testLibDir);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
-                    // for this test same file names are added to the version
-                    createTestColorDepthImageFiles(libVersionDir, testFilenames);
-                });
-
-        return createTestColorDepthImageFiles(testLibDir, testFilenames);
+                    return ImmutablePair.of(libFilesEntry.getKey(), createTestColorDepthImageFiles(testLibDir, libFilesEntry.getValue()));
+                })
+                .collect(Collectors.toMap(libFilesEntry -> libFilesEntry.getLeft(), libFilesEntry -> libFilesEntry.getRight()));
     }
 
     private List<String> createTestColorDepthImageFiles(Path testLibDir, String[] filenames) {

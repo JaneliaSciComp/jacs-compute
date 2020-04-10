@@ -11,6 +11,7 @@ import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.*;
 import org.janelia.model.service.JacsServiceData;
@@ -46,19 +47,19 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
     }
 
     private final WrappedServiceProcessor<ColorDepthFileSearch, List<File>> colorDepthFileSearch;
-    private final LegacyDomainDao dao;
+    private final LegacyDomainDao legacyDomainDao;
 
     @Inject
     ColorDepthObjectSearch(ServiceComputationFactory computationFactory,
                            JacsServiceDataPersistence jacsServiceDataPersistence,
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                           LegacyDomainDao dao,
+                           LegacyDomainDao legacyDomainDao,
                            @IntPropertyValue(name = "service.colorDepthSearch.minNodes", defaultValue = 1) Integer minNodes,
                            @IntPropertyValue(name = "service.colorDepthSearch.maxNodes", defaultValue = 8) Integer maxNodes,
                            ColorDepthFileSearch colorDepthFileSearch,
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
-        this.dao = dao;
+        this.legacyDomainDao = legacyDomainDao;
         this.minNodes = minNodes;
         this.maxNodes = maxNodes;
         this.colorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, colorDepthFileSearch);
@@ -91,10 +92,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         Stopwatch sparkAppWatch = Stopwatch.createStarted();
         logger.info("Executing ColorDepthSearch#{} with ColorDepthMask#{}", args.searchId, args.maskId);
 
-        ColorDepthSearch search = dao.getDomainObject(jacsServiceData.getOwnerKey(),
+        ColorDepthSearch search = legacyDomainDao.getDomainObject(jacsServiceData.getOwnerKey(),
                 ColorDepthSearch.class, args.searchId);
 
-        if (search==null) {
+        if (search == null) {
             throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" not found");
         }
 
@@ -102,7 +103,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
             throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" has no libraries defined");
         }
 
-        List<ColorDepthMask> masks = dao.getDomainObjectsAs(search.getMasks(), ColorDepthMask.class);
+        List<ColorDepthMask> masks = legacyDomainDao.getDomainObjectsAs(search.getMasks(), ColorDepthMask.class);
 
         if (masks.isEmpty()) {
             throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" has no masks defined");
@@ -117,7 +118,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
             if (args.runMasksWithoutResults) {
                 Set<Long> masksWithoutResults =
                         search.getMasks().stream().map(Reference::getTargetId).collect(Collectors.toSet());
-                for (ColorDepthResult result : dao.getDomainObjectsAs(search.getResults(), ColorDepthResult.class)) {
+                for (ColorDepthResult result : legacyDomainDao.getDomainObjectsAs(search.getResults(), ColorDepthResult.class)) {
                     for (ColorDepthMaskResult maskResult : result.getMaskResults()) {
                         masksWithoutResults.remove(maskResult.getMaskRef().getTargetId());
                     }
@@ -150,7 +151,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
         int totalFileCount = 0;
         for (String libraryIdentifier : search.getLibraries()) {
-            List<String> colorDepthPaths = dao.getColorDepthPaths(jacsServiceData.getOwnerKey(), libraryIdentifier, search.getAlignmentSpace());
+            List<String> colorDepthPaths = legacyDomainDao.getColorDepthPaths(jacsServiceData.getOwnerKey(), libraryIdentifier, search.getAlignmentSpace());
             pathsToSearch.addAll(colorDepthPaths);
             totalFileCount += colorDepthPaths.size();
         }
@@ -169,8 +170,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         File colorDepthPaths = workingDirectory.getServiceFolder().resolve("colorDepthPaths.txt").toFile();
         try {
             FileUtils.writeLines(colorDepthPaths, pathsToSearch);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new ComputationException(jacsServiceData, e);
         }
 
@@ -240,11 +240,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                 double scorePct = Double.parseDouble(s[c++].trim());
                                 String filepath = s[c].trim();
 
-                                ColorDepthImage colorDepthImageByPath = dao.getColorDepthImageByPath(jacsServiceData.getOwnerKey(), filepath);
-                                if (colorDepthImageByPath==null) {
+                                ColorDepthImage colorDepthImageByPath = legacyDomainDao.getColorDepthImageByPath(jacsServiceData.getOwnerKey(), filepath);
+                                if (colorDepthImageByPath == null) {
                                     throw new IllegalStateException("Could not find result file in database:"+ filepath);
-                                }
-                                else {
+                                } else {
                                     ColorDepthMatch match = new ColorDepthMatch();
                                     match.setImageRef(Reference.createFor(colorDepthImageByPath));
                                     match.setScore(score);
@@ -259,15 +258,14 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                             }
 
                             colorDepthResult.getMaskResults().add(maskResult);
-                        }
-                        catch (IOException e) {
+                        } catch (IOException e) {
                             throw new ComputationException(jacsServiceData, e);
                         }
                     }
 
-                    colorDepthResult = dao.save(jacsServiceData.getOwnerKey(), colorDepthResult);
+                    colorDepthResult = legacyDomainDao.save(jacsServiceData.getOwnerKey(), colorDepthResult);
                     logger.info("Saved {}", colorDepthResult);
-                    dao.addColorDepthSearchResult(jacsServiceData.getOwnerKey(), search.getId(), colorDepthResult);
+                    legacyDomainDao.addColorDepthSearchResult(jacsServiceData.getOwnerKey(), search.getId(), colorDepthResult);
                     logger.info("Updated ColorDepthSearch#{} with new result", search.getId());
 
                     long seconds = sparkAppWatch.stop().elapsed().getSeconds();
