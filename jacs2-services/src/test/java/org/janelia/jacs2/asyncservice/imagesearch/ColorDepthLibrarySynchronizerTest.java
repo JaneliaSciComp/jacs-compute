@@ -7,6 +7,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -35,6 +37,7 @@ import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.sample.LineRelease;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
@@ -45,6 +48,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -101,7 +105,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
         Map<String, String[]> testFileNames = ImmutableMap.of(
-                testLib, new String[] {
+                testLib, new String[]{
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png",
                         // the next 2 file correspond to the same sample ID but they have different sample name so only 1 set of these two will survive
@@ -160,7 +164,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
         Map<String, String[]> testFileNames = ImmutableMap.of(
-                testLib, new String[] {
+                testLib, new String[]{
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png",
                         // the next 2 file correspond to the same sample ID but they have different sample name so only 1 set of these two will survive
@@ -220,7 +224,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
         Map<String, String[]> testFileNames = ImmutableMap.of(
-                testLib, new String[] {
+                testLib, new String[]{
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png",
                         // the next 2 file correspond to the same sample ID but they have different sample name so only 1 set of these two will survive
@@ -279,19 +283,19 @@ public class ColorDepthLibrarySynchronizerTest {
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
         Map<String, String[]> testLibsWithFiles = ImmutableMap.of(
-                testLib, new String[] {
+                testLib, new String[]{
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1_CDM.png",
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2_CDM.png"
                 },
-                testLib + "/ver1", new String[] {
+                testLib + "/ver1", new String[]{
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1-ver1_CDM.png",
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2-ver1_CDM.png"
                 },
-                testLib + "/ver1/ver1_1", new String[] {
+                testLib + "/ver1/ver1_1", new String[]{
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1-ver1-ver1_1_CDM.png",
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2-ver1-ver1_1_CDM.png"
                 },
-                testLib + "/ver2", new String[] {
+                testLib + "/ver2", new String[]{
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH1-ver2_CDM.png",
                         "GMR_83B04_AE_01-20190423_63_B1-40x-Brain-JRC2018_Unisex_20x_HR-2663179940551196770-CH2-ver2_CDM.png"
                 }
@@ -365,7 +369,6 @@ public class ColorDepthLibrarySynchronizerTest {
         JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
                 .addArgs("-alignmentSpace", testAlignmentSpace)
                 .addArgs("-library", testLib)
-                .addArgs("-skipPublishedDiscovery")
                 .setName("colorDepthLibrarySync")
                 .build();
         testServiceData.setId(TEST_SERVICE_ID);
@@ -431,7 +434,93 @@ public class ColorDepthLibrarySynchronizerTest {
                         Collectors.collectingAndThen(
                                 Collectors.toSet(),
                                 sampleRefs -> colorDepthImageDao.addLibraryBySampleRefs(testIdentifier, sampleRefs))));
-        Assert.assertEquals(120/25 + 1, results.size());
+        Assert.assertEquals(120 / 25 + 1, results.size());
         Mockito.verify(colorDepthImageDao, Mockito.times(results.size())).addLibraryBySampleRefs(eq(testIdentifier), anySet());
     }
+
+    @Test
+    public void discoverLibrariesByReleases() {
+        JacsServiceData testService = createReleaseSyncOnlyServiceData();
+
+        Mockito.when(lineReleaseDao.findAll(0, -1))
+                .thenReturn(ImmutableList.of(
+                        createLineRelease(1L, "site 1",
+                                Arrays.asList(Reference.createFor("Sample#1"), Reference.createFor("Sample#2"), Reference.createFor("Sample#3"))),
+                        createLineRelease(2L, "site 2",
+                                Arrays.asList(Reference.createFor("Sample#4"), Reference.createFor("Sample#5"), Reference.createFor("Sample#6"))),
+                        createLineRelease(3L, "site 1",
+                                Arrays.asList(Reference.createFor("Sample#7"), Reference.createFor("Sample#8"), Reference.createFor("Sample#9")))
+                ));
+        Mockito.when(colorDepthImageDao.addLibraryBySampleRefs(
+                "flylight_site_1_published",
+                ImmutableSet.of(
+                        Reference.createFor("Sample#1"), Reference.createFor("Sample#2"), Reference.createFor("Sample#3"),
+                        Reference.createFor("Sample#7"), Reference.createFor("Sample#8"), Reference.createFor("Sample#9")
+                )))
+                .then((Answer<Long>) invocation -> {
+                    Collection<Reference> refs = invocation.getArgument(1);
+                    return (long) refs.size();
+                });
+        Mockito.when(colorDepthImageDao.addLibraryBySampleRefs(
+                "flylight_site_2_published",
+                ImmutableSet.of(
+                        Reference.createFor("Sample#4"), Reference.createFor("Sample#5"), Reference.createFor("Sample#6")
+                )))
+                .then((Answer<Long>) invocation -> {
+                    Collection<Reference> refs = invocation.getArgument(1);
+                    return (long) refs.size();
+                });
+        ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
+                jacsServiceDataPersistence,
+                TEST_WORKING_DIR,
+                testDirectory.resolve("").toString(),
+                legacyDao,
+                colorDepthImageDao,
+                lineReleaseDao,
+                jacsNotificationDao,
+                logger);
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
+        colorDepthLibrarySynchronizer.process(testService)
+                .thenApply(r -> {
+                    successful.accept(r);
+                    try {
+                        Mockito.verify(legacyDao, Mockito.times(2)).save(ArgumentMatchers.argThat(arg -> true), ArgumentMatchers.any(ColorDepthLibrary.class));
+                        Mockito.verify(colorDepthImageDao).countColorDepthMIPsByAlignmentSpaceForLibrary("flylight_site_1_published");
+                        Mockito.verify(colorDepthImageDao).countColorDepthMIPsByAlignmentSpaceForLibrary("flylight_site_2_published");
+                    } catch (Exception e) {
+                        Assert.fail(e.toString());
+                    }
+                    // 2 existing samples had the same sample id but different name so they should have been deleted
+                    Mockito.verify(legacyDao, Mockito.never()).deleteDomainObject(isNull(), eq(ColorDepthImage.class), anyLong());
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    failure.accept(exc);
+                    Assert.fail(exc.toString());
+                    return null;
+                });
+
+    }
+
+    private LineRelease createLineRelease(Long id, String site, List<Reference> sampleRefs) {
+        LineRelease lr = new LineRelease();
+        lr.setId(id);
+        lr.setTargetWebsite(site);
+        sampleRefs.forEach(lr::addChild);
+        return lr;
+    }
+
+    private JacsServiceData createReleaseSyncOnlyServiceData() {
+        JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
+                .addArgs("-skipFileDiscovery")
+                .addArgs("-includePublishedDiscovery")
+                .setName("colorDepthLibrarySync")
+                .build();
+        testServiceData.setId(TEST_SERVICE_ID);
+        return testServiceData;
+    }
+
 }

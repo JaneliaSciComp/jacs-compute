@@ -4,7 +4,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -65,8 +64,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         String library;
         @Parameter(names = "-skipFileDiscovery", description = "If set skips the file system based discovery", arity = 0)
         boolean skipFileSystemDiscovery = false;
-        @Parameter(names = "-skipPublishedDiscovery", description = "If set skips the published based discovery", arity = 0)
-        boolean skipPublishedDiscovery = false;
+        @Parameter(names = "-includePublishedDiscovery", description = "If set also perform the published based discovery", arity = 0)
+        boolean includePublishedDiscovery = false;
         @Parameter(names = "-publishedCollections", description = "list of release names", variableArity = true)
         List<String> publishedCollections;
         @Parameter(names = "-publishingSites", description = "list of publishing web sites", variableArity = true)
@@ -125,7 +124,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
 
         if (!args.skipFileSystemDiscovery) runFileSystemBasedDiscovery(args, indexedLibraries);
-        if (!args.skipPublishedDiscovery) runPublishedLinesBasedDiscovery(args, indexedLibraries);
+        if (args.includePublishedDiscovery) runPublishedLinesBasedDiscovery(args, indexedLibraries);
 
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
     }
