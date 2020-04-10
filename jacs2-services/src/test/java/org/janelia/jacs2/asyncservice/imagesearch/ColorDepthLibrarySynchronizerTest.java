@@ -11,9 +11,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
@@ -28,8 +30,12 @@ import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageDao;
+import org.janelia.model.access.domain.dao.LineReleaseDao;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.AfterClass;
@@ -42,6 +48,7 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -57,6 +64,8 @@ public class ColorDepthLibrarySynchronizerTest {
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private JacsNotificationDao jacsNotificationDao;
     private LegacyDomainDao legacyDao;
+    private ColorDepthImageDao colorDepthImageDao;
+    private LineReleaseDao lineReleaseDao;
     private Logger logger;
 
     @BeforeClass
@@ -74,7 +83,9 @@ public class ColorDepthLibrarySynchronizerTest {
         logger = mock(Logger.class);
         serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        colorDepthImageDao = mock(ColorDepthImageDao.class);
         legacyDao = mock(LegacyDomainDao.class);
+        lineReleaseDao = mock(LineReleaseDao.class);
         jacsNotificationDao = mock(JacsNotificationDao.class);
     }
 
@@ -84,7 +95,7 @@ public class ColorDepthLibrarySynchronizerTest {
         String testAlignmentSpace = "testAlignment";
         String testLib = "testLib";
 
-        JacsServiceData testService = createTestServiceData(testAlignmentSpace, testLib);
+        JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
 
         Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
@@ -110,6 +121,8 @@ public class ColorDepthLibrarySynchronizerTest {
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
                 legacyDao,
+                colorDepthImageDao,
+                lineReleaseDao,
                 jacsNotificationDao,
                 logger);
 
@@ -141,7 +154,7 @@ public class ColorDepthLibrarySynchronizerTest {
         String testContext = "checkColorDepthMIPsCreatedWhenNewerRenamedSamplesAdded";
         String testAlignmentSpace = "testAlignment";
         String testLib = "testLib";
-        JacsServiceData testService = createTestServiceData(testAlignmentSpace, testLib);
+        JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
 
         Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
@@ -168,6 +181,8 @@ public class ColorDepthLibrarySynchronizerTest {
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
                 legacyDao,
+                colorDepthImageDao,
+                lineReleaseDao,
                 jacsNotificationDao,
                 logger);
 
@@ -199,7 +214,7 @@ public class ColorDepthLibrarySynchronizerTest {
         String testContext = "checkColorDepthMIPsCreatedWhenOlderRenamedSampleFilesExist";
         String testAlignmentSpace = "testAlignment";
         String testLib = "testLib";
-        JacsServiceData testService = createTestServiceData(testAlignmentSpace, testLib);
+        JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
 
         Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
@@ -225,6 +240,8 @@ public class ColorDepthLibrarySynchronizerTest {
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
                 legacyDao,
+                colorDepthImageDao,
+                lineReleaseDao,
                 jacsNotificationDao,
                 logger);
 
@@ -256,7 +273,7 @@ public class ColorDepthLibrarySynchronizerTest {
         String testContext = "createColorDepthLibraryVersion";
         String testAlignmentSpace = "testAlignment";
         String testLib = "testLib";
-        JacsServiceData testService = createTestServiceData(testAlignmentSpace, testLib);
+        JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
 
         Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
@@ -308,6 +325,8 @@ public class ColorDepthLibrarySynchronizerTest {
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
                 legacyDao,
+                colorDepthImageDao,
+                lineReleaseDao,
                 jacsNotificationDao,
                 logger);
 
@@ -342,10 +361,11 @@ public class ColorDepthLibrarySynchronizerTest {
         return cdLib;
     }
 
-    private JacsServiceData createTestServiceData(String testAlignmentSpace, String testLib) {
+    private JacsServiceData createFSSyncOnlyServiceData(String testAlignmentSpace, String testLib) {
         JacsServiceData testServiceData = new JacsServiceDataBuilder(null)
                 .addArgs("-alignmentSpace", testAlignmentSpace)
                 .addArgs("-library", testLib)
+                .addArgs("-skipPublishedDiscovery")
                 .setName("colorDepthLibrarySync")
                 .build();
         testServiceData.setId(TEST_SERVICE_ID);
@@ -393,5 +413,25 @@ public class ColorDepthLibrarySynchronizerTest {
                 })
                 .map(File::getAbsolutePath)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Test for partitioning algorithm used for library discovery based on release
+     */
+    @Test
+    public void simplePartitioning() {
+        List<Reference> testData = LongStream.rangeClosed(1, 120)
+                .mapToObj(i -> Reference.createFor(Sample.class, i))
+                .collect(Collectors.toList());
+        String testIdentifier = "testlib";
+        AtomicInteger counter = new AtomicInteger();
+        Map<Integer, Long> results = testData.stream()
+                .collect(Collectors.groupingBy(
+                        ref -> counter.getAndIncrement() / 25,
+                        Collectors.collectingAndThen(
+                                Collectors.toSet(),
+                                sampleRefs -> colorDepthImageDao.addLibraryBySampleRefs(testIdentifier, sampleRefs))));
+        Assert.assertEquals(120/25 + 1, results.size());
+        Mockito.verify(colorDepthImageDao, Mockito.times(results.size())).addLibraryBySampleRefs(eq(testIdentifier), anySet());
     }
 }

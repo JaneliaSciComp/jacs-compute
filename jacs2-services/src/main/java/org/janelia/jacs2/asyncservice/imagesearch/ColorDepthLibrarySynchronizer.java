@@ -4,9 +4,12 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -16,6 +19,7 @@ import javax.inject.Named;
 
 import com.beust.jcommander.Parameter;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
@@ -28,11 +32,14 @@ import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageDao;
+import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthFileComponents;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 import org.janelia.model.domain.sample.DataSet;
+import org.janelia.model.domain.sample.LineRelease;
 import org.janelia.model.security.Subject;
 import org.janelia.model.service.JacsNotification;
 import org.janelia.model.service.JacsServiceData;
@@ -56,10 +63,14 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         String alignmentSpace;
         @Parameter(names = "-library", description = "Library identifier")
         String library;
-        @Parameter(names = "-skipFileDiscovery", description = "If set skips the file system based discovery", arity = 1)
+        @Parameter(names = "-skipFileDiscovery", description = "If set skips the file system based discovery", arity = 0)
         boolean skipFileSystemDiscovery = false;
-        @Parameter(names = "-skipPublishedDiscovery", description = "If set skips the published based discovery", arity = 1)
+        @Parameter(names = "-skipPublishedDiscovery", description = "If set skips the published based discovery", arity = 0)
         boolean skipPublishedDiscovery = false;
+        @Parameter(names = "-publishedCollections", description = "list of release names", variableArity = true)
+        List<String> publishedCollections;
+        @Parameter(names = "-publishingSites", description = "list of publishing web sites", variableArity = true)
+        List<String> publishingSites;
 
         SyncArgs() {
             super("Color depth library synchronization");
@@ -67,7 +78,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private final Path rootPath;
-    private final LegacyDomainDao dao;
+    private final LegacyDomainDao legacyDomainDao;
+    private final ColorDepthImageDao colorDepthImageDao;
+    private final LineReleaseDao lineReleaseDao;
     private final JacsNotificationDao jacsNotificationDao;
     private int existing = 0;
     private int created = 0;
@@ -80,12 +93,16 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                   JacsServiceDataPersistence jacsServiceDataPersistence,
                                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                   @StrPropertyValue(name = "service.colorDepthSearch.filepath") String rootPath,
-                                  LegacyDomainDao dao,
+                                  LegacyDomainDao legacyDomainDao,
+                                  ColorDepthImageDao colorDepthImageDao,
+                                  LineReleaseDao lineReleaseDao,
                                   JacsNotificationDao jacsNotificationDao,
                                   Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.rootPath = Paths.get(rootPath);
-        this.dao = dao;
+        this.legacyDomainDao = legacyDomainDao;
+        this.colorDepthImageDao = colorDepthImageDao;
+        this.lineReleaseDao = lineReleaseDao;
         this.jacsNotificationDao = jacsNotificationDao;
     }
 
@@ -100,8 +117,15 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         logCDLibSyncMaintenanceEvent(jacsServiceData.getId());
 
         SyncArgs args = getArgs(jacsServiceData);
-        if (!args.skipFileSystemDiscovery) runFileSystemBasedDiscovery(args);
-        if (!args.skipPublishedDiscovery) runPublishedLinesBasedDiscovery(args);
+
+        // Get currently existing libraries
+        Map<String, ColorDepthLibrary> indexedLibraries = legacyDomainDao.getDomainObjects(null, ColorDepthLibrary.class).stream()
+                .filter(cdl -> StringUtils.isBlank(args.library) || StringUtils.equalsIgnoreCase(args.library, cdl.getIdentifier()))
+                .collect(Collectors.toMap(ColorDepthLibrary::getIdentifier, Function.identity()));
+
+
+        if (!args.skipFileSystemDiscovery) runFileSystemBasedDiscovery(args, indexedLibraries);
+        if (!args.skipPublishedDiscovery) runPublishedLinesBasedDiscovery(args, indexedLibraries);
 
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
     }
@@ -118,15 +142,10 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SyncArgs());
     }
 
-    private void runFileSystemBasedDiscovery(SyncArgs args) {
+    private void runFileSystemBasedDiscovery(SyncArgs args, Map<String, ColorDepthLibrary> indexedLibraries) {
         logger.info("Running discovery with parameters:");
         logger.info("  alignmentSpace={}", args.alignmentSpace);
         logger.info("  library={}", args.library);
-
-        // Get currently existing libraries
-        Map<String, ColorDepthLibrary> indexedLibraries = dao.getDomainObjects(null, ColorDepthLibrary.class).stream()
-                .filter(cdl -> StringUtils.isBlank(args.library) || StringUtils.equalsIgnoreCase(args.library, cdl.getIdentifier()))
-                .collect(Collectors.toMap(ColorDepthLibrary::getIdentifier, Function.identity()));
 
         // Walk the relevant alignment directories
         walkChildDirs(rootPath.toFile())
@@ -138,7 +157,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         // It's necessary to recalculate all the counts here, because some color depth images may be part of constructed
         // libraries which are not represented explicitly on disk.
         try {
-            dao.updateColorDepthCounts(dao.getColorDepthCounts());
+            legacyDomainDao.updateColorDepthCounts(legacyDomainDao.getColorDepthCounts());
         } catch (Exception e) {
            logger.error("Failed to update color depth counts", e);
         }
@@ -161,8 +180,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             library = indexedLibraries.get(libraryIdentifier);
         }
 
-        created = 0;
-        deleted = 0;
         processLibraryFiles(libraryDir, alignmentSpace, library);
 
         logger.info("  Verified {} existing images, created {} images", existing, created);
@@ -175,7 +192,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             // If the library exists already, or should be created
             library.getColorDepthCounts().put(alignmentSpace, total);
             try {
-                indexedLibraries.put(libraryIdentifier, dao.save(library.getOwnerKey(), library));
+                indexedLibraries.put(libraryIdentifier, legacyDomainDao.save(library.getOwnerKey(), library));
                 logger.debug("  Saved color depth library {} with count {}", libraryIdentifier, total);
             } catch (Exception e) {
                 logger.error("Could not update library file counts for: {}", libraryIdentifier, e);
@@ -206,7 +223,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         library.setVersion(libraryVersion);
         library.setParentLibraryRef(parentLibrary == null ? null : Reference.createFor(parentLibrary));
 
-        DataSet dataSet = dao.getDataSetByIdentifier(null, libraryIdentifier);
+        DataSet dataSet = legacyDomainDao.getDataSetByIdentifier(null, libraryIdentifier);
         if (dataSet != null) {
             // Copy permissions from corresponding data set
             library.setOwnerKey(dataSet.getOwnerKey());
@@ -214,7 +231,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             library.setWriters(dataSet.getWriters());
         } else {
             String ownerName = libraryIdentifier.split("_")[0];
-            Subject subject = dao.getSubjectByName(ownerName);
+            Subject subject = legacyDomainDao.getSubjectByName(ownerName);
             if (subject != null) {
                 logger.warn("No corresponding data set found. Falling back on owner encoded in library identifier: {}", subject.getKey());
                 library.setOwnerKey(subject.getKey());
@@ -232,7 +249,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         this.created = 0;
         this.deleted = 0;
 
-        Map<String, Set<ColorDepthFileComponents>> existingColorDepthFiles = dao.getColorDepthPaths(null, library.getIdentifier(), alignmentSpace).stream()
+        Map<String, Set<ColorDepthFileComponents>> existingColorDepthFiles = legacyDomainDao.getColorDepthPaths(null, library.getIdentifier(), alignmentSpace).stream()
                 .map(this::parseColorDepthFileComponents)
                 .collect(Collectors.groupingBy(cdf -> {
                     if (cdf.getSampleRef() == null) {
@@ -323,7 +340,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 });
 
         // this post phase is for the case when files are already in the library and cleanup is needed.
-        dao.getColorDepthPaths(null, library.getIdentifier(), alignmentSpace).stream()
+        legacyDomainDao.getColorDepthPaths(null, library.getIdentifier(), alignmentSpace).stream()
                 .map(filepath -> parseColorDepthFileComponents(filepath))
                 .filter(cdf -> cdf.getSampleRef() != null)
                 .collect(Collectors.groupingBy(cdf -> cdf.getSampleRef().getTargetId().toString(), Collectors.toSet()))
@@ -421,7 +438,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 if (sourceMIPFileName == null) {
                     logger.warn("Invalid source MIP file name - no file found for {} in {} folder", sourceCDMName, libraryDir);
                 } else {
-                    ColorDepthImage sourceImage = dao.getColorDepthImageByPath(null, sourceMIPFileName);
+                    ColorDepthImage sourceImage = legacyDomainDao.getColorDepthImageByPath(null, sourceMIPFileName);
                     if (sourceImage != null) {
                         image.setSourceImageRef(Reference.createFor(sourceImage));
                     } else {
@@ -429,7 +446,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 }
             }
-            dao.save(library.getOwnerKey(), image);
+            legacyDomainDao.save(library.getOwnerKey(), image);
             return true;
         } catch (Exception e) {
             logger.warn("  Could not create image for: {}", colorDepthImageFileComponents.getFile());
@@ -438,9 +455,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private boolean deleteColorDepthImage(ColorDepthFileComponents cdc) {
-        ColorDepthImage colorDepthImage = dao.getColorDepthImageByPath(null, cdc.getFile().getAbsolutePath());
+        ColorDepthImage colorDepthImage = legacyDomainDao.getColorDepthImageByPath(null, cdc.getFile().getAbsolutePath());
         if (colorDepthImage != null) {
-            dao.deleteDomainObject(null, colorDepthImage.getClass(), colorDepthImage.getId());
+            legacyDomainDao.deleteDomainObject(null, colorDepthImage.getClass(), colorDepthImage.getId());
             return true;
         } else {
             return false;
@@ -450,7 +467,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private ColorDepthLibrary findSourceLibrary(ColorDepthLibrary l) {
         ColorDepthLibrary sourceLibrary = null;
         for (ColorDepthLibrary currentLibrary = l; currentLibrary.hasVersion(); ) {
-            ColorDepthLibrary parentLibrary = dao.getDomainObject(null, ColorDepthLibrary.class, currentLibrary.getParentLibraryRef().getTargetId());
+            ColorDepthLibrary parentLibrary = legacyDomainDao.getDomainObject(null, ColorDepthLibrary.class, currentLibrary.getParentLibraryRef().getTargetId());
             if (parentLibrary == null) {
                 logger.error("Invalid parent library reference in {} -> {}", currentLibrary, currentLibrary.getParentLibraryRef());
                 throw new IllegalArgumentException("Invalid parent library reference " + currentLibrary.getParentLibraryRef() + " in " + currentLibrary);
@@ -469,8 +486,70 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return ColorDepthFileComponents.fromFilepath(filepath);
     }
 
-    private void runPublishedLinesBasedDiscovery(SyncArgs args) {
+    private void runPublishedLinesBasedDiscovery(SyncArgs args, Map<String, ColorDepthLibrary> indexedLibraries) {
+        Map<String, List<LineRelease>> releasesByWebsite = retrieveLineReleases(args.publishedCollections, args.publishingSites);
+        releasesByWebsite
+                .forEach((site, releases) -> {
+                    String libraryIdentifier = "flylight_" + site.toLowerCase().replace(' ', '_') + "_published";
+                    ColorDepthLibrary library;
+                    boolean libraryCreated;
+                    if (indexedLibraries.get(libraryIdentifier) == null) {
+                        library = createLibraryForPublishedRelease(libraryIdentifier);
+                        libraryCreated = true;
+                    } else {
+                        library = indexedLibraries.get(libraryIdentifier);
+                        libraryCreated = false;
+                    }
+                    boolean libraryUpdated = releases.stream().map(lr -> library.addReaders(lr.getReaders()) ||
+                            library.addWriters(lr.getWriters()) ||
+                            library.addSourceRelease(Reference.createFor(lr)))
+                            .reduce(false, (r1, r2) -> r1 || r2) && !libraryCreated;
+
+                    AtomicInteger counter = new AtomicInteger();
+                    long updatedMips = releases.stream()
+                            .flatMap(lr -> lr.getChildren().stream())
+                            .collect(Collectors.groupingBy(
+                                    ref -> counter.getAndIncrement() / 10000,
+                                    Collectors.collectingAndThen(
+                                            Collectors.toSet(),
+                                            sampleRefs -> colorDepthImageDao.addLibraryBySampleRefs(libraryIdentifier, sampleRefs))))
+                            .entrySet().stream()
+                            .map(Map.Entry::getValue)
+                            .reduce(0L, (v1, v2) -> v1 + v2)
+                            ;
+                    if (libraryCreated && updatedMips > 0 || libraryUpdated) {
+                        if (updatedMips > 0) {
+                            library.setColorDepthCounts(
+                                    colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForLibrary(libraryIdentifier)
+                            );
+                        }
+                        try {
+                            legacyDomainDao.save(library.getOwnerKey(), library);
+                        } catch (Exception e) {
+                            logger.error("Could not update library file counts for: {}", libraryIdentifier, e);
+                        }
+                    }
+                });
     }
 
+    private ColorDepthLibrary createLibraryForPublishedRelease(String libraryIdentifier) {
+        ColorDepthLibrary library = new ColorDepthLibrary();
+        library.setIdentifier(libraryIdentifier);
+        library.setName(libraryIdentifier);
+        library.setOwnerKey(DEFAULT_OWNER);
+        return library;
+    }
+
+    private Map<String, List<LineRelease>> retrieveLineReleases(List<String> releaseNames, List<String> publishingSites) {
+        List<LineRelease> lineReleases;
+        if (CollectionUtils.isEmpty(releaseNames) && CollectionUtils.isEmpty(publishingSites)) {
+            lineReleases = lineReleaseDao.findAll(0, -1);
+        } else if (CollectionUtils.isNotEmpty(releaseNames)) {
+            lineReleases = lineReleaseDao.findReleasesByName(releaseNames);
+        } else {
+            lineReleases = lineReleaseDao.findReleasesByPublishingSites(publishingSites);
+        }
+        return lineReleases.stream().collect(Collectors.groupingBy(LineRelease::getTargetWebsite, Collectors.toList()));
+    }
 
 }

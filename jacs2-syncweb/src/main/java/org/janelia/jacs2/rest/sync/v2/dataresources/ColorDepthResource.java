@@ -137,6 +137,26 @@ public class ColorDepthResource {
         }
     }
 
+    @ApiOperation(value = "Counts all color depth mips per alignment space for the given library")
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully fetched the color depth mips count",  response =  Map.class,
+                    responseContainer = "Map" ),
+            @ApiResponse( code = 500, message = "Internal Server Error counting the color depth mips" )
+    })
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @Path("colorDepthMIPsCountPerAlignmentSpace")
+    public Response countColorDepthMipsPerAlignmentSpaceByLibrary(@ApiParam @QueryParam("libraryName") String libraryName) {
+        LOG.trace("Start countColorDepthMipsPerAlignmentSpaceByLibrary({})", libraryName);
+        try {
+            return Response
+                    .ok(colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForLibrary(libraryName))
+                    .build();
+        } finally {
+            LOG.trace("Finished countColorDepthMipsPerAlignmentSpaceByLibrary({})", libraryName);
+        }
+    }
+
     @ApiOperation(value = "Gets all color depth mips that match the given parameters")
     @ApiResponses(value = {
             @ApiResponse( code = 200, message = "Successfully fetched the list of color depth mips",  response = ColorDepthImage.class,
