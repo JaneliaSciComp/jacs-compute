@@ -11,7 +11,6 @@ import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.*;
 import org.janelia.model.service.JacsServiceData;
@@ -216,7 +215,6 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                     colorDepthResult.setParameters(searchParameters);
 
                     for (File resultsFile : result.getResult()) {
-
                         logger.info("Processing result file: {}", resultsFile);
 
                         String maskFile;
@@ -240,16 +238,12 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                 double scorePct = Double.parseDouble(s[c++].trim());
                                 String filepath = s[c].trim();
 
-                                ColorDepthImage colorDepthImageByPath = legacyDomainDao.getColorDepthImageByPath(jacsServiceData.getOwnerKey(), filepath);
-                                if (colorDepthImageByPath == null) {
-                                    throw new IllegalStateException("Could not find result file in database:"+ filepath);
-                                } else {
-                                    ColorDepthMatch match = new ColorDepthMatch();
-                                    match.setImageRef(Reference.createFor(colorDepthImageByPath));
-                                    match.setScore(score);
-                                    match.setScorePercent(scorePct);
-                                    maskResult.addMatch(match);
-                                }
+                                ColorDepthImage sourceColorDepthImage = getSourceColorDepthImage(jacsServiceData.getOwnerKey(), filepath);
+                                ColorDepthMatch match = new ColorDepthMatch();
+                                match.setImageRef(Reference.createFor(sourceColorDepthImage));
+                                match.setScore(score);
+                                match.setScorePercent(scorePct);
+                                maskResult.addMatch(match);
 
                                 if (++i>=maxResultsPerMask) {
                                     logger.warn("Too many results returned, truncating at {}", maxResultsPerMask);
@@ -277,6 +271,24 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
 
                 return new JacsServiceResult<>(jacsServiceData, Boolean.TRUE);
         });
+    }
+
+    private ColorDepthImage getSourceColorDepthImage(String ownerKey, String filepath) {
+        ColorDepthImage colorDepthImage = legacyDomainDao.getColorDepthImageByPath(ownerKey, filepath);
+        if (colorDepthImage == null) {
+            throw new IllegalStateException("Could not find result file in database:"+ filepath);
+        }
+        ColorDepthImage sourceImage;
+        if (colorDepthImage.getSourceImageRef() != null) {
+            sourceImage = legacyDomainDao.getDomainObject(ownerKey, ColorDepthImage.class, colorDepthImage.getSourceImageRef().getTargetId());
+            if (sourceImage == null) {
+                throw new IllegalStateException("Could not find source image " + colorDepthImage.getSourceImageRef() + " referenced by " + colorDepthImage +
+                        " while retrieving the color depth image entity for path " + filepath);
+            }
+        } else {
+            sourceImage = null;
+        }
+        return sourceImage == null ? colorDepthImage : sourceImage;
     }
 
     private IntegratedColorDepthSearchArgs getArgs(JacsServiceData jacsServiceData) {
