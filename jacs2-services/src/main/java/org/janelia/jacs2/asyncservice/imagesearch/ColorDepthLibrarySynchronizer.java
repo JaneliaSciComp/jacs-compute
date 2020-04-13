@@ -448,7 +448,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             legacyDomainDao.save(library.getOwnerKey(), image);
             return true;
         } catch (Exception e) {
-            logger.warn("  Could not create image for: {}", colorDepthImageFileComponents.getFile());
+            logger.warn("  Could not create image for: {}", colorDepthImageFileComponents.getFile(), e);
         }
         return false;
     }
