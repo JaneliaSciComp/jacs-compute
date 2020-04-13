@@ -60,7 +60,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     static class SyncArgs extends ServiceArgs {
         @Parameter(names = "-alignmentSpace", description = "Alignment space")
         String alignmentSpace;
-        @Parameter(names = "-library", description = "Library identifier")
+        @Parameter(names = "-library", description = "Library identifier. This has to be a root library, not a version of some other library")
         String library;
         @Parameter(names = "-skipFileDiscovery", description = "If set skips the file system based discovery", arity = 0)
         boolean skipFileSystemDiscovery = false;
