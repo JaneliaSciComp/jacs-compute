@@ -30,11 +30,14 @@ import io.undertow.util.HeaderValues;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.model.security.util.SubjectUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Authenticated user attribute
  */
 public class AuthenticatedUserAttribute implements ExchangeAttribute {
+    private static final Logger LOG = LoggerFactory.getLogger(AuthenticatedUserAttribute.class);
 
     private static final String AUTHORIZATION_ATTRIBUTE = "Authorization";
     private static final String USERNAME_ATTRIBUTE = "Username";
@@ -70,7 +73,14 @@ public class AuthenticatedUserAttribute implements ExchangeAttribute {
                                             return Optional.empty();
                                         }
                                         // take only the payload and decode it
-                                        Claims body = Jwts.parser().parseClaimsJwt("." + token.split("\\.")[1] + ".").getBody();
+                                        String claimsPayload =  token.split("\\.")[1];
+                                        Claims body;
+                                        try {
+                                            body = Jwts.parser().parseClaimsJwt("." + claimsPayload + ".").getBody();
+                                        } catch (Exception e) {
+                                            LOG.error("Error get JWT claims from {} -> {}", claimsPayload, e.getMessage());
+                                            return Optional.empty();
+                                        }
                                         // then try to get the username from the claims body
                                         Object usernameClaim = body.get(JWTProvider.USERNAME_CLAIM);
                                         if (usernameClaim != null) {
