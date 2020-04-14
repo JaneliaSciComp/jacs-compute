@@ -29,6 +29,7 @@ import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
@@ -93,7 +94,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                   @StrPropertyValue(name = "service.colorDepthSearch.filepath") String rootPath,
                                   LegacyDomainDao legacyDomainDao,
-                                  ColorDepthImageDao colorDepthImageDao,
+                                  @AsyncIndex ColorDepthImageDao colorDepthImageDao,
                                   LineReleaseDao lineReleaseDao,
                                   JacsNotificationDao jacsNotificationDao,
                                   Logger logger) {
