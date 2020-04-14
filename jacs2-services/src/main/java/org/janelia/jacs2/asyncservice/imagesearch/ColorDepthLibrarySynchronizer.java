@@ -216,6 +216,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private ColorDepthLibrary createNewLibrary(String libraryIdentifier, String libraryVersion, ColorDepthLibrary parentLibrary) {
+        logger.info("Create new library {} - version {}", libraryIdentifier, StringUtils.defaultIfBlank(libraryVersion, "<<NONE>>"));
         ColorDepthLibrary library = new ColorDepthLibrary();
         library.setIdentifier(libraryIdentifier);
         library.setName(libraryIdentifier);
@@ -532,6 +533,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private ColorDepthLibrary createLibraryForPublishedRelease(String libraryIdentifier) {
+        logger.info("Create library {}", libraryIdentifier);
         ColorDepthLibrary library = new ColorDepthLibrary();
         library.setIdentifier(libraryIdentifier);
         library.setName(libraryIdentifier);
