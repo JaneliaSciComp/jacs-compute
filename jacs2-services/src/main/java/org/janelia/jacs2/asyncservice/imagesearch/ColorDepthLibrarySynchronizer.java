@@ -551,7 +551,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         } else {
             lineReleases = lineReleaseDao.findReleasesByPublishingSites(publishingSites);
         }
-        return lineReleases.stream().collect(Collectors.groupingBy(LineRelease::getTargetWebsite, Collectors.toList()));
+        return lineReleases.stream()
+                .filter(lr -> StringUtils.isNotBlank(lr.getTargetWebsite()))
+                .collect(Collectors.groupingBy(LineRelease::getTargetWebsite, Collectors.toList()));
     }
 
 }
