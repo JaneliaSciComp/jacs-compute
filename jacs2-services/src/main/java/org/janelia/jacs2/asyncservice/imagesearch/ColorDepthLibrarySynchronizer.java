@@ -520,6 +520,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                             ;
                     if (libraryCreated && updatedMips > 0 || libraryUpdated) {
                         if (updatedMips > 0) {
+                            logger.info("Updated {} mips for library {}", updatedMips, libraryIdentifier);
                             library.setColorDepthCounts(
                                     colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForLibrary(libraryIdentifier)
                             );
@@ -529,6 +530,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         } catch (Exception e) {
                             logger.error("Could not update library file counts for: {}", libraryIdentifier, e);
                         }
+                    } else {
+                        logger.info("Nothing was updated for library {}", libraryIdentifier);
                     }
                 });
     }
