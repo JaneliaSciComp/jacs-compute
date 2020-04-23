@@ -233,7 +233,7 @@ public class TmResource {
         LOG.info("getWorkspaceNeuronMetadata({}, {}, {})", workspaceId, offsetParam, lengthParam);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
-            return null;
+            return Response.status(Response.Status.UNAUTHORIZED).build();
         long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
         int length = lengthParam == null || lengthParam < 0 ? -1 : lengthParam;
         try {
