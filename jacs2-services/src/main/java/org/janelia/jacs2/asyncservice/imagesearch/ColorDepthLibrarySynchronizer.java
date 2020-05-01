@@ -329,7 +329,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                                 // the current file is older than one of the existing files
                                                 // for the same objective, area and channel so simply skip this
                                                 // without incrementing the existing counter
-                                                logger.info("Skipping {} because I found {} created for the same sample {} more recently",
+                                                logger.debug("Skipping {} because I found {} created for the same sample {} more recently",
                                                         cdf.getFile(), existingCdf.getFile(), existingCdf.getSampleRef());
                                                 return false;
                                             }
@@ -350,7 +350,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
         // this post phase is for the case when files are already in the library and cleanup is needed.
         legacyDomainDao.getColorDepthPaths(null, library.getIdentifier(), alignmentSpace).stream()
-                .map(filepath -> parseColorDepthFileComponents(filepath))
+                .map(this::parseColorDepthFileComponents)
                 .filter(cdf -> cdf.getSampleRef() != null)
                 .collect(Collectors.groupingBy(cdf -> cdf.getSampleRef().getTargetId().toString(), Collectors.toSet()))
                 .entrySet()
@@ -360,8 +360,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         return false;
                     } else {
                         Set<String> sampleNames = e.getValue().stream()
-                                .map(cdfc -> cdfc.getSampleName())
-                                .filter(sn -> StringUtils.isNotBlank(sn))
+                                .map(ColorDepthFileComponents::getSampleName)
+                                .filter(StringUtils::isNotBlank)
                                 .collect(Collectors.toSet());
                         // if there are 2 or more entries with the same sample ID but different name
                         // there is something wrong and some cleanup it's needed
@@ -438,6 +438,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         colorDepthImageFileComponents.getChannelNumber(),
                         null
                 );
+                logger.debug("Lookup {} in {}", "glob:" + sourceCDMName + "*", sourceLibraryDir);
                 String sourceMIPFileName = FileUtils.lookupFiles(sourceLibraryDir, 1,
                         "glob:" + sourceCDMName + "*")
                         .filter(p -> Files.isRegularFile(p))
