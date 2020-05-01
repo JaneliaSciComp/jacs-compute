@@ -274,6 +274,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         // Walk all images within any structure
         FileUtils.lookupFiles(
                 libraryDir.toPath(), 1, "glob:**/*")
+                .parallel()
                 .filter(p -> !p.toFile().equals(libraryDir))
                 .map(Path::toFile)
                 .filter(File::isFile)
