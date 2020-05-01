@@ -219,8 +219,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         }
         logger.info("Discovering files in {}", dir);
         return FileUtils.lookupFiles(dirPath, 1, "glob:**/*")
-                .filter(p -> !p.toFile().equals(dir))
-                .filter(p -> Files.isDirectory(p)).map(Path::toFile);
+                .filter(Files::isDirectory)
+                .map(Path::toFile)
+                .filter(p -> !p.equals(dir));
     }
 
     private ColorDepthLibrary createNewLibrary(String libraryIdentifier, String libraryVersion, ColorDepthLibrary parentLibrary) {
