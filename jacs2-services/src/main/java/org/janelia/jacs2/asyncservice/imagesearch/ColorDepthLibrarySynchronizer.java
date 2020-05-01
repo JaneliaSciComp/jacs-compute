@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,6 +22,7 @@ import com.beust.jcommander.Parameter;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -32,12 +35,14 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthFileComponents;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.LineRelease;
 import org.janelia.model.security.Subject;
@@ -81,6 +86,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private final LegacyDomainDao legacyDomainDao;
     private final ColorDepthImageDao colorDepthImageDao;
     private final LineReleaseDao lineReleaseDao;
+    private final AnnotationDao annotationDao;
     private final JacsNotificationDao jacsNotificationDao;
     private int existing = 0;
     private int created = 0;
@@ -96,6 +102,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                   LegacyDomainDao legacyDomainDao,
                                   @AsyncIndex ColorDepthImageDao colorDepthImageDao,
                                   LineReleaseDao lineReleaseDao,
+                                  AnnotationDao annotationDao,
                                   JacsNotificationDao jacsNotificationDao,
                                   Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
@@ -103,6 +110,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         this.legacyDomainDao = legacyDomainDao;
         this.colorDepthImageDao = colorDepthImageDao;
         this.lineReleaseDao = lineReleaseDao;
+        this.annotationDao = annotationDao;
         this.jacsNotificationDao = jacsNotificationDao;
     }
 
@@ -420,7 +428,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             image.setChannelNumber(colorDepthImageFileComponents.getChannelNumber());
             ColorDepthLibrary sourceLibrary = findSourceLibrary(library);
             if (sourceLibrary != null) {
-                Path libraryDir = rootPath.resolve(alignmentSpace).resolve(sourceLibrary.getIdentifier());
+                Path sourceLibraryDir = rootPath.resolve(alignmentSpace).resolve(sourceLibrary.getIdentifier());
                 String sourceCDMName = ColorDepthFileComponents.createCDMName(
                         colorDepthImageFileComponents.getSampleName(),
                         colorDepthImageFileComponents.getObjective(),
@@ -430,14 +438,14 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         colorDepthImageFileComponents.getChannelNumber(),
                         null
                 );
-                String sourceMIPFileName = FileUtils.lookupFiles(libraryDir, 1,
-                        "glob:**/" + sourceCDMName + "*")
+                String sourceMIPFileName = FileUtils.lookupFiles(sourceLibraryDir, 1,
+                        "glob:" + sourceCDMName + "*")
                         .filter(p -> Files.isRegularFile(p))
                         .findFirst()
                         .map(p -> p.toString())
                         .orElse(null);
                 if (sourceMIPFileName == null) {
-                    logger.warn("Invalid source MIP file name - no file found for {} in {} folder", sourceCDMName, libraryDir);
+                    logger.warn("Invalid source MIP file name - no file found for {} in {} folder", sourceCDMName, sourceLibraryDir);
                 } else {
                     ColorDepthImage sourceImage = legacyDomainDao.getColorDepthImageByPath(null, sourceMIPFileName);
                     if (sourceImage != null) {
@@ -501,6 +509,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         library = indexedLibraries.get(libraryIdentifier);
                         libraryCreated = false;
                     }
+                    // dereference the library first from all mips
+                    colorDepthImageDao.removeAllMipsFromLibrary(libraryIdentifier);
                     boolean libraryUpdated = releases.stream().map(lr -> library.addReaders(lr.getReaders()) ||
                             library.addWriters(lr.getWriters()) ||
                             library.addSourceRelease(Reference.createFor(lr)))
@@ -513,7 +523,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                     ref -> counter.getAndIncrement() / 10000,
                                     Collectors.collectingAndThen(
                                             Collectors.toSet(),
-                                            sampleRefs -> colorDepthImageDao.addLibraryBySampleRefs(libraryIdentifier, sampleRefs))))
+                                            sampleRefs -> addLibraryToMipsBySampleRefs(libraryIdentifier, sampleRefs))))
                             .entrySet().stream()
                             .map(Map.Entry::getValue)
                             .reduce(0L, (v1, v2) -> v1 + v2)
@@ -534,6 +544,32 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         logger.info("Nothing was updated for library {}", libraryIdentifier);
                     }
                 });
+    }
+
+    private long addLibraryToMipsBySampleRefs(String libraryIdentifier, Set<Reference> sampleRefs) {
+        Map<String, Set<Reference>> publishedSamplesGroupedByObjective = annotationDao.findAnnotationsByTargets(sampleRefs).stream()
+                .map(a -> ImmutablePair.of(getPublishedObjective(a.getName()), a.getTarget()))
+                .filter(sampleWithObjective -> StringUtils.isNotBlank(sampleWithObjective.getLeft()))
+                .collect(Collectors.groupingBy(
+                        ImmutablePair::getLeft,
+                        Collectors.collectingAndThen(
+                                Collectors.toSet(),
+                                r -> r.stream().map(ImmutablePair::getRight).collect(Collectors.toSet()))))
+                ;
+
+        return publishedSamplesGroupedByObjective.entrySet().stream()
+                .map(e -> colorDepthImageDao.addLibraryBySampleRefs(libraryIdentifier, e.getKey(), e.getValue(), false))
+                .reduce(0L, Long::sum);
+    }
+
+    private String getPublishedObjective(String annotationName) {
+        Pattern publishedObjectiveRegExPattern = Pattern.compile("Publish(\\d+x)ToWeb", Pattern.CASE_INSENSITIVE);
+        Matcher m = publishedObjectiveRegExPattern.matcher(annotationName);
+        if (m.find()) {
+            return m.group(1);
+        } else {
+            return null;
+        }
     }
 
     private ColorDepthLibrary createLibraryForPublishedRelease(String libraryIdentifier) {

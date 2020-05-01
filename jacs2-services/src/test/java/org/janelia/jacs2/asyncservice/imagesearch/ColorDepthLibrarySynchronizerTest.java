@@ -32,11 +32,13 @@ import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.sample.LineRelease;
 import org.janelia.model.domain.sample.Sample;
 import org.janelia.model.service.JacsServiceData;
@@ -51,6 +53,7 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -70,6 +73,7 @@ public class ColorDepthLibrarySynchronizerTest {
     private LegacyDomainDao legacyDao;
     private ColorDepthImageDao colorDepthImageDao;
     private LineReleaseDao lineReleaseDao;
+    private AnnotationDao annotationDao;
     private Logger logger;
 
     @BeforeClass
@@ -90,6 +94,7 @@ public class ColorDepthLibrarySynchronizerTest {
         colorDepthImageDao = mock(ColorDepthImageDao.class);
         legacyDao = mock(LegacyDomainDao.class);
         lineReleaseDao = mock(LineReleaseDao.class);
+        annotationDao = mock(AnnotationDao.class);
         jacsNotificationDao = mock(JacsNotificationDao.class);
     }
 
@@ -127,6 +132,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 legacyDao,
                 colorDepthImageDao,
                 lineReleaseDao,
+                annotationDao,
                 jacsNotificationDao,
                 logger);
 
@@ -187,6 +193,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 legacyDao,
                 colorDepthImageDao,
                 lineReleaseDao,
+                annotationDao,
                 jacsNotificationDao,
                 logger);
 
@@ -246,6 +253,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 legacyDao,
                 colorDepthImageDao,
                 lineReleaseDao,
+                annotationDao,
                 jacsNotificationDao,
                 logger);
 
@@ -331,6 +339,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 legacyDao,
                 colorDepthImageDao,
                 lineReleaseDao,
+                annotationDao,
                 jacsNotificationDao,
                 logger);
 
@@ -433,9 +442,9 @@ public class ColorDepthLibrarySynchronizerTest {
                         ref -> counter.getAndIncrement() / 25,
                         Collectors.collectingAndThen(
                                 Collectors.toSet(),
-                                sampleRefs -> colorDepthImageDao.addLibraryBySampleRefs(testIdentifier, sampleRefs))));
+                                sampleRefs -> colorDepthImageDao.addLibraryBySampleRefs(testIdentifier, "20x", sampleRefs, false))));
         Assert.assertEquals(120 / 25 + 1, results.size());
-        Mockito.verify(colorDepthImageDao, Mockito.times(results.size())).addLibraryBySampleRefs(eq(testIdentifier), anySet());
+        Mockito.verify(colorDepthImageDao, Mockito.times(results.size())).addLibraryBySampleRefs(eq(testIdentifier), anyString(), anySet(), anyBoolean());
     }
 
     @Test
@@ -451,23 +460,39 @@ public class ColorDepthLibrarySynchronizerTest {
                         createLineRelease(3L, "site 1",
                                 Arrays.asList(Reference.createFor("Sample#7"), Reference.createFor("Sample#8"), Reference.createFor("Sample#9")))
                 ));
+        Mockito.when(annotationDao.findAnnotationsByTargets(anySet()))
+                .then(invocation -> {
+                    Collection<Reference> refs = invocation.getArgument(0);
+                    return refs.stream()
+                            .map(sr -> {
+                                Annotation a = new Annotation();
+                                a.setName("Publish20xToWeb");
+                                a.setTarget(sr);
+                                return a;
+                            })
+                            .collect(Collectors.toList());
+                });
         Mockito.when(colorDepthImageDao.addLibraryBySampleRefs(
                 "flylight_site_1_published",
+                "20x",
                 ImmutableSet.of(
                         Reference.createFor("Sample#1"), Reference.createFor("Sample#2"), Reference.createFor("Sample#3"),
                         Reference.createFor("Sample#7"), Reference.createFor("Sample#8"), Reference.createFor("Sample#9")
-                )))
+                ),
+                false))
                 .then((Answer<Long>) invocation -> {
-                    Collection<Reference> refs = invocation.getArgument(1);
+                    Collection<Reference> refs = invocation.getArgument(2);
                     return (long) refs.size();
                 });
         Mockito.when(colorDepthImageDao.addLibraryBySampleRefs(
                 "flylight_site_2_published",
+                "20x",
                 ImmutableSet.of(
                         Reference.createFor("Sample#4"), Reference.createFor("Sample#5"), Reference.createFor("Sample#6")
-                )))
+                ),
+                false))
                 .then((Answer<Long>) invocation -> {
-                    Collection<Reference> refs = invocation.getArgument(1);
+                    Collection<Reference> refs = invocation.getArgument(2);
                     return (long) refs.size();
                 });
         ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
@@ -477,6 +502,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 legacyDao,
                 colorDepthImageDao,
                 lineReleaseDao,
+                annotationDao,
                 jacsNotificationDao,
                 logger);
         @SuppressWarnings("unchecked")
