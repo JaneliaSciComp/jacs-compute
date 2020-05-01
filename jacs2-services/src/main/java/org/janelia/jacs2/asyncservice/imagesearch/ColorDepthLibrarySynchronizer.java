@@ -438,9 +438,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         colorDepthImageFileComponents.getChannelNumber(),
                         null
                 );
-                logger.debug("Lookup {} in {}", "glob:" + sourceCDMName + "*", sourceLibraryDir);
+                logger.debug("Lookup {} in {}", sourceCDMName, sourceLibraryDir);
                 String sourceMIPFileName = FileUtils.lookupFiles(sourceLibraryDir, 1,
-                        "glob:" + sourceCDMName + "*")
+                        "regex:.*" + sourceCDMName + ".*\\..*$")
                         .filter(p -> Files.isRegularFile(p))
                         .findFirst()
                         .map(p -> p.toString())
