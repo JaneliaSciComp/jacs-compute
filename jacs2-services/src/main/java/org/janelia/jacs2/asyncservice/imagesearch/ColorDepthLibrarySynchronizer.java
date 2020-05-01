@@ -42,7 +42,6 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthFileComponents;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
-import org.janelia.model.domain.ontology.Annotation;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.domain.sample.LineRelease;
 import org.janelia.model.security.Subject;
@@ -443,8 +442,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 String sourceMIPFileName = FileUtils.lookupFiles(sourceLibraryDir, 1,
                         "regex:.*" + sourceCDMName + ".*\\..*$")
                         .filter(p -> Files.isRegularFile(p))
-                        .findFirst()
                         .map(p -> p.toString())
+                        .findFirst()
                         .orElse(null);
                 if (sourceMIPFileName == null) {
                     logger.warn("Invalid source MIP file name - no file found for {} in {} folder", sourceCDMName, sourceLibraryDir);
