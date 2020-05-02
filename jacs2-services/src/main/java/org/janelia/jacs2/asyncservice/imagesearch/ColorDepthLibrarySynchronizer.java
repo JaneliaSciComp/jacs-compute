@@ -448,12 +448,16 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         .orElse(null);
                 if (sourceMIPFileName == null) {
                     logger.warn("Invalid source MIP file name - no file found for {} in {} folder", sourceCDMName, sourceLibraryDir);
+                    return false;
                 } else {
                     ColorDepthImage sourceImage = legacyDomainDao.getColorDepthImageByPath(null, sourceMIPFileName);
                     if (sourceImage != null) {
                         image.setSourceImageRef(Reference.createFor(sourceImage));
                     } else {
+                        // this is the case when the file exist but the mip entity was deleted because
+                        // it actually corresponds to a renamed mip
                         logger.warn("No color depth image entity found for {}", sourceMIPFileName);
+                        return false;
                     }
                 }
             }
