@@ -447,6 +447,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         .findFirst()
                         .orElse(null);
                 if (sourceMIPFileName == null) {
+                    // the original image file not found so something is wrong here
                     logger.warn("Invalid source MIP file name - no file found for {} in {} folder", sourceCDMName, sourceLibraryDir);
                     return false;
                 } else {
@@ -456,7 +457,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     } else {
                         // this is the case when the file exist but the mip entity was deleted because
                         // it actually corresponds to a renamed mip
-                        logger.warn("No color depth image entity found for {}", sourceMIPFileName);
+                        logger.warn("No color depth image entity found for {} so no MIP will be created", sourceMIPFileName);
                         return false;
                     }
                 }
