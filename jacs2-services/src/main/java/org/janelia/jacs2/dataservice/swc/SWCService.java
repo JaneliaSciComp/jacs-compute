@@ -307,6 +307,7 @@ public class SWCService {
         double[] externalOffset = swcData.extractOffset();
         String neuronName = swcData.extractName();
         TmNeuronMetadata neuronMetadata = new TmNeuronMetadata(tmWorkspace, neuronName);
+        neuronMetadata.setOwnerKey(neuronOwnerKey);
         neuronMetadata.setReaders(tmWorkspace.getReaders());
         neuronMetadata.setWriters(tmWorkspace.getWriters());
 
