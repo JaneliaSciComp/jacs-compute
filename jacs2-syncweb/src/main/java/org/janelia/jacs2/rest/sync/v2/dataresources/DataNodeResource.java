@@ -36,6 +36,7 @@ import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
+import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.workspace.Node;
@@ -92,6 +93,44 @@ public class DataNodeResource {
                 .ok(dataNode)
                 .build();
     }
+
+    @ApiOperation(value = "Gets all the children of a node",
+            notes = "Returns all the children of the given node which are visible to the current user."
+    )
+    @ApiResponses(value = {
+            @ApiResponse( code = 200, message = "Successfully got children", response=DomainObject.class,
+                    responseContainer =  "List"),
+            @ApiResponse( code = 500, message = "Internal Server Error getting node children" )
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/node/children")
+    public Response getNodeChildren(@ApiParam @QueryParam("subjectKey") String subjectKey,
+                                    @ApiParam @QueryParam("nodeRef") String nodeReference,
+                                    @ApiParam @QueryParam("sortCriteria") String sortCriteria,
+                                    @ApiParam @QueryParam("page") int page,
+                                    @ApiParam @QueryParam("pageSize") int pageSize) {
+        LOG.trace("Start getNodeChildren({}, {}, {}, {}, {})", subjectKey, nodeReference, sortCriteria, page, pageSize);
+        try {
+            if (StringUtils.isBlank(subjectKey)) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse("Invalid subject key"))
+                        .build();
+            }
+
+            Node node = (Node)legacyDomainDao.getDomainObject(subjectKey, Reference.createFor(nodeReference));
+
+            List<DomainObject> children = workspaceNodeDao.getChildren(subjectKey, node, sortCriteria, page, pageSize);
+            LOG.trace("Found {} children accessible by {}", children.size(), subjectKey);
+            return Response.ok()
+                    .type(MediaType.APPLICATION_JSON)
+                    .entity(new GenericEntity<List<DomainObject>>(children){})
+                    .build();
+        } finally {
+            LOG.trace("Finished getNodeChildren({}, {}, {}, {}, {})", subjectKey, nodeReference, sortCriteria, page, pageSize);
+        }
+    }
+
 
     @ApiOperation(value = "Adds items to a Node",
             notes = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
