@@ -419,7 +419,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             image.setAlignmentSpace(alignmentSpace);
             image.setReaders(library.getReaders());
             image.setWriters(library.getWriters());
-            if (colorDepthImageFileComponents.getSampleRef() == null && !alignmentSpace.equals(colorDepthImageFileComponents.getAlignmentSpace())) {
+            if (colorDepthImageFileComponents.getSampleRef() != null && !alignmentSpace.equals(colorDepthImageFileComponents.getAlignmentSpace())) {
                 throw new IllegalStateException("Alignment space does not match path: ("
                         +colorDepthImageFileComponents.getAlignmentSpace()+" != "+alignmentSpace+")");
             }

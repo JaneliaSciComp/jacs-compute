@@ -101,7 +101,7 @@ public class ColorDepthLibrarySynchronizerTest {
     @Test
     public void checkCleanupRenamedSampleOnSyncWhenAllMIPsExist() {
         String testContext = "checkCleanupRenamedSampleOnSyncWhenAllMIPsExist";
-        String testAlignmentSpace = "testAlignment";
+        String testAlignmentSpace = "JRC2018_Unisex_20x_HR";
         String testLib = "testLib";
 
         JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
@@ -162,7 +162,7 @@ public class ColorDepthLibrarySynchronizerTest {
     @Test
     public void checkColorDepthMIPsCreatedWhenNewerRenamedSamplesAdded() {
         String testContext = "checkColorDepthMIPsCreatedWhenNewerRenamedSamplesAdded";
-        String testAlignmentSpace = "testAlignment";
+        String testAlignmentSpace = "JRC2018_Unisex_20x_HR";
         String testLib = "testLib";
         JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
 
@@ -283,7 +283,7 @@ public class ColorDepthLibrarySynchronizerTest {
     @Test
     public void createColorDepthLibraryVersion() {
         String testContext = "createColorDepthLibraryVersion";
-        String testAlignmentSpace = "testAlignment";
+        String testAlignmentSpace = "JRC2018_Unisex_20x_HR";
         String testLib = "testLib";
         JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
 
