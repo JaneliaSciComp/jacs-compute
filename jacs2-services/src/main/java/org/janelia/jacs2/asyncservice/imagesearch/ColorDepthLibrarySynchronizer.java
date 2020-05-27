@@ -21,6 +21,7 @@ import javax.inject.Named;
 import com.beust.jcommander.Parameter;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
@@ -419,26 +420,40 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             image.setAlignmentSpace(alignmentSpace);
             image.setReaders(library.getReaders());
             image.setWriters(library.getWriters());
-            if (colorDepthImageFileComponents.getSampleRef() != null && !alignmentSpace.equals(colorDepthImageFileComponents.getAlignmentSpace())) {
-                throw new IllegalStateException("Alignment space does not match path: ("
-                        +colorDepthImageFileComponents.getAlignmentSpace()+" != "+alignmentSpace+")");
+            if (colorDepthImageFileComponents.hasNameComponents()) {
+                if (colorDepthImageFileComponents.getSampleRef() != null && !alignmentSpace.equals(colorDepthImageFileComponents.getAlignmentSpace())) {
+                    throw new IllegalStateException("Alignment space does not match path: ("
+                            +colorDepthImageFileComponents.getAlignmentSpace()+" != "+alignmentSpace+")");
+                }
+                image.setSampleRef(colorDepthImageFileComponents.getSampleRef());
+                image.setObjective(colorDepthImageFileComponents.getObjective());
+                image.setAnatomicalArea(colorDepthImageFileComponents.getAnatomicalArea());
+                image.setChannelNumber(colorDepthImageFileComponents.getChannelNumber());
             }
-            image.setSampleRef(colorDepthImageFileComponents.getSampleRef());
-            image.setObjective(colorDepthImageFileComponents.getObjective());
-            image.setAnatomicalArea(colorDepthImageFileComponents.getAnatomicalArea());
-            image.setChannelNumber(colorDepthImageFileComponents.getChannelNumber());
             ColorDepthLibrary sourceLibrary = findSourceLibrary(library);
             if (sourceLibrary != null) {
                 Path sourceLibraryDir = rootPath.resolve(alignmentSpace).resolve(sourceLibrary.getIdentifier());
-                String sourceCDMName = ColorDepthFileComponents.createCDMName(
-                        colorDepthImageFileComponents.getSampleName(),
-                        colorDepthImageFileComponents.getObjective(),
-                        colorDepthImageFileComponents.getAnatomicalArea(),
-                        colorDepthImageFileComponents.getAlignmentSpace(),
-                        colorDepthImageFileComponents.getSampleRef(),
-                        colorDepthImageFileComponents.getChannelNumber(),
-                        null
-                );
+                String sourceCDMName;
+                if (colorDepthImageFileComponents.hasNameComponents()) {
+                    sourceCDMName = ColorDepthFileComponents.createCDMNameFromNameComponents(
+                            colorDepthImageFileComponents.getSampleName(),
+                            colorDepthImageFileComponents.getObjective(),
+                            colorDepthImageFileComponents.getAnatomicalArea(),
+                            colorDepthImageFileComponents.getAlignmentSpace(),
+                            colorDepthImageFileComponents.getSampleRef(),
+                            colorDepthImageFileComponents.getChannelNumber(),
+                            null
+                    );
+                } else {
+                    if (library.hasVersion()) {
+                        // remove the version from the filename
+                        sourceCDMName = Pattern.compile("[_-]" + library.getVersion() + "$", Pattern.CASE_INSENSITIVE)
+                                .matcher(colorDepthImageFileComponents.getFileName())
+                                .replaceAll(StringUtils.EMPTY);
+                    } else {
+                        sourceCDMName = colorDepthImageFileComponents.getFileName();
+                    }
+                }
                 logger.debug("Lookup {} in {}", sourceCDMName, sourceLibraryDir);
                 String sourceMIPFileName = FileUtils.lookupFiles(sourceLibraryDir, 1,
                         "regex:.*" + sourceCDMName + ".*\\..*$")
