@@ -773,8 +773,8 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {
-        return dao.createLineRelease(subjectKey, name, releaseDate, lagTimeMonths, dataSets);
+    public LineRelease createLineRelease(String subjectKey, String name) throws Exception {
+        return dao.createLineRelease(subjectKey, name);
     }
 
     @Override

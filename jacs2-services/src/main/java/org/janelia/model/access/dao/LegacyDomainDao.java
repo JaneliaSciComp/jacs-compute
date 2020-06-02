@@ -426,7 +426,7 @@ public interface LegacyDomainDao {
 
     List<LineRelease> getLineReleases(String subjectKey);
 
-    LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception;
+    LineRelease createLineRelease(String subjectKey, String name) throws Exception;
 
     /**
      * Sum the disk space usage of all the samples in the given data set, and cache it within the corresponding DataDet object.

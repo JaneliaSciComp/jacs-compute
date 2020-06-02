@@ -198,10 +198,7 @@ public class LineReleaseResource {
             LineRelease lineReleaseArg = query.getDomainObjectAs(LineRelease.class);
             LineRelease lineRelease = legacyDomainDao.createLineRelease(
                     query.getSubjectKey(),
-                    lineReleaseArg.getName(),
-                    lineReleaseArg.getReleaseDate(),
-                    lineReleaseArg.getLagTimeMonths(),
-                    lineReleaseArg.getDataSets());
+                    lineReleaseArg.getName());
             return Response
                     .created(UriBuilder.fromMethod(this.getClass(), "getReleaseInfoById").build(lineRelease.getId()))
                     .entity(lineRelease)

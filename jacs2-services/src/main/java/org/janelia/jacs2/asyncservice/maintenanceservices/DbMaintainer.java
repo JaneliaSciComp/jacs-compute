@@ -167,6 +167,7 @@ public class DbMaintainer {
      * @param sample
      * @return true if changes were made
      */
+    @SuppressWarnings("deprecation")
     private boolean migrateTmSample(TmSample sample) {
         String sampleFilepath;
         if (StringUtils.startsWith(sample.getFilepath(), "//")) {
