@@ -1,6 +1,7 @@
 package org.janelia.jacs2.cdi;
 
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Instance;
@@ -15,14 +16,17 @@ import org.janelia.messaging.core.MessageSender;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.cdi.WithCache;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.NodeDao;
+import org.janelia.model.access.domain.nodetools.AllNodeAncestorsGetterImpl;
+import org.janelia.model.access.domain.nodetools.CachedAllNodeAncestorsGetterImpl;
+import org.janelia.model.access.domain.nodetools.DirectNodeAncestorsGetterImpl;
+import org.janelia.model.access.domain.nodetools.NodeAncestorsGetter;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.access.domain.search.SolrBasedDomainObjectIndexer;
 import org.janelia.model.access.search.AsyncDomainObjectIndexer;
 import org.janelia.model.domain.DomainObjectGetter;
 import org.janelia.model.domain.ontology.DomainAnnotationGetter;
-import org.janelia.model.domain.workspace.AllNodeAncestorsGetter;
-import org.janelia.model.domain.workspace.DirectNodeAncestorsGetter;
-import org.janelia.model.domain.workspace.NodeAncestorsGetter;
+import org.janelia.model.domain.workspace.Node;
 
 @ApplicationScoped
 public class IndexingProducer {
@@ -35,18 +39,16 @@ public class IndexingProducer {
     }
 
     @Produces
-    public NodeAncestorsGetter createAllNodeAncestorsGetter(DirectNodeAncestorsGetter directNodeAncestorsGetter) {
-        return new AllNodeAncestorsGetter(directNodeAncestorsGetter);
-    }
-
-    @Produces
-    public DomainObjectIndexerProvider<SolrServer> createIndexerProviderForRealTimeIndexing(NodeAncestorsGetter allNodeAncestorsGetter,
-                                                                                            DomainAnnotationGetter nodeAnnotationGetter,
-                                                                                            DomainObjectGetter objectGetter,
-                                                                                            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
-                                                                                            @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
+    public DomainObjectIndexerProvider<SolrServer> createIndexerProviderForRealTimeIndexing(
+            Instance<NodeDao<? extends Node>> nodeDaosProvider,
+            DomainAnnotationGetter nodeAnnotationGetter,
+            DomainObjectGetter objectGetter,
+            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
+            @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
         return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,
-                allNodeAncestorsGetter,
+                nodeDaosProvider.stream()
+                        .map(nodeDao -> new AllNodeAncestorsGetterImpl<>(new DirectNodeAncestorsGetterImpl<>(nodeDao)))
+                        .collect(Collectors.toList()),
                 nodeAnnotationGetter,
                 objectGetter,
                 solrBatchSize,
@@ -67,13 +69,16 @@ public class IndexingProducer {
      */
     @WithCache
     @Produces
-    public DomainObjectIndexerProvider<SolrServer> createIndexerProviderForIndexRebuild(@WithCache Instance<NodeAncestorsGetter> allNodeAncestorsGetterProvider,
-                                                                                        @WithCache Instance<DomainAnnotationGetter> nodeAnnotationGetterProvider,
-                                                                                        DomainObjectGetter objectGetter,
-                                                                                        @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
-                                                                                        @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
+    public DomainObjectIndexerProvider<SolrServer> createIndexerProviderForIndexRebuild(
+            Instance<NodeDao<? extends Node>> nodeDaosProvider,
+            @WithCache Instance<DomainAnnotationGetter> nodeAnnotationGetterProvider,
+            DomainObjectGetter objectGetter,
+            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
+            @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
         return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,
-                allNodeAncestorsGetterProvider.get(),
+                nodeDaosProvider.stream()
+                        .map(CachedAllNodeAncestorsGetterImpl::new)
+                        .collect(Collectors.toList()),
                 nodeAnnotationGetterProvider.get(),
                 objectGetter,
                 solrBatchSize,

@@ -20,6 +20,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.cronservice.CronScheduledServiceManager;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.SubjectDao;
 import org.slf4j.Logger;
 
 public class TestResourceBinder extends AbstractBinder {
@@ -66,6 +67,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getApplicationConfig()).to(ApplicationConfig.class).qualifiedBy(applicationPropertiesAnnotation);
         bind(dependenciesProducer.getJacsServiceDataManager()).to(JacsServiceDataManager.class);
         bind(dependenciesProducer.getServiceRegistry()).to(ServiceRegistry.class);
+        bind(dependenciesProducer.getSubjectDao()).to(SubjectDao.class);
         bind(dependenciesProducer.getLegacyDomainDao()).to(LegacyDomainDao.class);
         bind(dependenciesProducer.getObjectMapperFactory()).to(ObjectMapperFactory.class);
         bind(dependenciesProducer.getJacsScheduledServiceDataManager()).to(CronScheduledServiceManager.class);

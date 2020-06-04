@@ -38,7 +38,6 @@ public class SampleDataServiceTest {
     private SampleDao sampleDao;
     private SubjectService subjectService;
     private LSMImageDao lsmImageDao;
-    private NeuronFragmentDao neuronFragmentDao;
 
     private SampleDataService testService;
 
@@ -49,7 +48,7 @@ public class SampleDataServiceTest {
         subjectService = mock(SubjectService.class);
         DaoFactory daoFactory = mock(DaoFactory.class);
         lsmImageDao = mock(LSMImageDao.class);
-        neuronFragmentDao = mock(NeuronFragmentDao.class);
+        NeuronFragmentDao neuronFragmentDao = mock(NeuronFragmentDao.class);
 
         DomainObjectService domainObjectService = new DomainObjectService(daoFactory);
         testService = new SampleDataService(domainObjectService, subjectService, sampleDao, lsmImageDao, neuronFragmentDao, logger);

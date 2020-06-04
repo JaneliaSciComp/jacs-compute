@@ -26,7 +26,7 @@ public class ServiceInfoResourceTest extends AbstractAsyncServicesAppResourceTes
         User testUser = new User();
         testUser.setKey("user:" + TEST_USERNAME);
         testUser.setName(TEST_USERNAME);
-        Mockito.when(dependenciesProducer.getLegacyDomainDao().getSubjectByNameOrKey(TEST_USERNAME))
+        Mockito.when(dependenciesProducer.getSubjectDao().findSubjectByNameOrKey(TEST_USERNAME))
                 .thenReturn(testUser);
         Response testResponse = target()
                 .path("services")

@@ -7,11 +7,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.model.access.dao.mongo.MongoDaoHelper;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.domain.sample.LSMImage;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.jacs2.dao.LSMImageDao;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.janelia.model.jacs2.DomainModelUtils;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
@@ -26,7 +26,7 @@ import static com.mongodb.client.model.Filters.eq;
 public class LSMImageMongoDao extends AbstractImageMongoDao<LSMImage> implements LSMImageDao {
     @Inject
     @Jacs2Future
-    public LSMImageMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
+    public LSMImageMongoDao(MongoDatabase mongoDatabase, @JacsDefault IdGenerator<Long> idGenerator) {
         super(mongoDatabase, idGenerator);
     }
 

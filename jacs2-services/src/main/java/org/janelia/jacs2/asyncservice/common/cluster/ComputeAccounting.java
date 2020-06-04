@@ -15,9 +15,10 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheLoader.InvalidCacheLoadException;
 import com.google.common.cache.LoadingCache;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
-import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.Group;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.util.SubjectUtils;
@@ -35,14 +36,14 @@ public class ComputeAccounting {
     private static final String DEFAULT_GROUP_NAME = "jacs";
     private static final String LSF_GROUP_COMMAND = "lsfgroup";
 
+    private final SubjectDao subjectDao;
     private final Logger log;
-    private final LegacyDomainDao dao;
 
     @Inject
-    public ComputeAccounting(LegacyDomainDao dao,
+    public ComputeAccounting(SubjectDao subjectDao,
                              Logger logger) {
+        this.subjectDao = subjectDao;
         this.log = logger;
-        this.dao = dao;
     }
 
     /**
@@ -56,7 +57,7 @@ public class ComputeAccounting {
                 new CacheLoader<String, String>() {
                   public String load(String subjectKey) throws Exception {
                       if (subjectKey.startsWith("group")) {
-                          Group group = dao.getGroupByNameOrKey(subjectKey);
+                          Group group = subjectDao.findGroupByNameOrKey(subjectKey);
                           String ldapGroup = group==null?null:group.getLdapGroupName();
                           log.debug("Got LDAP group "+ldapGroup+" for subject "+subjectKey);
                           return ldapGroup;
@@ -146,7 +147,7 @@ public class ComputeAccounting {
         if (StringUtils.isNotBlank(serviceBillingAccount)) {
             String ownerComputeGroup = getComputeGroup(serviceContext.getOwnerKey());
             // User provided a billing account
-            Subject billedSubject = dao.getSubjectByNameOrKey(serviceBillingAccount);
+            Subject billedSubject = subjectDao.findSubjectByNameOrKey(serviceBillingAccount);
             String billedComputeGroup;
             if (billedSubject != null) {
                 billedComputeGroup = getComputeGroup(billedSubject.getKey());
@@ -160,7 +161,7 @@ public class ComputeAccounting {
                 billingAccount = billedComputeGroup;
             } else {
                 // no match - check if the user has admin privileges
-                Subject authenticatedUser = dao.getSubjectByNameOrKey(serviceContext.getAuthKey());
+                Subject authenticatedUser = subjectDao.findSubjectByNameOrKey(serviceContext.getAuthKey());
                 if (SubjectUtils.isAdmin(authenticatedUser)) {
                     log.info("Admin user {} can use the provided billing account {}", serviceContext.getAuthKey(), serviceBillingAccount);
                     billingAccount = serviceBillingAccount;

@@ -5,10 +5,11 @@ import com.mongodb.client.MongoDatabase;
 import org.janelia.jacs2.AbstractITest;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.model.access.dao.ReadWriteDao;
+import org.janelia.model.access.domain.IdGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoDBHelper;
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.RegistryHelper;
 import org.janelia.model.jacs2.domain.interfaces.HasIdentifier;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
@@ -20,7 +21,7 @@ public abstract class AbstractMongoDaoITest<T extends HasIdentifier> extends Abs
     protected static ObjectMapperFactory testObjectMapperFactory = ObjectMapperFactory.instance();
 
     protected MongoDatabase testMongoDatabase;
-    protected TimebasedIdentifierGenerator idGenerator = new TimebasedIdentifierGenerator(0);
+    protected IdGenerator<Long> idGenerator = new TimebasedIdentifierGenerator(0);
     protected Random dataGenerator = new Random();
 
     @BeforeClass

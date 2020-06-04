@@ -11,6 +11,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.cronservice.CronScheduledServiceManager;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.SubjectDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,7 @@ public class TestResourceDependenciesProducer {
     private JacsServiceDataManager jacsServiceDataManager = mock(JacsServiceDataManager.class);
     private ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
     private LegacyDomainDao legacyDomainDao = mock(LegacyDomainDao.class);
+    private SubjectDao subjectDao = mock(SubjectDao.class);
     private JWTProvider jwtProvider = mock(JWTProvider.class);
     private ObjectMapperFactory objectMapperFactory = ObjectMapperFactory.instance();
     private CronScheduledServiceManager jacsScheduledServiceDataManager = mock(CronScheduledServiceManager.class);
@@ -69,6 +71,11 @@ public class TestResourceDependenciesProducer {
     @Produces
     public ServiceRegistry getServiceRegistry() {
         return serviceRegistry;
+    }
+
+    @Produces
+    public SubjectDao getSubjectDao() {
+        return subjectDao;
     }
 
     @Produces

@@ -3,7 +3,7 @@ package org.janelia.jacs2.filter;
 import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.auth.JacsSecurityContext;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
@@ -50,7 +50,7 @@ public class AuthFilterTest {
     private static final String TEST_SYSTEM_USER = "TESTUSER";
 
     @Mock
-    private LegacyDomainDao dao;
+    private SubjectDao subjectDao;
     @Mock
     private JWTProvider jwtProvider;
     @Mock
@@ -62,7 +62,7 @@ public class AuthFilterTest {
     @Before
     public void setUp() {
         authFilter = new AuthFilter();
-        Whitebox.setInternalState(authFilter, "dao", dao);
+        Whitebox.setInternalState(authFilter, "subjectDao", subjectDao);
         Whitebox.setInternalState(authFilter, "logger", logger);
         Whitebox.setInternalState(authFilter, "resourceInfo", resourceInfo);
         Whitebox.setInternalState(authFilter, "jwtProvider", jwtProvider);
@@ -79,7 +79,7 @@ public class AuthFilterTest {
         ContainerRequestContext requestContext = Mockito.mock(ContainerRequestContext.class);
         Mockito.when(resourceInfo.getResourceMethod()).then(invocation -> Whitebox.getMethod(TestResource.class, "m"));
         authFilter.filter(requestContext);
-        Mockito.verifyNoMoreInteractions(requestContext, dao, jwtProvider);
+        Mockito.verifyNoMoreInteractions(requestContext, subjectDao, jwtProvider);
     }
 
     @Test
@@ -94,7 +94,7 @@ public class AuthFilterTest {
         final String testUserName = "thisuser";
         Mockito.when(requestContext.getHeaders())
                 .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of("UserName", testUserName)));
-        Mockito.when(dao.getSubjectByNameOrKey(testUserName)).then(invocation -> {
+        Mockito.when(subjectDao.findSubjectByNameOrKey(testUserName)).then(invocation -> {
             String usernameArg = invocation.getArgument(0);
             Subject subject = new User();
             subject.setKey("user:" + usernameArg);
@@ -109,9 +109,9 @@ public class AuthFilterTest {
         Mockito.verify(requestContext).setSecurityContext(any(JacsSecurityContext.class));
         Mockito.verify(requestContext, Mockito.times(1)).getUriInfo();
         Mockito.verify(requestContext).setSecurityContext(any(JacsSecurityContext.class));
-        Mockito.verify(dao).getSubjectByNameOrKey(testUserName);
+        Mockito.verify(subjectDao).findSubjectByNameOrKey(testUserName);
 
-        Mockito.verifyNoMoreInteractions(requestContext, dao, jwtProvider);
+        Mockito.verifyNoMoreInteractions(requestContext, subjectDao, jwtProvider);
     }
 
     @Test
@@ -131,7 +131,7 @@ public class AuthFilterTest {
                         "RunAsUser", runAsThisUser
                 )));
         AtomicLong idGen = new AtomicLong(1);
-        Mockito.when(dao.getSubjectByNameOrKey(anyString())).then(invocation -> {
+        Mockito.when(subjectDao.findSubjectByNameOrKey(anyString())).then(invocation -> {
             String usernameArg = invocation.getArgument(0);
             Subject subject = new User() {{
                 setUserGroupRole("group:admin", GroupRole.Reader);
@@ -149,10 +149,10 @@ public class AuthFilterTest {
         Mockito.verify(requestContext).setSecurityContext(any(JacsSecurityContext.class));
         Mockito.verify(requestContext, Mockito.times(1)).getUriInfo();
         Mockito.verify(requestContext).setSecurityContext(any(JacsSecurityContext.class));
-        Mockito.verify(dao).getSubjectByNameOrKey(testUserName);
-        Mockito.verify(dao).getSubjectByNameOrKey(runAsThisUser);
+        Mockito.verify(subjectDao).findSubjectByNameOrKey(testUserName);
+        Mockito.verify(subjectDao).findSubjectByNameOrKey(runAsThisUser);
 
-        Mockito.verifyNoMoreInteractions(requestContext, dao, jwtProvider);
+        Mockito.verifyNoMoreInteractions(requestContext, subjectDao, jwtProvider);
     }
 
     @Test
@@ -172,7 +172,7 @@ public class AuthFilterTest {
                         "RunAsUser", runAsThisUser
                 )));
         AtomicLong idGen = new AtomicLong(1);
-        Mockito.when(dao.getSubjectByNameOrKey(anyString())).then(invocation -> {
+        Mockito.when(subjectDao.findSubjectByNameOrKey(anyString())).then(invocation -> {
             String usernameArg = invocation.getArgument(0);
             Subject subject = new User();
             subject.setId(idGen.getAndIncrement());
@@ -186,10 +186,10 @@ public class AuthFilterTest {
         authFilter.filter(requestContext);
         Mockito.verify(requestContext, Mockito.times(2)).getHeaders();
         Mockito.verify(requestContext).abortWith(argThat(argument -> argument.getStatus() == 403));
-        Mockito.verify(dao).getSubjectByNameOrKey(testUserName);
-        Mockito.verify(dao).getSubjectByNameOrKey(runAsThisUser);
+        Mockito.verify(subjectDao).findSubjectByNameOrKey(testUserName);
+        Mockito.verify(subjectDao).findSubjectByNameOrKey(runAsThisUser);
 
-        Mockito.verifyNoMoreInteractions(requestContext, dao, jwtProvider);
+        Mockito.verifyNoMoreInteractions(requestContext, subjectDao, jwtProvider);
     }
 
     @Test
@@ -207,7 +207,7 @@ public class AuthFilterTest {
         Mockito.when(requestContext.getHeaders())
                 .thenReturn(new MultivaluedHashMap<>(ImmutableMap.of("Authorization", "Bearer " + testToken)));
         Mockito.when(jwtProvider.decodeJWT(testToken)).thenReturn(createTestJWT(testUserName));
-        Mockito.when(dao.getSubjectByNameOrKey(testUserName)).then(invocation -> {
+        Mockito.when(subjectDao.findSubjectByNameOrKey(testUserName)).then(invocation -> {
             String usernameArg = invocation.getArgument(0);
             Subject subject = new User();
             subject.setKey("user:" + usernameArg);

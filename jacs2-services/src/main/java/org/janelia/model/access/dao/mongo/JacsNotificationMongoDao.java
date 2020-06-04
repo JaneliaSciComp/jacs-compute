@@ -3,7 +3,7 @@ package org.janelia.model.access.dao.mongo;
 import com.mongodb.client.MongoDatabase;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.access.dao.JacsNotificationDao;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.service.JacsNotification;
 
 import javax.inject.Inject;
@@ -14,7 +14,7 @@ import javax.inject.Inject;
 public class JacsNotificationMongoDao extends AbstractMongoDao<JacsNotification> implements JacsNotificationDao {
 
     @Inject
-    public JacsNotificationMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
+    public JacsNotificationMongoDao(MongoDatabase mongoDatabase, @JacsDefault IdGenerator<Long> idGenerator) {
         super(mongoDatabase, idGenerator);
     }
 }

@@ -7,9 +7,9 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.security.GroupRole;
 import org.janelia.model.security.Subject;
-import org.janelia.model.security.util.SubjectUtils;
 import org.slf4j.Logger;
 
 import javax.annotation.Priority;
@@ -48,7 +48,7 @@ public class AuthFilter implements ContainerRequestFilter {
     private static final String APIKEY_PREFIX = "APIKEY ";
 
     @Inject
-    private LegacyDomainDao dao;
+    private SubjectDao subjectDao;
     @Inject
     private JWTProvider jwtProvider;
     @PropertyValue(name = "JACS.SystemAppUserName")
@@ -75,7 +75,7 @@ public class AuthFilter implements ContainerRequestFilter {
         Subject authenticatedSubject;
         Response subjectCheckResponse;
         if (StringUtils.isNotBlank(authUserName)) {
-            authenticatedSubject = dao.getSubjectByNameOrKey(authUserName);
+            authenticatedSubject = subjectDao.findSubjectByNameOrKey(authUserName);
             if (authenticatedSubject == null) {
                 logger.warn("Invalid username parameter passed in for authentication - no entry found for {}", authUserName);
                 subjectCheckResponse = Response.status(Response.Status.UNAUTHORIZED)
@@ -126,7 +126,7 @@ public class AuthFilter implements ContainerRequestFilter {
         Subject authorizedSubject;
 
         if (StringUtils.isNotBlank(runAsUserName)) {
-            authorizedSubject = dao.getSubjectByNameOrKey(runAsUserName);
+            authorizedSubject = subjectDao.findSubjectByNameOrKey(runAsUserName);
             if (authorizedSubject == null) {
                 // if "run as" is specified it must be a valid user
                 logger.warn("Invalid run-as user specified in header {}: {}", HEADER_RUNASUSER, runAsUserName);

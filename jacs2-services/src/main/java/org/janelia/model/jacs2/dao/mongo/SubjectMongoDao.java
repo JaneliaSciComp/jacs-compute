@@ -6,9 +6,9 @@ import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.access.dao.mongo.AbstractMongoDao;
 import org.janelia.model.access.dao.mongo.MongoDaoHelper;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.jacs2.dao.SubjectDao;
 import org.janelia.model.jacs2.domain.Subject;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -18,7 +18,7 @@ import static com.mongodb.client.model.Filters.eq;
 public class SubjectMongoDao extends AbstractMongoDao<Subject> implements SubjectDao {
     @Inject
     @Jacs2Future
-    public SubjectMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
+    public SubjectMongoDao(MongoDatabase mongoDatabase, @JacsDefault IdGenerator<Long> idGenerator) {
         super(mongoDatabase, idGenerator);
     }
 

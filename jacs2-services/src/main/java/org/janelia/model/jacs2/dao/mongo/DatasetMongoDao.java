@@ -5,11 +5,11 @@ import com.mongodb.client.model.Filters;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.domain.sample.DataSet;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.jacs2.dao.DatasetDao;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.janelia.model.jacs2.DomainModelUtils;
 
 import javax.inject.Inject;
@@ -18,7 +18,7 @@ import java.util.List;
 public class DatasetMongoDao extends AbstractDomainObjectDao<DataSet> implements DatasetDao {
     @Inject
     @Jacs2Future
-    public DatasetMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
+    public DatasetMongoDao(MongoDatabase mongoDatabase, @JacsDefault IdGenerator<Long> idGenerator) {
         super(mongoDatabase, idGenerator);
     }
 

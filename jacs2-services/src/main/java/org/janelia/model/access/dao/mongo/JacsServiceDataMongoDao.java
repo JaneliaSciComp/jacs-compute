@@ -16,7 +16,7 @@ import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.JacsServiceDataDao;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
@@ -46,7 +46,7 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
 
     @Inject
     public JacsServiceDataMongoDao(MongoDatabase mongoDatabase,
-                                   @JacsDefault TimebasedIdentifierGenerator idGenerator,
+                                   @JacsDefault IdGenerator<Long> idGenerator,
                                    @BoolPropertyValue(name = "MongoDB.createCollectionIndexes") boolean createCollectionIndexes) {
         super(mongoDatabase, idGenerator);
         if (createCollectionIndexes) {

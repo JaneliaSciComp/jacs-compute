@@ -2,11 +2,9 @@ package org.janelia.model.access.dao.mongo;
 
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -52,10 +50,6 @@ import org.janelia.model.domain.sample.StatusTransition;
 import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
-import org.janelia.model.security.Group;
-import org.janelia.model.security.GroupRole;
-import org.janelia.model.security.Subject;
-import org.janelia.model.security.User;
 import org.jongo.MongoCollection;
 import org.jongo.MongoCursor;
 import org.slf4j.Logger;
@@ -79,73 +73,8 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public Subject save(Subject subject) {
-        return dao.save(subject);
-    }
-
-    @Override
-    public List<Subject> getSubjects() {
-        return dao.getSubjects();
-    }
-
-    @Override
-    public List<Subject> getUsers() throws Exception {
-        return dao.getUsers();
-    }
-
-    @Override
-    public List<Subject> getGroups() throws Exception {
-        return dao.getGroups();
-    }
-
-    @Override
-    public Set<String> getReaderSet(String subjectKey) {
-        return dao.getReaderSet(subjectKey);
-    }
-
-    @Override
-    public Set<String> getWriterSet(String subjectKey) {
-        return dao.getWriterSet(subjectKey);
-    }
-
-    @Override
-    public Subject getSubjectByKey(String subjectKey) {
-        return dao.getSubjectByKey(subjectKey);
-    }
-
-    @Override
-    public Subject getSubjectByName(String subjectName) {
-        return dao.getSubjectByName(subjectName);
-    }
-
-    @Override
-    public Subject getSubjectByNameOrKey(String subjectNameOrKey) {
-        return dao.getSubjectByNameOrKey(subjectNameOrKey);
-    }
-
-    @Override
-    public User getUserByNameOrKey(String subjectNameOrKey) {
-        return dao.getUserByNameOrKey(subjectNameOrKey);
-    }
-
-    @Override
-    public Group getGroupByNameOrKey(String subjectNameOrKey) {
-        return dao.getGroupByNameOrKey(subjectNameOrKey);
-    }
-
-    @Override
-    public void createWorkspace(String ownerKey) throws Exception {
-        dao.createWorkspace(ownerKey);
-    }
-
-    @Override
     public List<Workspace> getWorkspaces(String subjectKey) {
         return dao.getWorkspaces(subjectKey);
-    }
-
-    @Override
-    public Workspace getDefaultWorkspace(String subjectKey) {
-        return dao.getDefaultWorkspace(subjectKey);
     }
 
     @Override
@@ -773,8 +702,8 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception {
-        return dao.createLineRelease(subjectKey, name, releaseDate, lagTimeMonths, dataSets);
+    public LineRelease createLineRelease(String subjectKey, String name) throws Exception {
+        return dao.createLineRelease(subjectKey, name);
     }
 
     @Override

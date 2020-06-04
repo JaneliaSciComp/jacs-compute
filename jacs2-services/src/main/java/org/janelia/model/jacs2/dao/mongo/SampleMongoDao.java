@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
 import org.janelia.model.access.dao.mongo.MongoDaoHelper;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.jacs2.domain.IndexedReference;
 import org.janelia.model.jacs2.domain.Subject;
 import org.janelia.model.jacs2.domain.sample.PipelineResult;
@@ -15,7 +16,6 @@ import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.model.jacs2.domain.sample.SamplePipelineRun;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.jacs2.dao.SampleDao;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.janelia.model.jacs2.DataInterval;
 import org.janelia.model.jacs2.DomainModelUtils;
 import org.janelia.model.jacs2.page.PageRequest;
@@ -35,7 +35,7 @@ import static com.mongodb.client.model.Filters.lt;
 public class SampleMongoDao extends AbstractDomainObjectDao<Sample> implements SampleDao {
     @Inject
     @Jacs2Future
-    public SampleMongoDao(MongoDatabase mongoDatabase, @JacsDefault TimebasedIdentifierGenerator idGenerator) {
+    public SampleMongoDao(MongoDatabase mongoDatabase, @JacsDefault IdGenerator<Long> idGenerator) {
         super(mongoDatabase, idGenerator);
     }
 

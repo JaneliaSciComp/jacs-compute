@@ -14,7 +14,8 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.model.access.cdi.DaoObjectMapper;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.IdGenerator;
+import org.janelia.model.access.domain.TimebasedIdentifierGenerator;
 
 @ApplicationScoped
 public class ApplicationProducer {
@@ -33,7 +34,7 @@ public class ApplicationProducer {
     @JacsDefault
     @ApplicationScoped
     @Produces
-    public TimebasedIdentifierGenerator idGenerator(@PropertyValue(name = "TimebasedIdentifierGenerator.DeploymentContext") Integer deploymentContext) {
+    public IdGenerator<Long> idGenerator(@PropertyValue(name = "TimebasedIdentifierGenerator.DeploymentContext") Integer deploymentContext) {
         return new TimebasedIdentifierGenerator(deploymentContext);
     }
 

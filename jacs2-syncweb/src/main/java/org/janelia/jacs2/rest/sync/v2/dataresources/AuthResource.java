@@ -64,8 +64,8 @@ public class AuthResource {
             }
 
             // Find user in the local database
-            User user = (User)subjectDao.findByName(userMetadata.getName());
-            if (user==null) {
+            User user = subjectDao.findUserByNameOrKey(userMetadata.getName());
+            if (user == null) {
                 // User was able to authenticate, but doesn't exist yet in our local database.
                 // Create user automatically
                 user = userManager.createUser(userMetadata);

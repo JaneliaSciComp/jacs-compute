@@ -2,10 +2,8 @@ package org.janelia.model.access.dao;
 
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import org.janelia.model.domain.DomainObject;
@@ -32,10 +30,6 @@ import org.janelia.model.domain.sample.StatusTransition;
 import org.janelia.model.domain.workspace.Node;
 import org.janelia.model.domain.workspace.TreeNode;
 import org.janelia.model.domain.workspace.Workspace;
-import org.janelia.model.security.Group;
-import org.janelia.model.security.GroupRole;
-import org.janelia.model.security.Subject;
-import org.janelia.model.security.User;
 import org.jongo.MongoCursor;
 
 /**
@@ -65,56 +59,7 @@ public interface LegacyDomainDao {
         }
     }
 
-    /**
-     * Save the given subject.
-     */
-    Subject save(Subject subject);
-
-    /**
-     * Return all the subjects.
-     */
-    List<Subject> getSubjects();
-
-    List<Subject> getUsers() throws Exception;
-
-    List<Subject> getGroups() throws Exception;
-
-    /**
-     * Return the set of subjectKeys which are readable by the given subject.
-     * This includes the subject itself, and all of the groups it has read access for.
-     */
-    Set<String> getReaderSet(String subjectKey);
-
-    /**
-     * Return the set of subjectKeys which are writable by the given subject.
-     * This includes the subject itself, and all of the groups it has write access for.
-     */
-    Set<String> getWriterSet(String subjectKey);
-
-    Subject getSubjectByKey(String subjectKey);
-
-    Subject getSubjectByName(String subjectName);
-
-    /**
-     * Return subject by name or key.
-     */
-    Subject getSubjectByNameOrKey(String subjectNameOrKey);
-
-    /**
-     * Return user by name or key.
-     */
-    User getUserByNameOrKey(String subjectNameOrKey);
-
-    /**
-     * Return group by name or key.
-     */
-    Group getGroupByNameOrKey(String subjectNameOrKey);
-
-    void createWorkspace(String ownerKey) throws Exception;
-
     List<Workspace> getWorkspaces(String subjectKey);
-
-    Workspace getDefaultWorkspace(String subjectKey);
 
     /**
      * Return all the preferences for a given subject.
@@ -426,7 +371,7 @@ public interface LegacyDomainDao {
 
     List<LineRelease> getLineReleases(String subjectKey);
 
-    LineRelease createLineRelease(String subjectKey, String name, Date releaseDate, Integer lagTimeMonths, List<String> dataSets) throws Exception;
+    LineRelease createLineRelease(String subjectKey, String name) throws Exception;
 
     /**
      * Sum the disk space usage of all the samples in the given data set, and cache it within the corresponding DataDet object.

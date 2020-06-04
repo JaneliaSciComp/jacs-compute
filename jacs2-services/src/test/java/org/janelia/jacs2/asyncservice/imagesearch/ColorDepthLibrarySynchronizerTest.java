@@ -35,6 +35,7 @@ import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
+import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
@@ -71,6 +72,7 @@ public class ColorDepthLibrarySynchronizerTest {
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private JacsNotificationDao jacsNotificationDao;
     private LegacyDomainDao legacyDao;
+    private SubjectDao subjectDao;
     private ColorDepthImageDao colorDepthImageDao;
     private LineReleaseDao lineReleaseDao;
     private AnnotationDao annotationDao;
@@ -91,8 +93,9 @@ public class ColorDepthLibrarySynchronizerTest {
         logger = mock(Logger.class);
         serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
-        colorDepthImageDao = mock(ColorDepthImageDao.class);
         legacyDao = mock(LegacyDomainDao.class);
+        subjectDao = mock(SubjectDao.class);
+        colorDepthImageDao = mock(ColorDepthImageDao.class);
         lineReleaseDao = mock(LineReleaseDao.class);
         annotationDao = mock(AnnotationDao.class);
         jacsNotificationDao = mock(JacsNotificationDao.class);
@@ -130,6 +133,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
                 legacyDao,
+                subjectDao,
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
@@ -191,6 +195,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
                 legacyDao,
+                subjectDao,
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
@@ -251,6 +256,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
                 legacyDao,
+                subjectDao,
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
@@ -337,6 +343,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
                 legacyDao,
+                subjectDao,
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
@@ -500,6 +507,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 TEST_WORKING_DIR,
                 testDirectory.resolve("").toString(),
                 legacyDao,
+                subjectDao,
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,

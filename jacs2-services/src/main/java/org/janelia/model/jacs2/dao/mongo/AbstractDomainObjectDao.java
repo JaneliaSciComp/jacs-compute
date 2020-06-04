@@ -11,10 +11,10 @@ import org.bson.conversions.Bson;
 import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.mongo.AbstractMongoDao;
 import org.janelia.model.access.dao.mongo.MongoDaoHelper;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.jacs2.dao.DomainObjectDao;
 import org.janelia.model.jacs2.domain.DomainObject;
 import org.janelia.model.jacs2.domain.Subject;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
 import org.janelia.model.jacs2.EntityFieldValueHandler;
 import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.jacs2.page.PageRequest;
@@ -36,7 +36,7 @@ import static com.mongodb.client.model.Filters.eq;
  */
 public abstract class AbstractDomainObjectDao<T extends DomainObject> extends AbstractMongoDao<T> implements DomainObjectDao<T> {
 
-    public AbstractDomainObjectDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
+    public AbstractDomainObjectDao(MongoDatabase mongoDatabase, IdGenerator<Long> idGenerator) {
         super(mongoDatabase, idGenerator);
     }
 

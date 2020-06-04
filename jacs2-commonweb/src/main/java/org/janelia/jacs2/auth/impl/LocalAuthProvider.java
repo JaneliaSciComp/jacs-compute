@@ -2,7 +2,6 @@ package org.janelia.jacs2.auth.impl;
 
 import org.janelia.jacs2.auth.PasswordProvider;
 import org.janelia.model.access.domain.dao.SubjectDao;
-import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,12 +25,11 @@ public class LocalAuthProvider implements AuthProvider {
     @Override
     public User authenticate(String username, String password) {
         try {
-            Subject subject = subjectDao.findByName(username);
-            if (!(subject instanceof User)) {
+            User user = subjectDao.findUserByNameOrKey(username);
+            if (user ==  null) {
                 LOG.info("Illegal attempt to authenticate as {}", username);
                 return null;
             }
-            User user = (User) subject;
 
             // Authenticate user
             if (user.getPassword() == null || !pwProvider.verifyPassword(password, user.getPassword())) {

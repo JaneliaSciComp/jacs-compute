@@ -1,5 +1,6 @@
 package org.janelia.model.access.dao.mongo;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -21,7 +22,7 @@ import org.bson.conversions.Bson;
 import org.janelia.model.access.dao.AbstractDao;
 import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.ReadWriteDao;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.domain.support.MongoMapped;
 import org.janelia.model.jacs2.AppendFieldValueHandler;
 import org.janelia.model.jacs2.DomainModelUtils;
@@ -45,10 +46,10 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoDao.class);
 
-    protected final TimebasedIdentifierGenerator idGenerator;
+    protected final IdGenerator<Long> idGenerator;
     final MongoCollection<T> mongoCollection;
 
-    protected AbstractMongoDao(MongoDatabase mongoDatabase, TimebasedIdentifierGenerator idGenerator) {
+    protected AbstractMongoDao(MongoDatabase mongoDatabase, IdGenerator<Long> idGenerator) {
         Class<T> entityClass = getEntityType();
         String entityCollectionName = getDomainObjectCollectionName(entityClass);
         mongoCollection = mongoDatabase.getCollection(entityCollectionName, entityClass);
@@ -107,7 +108,7 @@ public abstract class AbstractMongoDao<T extends HasIdentifier> extends Abstract
 
     @Override
     public void saveAll(Collection<T> entities) {
-        Iterator<Number> idIterator = idGenerator.generateIdList(entities.size()).iterator();
+        Iterator<Long> idIterator = idGenerator.generateIdList(entities.size()).iterator();
         List<T> toInsert = new ArrayList<>();
         entities.forEach(e -> {
             if (e.getId() == null) {

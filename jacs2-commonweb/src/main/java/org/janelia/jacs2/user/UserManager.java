@@ -86,8 +86,8 @@ public class UserManager {
             throw new IllegalArgumentException("Username cannot be blank");
         }
 
-        User existingUser = (User)subjectDao.findByNameOrKey(username);
-        if (existingUser!=null) {
+        User existingUser = subjectDao.findUserByNameOrKey(username);
+        if (existingUser != null) {
             throw new RuntimeException("User already exists: "+username);
         }
 

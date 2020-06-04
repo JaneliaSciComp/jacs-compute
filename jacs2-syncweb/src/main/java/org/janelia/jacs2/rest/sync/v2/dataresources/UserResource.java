@@ -85,7 +85,7 @@ public class UserResource {
                     .build();
         }
         try {
-            Subject existingUser = subjectDao.findByNameOrKey(subjectKey);
+            User existingUser = subjectDao.findUserByNameOrKey(subjectKey);
             if (existingUser == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             } else {
@@ -148,11 +148,10 @@ public class UserResource {
                 throw new WebApplicationException(Response.Status.FORBIDDEN);
             }
 
-            Subject subject = subjectDao.findByName(authenticationMessage.getUsername());
-            if (!(subject instanceof User)) {
+            User user = subjectDao.findUserByNameOrKey(authenticationMessage.getUsername());
+            if (user == null) {
                 throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
-            User user = (User)subject;
             subjectDao.setUserPassword(user, pwProvider.generatePBKDF2Hash(authenticationMessage.getPassword()));
             return user;
         } catch (Exception e) {
@@ -189,7 +188,7 @@ public class UserResource {
         }
         try {
             String username = SubjectUtils.getSubjectName(subjectKey);
-            Subject existingUser = subjectDao.findByNameOrKey(subjectKey);
+            Subject existingUser = subjectDao.findUserByNameOrKey(subjectKey);
             if (existingUser == null) {
                 User user = new User();
                 user.setName(username);
@@ -238,17 +237,16 @@ public class UserResource {
                 throw new WebApplicationException(Response.Status.FORBIDDEN);
             }
 
-            User dbUser = (User) subjectDao.findByNameOrKey(username);
+            User dbUser = subjectDao.findUserByNameOrKey(username);
             if (dbUser == null) {
                 return Response.status(Response.Status.NOT_FOUND).build();
-            }
-            else {
+            } else {
                 // existing user
                 boolean emailR = subjectDao.updateUserProperty(dbUser, "email", (String) userProperties.get("email"));
                 boolean fullNameR = subjectDao.updateUserProperty(dbUser, "fullName", (String) userProperties.get("fullname"));
                 boolean nameR = subjectDao.updateUserProperty(dbUser, "name", username);
                 if (emailR && fullNameR && nameR) {
-                    dbUser = (User) subjectDao.findByNameOrKey(username);
+                    dbUser = subjectDao.findUserByNameOrKey(username);
                     return Response.ok(dbUser).build();
                 }
                 else {
@@ -282,21 +280,18 @@ public class UserResource {
     @Path("/user/roles")
     public Response updateUserRoles(@ApiParam Set<UserGroupRole> roles,
                                     @ApiParam @QueryParam("userKey") String userKey) {
-        Subject subject = subjectDao.findByNameOrKey(userKey);
-
+        User user = subjectDao.findUserByNameOrKey(userKey);
         LOG.info("Start UpdateUser({}, {})", userKey, roles);
-        if (subject==null) {
+        if (user == null) {
             LOG.error("Invalid user ({}) provided to updateUser", userKey);
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResponse("Invalid user " + userKey))
                     .build();
         }
         try {
-            User user = (User)subject;
             if (subjectDao.updateUserGroupRoles(user, roles)) {
                 return Response.status(Response.Status.OK).build();
-            }
-            else {
+            } else {
                 LOG.error("Could not update group roles for user {}", user);
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
@@ -402,13 +397,13 @@ public class UserResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/user/subject")
     public Response getSubjectByNameOrKey(@QueryParam("subjectKey") String subjectNameOrKey) {
-        LOG.trace("Start getSubjectByKey({})", subjectNameOrKey);
+        LOG.trace("Start getSubjectByNameOrKey({})", subjectNameOrKey);
         try {
-            Subject s = subjectDao.findByNameOrKey(subjectNameOrKey);
+            Subject s = subjectDao.findSubjectByNameOrKey(subjectNameOrKey);
             return Response.ok(s)
                     .build();
         } finally {
-            LOG.trace("Finished getSubjectByKey({})", subjectNameOrKey);
+            LOG.trace("Finished getSubjectByNameOrKey({})", subjectNameOrKey);
         }
     }
 

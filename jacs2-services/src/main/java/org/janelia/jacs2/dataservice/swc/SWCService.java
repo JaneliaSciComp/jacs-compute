@@ -34,7 +34,7 @@ import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.IdSource;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
@@ -63,7 +63,7 @@ public class SWCService {
     private final RenderedVolumeLoader renderedVolumeLoader;
     private final SWCReader swcReader;
     private final Path defaultSWCLocation;
-    private final IdSource neuronIdGenerator;
+    private final IdGenerator<Long> neuronIdGenerator;
     private final ExecutorService executorService;
 
     @Inject
@@ -75,7 +75,7 @@ public class SWCService {
                       DataStorageLocationFactory dataStorageLocationFactory,
                       RenderedVolumeLoader renderedVolumeLoader,
                       SWCReader swcReader,
-                      IdSource neuronIdGenerator,
+                      IdGenerator<Long> neuronIdGenerator,
                       ExecutorService executorService,
                       @PropertyValue(name = "service.swcImport.DefaultLocation") String defaultSWCLocation) {
         this.storageService = storageService;
@@ -333,7 +333,7 @@ public class SWCService {
             nodeParentLinkage.put(node.getIndex(), node.getParentIndex());
 
         }
-        TmNeuronUtils.addLinkedGeometricAnnotationsInMemory(nodeParentLinkage, annotations, neuronMetadata, () -> neuronIdGenerator.next());
+        TmNeuronUtils.addLinkedGeometricAnnotationsInMemory(nodeParentLinkage, annotations, neuronMetadata, () -> neuronIdGenerator.generateId());
 
         // Set neuron color
         float[] colorArr = swcData.extractColors();

@@ -39,6 +39,7 @@ import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
+import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthFileComponents;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
@@ -84,6 +85,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
     private final Path rootPath;
     private final LegacyDomainDao legacyDomainDao;
+    private final SubjectDao subjectDao;
     private final ColorDepthImageDao colorDepthImageDao;
     private final LineReleaseDao lineReleaseDao;
     private final AnnotationDao annotationDao;
@@ -100,6 +102,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                   @StrPropertyValue(name = "service.colorDepthSearch.filepath") String rootPath,
                                   LegacyDomainDao legacyDomainDao,
+                                  SubjectDao subjectDao,
                                   @AsyncIndex ColorDepthImageDao colorDepthImageDao,
                                   LineReleaseDao lineReleaseDao,
                                   AnnotationDao annotationDao,
@@ -108,6 +111,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.rootPath = Paths.get(rootPath);
         this.legacyDomainDao = legacyDomainDao;
+        this.subjectDao = subjectDao;
         this.colorDepthImageDao = colorDepthImageDao;
         this.lineReleaseDao = lineReleaseDao;
         this.annotationDao = annotationDao;
@@ -241,7 +245,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             library.setWriters(dataSet.getWriters());
         } else {
             String ownerName = libraryIdentifier.split("_")[0];
-            Subject subject = legacyDomainDao.getSubjectByName(ownerName);
+            Subject subject = subjectDao.findSubjectByName(ownerName);
             if (subject != null) {
                 logger.warn("No corresponding data set found. Falling back on owner encoded in library identifier: {}", subject.getKey());
                 library.setOwnerKey(subject.getKey());

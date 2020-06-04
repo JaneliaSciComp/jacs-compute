@@ -20,7 +20,7 @@ import org.bson.conversions.Bson;
 import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.model.access.dao.JacsScheduledServiceDataDao;
-import org.janelia.model.util.TimebasedIdentifierGenerator;
+import org.janelia.model.access.domain.IdGenerator;
 import org.janelia.model.service.JacsScheduledServiceData;
 
 /**
@@ -30,7 +30,7 @@ public class JacsScheduledServiceDataMongoDao extends AbstractMongoDao<JacsSched
 
     @Inject
     public JacsScheduledServiceDataMongoDao(MongoDatabase mongoDatabase,
-                                            @JacsDefault TimebasedIdentifierGenerator idGenerator,
+                                            @JacsDefault IdGenerator<Long> idGenerator,
                                             @BoolPropertyValue(name = "MongoDB.createCollectionIndexes") boolean createCollectionIndexes) {
         super(mongoDatabase, idGenerator);
         if (createCollectionIndexes) {
