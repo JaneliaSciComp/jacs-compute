@@ -10,6 +10,7 @@ import org.janelia.jacs2.dao.DaoFactory;
 import org.janelia.model.jacs2.dao.DomainObjectDao;
 
 import javax.inject.Inject;
+
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;

@@ -1,8 +1,14 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
 import org.hamcrest.Matchers;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
@@ -12,13 +18,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import static org.hamcrest.collection.IsArrayContainingInOrder.arrayContaining;
-import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -261,14 +261,14 @@ public class AbstractServiceProcessorTest {
                 ),
                 // Test 3
                 new TestData(
-                        new BigInteger("123456789123456789123456789"),
+                        new BigInteger("1234567891234567891234567890009090"),
                         new String[] {"arg1", "|>${predServiceName}"},
                         ImmutableMap.of(
                                 "result", "|>${predServiceName}"
                         ),
-                        new String[] {"arg1", "123456789123456789123456789"},
+                        new String[] {"arg1", "1234567891234567891234567890009090"},
                         ImmutableMap.<String, Object>of(
-                                "result", new BigInteger("123456789123456789123456789")
+                                "result", new BigInteger("1234567891234567891234567890009090")
                         )
                 ),
                 // Test 4

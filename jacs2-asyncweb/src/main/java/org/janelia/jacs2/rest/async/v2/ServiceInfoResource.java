@@ -38,7 +38,6 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -226,7 +225,7 @@ public class ServiceInfoResource {
     @Path("/{service-instance-id}")
     public Response getServiceInfo(@PathParam("service-instance-id") Long instanceId,
                                    @Context SecurityContext securityContext) {
-        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
+        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(instanceId);
         if (serviceData == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -253,7 +252,7 @@ public class ServiceInfoResource {
     @Path("/{service-instance-id}/job-output")
     public Response getServiceStandardOutput(@PathParam("service-instance-id") Long instanceId,
                                              @Context SecurityContext securityContext) {
-        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
+        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(instanceId);
         if (serviceData == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -310,7 +309,7 @@ public class ServiceInfoResource {
     @Path("/{service-instance-id}/job-errors")
     public Response getServiceStandardError(@PathParam("service-instance-id") Long instanceId,
                                              @Context SecurityContext securityContext) {
-        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(BigInteger.valueOf(instanceId));
+        JacsServiceData serviceData = jacsServiceDataManager.retrieveServiceById(instanceId);
         if (serviceData == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)

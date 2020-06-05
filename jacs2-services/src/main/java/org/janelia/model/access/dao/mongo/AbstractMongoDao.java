@@ -1,6 +1,5 @@
 package org.janelia.model.access.dao.mongo;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
