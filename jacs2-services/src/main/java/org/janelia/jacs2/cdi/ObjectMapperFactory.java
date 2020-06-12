@@ -4,9 +4,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 
 import org.janelia.model.access.domain.dao.mongo.mongodbutils.MongoModule;
+
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_GETTERS;
+import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_SETTERS;
 
 public class ObjectMapperFactory {
     private static final ObjectMapperFactory INSTANCE = new ObjectMapperFactory();
@@ -39,6 +44,11 @@ public class ObjectMapperFactory {
     }
 
     public ObjectMapper newMongoCompatibleObjectMapper() {
-        return newObjectMapper().registerModule(new MongoModule());
+        ObjectMapper mapper = newObjectMapper();
+        mapper.disable(AUTO_DETECT_SETTERS);
+        mapper.disable(AUTO_DETECT_GETTERS);
+        VisibilityChecker<?> visibilityChecker = mapper.getSerializationConfig().getDefaultVisibilityChecker();
+        return mapper.setVisibility(visibilityChecker.withFieldVisibility(ANY))
+            .registerModule(new MongoModule());
     }
 }
