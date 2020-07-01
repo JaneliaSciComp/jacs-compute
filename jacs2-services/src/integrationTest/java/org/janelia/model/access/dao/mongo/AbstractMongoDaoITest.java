@@ -1,7 +1,8 @@
 package org.janelia.model.access.dao.mongo;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
+
 import org.janelia.jacs2.AbstractITest;
 import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.model.access.dao.ReadWriteDao;
@@ -32,6 +33,8 @@ public abstract class AbstractMongoDaoITest<T extends HasIdentifier> extends Abs
                 integrationTestsConfig.getStringPropertyValue("MongoDB.AuthDatabase", integrationTestsConfig.getStringPropertyValue("MongoDB.Database")),
                 integrationTestsConfig.getStringPropertyValue("MongoDB.Username"),
                 integrationTestsConfig.getStringPropertyValue("MongoDB.Password"),
+                integrationTestsConfig.getStringPropertyValue("MongoDB.ReplicaSet"),
+                integrationTestsConfig.getBooleanPropertyValue("MongoDB.UseSSL", false),
                 0, // use default
                 0, // use default
                 -1, // use default

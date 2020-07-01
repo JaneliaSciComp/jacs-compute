@@ -1,6 +1,8 @@
 package org.janelia.jacs2.cdi;
 
 import com.mongodb.MongoClient;
+
+import org.janelia.jacs2.cdi.qualifier.JacsLegacy;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.model.access.domain.DomainDAO;
 
@@ -12,7 +14,7 @@ public class DaoProducer {
 
     @Produces
     public DomainDAO createDomainDAO(
-            MongoClient mongoClient,
+            @JacsLegacy MongoClient mongoClient,
             @PropertyValue(name = "MongoDB.Database") String databaseName) {
         return new DomainDAO(mongoClient, databaseName);
     }

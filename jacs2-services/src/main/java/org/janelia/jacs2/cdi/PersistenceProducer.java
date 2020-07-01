@@ -5,14 +5,16 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Jacs2Future;
+import org.janelia.jacs2.cdi.qualifier.JacsLegacy;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.Sage;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
@@ -29,6 +31,10 @@ public class PersistenceProducer {
     @Inject
     @PropertyValue(name = "MongoDB.ServerName")
     private String mongoServer;
+
+    @Inject
+    @PropertyValue(name = "MongoDB.ReplicaSet")
+    private String mongoReplicaSet;
 
     @Inject
     @PropertyValue(name = "MongoDB.ConnectionURL")
@@ -57,6 +63,7 @@ public class PersistenceProducer {
             @IntPropertyValue(name = "MongoDB.MaxConnLifeTime") int maxConnLifeTimeInSecs,
             @PropertyValue(name = "MongoDB.Username") String username,
             @PropertyValue(name = "MongoDB.Password") String password,
+            @BoolPropertyValue(name = "MongoDB.UseSSL") boolean useSSL,
             ObjectMapperFactory objectMapperFactory) {
         return MongoDBHelper.createMongoClient(
                 mongoConnectionURL,
@@ -64,6 +71,39 @@ public class PersistenceProducer {
                 StringUtils.defaultIfBlank(authMongoDatabase, mongoDatabase),
                 username,
                 password,
+                mongoReplicaSet,
+                useSSL,
+                threadsAllowedToBlockMultiplier,
+                connectionsPerHost,
+                connectTimeout,
+                maxWaitTimeInSecs,
+                maxConnectionIdleTimeInSecs,
+                maxConnLifeTimeInSecs,
+                () -> RegistryHelper.createCodecRegistryWithJacsksonEncoder(objectMapperFactory.newMongoCompatibleObjectMapper())
+        );
+    }
+
+    @JacsLegacy
+    @ApplicationScoped
+    @Produces
+    public com.mongodb.MongoClient createLegacyMongoClient(
+            @PropertyValue(name = "MongoDB.ThreadsAllowedToBlockForConnectionMultiplier") int threadsAllowedToBlockMultiplier,
+            @PropertyValue(name = "MongoDB.ConnectionsPerHost") int connectionsPerHost,
+            @PropertyValue(name = "MongoDB.ConnectTimeout") int connectTimeout,
+            @IntPropertyValue(name = "MongoDB.MaxWaitTimeInSecs", defaultValue = 120) int maxWaitTimeInSecs,
+            @IntPropertyValue(name = "MongoDB.MaxConnectionIdleTimeInSecs") int maxConnectionIdleTimeInSecs,
+            @IntPropertyValue(name = "MongoDB.MaxConnLifeTime") int maxConnLifeTimeInSecs,
+            @PropertyValue(name = "MongoDB.Username") String username,
+            @PropertyValue(name = "MongoDB.Password") String password,
+            @BoolPropertyValue(name = "MongoDB.UseSSL") boolean useSSL,
+            ObjectMapperFactory objectMapperFactory) {
+        return MongoDBHelper.createLegacyMongoClient(
+                mongoConnectionURL,
+                mongoServer,
+                StringUtils.defaultIfBlank(authMongoDatabase, mongoDatabase),
+                username,
+                password,
+                useSSL,
                 threadsAllowedToBlockMultiplier,
                 connectionsPerHost,
                 connectTimeout,
