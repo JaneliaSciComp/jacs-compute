@@ -264,7 +264,7 @@ TmSampleResource {
                     .build();
         }
 
-        String ktxFullPath;
+        final String ktxFullPath;
         if (StringUtils.isBlank(sample.getLargeVolumeKTXFilepath())) {
             LOG.info("KTX data path not provided for {}. Attempting to find it relative to the octree...", sample.getName());
             ktxFullPath = StringUtils.appendIfMissing(samplePath, "/") + "ktx";
@@ -281,27 +281,29 @@ TmSampleResource {
                 })
                 ;
         if (ktxFound) {
-            if (StringUtils.isBlank(ktxFullPath)) {
+            if (StringUtils.isBlank(sample.getLargeVolumeKTXFilepath())) {
                 LOG.info("Setting KTX data path to {}", ktxFullPath);
-                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
+                sample.setLargeVolumeKTXFilepath(ktxFullPath);
             }
         } else {
-            sample.setFilesystemSync(false); // set file system sync to false because ktx directory does not exist
+            if (StringUtils.isNotBlank(sample.getLargeVolumeKTXFilepath())) {
+                sample.setFilesystemSync(false); // set file system sync to false because ktx directory does not exist
+            }
         }
 
-        String acquisitionPath;
-        if (StringUtils.isBlank(DomainUtils.getFilepath(sample, FileType.TwoPhotonAcquisition))) {
+        final String acquisitionPath;
+        if (StringUtils.isBlank(sample.getAcquisitionFilepath())) {
             LOG.info("RAW data path not provided for {}. Attempting to read it from the tilebase.cache.yml...", sample.getName());
             RawVolData rawVolData = readRawVolumeData(rvl);
             if (rawVolData != null) {
                 acquisitionPath = rawVolData.getPath();
             } else {
                 acquisitionPath = null;
-                sample.setFilesystemSync(false); // set file system sync to false because there is something wrong with the acquisition path
             }
         } else {
             acquisitionPath = sample.getAcquisitionFilepath();
         }
+
         if (StringUtils.isNotBlank(acquisitionPath)) {
             boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
                     .map(dl -> true)
@@ -313,10 +315,12 @@ TmSampleResource {
             if (acquisitionPathFound) {
                 if (StringUtils.isBlank(sample.getAcquisitionFilepath())) {
                     LOG.info("Setting RAW data path to {}", acquisitionPath);
-                    DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, acquisitionPath);
+                    sample.setAcquisitionFilepath(acquisitionPath, false);
                 }
             } else {
-                sample.setFilesystemSync(false); // set file system sync to false because the acquisition directory is not accessible
+                if (StringUtils.isNotBlank(sample.getAcquisitionFilepath())) {
+                    sample.setFilesystemSync(false); // set file system sync to false because the acquisition directory is not accessible
+                }
             }
         }
 
