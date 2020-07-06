@@ -1,5 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -119,6 +121,12 @@ public class DataNodeResource {
             }
 
             Node node = (Node)legacyDomainDao.getDomainObject(subjectKey, Reference.createFor(nodeReference));
+            if (node==null) {
+                return Response.ok()
+                        .type(MediaType.APPLICATION_JSON)
+                        .entity(new GenericEntity<List<DomainObject>>(Collections.emptyList()){})
+                        .build();
+            }
 
             List<DomainObject> children = workspaceNodeDao.getChildren(subjectKey, node, sortCriteria, page, pageSize);
             LOG.trace("Found {} children accessible by {}", children.size(), subjectKey);
