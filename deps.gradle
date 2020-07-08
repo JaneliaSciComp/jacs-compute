@@ -116,7 +116,7 @@ dependencies {
         ASSERTJ_VERSION = "3.11.1"
         JUNIT_VERSION = "4.12"
         HAMCREST_VERSION = "2.0.0.0"
-        MOCKITO_VERSION = "2.8.9"
+        MOCKITO_VERSION = "2.8.47"
         POWERMOCKITO_VERSION = "1.7.3"
 
         JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
