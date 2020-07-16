@@ -28,6 +28,7 @@ import org.janelia.model.service.JacsServiceState;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -121,10 +122,29 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
     }
 
     @Override
-    public PageResult<JacsServiceData> claimServiceByQueueAndState(String queueId, Set<JacsServiceState> requestStates, PageRequest pageRequest) {
+    public PageResult<JacsServiceData> claimServiceByQueueAndState(String queueId, boolean onlyPreAssignedWork, Set<JacsServiceState> requestStates, PageRequest pageRequest) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(requestStates));
-        ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
+        if (onlyPreAssignedWork) {
+            return new PageResult<>(pageRequest, getOnlyPreAssignedServiceByQueueAndState(queueId, requestStates, pageRequest));
+        } else {
+            return new PageResult<>(pageRequest, claimNewOrPreAssignedServiceByQueueAndState(queueId, requestStates, pageRequest));
+        }
+    }
 
+    private List<JacsServiceData> getOnlyPreAssignedServiceByQueueAndState(String queueId, Set<JacsServiceState> requestStates, PageRequest pageRequest) {
+        if (StringUtils.isBlank(queueId)) {
+            // the semantics here is that an empty queueID in the database matches nothing so no point to query anything
+            return Collections.emptyList();
+        }
+        ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
+        filtersBuilder.add(Filters.eq("queueId", queueId));
+        filtersBuilder.add(in("state", requestStates));
+        Bson bsonFilter = and(filtersBuilder.build());
+        return find(bsonFilter, MongoDaoHelper.createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), JacsServiceData.class);
+    }
+
+    private List<JacsServiceData> claimNewOrPreAssignedServiceByQueueAndState(String queueId, Set<JacsServiceState> requestStates, PageRequest pageRequest) {
+        ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
         if (StringUtils.isNotBlank(queueId)) {
             filtersBuilder.add(Filters.or(
                     Filters.eq("queueId", queueId),
@@ -135,10 +155,7 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
         filtersBuilder.add(in("state", requestStates));
         Bson bsonFilter = and(filtersBuilder.build());
         List<JacsServiceData> candidateResults = find(bsonFilter, MongoDaoHelper.createBsonSortCriteria(pageRequest.getSortCriteria()), pageRequest.getOffset(), pageRequest.getPageSize(), JacsServiceData.class);
-        if (candidateResults.isEmpty()) {
-            return new PageResult<>(pageRequest, candidateResults);
-        }
-        List<JacsServiceData> finalClaimedResults = candidateResults.stream()
+        return candidateResults.stream()
                 .map(sd -> {
                     FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
                     updateOptions.returnDocument(ReturnDocument.AFTER);
@@ -160,7 +177,6 @@ public class JacsServiceDataMongoDao extends AbstractMongoDao<JacsServiceData> i
                 })
                 .filter(sd -> sd != null)
                 .collect(Collectors.toList());
-        return new PageResult<>(pageRequest, finalClaimedResults);
     }
 
     @Override

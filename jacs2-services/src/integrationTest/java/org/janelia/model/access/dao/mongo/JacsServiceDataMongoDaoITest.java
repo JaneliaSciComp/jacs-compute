@@ -1,11 +1,21 @@
 package org.janelia.model.access.dao.mongo;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.bson.conversions.Bson;
 import org.hamcrest.CoreMatchers;
@@ -27,15 +37,6 @@ import org.janelia.model.service.RegisteredJacsNotification;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -318,16 +319,24 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         PageRequest pageRequest = new PageRequest();
         PageResult<JacsServiceData> retrievedQueuedServices;
 
-        // first claim unassigned services
-        retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
+        // claim only preassigned services - at this point there shouldn't be any
+        retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, true, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
+        assertThat(retrievedQueuedServices.getResultList(), emptyCollectionOf(JacsServiceData.class));
+        // now actually claim unassigned services
+        retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, false, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
         assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
-        // now try to claim them for a different queue
-        retrievedQueuedServices = testDao.claimServiceByQueueAndState("otherQueue", ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
+        // then try to claim them for a different queue
+        retrievedQueuedServices = testDao.claimServiceByQueueAndState("otherQueue", false, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), emptyCollectionOf(JacsServiceData.class));
-        // then claim them again for the same queue that claimed them first
-        retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
+        // claim them again for the same queue that claimed them first
+        retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, false, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
+        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
+        assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
+        // test again with onlyPreAssigned true
+        retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, true, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
         assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
         assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
@@ -393,7 +402,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 return candidates;
             }
         };
-        PageResult<JacsServiceData> retrievedQueuedServices = spiedTestDao.claimServiceByQueueAndState(testQueueId, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
+        PageResult<JacsServiceData> retrievedQueuedServices = spiedTestDao.claimServiceByQueueAndState(testQueueId, false, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
         assertThat(retrievedQueuedServices.getResultList(), emptyCollectionOf(JacsServiceData.class));
     }
 

@@ -45,7 +45,7 @@ public class JacsServiceEngineImplTest {
         serviceRegistrarSource = mock(Instance.class);
         serviceRegistry = mock(ServiceRegistry.class);
         logger = mock(Logger.class);
-        jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, "queueId", 10, logger);
+        jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, "queueId", false, 10, logger);
         doAnswer(invocation -> {
             JacsServiceData sd = invocation.getArgument(0);
             sd.setId(idSequence++);

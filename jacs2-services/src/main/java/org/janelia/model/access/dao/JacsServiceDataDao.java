@@ -22,6 +22,6 @@ public interface JacsServiceDataDao extends ReadWriteDao<JacsServiceData, Number
     long countMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval);
     PageResult<JacsServiceData> findMatchingServices(JacsServiceData pattern, DataInterval<Date> creationInterval, PageRequest pageRequest);
     PageResult<JacsServiceData> findServicesByState(Set<JacsServiceState> requestStates, PageRequest pageRequest);
-    PageResult<JacsServiceData> claimServiceByQueueAndState(String queueId, Set<JacsServiceState> requestStates, PageRequest pageRequest);
+    PageResult<JacsServiceData> claimServiceByQueueAndState(String queueId, boolean onlyPreAssignedWork, Set<JacsServiceState> requestStates, PageRequest pageRequest);
     void saveServiceHierarchy(JacsServiceData serviceData);
 }

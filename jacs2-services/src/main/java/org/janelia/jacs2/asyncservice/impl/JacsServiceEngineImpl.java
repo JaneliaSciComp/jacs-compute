@@ -77,7 +77,7 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
     private Logger logger;
     private int nAvailableSlots;
     private Semaphore availableSlots;
-    private String defaultProcessorQueueId;
+    private String defaultSubmissionQueueId;
 
     JacsServiceEngineImpl() {
         // CDI required ctor
@@ -88,7 +88,7 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
                                  JacsServiceQueue jacsServiceQueue,
                                  Instance<ServiceRegistry> serviceRegistrarSource,
                                  @PropertyValue(name = "service.engine.ProcessingSlots") int nAvailableSlots,
-                                 @PropertyValue(name = "service.defaultProcessor.queue.id") String defaultProcessorQueueId,
+                                 @PropertyValue(name = "service.defaultSubmission.queue.id") String defaultSubmissionQueueId,
                                  Logger logger) {
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.jacsServiceQueue = jacsServiceQueue;
@@ -96,8 +96,8 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
         this.logger = logger;
         this.nAvailableSlots = nAvailableSlots <= 0 ? DEFAULT_MAX_RUNNING_SLOTS : nAvailableSlots;
         this.availableSlots = new Semaphore(this.nAvailableSlots, true);
-        this.defaultProcessorQueueId = StringUtils.defaultIfBlank(defaultProcessorQueueId, null);
-        logger.info("Default queue id: {}", defaultProcessorQueueId);
+        this.defaultSubmissionQueueId = StringUtils.defaultIfBlank(defaultSubmissionQueueId, null);
+        logger.info("Default queue id: {}", defaultSubmissionQueueId);
     }
 
     @Override
@@ -167,7 +167,7 @@ public class JacsServiceEngineImpl implements JacsServiceEngine {
         if (StringUtils.isBlank(serviceArgs.getQueueId())) {
             // if the client hasn't specified where the service should process
             // use the defaultProcessorQueueId to specify where processing will take place
-            serviceArgs.setQueueId(defaultProcessorQueueId);
+            serviceArgs.setQueueId(defaultSubmissionQueueId);
         }
         serviceArgs.initAccessId();
         jacsServiceDataPersistence.saveHierarchy(serviceArgs);

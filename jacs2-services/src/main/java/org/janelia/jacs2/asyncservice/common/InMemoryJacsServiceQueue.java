@@ -3,6 +3,7 @@ package org.janelia.jacs2.asyncservice.common;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections4.CollectionUtils;
+import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.page.PageRequest;
@@ -37,6 +38,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     private final Set<Number> submittedServicesSet = new LinkedHashSet<>();
     private Logger logger;
     private String queueId;
+    private boolean onlyPreAssignedWork;
     private int maxReadyCapacity;
     private boolean noWaitingSpaceAvailable;
 
@@ -47,9 +49,11 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
     @Inject
     public InMemoryJacsServiceQueue(JacsServiceDataPersistence jacsServiceDataPersistence,
                                     @PropertyValue(name = "service.queue.id") String queueId,
+                                    @BoolPropertyValue(name = "service.queue.getOnlyPreAssignedWork") boolean onlyPreAssignedWork,
                                     @PropertyValue(name = "service.queue.MaxCapacity") int maxReadyCapacity,
                                     Logger logger) {
         this.queueId = queueId;
+        this.onlyPreAssignedWork = onlyPreAssignedWork;
         this.maxReadyCapacity = maxReadyCapacity < 0 ? 0 : maxReadyCapacity;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
         this.waitingServices = new PriorityBlockingQueue<>(
@@ -175,7 +179,7 @@ public class InMemoryJacsServiceQueue implements JacsServiceQueue {
             servicePageRequest.setSortCriteria(new ArrayList<>(ImmutableList.of(
                     new SortCriteria("priority", SortDirection.DESC),
                     new SortCriteria("creationDate"))));
-            PageResult<JacsServiceData> services = jacsServiceDataPersistence.claimServiceByQueueAndState(queueId, jacsServiceStates, servicePageRequest);
+            PageResult<JacsServiceData> services = jacsServiceDataPersistence.claimServiceByQueueAndState(queueId, onlyPreAssignedWork, jacsServiceStates, servicePageRequest);
             if (CollectionUtils.isNotEmpty(services.getResultList())) {
                 services.getResultList().stream().forEach(serviceData -> {
                     try {

@@ -64,10 +64,10 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
         }
     }
 
-    public PageResult<JacsServiceData> claimServiceByQueueAndState(String queueId, Set<JacsServiceState> requestStates, PageRequest pageRequest) {
+    public PageResult<JacsServiceData> claimServiceByQueueAndState(String queueId, boolean onlyPreAssignedWork, Set<JacsServiceState> requestStates, PageRequest pageRequest) {
         JacsServiceDataDao jacsServiceDataDao = daoSource.get();
         try {
-            return jacsServiceDataDao.claimServiceByQueueAndState(queueId, requestStates, pageRequest);
+            return jacsServiceDataDao.claimServiceByQueueAndState(queueId, onlyPreAssignedWork, requestStates, pageRequest);
         } finally {
             daoSource.destroy(jacsServiceDataDao);
         }

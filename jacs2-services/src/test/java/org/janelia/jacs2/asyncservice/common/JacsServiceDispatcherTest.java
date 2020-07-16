@@ -71,7 +71,7 @@ public class JacsServiceDispatcherTest {
         jacsNotificationDao = mock(JacsNotificationDao.class);
         Instance<ServiceRegistry> serviceRegistrarSource = mock(Instance.class);
         serviceRegistry = mock(ServiceRegistry.class);
-        jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, TEST_QUEUE_NAME, 10, logger);
+        jacsServiceQueue = new InMemoryJacsServiceQueue(jacsServiceDataPersistence, TEST_QUEUE_NAME, false, 10, logger);
         jacsServiceEngine = new JacsServiceEngineImpl(jacsServiceDataPersistence, jacsServiceQueue, serviceRegistrarSource, 10, TEST_QUEUE_NAME, logger);
         emailNotificationService = mock(EmailNotificationService.class);
         testDispatcher = new JacsServiceDispatcher(serviceComputationFactory,
@@ -100,7 +100,6 @@ public class JacsServiceDispatcherTest {
             }
             return null;
         }).when(jacsServiceDataPersistence).updateServiceState(any(JacsServiceData.class), any(JacsServiceState.class), any(JacsServiceEvent.class));
-
     }
 
     @Test
@@ -134,7 +133,7 @@ public class JacsServiceDispatcherTest {
     public void dispatchServiceWhenNoSlotsAreAvailable() {
         jacsServiceEngine.setProcessingSlotsCount(0);
         JacsServiceData testService = enqueueTestService("test");
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), eq(false), anySet(), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
         testDispatcher.dispatchServices();
         verify(logger).debug("Abort service {} for now because there are not enough processing slots", testService);
@@ -144,7 +143,7 @@ public class JacsServiceDispatcherTest {
     public void runSubmittedService() {
         JacsServiceData testServiceData = enqueueTestService("submittedService");
 
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), eq(false), anySet(), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
 
         verifyDispatch(testServiceData);
@@ -156,7 +155,7 @@ public class JacsServiceDispatcherTest {
 
         PageResult<JacsServiceData> nonEmptyPageResult = new PageResult<>();
         nonEmptyPageResult.setResultList(ImmutableList.of(testServiceData));
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), eq(false), anySet(), any(PageRequest.class)))
                 .thenReturn(nonEmptyPageResult)
                 .thenReturn(new PageResult<>());
 
@@ -259,7 +258,7 @@ public class JacsServiceDispatcherTest {
     @Test
     public void serviceProcessingError() {
         JacsServiceData testServiceData = enqueueTestService("submittedService");
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), eq(false), anySet(), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
         ComputationException processException = new ComputationException(testServiceData, "test exception");
         ServiceProcessor testProcessor = prepareServiceProcessor(testServiceData, processException);
@@ -320,7 +319,7 @@ public class JacsServiceDispatcherTest {
     @Test
     public void suspendService() {
         JacsServiceData testServiceData = enqueueTestService("suspendedService", JacsServiceState.SUSPENDED);
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), eq(false), anySet(), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
         ServiceProcessor testProcessor = prepareServiceProcessor(testServiceData, null);
 
@@ -340,7 +339,7 @@ public class JacsServiceDispatcherTest {
     @Test
     public void suspendServiceDuringExecution() {
         JacsServiceData testServiceData = enqueueTestService("suspendedService");
-        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), anySet(), any(PageRequest.class)))
+        when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), eq(false), anySet(), any(PageRequest.class)))
                 .thenReturn(new PageResult<>());
         ServiceProcessor testProcessor = prepareServiceProcessor(testServiceData, new ServiceSuspendedException(testServiceData));
 

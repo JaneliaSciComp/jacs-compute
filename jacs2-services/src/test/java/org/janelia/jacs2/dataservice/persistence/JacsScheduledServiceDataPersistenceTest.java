@@ -1,24 +1,22 @@
 package org.janelia.jacs2.dataservice.persistence;
 
-import com.google.common.collect.ImmutableList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import javax.enterprise.inject.Instance;
+
 import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.janelia.model.access.dao.JacsScheduledServiceDataDao;
 import org.janelia.model.service.JacsScheduledServiceData;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-
-import javax.enterprise.inject.Instance;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertThat;
 
