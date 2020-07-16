@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,7 @@ import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.domain.Reference;
@@ -450,6 +452,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     );
                 } else {
                     if (library.hasVersion()) {
+                        // if the mip name does not follow the convention assume the version is in the file name
                         // remove the version from the filename
                         sourceCDMName = Pattern.compile("[_-]" + library.getVersion() + "$", Pattern.CASE_INSENSITIVE)
                                 .matcher(colorDepthImageFileComponents.getFileName())
@@ -458,27 +461,22 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         sourceCDMName = colorDepthImageFileComponents.getFileName();
                     }
                 }
-                logger.debug("Lookup {} in {}", sourceCDMName, sourceLibraryDir);
-                String sourceMIPFileName = FileUtils.lookupFiles(sourceLibraryDir, 1,
-                        "regex:.*" + sourceCDMName + ".*\\..*$")
-                        .filter(p -> Files.isRegularFile(p))
-                        .map(p -> p.toString())
-                        .findFirst()
-                        .orElse(null);
-                if (sourceMIPFileName == null) {
-                    // the original image file not found so something is wrong here
-                    logger.warn("Invalid source MIP file name - no file found for {} in {} folder", sourceCDMName, sourceLibraryDir);
-                    return false;
+                logger.debug("Lookup {} in {}, alignmentSpace: {}", sourceCDMName, sourceLibrary.getIdentifier(), alignmentSpace);
+                ColorDepthImage sourceImage = colorDepthImageDao.streamColorDepthMIPs(
+                        new ColorDepthImageQuery()
+                                .withLibraryIdentifiers(Collections.singletonList(sourceLibrary.getIdentifier()))
+                                .withAlignmentSpace(alignmentSpace)
+                                .withFuzzyNames(Collections.singleton(sourceCDMName))
+                                .withFuzzyFilepaths(Collections.singleton(sourceCDMName))
+                ).findFirst().orElse(null);
+                if (sourceImage != null) {
+                    image.setSourceImageRef(Reference.createFor(sourceImage));
                 } else {
-                    ColorDepthImage sourceImage = legacyDomainDao.getColorDepthImageByPath(null, sourceMIPFileName);
-                    if (sourceImage != null) {
-                        image.setSourceImageRef(Reference.createFor(sourceImage));
-                    } else {
-                        // this is the case when the file exist but the mip entity was deleted because
-                        // it actually corresponds to a renamed mip
-                        logger.warn("No color depth image entity found for {} so no MIP will be created", sourceMIPFileName);
-                        return false;
-                    }
+                    // this is the case when the file exist but the mip entity was deleted because
+                    // it actually corresponds to a renamed mip
+                    logger.warn("No color depth image entity found for {} in library {}, alignment {}, so no MIP will be created",
+                            sourceCDMName, sourceLibrary.getIdentifier(), alignmentSpace);
+                    return false;
                 }
             }
             legacyDomainDao.save(library.getOwnerKey(), image);

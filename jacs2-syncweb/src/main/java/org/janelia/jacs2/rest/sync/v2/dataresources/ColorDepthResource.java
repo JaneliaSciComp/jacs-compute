@@ -39,6 +39,7 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.domain.Reference;
@@ -123,11 +124,14 @@ public class ColorDepthResource {
         LOG.trace("Start countColorDepthMipsByLibrary({}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, datasets);
         try {
             List<String> sampleRefs = retrieveSamplesByDatasets(extractMultiValueParams(datasets)).stream().map(s -> Reference.createFor(s).toString()).collect(Collectors.toList());
-            long colorDepthMIPsCount = colorDepthImageDao.countColorDepthMIPs(ownerKey, alignmentSpace,
-                    extractMultiValueParams(libraryNames),
-                    extractMultiValueParams(names),
-                    extractMultiValueParams(filepaths),
-                    sampleRefs
+            long colorDepthMIPsCount = colorDepthImageDao.countColorDepthMIPs(
+                    new ColorDepthImageQuery()
+                        .withOwner(ownerKey)
+                        .withAlignmentSpace(alignmentSpace)
+                        .withLibraryIdentifiers(extractMultiValueParams(libraryNames))
+                        .withExactNames(extractMultiValueParams(names))
+                        .withExactFilepaths(extractMultiValueParams(filepaths))
+                        .withSampleRefs(sampleRefs)
             );
             return Response
                     .ok(colorDepthMIPsCount)
@@ -179,13 +183,16 @@ public class ColorDepthResource {
             int offset = parseIntegerParam("offset", offsetParam, 0);
             int length = parseIntegerParam("length", lengthParam, -1);
             List<String> sampleRefs = retrieveSamplesByDatasets(extractMultiValueParams(datasets)).stream().map(s -> Reference.createFor(s).toString()).collect(Collectors.toList());
-            Stream<ColorDepthImage> cdmStream = colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace,
-                    extractMultiValueParams(libraryNames),
-                    extractMultiValueParams(names),
-                    extractMultiValueParams(filepaths),
-                    sampleRefs,
-                    offset,
-                    length
+            Stream<ColorDepthImage> cdmStream = colorDepthImageDao.streamColorDepthMIPs(
+                    new ColorDepthImageQuery()
+                            .withOwner(ownerKey)
+                            .withAlignmentSpace(alignmentSpace)
+                            .withLibraryIdentifiers(extractMultiValueParams(libraryNames))
+                            .withExactNames(extractMultiValueParams(names))
+                            .withExactFilepaths(extractMultiValueParams(filepaths))
+                            .withSampleRefs(sampleRefs)
+                            .withOffset(offset)
+                            .withLength(length)
             );
             return Response
                     .ok(new GenericEntity<List<ColorDepthImage>>(cdmStream.collect(Collectors.toList())){})
@@ -217,13 +224,16 @@ public class ColorDepthResource {
             int offset = parseIntegerParam("offset", offsetParam, 0);
             int length = parseIntegerParam("length", lengthParam, -1);
             Map<Reference, Sample> samplesIndexedByRef = retrieveSamplesByDatasets(extractMultiValueParams(datasetParam)).stream().collect(Collectors.toMap(Reference::createFor, s -> s));
-            List<ColorDepthImage> cdmList = colorDepthImageDao.streamColorDepthMIPs(ownerKey, alignmentSpace,
-                    extractMultiValueParams(libraryNames),
-                    extractMultiValueParams(names),
-                    extractMultiValueParams(filepaths),
-                    samplesIndexedByRef.keySet().stream().map(Reference::toString).collect(Collectors.toSet()),
-                    offset,
-                    length
+            List<ColorDepthImage> cdmList = colorDepthImageDao.streamColorDepthMIPs(
+                    new ColorDepthImageQuery()
+                            .withOwner(ownerKey)
+                            .withAlignmentSpace(alignmentSpace)
+                            .withLibraryIdentifiers(extractMultiValueParams(libraryNames))
+                            .withExactNames(extractMultiValueParams(names))
+                            .withExactFilepaths(extractMultiValueParams(filepaths))
+                            .withSampleRefs(samplesIndexedByRef.keySet().stream().map(Reference::toString).collect(Collectors.toSet()))
+                            .withOffset(offset)
+                            .withLength(length)
             ).collect(Collectors.toList());
 
             if (samplesIndexedByRef.isEmpty()) {

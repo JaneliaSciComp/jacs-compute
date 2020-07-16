@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
+import com.sun.mail.iap.Argument;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
@@ -34,6 +35,7 @@ import org.janelia.model.access.dao.JacsNotificationDao;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.domain.Reference;
@@ -421,6 +423,12 @@ public class ColorDepthLibrarySynchronizerTest {
                     }
                     File testCDFile = indexedTestFilePath.getRight().toFile();
                     testCDFile.setLastModified(System.currentTimeMillis() - (filenames.length - indexedTestFilePath.getLeft()) * 1000);
+                    Mockito.when(colorDepthImageDao.streamColorDepthMIPs(ArgumentMatchers.any(ColorDepthImageQuery.class))).then(invocation -> {
+                        ColorDepthImage cdi = new ColorDepthImage();
+                        cdi.setId(testCDFile.lastModified());
+                        cdi.setFilepath(testCDFile.getAbsolutePath());
+                        return Stream.of(cdi);
+                    });
                     Mockito.when(legacyDao.getColorDepthImageByPath(null, testCDFile.getAbsolutePath())).then(invocation -> {
                         String cdfile = invocation.getArgument(1);
                         ColorDepthImage cdi = new ColorDepthImage();
