@@ -1,9 +1,11 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -59,8 +61,9 @@ public class DomainReferenceResource {
 
     @Inject
     private ReferenceDomainObjectReadDao referenceDomainObjectReadDao;
+    @Any
     @Inject
-    private Instance<NodeDao<? extends Node>> nodeDaosProvider;
+    private Instance<NodeDao<? extends Node>> nodeDaos;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -86,7 +89,7 @@ public class DomainReferenceResource {
         LOG.trace("Start getNodeDirectAncestors({}, {})", subjectKey, nodeReferenceParam);
         try {
             Reference nodeReference = Reference.createFor(nodeReferenceParam);
-            Set<Reference> directAncestors = nodeDaosProvider.stream()
+            Set<Reference> directAncestors = nodeDaos.stream()
                     .flatMap(nodeDao -> {
                         DirectNodeAncestorsGetter<? extends Node> nodeAncestorsGetter = new DirectNodeAncestorsGetterImpl<>(nodeDao);
                         Set<Reference> ancestors = nodeAncestorsGetter.getDirectAncestors(nodeReference);
