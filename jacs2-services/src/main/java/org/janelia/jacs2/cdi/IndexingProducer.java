@@ -20,7 +20,6 @@ import org.janelia.model.access.domain.dao.NodeDao;
 import org.janelia.model.access.domain.nodetools.AllNodeAncestorsGetterImpl;
 import org.janelia.model.access.domain.nodetools.CachedAllNodeAncestorsGetterImpl;
 import org.janelia.model.access.domain.nodetools.DirectNodeAncestorsGetterImpl;
-import org.janelia.model.access.domain.nodetools.NodeAncestorsGetter;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.access.domain.search.SolrBasedDomainObjectIndexer;
 import org.janelia.model.access.search.AsyncDomainObjectIndexer;

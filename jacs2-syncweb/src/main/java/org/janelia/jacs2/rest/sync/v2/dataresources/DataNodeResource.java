@@ -1,6 +1,5 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -138,7 +137,6 @@ public class DataNodeResource {
             LOG.trace("Finished getNodeChildren({}, {}, {}, {}, {})", subjectKey, nodeReference, sortCriteria, page, pageSize);
         }
     }
-
 
     @ApiOperation(value = "Adds items to a Node",
             notes = "Uses the DomainObject parameter of the DomainQuery for the Node, " +
