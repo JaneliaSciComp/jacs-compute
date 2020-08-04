@@ -22,7 +22,6 @@ import javax.inject.Named;
 import com.beust.jcommander.Parameter;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
