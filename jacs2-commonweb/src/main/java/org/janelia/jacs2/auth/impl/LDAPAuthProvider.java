@@ -241,8 +241,12 @@ public class LDAPAuthProvider implements AuthProvider {
     }
 
     private boolean authenticate(LdapConnection connection, String userDn, String password) throws LdapException {
-
         LOG.trace("Re-binding with DN {} using password", userDn);
+
+        if (StringUtils.isNotBlank(password)) {
+            LOG.info("Empty password is not allowed for {}", userDn);
+            return false;
+        }
 
         final BindRequestImpl bindRequest = new BindRequestImpl();
         bindRequest.setName(userDn);
