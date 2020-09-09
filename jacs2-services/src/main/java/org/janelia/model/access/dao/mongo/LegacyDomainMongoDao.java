@@ -717,6 +717,11 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
+    public List<ColorDepthImage> getColorDepthImages(String subjectKey, String libraryIdentifier, String alignmentSpace) {
+        return dao.getColorDepthImages(subjectKey, libraryIdentifier, alignmentSpace);
+    }
+
+    @Override
     public Map<String,Map<String,Integer>> getColorDepthCounts() {
         return dao.getColorDepthCounts();
     }

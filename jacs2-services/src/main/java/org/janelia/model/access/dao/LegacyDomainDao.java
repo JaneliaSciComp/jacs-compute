@@ -382,6 +382,8 @@ public interface LegacyDomainDao {
 
     void addColorDepthSearchResult(String subjectKey, Long searchId, ColorDepthResult result);
 
+    public List<ColorDepthImage> getColorDepthImages(String subjectKey, String libraryIdentifier, String alignmentSpace);
+
     public Map<String,Map<String,Integer>> getColorDepthCounts();
 
     public void updateColorDepthCounts(Map<String,Map<String,Integer>> counts) throws Exception;
