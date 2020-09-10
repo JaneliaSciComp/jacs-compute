@@ -100,7 +100,8 @@ public class DbMaintainer {
                 asList(
                         new DaoIndex("{filepath:1}", "{unique:true}"),
                         new DaoIndex("{sampleRef:1}"),
-                        new DaoIndex("{libraries:1}")
+                        new DaoIndex("{libraries:1}"),
+                        new DaoIndex("{libraries:1,alignmentSpace:1}")
                 ));
 
         legacyDomainDao.ensureCollectionIndex("cdmipMask",
