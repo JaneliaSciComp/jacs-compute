@@ -48,8 +48,10 @@ public class ColorDepthLibraryValidator extends AbstractServiceProcessor<Void> {
         String alignmentSpace;
         @Parameter(names = "-library", description = "Library identifier. This has to be a root library, not a version of some other library")
         String library;
-        @Parameter(names = "-dryRun", description = "Runs without making any changes to the database or filesystem. Everything is logged, but nothing is actually changed.", arity = 0)
-        boolean dryRun = true;
+        @Parameter(names = "-dryRun", description = "Runs without making any changes to the database or filesystem. Everything is logged, but nothing is actually changed.")
+        boolean dryRun = false;
+        @Parameter(names = "-force", description = "Forces deletions even if they exceed safety limits. This only has an effect if dryRun is false.")
+        boolean force = false;
 
         ValidateArgs() {
             super("Color depth library validator");
@@ -76,7 +78,7 @@ public class ColorDepthLibraryValidator extends AbstractServiceProcessor<Void> {
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(ColorDepthLibrarySynchronizer.class, new ColorDepthLibrarySynchronizer.SyncArgs());
+        return ServiceArgs.getMetadata(ColorDepthLibraryValidator.class, new ColorDepthLibraryValidator.ValidateArgs());
     }
 
     @Override
@@ -107,28 +109,42 @@ public class ColorDepthLibraryValidator extends AbstractServiceProcessor<Void> {
         logger.info("  alignmentSpace={}", args.alignmentSpace);
         logger.info("  library={}", args.library);
         logger.info("  dryRun={}", args.dryRun);
+        logger.info("  force={}", args.force);
 
-        long numImagesProcessed = 0;
+        long totalNumLibrariesProcessed = 0;
+        long totalNumImagesProcessed = 0;
+        long totalNumDeleted = 0;
+
         Map<String, Map<String, Integer>> counts = legacyDomainDao.getColorDepthCounts();
+        TreeSet<String> libraries = new TreeSet<>(counts.keySet());
 
-        for(String libraryIdentifier : new TreeSet<>(counts.keySet())) {
+        for(String libraryIdentifier : libraries) {
 
             if (args.library != null && !args.library.equals(libraryIdentifier)) {
                 continue;
             }
-
             logger.info("Processing {}", libraryIdentifier);
+            totalNumLibrariesProcessed++;
 
             Map<Long, Sample> samples = new HashMap<>();
             for(Sample sample : legacyDomainDao.getSamplesByDataSet(null, libraryIdentifier)) {
                 samples.put(sample.getId(), sample);
             }
+            logger.trace("  Found {} samples associated with {}", samples.size(), libraryIdentifier);
 
             for(String alignmentSpace : new TreeSet<>(counts.get(libraryIdentifier).keySet())) {
+
+                // Ignore older alignments that were deleted from samples
+                if (!alignmentSpace.startsWith("JRC2018")) continue;
 
                 if (args.alignmentSpace != null && !args.alignmentSpace.equals(alignmentSpace)) {
                     continue;
                 }
+
+                logger.info("  Processing {} - {}", libraryIdentifier, alignmentSpace);
+
+                long numImagesProcessed = 0;
+                long numDeleted = 0;
 
                 // Get all the CDMs for this library/alignmentSpace and group them by sample
                 List<ColorDepthImage> images = legacyDomainDao.getColorDepthImages(null, libraryIdentifier, alignmentSpace);
@@ -140,14 +156,9 @@ public class ColorDepthLibraryValidator extends AbstractServiceProcessor<Void> {
                         continue;
                     }
                     imagesBySample.put(image.getSampleRef().getTargetId(), image);
-                    numImagesProcessed++;
                 }
 
-                // Ignore older alignments that were deleted from samples
-                if (!alignmentSpace.startsWith("JRC2018")) continue;
-
-                long numProcessed = 0;
-                long numFixed = 0;
+                logger.info("    Found {} images mapping to {} samples", images.size(), imagesBySample.keySet().size());
 
                 List<ColorDepthImage> toDelete = new ArrayList<>();
 
@@ -155,13 +166,11 @@ public class ColorDepthLibraryValidator extends AbstractServiceProcessor<Void> {
                     Sample sample = samples.get(sampleId);
 
                     if (sample==null) {
-                        // Try fetching the sample directly.
-                        // This is necessary e.g. when the library is constructed from samples in other data sets
-                        sample = legacyDomainDao.getDomainObject(null, Sample.class, sampleId);
-                        if (sample==null) {
-                            logger.warn("Sample no longer exists: {}", sampleId);
-                            continue;
-                        }
+                        // This probably means that we're coming at the sample from a constructed library, and not from
+                        // its original data-set-linked library. That's fine, and we'll probably get to it later.
+                        // But it could also mean that the sample is gone or is inaccessible,
+                        // and this service doesn't currently address that edge case.
+                        continue;
                     }
 
                     // Create set of valid CDMs in this sample
@@ -169,7 +178,7 @@ public class ColorDepthLibraryValidator extends AbstractServiceProcessor<Void> {
                     for(ObjectiveSample objectiveSample : sample.getObjectiveSamples()) {
                         for(SamplePipelineRun run : objectiveSample.getPipelineRuns()) {
                             for(SampleAlignmentResult alignment : run.getAlignmentResults()) {
-                                if (alignment.getAlignmentSpace().equals(alignmentSpace)) {
+                                if (alignment.getAlignmentSpace()!=null && alignment.getAlignmentSpace().equals(alignmentSpace)) {
                                     List<Integer> signals = ChanSpecUtils.getSignalChannelIndexList(alignment.getChannelSpec());
                                     for(Integer signalIndex : signals) {
                                         String cdm = objectiveSample.getObjective() + DELIM + alignment.getAlignmentSpace()
@@ -187,38 +196,47 @@ public class ColorDepthLibraryValidator extends AbstractServiceProcessor<Void> {
                         String cdm = file.getObjective() + DELIM + file.getAlignmentSpace()
                                 + DELIM + file.getAnatomicalArea() + DELIM + file.getChannelNumber();
                         if (!cdms.contains(cdm)) {
-                            logger.info("Will delete rogue CDM: {}", image.getFilepath());
+                            logger.info("    Will delete rogue CDM: {}", image.getFilepath());
                             toDelete.add(image);
                         }
-                        else {
-                            numProcessed++;
+                        numImagesProcessed++;
+                    }
+                }
+
+                if (!toDelete.isEmpty()) {
+                    double toDeletePct = (double) toDelete.size() / (double) images.size();
+                    int toDeletePercent = (int) (toDeletePct * 100);
+                    logger.info("    Will delete {} ({}%) of images in {} - {}",
+                            toDelete.size(), toDeletePercent, libraryIdentifier, alignmentSpace);
+
+                    // Do not automatically delete if the candidate set is more than 20 images and more than 20% of the library
+                    if (toDelete.size() > 20 && toDeletePct > 0.20 && !args.force) {
+                        logger.warn("    Percentage of images to delete exceeds safety limit. Resubmit with force=true to continue.");
+                        continue;
+                    }
+                    for (ColorDepthImage image : toDelete) {
+                        if (!args.dryRun) {
+                            if (deleteColorDepthImage(image)) {
+                                numDeleted++;
+                            }
                         }
                     }
+                    logger.info("    {} - {} - Processed {} images, deleted {} rogue CDMs.",
+                            libraryIdentifier, alignmentSpace, numImagesProcessed, numDeleted);
                 }
 
-                for (ColorDepthImage colorDepthImage : toDelete) {
-
-                    if (!args.dryRun) {
-                        // TODO: delete file on disk
-                        // TODO: delete object in database
-                    }
-
-                    numFixed++;
-                }
-
-                long total = images.size();
-                long numErrors = total - numProcessed;
-                long numRemaining = numErrors - numFixed;
-                if (numErrors>0) {
-                    logger.info("{} - {} - Processed {} images. Detected {} issues and fixed {}.",
-                            libraryIdentifier, alignmentSpace, numProcessed, numErrors, numFixed);
-                }
-                if (numRemaining>0) {
-                    logger.warn("Library has unresolved issues: {} - {}", libraryIdentifier, alignmentSpace);
-                }
+                totalNumImagesProcessed += numImagesProcessed;
+                totalNumDeleted += numDeleted;
             }
         }
 
-        logger.info("Processed {} images", numImagesProcessed);
+        logger.info("Processed {} color depth libraries", totalNumLibrariesProcessed);
+        logger.info("Processed {} images in total, and deleted {} rogue CDMs.", totalNumImagesProcessed, totalNumDeleted);
+    }
+
+    private boolean deleteColorDepthImage(ColorDepthImage image) {
+        // TODO: delete file on disk
+        // TODO: delete object in database
+        return true; // success
     }
 }
