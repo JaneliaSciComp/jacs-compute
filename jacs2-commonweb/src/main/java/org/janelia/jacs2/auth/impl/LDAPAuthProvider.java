@@ -222,7 +222,7 @@ public class LDAPAuthProvider implements AuthProvider {
         }
     }
 
-    private class LdapUser {
+    private static class LdapUser {
         String userDn;
         User userInfo;
 
