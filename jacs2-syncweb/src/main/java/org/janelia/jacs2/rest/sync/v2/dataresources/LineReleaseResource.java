@@ -36,6 +36,7 @@ import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.sample.LineRelease;
+import org.janelia.model.security.Group;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +60,7 @@ import org.slf4j.LoggerFactory;
 @Path("/process")
 public class LineReleaseResource {
     private static final Logger LOG = LoggerFactory.getLogger(LineReleaseResource.class);
+    private static final String FLYLIGHT_TECHNICAL = "group:flylighttechnical";
 
     @AsyncIndex
     @Inject
@@ -156,33 +158,6 @@ public class LineReleaseResource {
         }
     }
 
-    @ApiOperation(value = "Updates a Line Release using the DomainObject parameter of the DomainQuery")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully updated a release", response = Response.class),
-            @ApiResponse(code = 500, message = "Internal Server Error updating a release")
-    })
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("release")
-    public Response updateRelease(DomainQuery query) {
-        LOG.trace("Start updateRelease({})", query);
-        try {
-            LineRelease lineRelease = lineReleaseDao.saveBySubjectKey(query.getDomainObjectAs(LineRelease.class), query.getSubjectKey());
-            return Response
-                    .ok(lineRelease)
-                    .contentLocation(UriBuilder.fromMethod(LineReleaseResource.class, "getReleaseInfoById").build(lineRelease.getId()))
-                    .build();
-        } catch (Exception e) {
-            LOG.error("Error occurred updating the line release {}", query, e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new ErrorResponse("Error while updating the release " + query))
-                    .build();
-        } finally {
-            LOG.trace("Finished updateRelease({})", query);
-        }
-    }
-
     @ApiOperation(value = "Creates a Line Release using the DomainObject parameter of the DomainQuery")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully created a new release", response = LineRelease.class),
@@ -196,10 +171,14 @@ public class LineReleaseResource {
         LOG.trace("Start createRelease({})", query);
         try {
             LineRelease lineReleaseArg = query.getDomainObjectAs(LineRelease.class);
-            LineRelease lineRelease = legacyDomainDao.createLineRelease(
-                    query.getSubjectKey(),
-                    lineReleaseArg.getName()
-            );
+            if (lineReleaseArg.getTargetWebsite()==null) {
+                lineReleaseArg.setTargetWebsite(LineRelease.TARGET_WEBSITES[0]);
+            }
+            // JW-45968: Share every release with FlyLight technicians by default
+            lineReleaseArg.getReaders().add(FLYLIGHT_TECHNICAL);
+            lineReleaseArg.getWriters().add(FLYLIGHT_TECHNICAL);
+            LineRelease lineRelease = lineReleaseDao.saveBySubjectKey(lineReleaseArg, query.getSubjectKey());
+
             return Response
                     .created(UriBuilder.fromMethod(this.getClass(), "getReleaseInfoById").build(lineRelease.getId()))
                     .entity(lineRelease)
@@ -211,6 +190,40 @@ public class LineReleaseResource {
                     .build();
         } finally {
             LOG.trace("Finished createRelease({})", query);
+        }
+    }
+
+    @ApiOperation(value = "Updates a Line Release using the DomainObject parameter of the DomainQuery")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully updated a release", response = Response.class),
+            @ApiResponse(code = 500, message = "Internal Server Error updating a release")
+    })
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("release")
+    public Response updateRelease(DomainQuery query) {
+        LOG.trace("Start updateRelease({})", query);
+        try {
+            LineRelease lineReleaseArg = query.getDomainObjectAs(LineRelease.class);
+            if (lineReleaseArg.getId()==null) {
+                LOG.error("Line release not found for update: {}", query);
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("Release not found: " + lineReleaseArg.getId()))
+                        .build();
+            }
+            LineRelease lineRelease = lineReleaseDao.saveBySubjectKey(lineReleaseArg, query.getSubjectKey());
+            return Response
+                    .ok(lineRelease)
+                    .contentLocation(UriBuilder.fromMethod(LineReleaseResource.class, "getReleaseInfoById").build(lineRelease.getId()))
+                    .build();
+        } catch (Exception e) {
+            LOG.error("Error occurred updating the line release {}", query, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error while updating the release " + query))
+                    .build();
+        } finally {
+            LOG.trace("Finished updateRelease({})", query);
         }
     }
 
