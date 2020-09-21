@@ -51,11 +51,13 @@ class CDMMetadataUtils {
     static List<String> findVariant(List<Path> variantsPaths, Path mipPath, String sourceCDMName, Function<String, String> mipVariantSuffixMapping) {
         String mipFilenameWithoutExtension = RegExUtils.replacePattern(mipPath.getFileName().toString(), "\\..*$", "");
         String sourceMIPNameWithoutExtension = RegExUtils.replacePattern(sourceCDMName, "\\..*$", "");
-        String regex = mipVariantSuffixMapping.apply(mipFilenameWithoutExtension);
+        String regex = ".+" +
+                "(" + mipVariantSuffixMapping.apply(mipFilenameWithoutExtension) + ")" +
+                ".+(png|tif)$";
 
         return variantsPaths.stream()
                 .filter(Files::exists)
-                .flatMap(variantPath -> FileUtils.lookupFiles(variantPath, 2, "regex:" + regex))
+                .flatMap(variantPath -> FileUtils.lookupFiles(variantPath, 1, "regex:" + regex))
                 .filter(Files::isRegularFile)
                 .map(Path::toString)
                 .collect(Collectors.toList());
