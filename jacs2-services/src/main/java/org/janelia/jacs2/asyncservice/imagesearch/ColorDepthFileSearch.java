@@ -62,14 +62,16 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
     private final String jarPath;
 
     static class ColorDepthSearchArgs extends ServiceArgs {
-        @Parameter(names = {"-inputFiles"}, description = "Comma-delimited list of mask files", required = true)
-        String inputFiles;
+        @Parameter(names = {"-masksFiles", "-inputMasks", "-inputFiles"},
+                description = "List of mask files to be searched against the specified libraries",
+                required = true)
+        List<String> masksFiles;
 
-        @Parameter(names = {"-searchDirs"}, description = "Comma-delimited list of directories containing the color depth MIPs to search")
-        String searchDirs;
+        @Parameter(names = {"-targetsFile", "-searchImageFile"}, description = "Filepath to a text file containing all a list of paths to search")
+        String targetsFile;
 
-        @Parameter(names = {"-searchImageFile"}, description = "Filepath to a text file containing all a list of paths to search")
-        String searchImageFile;
+        @Parameter(names = {"-cdMatchesDir", "-od"}, description = "Color depth matches or results directory")
+        String cdMatchesDir;
 
         @Parameter(names = {"-dataThreshold"}, description = "Data threshold")
         Integer dataThreshold;
@@ -88,6 +90,9 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
 
         @Parameter(names = {"-pctPositivePixels"}, description = "% of Positive PX Threshold (0-100%)")
         Double pctPositivePixels;
+
+        @Parameter(names = {"-negativeRadius"}, description = "Negative radius for the gradient score")
+        Integer negativeRadius = 20;
 
         @Parameter(names = {"-numNodes"}, description = "Number of worker nodes")
         Integer numNodes;
@@ -234,35 +239,15 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
         prepareDir(jacsServiceData.getOutputPath());
         prepareDir(jacsServiceData.getErrorPath());
 
-        List<String> inputFiles = new ArrayList<>();
         List<String> outputFiles = new ArrayList<>();
-        Set<Path> outputPaths = new HashSet<>();
-
-        for(String inputFile : args.inputFiles.split(",")) {
-            inputFiles.add(inputFile);
-            String name = FileUtils.getFileNameOnly(inputFile);
-
-            int i = 1;
-            Path outputPath;
-            do {
-                String discriminator = i == 1 ? "" : "_" + i;
-                outputPath = serviceWorkingFolder.getServiceFolder(name + discriminator + RESULTS_FILENAME_SUFFIX);
-                i++;
-            } while (outputPaths.contains(outputPath));
-
-            outputPaths.add(outputPath);
-            outputFiles.add(outputPath.toFile().getAbsolutePath());
-        }
 
         List<String> appArgs = new ArrayList<>();
 
         appArgs.add("-m");
-        appArgs.addAll(inputFiles);
+        appArgs.addAll(args.masksFiles);
 
-        if (args.searchDirs != null) {
-            appArgs.add("-i");
-            appArgs.add(args.searchDirs);
-        }
+        appArgs.add("-i");
+        appArgs.add(args.targetsFile);
 
         if (args.maskThresholds != null && !args.maskThresholds.isEmpty()) {
             appArgs.add("--maskThresholds");
