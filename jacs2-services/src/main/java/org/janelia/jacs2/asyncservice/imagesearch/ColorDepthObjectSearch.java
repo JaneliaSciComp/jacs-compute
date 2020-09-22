@@ -213,6 +213,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         if (args.useJavaProcess) {
             cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList);
         } else {
+            serviceArgList.add(new ServiceArg("-useSpark"));
             cdsComputation = runSparkBasedColorDepthSearch(jacsServiceData, serviceArgList);
         }
         return cdsComputation
