@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -200,7 +201,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         final Integer maxResultsPerMask = search.getParameters().getMaxResultsPerMask() == null
                 ? 200 : search.getParameters().getMaxResultsPerMask();
 
-        logger.debug("!!!!!!!! Call service with {}", serviceArgList);
+        logger.info("!!!!!!!! Call service with {}", serviceArgList);
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, Boolean.TRUE));  // FIXME
 
 //        return colorDepthFileSearch.process(
@@ -239,129 +240,70 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         return targetLibraries.stream()
                 .flatMap(targetLibrary -> {
                     Stream<ColorDepthImage> cdmiStream;
-                    if (StringUtils.isNotBlank(targetLibrary.getLibraryName())) {
+                    Map<Reference, ColorDepthImage> indexedLibraryMIPs;
+                    List<ColorDepthImage> libraryMIPs = colorDepthImageDao.streamColorDepthMIPs(
+                            new ColorDepthImageQuery()
+                                    .withAlignmentSpace(alignmentSpace)
+                                    .withLibraryIdentifiers(Collections.singleton(targetLibrary.getLibraryName())))
+                            .collect(Collectors.toList());
+                    if (StringUtils.isNotBlank(targetLibrary.getSegmentationVariant())) {
                         cdmiStream = colorDepthImageDao.streamColorDepthMIPs(
                                 new ColorDepthImageQuery()
                                         .withAlignmentSpace(alignmentSpace)
-                                        .withLibraryIdentifiers(Collections.singleton(targetLibrary.getLibraryName())));
+                                        .withLibraryIdentifiers(Collections.singleton(targetLibrary.getLibraryName() + "_" + targetLibrary.getSegmentationVariant())));
+                        indexedLibraryMIPs = libraryMIPs.stream()
+                                .collect(Collectors.toMap(Reference::createFor, Function.identity()));
                     } else {
-                        logger.warn("No library name or searchable folder set");
-                        cdmiStream =  Stream.of();
+                        logger.info("No segmentation variant set for {}", targetLibrary.getLibraryName());
+                        cdmiStream = libraryMIPs.stream();
+                        indexedLibraryMIPs = Collections.emptyMap();
                     }
                     return cdmiStream
                             .map(cdmi -> {
                                 Reference sampleRef =  cdmi.getSampleRef();
                                 Reference sourceImageRef = cdmi.getSourceImageRef();
+                                ColorDepthImage sourceMIP = indexedLibraryMIPs.get(sourceImageRef);
                                 CDMMetadata targetMetadata = new CDMMetadata();
                                 targetMetadata.setId(cdmi.getId().toString());
                                 targetMetadata.setLibraryName(cdmi.getLibraries().stream().findFirst().orElse(null));
                                 targetMetadata.setAlignmentSpace(cdmi.getAlignmentSpace());
+                                if (sourceMIP == null) {
+                                    targetMetadata.setCdmPath(cdmi.getFilepath());
+                                } else {
+                                    targetMetadata.setCdmPath(sourceMIP.getFilepath());
+                                }
                                 targetMetadata.setCdmPath(cdmi.getFilepath());
                                 targetMetadata.setImagePath(cdmi.getFilepath());
                                 targetMetadata.setSampleRef(sampleRef != null ? sampleRef.toString() : null);
                                 targetMetadata.setRelatedImageRefId(sourceImageRef != null ? sourceImageRef.toString() : null);
-                                return ImmutablePair.of(cdmi, targetMetadata);
-                            })
-                            .flatMap(cdmiWithMetadataPair -> {
-                                if (targetLibrary.hasSearchableImagesLocation()) {
-                                    List<Path> searchablePaths = CDMMetadataUtils.variantPaths(
-                                            Paths.get(targetLibrary.getSearchableImagesLocation()),
-                                            Paths.get(cdmiWithMetadataPair.getRight().getCdmPath()),
-                                            cdmiWithMetadataPair.getRight().getAlignmentSpace(),
-                                            cdmiWithMetadataPair.getLeft().getLibraries());
-                                    return CDMMetadataUtils.findVariant(
-                                            searchablePaths,
-                                            Paths.get(cdmiWithMetadataPair.getRight().getImagePath()),
-                                            Paths.get(cdmiWithMetadataPair.getRight().getCdmPath()).getFileName().toString(),
-                                            nameComponent -> StringUtils.removeEnd(nameComponent, "_CDM")).stream()
-                                            .map(variantPath -> new ImmutablePair<>(
-                                                    cdmiWithMetadataPair.getLeft(),
-                                                    new CDMMetadata()
-                                                            .copyFrom(cdmiWithMetadataPair.getRight())
-                                                            .setImagePath(variantPath)));
-
-                                } else {
-                                    return Stream.of(cdmiWithMetadataPair);
+                                if (targetLibrary.hasGradientVariant()) {
+                                    List<Path> gradientVariantPaths = CDMMetadataUtils.variantPaths(
+                                            Paths.get(targetLibrary.getGradientVariant()),
+                                            Paths.get(cdmi.getFilepath()),
+                                            cdmi.getAlignmentSpace(),
+                                            cdmi.getLibraries());
+                                    targetMetadata.addVariant(
+                                            "gradient",
+                                            CDMMetadataUtils.variantCandidatesStream(
+                                                    gradientVariantPaths,
+                                                    targetMetadata.getImagePath()).findFirst().orElse(null)
+                                    );
                                 }
-                            })
-                            .map(cdmiWithMetadataPair -> cdmiWithMetadataPair.getRight())
-                            ;
-
-//                    return cdmiStream
-//                            .map(cdmi -> {
-//                                // source CDM path could actually be the name of the parent MIP
-//                                // if the current MIP was derived from some other MIP or
-//                                // is already a variant of another MIP
-//                                Reference sampleRef =  cdmi.getSampleRef();
-//                                Reference sourceImageRef = cdmi.getSourceImageRef();
-//                                String sourceCdmPath = cdmi.getFilepath();
-//                                Path mipImagePath = Paths.get(cdmi.getFilepath());
-//                                CDMMetadata targetMetadata = new CDMMetadata();
-//                                targetMetadata.setId(cdmi.getId().toString());
-//                                targetMetadata.setLibraryName(cdmi.getLibraries().stream().findFirst().orElse(null));
-//                                targetMetadata.setCdmPath(cdmi.getFilepath());
-//                                targetMetadata.setImagePath(cdmi.getFilepath());
-//                                targetMetadata.setSampleRef(sampleRef != null ? sampleRef.toString() : null);
-//                                targetMetadata.setRelatedImageRefId(sourceImageRef != null ? sourceImageRef.toString() : null);
-//                                List<Path> gradientVariantPaths = CDMMetadataUtils.variantPaths(
-//                                        Paths.get(targetLibrary.getGradientImagesLocation()),
-//                                        mipImagePath,
-//                                        cdmi.getAlignmentSpace(),
-//                                        cdmi.getLibraries());
-//                                targetMetadata.addVariant(
-//                                        "gradient",
-//                                        CDMMetadataUtils.findVariant(
-//                                                gradientVariantPaths,
-//                                                mipImagePath,
-//                                                sourceCdmPath,
-//                                                nameComponent -> {
-//                                                    String nameComponeWithNoSuffix = StringUtils.removeEnd(nameComponent, "_CDM");
-//                                                    String suffix = StringUtils.defaultIfBlank(zgapsSuffix, "");
-//                                                    if (StringUtils.isNotBlank(librarySuffix)) {
-//                                                        return StringUtils.replaceIgnoreCase(nc, librarySuffix, "") + suffix;
-//                                                    } else {
-//
-//                                                        nameComponent + "-gradient"
-//                                                    }));
-//
-//                                if (targetLibrary.hasGradientImagesLocation()) {
-//                                    List<Path> gradientVariantPaths = CDMMetadataUtils.variantPaths(
-//                                            Paths.get(targetLibrary.getGradientImagesLocation()),
-//                                            mipImagePath,
-//                                            cdmi.getAlignmentSpace(),
-//                                            cdmi.getLibraries());
-//                                    targetMetadata.addVariant(
-//                                            "gradient",
-//                                            CDMMetadataUtils.findVariant(
-//                                                    gradientVariantPaths,
-//                                                    mipImagePath,
-//                                                    sourceCdmPath,
-//                                                    nameComponent -> {
-//                                                        String nameComponeWithNoSuffix = StringUtils.removeEnd(nameComponent, "_CDM");
-//                                                        String suffix = StringUtils.defaultIfBlank(zgapsSuffix, "");
-//                                                        if (StringUtils.isNotBlank(librarySuffix)) {
-//                                                            return StringUtils.replaceIgnoreCase(nc, librarySuffix, "") + suffix;
-//                                                        } else {
-//
-//                                                            nameComponent + "-gradient"
-//                                                    }));
-//                                }
-//                                if (targetLibrary.hasZgapMaskImagesLocation()) {
-//                                    List<Path> zgapVariantPaths = CDMMetadataUtils.variantPaths(
-//                                            Paths.get(targetLibrary.getZgapMaskImagesLocation()),
-//                                            mipImagePath,
-//                                            cdmi.getAlignmentSpace(),
-//                                            cdmi.getLibraries());
-//                                    targetMetadata.addVariant(
-//                                            "zgap",
-//                                            CDMMetadataUtils.findVariant(
-//                                                    zgapVariantPaths,
-//                                                    mipImagePath,
-//                                                    sourceCdmPath,
-//                                                    nameComponent -> nameComponent + "-zgap"));
-//                                }
-//                                return targetMetadata;
-//                            });
+                                if (targetLibrary.hasZgapMaskVariant()) {
+                                    List<Path> zgapMasksVariantPaths = CDMMetadataUtils.variantPaths(
+                                            Paths.get(targetLibrary.getZgapMaskVariant()),
+                                            Paths.get(cdmi.getFilepath()),
+                                            cdmi.getAlignmentSpace(),
+                                            cdmi.getLibraries());
+                                    targetMetadata.addVariant(
+                                            "zgap",
+                                            CDMMetadataUtils.variantCandidatesStream(
+                                                    zgapMasksVariantPaths,
+                                                    targetMetadata.getImagePath()).findFirst().orElse(null)
+                                    );
+                                }
+                                return targetMetadata;
+                            });
                 })
                 .collect(Collectors.toList());
     }

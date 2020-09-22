@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.imagesearch;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -48,18 +49,15 @@ class CDMMetadataUtils {
         return -1;
     }
 
-    static List<String> findVariant(List<Path> variantsPaths, Path mipPath, String sourceCDMName, Function<String, String> mipVariantSuffixMapping) {
-        String mipFilenameWithoutExtension = RegExUtils.replacePattern(mipPath.getFileName().toString(), "\\..*$", "");
-        String sourceMIPNameWithoutExtension = RegExUtils.replacePattern(sourceCDMName, "\\..*$", "");
-        String regex = ".+" +
-                "(" + mipVariantSuffixMapping.apply(mipFilenameWithoutExtension) + ")" +
-                ".+(png|tif)$";
-
+    static Stream<String> variantCandidatesStream(List<Path> variantsPaths, String mipPathname) {
+        String mipFilenameWithoutExtension = RegExUtils.replacePattern(Paths.get(mipPathname).getFileName().toString(), "\\..*$", "");
         return variantsPaths.stream()
+                .flatMap(variantPath -> Stream.of(
+                        variantPath.resolve(mipFilenameWithoutExtension + ".png"),
+                        variantPath.resolve(mipFilenameWithoutExtension + ".tif")
+                ))
                 .filter(Files::exists)
-                .flatMap(variantPath -> FileUtils.lookupFiles(variantPath, 1, "regex:" + regex))
                 .filter(Files::isRegularFile)
-                .map(Path::toString)
-                .collect(Collectors.toList());
+                .map(Path::toString);
     }
 }
