@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,6 +20,7 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -267,21 +269,27 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                 targetMetadata.setId(cdmi.getId().toString());
                                 targetMetadata.setLibraryName(cdmi.getLibraries().stream().findFirst().orElse(null));
                                 targetMetadata.setAlignmentSpace(cdmi.getAlignmentSpace());
+                                Set<String> mipLibraries;
                                 if (sourceMIP == null) {
                                     targetMetadata.setCdmPath(cdmi.getFilepath());
+                                    mipLibraries = cdmi.getLibraries();
                                 } else {
                                     targetMetadata.setCdmPath(sourceMIP.getFilepath());
+                                    mipLibraries = ImmutableSet.<String>builder()
+                                            .addAll(sourceMIP.getLibraries())
+                                            .addAll(cdmi.getLibraries())
+                                            .build();
                                 }
                                 targetMetadata.setCdmPath(cdmi.getFilepath());
                                 targetMetadata.setImagePath(cdmi.getFilepath());
                                 targetMetadata.setSampleRef(sampleRef != null ? sampleRef.toString() : null);
                                 targetMetadata.setRelatedImageRefId(sourceImageRef != null ? sourceImageRef.toString() : null);
                                 if (targetLibrary.hasGradientVariant()) {
-                                    List<Path> gradientVariantPaths = CDMMetadataUtils.variantPaths(
+                                    Set<Path> gradientVariantPaths = CDMMetadataUtils.variantPaths(
                                             Paths.get(targetLibrary.getGradientVariant()),
                                             Paths.get(cdmi.getFilepath()),
                                             cdmi.getAlignmentSpace(),
-                                            cdmi.getLibraries());
+                                            mipLibraries);
                                     targetMetadata.addVariant(
                                             "gradient",
                                             CDMMetadataUtils.variantCandidatesStream(
@@ -290,11 +298,11 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                     );
                                 }
                                 if (targetLibrary.hasZgapMaskVariant()) {
-                                    List<Path> zgapMasksVariantPaths = CDMMetadataUtils.variantPaths(
+                                    Set<Path> zgapMasksVariantPaths = CDMMetadataUtils.variantPaths(
                                             Paths.get(targetLibrary.getZgapMaskVariant()),
                                             Paths.get(cdmi.getFilepath()),
                                             cdmi.getAlignmentSpace(),
-                                            cdmi.getLibraries());
+                                            mipLibraries);
                                     targetMetadata.addVariant(
                                             "zgap",
                                             CDMMetadataUtils.variantCandidatesStream(
