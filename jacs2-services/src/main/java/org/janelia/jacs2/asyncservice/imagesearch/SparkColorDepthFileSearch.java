@@ -5,9 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -52,7 +50,7 @@ import org.slf4j.Logger;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Named("colorDepthFileSearch")
-public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
+public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
 
     private static final String RESULTS_FILENAME_SUFFIX = "_results.txt";
 
@@ -61,39 +59,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
     private final long searchIntervalCheckInMillis;
     private final String jarPath;
 
-    static class ColorDepthSearchArgs extends ServiceArgs {
-        @Parameter(names = {"-masksFiles", "-inputMasks", "-inputFiles"},
-                description = "List of mask files to be searched against the specified libraries",
-                required = true)
-        List<String> masksFiles;
-
-        @Parameter(names = {"-targetsFile", "-searchImageFile"}, description = "Filepath to a text file containing all a list of paths to search")
-        String targetsFile;
-
-        @Parameter(names = {"-cdMatchesDir", "-od"}, description = "Color depth matches or results directory")
-        String cdMatchesDir;
-
-        @Parameter(names = {"-dataThreshold"}, description = "Data threshold")
-        Integer dataThreshold;
-
-        @Parameter(names = {"-maskThresholds"}, description = "Mask thresholds", variableArity = true)
-        List<Integer> maskThresholds;
-
-        @Parameter(names = {"-pixColorFluctuation"}, description = "Pix Color Fluctuation, 1.18 per slice")
-        Double pixColorFluctuation;
-
-        @Parameter(names = {"-xyShift"}, description = "Number of pixels to try shifting in XY plane")
-        Integer xyShift = 0;
-
-        @Parameter(names = {"-mirrorMask"}, description = "Should the mask be mirrored across the Y axis?")
-        Boolean mirrorMask = false;
-
-        @Parameter(names = {"-pctPositivePixels"}, description = "% of Positive PX Threshold (0-100%)")
-        Double pctPositivePixels;
-
-        @Parameter(names = {"-negativeRadius"}, description = "Negative radius for the gradient score")
-        Integer negativeRadius = 20;
-
+    static class SparkColorDepthSearchArgs extends ColorDepthSearchArgs {
         @Parameter(names = {"-numNodes"}, description = "Number of worker nodes")
         Integer numNodes;
 
@@ -105,17 +71,17 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
     }
 
     @Inject
-    ColorDepthFileSearch(ServiceComputationFactory computationFactory,
-                         JacsServiceDataPersistence jacsServiceDataPersistence,
-                         @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                         LSFSparkClusterLauncher clusterLauncher,
-                         ComputeAccounting clusterAccounting,
-                         @IntPropertyValue(name = "service.colorDepthSearch.searchTimeoutInSeconds", defaultValue = 1200) int searchTimeoutInSeconds,
-                         @IntPropertyValue(name = "service.colorDepthSearch.searchIntervalCheckInMillis", defaultValue = 5000) int searchIntervalCheckInMillis,
-                         @IntPropertyValue(name = "service.colorDepthSearch.numNodes", defaultValue = 6) Integer defaultNumNodes,
-                         @IntPropertyValue(name = "service.colorDepthSearch.minRequiredWorkers", defaultValue = 1) Integer defaultMinRequiredWorkers,
-                         @StrPropertyValue(name = "service.colorDepthSearch.jarPath") String jarPath,
-                         Logger log) {
+    SparkColorDepthFileSearch(ServiceComputationFactory computationFactory,
+                              JacsServiceDataPersistence jacsServiceDataPersistence,
+                              @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
+                              LSFSparkClusterLauncher clusterLauncher,
+                              ComputeAccounting clusterAccounting,
+                              @IntPropertyValue(name = "service.colorDepthSearch.searchTimeoutInSeconds", defaultValue = 1200) int searchTimeoutInSeconds,
+                              @IntPropertyValue(name = "service.colorDepthSearch.searchIntervalCheckInMillis", defaultValue = 5000) int searchIntervalCheckInMillis,
+                              @IntPropertyValue(name = "service.colorDepthSearch.numNodes", defaultValue = 6) Integer defaultNumNodes,
+                              @IntPropertyValue(name = "service.colorDepthSearch.minRequiredWorkers", defaultValue = 1) Integer defaultMinRequiredWorkers,
+                              @StrPropertyValue(name = "service.colorDepthSearch.jarPath") String jarPath,
+                              Logger log) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, defaultMinRequiredWorkers, log);
         this.clusterAccounting = clusterAccounting;
         this.searchTimeoutInMillis = searchTimeoutInSeconds > 0 ? searchTimeoutInSeconds * 1000 : -1;
@@ -125,7 +91,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(ColorDepthFileSearch.class, new ColorDepthSearchArgs());
+        return ServiceArgs.getMetadata(SparkColorDepthFileSearch.class, new ColorDepthSearchArgs());
     }
 
     @Override
@@ -145,7 +111,7 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
 
     @Override
     public ServiceComputation<JacsServiceResult<List<File>>> process(JacsServiceData jacsServiceData) {
-        ColorDepthSearchArgs args = getArgs(jacsServiceData);
+        SparkColorDepthSearchArgs args = getArgs(jacsServiceData);
 
         // prepare service directories
         JacsServiceFolder serviceWorkingFolder = prepareSparkJobDirs(jacsServiceData);
@@ -192,11 +158,11 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
                 });
     }
 
-    private ColorDepthSearchArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ColorDepthSearchArgs());
+    private SparkColorDepthSearchArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SparkColorDepthSearchArgs());
     }
 
-    private ServiceComputation<SparkCluster> startCluster(JacsServiceData jacsServiceData, ColorDepthSearchArgs args, JacsServiceFolder serviceWorkingFolder) {
+    private ServiceComputation<SparkCluster> startCluster(JacsServiceData jacsServiceData, SparkColorDepthSearchArgs args, JacsServiceFolder serviceWorkingFolder) {
         int numNodes;
         if (args.numNodes != null) {
             numNodes = args.numNodes;
@@ -232,14 +198,12 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
                 searchTimeoutInMillis > 0 ? (int) (Duration.ofMillis(searchTimeoutInMillis).toMinutes()+ 1) : -1);
     }
 
-    private ServiceComputation<SparkApp> runApp(JacsServiceData jacsServiceData, ColorDepthSearchArgs args, SparkCluster cluster) {
+    private ServiceComputation<SparkApp> runApp(JacsServiceData jacsServiceData, SparkColorDepthSearchArgs args, SparkCluster cluster) {
         logger.trace("Run color depth with {}", args);
 
         JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         prepareDir(jacsServiceData.getOutputPath());
         prepareDir(jacsServiceData.getErrorPath());
-
-        List<String> outputFiles = new ArrayList<>();
 
         List<String> appArgs = new ArrayList<>();
 
@@ -280,8 +244,8 @@ public class ColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
             appArgs.add(args.pctPositivePixels.toString());
         }
 
-        appArgs.add("-o");
-        appArgs.addAll(outputFiles);
+        appArgs.add("--outputDir");
+        appArgs.add(args.cdMatchesDir);
 
         int parallelism;
         if (args.parallelism != null) {

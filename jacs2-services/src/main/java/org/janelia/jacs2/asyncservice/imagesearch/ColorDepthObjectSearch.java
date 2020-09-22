@@ -35,6 +35,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceDataUtils;
+import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
@@ -49,6 +50,7 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.CDSLibraryParam;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
+import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
 import org.janelia.model.domain.gui.cdmip.ColorDepthSearch;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
@@ -72,9 +74,12 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         Long maskId;
         @Parameter(names = "-runMasksWithoutResults", description = "If a mask id is provided, should other masks also be run if they don't have results yet?")
         boolean runMasksWithoutResults = true;
+        @Parameter(names = "-use-java-process", description = "If set it uses java process based search; the default is spark based search")
+        boolean useJavaProcess = false;
     }
 
-    private final WrappedServiceProcessor<ColorDepthFileSearch, List<File>> colorDepthFileSearch;
+    private final WrappedServiceProcessor<SparkColorDepthFileSearch, List<File>> sparkColorDepthFileSearch;
+    private final WrappedServiceProcessor<JavaProcessColorDepthFileSearch, List<File>> javaProcessColorDepthFileSearch;
     private final LegacyDomainDao legacyDomainDao;
     private final ColorDepthImageDao colorDepthImageDao;
     private final ObjectMapper objectMapper;
@@ -87,7 +92,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                            LegacyDomainDao legacyDomainDao,
                            @IntPropertyValue(name = "service.colorDepthSearch.minNodes", defaultValue = 1) Integer minNodes,
                            @IntPropertyValue(name = "service.colorDepthSearch.maxNodes", defaultValue = 8) Integer maxNodes,
-                           ColorDepthFileSearch colorDepthFileSearch,
+                           SparkColorDepthFileSearch sparkColorDepthFileSearch,
+                           JavaProcessColorDepthFileSearch javaProcessColorDepthFileSearch,
                            ColorDepthImageDao colorDepthImageDao,
                            ObjectMapper objectMapper,
                            Logger logger) {
@@ -95,7 +101,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         this.legacyDomainDao = legacyDomainDao;
         this.minNodes = minNodes;
         this.maxNodes = maxNodes;
-        this.colorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, colorDepthFileSearch);
+        this.sparkColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sparkColorDepthFileSearch);
+        this.javaProcessColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, javaProcessColorDepthFileSearch);
         this.colorDepthImageDao = colorDepthImageDao;
         this.objectMapper = objectMapper;
     }
@@ -178,11 +185,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                         });
 
         List<ServiceArg> serviceArgList = new ArrayList<>();
-        serviceArgList.add(new ServiceArg("-maskFiles", maskFilesAndThresholds.getLeft()));
-        serviceArgList.add(new ServiceArg("-maskThresholds", maskFilesAndThresholds.getRight()));
-        serviceArgList.add(new ServiceArg("-targetFiles", colorDepthTargetsFile.getAbsolutePath()));
+        serviceArgList.add(new ServiceArg("-masksFiles", maskFilesAndThresholds.getLeft()));
+        serviceArgList.add(new ServiceArg("-masksThresholds", maskFilesAndThresholds.getRight()));
+        serviceArgList.add(new ServiceArg("-targetsFile", colorDepthTargetsFile.getAbsolutePath()));
         serviceArgList.add(new ServiceArg("-cdMatchesDir", workingDirectory.getServiceFolder().resolve("cdsMatches").toString()));
-
         serviceArgList.add(new ServiceArg("-numNodes", numNodes));
         serviceArgList.add(new ServiceArg("-negativeRadius", search.getParameters().getNegativeRadius()));
         if (search.getDataThreshold() != null) {
@@ -203,22 +209,38 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         final Integer maxResultsPerMask = search.getParameters().getMaxResultsPerMask() == null
                 ? 200 : search.getParameters().getMaxResultsPerMask();
 
-        logger.info("!!!!!!!! Call service with {}", serviceArgList);
-        return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData, Boolean.TRUE));  // FIXME
+        ServiceComputation<JacsServiceResult<List<File>>> cdsComputation;
+        if (args.useJavaProcess) {
+            cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList);
+        } else {
+            cdsComputation = runSparkBasedColorDepthSearch(jacsServiceData, serviceArgList);
+        }
+        return cdsComputation
+                .thenApply((JacsServiceResult<List<File>> result) -> {
+                    ColorDepthResult colorDepthResult = new ColorDepthResult();
+                    colorDepthResult.setParameters(search.getParameters());
+                    result.getResult().forEach(cdsMatchesFile -> {
 
-//        return colorDepthFileSearch.process(
-//                new ServiceExecutionContext.Builder(jacsServiceData)
-//                    .description("Color depth search")
-//                    .build(),
-//                serviceArgList.toArray(new ServiceArg[0]))
-//            .thenApply((JacsServiceResult<List<File>> result) -> {
-//                ColorDepthResult colorDepthResult = new ColorDepthResult();
-//                colorDepthResult.setParameters(search.getParameters());
-//                result.getResult().forEach(cdsMatchesFile -> {
-//
-//                });
-//                return new JacsServiceResult<>(jacsServiceData, Boolean.TRUE);
-//        });
+                    });
+                    return new JacsServiceResult<>(jacsServiceData, Boolean.TRUE);
+                });
+    }
+
+    private ServiceComputation<JacsServiceResult<List<File>>> runJavaProcessBasedColorDepthSearch(JacsServiceData jacsServiceData, List<ServiceArg> serviceArgList) {
+        return javaProcessColorDepthFileSearch.process(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Java process based color depth search")
+                        .build(),
+                serviceArgList.toArray(new ServiceArg[0]));
+    }
+
+    private ServiceComputation<JacsServiceResult<List<File>>> runSparkBasedColorDepthSearch(JacsServiceData jacsServiceData,
+                                                                                            List<ServiceArg> serviceArgList) {
+        return sparkColorDepthFileSearch.process(
+                new ServiceExecutionContext.Builder(jacsServiceData)
+                        .description("Spark based color depth search")
+                        .build(),
+                serviceArgList.toArray(new ServiceArg[0]));
     }
 
     private Map<Integer, List<CDMMetadata>> getMasksWithThresholds(List<Reference> maskRefs) {
