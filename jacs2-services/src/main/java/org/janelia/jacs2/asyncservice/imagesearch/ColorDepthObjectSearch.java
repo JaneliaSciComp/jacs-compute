@@ -246,11 +246,11 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                     .withAlignmentSpace(alignmentSpace)
                                     .withLibraryIdentifiers(Collections.singleton(targetLibrary.getLibraryName())))
                             .collect(Collectors.toList());
-                    if (StringUtils.isNotBlank(targetLibrary.getSegmentationVariant())) {
+                    if (targetLibrary.hasSearchableVariant()) {
                         cdmiStream = colorDepthImageDao.streamColorDepthMIPs(
                                 new ColorDepthImageQuery()
                                         .withAlignmentSpace(alignmentSpace)
-                                        .withLibraryIdentifiers(Collections.singleton(targetLibrary.getLibraryName() + "_" + targetLibrary.getSegmentationVariant())));
+                                        .withLibraryIdentifiers(Collections.singleton(targetLibrary.getLibraryName() + "_" + targetLibrary.getSearchableVariant())));
                         indexedLibraryMIPs = libraryMIPs.stream()
                                 .collect(Collectors.toMap(Reference::createFor, Function.identity()));
                     } else {
