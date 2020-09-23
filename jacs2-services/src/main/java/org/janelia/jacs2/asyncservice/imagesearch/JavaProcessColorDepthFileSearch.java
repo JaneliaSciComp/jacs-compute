@@ -107,7 +107,7 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
         externalScriptWriter.addWithArgs("${JAVA_HOME}/bin/java")
-                .addArg("${CDS_OPTS}")
+                .addArg("\"${CDS_OPTS}\"")
                 .addArg(runtimeOpts.toString())
                 .addArgs("-jar", jarPath)
                 .addArg("searchFromJSON")
