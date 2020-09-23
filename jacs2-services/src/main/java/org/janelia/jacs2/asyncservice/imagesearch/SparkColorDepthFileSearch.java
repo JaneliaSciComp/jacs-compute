@@ -211,13 +211,11 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
         appArgs.addAll(args.masksFiles);
 
         appArgs.add("-i");
-        appArgs.add(args.targetsFile);
+        appArgs.addAll(args.targetsFiles);
 
-        if (args.maskThresholds != null && !args.maskThresholds.isEmpty()) {
-            appArgs.add("--maskThresholds");
-            for (Integer maskThreshold : args.maskThresholds) {
-                appArgs.add(maskThreshold.toString());
-            }
+        if (args.maskThreshold != null) {
+            appArgs.add("--maskThreshold");
+            appArgs.add(args.maskThreshold.toString());
         }
 
         if (args.dataThreshold != null) {

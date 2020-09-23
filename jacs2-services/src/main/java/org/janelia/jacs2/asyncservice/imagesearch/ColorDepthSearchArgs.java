@@ -12,8 +12,8 @@ class ColorDepthSearchArgs extends ServiceArgs {
             required = true)
     List<String> masksFiles;
 
-    @Parameter(names = {"-targetsFile", "-searchImageFile"}, description = "Filepath to a JSON file containing all MIPs to search")
-    String targetsFile;
+    @Parameter(names = {"-targetsFiles", "-searchImageFile"}, description = "Filepath to one or more JSON files containing all MIPs to search")
+    List<String> targetsFiles;
 
     @Parameter(names = {"-cdMatchesDir", "-od"}, description = "Color depth matches or results directory")
     String cdMatchesDir;
@@ -21,8 +21,8 @@ class ColorDepthSearchArgs extends ServiceArgs {
     @Parameter(names = {"-dataThreshold"}, description = "Data threshold")
     Integer dataThreshold;
 
-    @Parameter(names = {"-masksThresholds"}, description = "Mask thresholds", variableArity = true)
-    List<Integer> maskThresholds;
+    @Parameter(names = {"-maskThreshold"}, description = "Mask thresholds", variableArity = true)
+    Integer maskThreshold;
 
     @Parameter(names = {"-pixColorFluctuation"}, description = "Pix Color Fluctuation, 1.18 per slice")
     Double pixColorFluctuation;

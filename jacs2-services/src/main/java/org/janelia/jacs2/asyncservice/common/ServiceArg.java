@@ -68,8 +68,8 @@ public class ServiceArg {
         }
     }
 
-    public ServiceArg(String flag, boolean value) {
-        if (value) {
+    public ServiceArg(String flag, Boolean value) {
+        if (value != null && value) {
             this.flag = flag;
             this.arity = 0;
             this.values = new String[0];
