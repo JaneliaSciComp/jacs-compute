@@ -392,7 +392,6 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                             .addAll(cdmi.getLibraries())
                                             .build();
                                 }
-                                targetMetadata.setCdmPath(cdmi.getFilepath());
                                 targetMetadata.setImageName(cdmi.getFilepath());
                                 targetMetadata.setSampleRef(sampleRef != null ? sampleRef.toString() : null);
                                 targetMetadata.setRelatedImageRefId(sourceImageRef != null ? sourceImageRef.toString() : null);
