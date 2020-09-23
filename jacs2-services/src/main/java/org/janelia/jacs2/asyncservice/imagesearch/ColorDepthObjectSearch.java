@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,7 +22,9 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
+import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -36,7 +39,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -44,10 +46,15 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
+import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.CDSLibraryParam;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
+import org.janelia.model.domain.gui.cdmip.ColorDepthMaskResult;
+import org.janelia.model.domain.gui.cdmip.ColorDepthMatch;
+import org.janelia.model.domain.gui.cdmip.ColorDepthParameters;
+import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
 import org.janelia.model.domain.gui.cdmip.ColorDepthSearch;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
@@ -59,7 +66,7 @@ import org.slf4j.Logger;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 @Named("colorDepthObjectSearch")
-public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
+public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> {
 
     private final int minNodes;
     private final int maxNodes;
@@ -110,23 +117,23 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
     }
 
     @Override
-    public ServiceResultHandler<Boolean> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<Boolean>() {
+    public ServiceResultHandler<Reference> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<Reference>() {
             @Override
             public boolean isResultReady(JacsServiceData jacsServiceData) {
                 return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override
-            public Boolean getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<List<SampleProcessorResult>>() {});
+            public Reference getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<Reference>() {});
             }
         };
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public ServiceComputation<JacsServiceResult<Boolean>> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<Reference>> process(JacsServiceData jacsServiceData) {
         IntegratedColorDepthSearchArgs args = getArgs(jacsServiceData);
 
         logger.info("Executing ColorDepthSearch#{} with ColorDepthMask#{}", args.searchId, args.maskId);
@@ -150,7 +157,20 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
             throw new ComputationException(jacsServiceData, e);
         }
 
-        Map<Integer, String> maskFilesByThreshold = getMasksWithThresholds(workingDirectory.getServiceFolder(), search.getMasks());
+        Set<Reference> masksToRun = new LinkedHashSet<>();
+        if (args.maskId != null) {
+            masksToRun.add(Reference.createFor(ColorDepthMask.class, args.maskId));
+            if (args.runMasksWithoutResults) {
+                masksToRun.addAll(getMasksFromCurrentSearchWithoutResults(search));
+            }
+        } else if (args.runMasksWithoutResults) {
+            masksToRun.addAll(getMasksFromCurrentSearchWithoutResults(search));
+        } else {
+            masksToRun.addAll(search.getMasks());
+        }
+        List<ColorDepthMask> masks = legacyDomainDao.getDomainObjectsAs(Lists.newArrayList(masksToRun.iterator()), ColorDepthMask.class);
+
+        Map<Integer, String> maskFilesByThreshold = getMasksWithThresholds(workingDirectory.getServiceFolder(), masks);
         List<ServiceComputation<?>> cdsComputations = maskFilesByThreshold.entrySet().stream()
                 .map(maskFileWithThreshold -> createColorDepthServiceInvocationParams(
                         maskFileWithThreshold.getValue(),
@@ -189,22 +209,78 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                     return cdsMatchesResults.stream().flatMap(r -> r.getResult().stream()).collect(Collectors.toList());
                 })
                 .thenApply(cdsMatches -> {
-                    System.out.println("!!!!  " + cdsMatches);
-                    Set<String> maskIds = search.getMasks().stream().map(Reference::getTargetId).map(Object::toString).collect(Collectors.toSet());
-                    cdsMatches.stream()
-                            .filter(cdsMatchesFile -> {
-                                return maskIds.contains(FileUtils.getFileNameOnly(cdsMatchesFile.toPath()));
-                            })
-                            .forEach(cdsMatchesFile -> {
-                                System.out.println("!!!!! PROCESS " + cdsMatchesFile);
-                                try {
-                                    CDMaskMatches cdMaskMatches = objectMapper.readValue(cdsMatchesFile, CDMaskMatches.class);
-                                } catch (IOException e) {
-                                    logger.error("Error reading results from {}", cdsMatchesFile, e);
-                                }
-                            });
-                    return updateServiceResult(jacsServiceData, true);
+                    ColorDepthResult colorDepthResult = collectColorDepthResults(
+                            jacsServiceData,
+                            search.getParameters(),
+                            masks.stream().map(AbstractDomainObject::getId).map(Object::toString).collect(Collectors.toSet()),
+                            cdsMatches);
+                    if (!colorDepthResult.getMaskResults().isEmpty()) {
+                        legacyDomainDao.addColorDepthSearchResult(jacsServiceData.getOwnerKey(), search.getId(), colorDepthResult);
+                        logger.info("Updated search {} }with new result {}", search, colorDepthResult);
+                        return updateServiceResult(jacsServiceData, Reference.createFor(colorDepthResult));
+                    } else  {
+                        return updateServiceResult(jacsServiceData, null);
+                    }
                 });
+    }
+
+    private ColorDepthResult collectColorDepthResults(JacsServiceData jacsServiceData, ColorDepthParameters searchParameters, Set<String> maskIds, List<File> cdMatchFiles) {
+        ColorDepthResult colorDepthResult = new ColorDepthResult();
+        colorDepthResult.setParameters(searchParameters);
+        int maxResultsPerMask = searchParameters.getMaxResultsPerMask() == null
+                ? 200
+                : searchParameters.getMaxResultsPerMask();
+        cdMatchFiles.stream()
+                .filter(cdsMatchesFile -> maskIds.contains(FileUtils.getFileNameOnly(cdsMatchesFile.toPath())))
+                .map(cdsMatchesFile -> {
+                    try {
+                        return objectMapper.readValue(cdsMatchesFile, CDMaskMatches.class);
+                    } catch (IOException e) {
+                        logger.error("Error reading results from {}", cdsMatchesFile, e);
+                        return new CDMaskMatches();
+                    }
+                })
+                .filter(CDMaskMatches::hasResults)
+                .forEach(cdMaskMatches -> {
+                    ColorDepthMaskResult maskResult = new ColorDepthMaskResult();
+                    maskResult.setMaskRef(Reference.createFor("ColorDepthMask" + "#" + cdMaskMatches.getMaskId()));
+                    cdMaskMatches.getResults().stream()
+                            .limit(maxResultsPerMask)
+                            .map(cdsMatchResult -> {
+                                ColorDepthMatch match = new ColorDepthMatch();
+                                ColorDepthImage sourceColorDepthImage = getSourceColorDepthImage(jacsServiceData.getOwnerKey(), cdsMatchResult.getImageName());
+                                match.setImageRef(Reference.createFor(sourceColorDepthImage));
+                                match.setMatchingPixels(cdsMatchResult.getMatchingPixels());
+                                match.setMatchingPixelsRatio(cdsMatchResult.getMatchingRatio());
+                                match.setGradientAreaGap(cdsMatchResult.getGradientAreaGap());
+                                match.setHighExpressionArea(cdsMatchResult.getHighExpressionArea());
+                                match.setScore(cdsMatchResult.getMatchingPixels());
+                                match.setScorePercent(cdsMatchResult.getMatchingRatio());
+                                return match;
+                            })
+                            .forEach(maskResult::addMatch);
+                    colorDepthResult.getMaskResults().add(maskResult);
+                });
+        try {
+            if (colorDepthResult.getMaskResults().isEmpty()) {
+                return colorDepthResult;
+            } else {
+                ColorDepthResult persistedColorDepthResult = legacyDomainDao.save(jacsServiceData.getOwnerKey(), colorDepthResult);
+                logger.info("Saved {}", persistedColorDepthResult);
+                return persistedColorDepthResult;
+            }
+        } catch (Exception e) {
+            logger.error("Error saving {}", colorDepthResult, e);
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private Set<Reference> getMasksFromCurrentSearchWithoutResults(ColorDepthSearch colorDepthSearch) {
+        Set<Reference> masksWithResults = legacyDomainDao.getDomainObjectsAs(colorDepthSearch.getResults(), ColorDepthResult.class).stream()
+                .flatMap(cdsResult -> cdsResult.getMaskResults().stream())
+                .map(ColorDepthMaskResult::getMaskRef)
+                .collect(Collectors.toSet());
+        return Sets.difference(ImmutableSet.copyOf(colorDepthSearch.getMasks()), masksWithResults);
     }
 
     private List<ServiceArg> createColorDepthServiceInvocationParams(String masksFile,
@@ -246,8 +322,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                 serviceArgList.toArray(new ServiceArg[0]));
     }
 
-    private Map<Integer, String> getMasksWithThresholds(Path masksFolder, List<Reference> maskRefs) {
-        List<ColorDepthMask> masks = legacyDomainDao.getDomainObjectsAs(maskRefs, ColorDepthMask.class);
+    private Map<Integer, String> getMasksWithThresholds(Path masksFolder, List<ColorDepthMask> masks) {
         Map<Integer, List<CDMMetadata>> masksPerFiles = masks.stream()
                 .map(mask -> {
                     Reference sampleRef =  mask.getSample();
