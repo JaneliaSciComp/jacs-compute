@@ -30,7 +30,7 @@ class ColorDepthSearchArgs extends ServiceArgs {
     @Parameter(names = {"-xyShift"}, description = "Number of pixels to try shifting in XY plane")
     Integer xyShift = 0;
 
-    @Parameter(names = {"-mirrorMask"}, description = "Should the mask be mirrored across the Y axis?")
+    @Parameter(names = {"-mirrorMask"}, description = "Should the mask be mirrored across the Y axis?", arity = 0)
     Boolean mirrorMask = false;
 
     @Parameter(names = {"-pctPositivePixels"}, description = "% of Positive PX Threshold (0-100%)")
@@ -38,4 +38,7 @@ class ColorDepthSearchArgs extends ServiceArgs {
 
     @Parameter(names = {"-negativeRadius"}, description = "Negative radius for the gradient score")
     Integer negativeRadius = 20;
+
+    @Parameter(names = {"-withGradientScores"}, description = "Should the mask be mirrored across the Y axis?", arity = 0)
+    boolean withGradientScores = false;
 }

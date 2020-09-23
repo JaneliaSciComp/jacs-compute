@@ -14,6 +14,8 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import com.beust.jcommander.Parameter;
+
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
@@ -50,6 +52,11 @@ import org.slf4j.Logger;
 @Named("javaProcessColorDepthFileSearch")
 public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProcessor<List<File>> {
 
+    static class JavaProcessColorDepthSearchArgs extends ColorDepthSearchArgs {
+        @Parameter(names = {"-partitionSize"}, description = "Processing partition size")
+        Integer partitionSize;
+    }
+
     private final String jarPath;
 
     @Inject
@@ -67,7 +74,7 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
 
     @Override
     public ServiceMetaData getMetadata() {
-        return ServiceArgs.getMetadata(JavaProcessColorDepthFileSearch.class, new ColorDepthSearchArgs());
+        return ServiceArgs.getMetadata(JavaProcessColorDepthFileSearch.class, new JavaProcessColorDepthSearchArgs());
     }
 
     @Override
@@ -80,22 +87,18 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
 
             @Override
             public List<File> collectResult(JacsServiceData jacsServiceData) {
-                ColorDepthSearchArgs args = getArgs(jacsServiceData);
-                return FileUtils.lookupFiles(Paths.get(args.cdMatchesDir), 1, "glob:**/*")
-                        .filter(Files::isRegularFile)
-                        .map(Path::toFile)
-                        .collect(Collectors.toList());
+                return ColorDepthFileSearchProcessingUtils.collectResults(getArgs(jacsServiceData));
             }
         };
     }
 
-    private ColorDepthSearchArgs getArgs(JacsServiceData jacsServiceData) {
-        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new ColorDepthSearchArgs());
+    private JavaProcessColorDepthSearchArgs getArgs(JacsServiceData jacsServiceData) {
+        return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new JavaProcessColorDepthSearchArgs());
     }
 
     @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
-        ColorDepthSearchArgs args = getArgs(jacsServiceData);
+        JavaProcessColorDepthSearchArgs args = getArgs(jacsServiceData);
         StringBuilder runtimeOpts = new StringBuilder();
         int requiredMemoryInGB = ProcessorHelper.getRequiredMemoryInGB(jacsServiceData.getResources());
         if (requiredMemoryInGB > 0) {
@@ -133,7 +136,12 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
         if (args.pctPositivePixels != null) {
             externalScriptWriter.addArgs("--pctPositivePixels", args.pctPositivePixels.toString());
         }
-
+        if (args.partitionSize != null && args.partitionSize > 0) {
+            externalScriptWriter.addArgs("--libraryPartitionSize", args.partitionSize.toString());
+        }
+        if (args.withGradientScores) {
+            externalScriptWriter.addArg("--with-grad-scores");
+        }
         externalScriptWriter.endArgs("");
         externalScriptWriter.close();
         return externalScriptCode;
