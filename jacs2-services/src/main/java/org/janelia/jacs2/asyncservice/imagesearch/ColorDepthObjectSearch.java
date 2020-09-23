@@ -146,14 +146,6 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         List<CDMMetadata> targets = getTargetColorDepthImages(search.getAlignmentSpace(), search.getLibraries());
         logger.info("Searching {} total targets", targets.size());
 
-        // Curve fitting using https://www.desmos.com/calculator
-        // This equation was found using https://mycurvefit.com
-        int desiredNodes = (int)Math.round(0.2 * Math.pow(targets.size(), 0.32));
-
-        int numNodes = Math.max(Math.min(desiredNodes, maxNodes), minNodes);
-        int filesPerNode = (int)Math.round(targets.size() / (double)numNodes);
-        logger.info("Using {} worker nodes, with {} files per node", numNodes, filesPerNode);
-
         // Create temporary file with paths to search
         JacsServiceFolder workingDirectory = getWorkingDirectory(jacsServiceData);
         File colorDepthTargetsFile = workingDirectory.getServiceFolder().resolve("colorDepthTargets.json").toFile();
@@ -181,6 +173,14 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                     if (args.useJavaProcess) {
                         cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList);
                     } else {
+                        // Curve fitting using https://www.desmos.com/calculator
+                        // This equation was found using https://mycurvefit.com
+                        int desiredNodes = (int)Math.round(0.2 * Math.pow(targets.size(), 0.32));
+
+                        int numNodes = Math.max(Math.min(desiredNodes, maxNodes), minNodes);
+                        int filesPerNode = (int)Math.round(targets.size() / (double)numNodes);
+                        logger.info("Using {} worker nodes, with {} files per node", numNodes, filesPerNode);
+
                         serviceArgList.add(new ServiceArg("-useSpark"));
                         serviceArgList.add(new ServiceArg("-numNodes", numNodes));
                         cdsComputation = runSparkBasedColorDepthSearch(jacsServiceData, serviceArgList);
