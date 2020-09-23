@@ -18,11 +18,11 @@ class ColorDepthSearchArgs extends ServiceArgs {
     @Parameter(names = {"-cdMatchesDir", "-od"}, description = "Color depth matches or results directory")
     String cdMatchesDir;
 
-    @Parameter(names = {"-dataThreshold"}, description = "Data threshold")
-    Integer dataThreshold;
-
     @Parameter(names = {"-maskThreshold"}, description = "Mask thresholds", variableArity = true)
     Integer maskThreshold;
+
+    @Parameter(names = {"-dataThreshold"}, description = "Data threshold")
+    Integer dataThreshold;
 
     @Parameter(names = {"-pixColorFluctuation"}, description = "Pix Color Fluctuation, 1.18 per slice")
     Double pixColorFluctuation;
