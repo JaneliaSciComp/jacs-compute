@@ -103,9 +103,9 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
         int requiredMemoryInGB = ProcessorHelper.getRequiredMemoryInGB(jacsServiceData.getResources());
         if (requiredMemoryInGB > 0) {
             runtimeOpts
-                    .append("-Mx").append(requiredMemoryInGB).append('G')
+                    .append("-Xmx").append(requiredMemoryInGB).append('G')
                     .append(' ')
-                    .append("-Ms").append(requiredMemoryInGB).append('G');
+                    .append("-Xms").append(requiredMemoryInGB).append('G');
         }
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
