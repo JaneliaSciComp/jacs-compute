@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.imagesearch;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.janelia.jacs2.asyncservice.alignservices.CMTKAlignmentResultFiles;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
@@ -131,7 +133,6 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
     public ServiceComputation<JacsServiceResult<Boolean>> process(JacsServiceData jacsServiceData) {
         IntegratedColorDepthSearchArgs args = getArgs(jacsServiceData);
 
-        Stopwatch sparkAppWatch = Stopwatch.createStarted();
         logger.info("Executing ColorDepthSearch#{} with ColorDepthMask#{}", args.searchId, args.maskId);
 
         ColorDepthSearch search = legacyDomainDao.getDomainObject(jacsServiceData.getOwnerKey(),
@@ -161,70 +162,62 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
             throw new ComputationException(jacsServiceData, e);
         }
 
-        Map<Integer, List<CDMMetadata>> masksWithThresholds = getMasksWithThresholds(search.getMasks());
-        Pair<String, String> maskFilesAndThresholds = masksWithThresholds.entrySet().stream().
-                map(maskEntry -> {
-                    File colorDepthMasksFile = workingDirectory.getServiceFolder()
-                            .resolve("colorDepthMasks-" + maskEntry.getKey() + ".json").toFile();
-                    try {
-                        objectMapper.writeValue(FileUtils.openOutputStream(colorDepthMasksFile), maskEntry.getValue());
-                    } catch (IOException e) {
-                        throw new ComputationException(jacsServiceData, e);
+        Map<Integer, String> maskFilesByThreshold = getMasksWithThresholds(workingDirectory.getServiceFolder(), search.getMasks());
+        List<ServiceComputation<?>> cdsComputations = maskFilesByThreshold.entrySet().stream()
+                .map(maskFileWithThreshold -> createColorDepthServiceInvocationParams(
+                        maskFileWithThreshold.getValue(),
+                        maskFileWithThreshold.getKey(),
+                        colorDepthTargetsFile.getAbsolutePath(),
+                        search.getDataThreshold(),
+                        workingDirectory.getServiceFolder().resolve("cdsMatches").toString(),
+                        search.getParameters().getNegativeRadius(),
+                        search.getPixColorFluctuation(),
+                        search.getXyShift(),
+                        search.getMirrorMask()
+                        ))
+                .map(serviceArgList -> {
+                    ServiceComputation<JacsServiceResult<List<File>>> cdsComputation;
+                    if (args.useJavaProcess) {
+                        cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList);
+                    } else {
+                        serviceArgList.add(new ServiceArg("-useSpark"));
+                        serviceArgList.add(new ServiceArg("-numNodes", numNodes));
+                        cdsComputation = runSparkBasedColorDepthSearch(jacsServiceData, serviceArgList);
                     }
-                    return ImmutablePair.of(colorDepthMasksFile.toString(), maskEntry.getKey().toString());
+                    return cdsComputation;
                 })
-                .reduce(ImmutablePair.of("", ""),
-                        (me1, me2) -> {
-                            if (StringUtils.isBlank(me1.getLeft())) {
-                                return me2;
-                            } else {
-                                return ImmutablePair.of(
-                                        me1.getLeft() + "," + me2.getLeft(),
-                                        me1.getRight() + "," + me2.getRight());
-                            }
-                        });
-
-        List<ServiceArg> serviceArgList = new ArrayList<>();
-        serviceArgList.add(new ServiceArg("-masksFiles", maskFilesAndThresholds.getLeft()));
-        serviceArgList.add(new ServiceArg("-masksThresholds", maskFilesAndThresholds.getRight()));
-        serviceArgList.add(new ServiceArg("-targetsFile", colorDepthTargetsFile.getAbsolutePath()));
-        serviceArgList.add(new ServiceArg("-cdMatchesDir", workingDirectory.getServiceFolder().resolve("cdsMatches").toString()));
-        serviceArgList.add(new ServiceArg("-numNodes", numNodes));
-        serviceArgList.add(new ServiceArg("-negativeRadius", search.getParameters().getNegativeRadius()));
-        if (search.getDataThreshold() != null) {
-            serviceArgList.add(new ServiceArg("-dataThreshold", search.getDataThreshold()));
-        }
-        if (search.getPixColorFluctuation() != null) {
-            serviceArgList.add(new ServiceArg("-pixColorFluctuation", search.getPixColorFluctuation()));
-        }
-        if (search.getXyShift() != null) {
-            serviceArgList.add(new ServiceArg("-xyShift", search.getXyShift()));
-        }
-
-        if (search.getMirrorMask() != null && search.getMirrorMask()) {
-            serviceArgList.add(new ServiceArg("-mirrorMask"));
-        }
-
-        // Fallback for older searches without max results
-        final Integer maxResultsPerMask = search.getParameters().getMaxResultsPerMask() == null
-                ? 200 : search.getParameters().getMaxResultsPerMask();
-
-        ServiceComputation<JacsServiceResult<List<File>>> cdsComputation;
-        if (args.useJavaProcess) {
-            cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList);
-        } else {
-            serviceArgList.add(new ServiceArg("-useSpark"));
-            cdsComputation = runSparkBasedColorDepthSearch(jacsServiceData, serviceArgList);
-        }
-        return cdsComputation
-                .thenApply((JacsServiceResult<List<File>> result) -> {
-                    ColorDepthResult colorDepthResult = new ColorDepthResult();
-                    colorDepthResult.setParameters(search.getParameters());
-                    result.getResult().forEach(cdsMatchesFile -> {
-
-                    });
-                    return new JacsServiceResult<>(jacsServiceData, Boolean.TRUE);
+                .collect(Collectors.toList());
+        return computationFactory.newCompletedComputation(null)
+                .thenCombineAll(cdsComputations, (Object ignored, List<?> results) -> (List<JacsServiceResult<List<File>>>) results)
+                .thenApply(cdsMatchesResults -> {
+                    return cdsMatchesResults.stream().flatMap(r -> r.getResult().stream()).collect(Collectors.toList());
+                })
+                .thenApply(cdsMatches -> {
+                    return updateServiceResult(jacsServiceData, true);
                 });
+    }
+
+    private List<ServiceArg> createColorDepthServiceInvocationParams(String masksFile,
+                                                                     Integer masksThreshold,
+                                                                     String targetsFile,
+                                                                     Integer targetsThreshold,
+                                                                     String cdMatchesDirname,
+                                                                     Integer negativeRadius,
+                                                                     Double pixColorFluctuation,
+                                                                     Integer xyShift,
+                                                                     Boolean mirrorMask) {
+        List<ServiceArg> serviceArgList = new ArrayList<>();
+        serviceArgList.add(new ServiceArg("searchFromJSON"));
+        serviceArgList.add(new ServiceArg("-masksFiles", masksFile));
+        serviceArgList.add(new ServiceArg("-maskThreshold", masksThreshold));
+        serviceArgList.add(new ServiceArg("-dataThreshold", targetsThreshold));
+        serviceArgList.add(new ServiceArg("-targetsFiles", targetsFile));
+        serviceArgList.add(new ServiceArg("-cdMatchesDir",  cdMatchesDirname));
+        serviceArgList.add(new ServiceArg("-negativeRadius", negativeRadius));
+        serviceArgList.add(new ServiceArg("-pixColorFluctuation", pixColorFluctuation));
+        serviceArgList.add(new ServiceArg("-xyShift", xyShift));
+        serviceArgList.add(new ServiceArg("-mirrorMask", mirrorMask));
+        return serviceArgList;
     }
 
     private ServiceComputation<JacsServiceResult<List<File>>> runJavaProcessBasedColorDepthSearch(JacsServiceData jacsServiceData, List<ServiceArg> serviceArgList) {
@@ -244,9 +237,9 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                 serviceArgList.toArray(new ServiceArg[0]));
     }
 
-    private Map<Integer, List<CDMMetadata>> getMasksWithThresholds(List<Reference> maskRefs) {
+    private Map<Integer, String> getMasksWithThresholds(Path masksFolder, List<Reference> maskRefs) {
         List<ColorDepthMask> masks = legacyDomainDao.getDomainObjectsAs(maskRefs, ColorDepthMask.class);
-        return masks.stream()
+        Map<Integer, List<CDMMetadata>> masksPerFiles = masks.stream()
                 .map(mask -> {
                     Reference sampleRef =  mask.getSample();
                     CDMMetadata maskMetadata = new CDMMetadata();
@@ -258,7 +251,20 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                 })
                 .collect(Collectors.groupingBy(
                         ImmutablePair::getLeft,
-                        Collectors.mapping(ImmutablePair::getRight, Collectors.toList())));
+                        Collectors.mapping(ImmutablePair::getRight, Collectors.toList())
+                ));
+        return masksPerFiles.entrySet().stream()
+                .map(masksPerFilesEntry -> {
+                    File colorDepthMasksFile = masksFolder
+                            .resolve("colorDepthMasks-" + masksPerFilesEntry.getKey() + ".json").toFile();
+                    try {
+                        objectMapper.writeValue(FileUtils.openOutputStream(colorDepthMasksFile), masksPerFilesEntry.getValue());
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                    return ImmutablePair.of(masksPerFilesEntry.getKey(), colorDepthMasksFile.getAbsolutePath());
+                })
+                .collect(Collectors.toMap(ImmutablePair::getLeft, ImmutablePair::getRight));
     }
 
     private List<CDMMetadata> getTargetColorDepthImages(String alignmentSpace, List<CDSLibraryParam> targetLibraries) {

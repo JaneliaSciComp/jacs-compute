@@ -19,7 +19,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
-import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -92,11 +91,11 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
         externalScriptWriter.addWithArgs("${JAVA_HOME}/bin/java")
                 .addArgs("-jar", jarPath)
                 .addArgs("-m").addArgs(args.masksFiles)
-                .addArgs("-i", args.targetsFile)
+                .addArgs("-i").addArgs(args.targetsFiles)
                 .addArgs("--outputDir", args.cdMatchesDir)
                 ;
-        if (args.maskThresholds != null && !args.maskThresholds.isEmpty()) {
-            externalScriptWriter.addArgs("--maskThresholds", args.maskThresholds.get(0).toString());
+        if (args.maskThreshold != null) {
+            externalScriptWriter.addArgs("--maskThresholds", args.maskThreshold.toString());
         }
         if (args.dataThreshold != null) {
             externalScriptWriter.addArgs("--dataThreshold", args.dataThreshold.toString());
