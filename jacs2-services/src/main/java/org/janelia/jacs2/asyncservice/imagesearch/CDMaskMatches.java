@@ -16,6 +16,10 @@ public class CDMaskMatches {
         this.maskId = maskId;
     }
 
+    boolean hasResults() {
+        return results != null && !results.isEmpty();
+    }
+
     public List<CDSMatchResult> getResults() {
         return results;
     }
