@@ -143,7 +143,7 @@ public class ScriptWriter {
 
     public ScriptWriter setVar(String var, String value) {
         try {
-            w.append(indent).append(var).append('=').append(value).append('\n');
+            w.append(indent).append(var).append('=').append('"').append(value).append('"').append('\n');
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
