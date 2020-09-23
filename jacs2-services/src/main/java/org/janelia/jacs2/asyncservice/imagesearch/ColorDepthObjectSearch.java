@@ -313,8 +313,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                 serviceArgList.toArray(new ServiceArg[0]));
     }
 
-    private ServiceComputation<JacsServiceResult<List<File>>> runSparkBasedColorDepthSearch(JacsServiceData jacsServiceData,
-                                                                                            List<ServiceArg> serviceArgList) {
+    private ServiceComputation<JacsServiceResult<List<File>>> runSparkBasedColorDepthSearch(JacsServiceData jacsServiceData, List<ServiceArg> serviceArgList) {
         return sparkColorDepthFileSearch.process(
                 new ServiceExecutionContext.Builder(jacsServiceData)
                         .description("Spark based color depth search")
