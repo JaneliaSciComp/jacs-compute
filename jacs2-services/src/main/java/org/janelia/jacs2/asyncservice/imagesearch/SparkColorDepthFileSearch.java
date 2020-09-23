@@ -207,6 +207,7 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
 
         List<String> appArgs = new ArrayList<>();
 
+        appArgs.add("searchFromJSON");
         appArgs.add("-m");
         appArgs.addAll(args.masksFiles);
 
