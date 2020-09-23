@@ -56,7 +56,9 @@ public class ScriptWriter {
 
     public ScriptWriter addArg(String arg) {
         try {
-            w.append(' ').append(arg);
+            if (StringUtils.isNotEmpty(arg)) {
+                w.append(' ').append(arg);
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

@@ -13,6 +13,7 @@ import javax.inject.Named;
 import org.janelia.jacs2.asyncservice.common.AbstractExeBasedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
+import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
@@ -86,10 +87,19 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
     @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
         ColorDepthSearchArgs args = getArgs(jacsServiceData);
+        StringBuilder runtimeOpts = new StringBuilder();
+        int requiredMemoryInGB = ProcessorHelper.getRequiredMemoryInGB(jacsServiceData.getResources());
+        if (requiredMemoryInGB > 0) {
+            runtimeOpts
+                    .append("-Mx").append(requiredMemoryInGB).append('G')
+                    .append(' ')
+                    .append("-Ms").append(requiredMemoryInGB).append('G');
+        }
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
         externalScriptWriter.addWithArgs("${JAVA_HOME}/bin/java")
-                .addArg("${JAVA_OPTS}")
+                .addArg("${CDS_OPTS}")
+                .addArg(runtimeOpts.toString())
                 .addArgs("-jar", jarPath)
                 .addArg("searchFromJSON")
                 .addArgs("-m").addArgs(args.masksFiles)
