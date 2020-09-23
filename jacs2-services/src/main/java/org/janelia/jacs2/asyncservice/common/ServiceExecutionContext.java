@@ -91,6 +91,11 @@ public class ServiceExecutionContext {
             return this;
         }
 
+        public Builder addEnv(Map<String, String> srcEnv) {
+            serviceExecutionContext.env.putAll(srcEnv);
+            return this;
+        }
+
         public Builder registerProcessingNotification(String processingEvent, Optional<RegisteredJacsNotification> processingNotification) {
             processingNotification.ifPresent(n -> serviceExecutionContext.processingNotification = n.withEventName(processingEvent));
             return this;
@@ -125,6 +130,7 @@ public class ServiceExecutionContext {
     private final List<Number> waitForIds = new ArrayList<>();
     private final Map<String, Object> dictionaryArgs = new LinkedHashMap<>();
     private final Map<String, String> resources = new LinkedHashMap<>();
+    private final Map<String, String> env = new LinkedHashMap<>();
     private RegisteredJacsNotification processingNotification;
     private final Map<String, RegisteredJacsNotification> processingStageNotifications = new HashMap<>();
 
@@ -137,6 +143,7 @@ public class ServiceExecutionContext {
         }
         if (parentService != null) {
             ResourceHelper.setAuthToken(resources, ResourceHelper.getAuthToken(parentService.getResources()));
+            env.putAll(parentService.getEnv());
         }
     }
 
@@ -191,8 +198,13 @@ public class ServiceExecutionContext {
     Map<String, String> getResourcesFromParent() {
         return parentService != null ? ImmutableMap.copyOf(parentService.getResources()) : ImmutableMap.of();
     }
+
     Map<String, String> getResources() {
         return resources;
+    }
+
+    Map<String, String> getEnv() {
+        return env;
     }
 
     Map<String, Object> getDictionaryArgs() {

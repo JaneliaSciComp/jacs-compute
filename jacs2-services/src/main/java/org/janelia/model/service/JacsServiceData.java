@@ -388,6 +388,10 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.env.put(varName, value);
     }
 
+    public void addAllToEnv(Map<String, String> env) {
+        this.env.putAll(env);
+    }
+
     public void clearEnv() {
         this.env.clear();
     }
