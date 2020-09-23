@@ -129,6 +129,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public ServiceComputation<JacsServiceResult<Boolean>> process(JacsServiceData jacsServiceData) {
         IntegratedColorDepthSearchArgs args = getArgs(jacsServiceData);
