@@ -153,7 +153,6 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
                                 serviceWorkingFolder.getServiceFolder(), 1, "glob:**/*"+RESULTS_FILENAME_SUFFIX)
                             .map(Path::toFile)
                             .collect(Collectors.toList());
-
                     return updateServiceResult(jacsServiceData, resultsFiles);
                 });
     }
