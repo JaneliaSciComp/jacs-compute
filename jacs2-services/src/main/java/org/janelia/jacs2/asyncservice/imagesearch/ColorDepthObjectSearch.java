@@ -208,7 +208,6 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                                                      Integer xyShift,
                                                                      Boolean mirrorMask) {
         List<ServiceArg> serviceArgList = new ArrayList<>();
-        serviceArgList.add(new ServiceArg("searchFromJSON"));
         serviceArgList.add(new ServiceArg("-masksFiles", masksFile));
         serviceArgList.add(new ServiceArg("-maskThreshold", masksThreshold));
         serviceArgList.add(new ServiceArg("-dataThreshold", targetsThreshold));

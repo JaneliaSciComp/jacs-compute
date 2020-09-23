@@ -89,13 +89,15 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
         externalScriptWriter.addWithArgs("${JAVA_HOME}/bin/java")
+                .addArg("${JAVA_OPTS}")
                 .addArgs("-jar", jarPath)
+                .addArg("searchFromJSON")
                 .addArgs("-m").addArgs(args.masksFiles)
                 .addArgs("-i").addArgs(args.targetsFiles)
                 .addArgs("--outputDir", args.cdMatchesDir)
                 ;
         if (args.maskThreshold != null) {
-            externalScriptWriter.addArgs("--maskThresholds", args.maskThreshold.toString());
+            externalScriptWriter.addArgs("--maskThreshold", args.maskThreshold.toString());
         }
         if (args.dataThreshold != null) {
             externalScriptWriter.addArgs("--dataThreshold", args.dataThreshold.toString());
