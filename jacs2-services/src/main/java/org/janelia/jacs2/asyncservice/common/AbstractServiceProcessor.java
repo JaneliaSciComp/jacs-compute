@@ -69,7 +69,6 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
             jacsServiceDataBuilder.setState(executionContext.getServiceState());
         }
         jacsServiceDataBuilder.setServiceTimeout(executionContext.getServiceTimeoutInMillis());
-        jacsServiceDataBuilder.addResources(executionContext.getResourcesFromParent());
         jacsServiceDataBuilder.addResources(executionContext.getResources());
         jacsServiceDataBuilder.addEnv(executionContext.getEnv());
         executionContext.getWaitFor().forEach(jacsServiceDataBuilder::addDependency);

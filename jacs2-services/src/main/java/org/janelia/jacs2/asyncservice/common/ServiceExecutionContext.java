@@ -142,7 +142,8 @@ public class ServiceExecutionContext {
             this.parentService = parentService.getParentService();
         }
         if (parentService != null) {
-            ResourceHelper.setAuthToken(resources, ResourceHelper.getAuthToken(parentService.getResources()));
+            // propagate resources and env from parent
+            resources.putAll(parentService.getResources());
             env.putAll(parentService.getEnv());
         }
     }
@@ -193,10 +194,6 @@ public class ServiceExecutionContext {
 
     String getDescription() {
         return description;
-    }
-
-    Map<String, String> getResourcesFromParent() {
-        return parentService != null ? ImmutableMap.copyOf(parentService.getResources()) : ImmutableMap.of();
     }
 
     Map<String, String> getResources() {
