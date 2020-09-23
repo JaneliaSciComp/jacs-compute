@@ -53,13 +53,6 @@ import org.slf4j.Logger;
 @Named("colorDepthFileSearch")
 public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>> {
 
-    private static final String RESULTS_FILENAME_SUFFIX = "_results.txt";
-
-    private final ComputeAccounting clusterAccounting;
-    private final long searchTimeoutInMillis;
-    private final long searchIntervalCheckInMillis;
-    private final String jarPath;
-
     static class SparkColorDepthSearchArgs extends ColorDepthSearchArgs {
         @Parameter(names = {"-numNodes"}, description = "Number of worker nodes")
         Integer numNodes;
@@ -70,6 +63,11 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
         @Parameter(names = {"-parallelism"}, description = "Parallelism")
         Integer parallelism;
     }
+
+    private final ComputeAccounting clusterAccounting;
+    private final long searchTimeoutInMillis;
+    private final long searchIntervalCheckInMillis;
+    private final String jarPath;
 
     @Inject
     SparkColorDepthFileSearch(ServiceComputationFactory computationFactory,
@@ -105,11 +103,7 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
 
             @Override
             public List<File> collectResult(JacsServiceData jacsServiceData) {
-                ColorDepthSearchArgs args = getArgs(jacsServiceData);
-                return FileUtils.lookupFiles(Paths.get(args.cdMatchesDir), 1, "glob:**/*")
-                        .filter(Files::isRegularFile)
-                        .map(Path::toFile)
-                        .collect(Collectors.toList());
+                return ColorDepthFileSearchProcessingUtils.collectResults(getArgs(jacsServiceData));
             }
         };
     }
@@ -153,13 +147,7 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
                 })
 
                 // Deal with the results
-                .thenApply((app) -> {
-                    List<File> resultsFiles = FileUtils.lookupFiles(
-                                serviceWorkingFolder.getServiceFolder(), 1, "glob:**/*"+RESULTS_FILENAME_SUFFIX)
-                            .map(Path::toFile)
-                            .collect(Collectors.toList());
-                    return updateServiceResult(jacsServiceData, resultsFiles);
-                });
+                .thenApply((app) -> updateServiceResult(jacsServiceData, ColorDepthFileSearchProcessingUtils.collectResults(getArgs(jacsServiceData))));
     }
 
     private SparkColorDepthSearchArgs getArgs(JacsServiceData jacsServiceData) {
@@ -245,7 +233,9 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
             appArgs.add("--pctPositivePixels");
             appArgs.add(args.pctPositivePixels.toString());
         }
-
+        if (args.withGradientScores) {
+            appArgs.add("--with-grad-scores");
+        }
         appArgs.add("--outputDir");
         appArgs.add(args.cdMatchesDir);
 
