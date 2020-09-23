@@ -133,6 +133,11 @@ public class JacsServiceDataBuilder {
         return this;
     }
 
+    public JacsServiceDataBuilder addEnv(Map<String, String> env) {
+        serviceData.addAllToEnv(env);
+        return this;
+    }
+
     public JacsServiceDataBuilder registerProcessingNotification(RegisteredJacsNotification notification) {
         serviceData.setProcessingNotification(notification);
         return this;

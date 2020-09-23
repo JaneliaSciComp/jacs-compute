@@ -201,7 +201,6 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
     private ServiceComputation<SparkApp> runApp(JacsServiceData jacsServiceData, SparkColorDepthSearchArgs args, SparkCluster cluster) {
         logger.trace("Run color depth with {}", args);
 
-        JacsServiceFolder serviceWorkingFolder = getWorkingDirectory(jacsServiceData);
         prepareDir(jacsServiceData.getOutputPath());
         prepareDir(jacsServiceData.getErrorPath());
 
