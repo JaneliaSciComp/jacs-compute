@@ -152,7 +152,7 @@ public class ScriptWriter {
 
     public ScriptWriter exportVar(String var, String value) {
         try {
-            w.append(indent).append("export ").append(var).append('=').append(value).append('\n');
+            w.append(indent).append("export ").append(var).append('=').append('"').append(value).append('"').append('\n');
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
