@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -104,7 +105,11 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
 
             @Override
             public List<File> collectResult(JacsServiceData jacsServiceData) {
-                throw new UnsupportedOperationException();
+                ColorDepthSearchArgs args = getArgs(jacsServiceData);
+                return FileUtils.lookupFiles(Paths.get(args.cdMatchesDir), 1, "glob:**/*")
+                        .filter(Files::isRegularFile)
+                        .map(Path::toFile)
+                        .collect(Collectors.toList());
             }
         };
     }
