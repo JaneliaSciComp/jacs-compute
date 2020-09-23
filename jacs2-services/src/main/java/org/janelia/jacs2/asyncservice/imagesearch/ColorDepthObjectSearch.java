@@ -20,14 +20,9 @@ import javax.inject.Named;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.janelia.jacs2.asyncservice.alignservices.CMTKAlignmentResultFiles;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
@@ -42,6 +37,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.sampleprocessing.SampleProcessorResult;
+import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -52,7 +48,6 @@ import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.CDSLibraryParam;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
-import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
 import org.janelia.model.domain.gui.cdmip.ColorDepthSearch;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
@@ -150,7 +145,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
         JacsServiceFolder workingDirectory = getWorkingDirectory(jacsServiceData);
         File colorDepthTargetsFile = workingDirectory.getServiceFolder().resolve("colorDepthTargets.json").toFile();
         try {
-            objectMapper.writeValue(FileUtils.openOutputStream(colorDepthTargetsFile), targets);
+            objectMapper.writeValue(org.apache.commons.io.FileUtils.openOutputStream(colorDepthTargetsFile), targets);
         } catch (IOException e) {
             throw new ComputationException(jacsServiceData, e);
         }
@@ -194,6 +189,20 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                     return cdsMatchesResults.stream().flatMap(r -> r.getResult().stream()).collect(Collectors.toList());
                 })
                 .thenApply(cdsMatches -> {
+                    System.out.println("!!!!  " + cdsMatches);
+                    Set<String> maskIds = search.getMasks().stream().map(Reference::getTargetId).map(Object::toString).collect(Collectors.toSet());
+                    cdsMatches.stream()
+                            .filter(cdsMatchesFile -> {
+                                return maskIds.contains(FileUtils.getFileNameOnly(cdsMatchesFile.toPath()));
+                            })
+                            .forEach(cdsMatchesFile -> {
+                                System.out.println("!!!!! PROCESS " + cdsMatchesFile);
+                                try {
+                                    CDMaskMatches cdMaskMatches = objectMapper.readValue(cdsMatchesFile, CDMaskMatches.class);
+                                } catch (IOException e) {
+                                    logger.error("Error reading results from {}", cdsMatchesFile, e);
+                                }
+                            });
                     return updateServiceResult(jacsServiceData, true);
                 });
     }
@@ -245,7 +254,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                     CDMMetadata maskMetadata = new CDMMetadata();
                     maskMetadata.setId(mask.getId().toString());
                     maskMetadata.setCdmPath(mask.getFilepath());
-                    maskMetadata.setImagePath(mask.getFilepath());
+                    maskMetadata.setImageName(mask.getFilepath());
                     maskMetadata.setSampleRef(sampleRef != null ? sampleRef.toString() : null);
                     return ImmutablePair.of(mask.getMaskThreshold(), maskMetadata);
                 })
@@ -258,7 +267,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                     File colorDepthMasksFile = masksFolder
                             .resolve("colorDepthMasks-" + masksPerFilesEntry.getKey() + ".json").toFile();
                     try {
-                        objectMapper.writeValue(FileUtils.openOutputStream(colorDepthMasksFile), masksPerFilesEntry.getValue());
+                        objectMapper.writeValue(org.apache.commons.io.FileUtils.openOutputStream(colorDepthMasksFile), masksPerFilesEntry.getValue());
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
@@ -310,7 +319,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                             .build();
                                 }
                                 targetMetadata.setCdmPath(cdmi.getFilepath());
-                                targetMetadata.setImagePath(cdmi.getFilepath());
+                                targetMetadata.setImageName(cdmi.getFilepath());
                                 targetMetadata.setSampleRef(sampleRef != null ? sampleRef.toString() : null);
                                 targetMetadata.setRelatedImageRefId(sourceImageRef != null ? sourceImageRef.toString() : null);
                                 if (targetLibrary.hasGradientVariant()) {
@@ -323,7 +332,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                             "gradient",
                                             CDMMetadataUtils.variantCandidatesStream(
                                                     gradientVariantPaths,
-                                                    targetMetadata.getImagePath()).findFirst().orElse(null)
+                                                    targetMetadata.getImageName()).findFirst().orElse(null)
                                     );
                                 }
                                 if (targetLibrary.hasZgapMaskVariant()) {
@@ -336,7 +345,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Boolean> {
                                             "zgap",
                                             CDMMetadataUtils.variantCandidatesStream(
                                                     zgapMasksVariantPaths,
-                                                    targetMetadata.getImagePath()).findFirst().orElse(null)
+                                                    targetMetadata.getImageName()).findFirst().orElse(null)
                                     );
                                 }
                                 return targetMetadata;
