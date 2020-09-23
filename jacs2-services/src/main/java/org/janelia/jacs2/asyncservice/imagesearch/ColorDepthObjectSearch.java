@@ -77,7 +77,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         @Parameter(names = "-maskId", description = "GUID of the ColorDepthMask object to use. If this is empty, all listed masks are searched.")
         Long maskId;
         @Parameter(names = "-runMasksWithoutResults", description = "If a mask id is provided, should other masks also be run if they don't have results yet?")
-        boolean runMasksWithoutResults = true;
+        boolean runAllOtherMasksWithoutResults = true;
         @Parameter(names = "-use-java-process", description = "If set it uses java process based search; the default is spark based search")
         boolean useJavaProcess = false;
     }
@@ -160,11 +160,9 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         Set<Reference> masksToRun = new LinkedHashSet<>();
         if (args.maskId != null) {
             masksToRun.add(Reference.createFor(ColorDepthMask.class, args.maskId));
-            if (args.runMasksWithoutResults) {
+            if (args.runAllOtherMasksWithoutResults) {
                 masksToRun.addAll(getMasksFromCurrentSearchWithoutResults(search));
             }
-        } else if (args.runMasksWithoutResults) {
-            masksToRun.addAll(getMasksFromCurrentSearchWithoutResults(search));
         } else {
             masksToRun.addAll(search.getMasks());
         }
