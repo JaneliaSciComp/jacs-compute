@@ -120,7 +120,7 @@ public class SparkColorDepthFileSearchTest {
 
         Mockito.when(sparkCluster.runApp(
                 jarPath,
-                null,
+                "org.janelia.colormipsearch.cmd.SparkMainEntry",
                 0,
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
@@ -137,6 +137,8 @@ public class SparkColorDepthFileSearchTest {
                         "--xyShift", "20",
                         "--mirrorMask",
                         "--pctPositivePixels", "10.0",
+                        "--negativeRadius", "20",
+                        "--with-grad-scores",
                         "--outputDir", "cdsresults"
                 )))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkApp));
@@ -152,7 +154,7 @@ public class SparkColorDepthFileSearchTest {
                     successful.accept(r);
                     Mockito.verify(sparkCluster).runApp(
                             jarPath,
-                            null,
+                            "org.janelia.colormipsearch.cmd.SparkMainEntry",
                             0,
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
@@ -169,6 +171,8 @@ public class SparkColorDepthFileSearchTest {
                                     "--xyShift", "20",
                                     "--mirrorMask",
                                     "--pctPositivePixels", "10.0",
+                                    "--negativeRadius", "20",
+                                    "--with-grad-scores",
                                     "--outputDir", "cdsresults"
                             ));
                     Mockito.verify(sparkCluster).stopCluster();
@@ -202,6 +206,7 @@ public class SparkColorDepthFileSearchTest {
                 .addArgs("-negativeRadius", "20")
                 .addArgs("-cdMatchesDir", "cdsresults")
                 .addArgs("-numNodes", "9")
+                .addArgs("-withGradientScores")
                 ;
         JacsServiceData testServiceData = testServiceDataBuilder
                 .setWorkspace(TEST_WORKSPACE)

@@ -233,6 +233,12 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
             appArgs.add("--pctPositivePixels");
             appArgs.add(args.pctPositivePixels.toString());
         }
+
+        if (args.negativeRadius != null) {
+            appArgs.add("--negativeRadius");
+            appArgs.add(args.negativeRadius.toString());
+        }
+
         if (args.withGradientScores) {
             appArgs.add("--with-grad-scores");
         }
@@ -248,7 +254,7 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
 
         logger.info("Starting Spark application {} with {}", jarPath, appArgs);
         return cluster.runApp(jarPath,
-                null,
+                "org.janelia.colormipsearch.cmd.SparkMainEntry",
                 parallelism,
                 jacsServiceData.getOutputPath(),
                 jacsServiceData.getErrorPath(),
