@@ -136,11 +136,14 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
         if (args.pctPositivePixels != null) {
             externalScriptWriter.addArgs("--pctPositivePixels", args.pctPositivePixels.toString());
         }
-        if (args.partitionSize != null && args.partitionSize > 0) {
-            externalScriptWriter.addArgs("--libraryPartitionSize", args.partitionSize.toString());
+        if (args.negativeRadius != null) {
+            externalScriptWriter.addArgs("--negativeRadius", args.negativeRadius.toString());
         }
         if (args.withGradientScores) {
             externalScriptWriter.addArg("--with-grad-scores");
+        }
+        if (args.partitionSize != null && args.partitionSize > 0) {
+            externalScriptWriter.addArgs("--libraryPartitionSize", args.partitionSize.toString());
         }
         externalScriptWriter.endArgs("");
         externalScriptWriter.close();
