@@ -152,7 +152,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
             String name = SubjectUtils.getSubjectName(jacsServiceData.getOwnerKey());
             pathElemsBuilder.add(name);
         }
-        pathElemsBuilder.add(jacsServiceData.getName());
+        pathElemsBuilder.add(jacsServiceData.getName().trim());
         if (jacsServiceData.hasId()) {
             pathElemsBuilder.addAll(FileUtils.getTreePathComponentsForId(jacsServiceData.getId()));
         } else if (jacsServiceData.hasParentServiceId()) {
