@@ -193,8 +193,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     if (args.useJavaProcess) {
                         if (processingPartitionSize > 0) {
                             serviceArgList.add(new ServiceArg("-partitionSize", processingPartitionSize));
-                            double memInGB = ((double) masks.size() * targets.size()  / processingPartitionSize);
-                            ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, (int)Math.ceil(memInGB));
+                            // number of parellel searches is (nmasks * ntargets) / partitionSize
+                            // each MIP requires about 2.6M and for a search we compare 2 MIPs
+                            double memInMB = ((double) masks.size() * targets.size()  / processingPartitionSize) * 2.6 * 2;
+                            ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, (int)Math.ceil(memInMB / 1024.));
                         }
                         cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList, colorDepthProcessingResources);
                     } else {
