@@ -7,7 +7,7 @@ allprojects {
     apply plugin: 'idea'
     apply plugin: 'eclipse'
     group = 'org.janelia.jacs2'
-    version = '8.18.1'
+    version = '8.20'
 }
 
 project.ext {
