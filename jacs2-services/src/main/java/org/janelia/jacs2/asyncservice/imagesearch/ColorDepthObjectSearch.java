@@ -50,7 +50,7 @@ import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.gui.cdmip.CDSLibraryParam;
+import org.janelia.model.domain.gui.cdmip.CDSTargetParam;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMaskResult;
@@ -150,7 +150,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
             throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" not found");
         }
 
-        List<CDMMetadata> targets = getTargetColorDepthImages(search.getAlignmentSpace(), search.getLibraries());
+        List<CDMMetadata> targets = getTargetColorDepthImages(search.getAlignmentSpace(), search.getCDSTargets());
         logger.info("Searching {} total targets", targets.size());
 
         // Create temporary file with paths to search
@@ -370,8 +370,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                 .collect(Collectors.toMap(ImmutablePair::getLeft, ImmutablePair::getRight));
     }
 
-    private List<CDMMetadata> getTargetColorDepthImages(String alignmentSpace, List<CDSLibraryParam> targetLibraries) {
-        return targetLibraries.stream()
+    private List<CDMMetadata> getTargetColorDepthImages(String alignmentSpace, List<CDSTargetParam> cdsTargets) {
+        return cdsTargets.stream()
                 .flatMap(targetLibrary -> {
                     Stream<ColorDepthImage> cdmiStream;
                     Map<Reference, ColorDepthImage> indexedLibraryMIPs;
