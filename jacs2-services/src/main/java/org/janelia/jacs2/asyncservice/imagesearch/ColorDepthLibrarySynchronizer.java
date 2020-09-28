@@ -230,12 +230,12 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 .filter(p -> !p.equals(dir));
     }
 
-    private ColorDepthLibrary createNewLibrary(String libraryIdentifier, String libraryVersion, ColorDepthLibrary parentLibrary) {
-        logger.info("Create new library {} - version {}", libraryIdentifier, StringUtils.defaultIfBlank(libraryVersion, "<<NONE>>"));
+    private ColorDepthLibrary createNewLibrary(String libraryIdentifier, String libraryVariant, ColorDepthLibrary parentLibrary) {
+        logger.info("Create new library {} - version {}", libraryIdentifier, StringUtils.defaultIfBlank(libraryVariant, "<<NONE>>"));
         ColorDepthLibrary library = new ColorDepthLibrary();
         library.setIdentifier(libraryIdentifier);
         library.setName(libraryIdentifier);
-        library.setVersion(libraryVersion);
+        library.setVariant(libraryVariant);
         library.setParentLibraryRef(parentLibrary == null ? null : Reference.createFor(parentLibrary));
 
         DataSet dataSet = legacyDomainDao.getDataSetByIdentifier(null, libraryIdentifier);
@@ -435,9 +435,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 image.setAnatomicalArea(colorDepthImageFileComponents.getAnatomicalArea());
                 image.setChannelNumber(colorDepthImageFileComponents.getChannelNumber());
             }
-            ColorDepthLibrary sourceLibrary = findSourceLibrary(library);
-            if (sourceLibrary != null) {
-                Path sourceLibraryDir = rootPath.resolve(alignmentSpace).resolve(sourceLibrary.getIdentifier());
+            ColorDepthLibrary variantSourceLibrary = findVariantSource(library);
+            if (variantSourceLibrary != null) {
                 String sourceCDMName;
                 if (colorDepthImageFileComponents.hasNameComponents()) {
                     sourceCDMName = ColorDepthFileComponents.createCDMNameFromNameComponents(
@@ -450,20 +449,20 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                             null
                     );
                 } else {
-                    if (library.hasVersion()) {
+                    if (library.isVariant()) {
                         // if the mip name does not follow the convention assume the version is in the file name
                         // remove the version from the filename
-                        sourceCDMName = Pattern.compile("[_-]" + library.getVersion() + "$", Pattern.CASE_INSENSITIVE)
+                        sourceCDMName = Pattern.compile("[_-]" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE)
                                 .matcher(colorDepthImageFileComponents.getFileName())
                                 .replaceAll(StringUtils.EMPTY);
                     } else {
                         sourceCDMName = colorDepthImageFileComponents.getFileName();
                     }
                 }
-                logger.debug("Lookup {} in {}, alignmentSpace: {}", sourceCDMName, sourceLibrary.getIdentifier(), alignmentSpace);
+                logger.debug("Lookup {} in {}, alignmentSpace: {}", sourceCDMName, variantSourceLibrary.getIdentifier(), alignmentSpace);
                 ColorDepthImage sourceImage = colorDepthImageDao.streamColorDepthMIPs(
                         new ColorDepthImageQuery()
-                                .withLibraryIdentifiers(Collections.singletonList(sourceLibrary.getIdentifier()))
+                                .withLibraryIdentifiers(Collections.singletonList(variantSourceLibrary.getIdentifier()))
                                 .withAlignmentSpace(alignmentSpace)
                                 .withFuzzyNames(Collections.singleton(sourceCDMName))
                                 .withFuzzyFilepaths(Collections.singleton(sourceCDMName))
@@ -474,7 +473,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     // this is the case when the file exist but the mip entity was deleted because
                     // it actually corresponds to a renamed mip
                     logger.warn("No color depth image entity found for {} in library {}, alignment {}, so no MIP will be created",
-                            sourceCDMName, sourceLibrary.getIdentifier(), alignmentSpace);
+                            sourceCDMName, variantSourceLibrary.getIdentifier(), alignmentSpace);
                     return false;
                 }
             }
@@ -496,16 +495,16 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         }
     }
 
-    private ColorDepthLibrary findSourceLibrary(ColorDepthLibrary l) {
+    private ColorDepthLibrary findVariantSource(ColorDepthLibrary libraryVariant) {
         ColorDepthLibrary sourceLibrary = null;
-        for (ColorDepthLibrary currentLibrary = l; currentLibrary.hasVersion(); ) {
-            ColorDepthLibrary parentLibrary = legacyDomainDao.getDomainObject(null, ColorDepthLibrary.class, currentLibrary.getParentLibraryRef().getTargetId());
+        for (ColorDepthLibrary currentLibraryVariant = libraryVariant; currentLibraryVariant.isVariant(); ) {
+            ColorDepthLibrary parentLibrary = legacyDomainDao.getDomainObject(null, ColorDepthLibrary.class, currentLibraryVariant.getParentLibraryRef().getTargetId());
             if (parentLibrary == null) {
-                logger.error("Invalid parent library reference in {} -> {}", currentLibrary, currentLibrary.getParentLibraryRef());
-                throw new IllegalArgumentException("Invalid parent library reference " + currentLibrary.getParentLibraryRef() + " in " + currentLibrary);
+                logger.error("Invalid parent library reference in {} -> {}", currentLibraryVariant, currentLibraryVariant.getParentLibraryRef());
+                throw new IllegalArgumentException("Invalid parent library reference " + currentLibraryVariant.getParentLibraryRef() + " in " + currentLibraryVariant);
             }
             sourceLibrary = parentLibrary;
-            currentLibrary = parentLibrary;
+            currentLibraryVariant = parentLibrary;
         }
         return sourceLibrary;
     }
