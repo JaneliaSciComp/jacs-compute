@@ -48,10 +48,13 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
+import org.janelia.model.access.domain.dao.ColorDepthLibraryDao;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.CDSTargetParam;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
+import org.janelia.model.domain.gui.cdmip.ColorDepthLibraryUtils;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMask;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMaskResult;
 import org.janelia.model.domain.gui.cdmip.ColorDepthMatch;
@@ -87,6 +90,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     private final WrappedServiceProcessor<JavaProcessColorDepthFileSearch, List<File>> javaProcessColorDepthFileSearch;
     private final LegacyDomainDao legacyDomainDao;
     private final ColorDepthImageDao colorDepthImageDao;
+    private final ColorDepthLibraryDao colorDepthLibraryDao;
     private final ObjectMapper objectMapper;
     private final int minNodes;
     private final int maxNodes;
@@ -103,6 +107,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                            SparkColorDepthFileSearch sparkColorDepthFileSearch,
                            JavaProcessColorDepthFileSearch javaProcessColorDepthFileSearch,
                            ColorDepthImageDao colorDepthImageDao,
+                           ColorDepthLibraryDao colorDepthLibraryDao,
                            ObjectMapper objectMapper,
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
@@ -113,6 +118,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         this.sparkColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sparkColorDepthFileSearch);
         this.javaProcessColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, javaProcessColorDepthFileSearch);
         this.colorDepthImageDao = colorDepthImageDao;
+        this.colorDepthLibraryDao = colorDepthLibraryDao;
         this.objectMapper = objectMapper;
     }
 
@@ -150,7 +156,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
             throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" not found");
         }
 
-        List<CDMMetadata> targets = getTargetColorDepthImages(search.getAlignmentSpace(), search.getCDSTargets());
+        List<CDMMetadata> targets = getTargetColorDepthImages(search.getAlignmentSpace(),
+                search.getCDSTargets(), search.useSegmentation(), search.useGradientScores());
         logger.info("Searching {} total targets", targets.size());
 
         // Create temporary file with paths to search
@@ -370,25 +377,31 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                 .collect(Collectors.toMap(ImmutablePair::getLeft, ImmutablePair::getRight));
     }
 
-    private List<CDMMetadata> getTargetColorDepthImages(String alignmentSpace, List<CDSTargetParam> cdsTargets) {
+    private List<CDMMetadata> getTargetColorDepthImages(String alignmentSpace,
+                                                        List<String> cdsTargets,
+                                                        boolean useSegmentation,
+                                                        boolean useGradientScores) {
         return cdsTargets.stream()
+                .flatMap(targetLibraryIdentifier -> colorDepthLibraryDao.getLibraryWithVariants(targetLibraryIdentifier).stream())
                 .flatMap(targetLibrary -> {
                     Stream<ColorDepthImage> cdmiStream;
                     Map<Reference, ColorDepthImage> indexedLibraryMIPs;
                     List<ColorDepthImage> libraryMIPs = colorDepthImageDao.streamColorDepthMIPs(
                             new ColorDepthImageQuery()
                                     .withAlignmentSpace(alignmentSpace)
-                                    .withLibraryIdentifiers(Collections.singleton(targetLibrary.getLibraryName())))
+                                    .withLibraryIdentifiers(Collections.singleton(targetLibrary.getIdentifier())))
                             .collect(Collectors.toList());
-                    if (targetLibrary.hasSearchableVariant()) {
+                    if (useSegmentation) {
                         cdmiStream = colorDepthImageDao.streamColorDepthMIPs(
                                 new ColorDepthImageQuery()
                                         .withAlignmentSpace(alignmentSpace)
-                                        .withLibraryIdentifiers(Collections.singleton(targetLibrary.getLibraryName() + "_" + targetLibrary.getSearchableVariant())));
+                                        .withLibraryIdentifiers(ColorDepthLibraryUtils.getSearchableVariants(targetLibrary).stream()
+                                                .map(ColorDepthLibrary::getIdentifier)
+                                                .collect(Collectors.toSet())));
                         indexedLibraryMIPs = libraryMIPs.stream()
                                 .collect(Collectors.toMap(Reference::createFor, Function.identity()));
                     } else {
-                        logger.info("No segmentation variant set for {}", targetLibrary.getLibraryName());
+                        logger.info("No segmentation variant set for {}", targetLibrary.getIdentifier());
                         cdmiStream = libraryMIPs.stream();
                         indexedLibraryMIPs = Collections.emptyMap();
                     }
@@ -401,13 +414,13 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 targetMetadata.setId(cdmi.getId().toString());
                                 targetMetadata.setLibraryName(cdmi.getLibraries().stream().findFirst().orElse(null));
                                 targetMetadata.setAlignmentSpace(cdmi.getAlignmentSpace());
-                                Set<String> mipLibraries;
+                                Set<String> cdmipLibraries;
                                 if (sourceMIP == null) {
                                     targetMetadata.setCdmPath(cdmi.getFilepath());
-                                    mipLibraries = cdmi.getLibraries();
+                                    cdmipLibraries = cdmi.getLibraries();
                                 } else {
                                     targetMetadata.setCdmPath(sourceMIP.getFilepath());
-                                    mipLibraries = ImmutableSet.<String>builder()
+                                    cdmipLibraries = ImmutableSet.<String>builder()
                                             .addAll(sourceMIP.getLibraries())
                                             .addAll(cdmi.getLibraries())
                                             .build();
@@ -415,31 +428,19 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 targetMetadata.setImageName(cdmi.getFilepath());
                                 targetMetadata.setSampleRef(sampleRef != null ? sampleRef.toString() : null);
                                 targetMetadata.setRelatedImageRefId(sourceImageRef != null ? sourceImageRef.toString() : null);
-                                if (targetLibrary.hasGradientVariant()) {
-                                    Set<Path> gradientVariantPaths = CDMMetadataUtils.variantPaths(
-                                            Paths.get(targetLibrary.getGradientVariant()),
-                                            Paths.get(cdmi.getFilepath()),
-                                            cdmi.getAlignmentSpace(),
-                                            mipLibraries);
-                                    targetMetadata.addVariant(
-                                            "gradient",
-                                            CDMMetadataUtils.variantCandidatesStream(
-                                                    gradientVariantPaths,
-                                                    targetMetadata.getImageName()).findFirst().orElse(null)
-                                    );
-                                }
-                                if (targetLibrary.hasZgapMaskVariant()) {
-                                    Set<Path> zgapMasksVariantPaths = CDMMetadataUtils.variantPaths(
-                                            Paths.get(targetLibrary.getZgapMaskVariant()),
-                                            Paths.get(cdmi.getFilepath()),
-                                            cdmi.getAlignmentSpace(),
-                                            mipLibraries);
-                                    targetMetadata.addVariant(
-                                            "zgap",
-                                            CDMMetadataUtils.variantCandidatesStream(
-                                                    zgapMasksVariantPaths,
-                                                    targetMetadata.getImageName()).findFirst().orElse(null)
-                                    );
+                                if (useGradientScores) {
+                                    // select a gradient variant and a zgap variant and add those to the mip metadata
+                                    // in order to use them for gradient score
+                                    ColorDepthLibraryUtils.selectVariants(targetLibrary, ImmutableSet.of("grad", "gradient")).stream()
+                                            .map(ColorDepthLibrary::getVariant)
+                                            .flatMap(variantName -> CDMMetadataUtils.variantPaths(variantName, Paths.get(cdmi.getFilepath()), cdmi.getAlignmentSpace(), cdmipLibraries).stream())
+                                            .findFirst()
+                                            .ifPresent(variantPath -> targetMetadata.addVariant("gradient", variantPath));
+                                    ColorDepthLibraryUtils.selectVariants(targetLibrary, ImmutableSet.of("zgap", "zgapmask")).stream()
+                                            .map(ColorDepthLibrary::getVariant)
+                                            .flatMap(variantName -> CDMMetadataUtils.variantPaths(variantName, Paths.get(cdmi.getFilepath()), cdmi.getAlignmentSpace(), cdmipLibraries).stream())
+                                            .findFirst()
+                                            .ifPresent(variantPath -> targetMetadata.addVariant("zgap", variantPath));
                                 }
                                 return targetMetadata;
                             });
