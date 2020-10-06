@@ -189,6 +189,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         search.getPixColorFluctuation(),
                         search.getXyShift(),
                         search.getMirrorMask(),
+                        search.getPctPositivePixels(),
                         search.useGradientScores()
                         ))
                 .map(serviceArgList -> {
@@ -308,6 +309,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                                                      Double pixColorFluctuation,
                                                                      Integer xyShift,
                                                                      Boolean mirrorMask,
+                                                                     Double pctPositivePixels,
                                                                      Boolean withGradScores) {
         List<ServiceArg> serviceArgList = new ArrayList<>();
         serviceArgList.add(new ServiceArg("-masksFiles", masksFile));
@@ -319,6 +321,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         serviceArgList.add(new ServiceArg("-pixColorFluctuation", pixColorFluctuation));
         serviceArgList.add(new ServiceArg("-xyShift", xyShift));
         serviceArgList.add(new ServiceArg("-mirrorMask", mirrorMask));
+        serviceArgList.add(new ServiceArg("-pctPositivePixels", pctPositivePixels));
         serviceArgList.add(new ServiceArg("-withGradientScores", withGradScores));
         return serviceArgList;
     }
