@@ -242,6 +242,7 @@ public class SparkColorDepthFileSearch extends AbstractSparkProcessor<List<File>
         if (args.withGradientScores) {
             appArgs.add("--with-grad-scores");
         }
+
         appArgs.add("--outputDir");
         appArgs.add(args.cdMatchesDir);
 

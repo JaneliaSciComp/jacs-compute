@@ -51,7 +51,6 @@ import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
 import org.janelia.model.access.domain.dao.ColorDepthLibraryDao;
 import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
-import org.janelia.model.domain.gui.cdmip.CDSTargetParam;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibraryUtils;
@@ -82,8 +81,6 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         boolean runAllOtherMasksWithoutResults = true;
         @Parameter(names = "-use-java-process", description = "If set it uses java process based search; the default is spark based search", arity = 0)
         boolean useJavaProcess = false;
-        @Parameter(names = "-with-grad-scores", description = "If set it computes gradient scores", arity = 0)
-        boolean withGradientScores;
     }
 
     private final WrappedServiceProcessor<SparkColorDepthFileSearch, List<File>> sparkColorDepthFileSearch;
@@ -192,7 +189,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         search.getPixColorFluctuation(),
                         search.getXyShift(),
                         search.getMirrorMask(),
-                        args.withGradientScores
+                        search.useGradientScores()
                         ))
                 .map(serviceArgList -> {
                     ServiceComputation<JacsServiceResult<List<File>>> cdsComputation;
