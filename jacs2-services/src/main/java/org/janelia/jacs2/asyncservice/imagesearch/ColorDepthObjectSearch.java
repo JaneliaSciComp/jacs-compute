@@ -431,12 +431,12 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 if (useGradientScores) {
                                     // select a gradient variant and a zgap variant and add those to the mip metadata
                                     // in order to use them for gradient score
-                                    ColorDepthLibraryUtils.selectVariants(targetLibrary, ImmutableSet.of("grad", "gradient")).stream()
+                                    ColorDepthLibraryUtils.selectVariantCandidates(targetLibrary, ImmutableSet.of("grad", "gradient")).stream()
                                             .map(ColorDepthLibrary::getVariant)
                                             .flatMap(variantName -> CDMMetadataUtils.variantPaths(variantName, Paths.get(cdmi.getFilepath()), cdmi.getAlignmentSpace(), cdmipLibraries).stream())
                                             .findFirst()
                                             .ifPresent(variantPath -> targetMetadata.addVariant("gradient", variantPath));
-                                    ColorDepthLibraryUtils.selectVariants(targetLibrary, ImmutableSet.of("zgap", "zgapmask")).stream()
+                                    ColorDepthLibraryUtils.selectVariantCandidates(targetLibrary, ImmutableSet.of("zgap", "zgapmask")).stream()
                                             .map(ColorDepthLibrary::getVariant)
                                             .flatMap(variantName -> CDMMetadataUtils.variantPaths(variantName, Paths.get(cdmi.getFilepath()), cdmi.getAlignmentSpace(), cdmipLibraries).stream())
                                             .findFirst()
