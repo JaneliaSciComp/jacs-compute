@@ -1,8 +1,5 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class CDSMatchResult extends AbstractCDMMetadata {
     private int matchingPixels;
     private double matchingRatio;
