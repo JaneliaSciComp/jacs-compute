@@ -265,8 +265,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                             .limit(maxResultsPerMask)
                             .map(cdsMatchResult -> {
                                 ColorDepthMatch match = new ColorDepthMatch();
-                                ColorDepthImage sourceColorDepthImage = getSourceColorDepthImage(jacsServiceData.getOwnerKey(), cdsMatchResult.getImageName());
-                                match.setImageRef(Reference.createFor(sourceColorDepthImage));
+                                match.setMatchingImageRef(Reference.createFor(getColorDepthImage(jacsServiceData.getOwnerKey(), cdsMatchResult.getImageName())));
+                                match.setImageRef(Reference.createFor(getColorDepthImage(jacsServiceData.getOwnerKey(), cdsMatchResult.getCdmPath())));
                                 match.setMatchingPixels(cdsMatchResult.getMatchingPixels());
                                 match.setMatchingPixelsRatio(cdsMatchResult.getMatchingRatio());
                                 match.setGradientAreaGap(cdsMatchResult.getGradientAreaGap());
@@ -448,22 +448,12 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                 .collect(Collectors.toList());
     }
 
-    private ColorDepthImage getSourceColorDepthImage(String ownerKey, String filepath) {
+    private ColorDepthImage getColorDepthImage(String ownerKey, String filepath) {
         ColorDepthImage colorDepthImage = legacyDomainDao.getColorDepthImageByPath(ownerKey, filepath);
         if (colorDepthImage == null) {
             throw new IllegalStateException("Could not find result file in database:"+ filepath);
         }
-        ColorDepthImage sourceImage;
-        if (colorDepthImage.getSourceImageRef() != null) {
-            sourceImage = legacyDomainDao.getDomainObject(ownerKey, ColorDepthImage.class, colorDepthImage.getSourceImageRef().getTargetId());
-            if (sourceImage == null) {
-                throw new IllegalStateException("Could not find source image " + colorDepthImage.getSourceImageRef() + " referenced by " + colorDepthImage +
-                        " while retrieving the color depth image entity for path " + filepath);
-            }
-        } else {
-            sourceImage = null;
-        }
-        return sourceImage == null ? colorDepthImage : sourceImage;
+        return colorDepthImage;
     }
 
     private IntegratedColorDepthSearchArgs getArgs(JacsServiceData jacsServiceData) {
