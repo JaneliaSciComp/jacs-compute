@@ -103,7 +103,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     private final ObjectMapper objectMapper;
     private final int minNodes;
     private final int maxNodes;
-    private final int processingPartitionSize;
+    private final int cdsPartitionSize;
 
     @Inject
     ColorDepthObjectSearch(ServiceComputationFactory computationFactory,
@@ -112,7 +112,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                            LegacyDomainDao legacyDomainDao,
                            @IntPropertyValue(name = "service.colorDepthSearch.minNodes", defaultValue = 1) Integer minNodes,
                            @IntPropertyValue(name = "service.colorDepthSearch.maxNodes", defaultValue = 8) Integer maxNodes,
-                           @IntPropertyValue(name = "service.colorDepthSearch.processingPartitionSize", defaultValue = 100) Integer processingPartitionSize,
+                           @IntPropertyValue(name = "service.colorDepthSearch.partitionSize", defaultValue = 100) Integer cdsPartitionSize,
                            SparkColorDepthFileSearch sparkColorDepthFileSearch,
                            JavaProcessColorDepthFileSearch javaProcessColorDepthFileSearch,
                            ColorDepthImageDao colorDepthImageDao,
@@ -123,7 +123,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         this.legacyDomainDao = legacyDomainDao;
         this.minNodes = minNodes;
         this.maxNodes = maxNodes;
-        this.processingPartitionSize = processingPartitionSize;
+        this.cdsPartitionSize = cdsPartitionSize;
         this.sparkColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sparkColorDepthFileSearch);
         this.javaProcessColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, javaProcessColorDepthFileSearch);
         this.colorDepthImageDao = colorDepthImageDao;
@@ -210,13 +210,25 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     ServiceComputation<JacsServiceResult<List<File>>> cdsComputation;
                     Map<String, String> colorDepthProcessingResources = new LinkedHashMap<>();
                     if (args.useJavaProcess) {
-                        if (processingPartitionSize > 0) {
-                            serviceArgList.add(new ServiceArg("-partitionSize", processingPartitionSize));
-                            // number of parellel searches is (nmasks * ntargets) / partitionSize
-                            // each MIP requires about 2.6M and for a search we compare 2 MIPs
-                            double memInMB = ((double) masks.size() * targets.size()  / processingPartitionSize) * 2.6 * 2;
-                            ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, (int)Math.ceil(memInMB / 1024.));
+                        int processingParitionSize;
+                        if (cdsPartitionSize > 0) {
+                            serviceArgList.add(new ServiceArg("-partitionSize", cdsPartitionSize));
+                            processingParitionSize = cdsPartitionSize;
+                        } else {
+                            processingParitionSize = 100;
                         }
+                        // number of parallel searches is (nmasks * ntargets) / partitionSize
+                        // each MIP requires about 2.6M and typicall we count the approx. # of images
+                        // that need to be resident in mem + 1 for the future
+                        // if gradient search is required we request more memory
+                        double memPerCDS;
+                        if (search.useGradientScores()) {
+                            memPerCDS = 2.6 * 7;
+                        } else {
+                            memPerCDS = 2.6 * 3;
+                        }
+                        double memInMB = ((double) masks.size() * targets.size()  / processingParitionSize) * memPerCDS;
+                        ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, (int)Math.ceil(memInMB / 1024.));
                         cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList, colorDepthProcessingResources);
                     } else {
                         // Curve fitting using https://www.desmos.com/calculator
