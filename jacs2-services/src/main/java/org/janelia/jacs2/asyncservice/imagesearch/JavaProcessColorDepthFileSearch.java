@@ -54,7 +54,7 @@ import org.slf4j.Logger;
 @Named("javaProcessColorDepthFileSearch")
 public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProcessor<List<File>> {
     private static final int MASKS_PER_JOB = 5000;
-    private static final int TARGETS_PER_JOB = 20000;
+    private static final int TARGETS_PER_JOB = 40000;
 
     static class JavaProcessColorDepthSearchArgs extends ColorDepthSearchArgs {
         @Parameter(names = {"-partitionSize"}, description = "Processing partition size")
@@ -123,7 +123,6 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
                 .addArg(runtimeOpts.toString())
                 .addArgs("-jar", jarPath)
                 .addArg("searchFromJSON")
-                .addArgs("-m").addArgs(args.masksFiles)
                 .addArgs("-m").addArgs(args.masksFiles)
                 .addArg("--masks-index").addArg("${masksOffset}")
                 .addArg("--masks-length").addArg("${masksLength}")
