@@ -12,8 +12,14 @@ class ColorDepthSearchArgs extends ServiceArgs {
             required = true)
     List<String> masksFiles;
 
+    @Parameter(names = {"-nmasks"}, description = "Total number of masks")
+    int nmasks = 0;
+
     @Parameter(names = {"-targetsFiles", "-searchImageFile"}, description = "Filepath to one or more JSON files containing all MIPs to search")
     List<String> targetsFiles;
+
+    @Parameter(names = {"-ntargets"}, description = "Total number of targets")
+    int ntargets = 0;
 
     @Parameter(names = {"-cdMatchesDir", "-od"}, description = "Color depth matches or results directory")
     String cdMatchesDir;

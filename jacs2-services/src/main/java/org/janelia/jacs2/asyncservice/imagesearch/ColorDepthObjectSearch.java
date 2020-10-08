@@ -72,6 +72,18 @@ import org.slf4j.Logger;
 @Named("colorDepthObjectSearch")
 public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> {
 
+    private static class MaskData {
+        final String filename;
+        final int threshhold;
+        final int count;
+
+        MaskData(String filename, int threshhold, int count) {
+            this.filename = filename;
+            this.threshhold = threshhold;
+            this.count = count;
+        }
+    }
+
     static class IntegratedColorDepthSearchArgs extends ServiceArgs {
         @Parameter(names = "-searchId", description = "GUID of the ColorDepthSearch object to use", required = true)
         Long searchId;
@@ -177,13 +189,15 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         }
         List<ColorDepthMask> masks = legacyDomainDao.getDomainObjectsAs(Lists.newArrayList(masksToRun.iterator()), ColorDepthMask.class);
 
-        Map<Integer, String> maskFilesByThreshold = getMasksWithThresholds(workingDirectory.getServiceFolder(), masks);
-        List<ServiceComputation<?>> cdsComputations = maskFilesByThreshold.entrySet().stream()
-                .map(maskFileWithThreshold -> createColorDepthServiceInvocationParams(
-                        maskFileWithThreshold.getValue(),
-                        maskFileWithThreshold.getKey(),
+        List<MaskData> maskDataList = getMaskData(workingDirectory.getServiceFolder(), masks);
+        List<ServiceComputation<?>> cdsComputations = maskDataList.stream()
+                .map(maskData -> createColorDepthServiceInvocationParams(
+                        maskData.filename,
+                        maskData.threshhold,
+                        maskData.count,
                         colorDepthTargetsFile.getAbsolutePath(),
                         search.getDataThreshold(),
+                        targets.size(),
                         workingDirectory.getServiceFolder().resolve("cdsMatches").toString(),
                         search.getParameters().getNegativeRadius(),
                         search.getPixColorFluctuation(),
@@ -302,8 +316,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
 
     private List<ServiceArg> createColorDepthServiceInvocationParams(String masksFile,
                                                                      Integer masksThreshold,
+                                                                     int nmasks,
                                                                      String targetsFile,
                                                                      Integer targetsThreshold,
+                                                                     int ntargets,
                                                                      String cdMatchesDirname,
                                                                      Integer negativeRadius,
                                                                      Double pixColorFluctuation,
@@ -314,8 +330,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         List<ServiceArg> serviceArgList = new ArrayList<>();
         serviceArgList.add(new ServiceArg("-masksFiles", masksFile));
         serviceArgList.add(new ServiceArg("-maskThreshold", masksThreshold));
+        serviceArgList.add(new ServiceArg("-nmasks", nmasks));
         serviceArgList.add(new ServiceArg("-dataThreshold", targetsThreshold));
         serviceArgList.add(new ServiceArg("-targetsFiles", targetsFile));
+        serviceArgList.add(new ServiceArg("-ntargets", ntargets));
         serviceArgList.add(new ServiceArg("-cdMatchesDir",  cdMatchesDirname));
         serviceArgList.add(new ServiceArg("-negativeRadius", negativeRadius));
         serviceArgList.add(new ServiceArg("-pixColorFluctuation", pixColorFluctuation));
@@ -348,7 +366,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                 serviceArgList);
     }
 
-    private Map<Integer, String> getMasksWithThresholds(Path masksFolder, List<ColorDepthMask> masks) {
+    private List<MaskData> getMaskData(Path masksFolder, List<ColorDepthMask> masks) {
         Map<Integer, List<CDMMetadata>> masksPerFiles = masks.stream()
                 .map(mask -> {
                     Reference sampleRef =  mask.getSample();
@@ -372,9 +390,13 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
-                    return ImmutablePair.of(masksPerFilesEntry.getKey(), colorDepthMasksFile.getAbsolutePath());
+                    return new MaskData(
+                            colorDepthMasksFile.getAbsolutePath(),
+                            masksPerFilesEntry.getKey(),
+                            masksPerFilesEntry.getValue().size()
+                    );
                 })
-                .collect(Collectors.toMap(ImmutablePair::getLeft, ImmutablePair::getRight));
+                .collect(Collectors.toList());
     }
 
     private List<CDMMetadata> getTargetColorDepthImages(String alignmentSpace,
