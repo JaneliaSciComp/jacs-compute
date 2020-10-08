@@ -440,6 +440,30 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         cdmips = libraryMIPs;
                         indexedLibraryMIPs = Collections.emptyMap();
                     }
+                    Set<String> cdmipGradients;
+                    Set<String> cdmipZgapMasks;
+                    if (useGradientScores) {
+                        // retrieve gradient and zgapmask mips
+                        cdmipGradients = colorDepthImageDao.streamColorDepthMIPs(
+                                new ColorDepthImageQuery()
+                                        .withAlignmentSpace(alignmentSpace)
+                                        .withLibraryIdentifiers(ColorDepthLibraryUtils.selectVariantCandidates(targetLibrary, ImmutableSet.of("grad", "gradient")).stream()
+                                                .map(ColorDepthLibrary::getIdentifier)
+                                                .collect(Collectors.toSet())))
+                                .map(mip -> mip.getFilepath())
+                                .collect(Collectors.toSet());
+                        cdmipZgapMasks = colorDepthImageDao.streamColorDepthMIPs(
+                                new ColorDepthImageQuery()
+                                        .withAlignmentSpace(alignmentSpace)
+                                        .withLibraryIdentifiers(ColorDepthLibraryUtils.selectVariantCandidates(targetLibrary, ImmutableSet.of("zgap", "zgapmask")).stream()
+                                                .map(ColorDepthLibrary::getIdentifier)
+                                                .collect(Collectors.toSet())))
+                                .map(mip -> mip.getFilepath())
+                                .collect(Collectors.toSet());
+                    } else {
+                        cdmipGradients = Collections.emptySet();
+                        cdmipZgapMasks = Collections.emptySet();
+                    }
                     return cdmips.stream()
                             .map(cdmi -> {
                                 Reference sampleRef =  cdmi.getSampleRef();
@@ -468,12 +492,22 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                     // in order to use them for gradient score
                                     ColorDepthLibraryUtils.selectVariantCandidates(targetLibrary, ImmutableSet.of("grad", "gradient")).stream()
                                             .map(ColorDepthLibrary::getVariant)
-                                            .flatMap(variantName -> CDMMetadataUtils.variantPaths(variantName, Paths.get(cdmi.getFilepath()), cdmi.getAlignmentSpace(), cdmipLibraries).stream())
+                                            .flatMap(variantName -> CDMMetadataUtils.variantPaths(
+                                                    variantName,
+                                                    Paths.get(cdmi.getFilepath()),
+                                                    cdmi.getAlignmentSpace(),
+                                                    cdmipLibraries,
+                                                    vp -> cdmipGradients.contains(vp.toString())).stream())
                                             .findFirst()
                                             .ifPresent(variantPath -> targetMetadata.addVariant("gradient", variantPath));
                                     ColorDepthLibraryUtils.selectVariantCandidates(targetLibrary, ImmutableSet.of("zgap", "zgapmask")).stream()
                                             .map(ColorDepthLibrary::getVariant)
-                                            .flatMap(variantName -> CDMMetadataUtils.variantPaths(variantName, Paths.get(cdmi.getFilepath()), cdmi.getAlignmentSpace(), cdmipLibraries).stream())
+                                            .flatMap(variantName -> CDMMetadataUtils.variantPaths(
+                                                    variantName,
+                                                    Paths.get(cdmi.getFilepath()),
+                                                    cdmi.getAlignmentSpace(),
+                                                    cdmipLibraries,
+                                                    vp -> cdmipZgapMasks.contains(vp.toString())).stream())
                                             .findFirst()
                                             .ifPresent(variantPath -> targetMetadata.addVariant("zgap", variantPath));
                                 }

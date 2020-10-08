@@ -1,8 +1,8 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -11,7 +11,11 @@ import org.apache.commons.lang3.RegExUtils;
 
 class CDMMetadataUtils {
 
-    static Set<String> variantPaths(String variantName, Path mipPath, String alignmentSpace, Set<String> libraries) {
+    static Set<String> variantPaths(String variantName,
+                                    Path mipPath,
+                                    String alignmentSpace,
+                                    Set<String> libraries,
+                                    Predicate<Path> variantExistChecker) {
         // the algorithm creates the variant path candidate as follows:
         // it looks up the alignment space component in the mip's folder name
         // if this is found then it builds the possible paths from there by
@@ -53,8 +57,7 @@ class CDMMetadataUtils {
                         variantPath.resolve(mipFilenameWithoutExtension + ".png"),
                         variantPath.resolve(mipFilenameWithoutExtension + ".tif")
                 ))
-                .filter(Files::exists)
-                .filter(Files::isRegularFile)
+                .filter(variantExistChecker)
                 .map(Path::toString)
                 .collect(Collectors.toSet());
     }
