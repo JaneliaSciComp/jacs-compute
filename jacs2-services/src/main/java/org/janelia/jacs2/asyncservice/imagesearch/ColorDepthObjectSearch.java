@@ -418,7 +418,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         return cdsTargets.stream()
                 .flatMap(targetLibraryIdentifier -> colorDepthLibraryDao.getLibraryWithVariants(targetLibraryIdentifier).stream())
                 .flatMap(targetLibrary -> {
-                    Stream<ColorDepthImage> cdmiStream;
+                    List<ColorDepthImage> cdmips;
                     Map<Reference, ColorDepthImage> indexedLibraryMIPs;
                     List<ColorDepthImage> libraryMIPs = colorDepthImageDao.streamColorDepthMIPs(
                             new ColorDepthImageQuery()
@@ -426,20 +426,21 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                     .withLibraryIdentifiers(Collections.singleton(targetLibrary.getIdentifier())))
                             .collect(Collectors.toList());
                     if (useSegmentation) {
-                        cdmiStream = colorDepthImageDao.streamColorDepthMIPs(
+                        cdmips = colorDepthImageDao.streamColorDepthMIPs(
                                 new ColorDepthImageQuery()
                                         .withAlignmentSpace(alignmentSpace)
                                         .withLibraryIdentifiers(ColorDepthLibraryUtils.getSearchableVariants(targetLibrary).stream()
                                                 .map(ColorDepthLibrary::getIdentifier)
-                                                .collect(Collectors.toSet())));
+                                                .collect(Collectors.toSet())))
+                                .collect(Collectors.toList());
                         indexedLibraryMIPs = libraryMIPs.stream()
                                 .collect(Collectors.toMap(Reference::createFor, Function.identity()));
                     } else {
                         logger.info("No segmentation variant set for {}", targetLibrary.getIdentifier());
-                        cdmiStream = libraryMIPs.stream();
+                        cdmips = libraryMIPs;
                         indexedLibraryMIPs = Collections.emptyMap();
                     }
-                    return cdmiStream
+                    return cdmips.stream()
                             .map(cdmi -> {
                                 Reference sampleRef =  cdmi.getSampleRef();
                                 Reference sourceImageRef = cdmi.getSourceImageRef();
