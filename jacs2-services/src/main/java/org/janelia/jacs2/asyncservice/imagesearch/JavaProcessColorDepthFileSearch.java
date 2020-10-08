@@ -4,10 +4,12 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
@@ -51,6 +53,8 @@ import org.slf4j.Logger;
  */
 @Named("javaProcessColorDepthFileSearch")
 public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProcessor<List<File>> {
+    private static final int MASKS_PER_JOB = 5000;
+    private static final int TARGETS_PER_JOB = 20000;
 
     static class JavaProcessColorDepthSearchArgs extends ColorDepthSearchArgs {
         @Parameter(names = {"-partitionSize"}, description = "Processing partition size")
@@ -109,13 +113,23 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
         }
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
+        externalScriptWriter
+                .read("masksOffset")
+                .read("masksLength")
+                .read("targetsOffset")
+                .read("targetsLength");
         externalScriptWriter.addWithArgs("${JAVA_HOME}/bin/java")
                 .addArg("${CDS_OPTS}")
                 .addArg(runtimeOpts.toString())
                 .addArgs("-jar", jarPath)
                 .addArg("searchFromJSON")
                 .addArgs("-m").addArgs(args.masksFiles)
+                .addArgs("-m").addArgs(args.masksFiles)
+                .addArg("--masks-index").addArg("${masksOffset}")
+                .addArg("--masks-length").addArg("${masksLength}")
                 .addArgs("-i").addArgs(args.targetsFiles)
+                .addArg("--images-index").addArg("${targetsOffset}")
+                .addArg("--images-length").addArg("${targetsLength}")
                 .addArgs("--outputDir", args.cdMatchesDir)
                 ;
         if (args.maskThreshold != null) {
@@ -154,6 +168,29 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
     protected Map<String, String> prepareEnvironment(JacsServiceData jacsServiceData) {
         // return an empty map but if JAVA_HOME needs to be overridden it can be in the service env
         return Collections.emptyMap();
+    }
+
+    @Override
+    protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
+        JavaProcessColorDepthSearchArgs args = getArgs(jacsServiceData);
+        List<ExternalCodeBlock> configs = new ArrayList<>();
+        int maskOffset = 0;
+        do {
+            int  targetOffset = 0;
+            do {
+                ExternalCodeBlock instanceConfig = new ExternalCodeBlock();
+                ScriptWriter configWriter = instanceConfig.getCodeWriter();
+                configWriter.add(String.valueOf(maskOffset));
+                configWriter.add(String.valueOf(MASKS_PER_JOB));
+                configWriter.add(String.valueOf(targetOffset));
+                configWriter.add(String.valueOf(TARGETS_PER_JOB));
+                configWriter.close();
+                configs.add(instanceConfig);
+                targetOffset += TARGETS_PER_JOB;
+            } while (targetOffset < args.ntargets);
+            maskOffset += MASKS_PER_JOB;
+        } while (maskOffset < args.nmasks);
+        return configs;
     }
 
 }
