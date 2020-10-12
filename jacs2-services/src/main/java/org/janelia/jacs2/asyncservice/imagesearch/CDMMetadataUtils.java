@@ -2,12 +2,15 @@ package org.janelia.jacs2.asyncservice.imagesearch;
 
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RegExUtils;
@@ -55,20 +58,23 @@ class CDMMetadataUtils {
         // once the candidates paths are available it looks up in the corresponding directories
         // for files with the same name as the source mip, trying out several image file extensions like .png or .tif
         String mipFilenameWithoutExtension = RegExUtils.replacePattern(mipPath.getFileName().toString(), "\\..*$", "");
-        String variantMipFilenameWithoutExtension = RegExUtils.replacePattern(
-                mipFilenameWithoutExtension,
-                "-.*_CDM",
-                "-" + variantName + "_CDM");
-        Pattern p = Pattern.compile("(-.*_CDM)??", Pattern.CANON_EQ);
-        Matcher m = p.matcher(mipFilenameWithoutExtension);
-        
+        Matcher m = Pattern.compile("CH.-(.+_CDM)").matcher(mipFilenameWithoutExtension);
+        Set<String> mipFilenames;
+        if(m.find()) {
+            mipFilenames = ImmutableSet.of(
+                    mipFilenameWithoutExtension + ".png",
+                    mipFilenameWithoutExtension + ".tif",
+                    mipFilenameWithoutExtension.replace(m.group(1), variantName + "_CDM.png"),
+                    mipFilenameWithoutExtension.replace(m.group(1), variantName + "_CDM.tif")
+            );
+        } else {
+            mipFilenames = ImmutableSet.of(
+                    mipFilenameWithoutExtension + ".png",
+                    mipFilenameWithoutExtension + ".tif"
+            );
+        }
         return variantPathsStream
-                .flatMap(variantPath -> Stream.of(
-                        variantPath.resolve(mipFilenameWithoutExtension + ".png"),
-                        variantPath.resolve(mipFilenameWithoutExtension + ".tif"),
-                        variantPath.resolve(variantMipFilenameWithoutExtension + ".png"),
-                        variantPath.resolve(variantMipFilenameWithoutExtension + ".tif")
-                ))
+                .flatMap(variantPath -> mipFilenames.stream().map(variantPath::resolve))
                 .filter(variantExistChecker)
                 .map(Path::toString)
                 .collect(Collectors.toSet());
