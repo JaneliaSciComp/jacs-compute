@@ -447,7 +447,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         cdmips = libraryMIPs;
                         indexedLibraryMIPs = Collections.emptyMap();
                     }
-                    Set<String> otherRelatedMIPLibraries = cdmips.stream().flatMap(mip -> mip.getLibraries().stream())
+                    Set<String> otherRelatedMIPLibraries = libraryMIPs.stream().flatMap(mip -> mip.getLibraries().stream())
                             .filter(l -> !l.equals(targetLibrary.getIdentifier()))
                             .collect(Collectors.toSet());
                     Set<String> cdmipDisplayMIPs;
