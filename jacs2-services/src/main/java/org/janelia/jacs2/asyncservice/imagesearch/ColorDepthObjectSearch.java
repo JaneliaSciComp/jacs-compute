@@ -74,6 +74,10 @@ import org.slf4j.Logger;
 @Named("colorDepthObjectSearch")
 public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> {
 
+    private static final String DISPLAY_VARIANT = "display";
+    private static final String GRADIENT_VARIANT = "gradient";
+    private static final String ZGAPMASK_VARIANT = "zgap";
+
     private static class MaskData {
         final String filename;
         final int threshhold;
@@ -498,7 +502,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                                 cdmipLibraries,
                                                 vp -> colorDepthImageDao.findColorDepthImageByPath(vp.toString()).isPresent()).stream())
                                         .findFirst()
-                                        .ifPresent(variantPath -> targetMetadata.addVariant("gradient", variantPath));
+                                        .ifPresent(variantPath -> targetMetadata.addVariant(DISPLAY_VARIANT, variantPath));
                                 if (useGradientScores) {
                                     // select a gradient variant and a zgap variant and add those to the mip metadata
                                     // in order to use them for gradient score
@@ -511,7 +515,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                                     cdmipLibraries,
                                                     vp -> cdmipGradients.contains(vp.toString())).stream())
                                             .findFirst()
-                                            .ifPresent(variantPath -> targetMetadata.addVariant("gradient", variantPath));
+                                            .ifPresent(variantPath -> targetMetadata.addVariant(GRADIENT_VARIANT, variantPath));
                                     ColorDepthLibraryUtils.selectVariantCandidates(targetLibrary, ImmutableSet.of("zgap", "zgapmask")).stream()
                                             .map(ColorDepthLibrary::getVariant)
                                             .flatMap(variantName -> CDMMetadataUtils.variantPaths(
@@ -521,7 +525,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                                     cdmipLibraries,
                                                     vp -> cdmipZgapMasks.contains(vp.toString())).stream())
                                             .findFirst()
-                                            .ifPresent(variantPath -> targetMetadata.addVariant("zgap", variantPath));
+                                            .ifPresent(variantPath -> targetMetadata.addVariant(ZGAPMASK_VARIANT, variantPath));
                                 }
                                 return targetMetadata;
                             });
