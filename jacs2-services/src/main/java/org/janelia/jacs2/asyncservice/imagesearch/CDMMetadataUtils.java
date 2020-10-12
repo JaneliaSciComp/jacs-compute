@@ -1,8 +1,11 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -56,6 +59,9 @@ class CDMMetadataUtils {
                 mipFilenameWithoutExtension,
                 "-.*_CDM",
                 "-" + variantName + "_CDM");
+        Pattern p = Pattern.compile("(-.*_CDM)??", Pattern.CANON_EQ);
+        Matcher m = p.matcher(mipFilenameWithoutExtension);
+        
         return variantPathsStream
                 .flatMap(variantPath -> Stream.of(
                         variantPath.resolve(mipFilenameWithoutExtension + ".png"),
