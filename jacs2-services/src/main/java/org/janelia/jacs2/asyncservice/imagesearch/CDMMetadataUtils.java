@@ -55,8 +55,15 @@ class CDMMetadataUtils {
                         .map(lname -> alignmentSpaceDir.resolve(lname).resolve(variantName));
             }
         }
-        // once the candidates paths are available it looks up in the corresponding directories
-        // for files with the same name as the source mip, trying out several image file extensions like .png or .tif
+        // we want to search mips that match either the given mip name or the parent mip name
+        // typically a segmented mip looks like:
+        // <line>-<slide code>-<objective>-<area>-<alignment space>-<sample id>-CH<channel>-<segment#>_CDM.tif
+        // and a non-segmented mip looks like:
+        // <line>-<slide code>-<objective>-<area>-<alignment space>-<sample id>-CH<channel>_CDM.tif
+        // and the names we are looking for are:
+        // <line>-<slide code>-<objective>-<area>-<alignment space>-<sample id>-CH<channel>-<segment#>_CDM.tif
+        // or
+        // <line>-<slide code>-<objective>-<area>-<alignment space>-<sample id>-CH<channel>_<variant>_CDM.tif
         String mipFilenameWithoutExtension = RegExUtils.replacePattern(mipPath.getFileName().toString(), "\\..*$", "");
         Matcher m = Pattern.compile("CH.-(.+_CDM)").matcher(mipFilenameWithoutExtension);
         Set<String> mipFilenames;
