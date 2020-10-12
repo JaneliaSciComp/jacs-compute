@@ -78,6 +78,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     private static final String DISPLAY_VARIANT = "display";
     private static final String GRADIENT_VARIANT = "gradient";
     private static final String ZGAPMASK_VARIANT = "zgap";
+    private static final String DISPLAY_VARIANT_SUFFIX = "gamma1_4";
 
     private static class MaskData {
         final String filename;
@@ -448,7 +449,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         indexedLibraryMIPs = Collections.emptyMap();
                     }
                     Set<String> otherRelatedMIPLibraries = libraryMIPs.stream().flatMap(mip -> mip.getLibraries().stream())
-                            .filter(l -> !l.equals(targetLibrary.getIdentifier()))
+                            .map(l -> l + "_" + DISPLAY_VARIANT_SUFFIX)
                             .collect(Collectors.toSet());
                     Set<String> cdmipDisplayMIPs;
                     if (!otherRelatedMIPLibraries.isEmpty()) {
@@ -509,7 +510,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 targetMetadata.setImageName(cdmi.getFilepath());
                                 targetMetadata.setSampleRef(sampleRef != null ? sampleRef.toString() : null);
                                 targetMetadata.setRelatedImageRefId(sourceImageRef != null ? sourceImageRef.toString() : null);
-                                ColorDepthLibraryUtils.selectVariantCandidates(targetLibrary, ImmutableSet.of("gamma", "gamma1_4")).stream()
+                                ColorDepthLibraryUtils.selectVariantCandidates(targetLibrary, ImmutableSet.of(DISPLAY_VARIANT_SUFFIX)).stream()
                                         .map(ColorDepthLibrary::getVariant)
                                         .flatMap(variantName -> CDMMetadataUtils.variantPaths(
                                                 variantName,
