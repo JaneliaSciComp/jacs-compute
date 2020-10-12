@@ -62,6 +62,7 @@ import org.janelia.model.domain.gui.cdmip.ColorDepthMatch;
 import org.janelia.model.domain.gui.cdmip.ColorDepthParameters;
 import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
 import org.janelia.model.domain.gui.cdmip.ColorDepthSearch;
+import org.janelia.model.domain.sample.Image;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
@@ -446,6 +447,21 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         cdmips = libraryMIPs;
                         indexedLibraryMIPs = Collections.emptyMap();
                     }
+                    Set<String> otherRelatedMIPLibraries = cdmips.stream().flatMap(mip -> mip.getLibraries().stream())
+                            .filter(l -> !l.equals(targetLibrary.getIdentifier()))
+                            .collect(Collectors.toSet());
+                    Set<String> cdmipDisplayMIPs;
+                    if (!otherRelatedMIPLibraries.isEmpty()) {
+                        cdmipDisplayMIPs = colorDepthImageDao.streamColorDepthMIPs(
+                                new ColorDepthImageQuery()
+                                        .withAlignmentSpace(alignmentSpace)
+                                        .withLibraryIdentifiers(otherRelatedMIPLibraries)
+                                        )
+                                .map(Image::getFilepath)
+                                .collect(Collectors.toSet());
+                    } else {
+                        cdmipDisplayMIPs = Collections.emptySet();
+                    }
                     Set<String> cdmipGradients;
                     Set<String> cdmipZgapMasks;
                     if (useGradientScores) {
@@ -456,7 +472,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                         .withLibraryIdentifiers(ColorDepthLibraryUtils.selectVariantCandidates(targetLibrary, ImmutableSet.of("grad", "gradient")).stream()
                                                 .map(ColorDepthLibrary::getIdentifier)
                                                 .collect(Collectors.toSet())))
-                                .map(mip -> mip.getFilepath())
+                                .map(Image::getFilepath)
                                 .collect(Collectors.toSet());
                         cdmipZgapMasks = colorDepthImageDao.streamColorDepthMIPs(
                                 new ColorDepthImageQuery()
@@ -464,7 +480,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                         .withLibraryIdentifiers(ColorDepthLibraryUtils.selectVariantCandidates(targetLibrary, ImmutableSet.of("zgap", "zgapmask")).stream()
                                                 .map(ColorDepthLibrary::getIdentifier)
                                                 .collect(Collectors.toSet())))
-                                .map(mip -> mip.getFilepath())
+                                .map(Image::getFilepath)
                                 .collect(Collectors.toSet());
                     } else {
                         cdmipGradients = Collections.emptySet();
@@ -500,7 +516,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                                 Paths.get(cdmi.getFilepath()),
                                                 cdmi.getAlignmentSpace(),
                                                 cdmipLibraries,
-                                                vp -> colorDepthImageDao.findColorDepthImageByPath(vp.toString()).isPresent()).stream())
+                                                vp -> cdmipDisplayMIPs.contains(vp.toString())).stream())
                                         .findFirst()
                                         .ifPresent(variantPath -> targetMetadata.addVariant(DISPLAY_VARIANT, variantPath));
                                 if (useGradientScores) {
