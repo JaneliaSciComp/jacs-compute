@@ -52,10 +52,16 @@ class CDMMetadataUtils {
         // once the candidates paths are available it looks up in the corresponding directories
         // for files with the same name as the source mip, trying out several image file extensions like .png or .tif
         String mipFilenameWithoutExtension = RegExUtils.replacePattern(mipPath.getFileName().toString(), "\\..*$", "");
+        String variantMipFilenameWithoutExtension = RegExUtils.replacePattern(
+                mipFilenameWithoutExtension,
+                "-.*_CDM",
+                "-" + variantName + "_CDM");
         return variantPathsStream
                 .flatMap(variantPath -> Stream.of(
                         variantPath.resolve(mipFilenameWithoutExtension + ".png"),
-                        variantPath.resolve(mipFilenameWithoutExtension + ".tif")
+                        variantPath.resolve(mipFilenameWithoutExtension + ".tif"),
+                        variantPath.resolve(variantMipFilenameWithoutExtension + ".png"),
+                        variantPath.resolve(variantMipFilenameWithoutExtension + ".tif")
                 ))
                 .filter(variantExistChecker)
                 .map(Path::toString)
