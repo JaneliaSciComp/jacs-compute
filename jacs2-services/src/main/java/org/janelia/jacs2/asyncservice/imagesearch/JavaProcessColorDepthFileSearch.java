@@ -48,7 +48,7 @@ import org.slf4j.Logger;
 @Named("javaProcessColorDepthFileSearch")
 public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProcessor<List<File>> {
     private static final int MASKS_PER_JOB = 5000;
-    private static final int TARGETS_PER_JOB = 40000;
+    static final int TARGETS_PER_JOB = 20000;
 
     static class JavaProcessColorDepthSearchArgs extends ColorDepthSearchArgs {
         @Parameter(names = {"-partitionSize"}, description = "Processing partition size")
@@ -97,6 +97,7 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
     @Override
     protected ExternalCodeBlock prepareExternalScript(JacsServiceData jacsServiceData) {
         JavaProcessColorDepthSearchArgs args = getArgs(jacsServiceData);
+        int ncores = ProcessorHelper.getProcessingSlots(jacsServiceData.getResources());
         StringBuilder runtimeOpts = new StringBuilder();
         int requiredMemoryInGB = ProcessorHelper.getRequiredMemoryInGB(jacsServiceData.getResources());
         if (requiredMemoryInGB > 0) {
@@ -151,6 +152,9 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
         }
         if (args.partitionSize != null && args.partitionSize > 0) {
             externalScriptWriter.addArgs("--libraryPartitionSize", args.partitionSize.toString());
+        }
+        if (ncores > 0) {
+            externalScriptWriter.addArgs("--cdsConcurrency", String.valueOf(2 * ncores - 1));
         }
         externalScriptWriter.endArgs("");
         externalScriptWriter.close();
