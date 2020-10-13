@@ -215,12 +215,19 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     ServiceComputation<JacsServiceResult<List<File>>> cdsComputation;
                     Map<String, String> colorDepthProcessingResources = new LinkedHashMap<>();
                     if (args.useJavaProcess) {
-                        int processingParitionSize;
+                        int ncores;
+                        if (targets.size() > JavaProcessColorDepthFileSearch.TARGETS_PER_JOB / 2) {
+                            ncores = 20;
+                        } else {
+                            ncores = 16;
+                        }
+                        ProcessorHelper.setRequiredSlots(colorDepthProcessingResources, ncores);
+                        int processingPartitionSize;
                         if (cdsPartitionSize > 0) {
                             serviceArgList.add(new ServiceArg("-partitionSize", cdsPartitionSize));
-                            processingParitionSize = cdsPartitionSize;
+                            processingPartitionSize = cdsPartitionSize;
                         } else {
-                            processingParitionSize = 100;
+                            processingPartitionSize = 100;
                         }
                         // number of parallel searches is (nmasks * ntargets) / partitionSize
                         // each MIP requires about 2.6M and typicall we count the approx. # of images
@@ -232,7 +239,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         } else {
                             memPerCDS = 2.6 * 3;
                         }
-                        double memInMB = ((double) masks.size() * targets.size()  / processingParitionSize) * memPerCDS;
+                        double memInMB = ((double) masks.size() * targets.size()  / processingPartitionSize) * memPerCDS;
                         ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, (int)Math.ceil(memInMB / 1024.));
                         cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList, colorDepthProcessingResources);
                     } else {
