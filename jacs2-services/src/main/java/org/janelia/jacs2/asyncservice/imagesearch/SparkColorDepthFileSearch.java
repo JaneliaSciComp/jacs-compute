@@ -1,13 +1,10 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -27,7 +24,6 @@ import org.janelia.jacs2.asyncservice.spark.LSFSparkClusterLauncher;
 import org.janelia.jacs2.asyncservice.spark.SparkApp;
 import org.janelia.jacs2.asyncservice.spark.SparkCluster;
 import org.janelia.jacs2.asyncservice.utils.DataHolder;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
