@@ -1,15 +1,10 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
@@ -26,7 +21,6 @@ import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractFileListServiceResultHandler;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;

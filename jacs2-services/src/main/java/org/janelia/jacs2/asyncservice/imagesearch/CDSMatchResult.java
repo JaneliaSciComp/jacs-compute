@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 public class CDSMatchResult extends AbstractCDMMetadata {
+
     private int matchingPixels;
     private double matchingRatio;
     private Long gradientAreaGap;
@@ -46,4 +47,5 @@ public class CDSMatchResult extends AbstractCDMMetadata {
     public void setNormalizedScore(Double normalizedScore) {
         this.normalizedScore = normalizedScore;
     }
+
 }

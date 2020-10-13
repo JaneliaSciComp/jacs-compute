@@ -6,8 +6,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -16,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -292,6 +289,34 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     }
                 })
                 .filter(CDMaskMatches::hasResults)
+                .peek(cdMaskMatches -> {
+                    Boolean useGradientScores = searchParameters.getUseGradientScores();
+                    long maxNegativeScore;
+                    int maxMatchingPixels;
+                    if (useGradientScores != null && useGradientScores) {
+                        maxNegativeScore = cdMaskMatches.getResults().stream()
+                                .map(cdsMatchResult -> CDScoreUtils.calculateNegativeScore(cdsMatchResult.getGradientAreaGap(), cdsMatchResult.getHighExpressionArea()))
+                                .max(Long::compare)
+                                .orElse(-1L);
+                        maxMatchingPixels = cdMaskMatches.getResults().stream().parallel()
+                                .map(CDSMatchResult::getMatchingPixels)
+                                .max(Integer::compare)
+                                .orElse(0);
+                    } else {
+                        maxNegativeScore = -1;
+                        maxMatchingPixels = -1;
+                    }
+                    cdMaskMatches.getResults().forEach(cdsMatchResult -> {
+                        cdsMatchResult.setNormalizedScore(CDScoreUtils.calculateNormalizedScore(
+                                cdsMatchResult.getGradientAreaGap(),
+                                cdsMatchResult.getHighExpressionArea(),
+                                maxNegativeScore,
+                                maxMatchingPixels,
+                                cdsMatchResult.getMatchingRatio(),
+                                cdsMatchResult.getMatchingPixels()));
+                    });
+                    CDScoreUtils.sortCDSResults(cdMaskMatches.getResults());
+                })
                 .forEach(cdMaskMatches -> {
                     ColorDepthMaskResult maskResult = new ColorDepthMaskResult();
                     maskResult.setMaskRef(Reference.createFor("ColorDepthMask" + "#" + cdMaskMatches.getMaskId()));
@@ -307,6 +332,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 match.setHighExpressionArea(cdsMatchResult.getHighExpressionArea());
                                 match.setScore(cdsMatchResult.getMatchingPixels());
                                 match.setScorePercent(cdsMatchResult.getMatchingRatio());
+                                match.setNormalizedScore(cdsMatchResult.getNormalizedScore());
                                 return match;
                             })
                             .forEach(maskResult::addMatch);
