@@ -241,7 +241,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                             memPerCDS = 2.6 * 3;
                         }
                         double memInMB = ((double) masks.size() * targets.size()  / processingPartitionSize) * memPerCDS;
-                        ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, (int)Math.ceil(memInMB / 1024.));
+                        ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, (int)Math.ceil(ncores * 15));
                         cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList, colorDepthProcessingResources);
                     } else {
                         // Curve fitting using https://www.desmos.com/calculator
