@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 import org.apache.commons.compress.utils.Lists;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
@@ -332,7 +333,12 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                             .map(cdsMatchResult -> {
                                 ColorDepthMatch match = new ColorDepthMatch();
                                 match.setMatchingImageRef(Reference.createFor(getColorDepthImage(cdsMatchResult.getImageName())));
-                                match.setImageRef(Reference.createFor(getColorDepthImage(cdsMatchResult.getCdmPath())));
+                                ColorDepthImage displayVariantMIP = getColorDepthImage(cdsMatchResult.getVariant(DISPLAY_VARIANT));
+                                if (displayVariantMIP == null) {
+                                    match.setImageRef(Reference.createFor(getColorDepthImage(cdsMatchResult.getCdmPath())));
+                                } else {
+                                    match.setImageRef(Reference.createFor(displayVariantMIP));
+                                }
                                 match.setMatchingPixels(cdsMatchResult.getMatchingPixels());
                                 match.setMatchingPixelsRatio(cdsMatchResult.getMatchingRatio());
                                 match.setGradientAreaGap(cdsMatchResult.getGradientAreaGap());
@@ -584,9 +590,12 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     }
 
     private ColorDepthImage getColorDepthImage(String filepath) {
-        return colorDepthImageDao.findColorDepthImageByPath(filepath)
-                .orElseThrow(() -> new IllegalStateException("Could not find result file in database:"+ filepath))
-                ;
+        if (StringUtils.isNotBlank(filepath)) {
+            return colorDepthImageDao.findColorDepthImageByPath(filepath)
+                    .orElse(null);
+        } else {
+            return null;
+        }
     }
 
     private IntegratedColorDepthSearchArgs getArgs(JacsServiceData jacsServiceData) {
