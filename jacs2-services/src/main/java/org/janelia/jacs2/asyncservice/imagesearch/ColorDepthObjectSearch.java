@@ -118,7 +118,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                            LegacyDomainDao legacyDomainDao,
                            @IntPropertyValue(name = "service.colorDepthSearch.minNodes", defaultValue = 1) Integer minNodes,
                            @IntPropertyValue(name = "service.colorDepthSearch.maxNodes", defaultValue = 8) Integer maxNodes,
-                           @IntPropertyValue(name = "service.colorDepthSearch.partitionSize", defaultValue = 100) Integer cdsPartitionSize,
+                           @IntPropertyValue(name = "service.colorDepthSearch.partitionSize") Integer cdsPartitionSize,
                            SparkColorDepthFileSearch sparkColorDepthFileSearch,
                            JavaProcessColorDepthFileSearch javaProcessColorDepthFileSearch,
                            ColorDepthImageDao colorDepthImageDao,
@@ -333,7 +333,12 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                             .map(cdsMatchResult -> {
                                 ColorDepthMatch match = new ColorDepthMatch();
                                 match.setMatchingImageRef(Reference.createFor(getColorDepthImage(cdsMatchResult.getImageName())));
-                                ColorDepthImage displayVariantMIP = getColorDepthImage(cdsMatchResult.getVariant(DISPLAY_VARIANT));
+                                ColorDepthImage displayVariantMIP;
+                                if (cdsMatchResult.hasVariant(DISPLAY_VARIANT)) {
+                                    displayVariantMIP = getColorDepthImage(cdsMatchResult.getVariant(DISPLAY_VARIANT));
+                                } else {
+                                    displayVariantMIP = null;
+                                }
                                 if (displayVariantMIP == null) {
                                     match.setImageRef(Reference.createFor(getColorDepthImage(cdsMatchResult.getCdmPath())));
                                 } else {
