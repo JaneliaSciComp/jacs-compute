@@ -117,6 +117,7 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
                 .addArg("${CDS_OPTS}")
                 .addArg(runtimeOpts.toString())
                 .addArgs("-jar", jarPath)
+                .addArgs("--cacheSize", String.valueOf(TARGETS_PER_JOB))
                 .addArg("searchFromJSON")
                 .addArgs("-m").addArgs(args.masksFiles)
                 .addArg("--masks-index").addArg("${masksOffset}")

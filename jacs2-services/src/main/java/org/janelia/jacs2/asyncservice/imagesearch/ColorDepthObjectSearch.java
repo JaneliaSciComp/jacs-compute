@@ -107,6 +107,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     private final ColorDepthImageDao colorDepthImageDao;
     private final ColorDepthLibraryDao colorDepthLibraryDao;
     private final ObjectMapper objectMapper;
+    private final int memPerCoreInGB;
     private final int minNodes;
     private final int maxNodes;
     private final int cdsPartitionSize;
@@ -116,6 +117,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                            JacsServiceDataPersistence jacsServiceDataPersistence,
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                            LegacyDomainDao legacyDomainDao,
+                           @IntPropertyValue(name = "service.cluster.memPerCoreInGB", defaultValue = 15) Integer memPerCoreInGB,
                            @IntPropertyValue(name = "service.colorDepthSearch.minNodes", defaultValue = 1) Integer minNodes,
                            @IntPropertyValue(name = "service.colorDepthSearch.maxNodes", defaultValue = 8) Integer maxNodes,
                            @IntPropertyValue(name = "service.colorDepthSearch.partitionSize") Integer cdsPartitionSize,
@@ -127,6 +129,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                            Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.legacyDomainDao = legacyDomainDao;
+        this.memPerCoreInGB = memPerCoreInGB;
         this.minNodes = minNodes;
         this.maxNodes = maxNodes;
         this.cdsPartitionSize = cdsPartitionSize;
@@ -173,7 +176,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
 
         List<CDMMetadata> targets = getTargetColorDepthImages(search.getAlignmentSpace(),
                 search.getCDSTargets(), search.useSegmentation(), search.useGradientScores());
-        logger.info("Searching {} total targets", targets.size());
+        int ntargets = targets.size();
+        logger.info("Searching {} total targets", ntargets);
 
         // Create temporary file with paths to search
         JacsServiceFolder workingDirectory = getWorkingDirectory(jacsServiceData);
@@ -203,7 +207,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         maskData.count,
                         colorDepthTargetsFile.getAbsolutePath(),
                         search.getDataThreshold(),
-                        targets.size(),
+                        ntargets,
                         workingDirectory.getServiceFolder().resolve("cdsMatches").toString(),
                         search.getParameters().getNegativeRadius(),
                         search.getPixColorFluctuation(),
@@ -217,8 +221,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     Map<String, String> colorDepthProcessingResources = new LinkedHashMap<>();
                     if (args.useJavaProcess) {
                         int ncores;
-                        if (targets.size() > JavaProcessColorDepthFileSearch.TARGETS_PER_JOB / 2) {
-                            ncores = 32;
+                        if (ntargets < JavaProcessColorDepthFileSearch.TARGETS_PER_JOB / 4) {
+                            ncores = 16;
+                        } else if (ntargets < JavaProcessColorDepthFileSearch.TARGETS_PER_JOB / 2) {
+                            ncores = 20;
                         } else {
                             ncores = 20;
                         }
@@ -230,26 +236,15 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                             processingPartitionSize = 200;
                         }
                         serviceArgList.add(new ServiceArg("-partitionSize", processingPartitionSize));
-                        // number of parallel searches is (nmasks * ntargets) / partitionSize
-                        // each MIP requires about 2.6M and typicall we count the approx. # of images
-                        // that need to be resident in mem + 1 for the future
-                        // if gradient search is required we request more memory
-                        double memPerCDS;
-                        if (search.useGradientScores()) {
-                            memPerCDS = 2.6 * 7;
-                        } else {
-                            memPerCDS = 2.6 * 3;
-                        }
-                        double memInMB = ((double) masks.size() * targets.size()  / processingPartitionSize) * memPerCDS;
-                        ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, (int)Math.ceil(ncores * 15));
+                        ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, ncores * memPerCoreInGB);
                         cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList, colorDepthProcessingResources);
                     } else {
                         // Curve fitting using https://www.desmos.com/calculator
                         // This equation was found using https://mycurvefit.com
-                        int desiredNodes = (int)Math.round(0.2 * Math.pow(targets.size(), 0.32));
+                        int desiredNodes = (int)Math.round(0.2 * Math.pow(ntargets, 0.32));
 
                         int numNodes = Math.max(Math.min(desiredNodes, maxNodes), minNodes);
-                        int filesPerNode = (int)Math.round(targets.size() / (double)numNodes);
+                        int filesPerNode = (int)Math.round(ntargets / (double)numNodes);
                         logger.info("Using {} worker nodes, with {} files per node", numNodes, filesPerNode);
 
                         serviceArgList.add(new ServiceArg("-useSpark"));
