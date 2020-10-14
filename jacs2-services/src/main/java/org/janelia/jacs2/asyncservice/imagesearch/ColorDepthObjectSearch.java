@@ -228,7 +228,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                             serviceArgList.add(new ServiceArg("-partitionSize", cdsPartitionSize));
                             processingPartitionSize = cdsPartitionSize;
                         } else {
-                            processingPartitionSize = 50;
+                            processingPartitionSize = 200;
                         }
                         // number of parallel searches is (nmasks * ntargets) / partitionSize
                         // each MIP requires about 2.6M and typicall we count the approx. # of images
