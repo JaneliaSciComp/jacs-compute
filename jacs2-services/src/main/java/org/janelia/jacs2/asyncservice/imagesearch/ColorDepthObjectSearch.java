@@ -63,6 +63,7 @@ import org.janelia.model.domain.gui.cdmip.ColorDepthResult;
 import org.janelia.model.domain.gui.cdmip.ColorDepthSearch;
 import org.janelia.model.domain.sample.Image;
 import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -121,7 +122,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                            @IntPropertyValue(name = "service.cluster.memPerCoreInGB", defaultValue = 15) Integer memPerCoreInGB,
                            @IntPropertyValue(name = "service.colorDepthSearch.minNodes", defaultValue = 1) Integer minNodes,
                            @IntPropertyValue(name = "service.colorDepthSearch.maxNodes", defaultValue = 8) Integer maxNodes,
-                           @DoublePropertyValue(name = "service.colorDepthSearch.partitionSizePerCoreFactor", defaultValue = 2.5) Double partitionSizePerCoreFactor,
+                           @DoublePropertyValue(name = "service.colorDepthSearch.partitionSizePerCoreFactor", defaultValue = 5) Double partitionSizePerCoreFactor,
                            SparkColorDepthFileSearch sparkColorDepthFileSearch,
                            JavaProcessColorDepthFileSearch javaProcessColorDepthFileSearch,
                            ColorDepthImageDao colorDepthImageDao,
@@ -175,6 +176,9 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
             throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" not found");
         }
 
+        jacsServiceDataPersistence.addServiceEvent(
+                jacsServiceData,
+                JacsServiceData.createServiceEvent(JacsServiceEventTypes.PREPARE_SERVICE_DATA, search.toString()));
         List<CDMMetadata> targets = getTargetColorDepthImages(search.getAlignmentSpace(),
                 search.getCDSTargets(), search.useSegmentation(), search.useGradientScores());
         int ntargets = targets.size();
@@ -279,6 +283,9 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     }
 
     private ColorDepthResult collectColorDepthResults(JacsServiceData jacsServiceData, ColorDepthParameters searchParameters, Set<String> maskIds, List<File> cdMatchFiles) {
+        jacsServiceDataPersistence.addServiceEvent(
+                jacsServiceData,
+                JacsServiceData.createServiceEvent(JacsServiceEventTypes.COLLECT_SERVICE_RESULTS, cdMatchFiles.toString()));
         ColorDepthResult colorDepthResult = new ColorDepthResult();
         colorDepthResult.setParameters(searchParameters);
         int maxResultsPerMask = searchParameters.getMaxResultsPerMask() == null
