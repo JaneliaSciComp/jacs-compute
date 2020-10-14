@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
+import org.janelia.jacs2.cdi.qualifier.DoublePropertyValue;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -50,6 +51,13 @@ public class ApplicationProducer {
     public Integer integerPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
         final PropertyValue property = injectionPoint.getAnnotated().getAnnotation(PropertyValue.class);
         return applicationConfig.getIntegerPropertyValue(property.name());
+    }
+
+    @DoublePropertyValue(name = "")
+    @Produces
+    public double doublePropertyValueWithDefault(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
+        final DoublePropertyValue property = injectionPoint.getAnnotated().getAnnotation(DoublePropertyValue.class);
+        return applicationConfig.getDoublePropertyValue(property.name(), property.defaultValue());
     }
 
     @IntPropertyValue(name = "")
