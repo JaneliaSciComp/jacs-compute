@@ -88,6 +88,10 @@ public class AbstractCDMMetadata {
         return variants != null && StringUtils.isNotBlank(variants.get(variant));
     }
 
+    public String getVariant(String variant) {
+        return variants.get(variant);
+    }
+
     public void addVariant(String variant, String variantLocation) {
         if (StringUtils.isBlank(variantLocation)) {
             return;
@@ -112,14 +116,4 @@ public class AbstractCDMMetadata {
                 .toString();
     }
 
-    AbstractCDMMetadata copyFrom(AbstractCDMMetadata other) {
-        this.id = other.id;
-        this.libraryName = other.libraryName;
-        this.alignmentSpace = other.alignmentSpace;
-        this.cdmPath = other.cdmPath;
-        this.imageName = other.imageName;
-        this.sampleRef = other.sampleRef;
-        this.relatedImageRefId = other.relatedImageRefId;
-        return this;
-    }
 }
