@@ -218,9 +218,9 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     if (args.useJavaProcess) {
                         int ncores;
                         if (targets.size() > JavaProcessColorDepthFileSearch.TARGETS_PER_JOB / 2) {
-                            ncores = 20;
+                            ncores = 32;
                         } else {
-                            ncores = 16;
+                            ncores = 20;
                         }
                         ProcessorHelper.setRequiredSlots(colorDepthProcessingResources, ncores);
                         int processingPartitionSize;
@@ -228,7 +228,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                             serviceArgList.add(new ServiceArg("-partitionSize", cdsPartitionSize));
                             processingPartitionSize = cdsPartitionSize;
                         } else {
-                            processingPartitionSize = 100;
+                            processingPartitionSize = 50;
                         }
                         // number of parallel searches is (nmasks * ntargets) / partitionSize
                         // each MIP requires about 2.6M and typicall we count the approx. # of images
