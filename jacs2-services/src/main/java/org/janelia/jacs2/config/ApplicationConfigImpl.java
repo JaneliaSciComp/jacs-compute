@@ -39,6 +39,18 @@ public class ApplicationConfigImpl implements ApplicationConfig {
         return StringUtils.isBlank(stringValue) ? defaultValue : Boolean.valueOf(stringValue);
     }
 
+    @Override
+    public Double getDoublePropertyValue(String name) {
+        String stringValue = getStringPropertyValue(name);
+        return StringUtils.isBlank(stringValue) ? null : Double.valueOf(stringValue);
+    }
+
+    @Override
+    public Double getDoublePropertyValue(String name, Double defaultValue) {
+        String stringValue = getStringPropertyValue(name);
+        return StringUtils.isBlank(stringValue) ? defaultValue : Double.valueOf(stringValue);
+    }
+
     public Integer getIntegerPropertyValue(String name) {
         String stringValue = getStringPropertyValue(name);
         return StringUtils.isBlank(stringValue) ? null : Integer.valueOf(stringValue);

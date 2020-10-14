@@ -42,6 +42,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.cdi.qualifier.DoublePropertyValue;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
@@ -110,7 +111,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     private final int memPerCoreInGB;
     private final int minNodes;
     private final int maxNodes;
-    private final int cdsPartitionSize;
+    private final double partitionSizePerCoreFactor;
 
     @Inject
     ColorDepthObjectSearch(ServiceComputationFactory computationFactory,
@@ -120,7 +121,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                            @IntPropertyValue(name = "service.cluster.memPerCoreInGB", defaultValue = 15) Integer memPerCoreInGB,
                            @IntPropertyValue(name = "service.colorDepthSearch.minNodes", defaultValue = 1) Integer minNodes,
                            @IntPropertyValue(name = "service.colorDepthSearch.maxNodes", defaultValue = 8) Integer maxNodes,
-                           @IntPropertyValue(name = "service.colorDepthSearch.partitionSize") Integer cdsPartitionSize,
+                           @DoublePropertyValue(name = "service.colorDepthSearch.partitionSizePerCoreFactor", defaultValue = 2.5) Double partitionSizePerCoreFactor,
                            SparkColorDepthFileSearch sparkColorDepthFileSearch,
                            JavaProcessColorDepthFileSearch javaProcessColorDepthFileSearch,
                            ColorDepthImageDao colorDepthImageDao,
@@ -132,7 +133,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         this.memPerCoreInGB = memPerCoreInGB;
         this.minNodes = minNodes;
         this.maxNodes = maxNodes;
-        this.cdsPartitionSize = cdsPartitionSize;
+        this.partitionSizePerCoreFactor = partitionSizePerCoreFactor;
         this.sparkColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sparkColorDepthFileSearch);
         this.javaProcessColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, javaProcessColorDepthFileSearch);
         this.colorDepthImageDao = colorDepthImageDao;
@@ -226,14 +227,16 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         } else if (ntargets < JavaProcessColorDepthFileSearch.TARGETS_PER_JOB / 2) {
                             ncores = 20;
                         } else {
-                            ncores = 20;
+                            ncores = 32;
                         }
                         ProcessorHelper.setRequiredSlots(colorDepthProcessingResources, ncores);
                         int processingPartitionSize;
-                        if (cdsPartitionSize > 0) {
-                            processingPartitionSize = cdsPartitionSize;
+                        if (partitionSizePerCoreFactor > 1) {
+                            // just an empirical way to calculate the size of the targets partition
+                            // knowing that partitions are processed concurrently and everything inside a partition is processed serially
+                            processingPartitionSize = (int) (Math.min(ntargets, JavaProcessColorDepthFileSearch.TARGETS_PER_JOB) / (ncores * partitionSizePerCoreFactor));
                         } else {
-                            processingPartitionSize = 200;
+                            processingPartitionSize = 100;
                         }
                         serviceArgList.add(new ServiceArg("-partitionSize", processingPartitionSize));
                         ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, ncores * memPerCoreInGB);
