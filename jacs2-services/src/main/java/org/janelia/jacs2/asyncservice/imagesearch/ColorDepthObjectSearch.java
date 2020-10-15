@@ -64,6 +64,7 @@ import org.janelia.model.domain.gui.cdmip.ColorDepthSearch;
 import org.janelia.model.domain.sample.Image;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
+import org.janelia.model.service.ProcessingLocation;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
@@ -243,7 +244,12 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                             processingPartitionSize = 100;
                         }
                         serviceArgList.add(new ServiceArg("-partitionSize", processingPartitionSize));
-                        ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, ncores * memPerCoreInGB);
+                        int memInGB = calculateRequiredMemInGB(jacsServiceData.getProcessingLocation(),
+                                ncores,
+                                masks.size(), // this is not quite right
+                                ntargets,
+                                processingPartitionSize);
+                        ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, memInGB);
                         cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList, colorDepthProcessingResources);
                     } else {
                         // Curve fitting using https://www.desmos.com/calculator
@@ -411,6 +417,22 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         serviceArgList.add(new ServiceArg("-pctPositivePixels", pctPositivePixels));
         serviceArgList.add(new ServiceArg("-withGradientScores", withGradScores));
         return serviceArgList;
+    }
+
+    private int calculateRequiredMemInGB(ProcessingLocation processingLocation,
+                                         int ncores,
+                                         int nQueries,
+                                         int nTargets,
+                                         int processingPartitionSize) {
+        if (processingLocation == ProcessingLocation.LSF_JAVA) {
+            return ncores * memPerCoreInGB;
+        } else {
+            // each MIP requires about 2.6M so for memory per color depth search we multiply 2.6 by an empirical factor (3.5 for example)
+            return (int) Math.ceil(Math.min(nQueries, JavaProcessColorDepthFileSearch.MASKS_PER_JOB)
+                            * 2.6 * 3.5 *
+                            (double) Math.min(nTargets, JavaProcessColorDepthFileSearch.TARGETS_PER_JOB) / processingPartitionSize / 1024.
+            );
+        }
     }
 
     private ServiceComputation<JacsServiceResult<List<File>>> runJavaProcessBasedColorDepthSearch(JacsServiceData jacsServiceData,
