@@ -429,7 +429,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         } else {
             // each MIP requires about 2.6M so for memory per color depth search we multiply 2.6 by an empirical factor (3.5 for example)
             return (int) Math.ceil(Math.min(nQueries, JavaProcessColorDepthFileSearch.MASKS_PER_JOB)
-                            * 2.6 * 3.5 *
+                            * 2.6 * 3.5 * ncores *
                             (double) Math.min(nTargets, JavaProcessColorDepthFileSearch.TARGETS_PER_JOB) / processingPartitionSize / 1024.
             );
         }
