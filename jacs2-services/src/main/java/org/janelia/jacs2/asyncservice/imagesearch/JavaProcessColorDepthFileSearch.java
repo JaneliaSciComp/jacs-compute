@@ -47,7 +47,7 @@ import org.slf4j.Logger;
  */
 @Named("javaProcessColorDepthFileSearch")
 public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProcessor<List<File>> {
-    private static final int MASKS_PER_JOB = 5000;
+    static final int MASKS_PER_JOB = 5000;
     static final int TARGETS_PER_JOB = 20000;
 
     static class JavaProcessColorDepthSearchArgs extends ColorDepthSearchArgs {
