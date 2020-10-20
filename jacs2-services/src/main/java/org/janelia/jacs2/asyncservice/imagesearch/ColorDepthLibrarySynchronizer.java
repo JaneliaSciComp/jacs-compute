@@ -462,9 +462,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                 .replaceFirst(StringUtils.EMPTY);
                         int lastSepIndex = n2.lastIndexOf('_');
                         if (lastSepIndex > 0) {
-                            sourceCDMNameCandidates = ImmutableSet.of(n1, n2);
-                        } else {
                             sourceCDMNameCandidates = ImmutableSet.of(n1, n2, n2.substring(0, lastSepIndex));
+                        } else {
+                            sourceCDMNameCandidates = ImmutableSet.of(n1, n2);
                         }
                     } else {
                         sourceCDMNameCandidates = ImmutableSet.of(colorDepthImageFileComponents.getFileName());
