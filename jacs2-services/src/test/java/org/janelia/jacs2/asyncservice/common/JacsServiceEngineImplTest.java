@@ -1,6 +1,12 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import java.util.List;
+
+import javax.enterprise.inject.Instance;
+
 import com.google.common.collect.ImmutableList;
+
+import org.hamcrest.MatcherAssert;
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
 import org.janelia.jacs2.asyncservice.ServerStats;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
@@ -9,13 +15,9 @@ import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.service.JacsServiceData;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
-
-import javax.enterprise.inject.Instance;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -88,7 +90,7 @@ public class JacsServiceEngineImplTest {
                 createServiceData("s3", 1)
         );
         List<JacsServiceData> newServices = jacsServiceEngine.submitMultipleServices(services);
-        Assert.assertThat(newServices, contains(
+        MatcherAssert.assertThat(newServices, contains(
                 allOf(hasProperty("id", equalTo(1)),
                         hasProperty("name", equalTo("s1")),
                         hasProperty("priority", equalTo(4))

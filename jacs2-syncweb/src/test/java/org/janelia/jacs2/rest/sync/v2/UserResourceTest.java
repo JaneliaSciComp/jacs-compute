@@ -1,24 +1,24 @@
 package org.janelia.jacs2.rest.sync.v2;
 
+import java.util.List;
+
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import com.google.common.collect.ImmutableList;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hamcrest.MatcherAssert;
 import org.janelia.model.security.Subject;
 import org.janelia.model.security.User;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import java.util.List;
-import java.util.function.Supplier;
-
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 
 public class UserResourceTest extends AbstractSyncServicesAppResourceTest {
 
@@ -45,7 +45,7 @@ public class UserResourceTest extends AbstractSyncServicesAppResourceTest {
             if (ksPair.getRight() == null) {
                 assertNull(returnedSubject);
             } else {
-                assertThat(returnedSubject, hasProperty("key", equalTo(ksPair.getRight().getKey())));
+                MatcherAssert.assertThat(returnedSubject, hasProperty("key", equalTo(ksPair.getRight().getKey())));
             }
         });
     }

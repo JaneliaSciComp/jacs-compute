@@ -1,8 +1,12 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.google.common.collect.ImmutableList;
+
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.hamcrest.Matchers;
+import org.hamcrest.MatcherAssert;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
@@ -10,13 +14,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-import java.util.Arrays;
-import java.util.List;
-
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class GenericAsyncServiceProcessorTest {
@@ -145,7 +144,7 @@ public class GenericAsyncServiceProcessorTest {
         for (TestData td : testData) {
             // clear actual service args
             JacsServiceData serviceData = genericAsyncServiceProcessor.createServiceData(new ServiceExecutionContext.Builder(null).build(), td.serviceArgs);
-            assertThat("Test "  + td, serviceData.getName(), equalTo(td.expectedServiceData.getName()));
+            MatcherAssert.assertThat("Test "  + td, serviceData.getName(), equalTo(td.expectedServiceData.getName()));
             assertEquals("Test " + td, td.expectedServiceData.getArgs(), serviceData.getArgs());
         }
     }

@@ -1,14 +1,15 @@
 package org.janelia.model.jacs2.domain.sample;
 
-import com.google.common.collect.ImmutableList;
-import org.janelia.model.jacs2.domain.IndexedReference;
-import org.junit.Test;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.ImmutableList;
+
+import org.hamcrest.MatcherAssert;
+import org.janelia.model.jacs2.domain.IndexedReference;
+import org.junit.Test;
+
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
 
 public class SamplePipelineRunTest {
 
@@ -129,7 +130,7 @@ public class SamplePipelineRunTest {
                         new IndexedReference<>(2, 0)
                 }))
         ;
-        assertThat(pr.streamResults().collect(Collectors.toList()), equalTo(expectedResultBuilder.build()));
+        MatcherAssert.assertThat(pr.streamResults().collect(Collectors.toList()), equalTo(expectedResultBuilder.build()));
     }
 
     private PipelineResult addPipelineResult(String resultName, List<PipelineResult> results) {

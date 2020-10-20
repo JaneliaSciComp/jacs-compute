@@ -20,6 +20,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.bson.conversions.Bson;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.model.access.dao.JacsServiceDataDao;
@@ -50,7 +51,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 
 public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServiceData> {
 
@@ -88,7 +88,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                 createTestServiceEvent("e1", "v1"),
                 createTestServiceEvent("e2", "v2"));
         JacsServiceData retrievedSi = testDao.findById(si.getId());
-        assertThat(retrievedSi.getName(), equalTo(si.getName()));
+        MatcherAssert.assertThat(retrievedSi.getName(), equalTo(si.getName()));
     }
 
     @Test
@@ -115,14 +115,14 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         JacsServiceData pattern = new JacsServiceData();
         pattern.setState(null);
         PageResult<JacsServiceData> searchResult = testDao.findMatchingServices(pattern, new DataInterval<>(null, null), new PageRequest());
-        assertThat(searchResult.getResultList(), hasSize(otherServices.size() + 1));
-        assertThat(testDao.countMatchingServices(pattern, new DataInterval<>(null, null)), equalTo(otherServices.size() + 1L));
+        MatcherAssert.assertThat(searchResult.getResultList(), hasSize(otherServices.size() + 1));
+        MatcherAssert.assertThat(testDao.countMatchingServices(pattern, new DataInterval<>(null, null)), equalTo(otherServices.size() + 1L));
 
         pattern.setTags(ImmutableList.of("t1", "t3", "t2"));
         searchResult = testDao.findMatchingServices(pattern, new DataInterval<>(null, null), new PageRequest());
-        assertThat(searchResult.getResultList(), hasSize(1));
-        assertThat(searchResult.getResultList().get(0).getTags(), contains("t6", "t5", "t4", "t3", "t2", "t1"));
-        assertThat(searchResult.getResultList().get(0).getDictionaryArgs(), Matchers.allOf(
+        MatcherAssert.assertThat(searchResult.getResultList(), hasSize(1));
+        MatcherAssert.assertThat(searchResult.getResultList().get(0).getTags(), contains("t6", "t5", "t4", "t3", "t2", "t1"));
+        MatcherAssert.assertThat(searchResult.getResultList().get(0).getDictionaryArgs(), Matchers.allOf(
                 Matchers.<String, Object>hasEntry("a2", "v2"),
                 Matchers.<String, Object>hasEntry("a1", ImmutableMap.<String, String>of("a1.1","v1.1", "a1.2", "v1.2")),
                 Matchers.<String, Object>hasEntry("a3", ImmutableMap.<String, Object>of("a3.1", "v3.1", "a3.2", "v3.2"))
@@ -130,7 +130,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
 
         pattern.setTags(ImmutableList.of("t1", "t3", "t7"));
         searchResult = testDao.findMatchingServices(pattern, new DataInterval<>(null, null), new PageRequest());
-        assertThat(searchResult.getResultList(), emptyCollectionOf(JacsServiceData.class));
+        MatcherAssert.assertThat(searchResult.getResultList(), emptyCollectionOf(JacsServiceData.class));
     }
 
     @SuppressWarnings("unchecked")
@@ -147,8 +147,8 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         testDao.update(si, si.addNewEvent(createTestServiceEvent("e4", "v4")));
         testDao.update(si, ImmutableMap.of("state", new SetFieldValueHandler<>(JacsServiceState.RUNNING)));
         JacsServiceData retrievedSi = testDao.findById(si.getId());
-        assertThat(retrievedSi.getName(), equalTo(si.getName()));
-        assertThat(retrievedSi.getEvents(),
+        MatcherAssert.assertThat(retrievedSi.getName(), equalTo(si.getName()));
+        MatcherAssert.assertThat(retrievedSi.getEvents(),
                 contains(new HasPropertyWithValue<>("name", CoreMatchers.equalTo("e1")),
                         new HasPropertyWithValue<>("name", CoreMatchers.equalTo("e2")),
                         new HasPropertyWithValue<>("name", CoreMatchers.equalTo("e3")),
@@ -164,7 +164,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
                         "s2", new RegisteredJacsNotification().addNotificationField("nf2", "nv2")
                 ));
         JacsServiceData retrievedSi1 = testDao.findById(si1.getId());
-        assertThat(retrievedSi1, allOf(
+        MatcherAssert.assertThat(retrievedSi1, allOf(
                 hasProperty("parentServiceId", nullValue(Long.class)),
                 hasProperty("rootServiceId", nullValue(Long.class))
         ));
@@ -172,7 +172,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         si1_1.updateParentService(si1);
         testDao.save(si1_1);
         JacsServiceData retrievedSi1_1 = testDao.findById(si1_1.getId());
-        assertThat(retrievedSi1_1, allOf(
+        MatcherAssert.assertThat(retrievedSi1_1, allOf(
                 hasProperty("parentServiceId", equalTo(si1.getId())),
                 hasProperty("rootServiceId", equalTo(si1.getId()))
         ));
@@ -181,7 +181,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         si1_2.updateParentService(si1);
         testDao.save(si1_2);
         JacsServiceData retrievedSi1_2 = testDao.findById(si1_2.getId());
-        assertThat(retrievedSi1_2, allOf(
+        MatcherAssert.assertThat(retrievedSi1_2, allOf(
                 hasProperty("parentServiceId", equalTo(si1.getId())),
                 hasProperty("rootServiceId", equalTo(si1.getId()))
         ));
@@ -191,19 +191,19 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         testDao.save(si1_2_1);
 
         JacsServiceData retrievedSi1_2_1 = testDao.findById(si1_2_1.getId());
-        assertThat(retrievedSi1_2_1, allOf(
+        MatcherAssert.assertThat(retrievedSi1_2_1, allOf(
                 hasProperty("parentServiceId", equalTo(si1_2.getId())),
                 hasProperty("rootServiceId", equalTo(si1.getId()))
         ));
 
         List<JacsServiceData> s1Children = testDao.findChildServices(si1.getId());
-        assertThat(s1Children.size(), equalTo(2));
-        assertThat(s1Children, everyItem(Matchers.hasProperty("parentServiceId", equalTo(si1.getId()))));
+        MatcherAssert.assertThat(s1Children.size(), equalTo(2));
+        MatcherAssert.assertThat(s1Children, everyItem(Matchers.hasProperty("parentServiceId", equalTo(si1.getId()))));
 
         List<JacsServiceData> s1Hierarchy = testDao.findServiceHierarchy(si1.getId()).serviceHierarchyStream().collect(Collectors.toList());
-        assertThat(s1Hierarchy.size(), equalTo(4));
-        assertThat(s1Hierarchy.subList(1, s1Hierarchy.size()), everyItem(Matchers.hasProperty("rootServiceId", equalTo(si1.getId()))));
-        assertThat(s1Hierarchy.get(0), Matchers.hasProperty("rootServiceId", Matchers.nullValue()));
+        MatcherAssert.assertThat(s1Hierarchy.size(), equalTo(4));
+        MatcherAssert.assertThat(s1Hierarchy.subList(1, s1Hierarchy.size()), everyItem(Matchers.hasProperty("rootServiceId", equalTo(si1.getId()))));
+        MatcherAssert.assertThat(s1Hierarchy.get(0), Matchers.hasProperty("rootServiceId", Matchers.nullValue()));
     }
 
     @Test
@@ -221,21 +221,21 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         testDao.saveServiceHierarchy(si1);
 
         List<JacsServiceData> s1Hierarchy = testDao.findServiceHierarchy(si1.getId()).serviceHierarchyStream().collect(Collectors.toList());;
-        assertThat(s1Hierarchy.size(), equalTo(5));
-        assertThat(s1Hierarchy.subList(1, s1Hierarchy.size()), everyItem(Matchers.hasProperty("rootServiceId", equalTo(si1.getId()))));
-        assertThat(s1Hierarchy.get(0), Matchers.hasProperty("rootServiceId", Matchers.nullValue()));
+        MatcherAssert.assertThat(s1Hierarchy.size(), equalTo(5));
+        MatcherAssert.assertThat(s1Hierarchy.subList(1, s1Hierarchy.size()), everyItem(Matchers.hasProperty("rootServiceId", equalTo(si1.getId()))));
+        MatcherAssert.assertThat(s1Hierarchy.get(0), Matchers.hasProperty("rootServiceId", Matchers.nullValue()));
 
         List<JacsServiceData> s1_1_Hierarchy = testDao.findServiceHierarchy(si1_1.getId()).serviceHierarchyStream().collect(Collectors.toList());;
-        assertThat(s1_1_Hierarchy.size(), equalTo(4));
-        assertThat(s1_1_Hierarchy, everyItem(Matchers.hasProperty("rootServiceId", equalTo(si1.getId()))));
+        MatcherAssert.assertThat(s1_1_Hierarchy.size(), equalTo(4));
+        MatcherAssert.assertThat(s1_1_Hierarchy, everyItem(Matchers.hasProperty("rootServiceId", equalTo(si1.getId()))));
 
         List<JacsServiceData> s1_2_Hierarchy = testDao.findServiceHierarchy(si1_2.getId()).serviceHierarchyStream().collect(Collectors.toList());;
-        assertThat(s1_2_Hierarchy.size(), equalTo(2));
-        assertThat(s1_2_Hierarchy, everyItem(Matchers.hasProperty("rootServiceId", equalTo(si1.getId()))));
+        MatcherAssert.assertThat(s1_2_Hierarchy.size(), equalTo(2));
+        MatcherAssert.assertThat(s1_2_Hierarchy, everyItem(Matchers.hasProperty("rootServiceId", equalTo(si1.getId()))));
 
         List<JacsServiceData> s1_2_1_Hierarchy = testDao.findServiceHierarchy(si1_2_1.getId()).serviceHierarchyStream().collect(Collectors.toList());;
-        assertThat(s1_2_1_Hierarchy.size(), equalTo(1));
-        assertThat(s1_2_1_Hierarchy, everyItem(Matchers.hasProperty("rootServiceId", equalTo(si1.getId()))));
+        MatcherAssert.assertThat(s1_2_1_Hierarchy.size(), equalTo(1));
+        MatcherAssert.assertThat(s1_2_1_Hierarchy, everyItem(Matchers.hasProperty("rootServiceId", equalTo(si1.getId()))));
     }
 
     @Test
@@ -277,12 +277,12 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         });
         PageRequest pageRequest = new PageRequest();
         PageResult<JacsServiceData> retrievedQueuedServices = testDao.findServicesByState(ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
-        assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
 
         PageResult<JacsServiceData> retrievedRunningOrCanceledServices = testDao.findServicesByState(
                 ImmutableSet.of(JacsServiceState.RUNNING, JacsServiceState.CANCELED), pageRequest);
-        assertThat(retrievedRunningOrCanceledServices.getResultList().size(), equalTo(servicesInRunningState.size() + servicesInCanceledState.size()));
+        MatcherAssert.assertThat(retrievedRunningOrCanceledServices.getResultList().size(), equalTo(servicesInRunningState.size() + servicesInCanceledState.size()));
     }
 
     @Test
@@ -321,29 +321,29 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
 
         // claim only preassigned services - at this point there shouldn't be any
         retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, true, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), emptyCollectionOf(JacsServiceData.class));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), emptyCollectionOf(JacsServiceData.class));
         // now actually claim unassigned services
         retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, false, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
-        assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
         // then try to claim them for a different queue
         retrievedQueuedServices = testDao.claimServiceByQueueAndState("otherQueue", false, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), emptyCollectionOf(JacsServiceData.class));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), emptyCollectionOf(JacsServiceData.class));
         // claim them again for the same queue that claimed them first
         retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, false, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
-        assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
         // test again with onlyPreAssigned true
         retrievedQueuedServices = testDao.claimServiceByQueueAndState(testQueueId, true, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
-        assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("queueId", equalTo(testQueueId))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList().size(), equalTo(servicesInQueuedState.size()));
 
         PageResult<JacsServiceData> retrievedRunningOrCanceledServices = testDao.findServicesByState(
                 ImmutableSet.of(JacsServiceState.RUNNING, JacsServiceState.CANCELED), pageRequest);
-        assertThat(retrievedRunningOrCanceledServices.getResultList().size(), equalTo(servicesInRunningState.size() + servicesInCanceledState.size()));
+        MatcherAssert.assertThat(retrievedRunningOrCanceledServices.getResultList().size(), equalTo(servicesInRunningState.size() + servicesInCanceledState.size()));
     }
 
     @Test
@@ -403,7 +403,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
             }
         };
         PageResult<JacsServiceData> retrievedQueuedServices = spiedTestDao.claimServiceByQueueAndState(testQueueId, false, ImmutableSet.of(JacsServiceState.QUEUED), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), emptyCollectionOf(JacsServiceData.class));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), emptyCollectionOf(JacsServiceData.class));
     }
 
     @Test
@@ -421,25 +421,25 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         PageResult<JacsServiceData> retrievedQueuedServices;
 
         retrievedQueuedServices = testDao.findMatchingServices(emptyRequest, new DataInterval<>(null, null), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("id", Matchers.in(testServices.stream().map(e->e.getId()).toArray()))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("id", Matchers.in(testServices.stream().map(e->e.getId()).toArray()))));
 
         JacsServiceData u1ServicesRequest = new JacsServiceData();
         u1ServicesRequest.setOwnerKey("user:u1");
         u1ServicesRequest.setState(JacsServiceState.QUEUED);
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(null, null), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("ownerKey", equalTo("user:u1"))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("ownerKey", equalTo("user:u1"))));
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(startDate, endDate), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
-        assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("ownerKey", equalTo("user:u1"))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("state", equalTo(JacsServiceState.QUEUED))));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), everyItem(Matchers.hasProperty("ownerKey", equalTo("user:u1"))));
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(null, startDate), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), hasSize(0));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), hasSize(0));
 
         retrievedQueuedServices = testDao.findMatchingServices(u1ServicesRequest, new DataInterval<>(endDate, null), pageRequest);
-        assertThat(retrievedQueuedServices.getResultList(), hasSize(0));
+        MatcherAssert.assertThat(retrievedQueuedServices.getResultList(), hasSize(0));
     }
 
     @Test
@@ -499,7 +499,7 @@ public class JacsServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsServ
         testData.forEach((sd, matcher) -> {
             PageRequest pageRequest = new PageRequest();
             PageResult<JacsServiceData> retrievedServices = testDao.findMatchingServices(sd, new DataInterval<>(null, null), pageRequest);
-            assertThat(retrievedServices.getResultList(), matcher);
+            MatcherAssert.assertThat(retrievedServices.getResultList(), matcher);
         });
 
 

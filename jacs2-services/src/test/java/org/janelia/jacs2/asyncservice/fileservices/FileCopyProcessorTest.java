@@ -1,6 +1,16 @@
 package org.janelia.jacs2.asyncservice.fileservices;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
 import com.google.common.collect.ImmutableMap;
+
+import org.hamcrest.MatcherAssert;
 import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.ExternalCodeBlock;
@@ -13,33 +23,20 @@ import org.janelia.model.access.dao.JacsJobInstanceInfoDao;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 public class FileCopyProcessorTest {
 
     private static final Long TEST_SERVICE_ID = 1L;
-
-    @Rule
-    public final ExpectedException expectedException = ExpectedException.none();
 
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private JacsJobInstanceInfoDao jacsJobInstanceInfoDao;
@@ -117,8 +114,7 @@ public class FileCopyProcessorTest {
    }
 
     private void verifyCompletionWithException(JacsServiceData testServiceData) {
-        expectedException.expect(ComputationException.class);
-        fileCopyProcessor.prepareProcessing(testServiceData);
+        Assert.assertThrows(ComputationException.class, () -> fileCopyProcessor.prepareProcessing(testServiceData));
     }
 
     @Test
@@ -147,8 +143,7 @@ public class FileCopyProcessorTest {
                     .addArgs("-mv")
                     .addArgs("-convert8")
                     .build();
-            expectedException.expect(UncheckedIOException.class);
-            fileCopyProcessor.postProcessing(new JacsServiceResult<>(testServiceData, testDestFile));
+            Assert.assertThrows(UncheckedIOException.class, () -> fileCopyProcessor.postProcessing(new JacsServiceResult<>(testServiceData, testDestFile)));
             assertTrue(Files.exists(testSourcePath));
         } finally {
             Files.deleteIfExists(testSourcePath);
@@ -181,7 +176,7 @@ public class FileCopyProcessorTest {
                 .addArgs("-dst", testDestFile.getAbsolutePath())
                 .build();
         ExternalCodeBlock copyScript = fileCopyProcessor.prepareExternalScript(testServiceData);
-        assertThat(copyScript.toString(),
+        MatcherAssert.assertThat(copyScript.toString(),
                 equalTo(executablesBaseDir + File.separatorChar + scriptName + " " + testSource + " " + testDestFile.getAbsolutePath() + " \n"));
     }
 
@@ -196,7 +191,7 @@ public class FileCopyProcessorTest {
                 .addArgs("-convert8")
                 .build();
         ExternalCodeBlock copyScript = fileCopyProcessor.prepareExternalScript(testServiceData);
-        assertThat(copyScript.toString(),
+        MatcherAssert.assertThat(copyScript.toString(),
                 equalTo(executablesBaseDir + File.separatorChar + scriptName + " " + testSource + " " + testDestFile.getAbsolutePath() + " 8 \n"));
     }
 
@@ -211,7 +206,7 @@ public class FileCopyProcessorTest {
                 .addArgs("-convert8")
                 .build();
         Map<String, String> env = fileCopyProcessor.prepareEnvironment(testServiceData);
-        assertThat(env, hasEntry(equalTo("LD_LIBRARY_PATH"), containsString(libraryPath)));
+        MatcherAssert.assertThat(env, hasEntry(equalTo("LD_LIBRARY_PATH"), containsString(libraryPath)));
     }
 
 }

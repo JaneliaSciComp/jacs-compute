@@ -1,7 +1,15 @@
 package org.janelia.model.access.dao.mongo;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.model.domain.Reference;
@@ -18,17 +26,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.IntStream;
-
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage> {
@@ -64,7 +65,7 @@ public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage
                     LSMImage lsmPattern = new LSMImage();
                     lsmPattern.setSageId(i);
                     PageResult<LSMImage> res = testDao.findMatchingLSMs(null, lsmPattern, pageRequest);
-                    assertThat(res.getResultList(), everyItem(
+                    MatcherAssert.assertThat(res.getResultList(), everyItem(
                             allOf(
                                     Matchers.<LSMImage>instanceOf(LSMImage.class),
                                     Matchers.in(testImages),
@@ -92,7 +93,7 @@ public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage
                     LSMImage lsmPattern = new LSMImage();
                     lsmPattern.setSlideCode(sc);
                     PageResult<LSMImage> res = testDao.findMatchingLSMs(null, lsmPattern, pageRequest);
-                    assertThat(res.getResultList(), everyItem(
+                    MatcherAssert.assertThat(res.getResultList(), everyItem(
                             allOf(
                                     Matchers.<LSMImage>instanceOf(LSMImage.class),
                                     Matchers.in(testImages),
@@ -118,7 +119,7 @@ public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage
 
         PageRequest pageRequest = new PageRequest();
         PageResult<LSMImage> result = testDao.findAll(pageRequest);
-        assertThat(result.getResultList(), hasSize(testImages.size()));
+        MatcherAssert.assertThat(result.getResultList(), hasSize(testImages.size()));
         assertTrue(result.getResultList().stream().allMatch(im -> newSampleRef.equals(im.getSampleRef())));
     }
 
@@ -138,7 +139,7 @@ public class LSMImageMongoDaoITest extends AbstractDomainObjectDaoITest<LSMImage
                 .forEach(im -> testDao.update(im, updatedFields));
         PageRequest pageRequest = new PageRequest();
         PageResult<LSMImage> result = testDao.findAll(pageRequest);
-        assertThat(result.getResultList(), hasSize(testImages.size()));
+        MatcherAssert.assertThat(result.getResultList(), hasSize(testImages.size()));
         assertTrue(result.getResultList().stream().allMatch(im -> im.getSampleRef() == null));
     }
 

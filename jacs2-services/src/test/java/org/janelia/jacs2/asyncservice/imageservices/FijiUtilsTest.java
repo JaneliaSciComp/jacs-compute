@@ -1,12 +1,13 @@
 package org.janelia.jacs2.asyncservice.imageservices;
 
 import com.google.common.collect.ImmutableList;
+
+import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
 
 public class FijiUtilsTest {
 
@@ -34,7 +35,7 @@ public class FijiUtilsTest {
                 new TestData("sr", "GYC", 'M', "GM")
         );
         for (TestData td : testData) {
-            assertThat(FijiUtils.getDefaultColorSpecAsString(td.chanSpec, td.signalColors, td.referenceColor), equalTo(td.expectedColorSpec));
+            MatcherAssert.assertThat(FijiUtils.getDefaultColorSpecAsString(td.chanSpec, td.signalColors, td.referenceColor), equalTo(td.expectedColorSpec));
         }
     }
 
@@ -56,7 +57,7 @@ public class FijiUtilsTest {
                 new TestData("#ff0000,#00ff00,#0000ff", "ssr", ImmutableList.of(new FijiColor('R', 1), new FijiColor('G', 1), new FijiColor('B', 1)))
         );
         for (TestData td : testData) {
-            assertThat(FijiUtils.getColorSpec(td.colorSpec, td.chanSpec), equalTo(td.expectedColors));
+            MatcherAssert.assertThat(FijiUtils.getColorSpec(td.colorSpec, td.chanSpec), equalTo(td.expectedColors));
         }
 
     }

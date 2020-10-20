@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.google.common.base.Splitter;
 
+import org.hamcrest.MatcherAssert;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.containerizedservices.RunContainerProcessor;
@@ -16,7 +17,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class KTXCreatorTest {
@@ -47,7 +47,7 @@ public class KTXCreatorTest {
                         "-subtreeLengthForSubjobSplitting", String.valueOf(subTreeLength)));
         KTXCreator.KTXCreatorArgs ktxArgs = ktxCreator.getArgs(testServiceData);
         String batchArgs = ktxCreator.getAppBatchArgs(ktxArgs);
-        assertThat(Splitter.on(',').splitToList(batchArgs), hasSize((int) Math.pow(8, subTreeLength) + 1));
+        MatcherAssert.assertThat(Splitter.on(',').splitToList(batchArgs), hasSize((int) Math.pow(8, subTreeLength) + 1));
     }
 
     private JacsServiceData createTestService(Long serviceId, List<String> args) {

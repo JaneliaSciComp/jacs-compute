@@ -7,12 +7,12 @@ import java.nio.file.Paths;
 
 import com.google.common.collect.Iterables;
 
+import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 
 public class SWCReaderTest {
 
@@ -45,9 +45,9 @@ public class SWCReaderTest {
         for (TestData td : testData) {
             SWCData swcData = swcReader.readSWCStream(td.swcFileName, getTestInputStream(td.swcFileName));
             assertNotNull(swcData);
-            assertThat(Iterables.size(swcData.getHeaderList()), equalTo(td.headerListSize));
-            assertThat(Iterables.size(swcData.getNodeList()), equalTo(td.nodesCount));
-            assertThat(swcData.extractOffset(), equalTo(td.offset));
+            MatcherAssert.assertThat(Iterables.size(swcData.getHeaderList()), equalTo(td.headerListSize));
+            MatcherAssert.assertThat(Iterables.size(swcData.getNodeList()), equalTo(td.nodesCount));
+            MatcherAssert.assertThat(swcData.extractOffset(), equalTo(td.offset));
         }
     }
 

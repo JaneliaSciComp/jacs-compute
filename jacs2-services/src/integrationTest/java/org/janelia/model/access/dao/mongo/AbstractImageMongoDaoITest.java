@@ -1,6 +1,11 @@
 package org.janelia.model.access.dao.mongo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.common.collect.ImmutableList;
+
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.janelia.model.jacs2.dao.ImageDao;
 import org.janelia.model.jacs2.dao.mongo.AbstractImageMongoDao;
@@ -14,13 +19,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
-import static org.junit.Assert.assertThat;
 
 public class AbstractImageMongoDaoITest extends AbstractDomainObjectDaoITest<Image> {
     private List<Image> testData = new ArrayList<>();
@@ -42,7 +43,7 @@ public class AbstractImageMongoDaoITest extends AbstractDomainObjectDaoITest<Ima
         Image testImage = createImage("line", "area", 100L);
         testDao.save(testImage);
         Image retrievedImage = testDao.findById(testImage.getId());
-        assertThat(retrievedImage, equalTo(testImage));
+        MatcherAssert.assertThat(retrievedImage, equalTo(testImage));
     }
 
     @Test
@@ -54,7 +55,7 @@ public class AbstractImageMongoDaoITest extends AbstractDomainObjectDaoITest<Ima
                 new SortCriteria("line", SortDirection.ASC)));
         PageResult<Image> res = testDao.findAll(pageRequest);
 
-        assertThat(res.getResultList(), everyItem(
+        MatcherAssert.assertThat(res.getResultList(), everyItem(
                 allOf(
                         Matchers.<Image>instanceOf(Image.class),
                         Matchers.in(testImages)

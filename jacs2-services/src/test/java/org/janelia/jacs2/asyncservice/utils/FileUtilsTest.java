@@ -1,17 +1,18 @@
 package org.janelia.jacs2.asyncservice.utils;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import org.junit.Test;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+
+import org.hamcrest.MatcherAssert;
+import org.junit.Test;
+
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
 
 public class FileUtilsTest {
 
@@ -44,7 +45,7 @@ public class FileUtilsTest {
                 .build();
 
         testData.entrySet().forEach(entry -> {
-           assertThat(FileUtils.getFilePath(
+            MatcherAssert.assertThat(FileUtils.getFilePath(
                    entry.getKey().dir,
                    entry.getKey().prefix,
                    entry.getKey().fileName,
@@ -62,7 +63,7 @@ public class FileUtilsTest {
                 .put("test/filenamewithext.ext1.ext2", "test/filenamewithext.ext1.newext")
                 .build();
         testData.entrySet().forEach(entry -> {
-            assertThat(FileUtils.replaceFileExt(Paths.get(entry.getKey()), "newext"), equalTo(Paths.get(entry.getValue())));
+            MatcherAssert.assertThat(FileUtils.replaceFileExt(Paths.get(entry.getKey()), "newext"), equalTo(Paths.get(entry.getValue())));
         });
     }
 
@@ -83,7 +84,7 @@ public class FileUtilsTest {
                 new TestData(ImmutableList.of("a/b/c/d", "/a/b/c/e", "/a/b/c/f"), Optional.empty())
         };
         for (TestData td : testData) {
-            assertThat(FileUtils.commonPath(td.paths), equalTo(td.expectedResult));
+            MatcherAssert.assertThat(FileUtils.commonPath(td.paths), equalTo(td.expectedResult));
         }
     }
 }

@@ -1,5 +1,6 @@
 package org.janelia.model.access.dao.mongo;
 
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.janelia.model.access.dao.JacsScheduledServiceDataDao;
 import org.janelia.model.service.JacsScheduledServiceData;
@@ -16,7 +17,6 @@ import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 
 public class JacsScheduledServiceDataMongoDaoITest extends AbstractMongoDaoITest<JacsScheduledServiceData> {
 
@@ -104,9 +104,9 @@ public class JacsScheduledServiceDataMongoDaoITest extends AbstractMongoDaoITest
 
     private void verifyScheduledService(Date timestamp, String testQueueId, boolean disabledFlag, int expectedResults, boolean expectedDisabledFlag) {
         List<JacsScheduledServiceData> scheduledServices = testDao.findServicesScheduledAtOrBefore(testQueueId, timestamp, disabledFlag);
-        assertThat(scheduledServices, hasSize(expectedResults));
-        assertThat(scheduledServices, everyItem(Matchers.hasProperty("nextStartTime", Matchers.lessThanOrEqualTo(timestamp))));
-        assertThat(scheduledServices, everyItem(Matchers.hasProperty("disabled", Matchers.equalTo(expectedDisabledFlag))));
+        MatcherAssert.assertThat(scheduledServices, hasSize(expectedResults));
+        MatcherAssert.assertThat(scheduledServices, everyItem(Matchers.hasProperty("nextStartTime", Matchers.lessThanOrEqualTo(timestamp))));
+        MatcherAssert.assertThat(scheduledServices, everyItem(Matchers.hasProperty("disabled", Matchers.equalTo(expectedDisabledFlag))));
     }
 
     @Test
@@ -124,7 +124,7 @@ public class JacsScheduledServiceDataMongoDaoITest extends AbstractMongoDaoITest
             JacsScheduledServiceData updatedService = testDao.updateServiceScheduledTime(scheduledService, timeToCheck)
                     .orElse(null);
             assertNotNull(updatedService);
-            assertThat(updatedService, Matchers.hasProperty("nextStartTime", Matchers.equalTo(scheduledService.getNextStartTime())));
+            MatcherAssert.assertThat(updatedService, Matchers.hasProperty("nextStartTime", Matchers.equalTo(scheduledService.getNextStartTime())));
             // next call should not update any service since it has already been scheduled
             JacsScheduledServiceData noServiceUpdated = testDao.updateServiceScheduledTime(scheduledService, timeToCheck)
                     .orElse(null);

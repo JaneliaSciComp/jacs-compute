@@ -1,19 +1,20 @@
 package org.janelia.jacs2.asyncservice.common;
 
+import javax.enterprise.inject.Instance;
+
 import com.google.common.collect.ImmutableList;
+
+import org.hamcrest.MatcherAssert;
+import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.asyncservice.impl.JacsServiceRegistry;
 import org.janelia.model.service.ServiceMetaData;
-import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-import javax.enterprise.inject.Instance;
-
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -39,7 +40,7 @@ public class ServiceRegistryTest {
     @Test
     public void getMetadataForRegisteredService() {
         ServiceMetaData smd = testServiceRegistry.getServiceMetadata("registered");
-        assertThat(smd, hasProperty("serviceName", equalTo("registered")));
+        MatcherAssert.assertThat(smd, hasProperty("serviceName", equalTo("registered")));
     }
 
     @Test

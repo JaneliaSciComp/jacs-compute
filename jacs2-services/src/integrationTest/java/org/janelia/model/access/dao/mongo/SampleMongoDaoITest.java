@@ -1,28 +1,5 @@
 package org.janelia.model.access.dao.mongo;
 
-import com.google.common.collect.ImmutableList;
-import org.hamcrest.beans.HasPropertyWithValue;
-import org.janelia.model.domain.Reference;
-import org.janelia.model.jacs2.dao.mongo.SampleMongoDao;
-import org.janelia.model.jacs2.domain.sample.PipelineResult;
-import org.janelia.model.jacs2.domain.sample.SamplePipelineRun;
-import org.janelia.model.jacs2.dao.SampleDao;
-import org.janelia.model.jacs2.domain.enums.FileType;
-import org.janelia.model.jacs2.domain.sample.Sample;
-import org.janelia.model.jacs2.domain.sample.ObjectiveSample;
-import org.janelia.model.jacs2.domain.sample.SampleTile;
-import org.janelia.model.jacs2.DataInterval;
-import org.janelia.model.jacs2.EntityFieldValueHandler;
-import org.janelia.model.jacs2.SetFieldValueHandler;
-import org.janelia.model.jacs2.page.PageRequest;
-import org.janelia.model.jacs2.page.PageResult;
-import org.janelia.model.jacs2.page.SortCriteria;
-import org.janelia.model.jacs2.page.SortDirection;
-import org.janelia.model.jacs2.DomainModelUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -31,10 +8,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.ImmutableList;
+
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.beans.HasPropertyWithValue;
+import org.janelia.model.domain.Reference;
+import org.janelia.model.jacs2.DataInterval;
+import org.janelia.model.jacs2.DomainModelUtils;
+import org.janelia.model.jacs2.EntityFieldValueHandler;
+import org.janelia.model.jacs2.SetFieldValueHandler;
+import org.janelia.model.jacs2.dao.SampleDao;
+import org.janelia.model.jacs2.dao.mongo.SampleMongoDao;
+import org.janelia.model.jacs2.domain.enums.FileType;
+import org.janelia.model.jacs2.domain.sample.ObjectiveSample;
+import org.janelia.model.jacs2.domain.sample.PipelineResult;
+import org.janelia.model.jacs2.domain.sample.Sample;
+import org.janelia.model.jacs2.domain.sample.SamplePipelineRun;
+import org.janelia.model.jacs2.domain.sample.SampleTile;
+import org.janelia.model.jacs2.page.PageRequest;
+import org.janelia.model.jacs2.page.PageResult;
+import org.janelia.model.jacs2.page.SortCriteria;
+import org.janelia.model.jacs2.page.SortDirection;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -42,7 +43,6 @@ import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.same;
 
@@ -86,9 +86,9 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
                 new SortCriteria("slideCode", SortDirection.DESC),
                 new SortCriteria("completionDate", SortDirection.DESC)));
         PageResult<Sample> res1 = testDao.findAll(pageRequest);
-        assertThat(res1.getResultList(), hasSize(5));
-        assertThat(res1.getResultList(), everyItem(hasProperty("dataSet", equalTo("ds1"))));
-        assertThat(res1.getResultList().stream().map(s -> s.getId()).collect(Collectors.toList()), contains(
+        MatcherAssert.assertThat(res1.getResultList(), hasSize(5));
+        MatcherAssert.assertThat(res1.getResultList(), everyItem(hasProperty("dataSet", equalTo("ds1"))));
+        MatcherAssert.assertThat(res1.getResultList().stream().map(s -> s.getId()).collect(Collectors.toList()), contains(
                 testSamples.get(4).getId(),
                 testSamples.get(3).getId(),
                 testSamples.get(2).getId(),
@@ -97,9 +97,9 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         ));
         pageRequest.setPageNumber(1);
         PageResult<Sample> res2 = testDao.findAll(pageRequest);
-        assertThat(res2.getResultList(), hasSize(5));
-        assertThat(res2.getResultList(), everyItem(hasProperty("dataSet", equalTo("ds2"))));
-        assertThat(res2.getResultList().stream().map(s -> s.getId()).collect(Collectors.toList()), contains(
+        MatcherAssert.assertThat(res2.getResultList(), hasSize(5));
+        MatcherAssert.assertThat(res2.getResultList(), everyItem(hasProperty("dataSet", equalTo("ds2"))));
+        MatcherAssert.assertThat(res2.getResultList().stream().map(s -> s.getId()).collect(Collectors.toList()), contains(
                 testSamples.get(9).getId(),
                 testSamples.get(8).getId(),
                 testSamples.get(7).getId(),
@@ -152,8 +152,8 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         PageResult<Sample> retrievedSamples;
 
         retrievedSamples = testDao.findMatchingSamples(null, testRequest, new DataInterval<>(startDate, endDate), pageRequest);
-        assertThat(retrievedSamples.getResultList(), hasSize(2)); // only 2 items are left on the last page
-        assertThat(retrievedSamples.getResultList(), everyItem(hasProperty("dataSet", equalTo("ds1"))));
+        MatcherAssert.assertThat(retrievedSamples.getResultList(), hasSize(2)); // only 2 items are left on the last page
+        MatcherAssert.assertThat(retrievedSamples.getResultList(), everyItem(hasProperty("dataSet", equalTo("ds1"))));
     }
 
     @Test
@@ -165,9 +165,9 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
                 createSampleObjective("o3")));
         testDao.save(testSample);
         Sample retrievedSample = testDao.findById(testSample.getId());
-        assertThat(retrievedSample, not(nullValue(Sample.class)));
-        assertThat(retrievedSample, not(same(testSample)));
-        assertThat(retrievedSample.getId(), equalTo(testSample.getId()));
+        MatcherAssert.assertThat(retrievedSample, not(nullValue(Sample.class)));
+        MatcherAssert.assertThat(retrievedSample, not(same(testSample)));
+        MatcherAssert.assertThat(retrievedSample.getId(), equalTo(testSample.getId()));
     }
 
     @Test
@@ -178,8 +178,8 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         changeAndUpdateSample(newSample);
         Sample retrievedSample = testDao.findById(testSample.getId());
         assertNull(retrievedSample.getFlycoreAlias());
-        assertThat(retrievedSample, hasProperty("line", equalTo("Updated line")));
-        assertThat(retrievedSample, hasProperty("dataSet", equalTo(newSample.getDataSet())));
+        MatcherAssert.assertThat(retrievedSample, hasProperty("line", equalTo("Updated line")));
+        MatcherAssert.assertThat(retrievedSample, hasProperty("dataSet", equalTo(newSample.getDataSet())));
     }
 
     @Test
@@ -192,9 +192,9 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
             newSample.setLockKey(lockKey);
             changeAndUpdateSample(newSample);
             Sample retrievedSample = testDao.findById(testSample.getId());
-            assertThat(retrievedSample.getFlycoreAlias(), allOf(equalTo(testSample.getFlycoreAlias()), not(equalTo(newSample.getFlycoreAlias()))));
-            assertThat(retrievedSample.getLine(), allOf(equalTo(testSample.getLine()), not(equalTo(newSample.getLine()))));
-            assertThat(retrievedSample.getDataSet(), allOf(equalTo(testSample.getDataSet()), not(equalTo(newSample.getDataSet()))));
+            MatcherAssert.assertThat(retrievedSample.getFlycoreAlias(), allOf(equalTo(testSample.getFlycoreAlias()), not(equalTo(newSample.getFlycoreAlias()))));
+            MatcherAssert.assertThat(retrievedSample.getLine(), allOf(equalTo(testSample.getLine()), not(equalTo(newSample.getLine()))));
+            MatcherAssert.assertThat(retrievedSample.getDataSet(), allOf(equalTo(testSample.getDataSet()), not(equalTo(newSample.getDataSet()))));
         }
     }
 
@@ -206,9 +206,9 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         Sample newSample = testDao.findById(testSample.getId());
         changeAndUpdateSample(newSample);
         Sample retrievedSample = testDao.findById(testSample.getId());
-        assertThat(retrievedSample.getFlycoreAlias(), allOf(equalTo(newSample.getFlycoreAlias()), not(equalTo(testSample.getFlycoreAlias()))));
-        assertThat(retrievedSample.getLine(), allOf(equalTo(newSample.getLine()), not(equalTo(testSample.getLine()))));
-        assertThat(retrievedSample.getDataSet(), allOf(equalTo(newSample.getDataSet()), not(equalTo(testSample.getDataSet()))));
+        MatcherAssert.assertThat(retrievedSample.getFlycoreAlias(), allOf(equalTo(newSample.getFlycoreAlias()), not(equalTo(testSample.getFlycoreAlias()))));
+        MatcherAssert.assertThat(retrievedSample.getLine(), allOf(equalTo(newSample.getLine()), not(equalTo(testSample.getLine()))));
+        MatcherAssert.assertThat(retrievedSample.getDataSet(), allOf(equalTo(newSample.getDataSet()), not(equalTo(testSample.getDataSet()))));
     }
 
     private void changeAndUpdateSample(Sample testSample) {
@@ -235,18 +235,18 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         Sample testSample = createTestSample("ds1", "sc1");
         testDao.save(testSample);
         Sample savedSample = testDao.findById(testSample.getId());
-        assertThat(savedSample.getLockKey(), nullValue());
-        assertThat(savedSample.getLockTimestamp(), nullValue());
+        MatcherAssert.assertThat(savedSample.getLockKey(), nullValue());
+        MatcherAssert.assertThat(savedSample.getLockTimestamp(), nullValue());
         // unlocking an unlocked sample has no effect
         assertFalse(testDao.unlockEntity("AnyKey", savedSample));
         savedSample = testDao.findById(testSample.getId());
-        assertThat(savedSample.getLockKey(), nullValue());
-        assertThat(savedSample.getLockTimestamp(), nullValue());
+        MatcherAssert.assertThat(savedSample.getLockKey(), nullValue());
+        MatcherAssert.assertThat(savedSample.getLockTimestamp(), nullValue());
         // now place the lock
         assertTrue(testDao.lockEntity("LockKey", testSample));
         Sample savedLockedSample = testDao.findById(testSample.getId());
-        assertThat(savedLockedSample.getLockKey(), equalTo("LockKey"));
-        assertThat(savedLockedSample.getLockTimestamp(), not(nullValue()));
+        MatcherAssert.assertThat(savedLockedSample.getLockKey(), equalTo("LockKey"));
+        MatcherAssert.assertThat(savedLockedSample.getLockTimestamp(), not(nullValue()));
     }
 
     @Test
@@ -255,20 +255,20 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         testDao.save(testSample);
         assertTrue(testDao.lockEntity("LockKey", testSample));
         Sample savedLockedSample = testDao.findById(testSample.getId());
-        assertThat(savedLockedSample.getLockKey(), equalTo("LockKey"));
+        MatcherAssert.assertThat(savedLockedSample.getLockKey(), equalTo("LockKey"));
         // I cannot place another lock on an already locked sample
         assertFalse(testDao.lockEntity("NewKey", savedLockedSample));
         savedLockedSample = testDao.findById(testSample.getId());
-        assertThat(savedLockedSample.getLockKey(), equalTo("LockKey"));
+        MatcherAssert.assertThat(savedLockedSample.getLockKey(), equalTo("LockKey"));
         // The sample cannot be unlocked with the wrong key
         assertFalse(testDao.lockEntity("WrongKey", savedLockedSample));
         savedLockedSample = testDao.findById(testSample.getId());
-        assertThat(savedLockedSample.getLockKey(), equalTo("LockKey"));
+        MatcherAssert.assertThat(savedLockedSample.getLockKey(), equalTo("LockKey"));
         // Now unlock it and test that the lock can be placed
         assertTrue(testDao.unlockEntity("LockKey", savedLockedSample));
         assertTrue(testDao.lockEntity("NewKey", savedLockedSample));
         savedLockedSample = testDao.findById(testSample.getId());
-        assertThat(savedLockedSample.getLockKey(), equalTo("NewKey"));
+        MatcherAssert.assertThat(savedLockedSample.getLockKey(), equalTo("NewKey"));
     }
 
     @SuppressWarnings("unchecked")
@@ -285,7 +285,7 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         testDao.addObjectivePipelineRun(testSample, "o3", createPipelineRun(3, "o3.1"));
         testDao.addObjectivePipelineRun(testSample, "o3", createPipelineRun(4, "o3.2"));
         Sample retrievedSample = testDao.findById(testSample.getId());
-        assertThat(retrievedSample.lookupObjective("o1").get().getPipelineRuns(),
+        MatcherAssert.assertThat(retrievedSample.lookupObjective("o1").get().getPipelineRuns(),
                 contains(new HasPropertyWithValue<>("name", equalTo("o1.1")), new HasPropertyWithValue<>("name", equalTo("o1.2")))
         );
     }
@@ -321,7 +321,7 @@ public class SampleMongoDaoITest extends AbstractDomainObjectDaoITest<Sample> {
         testDao.addSampleObjectivePipelineRunResult(testSample, "o1", 2, null, createPipelineResult("result not created"));
 
         Sample retrievedSample = testDao.findById(testSample.getId());
-        assertThat(
+        MatcherAssert.assertThat(
                 retrievedSample.lookupObjective("o1")
                         .flatMap(os -> os.findPipelineRunById(1))
                         .map(positionalRun -> positionalRun.getReference().streamResults().map(indexedResult -> indexedResult.getReference()).collect(Collectors.toList()))

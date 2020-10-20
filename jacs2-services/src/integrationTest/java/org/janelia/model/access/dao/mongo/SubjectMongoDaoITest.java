@@ -1,11 +1,17 @@
 package org.janelia.model.access.dao.mongo;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
+import org.hamcrest.MatcherAssert;
+import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.jacs2.dao.SubjectDao;
 import org.janelia.model.jacs2.dao.mongo.SubjectMongoDao;
 import org.janelia.model.jacs2.domain.Subject;
-import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
 import org.janelia.model.jacs2.page.SortCriteria;
@@ -14,17 +20,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static java.util.Objects.isNull;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.same;
 
 public class SubjectMongoDaoITest extends AbstractMongoDaoITest<Subject> {
@@ -52,7 +53,7 @@ public class SubjectMongoDaoITest extends AbstractMongoDaoITest<Subject> {
         pageRequest.setSortCriteria(ImmutableList.of(
                 new SortCriteria("name", SortDirection.ASC)));
         PageResult<Subject> res = testDao.findAll(pageRequest);
-        assertThat(res.getResultList(), hasSize(testSubjects.size()));
+        MatcherAssert.assertThat(res.getResultList(), hasSize(testSubjects.size()));
         assertEquals(testSubjects.stream().map(s -> s.getId()).collect(Collectors.toList()),
                         res.getResultList().stream().map(s -> s.getId()).collect(Collectors.toList()));
     }
@@ -62,8 +63,8 @@ public class SubjectMongoDaoITest extends AbstractMongoDaoITest<Subject> {
         Subject testSubject = createTestSubject("s1", "g1");
         testDao.save(testSubject);
         Subject retrievedSubject = testDao.findByName(testSubject.getName());
-        assertThat(retrievedSubject, not(isNull(Subject.class)));
-        assertThat(retrievedSubject, not(same(testSubject)));
+        MatcherAssert.assertThat(retrievedSubject, not(isNull(Subject.class)));
+        MatcherAssert.assertThat(retrievedSubject, not(same(testSubject)));
     }
 
     @Test
@@ -71,8 +72,8 @@ public class SubjectMongoDaoITest extends AbstractMongoDaoITest<Subject> {
         Subject testSubject = createTestSubject("s1", "g1");
         testDao.save(testSubject);
         Subject retrievedSubject = testDao.findById(testSubject.getId());
-        assertThat(retrievedSubject, not(isNull(Subject.class)));
-        assertThat(retrievedSubject, not(same(testSubject)));
+        MatcherAssert.assertThat(retrievedSubject, not(isNull(Subject.class)));
+        MatcherAssert.assertThat(retrievedSubject, not(same(testSubject)));
     }
 
     @Test
@@ -88,8 +89,8 @@ public class SubjectMongoDaoITest extends AbstractMongoDaoITest<Subject> {
                 "fullName", new SetFieldValueHandler<>(testSubject.getFullName()))
         );
         Subject retrievedSample = testDao.findById(testSubject.getId());
-        assertThat(retrievedSample, hasProperty("key", equalTo("user:s1")));
-        assertThat(retrievedSample, hasProperty("fullName", equalTo(testFullname)));
+        MatcherAssert.assertThat(retrievedSample, hasProperty("key", equalTo("user:s1")));
+        MatcherAssert.assertThat(retrievedSample, hasProperty("fullName", equalTo(testFullname)));
     }
 
     protected List<Subject> createMultipleTestItems(int nItems) {

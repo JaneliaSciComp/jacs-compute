@@ -1,9 +1,5 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
-import org.hamcrest.CoreMatchers;
-import org.junit.Test;
-import org.mockito.Mockito;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +8,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.spi.FileSystemProvider;
 
-import static org.junit.Assert.assertThat;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 public class AlignmentUtilsTest {
 
@@ -35,6 +34,6 @@ public class AlignmentUtilsTest {
                 "Transform: MatrixOffsetTransformBase_double_3_3" + nl +
                 "Parameters: 0.7760273859 0.5681118308 -0.08607871711 -0.5312055299 0.7869334512 -0.1875634849 -0.06294143877 0.1666959753 0.8998907077 0 0 0" + nl +
                 "FixedParameters: 0 0 0" + nl;
-        assertThat(outputWriter.toString(), CoreMatchers.equalTo(expectedOutput));
+        MatcherAssert.assertThat(outputWriter.toString(), CoreMatchers.equalTo(expectedOutput));
     }
 }

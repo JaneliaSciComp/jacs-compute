@@ -1,12 +1,13 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableMap;
+
+import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class DefaultServiceErrorCheckerTest {
@@ -30,7 +31,7 @@ public class DefaultServiceErrorCheckerTest {
                         .put("OK here", false)
                         .put("\n", false)
                         .build();
-        testData.forEach((l, r) -> assertThat(serviceErrorChecker.hasErrors(l), equalTo(r)));
+        testData.forEach((l, r) -> MatcherAssert.assertThat(serviceErrorChecker.hasErrors(l), equalTo(r)));
     }
 
 }
