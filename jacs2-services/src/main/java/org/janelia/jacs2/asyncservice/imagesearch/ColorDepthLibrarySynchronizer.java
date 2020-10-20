@@ -68,7 +68,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     static class SyncArgs extends ServiceArgs {
         @Parameter(names = "-alignmentSpace", description = "Alignment space")
         String alignmentSpace;
-        @Parameter(names = "-library", description = "Library identifier. This has to be a root library, not a version of some other library")
+        @Parameter(names = "-library", description = "Library identifier. This has to be a root library, not a variant of another library")
         String library;
         @Parameter(names = "-skipFileDiscovery", description = "If set skips the file system based discovery", arity = 0)
         boolean skipFileSystemDiscovery = false;
@@ -181,14 +181,14 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private void processLibraryDir(File libraryDir, String alignmentSpace, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries) {
         logger.info("Discovering files in {}", libraryDir);
         String libraryIdentifier = parentLibrary == null ? libraryDir.getName() : parentLibrary.getIdentifier() + '_' + libraryDir.getName();
-        String libraryVersion = parentLibrary == null ? null : libraryDir.getName();
+        String libraryVariant = parentLibrary == null ? null : libraryDir.getName();
 
         // This prefetch is an optimization so that we can efficiency check which images already exist
         // in the database without incurring a huge cost for each image.
         // Figure out the owner of the library and the images
         ColorDepthLibrary library;
         if (indexedLibraries.get(libraryIdentifier) == null) {
-            library = createNewLibrary(libraryIdentifier, libraryVersion, parentLibrary);
+            library = createNewLibrary(libraryIdentifier, libraryVariant, parentLibrary);
         } else {
             library = indexedLibraries.get(libraryIdentifier);
         }
@@ -212,7 +212,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             }
         }
 
-        processLibraryVersions(libraryDir, alignmentSpace, library, indexedLibraries);
+        processLibraryVariants(libraryDir, alignmentSpace, library, indexedLibraries);
     }
 
     private Stream<File> walkChildDirs(File dir) {
@@ -231,7 +231,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private ColorDepthLibrary createNewLibrary(String libraryIdentifier, String libraryVariant, ColorDepthLibrary parentLibrary) {
-        logger.info("Create new library {} - version {}", libraryIdentifier, StringUtils.defaultIfBlank(libraryVariant, "<<NONE>>"));
+        logger.info("Create new library {} - library variant {}", libraryIdentifier, StringUtils.defaultIfBlank(libraryVariant, "<<NONE>>"));
         ColorDepthLibrary library = new ColorDepthLibrary();
         library.setIdentifier(libraryIdentifier);
         library.setName(libraryIdentifier);
@@ -404,10 +404,10 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
     }
 
-    private void processLibraryVersions(File libraryDir, String alignmentSpace, ColorDepthLibrary library, Map<String, ColorDepthLibrary> indexedLibraries) {
+    private void processLibraryVariants(File libraryDir, String alignmentSpace, ColorDepthLibrary library, Map<String, ColorDepthLibrary> indexedLibraries) {
         // Walk subdirs of the libraryDir
         walkChildDirs(libraryDir)
-                .forEach(libraryVersionDir -> processLibraryDir(libraryVersionDir, alignmentSpace, library, indexedLibraries));
+                .forEach(libraryVariantDir -> processLibraryDir(libraryVariantDir, alignmentSpace, library, indexedLibraries));
     }
 
     /**
@@ -450,8 +450,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     );
                 } else {
                     if (library.isVariant()) {
-                        // if the mip name does not follow the convention assume the version is in the file name
-                        // remove the version from the filename
+                        // if the mip name does not follow the convention assume the variant is in the file name
+                        // remove the variant from the filename
                         sourceCDMName = Pattern.compile("[_-]" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE)
                                 .matcher(colorDepthImageFileComponents.getFileName())
                                 .replaceAll(StringUtils.EMPTY);

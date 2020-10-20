@@ -250,6 +250,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 ntargets,
                                 processingPartitionSize);
                         ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, memInGB);
+                        ProcessorHelper.setSoftJobDurationLimitInSeconds(colorDepthProcessingResources, 1800); // set job duration to 1/2 h
                         cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList, colorDepthProcessingResources);
                     } else {
                         // Curve fitting using https://www.desmos.com/calculator
