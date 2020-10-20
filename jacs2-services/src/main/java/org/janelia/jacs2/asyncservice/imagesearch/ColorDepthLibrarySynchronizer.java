@@ -454,15 +454,18 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     if (library.isVariant()) {
                         // if the mip name does not follow the convention assume the variant is in the file name
                         // remove the variant from the filename
-                        String sourceCDMName = Pattern.compile("[_-]" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE)
+                        String n1 = Pattern.compile("[_-]" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE)
                                 .matcher(colorDepthImageFileComponents.getFileName())
                                 .replaceAll(StringUtils.EMPTY);
-                        sourceCDMNameCandidates = ImmutableSet.of(
-                                sourceCDMName,
-                                Pattern.compile("-.*CDM$", Pattern.CASE_INSENSITIVE)
-                                        .matcher(sourceCDMName)
-                                        .replaceFirst(StringUtils.EMPTY)
-                        );
+                        String n2 = Pattern.compile("-.*CDM$", Pattern.CASE_INSENSITIVE)
+                                .matcher(sourceCDMName)
+                                .replaceFirst(StringUtils.EMPTY);
+                        int lastSepIndex = n2.lastIndexOf('_');
+                        if (lastSepIndex > 0) {
+                            sourceCDMNameCandidates = ImmutableSet.of(n1, n2);
+                        } else {
+                            sourceCDMNameCandidates = ImmutableSet.of(n1, n2, n2.substring(0, lastSepIndex));
+                        }
                     } else {
                         sourceCDMNameCandidates = ImmutableSet.of(colorDepthImageFileComponents.getFileName());
                     }
