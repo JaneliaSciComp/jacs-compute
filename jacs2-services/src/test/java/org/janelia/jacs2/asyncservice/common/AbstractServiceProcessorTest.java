@@ -9,6 +9,7 @@ import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
@@ -19,7 +20,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import static org.hamcrest.collection.IsArrayContainingInOrder.arrayContaining;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -360,10 +360,10 @@ public class AbstractServiceProcessorTest {
             testServiceDataPredecessor.setSerializableResult(td.result);
             String[] serviceArgs = testProcessor.getJacsServiceArgsArray(testServiceData);
             int currentIndex = tIndex;
-            assertThat("Test " + currentIndex, serviceArgs, arrayContaining(td.expectedListArgs));
+            MatcherAssert.assertThat("Test " + currentIndex, serviceArgs, arrayContaining(td.expectedListArgs));
             td.expectedDictArgs.forEach((k, v) -> {
-                assertThat("Test " + currentIndex, testServiceData.getServiceArgs(), Matchers.hasKey(k));
-                assertThat("Test " + currentIndex, testServiceData.getServiceArgs().get(k), Matchers.equalTo(v));
+                MatcherAssert.assertThat("Test " + currentIndex, testServiceData.getServiceArgs(), Matchers.hasKey(k));
+                MatcherAssert.assertThat("Test " + currentIndex, testServiceData.getServiceArgs().get(k), Matchers.equalTo(v));
             });
             tIndex++;
         }

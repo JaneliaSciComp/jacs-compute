@@ -1,6 +1,8 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.collect.ImmutableList;
+
+import org.hamcrest.MatcherAssert;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.jacs2.page.PageRequest;
 import org.janelia.model.jacs2.page.PageResult;
@@ -59,7 +61,7 @@ public class InMemoryJacsServiceQueueTest {
         serviceDataPageResult.setResultList(serviceResults);
         when(jacsServiceDataPersistence.claimServiceByQueueAndState(anyString(), eq(false), anySet(), any(PageRequest.class))).thenReturn(serviceDataPageResult);
         jacsServiceQueue.refreshServiceQueue();
-        assertThat(jacsServiceQueue.getReadyServicesSize(), equalTo(serviceResults.size()));
+        MatcherAssert.assertThat(jacsServiceQueue.getReadyServicesSize(), equalTo(serviceResults.size()));
     }
 
     private JacsServiceData createTestService(Long serviceId, String serviceName) {

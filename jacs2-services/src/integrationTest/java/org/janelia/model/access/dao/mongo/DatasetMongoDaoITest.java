@@ -1,7 +1,14 @@
 package org.janelia.model.access.dao.mongo;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
+import org.hamcrest.MatcherAssert;
 import org.janelia.model.jacs2.SetFieldValueHandler;
 import org.janelia.model.jacs2.dao.DatasetDao;
 import org.janelia.model.jacs2.dao.mongo.DatasetMongoDao;
@@ -15,11 +22,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
@@ -30,7 +32,6 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.same;
 
 public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> {
@@ -60,9 +61,9 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
                 new SortCriteria("name", SortDirection.ASC),
                 new SortCriteria("creationDate", SortDirection.DESC)));
         PageResult<DataSet> res1 = testDao.findAll(pageRequest);
-        assertThat(res1.getResultList(), hasSize(5));
-        assertThat(res1.getResultList(), everyItem(hasProperty("name", startsWith("ds"))));
-        assertThat(res1.getResultList().stream().map(s -> s.getId()).collect(Collectors.toList()), contains(
+        MatcherAssert.assertThat(res1.getResultList(), hasSize(5));
+        MatcherAssert.assertThat(res1.getResultList(), everyItem(hasProperty("name", startsWith("ds"))));
+        MatcherAssert.assertThat(res1.getResultList().stream().map(s -> s.getId()).collect(Collectors.toList()), contains(
                 testDatasets.get(0).getId(),
                 testDatasets.get(1).getId(),
                 testDatasets.get(2).getId(),
@@ -91,9 +92,9 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
         DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(), ImmutableList.of());
         testDao.save(testDataset);
         DataSet retrievedDatasets = testDao.findById(testDataset.getId());
-        assertThat(retrievedDatasets, notNullValue(DataSet.class));
-        assertThat(retrievedDatasets, not(same(testDataset)));
-        assertThat(retrievedDatasets.getId(), allOf(
+        MatcherAssert.assertThat(retrievedDatasets, notNullValue(DataSet.class));
+        MatcherAssert.assertThat(retrievedDatasets, not(same(testDataset)));
+        MatcherAssert.assertThat(retrievedDatasets.getId(), allOf(
                 notNullValue(Number.class),
                 equalTo(testDataset.getId())
         ));
@@ -106,8 +107,8 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
         testDataset.setOwnerKey("subject:verify");
         testDao.update(testDataset, ImmutableMap.of("ownerKey", new SetFieldValueHandler<>(testDataset.getOwnerKey())));
         DataSet retrievedDataset = testDao.findById(testDataset.getId());
-        assertThat(retrievedDataset, hasProperty("ownerKey", equalTo("subject:verify")));
-        assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
+        MatcherAssert.assertThat(retrievedDataset, hasProperty("ownerKey", equalTo("subject:verify")));
+        MatcherAssert.assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
     }
 
     @Test
@@ -115,8 +116,8 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
         DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of("subject:verify"), ImmutableList.of());
         testDao.save(testDataset);
         DataSet retrievedDataset = testDao.findByNameOrIdentifier(null, "ds1Id");
-        assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
-        assertThat(retrievedDataset, hasProperty("identifier", equalTo(testDataset.getIdentifier())));
+        MatcherAssert.assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
+        MatcherAssert.assertThat(retrievedDataset, hasProperty("identifier", equalTo(testDataset.getIdentifier())));
     }
 
     @Test
@@ -128,9 +129,9 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
         DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(subjectName), ImmutableList.of());
         testDao.save(testDataset);
         DataSet retrievedDataset = testDao.findByNameOrIdentifier(subject, "ds1Id");
-        assertThat(retrievedDataset, hasProperty("identifier", equalTo(testDataset.getIdentifier())));
-        assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
-        assertThat(retrievedDataset, hasProperty("ownerKey", equalTo(TEST_OWNER_KEY)));
+        MatcherAssert.assertThat(retrievedDataset, hasProperty("identifier", equalTo(testDataset.getIdentifier())));
+        MatcherAssert.assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
+        MatcherAssert.assertThat(retrievedDataset, hasProperty("ownerKey", equalTo(TEST_OWNER_KEY)));
     }
 
     @Test
@@ -138,7 +139,7 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
         DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of("subject:verify"), ImmutableList.of());
         testDao.save(testDataset);
         DataSet retrievedDataset = testDao.findByNameOrIdentifier(null, "ds1");
-        assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
+        MatcherAssert.assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
     }
 
     @Test
@@ -150,8 +151,8 @@ public class DatasetMongoDaoITest extends AbstractDomainObjectDaoITest<DataSet> 
         DataSet testDataset = createTestDataset("ds1", TEST_OWNER_KEY, ImmutableList.of(subjectName), ImmutableList.of());
         testDao.save(testDataset);
         DataSet retrievedDataset = testDao.findByNameOrIdentifier(subject, "ds1");
-        assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
-        assertThat(retrievedDataset, hasProperty("ownerKey", equalTo(TEST_OWNER_KEY)));
+        MatcherAssert.assertThat(retrievedDataset, hasProperty("name", equalTo(testDataset.getName())));
+        MatcherAssert.assertThat(retrievedDataset, hasProperty("ownerKey", equalTo(TEST_OWNER_KEY)));
     }
 
     @Test

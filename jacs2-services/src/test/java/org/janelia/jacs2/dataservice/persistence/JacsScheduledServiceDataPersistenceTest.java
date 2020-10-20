@@ -9,6 +9,7 @@ import java.util.stream.IntStream;
 import javax.enterprise.inject.Instance;
 
 import org.hamcrest.Description;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
 import org.janelia.model.access.dao.JacsScheduledServiceDataDao;
@@ -17,8 +18,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-
-import static org.junit.Assert.assertThat;
 
 public class JacsScheduledServiceDataPersistenceTest {
 
@@ -52,7 +51,7 @@ public class JacsScheduledServiceDataPersistenceTest {
         });
         Date testScheduledDate = new Date();
         List<JacsScheduledServiceData> scheduledServices = jacsScheduledServiceDataPersistence.updateServicesScheduledAtOrBefore(testServices, testScheduledDate);
-        assertThat(scheduledServices, Matchers.everyItem(Matchers.hasProperty("id", new TypeSafeMatcher<Integer>() {
+        MatcherAssert.assertThat(scheduledServices, Matchers.everyItem(Matchers.hasProperty("id", new TypeSafeMatcher<Integer>() {
             @Override
             protected boolean matchesSafely(Integer item) {
                 return item % 2 == 0;
@@ -63,7 +62,7 @@ public class JacsScheduledServiceDataPersistenceTest {
                 description.appendText("that is even");
             }
         })));
-        assertThat(scheduledServices, Matchers.everyItem(Matchers.hasProperty("lastStartTime", Matchers.sameInstance(testScheduledDate))));
+        MatcherAssert.assertThat(scheduledServices, Matchers.everyItem(Matchers.hasProperty("lastStartTime", Matchers.sameInstance(testScheduledDate))));
     }
 
     private JacsScheduledServiceData createTestData(Number id) {

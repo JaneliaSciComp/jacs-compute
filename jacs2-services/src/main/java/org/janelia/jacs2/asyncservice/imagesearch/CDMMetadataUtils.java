@@ -1,8 +1,6 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;

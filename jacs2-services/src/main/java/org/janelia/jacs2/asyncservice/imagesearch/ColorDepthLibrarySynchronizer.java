@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import com.beust.jcommander.Parameter;
+import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -437,35 +438,42 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             }
             ColorDepthLibrary variantSourceLibrary = findVariantSource(library);
             if (variantSourceLibrary != null) {
-                String sourceCDMName;
+                Set<String> sourceCDMNameCandidates;
                 if (colorDepthImageFileComponents.hasNameComponents()) {
-                    sourceCDMName = ColorDepthFileComponents.createCDMNameFromNameComponents(
-                            colorDepthImageFileComponents.getSampleName(),
-                            colorDepthImageFileComponents.getObjective(),
-                            colorDepthImageFileComponents.getAnatomicalArea(),
-                            colorDepthImageFileComponents.getAlignmentSpace(),
-                            colorDepthImageFileComponents.getSampleRef(),
-                            colorDepthImageFileComponents.getChannelNumber(),
-                            null
+                    sourceCDMNameCandidates = ImmutableSet.of(
+                            ColorDepthFileComponents.createCDMNameFromNameComponents(
+                                    colorDepthImageFileComponents.getSampleName(),
+                                    colorDepthImageFileComponents.getObjective(),
+                                    colorDepthImageFileComponents.getAnatomicalArea(),
+                                    colorDepthImageFileComponents.getAlignmentSpace(),
+                                    colorDepthImageFileComponents.getSampleRef(),
+                                    colorDepthImageFileComponents.getChannelNumber(),
+                                    null)
                     );
                 } else {
                     if (library.isVariant()) {
                         // if the mip name does not follow the convention assume the variant is in the file name
                         // remove the variant from the filename
-                        sourceCDMName = Pattern.compile("[_-]" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE)
+                        String sourceCDMName = Pattern.compile("[_-]" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE)
                                 .matcher(colorDepthImageFileComponents.getFileName())
                                 .replaceAll(StringUtils.EMPTY);
+                        sourceCDMNameCandidates = ImmutableSet.of(
+                                sourceCDMName,
+                                Pattern.compile("-.*CDM$", Pattern.CASE_INSENSITIVE)
+                                        .matcher(sourceCDMName)
+                                        .replaceFirst(StringUtils.EMPTY)
+                        );
                     } else {
-                        sourceCDMName = colorDepthImageFileComponents.getFileName();
+                        sourceCDMNameCandidates = ImmutableSet.of(colorDepthImageFileComponents.getFileName());
                     }
                 }
-                logger.debug("Lookup {} in {}, alignmentSpace: {}", sourceCDMName, variantSourceLibrary.getIdentifier(), alignmentSpace);
+                logger.debug("Lookup {} in {}, alignmentSpace: {}", sourceCDMNameCandidates, variantSourceLibrary.getIdentifier(), alignmentSpace);
                 ColorDepthImage sourceImage = colorDepthImageDao.streamColorDepthMIPs(
                         new ColorDepthImageQuery()
                                 .withLibraryIdentifiers(Collections.singletonList(variantSourceLibrary.getIdentifier()))
                                 .withAlignmentSpace(alignmentSpace)
-                                .withFuzzyNames(Collections.singleton(sourceCDMName))
-                                .withFuzzyFilepaths(Collections.singleton(sourceCDMName))
+                                .withFuzzyNames(sourceCDMNameCandidates)
+                                .withFuzzyFilepaths(sourceCDMNameCandidates)
                 ).findFirst().orElse(null);
                 if (sourceImage != null) {
                     image.setSourceImageRef(Reference.createFor(sourceImage));
@@ -473,7 +481,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     // this is the case when the file exist but the mip entity was deleted because
                     // it actually corresponds to a renamed mip
                     logger.warn("No color depth image entity found for {} in library {}, alignment {}, so no MIP will be created",
-                            sourceCDMName, variantSourceLibrary.getIdentifier(), alignmentSpace);
+                            sourceCDMNameCandidates, variantSourceLibrary.getIdentifier(), alignmentSpace);
                     return false;
                 }
             }

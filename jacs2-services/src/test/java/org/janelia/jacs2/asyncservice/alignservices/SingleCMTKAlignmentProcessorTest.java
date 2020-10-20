@@ -1,9 +1,20 @@
 package org.janelia.jacs2.asyncservice.alignservices;
 
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
+import org.hamcrest.MatcherAssert;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -18,20 +29,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class SingleCMTKAlignmentProcessorTest {
@@ -110,10 +110,10 @@ public class SingleCMTKAlignmentProcessorTest {
         assertTrue(warpRegistrationResultsDir.toFile().exists());
         reformattedFiles.forEach(rf -> {
             assertTrue(rf.toFile().exists());
-            assertThat(testDirectory.relativize(rf), equalTo(Paths.get("reformatted", rf.getFileName().toString())));
+            MatcherAssert.assertThat(testDirectory.relativize(rf), equalTo(Paths.get("reformatted", rf.getFileName().toString())));
         });
-        assertThat(testDirectory.relativize(affineRegistrationResultsDir), equalTo(Paths.get("Registration/affine", affineRegistrationResultsDir.getFileName().toString())));
-        assertThat(testDirectory.relativize(warpRegistrationResultsDir), equalTo(Paths.get("Registration/warp", warpRegistrationResultsDir.getFileName().toString())));
+        MatcherAssert.assertThat(testDirectory.relativize(affineRegistrationResultsDir), equalTo(Paths.get("Registration/affine", affineRegistrationResultsDir.getFileName().toString())));
+        MatcherAssert.assertThat(testDirectory.relativize(warpRegistrationResultsDir), equalTo(Paths.get("Registration/warp", warpRegistrationResultsDir.getFileName().toString())));
     }
 
     private JacsServiceData createTestServiceData(Long serviceId, List<String> inputImages) {

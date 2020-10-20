@@ -1,8 +1,18 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Stream;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
+import org.hamcrest.MatcherAssert;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
@@ -22,18 +32,9 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.slf4j.Logger;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Stream;
-
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
@@ -141,7 +142,7 @@ public class SageLoaderProcessorTest {
         SageLoaderProcessor sageLoaderProcessor = createSageLoaderProcessor("production");
 
         List<String> errors =  sageLoaderProcessor.getErrorChecker().collectErrors(testService);
-        assertThat(errors, hasItem("Not all images found - expected 4 but only found 3 (check that grammar pipeline tools are in the right location)"));
+        MatcherAssert.assertThat(errors, hasItem("Not all images found - expected 4 but only found 3 (check that grammar pipeline tools are in the right location)"));
     }
 
     @Test
@@ -203,7 +204,7 @@ public class SageLoaderProcessorTest {
         SageLoaderProcessor sageLoaderProcessor = createSageLoaderProcessor("production");
 
         List<String> errors =  sageLoaderProcessor.getErrorChecker().collectErrors(testService);
-        assertThat(errors, hasSize(0));
+        MatcherAssert.assertThat(errors, hasSize(0));
     }
 
     @Test
@@ -266,7 +267,7 @@ public class SageLoaderProcessorTest {
         SageLoaderProcessor sageLoaderProcessor = createSageLoaderProcessor("dev");
 
         List<String> errors =  sageLoaderProcessor.getErrorChecker().collectErrors(testService);
-        assertThat(errors, hasItem("Not all images found - expected 5 but found 3 and inserted 1"));
+        MatcherAssert.assertThat(errors, hasItem("Not all images found - expected 5 but found 3 and inserted 1"));
     }
 
     @Test
@@ -329,7 +330,7 @@ public class SageLoaderProcessorTest {
         SageLoaderProcessor sageLoaderProcessor = createSageLoaderProcessor("dev");
 
         List<String> errors =  sageLoaderProcessor.getErrorChecker().collectErrors(testService);
-        assertThat(errors, hasSize(0));
+        MatcherAssert.assertThat(errors, hasSize(0));
     }
 
     @Test
@@ -392,7 +393,7 @@ public class SageLoaderProcessorTest {
         SageLoaderProcessor sageLoaderProcessor = createSageLoaderProcessor("dev");
 
         List<String> errors =  sageLoaderProcessor.getErrorChecker().collectErrors(testService);
-        assertThat(errors, hasSize(0));
+        MatcherAssert.assertThat(errors, hasSize(0));
     }
 
     @Test
@@ -414,7 +415,7 @@ public class SageLoaderProcessorTest {
         SageLoaderProcessor sageLoaderProcessor = createSageLoaderProcessor("dev");
 
         List<String> errors =  sageLoaderProcessor.getErrorChecker().collectErrors(testService);
-        assertThat(errors, hasItems(
+        MatcherAssert.assertThat(errors, hasItems(
                 "Processor output path not found: " + testService,
                 "Processor error path not found: " + testService));
     }

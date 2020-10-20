@@ -1,15 +1,15 @@
 package org.janelia.jacs2.asyncservice.containerizedservices;
 
-import com.beust.jcommander.JCommander;
-import com.google.common.collect.ImmutableList;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
-import org.junit.Test;
-
 import java.util.Arrays;
 
-import static org.junit.Assert.assertThat;
+import com.beust.jcommander.JCommander;
+import com.google.common.collect.ImmutableList;
+
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.TypeSafeMatcher;
+import org.junit.Test;
 
 public class SingularityRunContainerArgsTest {
 
@@ -146,7 +146,7 @@ public class SingularityRunContainerArgsTest {
                     .addObject(args)
                     .args(td.sargs)
                     .build();
-            assertThat(Arrays.asList(td.sargs).toString(), args, td.checker);
+            MatcherAssert.assertThat(Arrays.asList(td.sargs).toString(), args, td.checker);
         }
 
     }

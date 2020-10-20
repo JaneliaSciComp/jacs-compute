@@ -1,19 +1,20 @@
 package org.janelia.jacs2.rest.sync.v2;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.janelia.model.domain.sample.DataSet;
 import org.janelia.model.security.User;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 public class DatasetResourceTest extends AbstractSyncServicesAppResourceTest {
 
@@ -40,7 +41,7 @@ public class DatasetResourceTest extends AbstractSyncServicesAppResourceTest {
                 .map(ds -> String.format("<dataSet><name>%1$s</name>%4$s<user>%2$s</user><dataSetIdentifier>%3$s</dataSetIdentifier></dataSet>",
                         ds.getName(), ds.getOwnerKey(), ds.getIdentifier(), ds.isSageSync() ? "<sageSync>SAGE Sync</sageSync>" : "<sageSync/>"))
                 .reduce("", (s1, s2) -> s1 + s2);
-        assertThat(xmlResult, Matchers.equalTo("<dataSetList>" + innerDataSetListXml + "</dataSetList>"));
+        MatcherAssert.assertThat(xmlResult, Matchers.equalTo("<dataSetList>" + innerDataSetListXml + "</dataSetList>"));
     }
 
     @Test
@@ -62,7 +63,7 @@ public class DatasetResourceTest extends AbstractSyncServicesAppResourceTest {
                         ds.getName(), ds.getOwnerKey(), ds.getIdentifier(), ds.isSageSync() ? "\"SAGE Sync\"": null))
                 .reduce(null, (s1, s2) -> s1 == null ? s2 : s1 + "," + s2);
 
-        assertThat(jsonResult, Matchers.equalTo("{\"dataSetList\":[" + innerDataSetList + "]}"));
+        MatcherAssert.assertThat(jsonResult, Matchers.equalTo("{\"dataSetList\":[" + innerDataSetList + "]}"));
     }
 
     private List<DataSet> prepareSageSyncedDatasetTest(List<String> testOwners, boolean testSageSyncFlag) {

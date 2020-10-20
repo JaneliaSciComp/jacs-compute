@@ -1,9 +1,9 @@
 package org.janelia.jacs2.dataservice.storage;
 
+import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
 
 public class StoragePathURITest {
 
@@ -32,7 +32,7 @@ public class StoragePathURITest {
         };
         for (TestData td : testData) {
             StoragePathURI sp = new StoragePathURI(td.storagePath);
-            assertThat(td.storagePath, sp.getStoragePath(), equalTo(td.expectedStoragePath));
+            MatcherAssert.assertThat(td.storagePath, sp.getStoragePath(), equalTo(td.expectedStoragePath));
         }
     }
 

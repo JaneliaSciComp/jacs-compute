@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -15,7 +16,6 @@ import org.mockito.stubbing.Answer;
 import org.xnio.conduits.StreamSourceConduit;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 
 public class RequestBodySaverStreamSourceConduitTest {
@@ -124,7 +124,7 @@ public class RequestBodySaverStreamSourceConduitTest {
         testData.forEach(td -> {
             RequestBodySaverStreamSourceConduit requestBodySaverStreamSourceConduit = new RequestBodySaverStreamSourceConduit(mockSourceConduit, true, td.boundary,
                     () -> new RequestBodyPart(null),
-                    rb -> assertThat(rb, equalTo(td.expectedRequestBodyParts)));
+                    rb -> MatcherAssert.assertThat(rb, equalTo(td.expectedRequestBodyParts)));
             prepareWrappedConduit(mockSourceConduit, td.requestBody);
             ByteBuffer byteBuffer = ByteBuffer.allocate(readBufferLength);
             exerciseStreamSource(requestBodySaverStreamSourceConduit, byteBuffer);
@@ -137,7 +137,7 @@ public class RequestBodySaverStreamSourceConduitTest {
         testData.forEach(td -> {
             RequestBodySaverStreamSourceConduit requestBodySaverStreamSourceConduit = new RequestBodySaverStreamSourceConduit(mockSourceConduit, false, null,
                     () -> new RequestBodyPart(td.requestMimeType),
-                    rb -> assertThat(rb, equalTo(td.expectedRequestBodyParts)));
+                    rb -> MatcherAssert.assertThat(rb, equalTo(td.expectedRequestBodyParts)));
             prepareWrappedConduit(mockSourceConduit, td.requestBody);
             ByteBuffer byteBuffer = ByteBuffer.allocate(readBufferLength);
             exerciseStreamSource(requestBodySaverStreamSourceConduit, byteBuffer);

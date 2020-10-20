@@ -1,19 +1,20 @@
 package org.janelia.model.jacs2;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Map;
+
 import com.google.common.collect.ImmutableList;
+
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.janelia.model.jacs2.domain.sample.LSMImage;
 import org.janelia.model.jacs2.domain.sample.Sample;
 import org.janelia.model.jacs2.sage.SlideImageGroup;
 import org.junit.Test;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Map;
-
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
-import static org.junit.Assert.assertThat;
 
 public class SampleUtilsTest {
     private static final String NO_CONSENSUS_VALUE = "No Consensus";
@@ -37,15 +38,15 @@ public class SampleUtilsTest {
                 createSlideImageGroup("t1", "a1", createLsm(slideCode, null, mountingProtocol, age, effector, gender), createLsm(slideCode, d1, mountingProtocol, age, effector, gender)),
                 createSlideImageGroup("t2", "a2", createLsm(slideCode, d2, mountingProtocol, age, effector, gender), createLsm(slideCode, d3, mountingProtocol, age, effector, gender))));
 
-        assertThat(testSample, hasProperty("slideCode", Matchers.equalTo(slideCode)));
-        assertThat(testSample, hasProperty("tmogDate", Matchers.equalTo(d3)));
-        assertThat(testSample, hasProperty("mountingProtocol", Matchers.equalTo(mountingProtocol)));
-        assertThat(testSample, hasProperty("age", Matchers.equalTo(age)));
-        assertThat(testSample, hasProperty("effector", Matchers.equalTo(effector)));
-        assertThat(testSample, hasProperty("gender", Matchers.equalTo(gender)));
+        MatcherAssert.assertThat(testSample, hasProperty("slideCode", Matchers.equalTo(slideCode)));
+        MatcherAssert.assertThat(testSample, hasProperty("tmogDate", Matchers.equalTo(d3)));
+        MatcherAssert.assertThat(testSample, hasProperty("mountingProtocol", Matchers.equalTo(mountingProtocol)));
+        MatcherAssert.assertThat(testSample, hasProperty("age", Matchers.equalTo(age)));
+        MatcherAssert.assertThat(testSample, hasProperty("effector", Matchers.equalTo(effector)));
+        MatcherAssert.assertThat(testSample, hasProperty("gender", Matchers.equalTo(gender)));
 
-        assertThat(updatedFields, hasEntry("slideCode", new SetFieldValueHandler<>(slideCode)));
-        assertThat(updatedFields, hasEntry("tmogDate", new SetFieldValueHandler<>(d3)));
+        MatcherAssert.assertThat(updatedFields, hasEntry("slideCode", new SetFieldValueHandler<>(slideCode)));
+        MatcherAssert.assertThat(updatedFields, hasEntry("tmogDate", new SetFieldValueHandler<>(d3)));
     }
 
     @Test
@@ -77,15 +78,15 @@ public class SampleUtilsTest {
                 ))
         );
 
-        assertThat(testSample, hasProperty("slideCode", Matchers.equalTo(slideCode)));
-        assertThat(testSample, hasProperty("tmogDate", Matchers.equalTo(d3)));
-        assertThat(testSample, hasProperty("mountingProtocol", Matchers.equalTo(NO_CONSENSUS_VALUE)));
-        assertThat(testSample, hasProperty("age", Matchers.equalTo(NO_CONSENSUS_VALUE)));
-        assertThat(testSample, hasProperty("effector", Matchers.equalTo(NO_CONSENSUS_VALUE)));
-        assertThat(testSample, hasProperty("gender", Matchers.equalTo(NO_CONSENSUS_VALUE)));
+        MatcherAssert.assertThat(testSample, hasProperty("slideCode", Matchers.equalTo(slideCode)));
+        MatcherAssert.assertThat(testSample, hasProperty("tmogDate", Matchers.equalTo(d3)));
+        MatcherAssert.assertThat(testSample, hasProperty("mountingProtocol", Matchers.equalTo(NO_CONSENSUS_VALUE)));
+        MatcherAssert.assertThat(testSample, hasProperty("age", Matchers.equalTo(NO_CONSENSUS_VALUE)));
+        MatcherAssert.assertThat(testSample, hasProperty("effector", Matchers.equalTo(NO_CONSENSUS_VALUE)));
+        MatcherAssert.assertThat(testSample, hasProperty("gender", Matchers.equalTo(NO_CONSENSUS_VALUE)));
 
-        assertThat(updatedFields, hasEntry("slideCode", new SetFieldValueHandler<>(slideCode)));
-        assertThat(updatedFields, hasEntry("tmogDate", new SetFieldValueHandler<>(d3)));
+        MatcherAssert.assertThat(updatedFields, hasEntry("slideCode", new SetFieldValueHandler<>(slideCode)));
+        MatcherAssert.assertThat(updatedFields, hasEntry("tmogDate", new SetFieldValueHandler<>(d3)));
     }
 
     private Sample createSample(Date tmogDate) {
