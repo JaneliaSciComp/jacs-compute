@@ -544,11 +544,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                     // dereference the library first from all mips
                     colorDepthImageDao.removeAllMipsFromLibrary(libraryIdentifier);
-                    boolean libraryUpdated = releases.stream().map(lr -> library.addReaders(lr.getReaders()) ||
-                            library.addWriters(lr.getWriters()) ||
-                            library.addSourceRelease(Reference.createFor(lr)))
-                            .reduce(false, (r1, r2) -> r1 || r2) && !libraryCreated;
-
                     AtomicInteger counter = new AtomicInteger();
                     long updatedMips = releases.stream()
                             .flatMap(lr -> lr.getChildren().stream())
@@ -561,7 +556,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                             .map(Map.Entry::getValue)
                             .reduce(0L, (v1, v2) -> v1 + v2)
                             ;
-                    if (libraryCreated && updatedMips > 0 || libraryUpdated) {
+                    if (updatedMips > 0 || !libraryCreated && updatedMips == 0) {
                         if (updatedMips > 0) {
                             logger.info("Updated {} mips from library {} for {}", updatedMips, libraryIdentifier, site);
                             library.setColorDepthCounts(
