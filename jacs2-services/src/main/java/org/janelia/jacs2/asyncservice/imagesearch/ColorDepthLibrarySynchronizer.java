@@ -64,8 +64,6 @@ import org.slf4j.Logger;
 @Named("colorDepthLibrarySync")
 public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void> {
 
-    private static final String DEFAULT_OWNER = "group:flylight";
-
     static class SyncArgs extends ServiceArgs {
         @Parameter(names = "-alignmentSpace", description = "Alignment space")
         String alignmentSpace;
@@ -92,6 +90,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private final LineReleaseDao lineReleaseDao;
     private final AnnotationDao annotationDao;
     private final JacsNotificationDao jacsNotificationDao;
+    private final String defaultOwnerKey;
     private int existing = 0;
     private int created = 0;
     private int deleted = 0;
@@ -109,6 +108,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                   LineReleaseDao lineReleaseDao,
                                   AnnotationDao annotationDao,
                                   JacsNotificationDao jacsNotificationDao,
+                                  @StrPropertyValue(name = "user.defaultReadGroups") String defaultOwnerKey,
                                   Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.rootPath = Paths.get(rootPath);
@@ -118,6 +118,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         this.lineReleaseDao = lineReleaseDao;
         this.annotationDao = annotationDao;
         this.jacsNotificationDao = jacsNotificationDao;
+        this.defaultOwnerKey = defaultOwnerKey;
     }
 
     @Override
@@ -247,12 +248,15 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         } else {
             String ownerName = libraryIdentifier.split("_")[0];
             Subject subject = subjectDao.findSubjectByName(ownerName);
+            Set<String> defaultAccessors = Collections.singleton(defaultOwnerKey);
             if (subject != null) {
                 logger.warn("No corresponding data set found. Falling back on owner encoded in library identifier: {}", subject.getKey());
                 library.setOwnerKey(subject.getKey());
+                library.addReaders(defaultAccessors);
+                library.addWriters(defaultAccessors);
             } else {
-                logger.warn("Falling back on default owner: {}", DEFAULT_OWNER);
-                library.setOwnerKey(DEFAULT_OWNER);
+                logger.warn("Falling back on default owner: {}", defaultOwnerKey);
+                library.setOwnerKey(defaultOwnerKey);
             }
         }
         return library;
@@ -537,6 +541,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     boolean libraryCreated;
                     if (indexedLibraries.get(libraryIdentifier) == null) {
                         library = createLibraryForPublishedRelease(libraryIdentifier);
+                        library.addReaders(releases.stream().flatMap(r -> r.getReaders().stream()).collect(Collectors.toSet()));
                         libraryCreated = true;
                     } else {
                         library = indexedLibraries.get(libraryIdentifier);
@@ -605,7 +610,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         ColorDepthLibrary library = new ColorDepthLibrary();
         library.setIdentifier(libraryIdentifier);
         library.setName(libraryIdentifier);
-        library.setOwnerKey(DEFAULT_OWNER);
+        library.setOwnerKey(defaultOwnerKey);
         return library;
     }
 
