@@ -133,13 +133,12 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         SyncArgs args = getArgs(jacsServiceData);
 
         // Get currently existing libraries
-        Map<String, ColorDepthLibrary> indexedLibraries = legacyDomainDao.getDomainObjects(null, ColorDepthLibrary.class).stream()
-                .filter(cdl -> StringUtils.isBlank(args.library) || StringUtils.startsWithIgnoreCase(cdl.getIdentifier(), args.library))
+        Map<String, ColorDepthLibrary> allIndexedLibraries = legacyDomainDao.getDomainObjects(null, ColorDepthLibrary.class).stream()
                 .collect(Collectors.toMap(ColorDepthLibrary::getIdentifier, Function.identity()));
 
 
-        if (!args.skipFileSystemDiscovery) runFileSystemBasedDiscovery(args, indexedLibraries);
-        if (args.includePublishedDiscovery) runPublishedLinesBasedDiscovery(args, indexedLibraries);
+        if (!args.skipFileSystemDiscovery) runFileSystemBasedDiscovery(args, allIndexedLibraries);
+        if (args.includePublishedDiscovery) runPublishedLinesBasedDiscovery(args, allIndexedLibraries);
 
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
     }

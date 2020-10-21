@@ -56,7 +56,7 @@ public class ColorDepthLibraryValidator extends AbstractServiceProcessor<Void> {
     static class ValidateArgs extends ServiceArgs {
         @Parameter(names = "-alignmentSpace", description = "Alignment space")
         String alignmentSpace;
-        @Parameter(names = "-library", description = "Library identifier. This has to be a root library, not a version of some other library")
+        @Parameter(names = "-library", description = "Library identifier. This has to be a root library, not a variant of some other library")
         String library;
         @Parameter(names = "-dryRun", description = "Runs without making any changes to the database or filesystem. Everything is logged, but nothing is actually changed.")
         boolean dryRun = false;
