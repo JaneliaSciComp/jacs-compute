@@ -532,6 +532,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         releasesByWebsite
                 .forEach((site, releases) -> {
                     String libraryIdentifier = "flylight_" + site.toLowerCase().replace(' ', '_') + "_published";
+                    logger.info("Processing release library {} for {}", libraryIdentifier, site);
                     ColorDepthLibrary library;
                     boolean libraryCreated;
                     if (indexedLibraries.get(libraryIdentifier) == null) {
@@ -562,7 +563,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                             ;
                     if (libraryCreated && updatedMips > 0 || libraryUpdated) {
                         if (updatedMips > 0) {
-                            logger.info("Updated {} mips for library {}", updatedMips, libraryIdentifier);
+                            logger.info("Updated {} mips from library {} for {}", updatedMips, libraryIdentifier, site);
                             library.setColorDepthCounts(
                                     colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForLibrary(libraryIdentifier)
                             );
