@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
-import com.sun.mail.iap.Argument;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
@@ -68,6 +67,7 @@ public class ColorDepthLibrarySynchronizerTest {
 
     private static final String TEST_WORKING_DIR = "testWorkingDir";
     private static final Long TEST_SERVICE_ID = 1L;
+    public static final String TEST_OWNER_KEY = "group:test";
     private static Path testDirectory;
 
     private ServiceComputationFactory serviceComputationFactory;
@@ -140,6 +140,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 lineReleaseDao,
                 annotationDao,
                 jacsNotificationDao,
+                TEST_OWNER_KEY,
                 logger);
 
         @SuppressWarnings("unchecked")
@@ -202,6 +203,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 lineReleaseDao,
                 annotationDao,
                 jacsNotificationDao,
+                TEST_OWNER_KEY,
                 logger);
 
         @SuppressWarnings("unchecked")
@@ -263,6 +265,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 lineReleaseDao,
                 annotationDao,
                 jacsNotificationDao,
+                TEST_OWNER_KEY,
                 logger);
 
         @SuppressWarnings("unchecked")
@@ -350,6 +353,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 lineReleaseDao,
                 annotationDao,
                 jacsNotificationDao,
+                TEST_OWNER_KEY,
                 logger);
 
         @SuppressWarnings("unchecked")
@@ -520,6 +524,7 @@ public class ColorDepthLibrarySynchronizerTest {
                 lineReleaseDao,
                 annotationDao,
                 jacsNotificationDao,
+                TEST_OWNER_KEY,
                 logger);
         @SuppressWarnings("unchecked")
         Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
