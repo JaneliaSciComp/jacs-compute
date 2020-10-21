@@ -81,6 +81,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
 
     private void swapCores(String currentCoreName, String otherCoreName) {
         try {
+            LOG.info("Swapping SOLR core {} with {}", currentCoreName, otherCoreName);
             SolrServer adminSolrServer = createSolrBuilder().build();
             CoreAdminRequest car = new CoreAdminRequest();
             car.setCoreName(currentCoreName);
