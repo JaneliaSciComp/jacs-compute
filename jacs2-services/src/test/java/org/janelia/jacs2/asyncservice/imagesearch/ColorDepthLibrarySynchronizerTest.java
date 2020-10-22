@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -31,10 +32,11 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
-import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
+import org.janelia.model.access.domain.dao.ColorDepthLibraryDao;
+import org.janelia.model.access.domain.dao.DatasetDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.domain.Reference;
@@ -55,6 +57,7 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anySet;
@@ -73,11 +76,12 @@ public class ColorDepthLibrarySynchronizerTest {
     private ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private JacsNotificationDao jacsNotificationDao;
-    private LegacyDomainDao legacyDao;
     private SubjectDao subjectDao;
     private ColorDepthImageDao colorDepthImageDao;
+    private ColorDepthLibraryDao colorDepthLibraryDao;
     private LineReleaseDao lineReleaseDao;
     private AnnotationDao annotationDao;
+    private DatasetDao datasetDao;
     private Logger logger;
 
     @BeforeClass
@@ -95,11 +99,12 @@ public class ColorDepthLibrarySynchronizerTest {
         logger = mock(Logger.class);
         serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
-        legacyDao = mock(LegacyDomainDao.class);
         subjectDao = mock(SubjectDao.class);
         colorDepthImageDao = mock(ColorDepthImageDao.class);
+        colorDepthLibraryDao = mock(ColorDepthLibraryDao.class);
         lineReleaseDao = mock(LineReleaseDao.class);
         annotationDao = mock(AnnotationDao.class);
+        datasetDao = mock(DatasetDao.class);
         jacsNotificationDao = mock(JacsNotificationDao.class);
     }
 
@@ -111,7 +116,7 @@ public class ColorDepthLibrarySynchronizerTest {
 
         JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
 
-        Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
+        Mockito.when(colorDepthLibraryDao.findAll(0, -1))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
         Map<String, String[]> testFileNames = ImmutableMap.of(
@@ -126,19 +131,28 @@ public class ColorDepthLibrarySynchronizerTest {
         Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testFileNames);
 
         testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
-            Mockito.when(legacyDao.getColorDepthPaths(null, libId.replace('/', '_'), testAlignmentSpace))
-                    .thenReturn(libFiles);
+            Mockito.when(colorDepthImageDao.streamColorDepthMIPs(
+                    new ColorDepthImageQuery()
+                            .withLibraryIdentifiers(Collections.singleton(libId.replace('/', '_')))
+                            .withAlignmentSpace(testAlignmentSpace)))
+                    .then(invocation -> libFiles.stream()
+                            .map(f -> {
+                                ColorDepthImage mip = new ColorDepthImage();
+                                mip.setFilepath(f);
+                                return mip;
+                            }));
         });
 
         ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
                 jacsServiceDataPersistence,
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
-                legacyDao,
                 subjectDao,
+                colorDepthLibraryDao,
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
+                datasetDao,
                 jacsNotificationDao,
                 TEST_OWNER_KEY,
                 logger);
@@ -151,12 +165,12 @@ public class ColorDepthLibrarySynchronizerTest {
                 .thenApply(r -> {
                     successful.accept(r);
                     try {
-                        Mockito.verify(legacyDao, Mockito.never()).save(anyString(), ArgumentMatchers.any(ColorDepthImage.class));
+                        Mockito.verify(colorDepthImageDao, Mockito.never()).saveBySubjectKey(any(ColorDepthImage.class), anyString());
                     } catch (Exception e) {
                         Assert.fail(e.toString());
                     }
                     // 2 existing samples had the same sample id but different name so they should have been deleted
-                    Mockito.verify(legacyDao, Mockito.times(2)).deleteDomainObject(isNull(), eq(ColorDepthImage.class), anyLong());
+                    Mockito.verify(colorDepthImageDao, Mockito.times(2)).delete(any(ColorDepthImage.class));
                     return r;
                 })
                 .exceptionally(exc -> {
@@ -173,7 +187,7 @@ public class ColorDepthLibrarySynchronizerTest {
         String testLib = "testLib";
         JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
 
-        Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
+        Mockito.when(colorDepthLibraryDao.findAll(0, -1))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
         Map<String, String[]> testFileNames = ImmutableMap.of(
@@ -188,20 +202,33 @@ public class ColorDepthLibrarySynchronizerTest {
         Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testFileNames);
 
         testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
-            Mockito.when(legacyDao.getColorDepthPaths(null, libId.replace('/', '_'), testAlignmentSpace))
-                    .thenReturn(libFiles.stream().filter(fn -> fn.contains("GMR_83B04")).collect(Collectors.toList()))
-                    .thenReturn(libFiles);
+            Mockito.when(colorDepthImageDao.streamColorDepthMIPs(
+                    new ColorDepthImageQuery()
+                            .withLibraryIdentifiers(Collections.singleton(libId.replace('/', '_')))
+                            .withAlignmentSpace(testAlignmentSpace)))
+                    .thenReturn(libFiles.stream().filter(fn -> fn.contains("GMR_83B04")).map(f -> {
+                        ColorDepthImage mip = new ColorDepthImage();
+                        mip.setFilepath(f);
+                        return mip;
+                    }))
+                    .thenReturn(libFiles.stream().map(f -> {
+                        ColorDepthImage mip = new ColorDepthImage();
+                        mip.setFilepath(f);
+                        return mip;
+                    }))
+                    ;
         });
 
         ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
                 jacsServiceDataPersistence,
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
-                legacyDao,
                 subjectDao,
+                colorDepthLibraryDao,
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
+                datasetDao,
                 jacsNotificationDao,
                 TEST_OWNER_KEY,
                 logger);
@@ -213,13 +240,10 @@ public class ColorDepthLibrarySynchronizerTest {
         colorDepthLibrarySynchronizer.process(testService)
                 .thenApply(r -> {
                     successful.accept(r);
-                    try {
-                        Mockito.verify(legacyDao, Mockito.times(2)).save(isNull(), ArgumentMatchers.any(ColorDepthImage.class));
-                    } catch (Exception e) {
-                        Assert.fail(e.toString());
-                    }
+                    Mockito.verify(colorDepthImageDao, Mockito.times(2)).saveBySubjectKey(any(ColorDepthImage.class), isNull());
+
                     // 2 existing samples had the same sample id but different name so they should have been deleted
-                    Mockito.verify(legacyDao, Mockito.times(2)).deleteDomainObject(isNull(), eq(ColorDepthImage.class), anyLong());
+                    Mockito.verify(colorDepthImageDao, Mockito.times(2)).delete(any(ColorDepthImage.class));
                     return r;
                 })
                 .exceptionally(exc -> {
@@ -236,7 +260,7 @@ public class ColorDepthLibrarySynchronizerTest {
         String testLib = "testLib";
         JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
 
-        Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
+        Mockito.when(colorDepthLibraryDao.findAll(0, -1))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
         Map<String, String[]> testFileNames = ImmutableMap.of(
@@ -251,19 +275,29 @@ public class ColorDepthLibrarySynchronizerTest {
         Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testFileNames);
 
         testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
-            Mockito.when(legacyDao.getColorDepthPaths(null, libId.replace('/', '_'), testAlignmentSpace))
-                    .thenReturn(libFiles.stream().filter(fn -> fn.contains("GMR_86D05")).collect(Collectors.toList())); // newer files exist in the mips
+            Mockito.when(colorDepthImageDao.streamColorDepthMIPs(
+                    new ColorDepthImageQuery()
+                            .withLibraryIdentifiers(Collections.singleton(libId.replace('/', '_')))
+                            .withAlignmentSpace(testAlignmentSpace)))
+                    .then(invocation -> libFiles.stream()
+                            .filter(fn -> fn.contains("GMR_86D05"))
+                            .map(f -> {
+                                ColorDepthImage mip = new ColorDepthImage();
+                                mip.setFilepath(f);
+                                return mip;
+                            }));
         });
 
         ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
                 jacsServiceDataPersistence,
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
-                legacyDao,
                 subjectDao,
+                colorDepthLibraryDao,
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
+                datasetDao,
                 jacsNotificationDao,
                 TEST_OWNER_KEY,
                 logger);
@@ -276,12 +310,12 @@ public class ColorDepthLibrarySynchronizerTest {
                 .thenApply(r -> {
                     successful.accept(r);
                     try {
-                        Mockito.verify(legacyDao, Mockito.never()).save(isNull(), ArgumentMatchers.any(ColorDepthImage.class));
+                        Mockito.verify(colorDepthImageDao, Mockito.never()).saveBySubjectKey(any(ColorDepthImage.class), isNull());
                     } catch (Exception e) {
                         Assert.fail(e.toString());
                     }
                     // 2 existing samples had the same sample id but different name so they should have been deleted
-                    Mockito.verify(legacyDao, Mockito.never()).deleteDomainObject(isNull(), eq(ColorDepthImage.class), anyLong());
+                    Mockito.verify(colorDepthImageDao, Mockito.never()).delete(any(ColorDepthImage.class));
                     return r;
                 })
                 .exceptionally(exc -> {
@@ -298,7 +332,7 @@ public class ColorDepthLibrarySynchronizerTest {
         String testLib = "testLib";
         JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
 
-        Mockito.when(legacyDao.getDomainObjects(null, ColorDepthLibrary.class))
+        Mockito.when(colorDepthLibraryDao.findAll(0, -1))
                 .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
 
         Map<String, String[]> testLibsWithFiles = ImmutableMap.of(
@@ -322,23 +356,30 @@ public class ColorDepthLibrarySynchronizerTest {
         Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testLibsWithFiles);
 
         testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
-            Mockito.when(legacyDao.getColorDepthPaths(null, libId.replace('/', '_'), testAlignmentSpace))
-                    .thenReturn(Collections.emptyList())
-                    .thenReturn(libFiles);
+            Mockito.when(colorDepthImageDao.streamColorDepthMIPs(
+                    new ColorDepthImageQuery()
+                            .withLibraryIdentifiers(Collections.singleton(libId.replace('/', '_')))
+                            .withAlignmentSpace(testAlignmentSpace)))
+                    .thenReturn(Stream.of())
+                    .thenReturn(libFiles.stream().map(f -> {
+                        ColorDepthImage mip = new ColorDepthImage();
+                        mip.setFilepath(f);
+                        return mip;
+                    }));
         });
 
         Map<Long, ColorDepthLibrary> createdCDLibraries = new HashMap<>();
 
         try {
-            Mockito.when(legacyDao.save(ArgumentMatchers.argThat(argument -> true), ArgumentMatchers.any(ColorDepthLibrary.class)))
+            Mockito.when(colorDepthLibraryDao.saveBySubjectKey(any(ColorDepthLibrary.class), ArgumentMatchers.argThat(argument -> true)))
                     .then(invocation -> {
-                        ColorDepthLibrary cdl = invocation.getArgument(1);
+                        ColorDepthLibrary cdl = invocation.getArgument(0);
                         cdl.setId(createdCDLibraries.size() + 1L);
                         createdCDLibraries.put(cdl.getId(), cdl);
                         return cdl;
                     });
-            Mockito.when(legacyDao.getDomainObject(isNull(), eq(ColorDepthLibrary.class), anyLong()))
-                    .then(invocation -> createdCDLibraries.get(invocation.getArgument(2)));
+            Mockito.when(colorDepthLibraryDao.findById(anyLong()))
+                    .then(invocation -> createdCDLibraries.get(invocation.getArgument(0)));
         } catch (Exception e) {
             Assert.fail(e.toString());
         }
@@ -347,11 +388,12 @@ public class ColorDepthLibrarySynchronizerTest {
                 jacsServiceDataPersistence,
                 TEST_WORKING_DIR,
                 testDirectory.resolve(testContext).toString(),
-                legacyDao,
                 subjectDao,
+                colorDepthLibraryDao,
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
+                datasetDao,
                 jacsNotificationDao,
                 TEST_OWNER_KEY,
                 logger);
@@ -363,14 +405,10 @@ public class ColorDepthLibrarySynchronizerTest {
         colorDepthLibrarySynchronizer.process(testService)
                 .thenApply(r -> {
                     successful.accept(r);
-                    try {
-                        Mockito.verify(legacyDao, Mockito.times(testLibsWithFiles.size())).save(ArgumentMatchers.argThat(arg -> true), ArgumentMatchers.any(ColorDepthLibrary.class));
-                        Mockito.verify(legacyDao, Mockito.times((int) testLibsWithFiles.entrySet().stream().flatMap(e -> Arrays.stream(e.getValue())).count())).save(ArgumentMatchers.argThat(arg -> true), ArgumentMatchers.any(ColorDepthImage.class));
-                    } catch (Exception e) {
-                        Assert.fail(e.toString());
-                    }
+                    Mockito.verify(colorDepthLibraryDao, Mockito.times(testLibsWithFiles.size())).saveBySubjectKey(any(ColorDepthLibrary.class), ArgumentMatchers.argThat(arg -> true));
+                    Mockito.verify(colorDepthImageDao, Mockito.times((int) testLibsWithFiles.entrySet().stream().flatMap(e -> Arrays.stream(e.getValue())).count())).saveBySubjectKey(any(ColorDepthImage.class), ArgumentMatchers.argThat(arg -> true));
                     // 2 existing samples had the same sample id but different name so they should have been deleted
-                    Mockito.verify(legacyDao, Mockito.never()).deleteDomainObject(isNull(), eq(ColorDepthImage.class), anyLong());
+                    Mockito.verify(colorDepthImageDao, Mockito.never()).delete(any(ColorDepthImage.class));
                     return r;
                 })
                 .exceptionally(exc -> {
@@ -427,18 +465,18 @@ public class ColorDepthLibrarySynchronizerTest {
                     }
                     File testCDFile = indexedTestFilePath.getRight().toFile();
                     testCDFile.setLastModified(System.currentTimeMillis() - (filenames.length - indexedTestFilePath.getLeft()) * 1000);
-                    Mockito.when(colorDepthImageDao.streamColorDepthMIPs(ArgumentMatchers.any(ColorDepthImageQuery.class))).then(invocation -> {
+                    Mockito.when(colorDepthImageDao.streamColorDepthMIPs(any(ColorDepthImageQuery.class))).then(invocation -> {
                         ColorDepthImage cdi = new ColorDepthImage();
                         cdi.setId(testCDFile.lastModified());
                         cdi.setFilepath(testCDFile.getAbsolutePath());
                         return Stream.of(cdi);
                     });
-                    Mockito.when(legacyDao.getColorDepthImageByPath(null, testCDFile.getAbsolutePath())).then(invocation -> {
-                        String cdfile = invocation.getArgument(1);
+                    Mockito.when(colorDepthImageDao.findColorDepthImageByPath(testCDFile.getAbsolutePath())).then(invocation -> {
+                        String cdfile = invocation.getArgument(0);
                         ColorDepthImage cdi = new ColorDepthImage();
                         cdi.setId(testCDFile.lastModified());
                         cdi.setFilepath(cdfile);
-                        return cdi;
+                        return Optional.of(cdi);
                     });
                     return testCDFile;
                 })
@@ -518,11 +556,12 @@ public class ColorDepthLibrarySynchronizerTest {
                 jacsServiceDataPersistence,
                 TEST_WORKING_DIR,
                 testDirectory.resolve("").toString(),
-                legacyDao,
                 subjectDao,
+                colorDepthLibraryDao,
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
+                datasetDao,
                 jacsNotificationDao,
                 TEST_OWNER_KEY,
                 logger);
@@ -534,14 +573,14 @@ public class ColorDepthLibrarySynchronizerTest {
                 .thenApply(r -> {
                     successful.accept(r);
                     try {
-                        Mockito.verify(legacyDao, Mockito.times(2)).save(ArgumentMatchers.argThat(arg -> true), ArgumentMatchers.any(ColorDepthLibrary.class));
+                        Mockito.verify(colorDepthLibraryDao, Mockito.times(2)).saveBySubjectKey(any(ColorDepthLibrary.class), ArgumentMatchers.argThat(arg -> true));
                         Mockito.verify(colorDepthImageDao).countColorDepthMIPsByAlignmentSpaceForLibrary("flylight_site_1_published");
                         Mockito.verify(colorDepthImageDao).countColorDepthMIPsByAlignmentSpaceForLibrary("flylight_site_2_published");
                     } catch (Exception e) {
                         Assert.fail(e.toString());
                     }
                     // 2 existing samples had the same sample id but different name so they should have been deleted
-                    Mockito.verify(legacyDao, Mockito.never()).deleteDomainObject(isNull(), eq(ColorDepthImage.class), anyLong());
+                    Mockito.verify(colorDepthImageDao, Mockito.never()).delete(any(ColorDepthImage.class));
                     return r;
                 })
                 .exceptionally(exc -> {
