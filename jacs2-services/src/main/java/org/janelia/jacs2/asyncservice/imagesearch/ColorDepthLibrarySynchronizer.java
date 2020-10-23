@@ -141,9 +141,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         Map<String, ColorDepthLibrary> allIndexedLibraries = colorDepthLibraryDao.findAll(0, -1).stream()
                 .collect(Collectors.toMap(ColorDepthLibrary::getIdentifier, Function.identity()));
 
-
-        if (!args.skipFileSystemDiscovery) runFileSystemBasedDiscovery(args, allIndexedLibraries);
         if (args.includePublishedDiscovery) runPublishedLinesBasedDiscovery(args, allIndexedLibraries);
+        if (!args.skipFileSystemDiscovery) runFileSystemBasedDiscovery(args, allIndexedLibraries);
 
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
     }
