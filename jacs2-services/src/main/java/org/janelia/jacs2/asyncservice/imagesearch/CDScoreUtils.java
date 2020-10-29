@@ -23,12 +23,14 @@ class CDScoreUtils {
         }
     }
 
-    static double calculateNormalizedScore(int pixelMatch,
-                                           long gradientAreaGap,
-                                           long highExpressionArea,
-                                           long maxPixelMatch,
-                                           long maxNegativeScore) {
-        if (pixelMatch == 0 || maxPixelMatch == 0 || maxNegativeScore < 0) {
+    static double calculateNormalizedScore(Integer pixelMatch,
+                                           Long gradientAreaGap,
+                                           Long highExpressionArea,
+                                           Integer maxPixelMatch,
+                                           Long maxNegativeScore) {
+        if (pixelMatch == null || pixelMatch == 0) {
+            return 0;
+        } else if (maxPixelMatch == null || maxPixelMatch == 0 || maxNegativeScore == null || maxNegativeScore < 0) {
             return pixelMatch;
         } else {
             double negativeScore = calculateNegativeScore(gradientAreaGap, highExpressionArea);
