@@ -3,31 +3,44 @@ package org.janelia.jacs2.asyncservice.imagesearch;
 import java.util.Comparator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class CDScoreUtils {
+    private static final int HIGH_EXPRESSION_FACTOR = 2;
+    private static final double LOW_NORMALIZED_NEGATIVE_SCORE = 0.002;
+    private static final double HIGH_NORMALIZED_NEGATIVE_SCORE = 1.;
+
     static long calculateNegativeScore(Long gradientAreaGap, Long highExpressionArea) {
         if (gradientAreaGap != null && highExpressionArea != null) {
-            return gradientAreaGap + highExpressionArea / 3;
+            return gradientAreaGap + highExpressionArea / HIGH_EXPRESSION_FACTOR;
         } else if (gradientAreaGap != null) {
             return gradientAreaGap;
         } else if (highExpressionArea != null) {
-            return highExpressionArea / 3;
+            return highExpressionArea / HIGH_EXPRESSION_FACTOR;
         } else {
             return -1;
         }
     }
 
-    static double calculateNormalizedScore(Long gradientAreaGap, Long highExpressionArea, long maxNegativeScore, long pixelMatch, double pixelMatchRatio, long maxPixelMatch) {
-        if (pixelMatch == 0 || pixelMatchRatio == 0 || maxNegativeScore == -1) {
+    static double calculateNormalizedScore(int pixelMatch,
+                                           long gradientAreaGap,
+                                           long highExpressionArea,
+                                           long maxPixelMatch,
+                                           long maxNegativeScore) {
+        if (pixelMatch == 0 || maxPixelMatch == 0 || maxNegativeScore < 0) {
             return pixelMatch;
         } else {
-            long negativeScore = calculateNegativeScore(gradientAreaGap, highExpressionArea);
+            double negativeScore = calculateNegativeScore(gradientAreaGap, highExpressionArea);
             if (negativeScore == -1) {
                 return pixelMatch;
-            } else {
-                double normalizedNegativeScore = (double) negativeScore / maxNegativeScore;
-                double boundedNegativeScore = Math.min(Math.max(normalizedNegativeScore * 2.5, 0.002), 1.);
-                return (double) pixelMatch / (double) maxPixelMatch / boundedNegativeScore * 100;
             }
+            double normalizedNegativeScore = negativeScore / maxNegativeScore;
+            double boundedNegativeScore = Math.min(
+                    Math.max(normalizedNegativeScore * 2.5, LOW_NORMALIZED_NEGATIVE_SCORE),
+                    HIGH_NORMALIZED_NEGATIVE_SCORE
+            );
+            return (double)pixelMatch / (double)maxPixelMatch / boundedNegativeScore * 100;
         }
     }
 

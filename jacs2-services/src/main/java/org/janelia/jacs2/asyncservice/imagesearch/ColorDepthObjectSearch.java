@@ -322,18 +322,18 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 .map(CDSMatchResult::getMatchingPixels)
                                 .max(Integer::compare)
                                 .orElse(0);
+                        logger.info("Values used for normalizing scores: maxNegativeScore:{}, maxMatchingPixels:{}", maxNegativeScore, maxMatchingPixels);
                     } else {
                         maxNegativeScore = -1;
                         maxMatchingPixels = -1;
                     }
                     cdMaskMatches.getResults().forEach(cdsMatchResult -> {
                         cdsMatchResult.setNormalizedScore(CDScoreUtils.calculateNormalizedScore(
+                                cdsMatchResult.getMatchingPixels(),
                                 cdsMatchResult.getGradientAreaGap(),
                                 cdsMatchResult.getHighExpressionArea(),
-                                maxNegativeScore,
                                 maxMatchingPixels,
-                                cdsMatchResult.getMatchingRatio(),
-                                cdsMatchResult.getMatchingPixels()));
+                                maxNegativeScore));
                     });
                     CDScoreUtils.sortCDSResults(cdMaskMatches.getResults());
                 })
