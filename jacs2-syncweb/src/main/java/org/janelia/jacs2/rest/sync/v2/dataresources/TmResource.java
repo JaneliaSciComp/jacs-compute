@@ -1,13 +1,6 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.ZoneId;
+import java.io.*;
 import java.util.*;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -38,6 +31,7 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -48,7 +42,7 @@ import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
 import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmOperation;
+import org.janelia.model.domain.tiledMicroscope.TmProtobufExchanger;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
@@ -107,68 +101,6 @@ public class TmResource {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             LOG.trace("Finished getAllWorkspace({})", subjectKey);
-        }
-    }
-
-    @ApiOperation(value = "Creates an TM Operation log for an operation performed during neuron tracing",
-            notes = "Stores the operation log in the TmOperation table for future analysis"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created an operation log"),
-            @ApiResponse(code = 500, message = "Error occurred while creating the operation log")
-    })
-    @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/operation/log")
-    public void createOperationLog(@ApiParam @QueryParam("username") String subjectKey,
-                                                @ApiParam @QueryParam("workspaceId") Long workspaceId,
-                                                @ApiParam @QueryParam("neuronId") Long neuronId,
-                                                @ApiParam @QueryParam("operationType") String operationType,
-                                                @ApiParam @QueryParam("timestamp") String timestamp) {
-        try {
-            DateFormat format = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
-            Date timestampDate = format.parse(timestamp);
-            tmNeuronMetadataDao.createOperationLog(workspaceId,neuronId,operationType, timestampDate, subjectKey);
-        } catch (Exception e) {
-            LOG.error("Error occurred creating operation log for {},{},{},{},{}", subjectKey,workspaceId,neuronId,
-                    operationType,timestamp);
-            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @ApiOperation(value = "queries for operations logs using filters",
-            notes = "Returns a list of TmOperation objects using the filters applied"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched the list of operations", response = TmOperation.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error occurred while fetching the operations")
-    })
-    @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/operation/report")
-    public List<TmOperation> getOperationLogs(@ApiParam @QueryParam("username") String subjectKey,
-                                              @ApiParam @QueryParam("workspaceId") Long workspaceId,
-                                              @ApiParam @QueryParam("neuronId") Long neuronId,
-                                              @ApiParam @QueryParam("startDate") String startTime,
-                                              @ApiParam @QueryParam("endDate") String endTime) {
-        try {
-            DateFormat format = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
-            TimeZone standardTime = TimeZone.getTimeZone("UTC");
-            format.setTimeZone(standardTime);
-            Date startDate=null, endDate=null;
-            if (startTime!=null) {
-                startDate = format.parse(startTime);
-            }
-            if (endTime!=null) {
-                endDate = format.parse(endTime);
-            }
-
-            return tmNeuronMetadataDao.getOperations(workspaceId, neuronId, startDate, endDate);
-        } catch (Exception e) {
-            LOG.error("Error occurred fetching operations logs for {},{},{},{},{}", subjectKey,workspaceId,neuronId,
-                    startTime,endTime);
-            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -297,7 +229,7 @@ public class TmResource {
         LOG.info("getWorkspaceNeuronMetadata({}, {}, {})", workspaceId, offsetParam, lengthParam);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
-            return Response.status(Response.Status.UNAUTHORIZED).build();
+            return null;
         long offset = offsetParam == null || offsetParam < 0L ? 0 : offsetParam;
         int length = lengthParam == null || lengthParam < 0 ? -1 : lengthParam;
         try {
@@ -486,4 +418,159 @@ public class TmResource {
         tmNeuronMetadataDao.updateNeuronTagsForNeurons(workspace, neuronIds, tagList, tagState, subjectKey);
         return Response.ok("DONE").build();
     }
+
+
+    @ApiOperation(value = "migrate all workspaces in a collection",
+            notes = "Migrate all workspace neurons from mysql to mongo"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully bulk loaded collection"),
+            @ApiResponse(code = 500, message = "Error occurred while bulk migrating neurons")
+    })
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/database/migrate")
+    public Map<String,Object> migrateAllWorkspaces(@ApiParam @QueryParam("subjectKey") final String subjectKey) {
+        // generate some stats
+        Map<String,Object> statsInfo = new HashMap<>();
+        try {
+            List<TmWorkspace> workspaceList = tmWorkspaceDao.getAllTmWorkspaces(subjectKey);
+            for (TmWorkspace workspace: workspaceList) {
+                if (!workspace.getNeuronCollection().equals("tmNeuron"))
+                    continue;
+                migrateWorkspace (statsInfo, workspace.getId(), subjectKey);
+                LOG.info("Progress Status: Completed {} out of {} workspaces", statsInfo.size(),workspaceList.size());
+            }
+        } catch (Exception e) {
+            LOG.error("Error occurred migrating full TmWorkspace collection from mysql", subjectKey, e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            LOG.trace("Finished migrating all workspaces");
+        }
+
+        return statsInfo;
+    }
+
+    @ApiOperation(value = "validate migration",
+            notes = "double checks Node count for mysql data store vs new per workspace vs."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully bulk loaded collection"),
+            @ApiResponse(code = 500, message = "Error occurred while bulk migrating neurons")
+    })
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/database/validate")
+    public Map<String,Object> validateMigration(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                                @ApiParam @QueryParam("startIndex") final Integer startIndex,
+                                                @ApiParam @QueryParam("endIndex") final Integer endIndex) {
+        // generate some stats
+        Map<String,Object> statsInfo = new HashMap<>();
+        TmProtobufExchanger exchanger = new TmProtobufExchanger();
+        Map<String,Object> mismatches = new HashMap<>();
+
+        try {
+            List<TmWorkspace> workspaceList = tmWorkspaceDao.getAllTmWorkspaces(subjectKey);
+            int currCount = 0;
+            workspaceList = workspaceList.subList(startIndex,endIndex);
+            for (TmWorkspace workspace: workspaceList) {
+                currCount++;
+                if ((currCount%100)==0)
+                    LOG.info("{} workspaces have been validated", currCount);
+                long sourceNodeCount = 0;
+                long targetNodeCount = 0;
+
+                // source nodes
+                List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(workspace,
+                        subjectKey, 0, 1000000);
+                for (Pair<TmNeuronMetadata, InputStream> pair : neuronPairs) {
+                    TmNeuronMetadata neuronMetadata = pair.getLeft();
+                    try {
+                        exchanger.deserializeNeuron(pair.getRight(), neuronMetadata);
+                        sourceNodeCount += neuronMetadata.getGeoAnnotationMap().values().size();
+                    } catch (Exception e) {
+                        throw new IllegalStateException(e);
+                    }
+                }
+
+                // target nodes
+                List<TmNeuronMetadata> targetNeurons = tmNeuronMetadataDao.getTmNeuronMetadataByWorkspaceId(workspace,
+                        subjectKey, 0, 1000000);
+                if (targetNeurons!=null && targetNeurons.size()>0) {
+                    for (TmNeuronMetadata targetNeuron: targetNeurons) {
+                        targetNodeCount+= targetNeuron.getGeoAnnotationMap().size();
+                    }
+                }
+
+                if (sourceNodeCount!=targetNodeCount) {
+                    LOG.info("Discrepancy found for {} - {}", workspace.getId(), workspace.getName());
+                    mismatches.put(workspace.getId().toString(), "source Nodes: " + sourceNodeCount + ",target Nodes: " + targetNodeCount);
+                }
+
+            }
+        } catch (Exception e) {
+            LOG.error("Error occurred migrating full TmWorkspace collection from mysql", subjectKey, e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            LOG.trace("Finished migrating all workspaces");
+        }
+
+        return statsInfo;
+    }
+
+
+    private void migrateWorkspace (Map<String,Object> statsInfo, Long workspaceId, String subjectKey) {
+        TmProtobufExchanger exchanger = new TmProtobufExchanger();
+        int MAX_BLOCK = 1000000;
+        int offset = 0;
+        long totalNodes = 0;
+        boolean continueMigration = true;
+
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
+        if (workspace==null) {
+            LOG.error("No workspace found for workspace id {}", workspaceId);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        int currCount = 0;
+        // while (continueMigration) {
+        LOG.info("getting next batch using offset {} and length {}",offset,MAX_BLOCK);
+        List<Pair<TmNeuronMetadata, InputStream>> neuronPairs = tmNeuronMetadataDao.getTmNeuronsMetadataWithPointStreamsByWorkspaceId(workspace,
+                subjectKey, offset, MAX_BLOCK);
+        if (neuronPairs.isEmpty() || neuronPairs.size()<MAX_BLOCK) {
+            continueMigration = false;
+        }
+        LOG.info("neuronPairs size {} to be processed",neuronPairs.size());
+        offset += neuronPairs.size();
+        List<TmNeuronMetadata> neurons = new ArrayList<>();
+        String workspaceOwner = workspace.getOwnerKey();
+        for(Pair<TmNeuronMetadata, InputStream> pair : neuronPairs) {
+            currCount++;
+            if ((currCount%100000)==0) {
+                tmNeuronMetadataDao.bulkMigrateNeuronsInWorkspace(workspace,neurons,workspaceOwner);
+                neurons = new ArrayList<>();
+                LOG.info("BIG BATCH WILL NOW BE PROCESSED");
+            }
+
+            if ((currCount%100)==0)
+                LOG.info("{} have been processed",currCount);
+            TmNeuronMetadata neuronMetadata = pair.getLeft();
+            try {
+                exchanger.deserializeNeuron(pair.getRight(), neuronMetadata);
+                totalNodes += neuronMetadata.getGeoAnnotationMap().values().size();
+                neurons.add(neuronMetadata);
+                //                 tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron, subjectKey).saveBySubjectKey(neuronMetadata, workspaceOwner);
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+
+        }
+        tmNeuronMetadataDao.bulkMigrateNeuronsInWorkspace(workspace,neurons,workspaceOwner);
+        // }
+        statsInfo.put(workspaceId.toString(), "totalNode: " + totalNodes + ",neurons count: " + offset);
+        LOG.info("workspace {} totalNode: {},neurons count: {}",workspaceId.toString(),totalNodes,offset);
+    }
+
 }
