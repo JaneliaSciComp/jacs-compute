@@ -419,6 +419,32 @@ public class TmResource {
         return Response.ok("DONE").build();
     }
 
+    @ApiOperation(value = "migrate workspace",
+            notes = "Migrate all neuron's annotation data from mysql to mongo"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully bulk updated tags"),
+            @ApiResponse(code = 500, message = "Error occurred while bulk updating tags")
+    })
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/workspace/migrate/{workspaceId}")
+    public Map<String,Object> migrateWorkspace(@ApiParam @QueryParam("subjectKey") final String subjectKey,
+                                               @ApiParam @PathParam("workspaceId") Long workspaceId) {
+        // generate some stats
+        Map<String,Object> statsInfo = new HashMap<>();
+        try {
+            migrateWorkspace (statsInfo, workspaceId, subjectKey);
+        } catch (Exception e) {
+            LOG.error("Error occurred migrating full TmWorkspace collection from mysql", subjectKey, e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        } finally {
+            LOG.trace("Finished migrating all workspaces");
+        }
+
+        return statsInfo;
+    }
 
     @ApiOperation(value = "migrate all workspaces in a collection",
             notes = "Migrate all workspace neurons from mysql to mongo"
