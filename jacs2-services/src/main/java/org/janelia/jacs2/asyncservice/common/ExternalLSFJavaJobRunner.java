@@ -1,22 +1,5 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.cluster.JobManager;
-import org.janelia.cluster.JobTemplate;
-import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
-import org.janelia.jacs2.asyncservice.common.cluster.LsfJavaExeJobHandler;
-import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
-import org.janelia.jacs2.asyncservice.qualifier.LSFJavaJob;
-import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
-import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceEvent;
-import org.janelia.model.service.JacsServiceEventTypes;
-import org.janelia.model.service.JacsServiceState;
-import org.slf4j.Logger;
-
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -25,6 +8,25 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import javax.inject.Inject;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.cluster.JobManager;
+import org.janelia.cluster.JobTemplate;
+import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
+import org.janelia.jacs2.asyncservice.common.cluster.LsfJavaExeJobHandler;
+import org.janelia.jacs2.asyncservice.common.cluster.MonitoredJobManager;
+import org.janelia.jacs2.asyncservice.qualifier.LSFJavaJob;
+import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
+import org.janelia.jacs2.config.ApplicationConfig;
+import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEvent;
+import org.janelia.model.service.JacsServiceEventTypes;
+import org.janelia.model.service.JacsServiceState;
+import org.slf4j.Logger;
 
 /**
  * External runner which uses the java-lsf library to submit and manage cluster jobs.
@@ -36,21 +38,18 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
 
     private final JobManager jobMgr;
     private final ComputeAccounting accounting;
-    private final boolean requiresAccountInfo;
-    private final boolean useJobGroup;
+    private final ApplicationConfig applicationConfig;
 
     @Inject
     public ExternalLSFJavaJobRunner(MonitoredJobManager monitoredJobManager,
                                     JacsServiceDataPersistence jacsServiceDataPersistence,
                                     ComputeAccounting accounting,
-                                    @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
-                                    @BoolPropertyValue(name = "service.cluster.useJobGroup") boolean useJobGroup,
+                                    @ApplicationProperties ApplicationConfig applicationConfig,
                                     Logger logger) {
         super(jacsServiceDataPersistence, logger);
         this.jobMgr = monitoredJobManager.getJobMgr();
-        this.requiresAccountInfo = requiresAccountInfo;
-        this.useJobGroup = useJobGroup;
         this.accounting = accounting;
+        this.applicationConfig = applicationConfig;
     }
 
     @Override
@@ -131,10 +130,10 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
 
         List<String> nativeSpec = createNativeSpec(serviceContext.getResources());
 
-        if (requiresAccountInfo)
+        if (applicationConfig.getBooleanPropertyValue("service.cluster.requiresAccountInfo", true))
             nativeSpec.add("-P " + billingAccount);
 
-        if (useJobGroup) {
+        if (applicationConfig.getBooleanPropertyValue("service.cluster.useJobGroup", false)) {
             String computingGroup = accounting.getComputeGroup(serviceContext.getOwnerKey());
             if (StringUtils.isNotBlank(computingGroup)) {
                 nativeSpec.add("-G " + computingGroup);
@@ -172,6 +171,8 @@ public class ExternalLSFJavaJobRunner extends AbstractExternalProcessRunner {
         String queue = jobResources.get("gridQueue");
         if (StringUtils.isNotBlank(queue)) {
             spec.add("-q "+queue);
+        } else if (StringUtils.isNotBlank(applicationConfig.getStringPropertyValue("service.cluster.queue"))) {
+            spec.add("-q "+applicationConfig.getStringPropertyValue("service.cluster.queue"));
         }
 
         StringBuilder selectResourceBuffer = new StringBuilder();

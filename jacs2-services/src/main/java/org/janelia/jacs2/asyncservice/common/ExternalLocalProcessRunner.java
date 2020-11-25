@@ -30,7 +30,10 @@ public class ExternalLocalProcessRunner extends AbstractExternalProcessRunner {
     private final ApplicationConfig applicationConfig;
 
     @Inject
-    public ExternalLocalProcessRunner(JacsServiceDataPersistence jacsServiceDataPersistence, ThrottledExeJobsQueue jobsQueue, @ApplicationProperties ApplicationConfig applicationConfig, Logger logger) {
+    public ExternalLocalProcessRunner(JacsServiceDataPersistence jacsServiceDataPersistence,
+                                      ThrottledExeJobsQueue jobsQueue,
+                                      @ApplicationProperties ApplicationConfig applicationConfig,
+                                      Logger logger) {
         super(jacsServiceDataPersistence, logger);
         this.jobsQueue = jobsQueue;
         this.applicationConfig = applicationConfig;

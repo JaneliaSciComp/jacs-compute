@@ -1,16 +1,5 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.base.Preconditions;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
-import org.janelia.jacs2.asyncservice.utils.FileUtils;
-import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
-import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceEventTypes;
-import org.slf4j.Logger;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -25,6 +14,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import com.google.common.base.Preconditions;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
+import org.janelia.jacs2.asyncservice.utils.ScriptWriter;
+import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceEventTypes;
+import org.slf4j.Logger;
 
 @MdcContext
 abstract class AbstractExternalProcessRunner implements ExternalProcessRunner {
