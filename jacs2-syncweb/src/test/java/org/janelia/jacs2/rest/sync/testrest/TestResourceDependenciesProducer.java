@@ -2,6 +2,11 @@ package org.janelia.jacs2.rest.sync.testrest;
 
 import java.util.concurrent.ExecutorService;
 
+import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.InjectionPoint;
+
+import com.google.common.collect.ImmutableMap;
+
 import org.janelia.jacs2.asyncservice.maintenanceservices.DbMaintainer;
 import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.auth.PasswordProvider;
@@ -11,11 +16,11 @@ import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.jacs2.dataservice.search.IndexBuilderService;
-import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
+import org.janelia.jacs2.dataservice.search.IndexBuilderService;
+import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.user.UserManager;
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -23,6 +28,7 @@ import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
+import org.janelia.model.access.domain.dao.LSMImageDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.OntologyDao;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
@@ -38,11 +44,6 @@ import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.InjectionPoint;
-
-import com.google.common.collect.ImmutableMap;
 
 import static org.mockito.Mockito.mock;
 
@@ -87,6 +88,7 @@ public class TestResourceDependenciesProducer {
     private SampleDataService sampleDataService = mock(SampleDataService.class);
     private SageDataService sageDataService = mock(SageDataService.class);
     private SampleDao sampleDao = mock(SampleDao.class);
+    private LSMImageDao lsmImageDao = mock(LSMImageDao.class);
     private ReferenceDomainObjectReadDao referenceDao = mock(ReferenceDomainObjectReadDao.class);
     private ExecutorService indexingExecutorService = mock(ExecutorService.class);
     private DbMaintainer dbMaintainer = mock(DbMaintainer.class);
@@ -180,7 +182,7 @@ public class TestResourceDependenciesProducer {
     }
 
     @Produces
-    public TmNeuronMetadataDao getTmNeuronMetadataSearchableDao() {
+    public TmNeuronMetadataDao getTmNeuronMetadataDao() {
         return tmNeuronMetadataDao;
     }
 
@@ -272,6 +274,11 @@ public class TestResourceDependenciesProducer {
     @Produces
     public SampleDao getSampleDao() {
         return sampleDao;
+    }
+
+    @Produces
+    public LSMImageDao getLsmImageDao() {
+        return lsmImageDao;
     }
 
     @Produces

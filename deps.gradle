@@ -9,7 +9,7 @@ dependencies {
 
         // dependency injection
         JAVAX_ENTERPRISE_VERSION = "2.0.SP1"
-        WELD_VERSION = "3.1.4.Final"
+        WELD_VERSION = "3.1.5.Final"
         CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
         CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
         CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-core:${WELD_VERSION}"
@@ -80,7 +80,7 @@ dependencies {
         JACKSON_JAXRS_XML_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-xml-provider:${JACKSON_VERSION}"
 
         // Spark
-        SPARK_LAUNCHER = "org.apache.spark:spark-launcher_2.11:2.3.1"
+        SPARK_LAUNCHER = "org.apache.spark:spark-launcher_2.12:3.0.1"
 
         // expressions
         JAVA_EXP_IMPL_LIB = "org.glassfish:javax.el:3.0.0"
@@ -102,7 +102,7 @@ dependencies {
 
         // Janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.1.0"
-        JACS_MODEL_VERSION = "2.37.2"
+        JACS_MODEL_VERSION = "2.38.0"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
         JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"

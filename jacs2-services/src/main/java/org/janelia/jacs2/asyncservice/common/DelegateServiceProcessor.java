@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import java.util.List;
+import java.util.Map;
 
 import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.model.service.JacsServiceData;
@@ -20,14 +21,27 @@ public class DelegateServiceProcessor<S extends ServiceProcessor<T>, T> implemen
         List<ServiceArg> mapServiceData(JacsServiceData jacsServiceData);
     }
 
+    public interface ServiceResourcesMapper {
+        Map<String, String> mapResources(JacsServiceData jacsServiceData);
+    }
+
     private final S delegateProcessor;
     private final ArgumentsMapper delegateArgsMapper;
-
+    private final ServiceResourcesMapper delegateResourcesMapper;
 
     public DelegateServiceProcessor(S delegateProcessor,
                                     ArgumentsMapper delegateArgsMapper) {
         this.delegateProcessor = delegateProcessor;
         this.delegateArgsMapper = delegateArgsMapper;
+        this.delegateResourcesMapper = JacsServiceData::getResources;
+    }
+
+    public DelegateServiceProcessor(S delegateProcessor,
+                                    ArgumentsMapper delegateArgsMapper,
+                                    ServiceResourcesMapper delegateResourcesMapper) {
+        this.delegateProcessor = delegateProcessor;
+        this.delegateArgsMapper = delegateArgsMapper;
+        this.delegateResourcesMapper = delegateResourcesMapper;
     }
 
     @Override
@@ -58,7 +72,9 @@ public class DelegateServiceProcessor<S extends ServiceProcessor<T>, T> implemen
     private JacsServiceData createDelegateServiceData(JacsServiceData jacsServiceData) {
         return delegateProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
                         .setServiceName(jacsServiceData.getName())
-                        .state(JacsServiceState.RUNNING).build(),
+                        .state(JacsServiceState.RUNNING)
+                        .addResources(delegateResourcesMapper.mapResources(jacsServiceData))
+                        .build(),
                 delegateArgsMapper.mapServiceData(jacsServiceData)
         );
     }

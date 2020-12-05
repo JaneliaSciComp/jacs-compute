@@ -1,13 +1,11 @@
 package org.janelia.jacs2.asyncservice.spark;
 
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
@@ -28,38 +26,11 @@ import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
 
 @Named("startSparkCluster")
-public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClusterStartProcessor.SparkJobInfo> {
+public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClusterInfo> {
 
     static class StartSparkJobArgs extends SparkArgs {
         StartSparkJobArgs() {
             super("Start spark cluster");
-        }
-    }
-
-    static class SparkJobInfo {
-        private final Long masterJobId;
-        private final List<Long> workerJobIds;
-        private final String masterURI;
-
-        @JsonCreator
-        SparkJobInfo(@JsonProperty("masterJobId") Long masterJobId,
-                     @JsonProperty("workerJobIds") List<Long> workerJobIds,
-                     @JsonProperty("masterURI") String masterURI) {
-            this.masterJobId = masterJobId;
-            this.workerJobIds = workerJobIds;
-            this.masterURI = masterURI;
-        }
-
-        public Long getMasterJobId() {
-            return masterJobId;
-        }
-
-        public List<Long> getWorkerJobIds() {
-            return workerJobIds;
-        }
-
-        public String getMasterURI() {
-            return masterURI;
         }
     }
 
@@ -71,10 +42,25 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                                @StrPropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                LSFSparkClusterLauncher clusterLauncher,
                                ComputeAccounting accounting,
-                               @IntPropertyValue(name = "service.spark.defaultNumNodes", defaultValue = 2) Integer defaultNumNodes,
-                               @IntPropertyValue(name = "service.spark.defaultMinRequiredWorkers", defaultValue = 1) Integer defaultMinRequiredWorkers,
+                               @StrPropertyValue(name = "service.spark.sparkHomeDir") String defaultSparkHomeDir,
+                               @StrPropertyValue(name = "service.spark.driver.memory", defaultValue = "1g") String defaultSparkDriverMemory,
+                               @IntPropertyValue(name = "service.spark.executor.cores", defaultValue = 5) int defaultCoresPerSparkExecutor,
+                               @IntPropertyValue(name = "service.spark.executor.core.memoryGB", defaultValue = 15) int defaultSparkMemoryPerExecutorCoreInGB,
+                               @StrPropertyValue(name = "service.spark.log4jconfig.filepath", defaultValue = "") String defaultSparkLogConfigFile,
+                               @StrPropertyValue(name = "hadoop.homeDir") String hadoopHomeDir,
                                Logger logger) {
-        super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, clusterLauncher, defaultNumNodes, defaultMinRequiredWorkers, logger);
+        super(computationFactory,
+                jacsServiceDataPersistence,
+                defaultWorkingDir,
+                clusterLauncher,
+                defaultSparkHomeDir,
+                defaultSparkDriverMemory,
+                defaultCoresPerSparkExecutor,
+                defaultSparkMemoryPerExecutorCoreInGB,
+                -1,
+                defaultSparkLogConfigFile,
+                hadoopHomeDir,
+                logger);
         this.accounting = accounting;
     }
 
@@ -84,22 +70,22 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
     }
 
     @Override
-    public ServiceResultHandler<SparkJobInfo> getResultHandler() {
-        return new AbstractAnyServiceResultHandler<SparkJobInfo>() {
+    public ServiceResultHandler<SparkClusterInfo> getResultHandler() {
+        return new AbstractAnyServiceResultHandler<SparkClusterInfo>() {
             @Override
             public boolean isResultReady(JacsServiceData jacsServiceData) {
                 return areAllDependenciesDone(jacsServiceData);
             }
 
             @Override
-            public SparkJobInfo getServiceDataResult(JacsServiceData jacsServiceData) {
-                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<SparkJobInfo>() {});
+            public SparkClusterInfo getServiceDataResult(JacsServiceData jacsServiceData) {
+                return ServiceDataUtils.serializableObjectToAny(jacsServiceData.getSerializableResult(), new TypeReference<SparkClusterInfo>() {});
             }
         };
     }
 
     @Override
-    public ServiceComputation<JacsServiceResult<SparkJobInfo>> process(JacsServiceData jacsServiceData) {
+    public ServiceComputation<JacsServiceResult<SparkClusterInfo>> process(JacsServiceData jacsServiceData) {
         // prepare service directories
         JacsServiceFolder serviceWorkingFolder = prepareSparkJobDirs(jacsServiceData);
 
@@ -108,28 +94,40 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                             jacsServiceDataPersistence.addServiceEvent(
                                     jacsServiceData,
                                     JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
-                                            String.format("Started spark cluster %s (%s)",
-                                                    sparkCluster.getMasterURI(),
-                                                    sparkCluster.getMasterJobId())));
+                                            String.format("Started spark cluster %s (%s, %s)",
+                                                    sparkCluster.getSparkClusterInfo().getMasterURI(),
+                                                    sparkCluster.getSparkClusterInfo().getMasterJobId(),
+                                                    sparkCluster.getSparkClusterInfo().getWorkerJobId())));
                             return updateServiceResult(
                                     jacsServiceData,
-                                    new SparkJobInfo(sparkCluster.getMasterJobId(), sparkCluster.getWorkerJobIds(), sparkCluster.getMasterURI())
+                                    sparkCluster.getSparkClusterInfo()
                             );
                 })
                 ;
     }
 
-    private ServiceComputation<SparkCluster> startCluster(JacsServiceData jacsServiceData, JacsServiceFolder serviceWorkingFolder) {
+    private ServiceComputation<LSFSparkCluster> startCluster(JacsServiceData jacsServiceData, JacsServiceFolder serviceWorkingFolder) {
+        Map<String, String> appResources = SparkAppResourceHelper.sparkAppResourceBuilder()
+                .sparkHome(getDefaultSparkHome())
+                .sparkDriverMemory(getDefaultSparkDriverMemory())
+                .sparkWorkerCores(getDefaultCoresPerSparkExecutor())
+                .sparkWorkerMemoryPerCoreInGB(getDefaultSparkMemoryPerExecutorCoreInGB())
+                .sparkAppTimeoutInMillis(getSparkClusterHardDurationMins() * 60L * 1000L)
+                .sparkLogConfigFile(getDefaultSparkLogConfigFile())
+                .hadoopHome(getHadoopHome())
+                .addAll(jacsServiceData.getResources())
+                .build();
         return sparkClusterLauncher.startCluster(
-                getRequestedNodes(jacsServiceData.getResources()),
-                getMinRequiredWorkers(jacsServiceData.getResources()),
+                "sparkjacs",
+                SparkAppResourceHelper.getSparkHome(appResources),
+                SparkAppResourceHelper.getSparkWorkers(appResources),
+                SparkAppResourceHelper.getSparkWorkerCores(appResources),
+                SparkAppResourceHelper.getMinRequiredWorkers(appResources),
                 serviceWorkingFolder.getServiceFolder(),
                 Paths.get(jacsServiceData.getOutputPath()),
                 Paths.get(jacsServiceData.getErrorPath()),
                 accounting.getComputeAccount(jacsServiceData),
-                getSparkDriverMemory(jacsServiceData.getResources()),
-                getSparkExecutorMemory(jacsServiceData.getResources()),
-                getSparkLogConfigFile(jacsServiceData.getResources()),
-                jacsServiceData.timeoutInMillis() > 0 ? jacsServiceData.timeoutInMins() + 1 : -1);
+                serviceTimeoutInMins(jacsServiceData, appResources)
+        );
     }
 }

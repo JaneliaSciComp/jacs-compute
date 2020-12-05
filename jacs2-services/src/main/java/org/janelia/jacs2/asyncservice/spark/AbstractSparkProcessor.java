@@ -1,54 +1,75 @@
 package org.janelia.jacs2.asyncservice.spark;
 
-import org.apache.commons.lang3.StringUtils;
+import java.time.Duration;
+import java.util.Map;
+
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
-import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
-import java.time.Duration;
-import java.util.Map;
-
 abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor<R> {
 
     protected final LSFSparkClusterLauncher sparkClusterLauncher;
-    protected final int defaultNumNodes;
-    protected final int defaultMinRequiredWorkers;
+    private final String defaultSparkHome;
+    private final String defaultSparkDriverMemory;
+    private final int defaultCoresPerSparkExecutor;
+    private final int defaultSparkMemoryPerExecutorCoreInGB;
+    private final int sparkClusterHardDurationMins;
+    private final String defaultSparkLogConfigFile;
+    private final String hadoopHome;
 
     protected AbstractSparkProcessor(ServiceComputationFactory computationFactory,
                                      JacsServiceDataPersistence jacsServiceDataPersistence,
                                      String defaultWorkingDir,
                                      LSFSparkClusterLauncher sparkClusterLauncher,
-                                     Integer defaultNumNodes,
-                                     Integer defaultMinRequiredWorkers,
+                                     String defaultSparkHome,
+                                     String defaultSparkDriverMemory,
+                                     int defaultCoresPerSparkExecutor,
+                                     int defaultSparkMemoryPerExecutorCoreInGB,
+                                     int sparkClusterHardDurationMins,
+                                     String defaultSparkLogConfigFile,
+                                     String hadoopHome,
                                      Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.sparkClusterLauncher = sparkClusterLauncher;
-        this.defaultNumNodes = defaultNumNodes == null || defaultNumNodes <= 0 ? 1 : defaultNumNodes;
-        this.defaultMinRequiredWorkers = defaultMinRequiredWorkers == null || defaultMinRequiredWorkers < 0 ? 0 : defaultMinRequiredWorkers;
+        this.defaultSparkHome = defaultSparkHome;
+        this.defaultSparkDriverMemory = defaultSparkDriverMemory;
+        this.defaultCoresPerSparkExecutor = defaultCoresPerSparkExecutor;
+        this.defaultSparkMemoryPerExecutorCoreInGB = defaultSparkMemoryPerExecutorCoreInGB;
+        this.sparkClusterHardDurationMins = sparkClusterHardDurationMins;
+        this.defaultSparkLogConfigFile = defaultSparkLogConfigFile;
+        this.hadoopHome = hadoopHome;
     }
 
-    int getRequestedNodes(Map<String, String> serviceResources) {
-        String requestedNodes = StringUtils.defaultIfBlank(serviceResources.get("sparkNumNodes"), "1");
-        int numNodes = Integer.parseInt(requestedNodes);
-        return numNodes <= 0 ? defaultNumNodes : numNodes;
+    protected String getDefaultSparkHome() {
+        return defaultSparkHome;
     }
 
-    int getMinRequiredWorkers(Map<String, String> serviceResources) {
-        String minSparkWorkersValue = StringUtils.defaultIfBlank(serviceResources.get("minSparkWorkers"), "0");
-        int minSparkWorkers = Integer.parseInt(minSparkWorkersValue);
-        return minSparkWorkers <= 0 ? defaultMinRequiredWorkers : minSparkWorkers;
+    protected String getDefaultSparkDriverMemory() {
+        return defaultSparkDriverMemory;
     }
 
-    int getDefaultParallelism(Map<String, String> serviceResources) {
-        String defaultParallelism = StringUtils.defaultIfBlank(serviceResources.get("sparkDefaultParallelism"), "0");
-        int parallelism = Integer.parseInt(defaultParallelism);
-        return parallelism <= 0 ? 0 : parallelism;
+    protected int getDefaultCoresPerSparkExecutor() {
+        return defaultCoresPerSparkExecutor;
+    }
+
+    protected int getDefaultSparkMemoryPerExecutorCoreInGB() {
+        return defaultSparkMemoryPerExecutorCoreInGB;
+    }
+
+    protected int getSparkClusterHardDurationMins() {
+        return sparkClusterHardDurationMins;
+    }
+
+    protected String getDefaultSparkLogConfigFile() {
+        return defaultSparkLogConfigFile;
+    }
+
+    protected String getHadoopHome() {
+        return hadoopHome;
     }
 
     protected JacsServiceFolder prepareSparkJobDirs(JacsServiceData jacsServiceData) {
@@ -60,48 +81,15 @@ abstract public class AbstractSparkProcessor<R> extends AbstractServiceProcessor
         return serviceWorkingFolder;
     }
 
-    protected String getSparkDriverMemory(Map<String, String> serviceResources) {
-        return serviceResources.get("sparkDriverMemory");
-    }
-
-    protected String getSparkExecutorMemory(Map<String, String> serviceResources) {
-        return serviceResources.get("sparkExecutorMemory");
-    }
-
-    String getSparkAppStackSize(Map<String, String> serviceResources) {
-        return serviceResources.get("sparkAppStackSize");
-    }
-
-    Long getSparkAppIntervalCheckInMillis(Map<String, String> serviceResources) {
-        String intervalCheck = serviceResources.get("sparkAppIntervalCheckInMillis");
-        if (StringUtils.isNotBlank(intervalCheck)) {
-            return Long.valueOf(intervalCheck.trim());
-        } else {
-            return null;
-        }
-    }
-
-    Long getSparkAppTimeoutInMillis(Map<String, String> serviceResources) {
-        String timeout = serviceResources.get("sparkAppTimeoutInMillis");
-        if (StringUtils.isNotBlank(timeout)) {
-            return Long.valueOf(timeout.trim());
-        } else {
-            return null;
-        }
-    }
-
-    int serviceTimeoutInMins(JacsServiceData jacsServiceData) {
-        Long sparkAppTimeoutInMillis = getSparkAppTimeoutInMillis(jacsServiceData.getResources());
-        if (sparkAppTimeoutInMillis != null && sparkAppTimeoutInMillis > 0) {
-            return (int) (Duration.ofMillis(sparkAppTimeoutInMillis).toMinutes() + 1);
+    int serviceTimeoutInMins(JacsServiceData jacsServiceData, Map<String, String> appResources) {
+        int sparkAppTimeoutInMin = SparkAppResourceHelper.getSparkAppTimeoutInMin(appResources);
+        if (sparkAppTimeoutInMin > 0) {
+            return sparkAppTimeoutInMin;
         } else if (jacsServiceData.timeoutInMins() > 0) {
-            return jacsServiceData.timeoutInMins() + 1;
+            return jacsServiceData.timeoutInMins();
         } else {
             return -1;
         }
     }
 
-    protected String getSparkLogConfigFile(Map<String, String> serviceResources) {
-        return serviceResources.get("sparkLogConfigFile");
-    }
 }

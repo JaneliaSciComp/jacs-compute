@@ -1,5 +1,11 @@
 package org.janelia.jacs2.rest.sync.testrest;
 
+import java.lang.annotation.Annotation;
+import java.util.concurrent.ExecutorService;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import org.glassfish.hk2.api.Injectee;
 import org.glassfish.hk2.api.InjectionResolver;
 import org.glassfish.hk2.api.ServiceHandle;
@@ -13,10 +19,10 @@ import org.janelia.jacs2.cdi.ObjectMapperFactory;
 import org.janelia.jacs2.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.config.ApplicationConfig;
-import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.sample.SageDataService;
 import org.janelia.jacs2.dataservice.sample.SampleDataService;
 import org.janelia.jacs2.dataservice.search.DocumentIndexingService;
+import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.user.UserManager;
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -24,6 +30,7 @@ import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.AnnotationDao;
 import org.janelia.model.access.domain.dao.ColorDepthImageDao;
 import org.janelia.model.access.domain.dao.DatasetDao;
+import org.janelia.model.access.domain.dao.LSMImageDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.OntologyDao;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
@@ -38,12 +45,6 @@ import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import java.lang.annotation.Annotation;
-import java.util.concurrent.ExecutorService;
 
 public class TestResourceBinder extends AbstractBinder {
     static class PropertyResolver implements InjectionResolver<PropertyValue> {
@@ -105,7 +106,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getTmReviewTaskSearchableDao()).to(TmReviewTaskDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getTmSampleSearchableDao()).to(TmSampleDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getWorkspaceNodeSearchableDao()).to(WorkspaceNodeDao.class).qualifiedBy(asyncIndexAnnotation);
-        bind(dependenciesProducer.getTmNeuronMetadataSearchableDao()).to(TmNeuronMetadataDao.class).qualifiedBy(asyncIndexAnnotation);
+        bind(dependenciesProducer.getTmNeuronMetadataDao()).to(TmNeuronMetadataDao.class);
         bind(dependenciesProducer.getTmWorkspaceSearchableDao()).to(TmWorkspaceDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getSubjectDao()).to(SubjectDao.class);
         bind(dependenciesProducer.getPwProvider()).to(PasswordProvider.class);
@@ -118,6 +119,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getUserManager()).to(UserManager.class);
         bind(dependenciesProducer.getDbMaintainer()).to(DbMaintainer.class);
         bind(dependenciesProducer.getSampleDao()).to(SampleDao.class);
+        bind(dependenciesProducer.getLsmImageDao()).to(LSMImageDao.class);
         bind(dependenciesProducer.getReferenceDao()).to(ReferenceDomainObjectReadDao.class);
         bind(PropertyResolver.class)
                 .to(new TypeLiteral<InjectionResolver<PropertyValue>>() {})

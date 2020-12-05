@@ -8,9 +8,12 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
+import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
+import org.janelia.model.service.ProcessingLocation;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.fail;
@@ -40,14 +44,19 @@ public class SparkAppProcessorTest {
 
     private static final String TEST_WORKSPACE = "testSparkWorkspace";
     private static final String DEFAULT_WORKING_DIR = "testWorking";
-    private static final int DEFAULT_NUM_NODES = 6;
-    private static final int DEFAULT_MIN_REQUIRED_WORKERS = 2;
+    private static final String DEFAULT_SPARK_HOME = "testSparkHome";
+    private static final String DEFAULT_SPARK_DRIVER_MEMORY = "1g";
+    private static final int DEFAULT_CORES_PER_SPARK_EXECUTOR = 3;
+    private static final int DEFAULT_MEMORY_PER_CORE_IN_GB = 15;
+    private static final int DEFAULT_SPARK_DURATION_MINS = 60;
+    private static final String DEFAULT_SPARK_LOG_CONFIG = "logconfig";
+    private static final String HADOOP_HOME_DIR = "hadoopHome";
 
     ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
     private LSFSparkClusterLauncher clusterLauncher;
     private ComputeAccounting clusterAccounting;
-    private SparkCluster sparkCluster;
+    private LSFSparkCluster sparkCluster;
     private SparkApp sparkApp;
 
     private SparkAppProcessor sparkAppProcessor;
@@ -60,7 +69,7 @@ public class SparkAppProcessorTest {
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         clusterLauncher = mock(LSFSparkClusterLauncher.class);
         clusterAccounting = mock(ComputeAccounting.class);
-        sparkCluster = mock(SparkCluster.class);
+        sparkCluster = mock(LSFSparkCluster.class);
         sparkApp = mock(SparkApp.class);
         Mockito.when(sparkApp.isDone()).thenReturn(true);
 
@@ -69,22 +78,25 @@ public class SparkAppProcessorTest {
                 DEFAULT_WORKING_DIR,
                 clusterLauncher,
                 clusterAccounting,
-                DEFAULT_NUM_NODES,
-                DEFAULT_MIN_REQUIRED_WORKERS,
+                DEFAULT_SPARK_HOME,
+                DEFAULT_SPARK_DRIVER_MEMORY,
+                DEFAULT_CORES_PER_SPARK_EXECUTOR,
+                DEFAULT_MEMORY_PER_CORE_IN_GB,
+                DEFAULT_SPARK_DURATION_MINS,
+                DEFAULT_SPARK_LOG_CONFIG,
+                HADOOP_HOME_DIR,
                 logger);
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    public void process() throws Exception {
+    public void processWithLocalSparkDriver() throws Exception {
         String testAppResource = "testApp";
         List<String> testAppArgs = ImmutableList.of("a1", "a2", "a3");
         int testNumNodes = 12;
         int testMinRequiredWorkers = 4;
         String testDriverMemory = "driverMem";
         String testExecutorMemory = "executorMem";
-        Long appIntervalCheckInMillis = null;
-        Long appTimeoutInMillis = null;
         String clusterBillingInfo = "clusterBillingInfo";
 
         JacsServiceData testService = createTestServiceData(1L, testAppResource,
@@ -93,7 +105,8 @@ public class SparkAppProcessorTest {
                 testNumNodes,
                 testMinRequiredWorkers,
                 testDriverMemory,
-                testExecutorMemory);
+                testExecutorMemory,
+                ProcessingLocation.LOCAL);
         JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
         Path serviceOutputPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR);
         Path serviceErrorPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR);
@@ -103,29 +116,38 @@ public class SparkAppProcessorTest {
         Mockito.when(clusterAccounting.getComputeAccount(testService)).thenReturn(clusterBillingInfo);
 
         Mockito.when(clusterLauncher.startCluster(
+                testAppResource,
+                DEFAULT_SPARK_HOME,
                 testNumNodes,
+                DEFAULT_CORES_PER_SPARK_EXECUTOR,
                 testMinRequiredWorkers,
                 serviceWorkingFolder.getServiceFolder(),
                 serviceOutputPath,
                 serviceErrorPath,
                 clusterBillingInfo,
-                testDriverMemory,
-                testExecutorMemory,
-                null,
-                -1))
+                DEFAULT_SPARK_DURATION_MINS))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
 
-        Mockito.when(sparkCluster.runApp(
+        Mockito.when(sparkCluster.getSparkClusterInfo())
+                .thenReturn(new SparkClusterInfo(1L, 2L, "spark://sparkmasterhost:7077"));
+        Map<String, String> appResources = SparkAppResourceHelper.sparkAppResourceBuilder()
+                .sparkHome(DEFAULT_SPARK_HOME)
+                .sparkDriverMemory(DEFAULT_SPARK_DRIVER_MEMORY)
+                .sparkWorkerCores(DEFAULT_CORES_PER_SPARK_EXECUTOR)
+                .sparkWorkerMemoryPerCoreInGB(DEFAULT_MEMORY_PER_CORE_IN_GB)
+                .sparkAppTimeoutInMillis(DEFAULT_SPARK_DURATION_MINS * 60L * 1000L)
+                .sparkLogConfigFile(DEFAULT_SPARK_LOG_CONFIG)
+                .hadoopHome(HADOOP_HOME_DIR)
+                .addAll(testService.getResources())
+                .build();
+        Mockito.when(sparkCluster.runLocalProcessApp(
                 testAppResource,
                 null,
-                0,
+                testAppArgs,
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
-                "128M",
-                appIntervalCheckInMillis,
-                appTimeoutInMillis,
-                testAppArgs)
-        ).thenReturn(serviceComputationFactory.newCompletedComputation(sparkApp));
+                appResources)
+        ).then(invocation -> serviceComputationFactory.newCompletedComputation(sparkApp));
 
         ServiceComputation<JacsServiceResult<Void>> sparkServiceComputation = sparkAppProcessor.process(testService);
 
@@ -136,16 +158,13 @@ public class SparkAppProcessorTest {
         sparkServiceComputation
                 .thenApply(r -> {
                     successful.accept(r);
-                    Mockito.verify(sparkCluster).runApp(
+                    Mockito.verify(sparkCluster).runLocalProcessApp(
                             testAppResource,
                             null,
-                            0,
+                            testAppArgs,
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                             serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
-                            "128M",
-                            appIntervalCheckInMillis,
-                            appTimeoutInMillis,
-                            testAppArgs);
+                            appResources);
                     Mockito.verify(sparkCluster).stopCluster();
                     return r;
                 })
@@ -156,16 +175,20 @@ public class SparkAppProcessorTest {
                 });
     }
 
-    private JacsServiceData createTestServiceData(Number serviceId, String testApp,
+    private JacsServiceData createTestServiceData(Number serviceId,
+                                                  String testApp,
                                                   List<String> appArgs,
                                                   String owner,
                                                   int numNodes,
                                                   int minRequiredWorkers,
                                                   String driverMemory,
-                                                  String executorMemory) {
+                                                  String executorMemory,
+                                                  ProcessingLocation processingLocation) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey(owner)
                 .setAuthKey(owner)
+                .setProcessingLocation(processingLocation)
+                .addArgs("-appName", testApp)
                 .addArgs("-appLocation", testApp)
                 .addArgs("-appArgs").addArgs(appArgs.stream().reduce((a1, a2) -> a1 + "," + a2).orElse(""))
                 .addResource("sparkAppStackSize", "128M")

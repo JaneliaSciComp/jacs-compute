@@ -1,6 +1,8 @@
 package org.janelia.jacs2.testhelpers;
 
 import com.google.common.collect.Streams;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.asyncservice.common.ServiceArg;
 import org.mockito.ArgumentMatcher;
 
@@ -21,5 +23,12 @@ public class ListArgMatcher<T> implements ArgumentMatcher<List<T>> {
                 .reduce((r1, r2) -> r1 && r2)
                 .orElse(false)
                 ;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("itemMatchers", itemMatchers)
+                .toString();
     }
 }

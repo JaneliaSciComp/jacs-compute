@@ -4,7 +4,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -15,14 +15,16 @@ import com.google.common.collect.ImmutableList;
 import org.janelia.jacs2.asyncservice.common.ComputationTestHelper;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
+import org.janelia.jacs2.asyncservice.common.ServiceArg;
+import org.janelia.jacs2.asyncservice.common.ServiceArgMatcher;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
-import org.janelia.jacs2.asyncservice.spark.LSFSparkClusterLauncher;
-import org.janelia.jacs2.asyncservice.spark.SparkApp;
-import org.janelia.jacs2.asyncservice.spark.SparkCluster;
+import org.janelia.jacs2.asyncservice.common.ServiceExecutionContext;
+import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
+import org.janelia.jacs2.asyncservice.spark.SparkAppProcessor;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
+import org.janelia.jacs2.testhelpers.ListArgMatcher;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceDataBuilder;
 import org.junit.Before;
@@ -38,6 +40,8 @@ import org.slf4j.Logger;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
@@ -51,16 +55,12 @@ public class SparkColorDepthFileSearchTest {
     private static final String DEFAULT_WORKING_DIR = "testWorking";
     private static final int SEARCH_TIMEOUT_IN_SECONDS = 1200;
     private static final int SEARCH_INTERVAL_CHECK_IN_MILLIS = 5000;
-    private static final int DEFAULT_NUM_NODES = 6;
-    private static final int DEFAULT_MIN_REQUIRED_WORKERS = 2;
+    private static final String DEFAULT_SPARK_HOME = "testSparkHome";
 
     ServiceComputationFactory serviceComputationFactory;
     private JacsServiceDataPersistence jacsServiceDataPersistence;
-    private LSFSparkClusterLauncher clusterLauncher;
-    private ComputeAccounting clusterAccounting;
-    private SparkCluster sparkCluster;
-    private SparkApp sparkApp;
-    private String jarPath = "sparkColorDepthSearch.jar";
+    private SparkAppProcessor sparkAppProcessor;
+    private final String jarPath = "sparkColorDepthSearch.jar";
 
     private SparkColorDepthFileSearch sparkColorDepthFileSearch;
 
@@ -70,21 +70,15 @@ public class SparkColorDepthFileSearchTest {
         Logger logger = mock(Logger.class);
         serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
         jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
-        clusterLauncher = mock(LSFSparkClusterLauncher.class);
-        clusterAccounting = mock(ComputeAccounting.class);
-        sparkCluster = mock(SparkCluster.class);
-        sparkApp = mock(SparkApp.class);
-        Mockito.when(sparkApp.isDone()).thenReturn(true);
+        sparkAppProcessor = mock(SparkAppProcessor.class);
 
         sparkColorDepthFileSearch = new SparkColorDepthFileSearch(serviceComputationFactory,
                 jacsServiceDataPersistence,
                 DEFAULT_WORKING_DIR,
-                clusterLauncher,
-                clusterAccounting,
+                sparkAppProcessor,
                 SEARCH_TIMEOUT_IN_SECONDS,
                 SEARCH_INTERVAL_CHECK_IN_MILLIS,
-                DEFAULT_NUM_NODES,
-                DEFAULT_MIN_REQUIRED_WORKERS,
+                DEFAULT_SPARK_HOME,
                 jarPath,
                 logger);
     }
@@ -92,11 +86,36 @@ public class SparkColorDepthFileSearchTest {
     @SuppressWarnings("unchecked")
     @Test
     public void process() throws Exception {
-        JacsServiceData testService = createTestServiceData(1L, "test");
-        JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
-        Path serviceOutputPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR);
-        Path serviceErrorPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR);
-        String clusterBillingInfo = "clusterBillingInfo";
+        String maskFiles = "m1,m2,m3";
+        String targetFiles = "t1,t2,t3";
+        String minWorkers = "2";
+        String maskThreshold = "50";
+        String targetThreshold = "60";
+        String pixColorFluctuation = "2.0";
+        String xyShift = "2";
+        String pctPositivePixels = "1.0";
+        String negativeRadius = "20";
+        String resultsDir = "cdsresults";
+        String numWorkers = "6";
+        JacsServiceData testService = createTestServiceData(
+                1L,
+                "test",
+                maskFiles,
+                targetFiles,
+                minWorkers,
+                maskThreshold,
+                targetThreshold,
+                pixColorFluctuation,
+                xyShift,
+                pctPositivePixels,
+                negativeRadius,
+                resultsDir,
+                numWorkers);
+
+        Mockito.when(sparkAppProcessor.createServiceData(any(ServiceExecutionContext.class), anyList()))
+                .then(invocation -> testService);
+        Mockito.when(sparkAppProcessor.process(any(JacsServiceData.class)))
+                .then(invocation -> serviceComputationFactory.newCompletedComputation(new JacsServiceResult(testService)));
 
         PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
@@ -104,44 +123,6 @@ public class SparkColorDepthFileSearchTest {
             Path root = invocation.getArgument(0);
             return Stream.of(root.resolve("f1_results.json"));
         });
-        Mockito.when(clusterAccounting.getComputeAccount(testService)).thenReturn(clusterBillingInfo);
-        Mockito.when(clusterLauncher.startCluster(
-                9,
-                3,
-                serviceWorkingFolder.getServiceFolder(),
-                serviceOutputPath,
-                serviceErrorPath,
-                clusterBillingInfo,
-                null,
-                null,
-                null,
-                (int) (Duration.ofSeconds(SEARCH_TIMEOUT_IN_SECONDS).toMinutes()+ 1)))
-                .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
-
-        Mockito.when(sparkCluster.runApp(
-                jarPath,
-                "org.janelia.colormipsearch.cmd.SparkMainEntry",
-                0,
-                serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
-                serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
-                null,
-                (long) SEARCH_INTERVAL_CHECK_IN_MILLIS,
-                SEARCH_TIMEOUT_IN_SECONDS * 1000L,
-                ImmutableList.of(
-                        "searchFromJSON",
-                        "-m", "f1", "f2", "f3",
-                        "-i", "s1", "s2",
-                        "--maskThreshold", "100",
-                        "--dataThreshold", "100",
-                        "--pixColorFluctuation", "2.0",
-                        "--xyShift", "20",
-                        "--mirrorMask",
-                        "--pctPositivePixels", "10.0",
-                        "--negativeRadius", "20",
-                        "--with-grad-scores",
-                        "--outputDir", "cdsresults"
-                )))
-                .thenReturn(serviceComputationFactory.newCompletedComputation(sparkApp));
 
         ServiceComputation<JacsServiceResult<List<File>>> colorDepthFileSearchComputation = sparkColorDepthFileSearch.process(testService);
 
@@ -152,30 +133,29 @@ public class SparkColorDepthFileSearchTest {
         colorDepthFileSearchComputation
                 .thenApply(r -> {
                     successful.accept(r);
-                    Mockito.verify(sparkCluster).runApp(
-                            jarPath,
-                            "org.janelia.colormipsearch.cmd.SparkMainEntry",
-                            0,
-                            serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
-                            serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
-                            null,
-                            (long) SEARCH_INTERVAL_CHECK_IN_MILLIS,
-                            SEARCH_TIMEOUT_IN_SECONDS * 1000L,
-                            ImmutableList.of(
-                                    "searchFromJSON",
-                                    "-m", "f1", "f2", "f3",
-                                    "-i", "s1", "s2",
-                                    "--maskThreshold", "100",
-                                    "--dataThreshold", "100",
-                                    "--pixColorFluctuation", "2.0",
-                                    "--xyShift", "20",
-                                    "--mirrorMask",
-                                    "--pctPositivePixels", "10.0",
-                                    "--negativeRadius", "20",
-                                    "--with-grad-scores",
-                                    "--outputDir", "cdsresults"
-                            ));
-                    Mockito.verify(sparkCluster).stopCluster();
+                    Mockito.verify(sparkAppProcessor).createServiceData(
+                            any(ServiceExecutionContext.class),
+                            argThat(new ListArgMatcher<>(
+                                    Arrays.asList(
+                                            new ServiceArgMatcher(new ServiceArg("-appName", "colordepthsearch")),
+                                            new ServiceArgMatcher(new ServiceArg("-appLocation", jarPath)),
+                                            new ServiceArgMatcher(new ServiceArg("-appEntryPoint", "org.janelia.colormipsearch.cmd.SparkMainEntry")),
+                                            new ServiceArgMatcher(new ServiceArg("-appArgs",
+                                                    "searchFromJSON," +
+                                                            "-m," + maskFiles + "," +
+                                                            "-i," + targetFiles + "," +
+                                                            "--maskThreshold," + maskThreshold + "," +
+                                                            "--dataThreshold," + targetThreshold + "," +
+                                                            "--pixColorFluctuation," + pixColorFluctuation + "," +
+                                                            "--xyShift," + xyShift + "," +
+                                                            "--mirrorMask," +
+                                                            "--pctPositivePixels," + pctPositivePixels + "," +
+                                                            "--negativeRadius," + negativeRadius + "," +
+                                                            "--with-grad-scores," +
+                                                            "--outputDir," + resultsDir))
+                                    )
+                            ))
+                    );
                     return r;
                 })
                 .exceptionally(exc -> {
@@ -190,22 +170,34 @@ public class SparkColorDepthFileSearchTest {
                 });
     }
 
-    private JacsServiceData createTestServiceData(Number serviceId, String owner) {
+    private JacsServiceData createTestServiceData(Number serviceId,
+                                                  String owner,
+                                                  String maskFiles,
+                                                  String targetFiles,
+                                                  String minWorkers,
+                                                  String maskThreshold,
+                                                  String targetThreshold,
+                                                  String pixColorFluctuation,
+                                                  String xyShift,
+                                                  String pctPositivePixels,
+                                                  String negativeRadius,
+                                                  String resultsDir,
+                                                  String numWorkers) {
         JacsServiceDataBuilder testServiceDataBuilder = new JacsServiceDataBuilder(null)
                 .setOwnerKey(owner)
                 .setAuthKey(owner)
-                .addArgs("-masksFiles", "f1,f2,f3")
-                .addArgs("-targetsFiles", "s1,s2")
-                .addArgs("-minWorkerNodes", "3")
-                .addArgs("-maskThreshold", "100")
-                .addArgs("-dataThreshold", "100")
-                .addArgs("-pixColorFluctuation", "2.0")
-                .addArgs("-xyShift", "20")
+                .addArgs("-masksFiles", maskFiles)
+                .addArgs("-targetsFiles", targetFiles)
+                .addArgs("-minWorkerNodes", minWorkers)
+                .addArgs("-maskThreshold", maskThreshold)
+                .addArgs("-dataThreshold", targetThreshold)
+                .addArgs("-pixColorFluctuation", pixColorFluctuation)
+                .addArgs("-xyShift", xyShift)
                 .addArgs("-mirrorMask")
-                .addArgs("-pctPositivePixels", "10.0")
-                .addArgs("-negativeRadius", "20")
-                .addArgs("-cdMatchesDir", "cdsresults")
-                .addArgs("-numNodes", "9")
+                .addArgs("-pctPositivePixels", pctPositivePixels)
+                .addArgs("-negativeRadius", negativeRadius)
+                .addArgs("-cdMatchesDir", resultsDir)
+                .addArgs("-numWorkers", numWorkers)
                 .addArgs("-withGradientScores")
                 ;
         JacsServiceData testServiceData = testServiceDataBuilder

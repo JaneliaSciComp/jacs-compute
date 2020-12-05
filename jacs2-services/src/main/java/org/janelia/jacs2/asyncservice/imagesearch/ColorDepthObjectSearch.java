@@ -111,8 +111,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     private final ColorDepthLibraryDao colorDepthLibraryDao;
     private final ObjectMapper objectMapper;
     private final int memPerCoreInGB;
-    private final int minNodes;
-    private final int maxNodes;
+    private final int minWorkers;
+    private final int maxWorkers;
     private final double partitionSizePerCoreFactor;
 
     @Inject
@@ -121,8 +121,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                            LegacyDomainDao legacyDomainDao,
                            @IntPropertyValue(name = "service.cluster.memPerCoreInGB", defaultValue = 15) Integer memPerCoreInGB,
-                           @IntPropertyValue(name = "service.colorDepthSearch.minNodes", defaultValue = 1) Integer minNodes,
-                           @IntPropertyValue(name = "service.colorDepthSearch.maxNodes", defaultValue = 8) Integer maxNodes,
+                           @IntPropertyValue(name = "service.colorDepthSearch.minWorkers", defaultValue = 1) Integer minWorkers,
+                           @IntPropertyValue(name = "service.colorDepthSearch.maxWorkers", defaultValue = 48) Integer maxWorkers,
                            @DoublePropertyValue(name = "service.colorDepthSearch.partitionSizePerCoreFactor", defaultValue = 5) Double partitionSizePerCoreFactor,
                            SparkColorDepthFileSearch sparkColorDepthFileSearch,
                            JavaProcessColorDepthFileSearch javaProcessColorDepthFileSearch,
@@ -133,8 +133,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.legacyDomainDao = legacyDomainDao;
         this.memPerCoreInGB = memPerCoreInGB;
-        this.minNodes = minNodes;
-        this.maxNodes = maxNodes;
+        this.minWorkers = minWorkers;
+        this.maxWorkers = maxWorkers;
         this.partitionSizePerCoreFactor = partitionSizePerCoreFactor;
         this.sparkColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sparkColorDepthFileSearch);
         this.javaProcessColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, javaProcessColorDepthFileSearch);
@@ -255,14 +255,14 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     } else {
                         // Curve fitting using https://www.desmos.com/calculator
                         // This equation was found using https://mycurvefit.com
-                        int desiredNodes = (int)Math.round(0.2 * Math.pow(ntargets, 0.32));
+                        int desiredWorkers = (int)Math.round(Math.pow(ntargets, 0.32));
 
-                        int numNodes = Math.max(Math.min(desiredNodes, maxNodes), minNodes);
-                        int filesPerNode = (int)Math.round(ntargets / (double)numNodes);
-                        logger.info("Using {} worker nodes, with {} files per node", numNodes, filesPerNode);
+                        int numWorkers = Math.max(Math.min(desiredWorkers, maxWorkers), minWorkers);
+                        int filesPerWorker = (int)Math.round(ntargets / (double)numWorkers);
+                        logger.info("Using {} workers, with {} files per worker", numWorkers, filesPerWorker);
 
                         serviceArgList.add(new ServiceArg("-useSpark"));
-                        serviceArgList.add(new ServiceArg("-numNodes", numNodes));
+                        serviceArgList.add(new ServiceArg("-numWorkers", numWorkers));
                         cdsComputation = runSparkBasedColorDepthSearch(jacsServiceData, serviceArgList, colorDepthProcessingResources);
                     }
                     return cdsComputation;
