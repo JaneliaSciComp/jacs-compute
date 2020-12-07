@@ -54,26 +54,41 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
         driverOptionsBuilder.add("--master", sparkClusterInfo.getMasterURI());
         String sparkDriverMemory = SparkAppResourceHelper.getSparkDriverMemory(sparkAppResources);
         if (StringUtils.isNotBlank(sparkDriverMemory)) {
-            driverOptionsBuilder.add("--conf").add(SparkLauncher.DRIVER_MEMORY + "=" + sparkDriverMemory);
+            driverOptionsBuilder.add("--driver-memory").add(sparkDriverMemory);
         }
         int sparkWorkerCores = SparkAppResourceHelper.getSparkWorkerCores(sparkAppResources);
         driverOptionsBuilder.add("--conf").add(SparkLauncher.EXECUTOR_CORES + "=" + sparkWorkerCores);
         int sparkMemPerCoreInGB = SparkAppResourceHelper.getSparkWorkerMemoryPerCoreInGB(sparkAppResources);
         if (sparkMemPerCoreInGB > 0) {
-            driverOptionsBuilder.add("--conf").add(SparkLauncher.EXECUTOR_MEMORY + "=" + sparkWorkerCores * sparkMemPerCoreInGB + "g");
+            driverOptionsBuilder.add("--executor-memory").add(sparkWorkerCores * sparkMemPerCoreInGB + "g");
         }
-        int sparkParallelism = SparkAppResourceHelper.getSparkParallelism(sparkAppResources);
+        int appDefinedParallelism = SparkAppResourceHelper.getSparkParallelism(sparkAppResources);
+        int defaultSparkParallelism = 3 * sparkWorkerCores * SparkAppResourceHelper.getSparkWorkers(sparkAppResources);
+        int sparkParallelism = appDefinedParallelism != 0 ? appDefinedParallelism : defaultSparkParallelism;
         if (sparkParallelism > 0) {
             // The default (4MB) open cost consolidates files into tiny partitions regardless of number of cores.
             // By forcing this parameter to zero, we can specify the exact parallelism we want.
             driverOptionsBuilder.add("--conf").add("spark.files.openCostInBytes=0");
             driverOptionsBuilder.add("--conf").add("spark.default.parallelism=" + sparkParallelism);
         }
+        StringBuilder sparkDriverJavaOptsBuilder = new StringBuilder();
         String sparkLogConfigFile = SparkAppResourceHelper.getSparkLogConfigFile(sparkAppResources);
         if (StringUtils.isNotBlank(sparkLogConfigFile)) {
             driverOptionsBuilder.add("--conf").add(SparkLauncher.EXECUTOR_EXTRA_JAVA_OPTIONS+"=-Dlog4j.configuration=file://" + sparkLogConfigFile);
+            sparkDriverJavaOptsBuilder.append("-Dlog4j.configuration=file://").append(SparkAppResourceHelper.getSparkLogConfigFile(sparkAppResources)).append(' ');
         }
-
+        String appStackSize = SparkAppResourceHelper.getSparkAppStackSize(sparkAppResources);
+        if (StringUtils.isNotBlank(appStackSize)) {
+            sparkDriverJavaOptsBuilder.append("-Xss").append(appStackSize).append(' ');
+        }
+        String hadoopHome = SparkAppResourceHelper.getHadoopHome(sparkAppResources);
+        if (StringUtils.isNotBlank(hadoopHome)) {
+            sparkDriverJavaOptsBuilder.append("-Dhadoop.home.dir=").append(hadoopHome).append(' ');
+            sparkDriverJavaOptsBuilder.append("-Djava.library.path=").append(hadoopHome).append("/lib/native ");
+        }
+        if (sparkDriverJavaOptsBuilder.length() > 0) {
+            driverOptionsBuilder.add("--driver-java-options", sparkDriverJavaOptsBuilder.toString());
+        }
         driverOptionsBuilder.add(appResource);
         if (CollectionUtils.isNotEmpty(appArgs)) {
             driverOptionsBuilder.addAll(appArgs);
