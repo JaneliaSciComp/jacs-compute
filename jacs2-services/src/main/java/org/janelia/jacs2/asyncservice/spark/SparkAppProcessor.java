@@ -1,8 +1,18 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
+
 import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceFolder;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -19,13 +29,6 @@ import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.ProcessingLocation;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Full cycle spark app processor that starts a spark cluster, runs the specified app and shuts down the cluster.
@@ -113,6 +116,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                 jacsServiceData,
                 JacsServiceData.createServiceEvent(JacsServiceEventTypes.START_PROCESS,
                         String.format("Starting a spark cluster with %d nodes", requestedSparkWorkers)));
+        String billingInfo = accounting.getComputeAccount(jacsServiceData);
         return sparkClusterLauncher.startCluster(
                 args.appName,
                 SparkAppResourceHelper.getSparkHome(appResources),
@@ -122,7 +126,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                 serviceWorkingFolder.getServiceFolder(),
                 Paths.get(jacsServiceData.getOutputPath()),
                 Paths.get(jacsServiceData.getErrorPath()),
-                accounting.getComputeAccount(jacsServiceData),
+                billingInfo,
                 serviceTimeoutInMins(jacsServiceData, appResources))
                 .thenCompose(sparkCluster -> {
                     runningClusterState.setData(sparkCluster);
@@ -135,26 +139,25 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                             sparkCluster.getSparkClusterInfo().getWorkerJobId(),
                                             args.appLocation,
                                             args.appEntryPoint)));
-                    ServiceComputation<? extends SparkApp> sparkAppRun;
-                    // the computation completes when the app completes
+                    SparkDriverRunner<? extends SparkApp> sparkDriverRunner;
                     if (jacsServiceData.getProcessingLocation() == ProcessingLocation.LSF_JAVA) {
-                        sparkAppRun = sparkCluster.runLSFApp(
-                                args.appLocation,
-                                args.appEntryPoint,
-                                args.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs())),
-                                jacsServiceData.getOutputPath(),
-                                jacsServiceData.getErrorPath(),
-                                appResources);
+                        sparkDriverRunner = sparkClusterLauncher.getLSFDriverRunner(billingInfo);
                     } else {
-                        sparkAppRun = sparkCluster.runLocalProcessApp(
-                                args.appLocation,
-                                args.appEntryPoint,
-                                args.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs())),
-                                jacsServiceData.getOutputPath(),
-                                jacsServiceData.getErrorPath(),
-                                appResources);
+                        sparkDriverRunner = sparkClusterLauncher.getLocalDriverRunner();
                     }
-                    return sparkAppRun;
+                    // the computation completes when the app completes
+                    return computationFactory.newCompletedComputation(
+                            sparkDriverRunner.startSparkApp(
+                                    sparkCluster.getSparkClusterInfo(),
+                                    args.appLocation,
+                                    args.appEntryPoint,
+                                    ServiceArgs.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs())),
+                                    jacsServiceData.getOutputPath(),
+                                    jacsServiceData.getErrorPath(),
+                                    appResources))
+                            .thenSuspendUntil(app -> new ContinuationCond.Cond<>(app, app.isDone()),
+                                    SparkAppResourceHelper.getSparkAppIntervalCheckInMillis(appResources),
+                                    SparkAppResourceHelper.getSparkAppTimeoutInMillis(appResources));
                 })
                 .whenComplete(((sparkApp, exc) -> {
                     if (runningClusterState.isPresent()) {

@@ -128,8 +128,9 @@ public class SparkAppProcessorTest {
                 DEFAULT_SPARK_DURATION_MINS))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
 
+        SparkClusterInfo testClusterInfo = new SparkClusterInfo(1L, 2L, "spark://sparkmasterhost:7077");
         Mockito.when(sparkCluster.getSparkClusterInfo())
-                .thenReturn(new SparkClusterInfo(1L, 2L, "spark://sparkmasterhost:7077"));
+                .thenReturn(testClusterInfo);
         Map<String, String> appResources = SparkAppResourceHelper.sparkAppResourceBuilder()
                 .sparkHome(DEFAULT_SPARK_HOME)
                 .sparkDriverMemory(DEFAULT_SPARK_DRIVER_MEMORY)
@@ -140,14 +141,17 @@ public class SparkAppProcessorTest {
                 .hadoopHome(HADOOP_HOME_DIR)
                 .addAll(testService.getResources())
                 .build();
-        Mockito.when(sparkCluster.runLocalProcessApp(
+        SparkDriverRunner<? extends SparkApp> sparkDriverRunner = mock(SparkDriverRunner.class);
+        Mockito.when(clusterLauncher.getLocalDriverRunner()).then(invocation -> sparkDriverRunner);
+        Mockito.when(sparkDriverRunner.startSparkApp(
+                testClusterInfo,
                 testAppResource,
                 null,
                 testAppArgs,
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
                 appResources)
-        ).then(invocation -> serviceComputationFactory.newCompletedComputation(sparkApp));
+        ).then(invocation -> sparkApp);
 
         ServiceComputation<JacsServiceResult<Void>> sparkServiceComputation = sparkAppProcessor.process(testService);
 
@@ -158,7 +162,8 @@ public class SparkAppProcessorTest {
         sparkServiceComputation
                 .thenApply(r -> {
                     successful.accept(r);
-                    Mockito.verify(sparkCluster).runLocalProcessApp(
+                    Mockito.verify(sparkDriverRunner).startSparkApp(
+                            testClusterInfo,
                             testAppResource,
                             null,
                             testAppArgs,

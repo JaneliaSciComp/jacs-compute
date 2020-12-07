@@ -1,5 +1,19 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
+
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
@@ -7,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.cluster.JobFuture;
 import org.janelia.cluster.JobInfo;
-import org.janelia.cluster.JobInfoBuilder;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobStatus;
 import org.janelia.cluster.JobTemplate;
@@ -21,22 +34,6 @@ import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.model.service.JacsJobInstanceInfo;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Launch a Spark cluster on LSF.
@@ -74,10 +71,10 @@ public class LSFSparkClusterLauncher {
                                    @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
                                    @IntPropertyValue(name = "service.spark.cluster.startTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
                                    @IntPropertyValue(name = "service.spark.cluster.intervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
-                                   @StrPropertyValue(name = "service.spark.startCommand", defaultValue="spark-class") String startSparkCmd,
-                                   @StrPropertyValue(name = "service.spark.sparkMasterClass", defaultValue="org.apache.spark.deploy.master.Master") String sparkMasterClass,
-                                   @StrPropertyValue(name = "service.spark.sparkWorkerClass", defaultValue="org.apache.spark.deploy.worker.Worker") String sparkWorkerClass,
-                                   @StrPropertyValue(name = "service.spark.lsf.spec", defaultValue="") String sparkLSFSpec,
+                                   @StrPropertyValue(name = "service.spark.startCommand", defaultValue = "spark-class") String startSparkCmd,
+                                   @StrPropertyValue(name = "service.spark.sparkMasterClass", defaultValue = "org.apache.spark.deploy.master.Master") String sparkMasterClass,
+                                   @StrPropertyValue(name = "service.spark.sparkWorkerClass", defaultValue = "org.apache.spark.deploy.worker.Worker") String sparkWorkerClass,
+                                   @StrPropertyValue(name = "service.spark.lsf.spec", defaultValue = "") String sparkLSFSpec,
                                    Logger logger) {
         this.computationFactory = computationFactory;
         this.jobMgr = monitoredJobManager.getJobMgr();
@@ -184,16 +181,24 @@ public class LSFSparkClusterLauncher {
                                     clusterStartTimeoutInMillis)
 
                             // then create the spark cluster
-                            .thenApply(workersInfo -> createSparkCluster(new SparkClusterInfo(masterJobInfo.getJobId(), workersInfo.getLeft(), sparkMasterURI), billingInfo));
+                            .thenApply(workersInfo -> createSparkCluster(new SparkClusterInfo(masterJobInfo.getJobId(), workersInfo.getLeft(), sparkMasterURI)));
                 });
     }
 
     LSFSparkCluster createSparkCluster(Long masterJobId, Long workerJobId, String billingInfo) {
-        return createSparkCluster(new SparkClusterInfo(masterJobId, workerJobId, getSparkURIFromJobId(masterJobId)), billingInfo);
+        return createSparkCluster(new SparkClusterInfo(masterJobId, workerJobId, getSparkURIFromJobId(masterJobId)));
     }
 
-    private LSFSparkCluster createSparkCluster(SparkClusterInfo sparkClusterInfo, String billingInfo) {
-        return new LSFSparkCluster(jobMgr, computationFactory, sparkClusterInfo, requiresAccountInfo ? billingInfo : null);
+    SparkDriverRunner<? extends SparkApp> getLocalDriverRunner() {
+        return new LocalSparkDriverRunner();
+    }
+
+    SparkDriverRunner<? extends SparkApp> getLSFDriverRunner(String billingInfo) {
+        return new LSFSparkDriverRunner(jobMgr, billingInfo);
+    }
+
+    private LSFSparkCluster createSparkCluster(SparkClusterInfo sparkClusterInfo) {
+        return new LSFSparkCluster(jobMgr, sparkClusterInfo);
     }
 
     private ServiceComputation<Long> startSparkMasterJob(String jobName,
@@ -292,7 +297,7 @@ public class LSFSparkClusterLauncher {
         List<String> spec = new ArrayList<>();
         if (nProcessingSlots > 1) {
             // append processing environment
-            spec.add("-n "+nProcessingSlots);
+            spec.add("-n " + nProcessingSlots);
         }
         if (StringUtils.isNotBlank(sparkLSFSpec)) {
             spec.addAll(Splitter.on(' ').trimResults().omitEmptyStrings().splitToList(sparkLSFSpec));
@@ -301,7 +306,7 @@ public class LSFSparkClusterLauncher {
             spec.add("-W " + sparkClusterTimeoutInMins);
         }
         if (requiresAccountInfo)
-            spec.add("-P "+billingAccount);
+            spec.add("-P " + billingAccount);
 
         return spec;
     }
@@ -322,11 +327,11 @@ public class LSFSparkClusterLauncher {
 
     private String getSparkURIFromJobInfo(JobInfo jobInfo) {
         return getHostname(jobInfo)
-                    .map(execHost -> DEFAULT_SPARK_URI_SCHEME + "://" + execHost + ":" + DEFAULT_SPARK_MASTER_PORT)
-                    .orElseThrow(() -> {
-                        logger.error("No proper exec hosts has been set for {} even though exec host field is set to {}", jobInfo, jobInfo.getExecHost());
-                        return new IllegalStateException("No proper exec hosts has been set for " + jobInfo + " even though exec host field is set to " + jobInfo.getExecHost());
-                    });
+                .map(execHost -> DEFAULT_SPARK_URI_SCHEME + "://" + execHost + ":" + DEFAULT_SPARK_MASTER_PORT)
+                .orElseThrow(() -> {
+                    logger.error("No proper exec hosts has been set for {} even though exec host field is set to {}", jobInfo, jobInfo.getExecHost());
+                    return new IllegalStateException("No proper exec hosts has been set for " + jobInfo + " even though exec host field is set to " + jobInfo.getExecHost());
+                });
     }
 
     private Optional<String> getHostname(JobInfo jobInfo) {

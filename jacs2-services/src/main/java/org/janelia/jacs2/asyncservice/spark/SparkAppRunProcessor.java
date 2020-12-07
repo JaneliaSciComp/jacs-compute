@@ -1,28 +1,31 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import com.beust.jcommander.Parameter;
 import com.google.common.collect.ImmutableList;
+
 import org.janelia.jacs2.asyncservice.common.ComputationException;
+import org.janelia.jacs2.asyncservice.common.ContinuationCond;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
 import org.janelia.jacs2.asyncservice.common.ServiceComputation;
 import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
+import org.janelia.model.service.ProcessingLocation;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 @Named("runSparkApp")
 public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
@@ -94,6 +97,7 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
                 .addAll(jacsServiceData.getResources())
                 .build();
         // start a spark app on on existing cluster
+        String billingInfo = accounting.getComputeAccount(jacsServiceData);
         return computationFactory.newCompletedComputation(sparkClusterLauncher.createSparkCluster(
                 args.getSparkMasterJobId(),
                 args.getSparkWorkerJobId(),
@@ -108,14 +112,25 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
                                             sparkCluster.getSparkClusterInfo().getMasterURI(),
                                             sparkCluster.getSparkClusterInfo().getMasterJobId(),
                                             sparkCluster.getSparkClusterInfo().getWorkerJobId())));
+                    SparkDriverRunner<? extends SparkApp> sparkDriverRunner;
+                    if (jacsServiceData.getProcessingLocation() == ProcessingLocation.LSF_JAVA) {
+                        sparkDriverRunner = sparkClusterLauncher.getLSFDriverRunner(billingInfo);
+                    } else {
+                        sparkDriverRunner = sparkClusterLauncher.getLocalDriverRunner();
+                    }
                     // the computation completes when the app completes
-                    return sparkCluster.runLocalProcessApp(
-                            args.appLocation,
-                            args.appEntryPoint,
-                            args.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs())),
-                            jacsServiceData.getOutputPath(),
-                            jacsServiceData.getErrorPath(),
-                            appResources);
+                    return computationFactory.newCompletedComputation(
+                            sparkDriverRunner.startSparkApp(
+                                    sparkCluster.getSparkClusterInfo(),
+                                    args.appLocation,
+                                    args.appEntryPoint,
+                                    ServiceArgs.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs())),
+                                    jacsServiceData.getOutputPath(),
+                                    jacsServiceData.getErrorPath(),
+                                    appResources))
+                            .thenSuspendUntil(app -> new ContinuationCond.Cond<>(app, app.isDone()),
+                                    SparkAppResourceHelper.getSparkAppIntervalCheckInMillis(appResources),
+                                    SparkAppResourceHelper.getSparkAppTimeoutInMillis(appResources));
                 })
                 .thenApply(sparkApp -> {
                     if (sparkApp.hasErrors()) {
