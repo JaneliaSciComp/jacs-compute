@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.spark;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,11 +11,12 @@ import org.apache.commons.lang3.StringUtils;
 
 public abstract class AbstractSparkApp implements SparkApp {
     private final String errorFilename;
-    private boolean checkedForErrorsFlag;
+    private long lastCheckedErrorFileSize;
     private String errorMessage;
 
     public AbstractSparkApp(String errorFilename) {
         this.errorFilename = errorFilename;
+        this.lastCheckedErrorFileSize = 0;
     }
 
     @Override
@@ -27,15 +29,16 @@ public abstract class AbstractSparkApp implements SparkApp {
     }
 
     private boolean checkForErrors() {
-        if (!checkedForErrorsFlag) {
-            if (StringUtils.isNotBlank(errorFilename)) {
+        if (StringUtils.isNotBlank(errorFilename)) {
+            File errorFile = new File(errorFilename);
+            if (errorFile.exists() && errorFile.length() > lastCheckedErrorFileSize) {
                 try (InputStream errorFileStream = new FileInputStream(errorFilename)) {
                     checkStreamForErrors(errorFileStream);
+                    lastCheckedErrorFileSize = errorFile.length();
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
                 }
             }
-            checkedForErrorsFlag = true;
         }
         return StringUtils.isNotBlank(errorMessage);
     }
