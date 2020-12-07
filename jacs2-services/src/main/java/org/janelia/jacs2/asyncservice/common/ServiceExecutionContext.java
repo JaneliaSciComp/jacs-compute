@@ -1,18 +1,17 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.model.service.JacsServiceData;
-import org.janelia.model.service.JacsServiceState;
-import org.janelia.model.service.ProcessingLocation;
-import org.janelia.model.service.RegisteredJacsNotification;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.model.service.JacsServiceData;
+import org.janelia.model.service.JacsServiceState;
+import org.janelia.model.service.ProcessingLocation;
+import org.janelia.model.service.RegisteredJacsNotification;
 
 public class ServiceExecutionContext {
 
@@ -25,6 +24,11 @@ public class ServiceExecutionContext {
 
         public Builder processingLocation(ProcessingLocation processingLocation) {
             if (processingLocation != null) serviceExecutionContext.processingLocation = processingLocation;
+            return this;
+        }
+
+        public Builder withId(Number serviceId) {
+            serviceExecutionContext.serviceId = serviceId;
             return this;
         }
 
@@ -121,6 +125,7 @@ public class ServiceExecutionContext {
 
     private final JacsServiceData parentService;
     private ProcessingLocation processingLocation;
+    private Number serviceId;
     private String serviceName;
     private String workspace;
     private JacsServiceState serviceState;
@@ -176,6 +181,14 @@ public class ServiceExecutionContext {
 
     Long getServiceTimeoutInMillis() {
         return serviceTimeoutInMillis;
+    }
+
+    boolean hasServiceId() {
+        return serviceId != null;
+    }
+
+    Number getServiceId() {
+        return serviceId;
     }
 
     String getServiceName(String defaultServiceName) {
