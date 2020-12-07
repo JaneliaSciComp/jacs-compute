@@ -345,6 +345,11 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.setAccessId(1);
     }
 
+    public JacsServiceData withAccessId(int accessId) {
+        this.accessId = accessId;
+        return this;
+    }
+
     public int nextAccessId() {
         return accessId + 1;
     }

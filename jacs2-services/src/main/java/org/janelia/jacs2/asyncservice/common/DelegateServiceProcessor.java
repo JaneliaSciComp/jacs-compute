@@ -76,8 +76,9 @@ public class DelegateServiceProcessor<S extends ServiceProcessor<T>, T> implemen
                         .state(JacsServiceState.RUNNING)
                         .addResources(delegateResourcesMapper.mapResources(jacsServiceData))
                         .build(),
-                delegateArgsMapper.mapServiceData(jacsServiceData)
-        ).withId(jacsServiceData.getId());
+                delegateArgsMapper.mapServiceData(jacsServiceData))
+                .withId(jacsServiceData.getId())
+                .withAccessId(jacsServiceData.getAccessId());
     }
 
 }
