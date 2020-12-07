@@ -131,6 +131,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
         if (StringUtils.isBlank(jacsServiceData.getErrorPath())) {
             serviceUpdates.putAll(jacsServiceData.updateErrorPath(jacsServiceFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString()));
         }
+        logger.info("!!!!!!!!!!!!!!!!!!!!!!!!!! UPDATE SERVICE DIRS: {}", jacsServiceData);
         jacsServiceDataPersistence.update(jacsServiceData, serviceUpdates);
     }
 

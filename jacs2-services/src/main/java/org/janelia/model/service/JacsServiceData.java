@@ -90,6 +90,11 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.id = id;
     }
 
+    public JacsServiceData withId(Number id) {
+        this.id = id;
+        return this;
+    }
+
     @JsonProperty("serviceId")
     public String getServiceId() {
         return hasId() ? id.toString() : null;

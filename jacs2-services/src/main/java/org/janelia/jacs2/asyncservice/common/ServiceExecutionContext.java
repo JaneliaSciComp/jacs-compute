@@ -27,11 +27,6 @@ public class ServiceExecutionContext {
             return this;
         }
 
-        public Builder withId(Number serviceId) {
-            serviceExecutionContext.serviceId = serviceId;
-            return this;
-        }
-
         public Builder waitFor(List<JacsServiceData> dependenciesList) {
             for (JacsServiceData dependency : dependenciesList) {
                 if (dependency != null) serviceExecutionContext.waitFor.add(dependency);
@@ -125,7 +120,6 @@ public class ServiceExecutionContext {
 
     private final JacsServiceData parentService;
     private ProcessingLocation processingLocation;
-    private Number serviceId;
     private String serviceName;
     private String workspace;
     private JacsServiceState serviceState;
@@ -181,14 +175,6 @@ public class ServiceExecutionContext {
 
     Long getServiceTimeoutInMillis() {
         return serviceTimeoutInMillis;
-    }
-
-    boolean hasServiceId() {
-        return serviceId != null;
-    }
-
-    Number getServiceId() {
-        return serviceId;
     }
 
     String getServiceName(String defaultServiceName) {

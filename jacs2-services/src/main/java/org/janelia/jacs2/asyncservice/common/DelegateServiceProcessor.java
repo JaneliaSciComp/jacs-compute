@@ -51,11 +51,7 @@ public class DelegateServiceProcessor<S extends ServiceProcessor<T>, T> implemen
 
     @Override
     public JacsServiceData createServiceData(ServiceExecutionContext executionContext, List<ServiceArg> args) {
-        JacsServiceData serviceData = delegateProcessor.createServiceData(executionContext, args);
-        if (executionContext.hasServiceId()) {
-            serviceData.setId(executionContext.getServiceId());
-        }
-        return serviceData;
+        return delegateProcessor.createServiceData(executionContext, args);
     }
 
     @Override
@@ -74,14 +70,14 @@ public class DelegateServiceProcessor<S extends ServiceProcessor<T>, T> implemen
     }
 
     private JacsServiceData createDelegateServiceData(JacsServiceData jacsServiceData) {
-        return delegateProcessor.createServiceData(new ServiceExecutionContext.Builder(jacsServiceData)
-                        .withId(jacsServiceData.getId())
+        return delegateProcessor.createServiceData(
+                new ServiceExecutionContext.Builder(jacsServiceData)
                         .setServiceName(jacsServiceData.getName())
                         .state(JacsServiceState.RUNNING)
                         .addResources(delegateResourcesMapper.mapResources(jacsServiceData))
                         .build(),
                 delegateArgsMapper.mapServiceData(jacsServiceData)
-        );
+        ).withId(jacsServiceData.getId());
     }
 
 }
