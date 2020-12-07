@@ -37,6 +37,9 @@ class LocalSparkDriverRunner implements SparkDriverRunner<LocalProcessSparkApp> 
         } else {
             sparkErrorFile = null;
         }
+        if (StringUtils.isNotBlank(appOutputDir)) {
+            sparkLauncher.redirectOutput(new File(appOutputDir, DRIVER_OUTPUT_FILENAME));
+        }
         String[] appArgsArray;
         if (CollectionUtils.isEmpty(appArgs)) {
             appArgsArray = new String[0];

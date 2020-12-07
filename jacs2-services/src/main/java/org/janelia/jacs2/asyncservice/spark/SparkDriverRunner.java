@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 interface SparkDriverRunner<A extends SparkApp> {
+    String DRIVER_OUTPUT_FILENAME = "sparkdriver.out";
     String DRIVER_ERROR_FILENAME = "sparkdriver.err";
 
     A startSparkApp(SparkClusterInfo sparkClusterInfo,
