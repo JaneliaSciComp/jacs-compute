@@ -339,7 +339,7 @@ public class LSFSparkClusterLauncher {
 
     private Optional<String> scanFileForSparkURI(File f) {
         if (f.exists()) {
-            Pattern p = Pattern.compile("Starting Spark master at (spark://(.*):([0-9]+))$");
+            Pattern p = Pattern.compile("Starting Spark master at (spark://([^:]+):([0-9]+))$");
             try (BufferedReader reader = new BufferedReader(new FileReader(f))) {
                 for (;;) {
                     String l = reader.readLine();
@@ -349,7 +349,9 @@ public class LSFSparkClusterLauncher {
                     }
                     Matcher m = p.matcher(l);
                     if (m.find()) {
-                        return Optional.of(m.group(1));
+                        String sparkURI = m.group(1);
+                        logger.info("Found spark URI: {} in {}", sparkURI, f);
+                        return Optional.of(sparkURI);
                     }
                 }
             } catch (Exception ignore) {
