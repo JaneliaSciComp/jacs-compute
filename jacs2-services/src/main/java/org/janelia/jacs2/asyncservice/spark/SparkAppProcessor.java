@@ -158,7 +158,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                     jacsServiceData.getErrorPath(),
                                     appResources))
                             .thenSuspendUntil(app -> {
-                                        logger.info("!!!!!! APP {} IS DONE {}", args.appName, app.isDone());
+                                        logger.info("!!!!!! APP {}:{} IS DONE {}", args.appName, app.getAppId(), app.isDone());
                                         return new ContinuationCond.Cond<>(app, app.isDone());
                                     },
                                     SparkAppResourceHelper.getSparkAppIntervalCheckInMillis(appResources),
