@@ -225,6 +225,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                 .map(serviceArgList -> {
                     ServiceComputation<JacsServiceResult<List<File>>> cdsComputation;
                     Map<String, String> colorDepthProcessingResources = new LinkedHashMap<>();
+                    ProcessorHelper.setHardJobDurationLimitInSeconds(colorDepthProcessingResources, 3599); // set job duration to under 1h
                     if (args.useJavaProcess) {
                         int ncores;
                         if (ntargets < JavaProcessColorDepthFileSearch.TARGETS_PER_JOB / 4) {
@@ -250,7 +251,6 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 ntargets,
                                 processingPartitionSize);
                         ProcessorHelper.setRequiredMemoryInGB(colorDepthProcessingResources, memInGB);
-                        ProcessorHelper.setSoftJobDurationLimitInSeconds(colorDepthProcessingResources, 1800); // set job duration to 1/2 h
                         cdsComputation = runJavaProcessBasedColorDepthSearch(jacsServiceData, serviceArgList, colorDepthProcessingResources);
                     } else {
                         // Curve fitting using https://www.desmos.com/calculator
