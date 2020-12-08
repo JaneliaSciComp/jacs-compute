@@ -28,6 +28,7 @@ import javax.inject.Inject;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -313,7 +314,10 @@ public class LSFSparkClusterLauncher {
                     jobOutputPath.resolve("W" + jobName  + "_#.out"),
                     jobErrorPath.resolve("W" + jobName + "_#.err"),
                     createNativeSpec(nCoresPerWorker, billingInfo, sparkJobsTimeoutInMins),
-                    Collections.emptyMap()
+                    ImmutableMap.of(
+                            // spark.worker.cleanup.enabled=true causes worker to remove SPARK_WORKER_DIR (with worker log data) before exit
+                            "SPARK_WORKER_OPTS", "-Dspark.worker.cleanup.enabled=true"
+                    )
             );
             JobFuture workerJobsFuture = jobMgr.submitJob(workerJobTemplate, 1, nWorkers);
             logger.info("Submitted {} spark worker jobs {} ", nWorkers, workerJobsFuture.getJobId());
