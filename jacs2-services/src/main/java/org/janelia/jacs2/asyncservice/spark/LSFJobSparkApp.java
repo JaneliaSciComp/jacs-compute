@@ -65,7 +65,7 @@ public class LSFJobSparkApp extends AbstractSparkApp {
         if (driverJobId == null) {
             return true; // if it was never started consider it an error
         } else {
-            return jobManager.getJobInfo(driverJobId).stream()
+            return jobManager.retrieveJobInfo(driverJobId).stream()
                     .filter(jobInfo -> jobInfo.getStatus() == JobStatus.EXIT)
                     .count() > 0;
         }

@@ -173,7 +173,7 @@ public class LSFSparkClusterLauncher {
                             .thenSuspendUntil(
                                     workerJobId -> {
                                         logger.trace("Check if spark workers job {} is ready", workerJobId);
-                                        return Pair.of(workerJobId, jobMgr.getJobInfo(workerJobId));
+                                        return Pair.of(workerJobId, jobMgr.retrieveJobInfo(workerJobId));
                                     },
                                     (Pair<Long, Collection<JobInfo>> workersInfo) -> {
                                         long runningWorkers = workersInfo.getRight().stream()
