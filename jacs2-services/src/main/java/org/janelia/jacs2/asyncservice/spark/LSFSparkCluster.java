@@ -23,16 +23,16 @@ class LSFSparkCluster {
 
     void stopCluster() {
         try {
-            LOG.info("Kill spark master job {}", sparkClusterInfo.getMasterJobId());
-            jobMgr.killJob(sparkClusterInfo.getMasterJobId());
-        } catch (Exception e) {
-            LOG.error("Error stopping spark master job {}", sparkClusterInfo.getMasterJobId(), e);
-        }
-        try {
             LOG.info("Kill spark worker job {}", sparkClusterInfo.getWorkerJobId());
             jobMgr.killJob(sparkClusterInfo.getWorkerJobId());
         } catch (Exception e) {
             LOG.error("Error stopping spark worker job {}", sparkClusterInfo.getWorkerJobId(), e);
+        }
+        try {
+            LOG.info("Kill spark master job {}", sparkClusterInfo.getMasterJobId());
+            jobMgr.killJob(sparkClusterInfo.getMasterJobId());
+        } catch (Exception e) {
+            LOG.error("Error stopping spark master job {}", sparkClusterInfo.getMasterJobId(), e);
         }
     }
 }
