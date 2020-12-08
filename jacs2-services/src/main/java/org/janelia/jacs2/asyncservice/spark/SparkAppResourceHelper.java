@@ -105,8 +105,20 @@ public class SparkAppResourceHelper {
 
     static int getSparkWorkers(Map<String, String> sparkResources) {
         String sparkWorkers = StringUtils.defaultIfBlank(
-                sparkResources.getOrDefault("sparkWorkers", sparkResources.get("sparkNumNodes")), "1");
+                sparkResources.getOrDefault("sparkWorkers", getSparkNodes(sparkResources)), "1");
         return Math.max(1, Integer.parseInt(sparkWorkers));
+    }
+
+    private static String getSparkNodes(Map<String, String> sparkResources) {
+        // this is the legacy mechanism of getting the workers where the entire node was allocated for a spark job
+        String sparkNodes = sparkResources.get("sparkNumNodes");
+        if (StringUtils.isNotBlank(sparkNodes)) {
+            int nSparkNodes = Integer.parseInt(sparkNodes);
+            // the legacy spark app allocated 5 slots on each node per worker, therefore each node could have up to 6 spark workers
+            return String.valueOf(nSparkNodes * 6);
+        } else {
+            return null;
+        }
     }
 
     static int getSparkWorkerCores(Map<String, String> sparkResources) {

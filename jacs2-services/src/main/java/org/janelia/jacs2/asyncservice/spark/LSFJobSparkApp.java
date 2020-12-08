@@ -1,16 +1,10 @@
 package org.janelia.jacs2.asyncservice.spark;
 
-import java.util.Collection;
-
 import org.janelia.cluster.JobInfo;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class LSFJobSparkApp extends AbstractSparkApp {
-    private static final Logger LOG = LoggerFactory.getLogger(LSFJobSparkApp.class);
-
     private final JobManager jobManager;
     private final Long driverJobId;
 
@@ -28,7 +22,6 @@ public class LSFJobSparkApp extends AbstractSparkApp {
     @Override
     public boolean isDone() {
         if (driverJobId == null) {
-            LOG.warn("!!!! ISDONE: Driver job id was not set");
             return true;
         } else {
             return jobManager.retrieveJobInfo(driverJobId).stream().allMatch(JobInfo::isComplete);
@@ -38,12 +31,9 @@ public class LSFJobSparkApp extends AbstractSparkApp {
     @Override
     public String getStatus() {
         if (driverJobId == null) {
-            LOG.warn("!!!! GET_STATUS: Driver job id was not set");
             return "NOT_FOUND";
         } else {
-            Collection<JobInfo> jobInfoCollection = jobManager.retrieveJobInfo(driverJobId);
-            LOG.info("!!!! JOB INFO {}", jobInfoCollection);
-            return jobInfoCollection.stream()
+            return jobManager.retrieveJobInfo(driverJobId).stream()
                     .map(ji -> ji.getStatus().name())
                     .findFirst()
                     .orElse("NOT_FOUND");

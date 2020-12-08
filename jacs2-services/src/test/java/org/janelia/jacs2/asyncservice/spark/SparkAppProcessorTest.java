@@ -186,7 +186,7 @@ public class SparkAppProcessorTest {
                                                   String testApp,
                                                   List<String> appArgs,
                                                   String owner,
-                                                  int numNodes,
+                                                  int numWorkers,
                                                   int minRequiredWorkers,
                                                   String driverMemory,
                                                   String executorMemory,
@@ -199,7 +199,7 @@ public class SparkAppProcessorTest {
                 .addArgs("-appLocation", testApp)
                 .addArgs("-appArgs").addArgs(appArgs.stream().reduce((a1, a2) -> a1 + "," + a2).orElse(""))
                 .addResource("sparkAppStackSize", "128M")
-                .addResource("sparkNumNodes", String.valueOf(numNodes))
+                .addResource("sparkWorkers", String.valueOf(numWorkers))
                 .addResource("minSparkWorkers", String.valueOf(minRequiredWorkers))
                 .addResource("sparkDriverMemory", driverMemory)
                 .addResource("sparkExecutorMemory", executorMemory)
