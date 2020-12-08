@@ -21,6 +21,11 @@ public class LocalProcessSparkApp extends AbstractSparkApp {
     }
 
     @Override
+    public String getStatus() {
+        return appHandle == null ? "NOT_FOUND" : appHandle.getState().name();
+    }
+
+    @Override
     public String getErrors() {
         if (appHandle.getState() == SparkAppHandle.State.KILLED) {
             return "Spark Application was terminated by the user";

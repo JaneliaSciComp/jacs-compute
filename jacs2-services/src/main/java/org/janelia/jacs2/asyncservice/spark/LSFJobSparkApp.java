@@ -31,6 +31,18 @@ public class LSFJobSparkApp extends AbstractSparkApp {
     }
 
     @Override
+    public String getStatus() {
+        if (driverJobId == null) {
+            return "NOT_FOUND";
+        } else {
+            return jobManager.getJobInfo(driverJobId).stream()
+                    .map(ji -> ji.getStatus().name())
+                    .findFirst()
+                    .orElse("NOT_FOUND");
+        }
+    }
+
+    @Override
     public String getErrors() {
         if (completedWithErrors()) {
             return "Spark Application terminated with errors";
