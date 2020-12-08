@@ -121,7 +121,7 @@ public class SparkAppProcessorTest {
                 testNumNodes,
                 DEFAULT_CORES_PER_SPARK_EXECUTOR,
                 testMinRequiredWorkers,
-                serviceWorkingFolder.getServiceFolder(),
+                serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR),
                 serviceOutputPath,
                 serviceErrorPath,
                 clusterBillingInfo,

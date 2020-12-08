@@ -123,7 +123,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                 SparkAppResourceHelper.getSparkWorkers(appResources),
                 SparkAppResourceHelper.getSparkWorkerCores(appResources),
                 SparkAppResourceHelper.getMinRequiredWorkers(appResources),
-                serviceWorkingFolder.getServiceFolder(),
+                serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR),
                 Paths.get(jacsServiceData.getOutputPath()),
                 Paths.get(jacsServiceData.getErrorPath()),
                 billingInfo,
