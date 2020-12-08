@@ -219,8 +219,8 @@ public class LSFSparkClusterLauncher {
                             .build(),
                     sparkHomeDir,
                     jobWorkingPath,
-                    jobOutputPath,
-                    jobErrorPath,
+                    jobOutputPath.resolve(jobName + ".out"),
+                    jobErrorPath.resolve(jobName + ".err"),
                     createNativeSpec(1, billingInfo, sparkJobsTimeoutInMins),
                     Collections.emptyMap()
             );
@@ -258,8 +258,8 @@ public class LSFSparkClusterLauncher {
                     jobArgsBuilder.build(),
                     sparkHomeDir,
                     jobWorkingPath,
-                    jobOutputPath,
-                    jobErrorPath,
+                    jobOutputPath.resolve(jobName  + "_#.out"),
+                    jobErrorPath.resolve(jobName + "_#.err"),
                     createNativeSpec(nCoresPerWorker, billingInfo, sparkJobsTimeoutInMins),
                     Collections.emptyMap()
             );
