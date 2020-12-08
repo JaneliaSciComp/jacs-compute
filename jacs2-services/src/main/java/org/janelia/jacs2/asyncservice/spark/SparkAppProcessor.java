@@ -173,6 +173,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                                 runningClusterState.getData().getSparkClusterInfo().getMasterURI(),
                                                 runningClusterState.getData().getSparkClusterInfo().getMasterJobId(),
                                                 runningClusterState.getData().getSparkClusterInfo().getWorkerJobId())));
+                        sparkApp.kill(); // terminate the app just in case it is still running
                         runningClusterState.getData().stopCluster();
                     }
                 }))
