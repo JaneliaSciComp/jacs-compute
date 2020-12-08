@@ -171,21 +171,25 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                                 runningClusterState.getData().getSparkClusterInfo().getMasterJobId(),
                                                 runningClusterState.getData().getSparkClusterInfo().getWorkerJobId())));
                         sparkApp.kill(); // terminate the app just in case it is still running
+                        if (exc != null) {
+                            logger.error("Spark processing error encountered", exc);
+                            jacsServiceDataPersistence.updateServiceState(
+                                    jacsServiceData,
+                                    JacsServiceState.ERROR,
+                                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, exc.toString()));
+                            throw new ComputationException(jacsServiceData, exc.toString());
+                        } else if (sparkApp.hasErrors()) {
+                            logger.error("Spark application error: {}", sparkApp.getErrors());
+                            jacsServiceDataPersistence.updateServiceState(
+                                    jacsServiceData,
+                                    JacsServiceState.ERROR,
+                                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, sparkApp.getErrors()));
+                            throw new ComputationException(jacsServiceData, sparkApp.getErrors());
+                        }
                         runningClusterState.getData().stopCluster();
                     }
                 }))
-                .thenApply(sparkApp -> {
-                    if (sparkApp.hasErrors()) {
-                        logger.error("Spark application error: {}", sparkApp.getErrors());
-                        jacsServiceDataPersistence.updateServiceState(
-                                jacsServiceData,
-                                JacsServiceState.ERROR,
-                                JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, sparkApp.getErrors()));
-                        throw new ComputationException(jacsServiceData, sparkApp.getErrors());
-                    } else {
-                        return new JacsServiceResult<>(jacsServiceData);
-                    }
-                })
+                .thenApply(sparkApp -> new JacsServiceResult<>(jacsServiceData))
                 ;
     }
 }
