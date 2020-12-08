@@ -176,7 +176,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                 }))
                 .thenApply(sparkApp -> {
                     if (sparkApp.hasErrors()) {
-                        logger.error("Spark application error");
+                        logger.error("Spark application error: {}", sparkApp.getErrors());
                         jacsServiceDataPersistence.updateServiceState(
                                 jacsServiceData,
                                 JacsServiceState.ERROR,

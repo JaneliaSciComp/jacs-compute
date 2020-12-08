@@ -55,7 +55,7 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
         return computationFactory.newCompletedComputation(sparkClusterLauncher.createSparkCluster(
                 args.getSparkMasterJobId(),
                 args.getSparkWorkerJobId(),
-                null /* billing info is not important here because we only want to destroy it anyway */))
+                null /* spark URI is not important here because we only want to destroy it anyway */))
                 .thenApply(sparkCluster -> {
                     jacsServiceDataPersistence.addServiceEvent(
                             jacsServiceData,

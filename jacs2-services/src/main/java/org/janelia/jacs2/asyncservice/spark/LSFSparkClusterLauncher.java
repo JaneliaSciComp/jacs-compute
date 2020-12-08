@@ -1,7 +1,13 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -15,6 +21,8 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
@@ -146,16 +154,21 @@ public class LSFSparkClusterLauncher {
                         clusterIntervalCheckInMillis,
                         clusterStartTimeoutInMillis)
 
-                // Now wait until the master is actually ready to accept connections.
-                // Without this step, the workers and driver may connect too early and we'll get messages like this:
-                // "Initial job has not accepted any resources; check your cluster UI to ensure that workers are registered and have sufficient resources"
-                // These types of warnings normally wouldn't matter much, except that Janelia's start worker script waits
-                // 2 minutes to retry if the worker fails to start because it can't connect to the master
+                // Wait for the URI to be written to the log
+                .thenSuspendUntil(
+                        jobInfo -> scanFileForSparkURI(getSparkErrorOutputLogPath(sparkJobName, jobErrorPath).toFile())
+                                .map(Optional::of)
+                                .orElseGet(() -> scanFileForSparkURI(getSparkErrorOutputLogPath(sparkJobName, jobOutputPath).toFile()))
+                                .map(sparkURI -> new SparkClusterInfo(jobInfo.getJobId(), null, sparkURI))
+                                .orElseGet(() -> new SparkClusterInfo(jobInfo.getJobId(), null, null)),
+                        sparkClusterInfo -> new ContinuationCond.Cond<>(sparkClusterInfo, StringUtils.isNotBlank(sparkClusterInfo.getMasterURI())),
+                        clusterIntervalCheckInMillis,
+                        clusterStartTimeoutInMillis
+                )
 
                 // Now we're ready to spawn the workers and have them connect back to the master
-                .thenCompose(masterJobInfo -> {
-                    String sparkMasterURI = getSparkURIFromJobInfo(masterJobInfo);
-                    logger.info("Spark master job {} ({}) is running on {}", masterJobInfo.getJobId(), sparkMasterURI, masterJobInfo.getExecHost());
+                .thenCompose((SparkClusterInfo sparkClusterInfo) -> {
+                    logger.info("Spark master job {} on {}", sparkClusterInfo.getMasterJobId(), sparkClusterInfo.getMasterURI());
                     return startSparkWorkerJobs(
                             sparkJobName,
                             sparkHomeDir,
@@ -167,7 +180,7 @@ public class LSFSparkClusterLauncher {
                             sparkJobsTimeoutInMins,
                             nWorkers,
                             nCoresPerWorker,
-                            sparkMasterURI)
+                            sparkClusterInfo.getMasterURI())
 
                             // Wait for the minimum number of workers to start
                             .thenSuspendUntil(
@@ -190,7 +203,7 @@ public class LSFSparkClusterLauncher {
                                     clusterStartTimeoutInMillis)
 
                             // then create the spark cluster
-                            .thenApply(workersInfo -> createSparkCluster(new SparkClusterInfo(masterJobInfo.getJobId(), workersInfo.getLeft(), sparkMasterURI)));
+                            .thenApply(workersInfo -> createSparkCluster(new SparkClusterInfo(sparkClusterInfo.getMasterJobId(), workersInfo.getLeft(), sparkClusterInfo.getMasterURI())));
                 });
     }
 
@@ -217,8 +230,8 @@ public class LSFSparkClusterLauncher {
         return sparkConfigFile.getAbsolutePath();
     }
 
-    LSFSparkCluster createSparkCluster(Long masterJobId, Long workerJobId, String billingInfo) {
-        return createSparkCluster(new SparkClusterInfo(masterJobId, workerJobId, getSparkURIFromJobId(masterJobId)));
+    LSFSparkCluster createSparkCluster(Long masterJobId, Long workerJobId, String sparkURI) {
+        return createSparkCluster(new SparkClusterInfo(masterJobId, workerJobId, sparkURI));
     }
 
     SparkDriverRunner<? extends SparkApp> getLocalDriverRunner() {
@@ -254,8 +267,8 @@ public class LSFSparkClusterLauncher {
                     jobArgsBuilder.build(),
                     sparkHomeDir,
                     jobWorkingPath,
-                    jobOutputPath.resolve("M" + jobName + ".out"),
-                    jobErrorPath.resolve("M" + jobName + ".err"),
+                    getSparkMasterOutputLogPath(jobName, jobOutputPath),
+                    getSparkErrorOutputLogPath(jobName, jobErrorPath),
                     createNativeSpec(1, billingInfo, sparkJobsTimeoutInMins),
                     Collections.emptyMap()
             );
@@ -312,6 +325,37 @@ public class LSFSparkClusterLauncher {
         }
     }
 
+    private Path getSparkMasterOutputLogPath(String jobName, Path outputPath) {
+        return outputPath.resolve("M" + jobName + ".out");
+    }
+
+    private Path getSparkErrorOutputLogPath(String jobName, Path outputPath) {
+        return outputPath.resolve("M" + jobName + ".err");
+    }
+
+    private Optional<String> scanFileForSparkURI(File f) {
+        if (f.exists()) {
+            Pattern p = Pattern.compile("Starting Spark master at (spark://(.*):([0-9]+))$");
+            try (BufferedReader reader = new BufferedReader(new FileReader(f))) {
+                for (;;) {
+                    String l = reader.readLine();
+                    if (l == null) break;
+                    if (StringUtils.isEmpty(l)) {
+                        continue;
+                    }
+                    Matcher m = p.matcher(l);
+                    if (m.find()) {
+                        return Optional.of(m.group(1));
+                    }
+                }
+            } catch (Exception ignore) {
+            }
+            return Optional.empty();
+        } else {
+            return Optional.empty();
+        }
+    }
+
     private JobTemplate createSparkJobTemplate(String jobName,
                                                List<String> jobOptions,
                                                String sparkHomeDir,
@@ -348,29 +392,6 @@ public class LSFSparkClusterLauncher {
             spec.add("-P " + billingAccount);
 
         return spec;
-    }
-
-    /**
-     * Get SparkURI given the master job ID.
-     *
-     * @param jobId - master job ID
-     * @return
-     */
-    private String getSparkURIFromJobId(Long jobId) {
-        Collection<JobInfo> jobInfos = jobMgr.getJobInfo(jobId);
-        return jobInfos.stream()
-                .map(jobInfo -> getSparkURIFromJobInfo(jobInfo))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private String getSparkURIFromJobInfo(JobInfo jobInfo) {
-        return getHostname(jobInfo)
-                .map(execHost -> DEFAULT_SPARK_URI_SCHEME + "://" + execHost + ":" + DEFAULT_SPARK_MASTER_PORT)
-                .orElseThrow(() -> {
-                    logger.error("No proper exec hosts has been set for {} even though exec host field is set to {}", jobInfo, jobInfo.getExecHost());
-                    return new IllegalStateException("No proper exec hosts has been set for " + jobInfo + " even though exec host field is set to " + jobInfo.getExecHost());
-                });
     }
 
     private Optional<String> getHostname(JobInfo jobInfo) {

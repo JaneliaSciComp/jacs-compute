@@ -103,7 +103,7 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
         return computationFactory.newCompletedComputation(sparkClusterLauncher.createSparkCluster(
                 args.getSparkMasterJobId(),
                 args.getSparkWorkerJobId(),
-                accounting.getComputeAccount(jacsServiceData)))
+                args.sparkURI))
                 .thenCompose(sparkCluster -> {
                     jacsServiceDataPersistence.addServiceEvent(
                             jacsServiceData,
