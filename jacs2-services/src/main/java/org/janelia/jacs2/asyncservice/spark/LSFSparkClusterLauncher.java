@@ -1,5 +1,7 @@
 package org.janelia.jacs2.asyncservice.spark;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -104,6 +107,7 @@ public class LSFSparkClusterLauncher {
         } else {
             minRequiredWorkers = minRequiredWorkersParam;
         }
+        String sparkConfigFile = createSparkConfigFile(jobWorkingPath.resolve("spark-config.properties").toFile());
         // Start the master first
         return startSparkMasterJob(
                 sparkJobName,
@@ -112,6 +116,7 @@ public class LSFSparkClusterLauncher {
                 jobOutputPath,
                 jobErrorPath,
                 billingInfo,
+                sparkConfigFile,
                 sparkJobsTimeoutInMins)
 
                 // Wait for the master job to start
@@ -150,12 +155,13 @@ public class LSFSparkClusterLauncher {
                     String sparkMasterURI = getSparkURIFromJobInfo(masterJobInfo);
                     logger.info("Spark master job {} ({}) is running on {}", masterJobInfo.getJobId(), sparkMasterURI, masterJobInfo.getExecHost());
                     return startSparkWorkerJobs(
-                            "W" + masterJobInfo.getJobId(),
+                            sparkJobName,
                             sparkHomeDir,
                             jobWorkingPath,
                             jobOutputPath,
                             jobErrorPath,
                             billingInfo,
+                            sparkConfigFile,
                             sparkJobsTimeoutInMins,
                             nWorkers,
                             nCoresPerWorker,
@@ -185,6 +191,23 @@ public class LSFSparkClusterLauncher {
                 });
     }
 
+    private String createSparkConfigFile(File sparkConfigFile) {
+        // for now just create a file with some defaults in case spark-defaults.conf is missing
+        Properties sparkConfig = new Properties();
+        sparkConfig.put("spark.rpc.askTimeout", "300s");
+        sparkConfig.put("spark.storage.blockManagerHeartBeatMs", "30000");
+        sparkConfig.put("spark.rpc.retry.wait", "30s");
+        sparkConfig.put("spark.kryoserializer.buffer.max", "1024m");
+        sparkConfig.put("spark.core.connection.ack.wait.timeout", "600s");
+        try (FileOutputStream sparkConfigStream = new FileOutputStream(sparkConfigFile)) {
+            sparkConfig.store(sparkConfigStream, null);
+        } catch (Exception e) {
+            logger.warn("Error writing spark config to {}", sparkConfigFile, e);
+            return null;
+        }
+        return sparkConfigFile.getAbsolutePath();
+    }
+
     LSFSparkCluster createSparkCluster(Long masterJobId, Long workerJobId, String billingInfo) {
         return createSparkCluster(new SparkClusterInfo(masterJobId, workerJobId, getSparkURIFromJobId(masterJobId)));
     }
@@ -207,20 +230,23 @@ public class LSFSparkClusterLauncher {
                                                          Path jobOutputPath,
                                                          Path jobErrorPath,
                                                          String billingInfo,
+                                                         String sparkConfigFile,
                                                          int sparkJobsTimeoutInMins) {
         logger.info("Starting spark {} master job {} with working directory {}", sparkHomeDir, jobName, jobWorkingPath);
         logger.info("Spark master output dir: {}", jobOutputPath);
         logger.info("Spark master error dir: {}", jobErrorPath);
         try {
+            ImmutableList.Builder<String> jobArgsBuilder = ImmutableList.<String>builder().add(sparkMasterClass);
+            if (StringUtils.isNotBlank(sparkConfigFile)) {
+                jobArgsBuilder.add("--properties-file").add(sparkConfigFile);
+            }
             JobTemplate masterJobTemplate = createSparkJobTemplate(
-                    jobName,
-                    ImmutableList.<String>builder()
-                            .add(sparkMasterClass)
-                            .build(),
+                    "M" + jobName,
+                    jobArgsBuilder.build(),
                     sparkHomeDir,
                     jobWorkingPath,
-                    jobOutputPath.resolve(jobName + ".out"),
-                    jobErrorPath.resolve(jobName + ".err"),
+                    jobOutputPath.resolve("M" + jobName + ".out"),
+                    jobErrorPath.resolve("M" + jobName + ".err"),
                     createNativeSpec(1, billingInfo, sparkJobsTimeoutInMins),
                     Collections.emptyMap()
             );
@@ -241,6 +267,7 @@ public class LSFSparkClusterLauncher {
                                                           Path jobOutputPath,
                                                           Path jobErrorPath,
                                                           String billingInfo,
+                                                          String sparkConfigFile,
                                                           int sparkJobsTimeoutInMins,
                                                           int nWorkers,
                                                           int nCoresPerWorker,
@@ -252,14 +279,17 @@ public class LSFSparkClusterLauncher {
                 jobArgsBuilder.add("-c").add(String.valueOf(nCoresPerWorker));
             }
             jobArgsBuilder.add("-d").add(jobWorkingPath.toString());
+            if (StringUtils.isNotBlank(sparkConfigFile)) {
+                jobArgsBuilder.add("--properties-file").add(sparkConfigFile);
+            }
             jobArgsBuilder.add(masterURI);
             JobTemplate workerJobTemplate = createSparkJobTemplate(
-                    jobName,
+                    "W" + jobName,
                     jobArgsBuilder.build(),
                     sparkHomeDir,
                     jobWorkingPath,
-                    jobOutputPath.resolve(jobName  + "_#.out"),
-                    jobErrorPath.resolve(jobName + "_#.err"),
+                    jobOutputPath.resolve("W" + jobName  + "_#.out"),
+                    jobErrorPath.resolve("W" + jobName + "_#.err"),
                     createNativeSpec(nCoresPerWorker, billingInfo, sparkJobsTimeoutInMins),
                     Collections.emptyMap()
             );
