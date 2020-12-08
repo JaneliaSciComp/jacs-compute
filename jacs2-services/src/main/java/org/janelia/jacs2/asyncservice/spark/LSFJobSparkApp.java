@@ -3,8 +3,12 @@ package org.janelia.jacs2.asyncservice.spark;
 import org.janelia.cluster.JobInfo;
 import org.janelia.cluster.JobManager;
 import org.janelia.cluster.JobStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LSFJobSparkApp extends AbstractSparkApp {
+    private static final Logger LOG = LoggerFactory.getLogger(LSFJobSparkApp.class);
+
     private final JobManager jobManager;
     private final Long driverJobId;
 
@@ -22,6 +26,7 @@ public class LSFJobSparkApp extends AbstractSparkApp {
     @Override
     public boolean isDone() {
         if (driverJobId == null) {
+            LOG.warn("Driver job id was not set");
             return true;
         } else {
             return jobManager.getJobInfo(driverJobId).stream()
