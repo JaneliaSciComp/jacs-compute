@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.spark;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -99,8 +100,8 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
                 driverOptionsBuilder.build(),
                 SparkAppResourceHelper.getSparkHome(sparkAppResources),
                 appOutputDir,
-                appOutputDir,
-                appErrorDir,
+                Paths.get(appOutputDir, DRIVER_OUTPUT_FILENAME).toString(),
+                Paths.get(appErrorDir, DRIVER_ERROR_FILENAME).toString(),
                 createNativeSpec(SparkAppResourceHelper.getSparkDriverCores(sparkAppResources),
                         billingInfo,
                         SparkAppResourceHelper.getSparkAppTimeoutInMin(sparkAppResources)),
