@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.spark;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -201,6 +202,12 @@ public class LSFSparkClusterLauncher {
         sparkConfig.put("spark.rpc.retry.wait", "30s");
         sparkConfig.put("spark.kryoserializer.buffer.max", "1024m");
         sparkConfig.put("spark.core.connection.ack.wait.timeout", "600s");
+        try {
+            Files.createDirectories(sparkConfigFile.getParentFile().toPath());
+        } catch(Exception e) {
+            logger.warn("Error creating spark config folder for {}", sparkConfigFile, e);
+            return null;
+        }
         try (FileOutputStream sparkConfigStream = new FileOutputStream(sparkConfigFile)) {
             sparkConfig.store(sparkConfigStream, null);
         } catch (Exception e) {
