@@ -7,7 +7,8 @@ interface SparkDriverRunner<A extends SparkApp> {
     String DRIVER_OUTPUT_FILENAME = "sparkdriver.out";
     String DRIVER_ERROR_FILENAME = "sparkdriver.err";
 
-    A startSparkApp(SparkClusterInfo sparkClusterInfo,
+    A startSparkApp(String appName,
+                    SparkClusterInfo sparkClusterInfo,
                     String appResource,
                     String appEntryPoint,
                     List<String> appArgs,

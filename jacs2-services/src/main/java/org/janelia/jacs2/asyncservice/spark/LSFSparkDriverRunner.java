@@ -29,7 +29,8 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
         this.billingInfo = billingInfo;
     }
 
-    public LSFJobSparkApp startSparkApp(SparkClusterInfo sparkClusterInfo,
+    public LSFJobSparkApp startSparkApp(String appName,
+                                        SparkClusterInfo sparkClusterInfo,
                                         String appResource,
                                         String appEntryPoint,
                                         List<String> appArgs,
@@ -96,7 +97,7 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
         }
 
         JobTemplate driverJobTemplate = createSparkDriverJobTemplate(
-                "sparkdriver",
+                "D" + appName,
                 driverOptionsBuilder.build(),
                 SparkAppResourceHelper.getSparkHome(sparkAppResources),
                 appOutputDir,
@@ -109,7 +110,7 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
         // Submit driver job
         try {
             JobFuture driverJobFuture = jobMgr.submitJob(driverJobTemplate);
-            LOG.info("Submitted spark job {} ", driverJobFuture.getJobId());
+            LOG.info("Submitted spark driver job {} ", driverJobFuture.getJobId());
             return new LSFJobSparkApp(jobMgr, driverJobFuture.getJobId(), sparkErrorFile != null ? sparkErrorFile.getAbsolutePath() : null);
         } catch (Exception e) {
             LOG.error("Error running spark application {} on {}", appResource, sparkClusterInfo, e);

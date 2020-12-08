@@ -16,7 +16,8 @@ import org.slf4j.LoggerFactory;
 class LocalSparkDriverRunner implements SparkDriverRunner<LocalProcessSparkApp> {
     private static final Logger LOG = LoggerFactory.getLogger(LocalSparkDriverRunner.class);
 
-    public LocalProcessSparkApp startSparkApp(SparkClusterInfo sparkClusterInfo,
+    public LocalProcessSparkApp startSparkApp(String appName,
+                                              SparkClusterInfo sparkClusterInfo,
                                               String appResource,
                                               String appEntryPoint,
                                               List<String> appArgs,
@@ -47,6 +48,7 @@ class LocalSparkDriverRunner implements SparkDriverRunner<LocalProcessSparkApp> 
             appArgsArray = appArgs.toArray(new String[0]);
         }
         sparkLauncher
+                .setAppName(appName)
                 .setSparkHome(SparkAppResourceHelper.getSparkHome(sparkAppResources))
                 .setMaster(sparkClusterInfo.getMasterURI())
                 .setAppResource(appResource)

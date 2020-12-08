@@ -133,6 +133,7 @@ public class LSFSparkClusterLauncher {
                                     throw new IllegalStateException("Spark master job " + masterJobInfo.getJobId() + " has already completed before starting the application");
                                 }
                                 if (masterJobInfo.getStatus() == JobStatus.RUNNING) {
+                                    logger.info("Master job {} is running", masterJobInfo.getJobId());
                                     return new ContinuationCond.Cond<>(masterJobInfo, true);
                                 } else {
                                     return new ContinuationCond.Cond<>(masterJobInfo, false);
@@ -178,6 +179,7 @@ public class LSFSparkClusterLauncher {
                                                 .filter(ji -> ji.getStatus() == JobStatus.RUNNING)
                                                 .count();
                                         if (runningWorkers >= minRequiredWorkers) {
+                                            logger.info("Reached the minimum workers requirement {} for {} - {} workers are running", minRequiredWorkers, workersInfo.getLeft(), runningWorkers);
                                             return new ContinuationCond.Cond<>(workersInfo, true);
                                         } else {
                                             return new ContinuationCond.Cond<>(workersInfo, false);

@@ -129,6 +129,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                 billingInfo,
                 serviceTimeoutInMins(jacsServiceData, appResources))
                 .thenCompose(sparkCluster -> {
+                    logger.info("Started spark cluster {}", sparkCluster.getSparkClusterInfo());
                     runningClusterState.setData(sparkCluster);
                     jacsServiceDataPersistence.addServiceEvent(
                             jacsServiceData,
@@ -148,6 +149,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                     // the computation completes when the app completes
                     return computationFactory.newCompletedComputation(
                             sparkDriverRunner.startSparkApp(
+                                    args.appName,
                                     sparkCluster.getSparkClusterInfo(),
                                     args.appLocation,
                                     args.appEntryPoint,

@@ -31,6 +31,8 @@ import org.slf4j.Logger;
 public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
 
     static class SparkClusterAppArgs extends SparkClusterArgs {
+        @Parameter(names = "-appName", description = "Spark application name")
+        String appName = "sparkjacs";
         @Parameter(names = "-appLocation", description = "Spark application location", required = true)
         String appLocation;
         @Parameter(names = "-appEntryPoint", description = "Spark application entry point, i.e., java main class name")
@@ -121,6 +123,7 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
                     // the computation completes when the app completes
                     return computationFactory.newCompletedComputation(
                             sparkDriverRunner.startSparkApp(
+                                    args.appName,
                                     sparkCluster.getSparkClusterInfo(),
                                     args.appLocation,
                                     args.appEntryPoint,

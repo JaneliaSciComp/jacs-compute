@@ -144,6 +144,7 @@ public class SparkAppProcessorTest {
         SparkDriverRunner<? extends SparkApp> sparkDriverRunner = mock(SparkDriverRunner.class);
         Mockito.when(clusterLauncher.getLocalDriverRunner()).then(invocation -> sparkDriverRunner);
         Mockito.when(sparkDriverRunner.startSparkApp(
+                testAppResource,
                 testClusterInfo,
                 testAppResource,
                 null,
@@ -163,6 +164,7 @@ public class SparkAppProcessorTest {
                 .thenApply(r -> {
                     successful.accept(r);
                     Mockito.verify(sparkDriverRunner).startSparkApp(
+                            testAppResource,
                             testClusterInfo,
                             testAppResource,
                             null,
