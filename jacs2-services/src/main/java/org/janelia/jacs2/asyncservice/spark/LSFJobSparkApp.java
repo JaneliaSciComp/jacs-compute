@@ -31,7 +31,7 @@ public class LSFJobSparkApp extends AbstractSparkApp {
             LOG.warn("!!!! ISDONE: Driver job id was not set");
             return true;
         } else {
-            return jobManager.getJobInfo(driverJobId).stream()
+            return jobManager.retrieveJobInfo(driverJobId).stream()
                 .filter(JobInfo::isComplete)
                 .count() == 0;
         }
@@ -43,7 +43,7 @@ public class LSFJobSparkApp extends AbstractSparkApp {
             LOG.warn("!!!! GET_STATUS: Driver job id was not set");
             return "NOT_FOUND";
         } else {
-            Collection<JobInfo> jobInfoCollection = jobManager.getJobInfo(driverJobId);
+            Collection<JobInfo> jobInfoCollection = jobManager.retrieveJobInfo(driverJobId);
             LOG.info("!!!! JOB INFO {}", jobInfoCollection);
             return jobInfoCollection.stream()
                     .map(ji -> ji.getStatus().name())
