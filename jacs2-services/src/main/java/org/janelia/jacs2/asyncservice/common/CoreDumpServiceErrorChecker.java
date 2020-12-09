@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.common;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
 public class CoreDumpServiceErrorChecker extends DefaultServiceErrorChecker {

@@ -49,10 +49,9 @@ public abstract class AbstractSparkApp implements SparkApp {
             try {
                 String l = reader.readLine();
                 if (l == null) break;
-                if (StringUtils.isEmpty(l)) {
+                if (StringUtils.isEmpty(l) || isIgnoredError(l)) {
                     continue;
-                }
-                if (isError(l)) {
+                } else if (isError(l)) {
                     errorMessage = l;
                     break;
                 }
@@ -60,6 +59,10 @@ public abstract class AbstractSparkApp implements SparkApp {
                 break;
             }
         }
+    }
+
+    private boolean isIgnoredError(String l) {
+        return l.matches("(?i:.*(executor.*terminated).*)");
     }
 
     private boolean isError(String l) {
