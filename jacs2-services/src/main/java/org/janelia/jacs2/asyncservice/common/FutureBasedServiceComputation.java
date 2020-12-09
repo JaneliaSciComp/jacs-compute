@@ -152,14 +152,26 @@ public class FutureBasedServiceComputation<T> implements ServiceComputation<T> {
     public ServiceComputation<T> whenComplete(BiConsumer<? super T, ? super Throwable> action) {
         FutureBasedServiceComputation<T> next = new FutureBasedServiceComputation<>(computationQueue, logger, new ServiceComputationTask<>(this));
         next.submit(() -> {
+            T r;
             try {
-                T r = waitForResult(this);
+                r = waitForResult(this);
+            } catch (SuspendedException e) {
+                throw e;
+            } catch (Exception e) {
+                // if the exception happened while getting the result
+                // execute the accept action with the exception and complete with exception
+                action.accept(null, e);
+                next.completeExceptionally(e);
+                return next.get();
+            }
+            try {
                 action.accept(r, null);
                 next.complete(r);
             } catch (SuspendedException e) {
                 throw e;
             } catch (Exception e) {
-                action.accept(null, e);
+                // if an exception was raised while executing the accept action
+                // do not re-execute the accept - simply complete with exception
                 next.completeExceptionally(e);
             }
             return next.get();
