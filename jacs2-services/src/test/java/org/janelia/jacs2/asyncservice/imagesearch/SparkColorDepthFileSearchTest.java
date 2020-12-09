@@ -55,6 +55,7 @@ public class SparkColorDepthFileSearchTest {
     private static final String DEFAULT_WORKING_DIR = "testWorking";
     private static final int SEARCH_TIMEOUT_IN_SECONDS = 1200;
     private static final int SEARCH_INTERVAL_CHECK_IN_MILLIS = 5000;
+    private static final int DEFAULT_CORES_PER_SPARK_WORKER = 1;
     private static final String DEFAULT_SPARK_HOME = "testSparkHome";
 
     ServiceComputationFactory serviceComputationFactory;
@@ -79,6 +80,7 @@ public class SparkColorDepthFileSearchTest {
                 SEARCH_TIMEOUT_IN_SECONDS,
                 SEARCH_INTERVAL_CHECK_IN_MILLIS,
                 DEFAULT_SPARK_HOME,
+                DEFAULT_CORES_PER_SPARK_WORKER,
                 jarPath,
                 logger);
     }
