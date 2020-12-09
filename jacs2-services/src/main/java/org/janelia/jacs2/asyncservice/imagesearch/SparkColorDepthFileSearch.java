@@ -140,7 +140,7 @@ public class SparkColorDepthFileSearch extends AbstractServiceProcessor<List<Fil
                             .sparkWorkers(args.numWorkers)
                             .minSparkWorkers(args.minWorkerNodes)
                             .sparkParallelism(args.parallelism)
-                            .sparkWorkerCores(coresPerSparkWorker > 0 ?  coresPerSparkWorker : null)
+                            .coresPerSparkWorker(coresPerSparkWorker > 0 ?  coresPerSparkWorker : null)
                             .sparkAppIntervalCheckInMillis(searchIntervalCheckInMillis)
                             .sparkAppTimeoutInMillis(searchTimeoutInMillis)
                             .addAll(jacsServiceData.getResources())

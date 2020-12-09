@@ -91,7 +91,7 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
         Map<String, String> appResources = SparkAppResourceHelper.sparkAppResourceBuilder()
                 .sparkHome(getDefaultSparkHome())
                 .sparkDriverMemory(getDefaultSparkDriverMemory())
-                .sparkWorkerCores(getDefaultCoresPerSparkExecutor())
+                .coresPerSparkWorker(getDefaultCoresPerSparkExecutor())
                 .sparkWorkerMemoryPerCoreInGB(getDefaultSparkMemoryPerExecutorCoreInGB())
                 .sparkAppTimeoutInMillis(getSparkClusterHardDurationMins() * 60L * 1000L)
                 .sparkLogConfigFile(getDefaultSparkLogConfigFile())

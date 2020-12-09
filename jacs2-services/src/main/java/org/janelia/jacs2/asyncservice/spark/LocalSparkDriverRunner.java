@@ -61,15 +61,15 @@ class LocalSparkDriverRunner implements SparkDriverRunner<LocalProcessSparkApp> 
         if (StringUtils.isNotBlank(sparkDriverMemory)) {
             sparkLauncher.setConf(SparkLauncher.DRIVER_MEMORY, sparkDriverMemory);
         }
-        int sparkWorkerCores = SparkAppResourceHelper.getSparkWorkerCores(sparkAppResources);
-        sparkLauncher.setConf(SparkLauncher.EXECUTOR_CORES, "" + sparkWorkerCores);
+        int nCoresPerSparkWorker = SparkAppResourceHelper.getCoresPerSparkWorker(sparkAppResources);
+        sparkLauncher.setConf(SparkLauncher.EXECUTOR_CORES, "" + nCoresPerSparkWorker);
         int sparkMemPerCoreInGB = SparkAppResourceHelper.getSparkWorkerMemoryPerCoreInGB(sparkAppResources);
         if (sparkMemPerCoreInGB > 0) {
-            sparkLauncher.setConf(SparkLauncher.EXECUTOR_MEMORY, "" + sparkWorkerCores * sparkMemPerCoreInGB + "g");
+            sparkLauncher.setConf(SparkLauncher.EXECUTOR_MEMORY, "" + nCoresPerSparkWorker * sparkMemPerCoreInGB + "g");
         }
+        int nSparkWorkers = SparkAppResourceHelper.getSparkWorkers(sparkAppResources);
         int appDefinedParallelism = SparkAppResourceHelper.getSparkParallelism(sparkAppResources);
-        int defaultSparkParallelism = 3 * sparkWorkerCores * SparkAppResourceHelper.getSparkWorkers(sparkAppResources);
-        int sparkParallelism = appDefinedParallelism != 0 ? appDefinedParallelism : defaultSparkParallelism;
+        int sparkParallelism = appDefinedParallelism != 0 ? appDefinedParallelism : nSparkWorkers;
         if (sparkParallelism > 0) {
             // The default (4MB) open cost consolidates files into tiny partitions regardless of number of cores.
             // By forcing this parameter to zero, we can specify the exact parallelism we want.

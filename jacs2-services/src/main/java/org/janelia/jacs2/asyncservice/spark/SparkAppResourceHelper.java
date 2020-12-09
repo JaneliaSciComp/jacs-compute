@@ -46,8 +46,8 @@ public class SparkAppResourceHelper {
             return setInteger("minSparkWorkers", val);
         }
 
-        public Builder sparkWorkerCores(Integer val) {
-            return setInteger("sparkWorkerCores", val);
+        public Builder coresPerSparkWorker(Integer val) {
+            return setInteger("coresPerSparkWorker", val);
         }
 
         public Builder sparkWorkerMemoryPerCoreInGB(Integer val) {
@@ -121,9 +121,9 @@ public class SparkAppResourceHelper {
         }
     }
 
-    static int getSparkWorkerCores(Map<String, String> sparkResources) {
-        String sparkWorkerCores = StringUtils.defaultIfBlank(sparkResources.get("sparkWorkerCores"), "1");
-        return Math.max(1, Integer.parseInt(sparkWorkerCores));
+    static int getCoresPerSparkWorker(Map<String, String> sparkResources) {
+        String coresPerSparkWorker = StringUtils.defaultIfBlank(sparkResources.get("coresPerSparkWorker"), "1");
+        return Math.max(1, Integer.parseInt(coresPerSparkWorker));
     }
 
     static int getSparkWorkerMemoryPerCoreInGB(Map<String, String> sparkResources) {

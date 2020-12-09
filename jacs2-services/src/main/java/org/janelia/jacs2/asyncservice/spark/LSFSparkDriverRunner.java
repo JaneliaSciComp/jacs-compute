@@ -54,11 +54,11 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
             driverOptionsBuilder.add("--class", appEntryPoint);
         }
         driverOptionsBuilder.add("--master", sparkClusterInfo.getMasterURI());
-        int sparkWorkerCores = SparkAppResourceHelper.getSparkWorkerCores(sparkAppResources);
-        driverOptionsBuilder.add("--conf").add(SparkLauncher.EXECUTOR_CORES + "=" + sparkWorkerCores);
+        int nCoresPerSparkWorker = SparkAppResourceHelper.getCoresPerSparkWorker(sparkAppResources);
+        driverOptionsBuilder.add("--conf").add(SparkLauncher.EXECUTOR_CORES + "=" + nCoresPerSparkWorker);
         int sparkMemPerCoreInGB = SparkAppResourceHelper.getSparkWorkerMemoryPerCoreInGB(sparkAppResources);
         if (sparkMemPerCoreInGB > 0) {
-            driverOptionsBuilder.add("--executor-memory").add(sparkWorkerCores * sparkMemPerCoreInGB + "g");
+            driverOptionsBuilder.add("--executor-memory").add(nCoresPerSparkWorker * sparkMemPerCoreInGB + "g");
         }
         int nDriverCores = SparkAppResourceHelper.getSparkDriverCores(sparkAppResources);
         String sparkDriverMemory = SparkAppResourceHelper.getSparkDriverMemory(sparkAppResources);
@@ -67,9 +67,9 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
         } else {
             driverOptionsBuilder.add("--driver-memory").add(nDriverCores * sparkMemPerCoreInGB + "g");
         }
+        int nSparkWorkers = SparkAppResourceHelper.getSparkWorkers(sparkAppResources);
         int appDefinedParallelism = SparkAppResourceHelper.getSparkParallelism(sparkAppResources);
-        int defaultSparkParallelism = 5 * sparkWorkerCores * SparkAppResourceHelper.getSparkWorkers(sparkAppResources);
-        int sparkParallelism = appDefinedParallelism != 0 ? appDefinedParallelism : defaultSparkParallelism;
+        int sparkParallelism = appDefinedParallelism != 0 ? appDefinedParallelism : nSparkWorkers;
         if (sparkParallelism > 0) {
             // The default (4MB) open cost consolidates files into tiny partitions regardless of number of cores.
             // By forcing this parameter to zero, we can specify the exact parallelism we want.

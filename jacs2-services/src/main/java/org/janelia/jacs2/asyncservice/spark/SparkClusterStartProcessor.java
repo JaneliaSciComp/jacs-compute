@@ -110,7 +110,7 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
         Map<String, String> appResources = SparkAppResourceHelper.sparkAppResourceBuilder()
                 .sparkHome(getDefaultSparkHome())
                 .sparkDriverMemory(getDefaultSparkDriverMemory())
-                .sparkWorkerCores(getDefaultCoresPerSparkExecutor())
+                .coresPerSparkWorker(getDefaultCoresPerSparkExecutor())
                 .sparkWorkerMemoryPerCoreInGB(getDefaultSparkMemoryPerExecutorCoreInGB())
                 .sparkAppTimeoutInMillis(getSparkClusterHardDurationMins() * 60L * 1000L)
                 .sparkLogConfigFile(getDefaultSparkLogConfigFile())
@@ -121,7 +121,7 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                 "sparkjacs",
                 SparkAppResourceHelper.getSparkHome(appResources),
                 SparkAppResourceHelper.getSparkWorkers(appResources),
-                SparkAppResourceHelper.getSparkWorkerCores(appResources),
+                SparkAppResourceHelper.getCoresPerSparkWorker(appResources),
                 SparkAppResourceHelper.getMinRequiredWorkers(appResources),
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR),
                 Paths.get(jacsServiceData.getOutputPath()),

@@ -220,7 +220,7 @@ public class SparkAppProcessorTest {
         Map<String, String> appResources = SparkAppResourceHelper.sparkAppResourceBuilder()
                 .sparkHome(DEFAULT_SPARK_HOME)
                 .sparkDriverMemory(DEFAULT_SPARK_DRIVER_MEMORY)
-                .sparkWorkerCores(DEFAULT_CORES_PER_SPARK_EXECUTOR)
+                .coresPerSparkWorker(DEFAULT_CORES_PER_SPARK_EXECUTOR)
                 .sparkWorkerMemoryPerCoreInGB(DEFAULT_MEMORY_PER_CORE_IN_GB)
                 .sparkAppTimeoutInMillis(DEFAULT_SPARK_DURATION_MINS * 60L * 1000L)
                 .sparkLogConfigFile(DEFAULT_SPARK_LOG_CONFIG)
