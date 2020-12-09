@@ -157,6 +157,17 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                     jacsServiceData.getOutputPath(),
                                     jacsServiceData.getErrorPath(),
                                     appResources))
+                            .thenApply(app -> {
+                                jacsServiceDataPersistence.addServiceEvent(
+                                        jacsServiceData,
+                                        JacsServiceData.createServiceEvent(JacsServiceEventTypes.START_PROCESS,
+                                                String.format("Started spark app %s cluster on %s (%s, %s)",
+                                                        app.getAppId(),
+                                                        runningClusterState.getData().getSparkClusterInfo().getMasterURI(),
+                                                        runningClusterState.getData().getSparkClusterInfo().getMasterJobId(),
+                                                        runningClusterState.getData().getSparkClusterInfo().getWorkerJobId())));
+                                return app;
+                            })
                             .thenSuspendUntil(app -> new ContinuationCond.Cond<>(app, app.isDone()),
                                     SparkAppResourceHelper.getSparkAppIntervalCheckInMillis(appResources),
                                     SparkAppResourceHelper.getSparkAppTimeoutInMillis(appResources));
