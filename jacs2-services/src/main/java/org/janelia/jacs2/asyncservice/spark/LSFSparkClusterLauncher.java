@@ -2,12 +2,8 @@ package org.janelia.jacs2.asyncservice.spark;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -54,9 +50,6 @@ import org.slf4j.Logger;
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
 public class LSFSparkClusterLauncher {
-
-    private final static String DEFAULT_SPARK_URI_SCHEME = "spark";
-    private final static int DEFAULT_SPARK_MASTER_PORT = 7077;
 
     private static final ExecutorService COMPLETION_MESSAGE_EXECUTOR = Executors.newCachedThreadPool((runnable) -> {
         Thread thread = Executors.defaultThreadFactory().newThread(runnable);

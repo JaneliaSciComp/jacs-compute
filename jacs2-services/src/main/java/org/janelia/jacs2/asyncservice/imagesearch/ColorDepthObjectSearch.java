@@ -122,7 +122,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                            LegacyDomainDao legacyDomainDao,
                            @IntPropertyValue(name = "service.cluster.memPerCoreInGB", defaultValue = 15) Integer memPerCoreInGB,
                            @IntPropertyValue(name = "service.colorDepthSearch.minWorkers", defaultValue = 1) Integer minWorkers,
-                           @IntPropertyValue(name = "service.colorDepthSearch.maxWorkers", defaultValue = 48) Integer maxWorkers,
+                           @IntPropertyValue(name = "service.colorDepthSearch.maxWorkers", defaultValue = -1) Integer maxWorkers,
                            @DoublePropertyValue(name = "service.colorDepthSearch.partitionSizePerCoreFactor", defaultValue = 5) Double partitionSizePerCoreFactor,
                            SparkColorDepthFileSearch sparkColorDepthFileSearch,
                            JavaProcessColorDepthFileSearch javaProcessColorDepthFileSearch,
@@ -256,8 +256,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         // Curve fitting using https://www.desmos.com/calculator
                         // This equation was found using https://mycurvefit.com
                         int desiredWorkers = (int)Math.round(Math.pow(ntargets, 0.32));
-
-                        int numWorkers = Math.max(Math.min(desiredWorkers, maxWorkers), minWorkers);
+                        // only cap the number of workers if maxWorkers is >= 0
+                        int numWorkers = Math.max(Math.min(desiredWorkers, maxWorkers > 0 ? maxWorkers : desiredWorkers), minWorkers);
                         int filesPerWorker = (int)Math.round(ntargets / (double)numWorkers);
                         logger.info("Using {} workers, with {} files per worker", numWorkers, filesPerWorker);
 

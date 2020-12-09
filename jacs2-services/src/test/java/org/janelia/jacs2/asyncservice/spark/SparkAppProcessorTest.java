@@ -99,32 +99,118 @@ public class SparkAppProcessorTest {
         String testExecutorMemory = "executorMem";
         String clusterBillingInfo = "clusterBillingInfo";
 
-        JacsServiceData testService = createTestServiceData(1L, testAppResource,
+        JacsServiceData testService = prepareTestService(
+                1L,
+                testAppResource,
                 testAppArgs,
                 "test",
                 testNumNodes,
                 testMinRequiredWorkers,
                 testDriverMemory,
                 testExecutorMemory,
+                clusterBillingInfo,
                 ProcessingLocation.LOCAL);
+
+        ServiceComputation<JacsServiceResult<Void>> sparkServiceComputation = sparkAppProcessor.process(testService);
+
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
+        sparkServiceComputation
+                .thenApply(r -> {
+                    successful.accept(r);
+                    Mockito.verify(sparkCluster).stopCluster();
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    failure.accept(exc);
+                    fail(exc.toString());
+                    return null;
+                });
+    }
+
+    @Test
+    public void sparkClusterShouldBeStoppedIfAppFails() throws Exception {
+        String testAppResource = "testApp";
+        List<String> testAppArgs = ImmutableList.of("a1", "a2", "a3");
+        int testNumNodes = 12;
+        int testMinRequiredWorkers = 4;
+        String testDriverMemory = "driverMem";
+        String testExecutorMemory = "executorMem";
+        String clusterBillingInfo = "clusterBillingInfo";
+
+        JacsServiceData testService = prepareTestService(
+                1L,
+                testAppResource,
+                testAppArgs,
+                "test",
+                testNumNodes,
+                testMinRequiredWorkers,
+                testDriverMemory,
+                testExecutorMemory,
+                clusterBillingInfo,
+                ProcessingLocation.LOCAL);
+        Mockito.when(sparkApp.hasErrors()).thenReturn(true);
+        Mockito.when(sparkApp.getErrors()).thenReturn("Error");
+
+        ServiceComputation<JacsServiceResult<Void>> sparkServiceComputation = sparkAppProcessor.process(testService);
+
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
+        sparkServiceComputation
+                .thenApply(r -> {
+                    successful.accept(r);
+                    fail("Processing should have failed");
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    failure.accept(exc);
+                    Mockito.verify(sparkCluster).stopCluster();
+                    return null;
+                });
+    }
+
+    private JacsServiceData prepareTestService(Number serviceId,
+                                               String testApp,
+                                               List<String> appArgs,
+                                               String owner,
+                                               int numWorkers,
+                                               int minRequiredWorkers,
+                                               String driverMemory,
+                                               String executorMemory,
+                                               String billingInfo,
+                                               ProcessingLocation processingLocation) throws Exception {
+        JacsServiceData testService = createTestServiceData(
+                serviceId,
+                testApp,
+                appArgs,
+                owner,
+                numWorkers,
+                minRequiredWorkers,
+                driverMemory,
+                executorMemory,
+                processingLocation);
         JacsServiceFolder serviceWorkingFolder = new JacsServiceFolder(null, Paths.get(testService.getWorkspace()), testService);
         Path serviceOutputPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR);
         Path serviceErrorPath = serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR);
 
         PowerMockito.mockStatic(Files.class);
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
-        Mockito.when(clusterAccounting.getComputeAccount(testService)).thenReturn(clusterBillingInfo);
+        Mockito.when(clusterAccounting.getComputeAccount(testService)).thenReturn(billingInfo);
 
         Mockito.when(clusterLauncher.startCluster(
-                testAppResource,
+                testApp,
                 DEFAULT_SPARK_HOME,
-                testNumNodes,
+                numWorkers,
                 DEFAULT_CORES_PER_SPARK_EXECUTOR,
-                testMinRequiredWorkers,
+                minRequiredWorkers,
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_CONFIG_DIR),
                 serviceOutputPath,
                 serviceErrorPath,
-                clusterBillingInfo,
+                billingInfo,
                 DEFAULT_SPARK_DURATION_MINS))
                 .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
 
@@ -144,42 +230,16 @@ public class SparkAppProcessorTest {
         SparkDriverRunner<? extends SparkApp> sparkDriverRunner = mock(SparkDriverRunner.class);
         Mockito.when(clusterLauncher.getLocalDriverRunner()).then(invocation -> sparkDriverRunner);
         Mockito.when(sparkDriverRunner.startSparkApp(
-                testAppResource,
+                testApp,
                 testClusterInfo,
-                testAppResource,
+                testApp,
                 null,
-                testAppArgs,
+                appArgs,
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
                 serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
                 appResources)
         ).then(invocation -> sparkApp);
-
-        ServiceComputation<JacsServiceResult<Void>> sparkServiceComputation = sparkAppProcessor.process(testService);
-
-        @SuppressWarnings("unchecked")
-        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
-        @SuppressWarnings("unchecked")
-        Consumer<Throwable> failure = mock(Consumer.class);
-        sparkServiceComputation
-                .thenApply(r -> {
-                    successful.accept(r);
-                    Mockito.verify(sparkDriverRunner).startSparkApp(
-                            testAppResource,
-                            testClusterInfo,
-                            testAppResource,
-                            null,
-                            testAppArgs,
-                            serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_OUTPUT_DIR).toString(),
-                            serviceWorkingFolder.getServiceFolder(JacsServiceFolder.SERVICE_ERROR_DIR).toString(),
-                            appResources);
-                    Mockito.verify(sparkCluster).stopCluster();
-                    return r;
-                })
-                .exceptionally(exc -> {
-                    failure.accept(exc);
-                    fail(exc.toString());
-                    return null;
-                });
+        return testService;
     }
 
     private JacsServiceData createTestServiceData(Number serviceId,

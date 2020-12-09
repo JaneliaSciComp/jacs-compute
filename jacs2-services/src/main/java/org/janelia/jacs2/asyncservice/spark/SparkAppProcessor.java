@@ -163,6 +163,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                 })
                 .whenComplete(((sparkApp, exc) -> {
                     if (runningClusterState.isPresent()) {
+                        // spark cluster was started
                         jacsServiceDataPersistence.addServiceEvent(
                                 jacsServiceData,
                                 JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
@@ -170,23 +171,35 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                                 runningClusterState.getData().getSparkClusterInfo().getMasterURI(),
                                                 runningClusterState.getData().getSparkClusterInfo().getMasterJobId(),
                                                 runningClusterState.getData().getSparkClusterInfo().getWorkerJobId())));
-                        if (sparkApp != null) sparkApp.kill(); // terminate the app just in case it is still running
+                        String appErrors;
+                        if (sparkApp != null) {
+                            sparkApp.kill(); // terminate the app just in case it is still running
+                        }
                         if (exc != null) {
                             logger.error("Spark processing error encountered", exc);
-                            jacsServiceDataPersistence.updateServiceState(
-                                    jacsServiceData,
-                                    JacsServiceState.ERROR,
-                                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, exc.toString()));
-                            throw new ComputationException(jacsServiceData, exc.toString());
-                        } else if (sparkApp.hasErrors()) {
+                            appErrors = exc.toString();
+                        } else if (sparkApp != null && sparkApp.hasErrors()) {
                             logger.error("Spark application error: {}", sparkApp.getErrors());
-                            jacsServiceDataPersistence.updateServiceState(
-                                    jacsServiceData,
-                                    JacsServiceState.ERROR,
-                                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, sparkApp.getErrors()));
-                            throw new ComputationException(jacsServiceData, sparkApp.getErrors());
+                            appErrors = sparkApp.getErrors();
+                        } else {
+                            appErrors = null;
                         }
                         runningClusterState.getData().stopCluster();
+                        if (appErrors != null) {
+                            jacsServiceDataPersistence.updateServiceState(
+                                    jacsServiceData,
+                                    JacsServiceState.ERROR,
+                                    JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, appErrors));
+                            throw new ComputationException(jacsServiceData, appErrors);
+                        }
+                    } else {
+                        // the cluster was never set most likely because it could not be started
+                        String appErrors = "Failed to start a spark cluster";
+                        jacsServiceDataPersistence.updateServiceState(
+                                jacsServiceData,
+                                JacsServiceState.ERROR,
+                                JacsServiceData.createServiceEvent(JacsServiceEventTypes.FAILED, appErrors));
+                        throw new ComputationException(jacsServiceData, appErrors);
                     }
                 }))
                 .thenApply(sparkApp -> new JacsServiceResult<>(jacsServiceData))
