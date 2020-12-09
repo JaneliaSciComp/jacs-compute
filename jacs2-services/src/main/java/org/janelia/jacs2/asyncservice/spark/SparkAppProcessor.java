@@ -170,7 +170,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                                 runningClusterState.getData().getSparkClusterInfo().getMasterURI(),
                                                 runningClusterState.getData().getSparkClusterInfo().getMasterJobId(),
                                                 runningClusterState.getData().getSparkClusterInfo().getWorkerJobId())));
-                        sparkApp.kill(); // terminate the app just in case it is still running
+                        if (sparkApp != null) sparkApp.kill(); // terminate the app just in case it is still running
                         if (exc != null) {
                             logger.error("Spark processing error encountered", exc);
                             jacsServiceDataPersistence.updateServiceState(
