@@ -68,7 +68,7 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
             driverOptionsBuilder.add("--driver-memory").add(nDriverCores * sparkMemPerCoreInGB + "g");
         }
         int appDefinedParallelism = SparkAppResourceHelper.getSparkParallelism(sparkAppResources);
-//        int defaultSparkParallelism = 3 * sparkWorkerCores * SparkAppResourceHelper.getSparkWorkers(sparkAppResources);
+//        int defaultSparkParallelism = 5 * sparkWorkerCores * SparkAppResourceHelper.getSparkWorkers(sparkAppResources);
 //        int sparkParallelism = appDefinedParallelism != 0 ? appDefinedParallelism : defaultSparkParallelism;
         if (appDefinedParallelism > 0) {
             // The default (4MB) open cost consolidates files into tiny partitions regardless of number of cores.
