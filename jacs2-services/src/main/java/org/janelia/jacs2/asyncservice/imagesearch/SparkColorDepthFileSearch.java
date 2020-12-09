@@ -67,7 +67,7 @@ public class SparkColorDepthFileSearch extends AbstractServiceProcessor<List<Fil
                               @IntPropertyValue(name = "service.colorDepthSearch.searchTimeoutInSeconds", defaultValue = 1200) int searchTimeoutInSeconds,
                               @IntPropertyValue(name = "service.colorDepthSearch.searchIntervalCheckInMillis", defaultValue = 5000) int searchIntervalCheckInMillis,
                               @StrPropertyValue(name = "service.spark.sparkHomeDir") String defaultSparkHomeDir,
-                              @IntPropertyValue(name = "service.colorDepthSearch.coresPerSparkWorker", defaultValue = 5) int coresPerSparkWorker,
+                              @IntPropertyValue(name = "service.colorDepthSearch.coresPerSparkWorker", defaultValue = 3) int coresPerSparkWorker,
                               @StrPropertyValue(name = "service.colorDepthSearch.jarPath") String jarPath,
                               Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);

@@ -54,24 +54,27 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
             driverOptionsBuilder.add("--class", appEntryPoint);
         }
         driverOptionsBuilder.add("--master", sparkClusterInfo.getMasterURI());
-        String sparkDriverMemory = SparkAppResourceHelper.getSparkDriverMemory(sparkAppResources);
-        if (StringUtils.isNotBlank(sparkDriverMemory)) {
-            driverOptionsBuilder.add("--driver-memory").add(sparkDriverMemory);
-        }
         int sparkWorkerCores = SparkAppResourceHelper.getSparkWorkerCores(sparkAppResources);
         driverOptionsBuilder.add("--conf").add(SparkLauncher.EXECUTOR_CORES + "=" + sparkWorkerCores);
         int sparkMemPerCoreInGB = SparkAppResourceHelper.getSparkWorkerMemoryPerCoreInGB(sparkAppResources);
         if (sparkMemPerCoreInGB > 0) {
             driverOptionsBuilder.add("--executor-memory").add(sparkWorkerCores * sparkMemPerCoreInGB + "g");
         }
+        int nDriverCores = SparkAppResourceHelper.getSparkDriverCores(sparkAppResources);
+        String sparkDriverMemory = SparkAppResourceHelper.getSparkDriverMemory(sparkAppResources);
+        if (StringUtils.isNotBlank(sparkDriverMemory)) {
+            driverOptionsBuilder.add("--driver-memory").add(sparkDriverMemory);
+        } else {
+            driverOptionsBuilder.add("--driver-memory").add(nDriverCores * sparkMemPerCoreInGB + "g");
+        }
         int appDefinedParallelism = SparkAppResourceHelper.getSparkParallelism(sparkAppResources);
-        int defaultSparkParallelism = 3 * sparkWorkerCores * SparkAppResourceHelper.getSparkWorkers(sparkAppResources);
-        int sparkParallelism = appDefinedParallelism != 0 ? appDefinedParallelism : defaultSparkParallelism;
-        if (sparkParallelism > 0) {
+//        int defaultSparkParallelism = 3 * sparkWorkerCores * SparkAppResourceHelper.getSparkWorkers(sparkAppResources);
+//        int sparkParallelism = appDefinedParallelism != 0 ? appDefinedParallelism : defaultSparkParallelism;
+        if (appDefinedParallelism > 0) {
             // The default (4MB) open cost consolidates files into tiny partitions regardless of number of cores.
             // By forcing this parameter to zero, we can specify the exact parallelism we want.
             driverOptionsBuilder.add("--conf").add("spark.files.openCostInBytes=0");
-            driverOptionsBuilder.add("--conf").add("spark.default.parallelism=" + sparkParallelism);
+            driverOptionsBuilder.add("--conf").add("spark.default.parallelism=" + appDefinedParallelism);
         }
         StringBuilder sparkDriverJavaOptsBuilder = new StringBuilder();
         String sparkLogConfigFile = SparkAppResourceHelper.getSparkLogConfigFile(sparkAppResources);
@@ -103,9 +106,7 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
                 appOutputDir,
                 Paths.get(appOutputDir, DRIVER_OUTPUT_FILENAME).toString(),
                 Paths.get(appErrorDir, DRIVER_ERROR_FILENAME).toString(),
-                createNativeSpec(SparkAppResourceHelper.getSparkDriverCores(sparkAppResources),
-                        billingInfo,
-                        SparkAppResourceHelper.getSparkAppTimeoutInMin(sparkAppResources)),
+                createNativeSpec(nDriverCores, billingInfo, SparkAppResourceHelper.getSparkAppTimeoutInMin(sparkAppResources)),
                 Collections.emptyMap());
         // Submit driver job
         try {
