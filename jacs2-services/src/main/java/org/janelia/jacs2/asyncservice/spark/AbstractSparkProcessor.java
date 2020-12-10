@@ -1,6 +1,5 @@
 package org.janelia.jacs2.asyncservice.spark;
 
-import java.time.Duration;
 import java.util.Map;
 
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;

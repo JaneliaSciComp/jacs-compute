@@ -49,7 +49,7 @@ import org.slf4j.Logger;
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-public class LSFSparkClusterLauncher {
+class LSFSparkClusterLauncher {
 
     private static final ExecutorService COMPLETION_MESSAGE_EXECUTOR = Executors.newCachedThreadPool((runnable) -> {
         Thread thread = Executors.defaultThreadFactory().newThread(runnable);
@@ -72,16 +72,16 @@ public class LSFSparkClusterLauncher {
     private final String sparkWorkerClass;
 
     @Inject
-    public LSFSparkClusterLauncher(ServiceComputationFactory computationFactory,
-                                   MonitoredJobManager monitoredJobManager,
-                                   @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
-                                   @IntPropertyValue(name = "service.spark.cluster.startTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
-                                   @IntPropertyValue(name = "service.spark.cluster.intervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
-                                   @StrPropertyValue(name = "service.spark.startCommand", defaultValue = "spark-class") String startSparkCmd,
-                                   @StrPropertyValue(name = "service.spark.sparkMasterClass", defaultValue = "org.apache.spark.deploy.master.Master") String sparkMasterClass,
-                                   @StrPropertyValue(name = "service.spark.sparkWorkerClass", defaultValue = "org.apache.spark.deploy.worker.Worker") String sparkWorkerClass,
-                                   @StrPropertyValue(name = "service.spark.lsf.spec", defaultValue = "") String sparkLSFSpec,
-                                   Logger logger) {
+    LSFSparkClusterLauncher(ServiceComputationFactory computationFactory,
+                            MonitoredJobManager monitoredJobManager,
+                            @BoolPropertyValue(name = "service.cluster.requiresAccountInfo", defaultValue = true) boolean requiresAccountInfo,
+                            @IntPropertyValue(name = "service.spark.cluster.startTimeoutInSeconds", defaultValue = 3600) int clusterStartTimeoutInSeconds,
+                            @IntPropertyValue(name = "service.spark.cluster.intervalCheckInMillis", defaultValue = 2000) int clusterIntervalCheckInMillis,
+                            @StrPropertyValue(name = "service.spark.startCommand", defaultValue = "spark-class") String startSparkCmd,
+                            @StrPropertyValue(name = "service.spark.sparkMasterClass", defaultValue = "org.apache.spark.deploy.master.Master") String sparkMasterClass,
+                            @StrPropertyValue(name = "service.spark.sparkWorkerClass", defaultValue = "org.apache.spark.deploy.worker.Worker") String sparkWorkerClass,
+                            @StrPropertyValue(name = "service.spark.lsf.spec", defaultValue = "") String sparkLSFSpec,
+                            Logger logger) {
         this.computationFactory = computationFactory;
         this.jobMgr = monitoredJobManager.getJobMgr();
         this.requiresAccountInfo = requiresAccountInfo;
@@ -94,16 +94,16 @@ public class LSFSparkClusterLauncher {
         this.logger = logger;
     }
 
-    public ServiceComputation<SparkClusterInfo> startCluster(String sparkJobName,
-                                                             String sparkHomeDir,
-                                                             int nWorkers,
-                                                             int nCoresPerWorker,
-                                                             int minRequiredWorkersParam,
-                                                             Path jobWorkingPath,
-                                                             Path jobOutputPath,
-                                                             Path jobErrorPath,
-                                                             String billingInfo,
-                                                             int sparkJobsTimeoutInMins) {
+    ServiceComputation<SparkClusterInfo> startCluster(String sparkJobName,
+                                                      String sparkHomeDir,
+                                                      int nWorkers,
+                                                      int nCoresPerWorker,
+                                                      int minRequiredWorkersParam,
+                                                      Path jobWorkingPath,
+                                                      Path jobOutputPath,
+                                                      Path jobErrorPath,
+                                                      String billingInfo,
+                                                      int sparkJobsTimeoutInMins) {
         int minRequiredWorkers;
         if (minRequiredWorkersParam < 0 || minRequiredWorkersParam > nWorkers) {
             minRequiredWorkers = nWorkers;
@@ -334,7 +334,10 @@ public class LSFSparkClusterLauncher {
                     jobOutputPath.resolve("W" + jobName + "_#.out"),
                     jobErrorPath.resolve("W" + jobName + "_#.err"),
                     createNativeSpec(nCoresPerWorker, billingInfo, sparkJobsTimeoutInMins),
-                    Collections.emptyMap()
+                    ImmutableMap.of(
+                            // spark.worker.cleanup.enabled=true causes worker to remove SPARK_WORKER_DIR (with worker log data) before exit
+                            "SPARK_WORKER_OPTS", "-Dspark.worker.cleanup.enabled=true"
+                    )
             );
             JobFuture workerJobsFuture = jobMgr.submitJob(workerJobTemplate, 1, nWorkers);
             logger.info("Submitted {} spark worker jobs {} ", nWorkers, workerJobsFuture.getJobId());

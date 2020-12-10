@@ -1,6 +1,9 @@
 package org.janelia.jacs2.asyncservice.spark;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,14 +101,15 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
         if (CollectionUtils.isNotEmpty(appArgs)) {
             driverOptionsBuilder.addAll(appArgs);
         }
-
+        Path driverOutputPath = getDriverLogPath(appOutputDir, DRIVER_OUTPUT_FILENAME);
+        Path driverErrorPath = getDriverLogPath(appErrorDir, DRIVER_ERROR_FILENAME);
         JobTemplate driverJobTemplate = createSparkDriverJobTemplate(
                 "D" + appName,
                 driverOptionsBuilder.build(),
                 SparkAppResourceHelper.getSparkHome(sparkAppResources),
                 appOutputDir,
-                Paths.get(appOutputDir, DRIVER_OUTPUT_FILENAME).toString(),
-                Paths.get(appErrorDir, DRIVER_ERROR_FILENAME).toString(),
+                driverOutputPath.toString(),
+                driverErrorPath.toString(),
                 createNativeSpec(nDriverCores, billingInfo, SparkAppResourceHelper.getSparkAppTimeoutInMin(sparkAppResources)),
                 Collections.emptyMap());
         // Submit driver job
@@ -117,6 +121,15 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
             LOG.error("Error running spark application {} on {}", appResource, sparkClusterInfo, e);
             throw new IllegalStateException(e);
         }
+    }
+
+    private Path getDriverLogPath(String dir, String fname) {
+        Path p = Paths.get(dir, fname);
+        try {
+            Files.deleteIfExists(p);
+        } catch (IOException ignore) {
+        }
+        return p;
     }
 
     private JobTemplate createSparkDriverJobTemplate(String jobName,
