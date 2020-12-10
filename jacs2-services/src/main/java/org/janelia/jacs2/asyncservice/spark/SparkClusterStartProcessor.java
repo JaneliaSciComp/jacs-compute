@@ -95,18 +95,18 @@ public class SparkClusterStartProcessor extends AbstractSparkProcessor<SparkClus
                                     jacsServiceData,
                                     JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
                                             String.format("Started spark cluster %s (%s, %s)",
-                                                    sparkCluster.getSparkClusterInfo().getMasterURI(),
-                                                    sparkCluster.getSparkClusterInfo().getMasterJobId(),
-                                                    sparkCluster.getSparkClusterInfo().getWorkerJobId())));
+                                                    sparkCluster.getMasterURI(),
+                                                    sparkCluster.getMasterJobId(),
+                                                    sparkCluster.getWorkerJobId())));
                             return updateServiceResult(
                                     jacsServiceData,
-                                    sparkCluster.getSparkClusterInfo()
+                                    sparkCluster
                             );
                 })
                 ;
     }
 
-    private ServiceComputation<LSFSparkCluster> startCluster(JacsServiceData jacsServiceData, JacsServiceFolder serviceWorkingFolder) {
+    private ServiceComputation<SparkClusterInfo> startCluster(JacsServiceData jacsServiceData, JacsServiceFolder serviceWorkingFolder) {
         Map<String, String> appResources = SparkAppResourceHelper.sparkAppResourceBuilder()
                 .sparkHome(getDefaultSparkHome())
                 .sparkDriverMemory(getDefaultSparkDriverMemory())

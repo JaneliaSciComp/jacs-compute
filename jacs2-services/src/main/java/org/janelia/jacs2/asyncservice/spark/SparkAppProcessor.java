@@ -98,7 +98,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
         // prepare spark job directories
         JacsServiceFolder serviceWorkingFolder = prepareSparkJobDirs(jacsServiceData);
 
-        DataHolder<LSFSparkCluster> runningClusterState = new DataHolder<>();
+        DataHolder<SparkClusterInfo> runningClusterState = new DataHolder<>();
         // prepare app resources
         Map<String, String> appResources = SparkAppResourceHelper.sparkAppResourceBuilder()
                 .sparkHome(getDefaultSparkHome())
@@ -129,15 +129,15 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                 billingInfo,
                 serviceTimeoutInMins(jacsServiceData, appResources))
                 .thenCompose(sparkCluster -> {
-                    logger.info("Started spark cluster {}", sparkCluster.getSparkClusterInfo());
+                    logger.info("Started spark cluster {}", sparkCluster);
                     runningClusterState.setData(sparkCluster);
                     jacsServiceDataPersistence.addServiceEvent(
                             jacsServiceData,
                             JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_SUBMIT,
                                     String.format("Started spark cluster %s (%s, %s) for running %s:%s",
-                                            sparkCluster.getSparkClusterInfo().getMasterURI(),
-                                            sparkCluster.getSparkClusterInfo().getMasterJobId(),
-                                            sparkCluster.getSparkClusterInfo().getWorkerJobId(),
+                                            sparkCluster.getMasterURI(),
+                                            sparkCluster.getMasterJobId(),
+                                            sparkCluster.getWorkerJobId(),
                                             args.appLocation,
                                             args.appEntryPoint)));
                     SparkDriverRunner<? extends SparkApp> sparkDriverRunner;
@@ -150,7 +150,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                     return computationFactory.newCompletedComputation(
                             sparkDriverRunner.startSparkApp(
                                     args.appName,
-                                    sparkCluster.getSparkClusterInfo(),
+                                    sparkCluster,
                                     args.appLocation,
                                     args.appEntryPoint,
                                     ServiceArgs.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs())),
@@ -163,9 +163,9 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                         JacsServiceData.createServiceEvent(JacsServiceEventTypes.START_PROCESS,
                                                 String.format("Started spark app %s cluster on %s (%s, %s)",
                                                         app.getAppId(),
-                                                        runningClusterState.getData().getSparkClusterInfo().getMasterURI(),
-                                                        runningClusterState.getData().getSparkClusterInfo().getMasterJobId(),
-                                                        runningClusterState.getData().getSparkClusterInfo().getWorkerJobId())));
+                                                        runningClusterState.getData().getMasterURI(),
+                                                        runningClusterState.getData().getMasterJobId(),
+                                                        runningClusterState.getData().getWorkerJobId())));
                                 return app;
                             })
                             .thenSuspendUntil(app -> new ContinuationCond.Cond<>(app, app.isDone()),
@@ -179,9 +179,9 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                                 jacsServiceData,
                                 JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
                                         String.format("Stop spark cluster on %s (%s, %s)",
-                                                runningClusterState.getData().getSparkClusterInfo().getMasterURI(),
-                                                runningClusterState.getData().getSparkClusterInfo().getMasterJobId(),
-                                                runningClusterState.getData().getSparkClusterInfo().getWorkerJobId())));
+                                                runningClusterState.getData().getMasterURI(),
+                                                runningClusterState.getData().getMasterJobId(),
+                                                runningClusterState.getData().getWorkerJobId())));
                         String appErrors;
                         if (sparkApp != null) {
                             sparkApp.kill(); // terminate the app just in case it is still running
@@ -195,7 +195,7 @@ public class SparkAppProcessor extends AbstractSparkProcessor<Void> {
                         } else {
                             appErrors = null;
                         }
-                        runningClusterState.getData().stopCluster();
+                        sparkClusterLauncher.stopCluster(runningClusterState.getData());
                         if (appErrors != null) {
                             jacsServiceDataPersistence.updateServiceState(
                                     jacsServiceData,

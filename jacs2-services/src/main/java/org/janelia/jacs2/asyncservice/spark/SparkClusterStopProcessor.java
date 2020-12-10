@@ -61,11 +61,11 @@ public class SparkClusterStopProcessor extends AbstractSparkProcessor<Void> {
                             jacsServiceData,
                             JacsServiceData.createServiceEvent(JacsServiceEventTypes.CLUSTER_STOP_JOB,
                                     String.format("Stop spark cluster on %s (%s, %s)",
-                                            sparkCluster.getSparkClusterInfo().getMasterURI(),
-                                            sparkCluster.getSparkClusterInfo().getMasterJobId(),
-                                            sparkCluster.getSparkClusterInfo().getWorkerJobId())));
+                                            sparkCluster.getMasterURI(),
+                                            sparkCluster.getMasterJobId(),
+                                            sparkCluster.getWorkerJobId())));
 
-                    sparkCluster.stopCluster();
+                    sparkClusterLauncher.stopCluster(sparkCluster);
                     return new JacsServiceResult<>(jacsServiceData);
                 })
                 ;

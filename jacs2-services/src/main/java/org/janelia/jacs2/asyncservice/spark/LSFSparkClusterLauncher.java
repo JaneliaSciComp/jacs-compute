@@ -94,16 +94,16 @@ public class LSFSparkClusterLauncher {
         this.logger = logger;
     }
 
-    public ServiceComputation<LSFSparkCluster> startCluster(String sparkJobName,
-                                                            String sparkHomeDir,
-                                                            int nWorkers,
-                                                            int nCoresPerWorker,
-                                                            int minRequiredWorkersParam,
-                                                            Path jobWorkingPath,
-                                                            Path jobOutputPath,
-                                                            Path jobErrorPath,
-                                                            String billingInfo,
-                                                            int sparkJobsTimeoutInMins) {
+    public ServiceComputation<SparkClusterInfo> startCluster(String sparkJobName,
+                                                             String sparkHomeDir,
+                                                             int nWorkers,
+                                                             int nCoresPerWorker,
+                                                             int minRequiredWorkersParam,
+                                                             Path jobWorkingPath,
+                                                             Path jobOutputPath,
+                                                             Path jobErrorPath,
+                                                             String billingInfo,
+                                                             int sparkJobsTimeoutInMins) {
         int minRequiredWorkers;
         if (minRequiredWorkersParam < 0 || minRequiredWorkersParam > nWorkers) {
             minRequiredWorkers = nWorkers;
@@ -197,7 +197,7 @@ public class LSFSparkClusterLauncher {
                                     clusterStartTimeoutInMillis)
 
                             // then create the spark cluster
-                            .thenApply(workersInfo -> createSparkCluster(new SparkClusterInfo(sparkClusterInfo.getMasterJobId(), workersInfo.getLeft(), sparkClusterInfo.getMasterURI())));
+                            .thenApply(workersInfo -> createSparkCluster(sparkClusterInfo.getMasterJobId(), workersInfo.getLeft(), sparkClusterInfo.getMasterURI()));
                 });
     }
 
@@ -211,7 +211,7 @@ public class LSFSparkClusterLauncher {
         sparkConfig.put("spark.core.connection.ack.wait.timeout", "600s");
         try {
             Files.createDirectories(sparkConfigFile.getParentFile().toPath());
-        } catch(Exception e) {
+        } catch (Exception e) {
             logger.warn("Error creating spark config folder for {}", sparkConfigFile, e);
             return null;
         }
@@ -224,8 +224,8 @@ public class LSFSparkClusterLauncher {
         return sparkConfigFile.getAbsolutePath();
     }
 
-    LSFSparkCluster createSparkCluster(Long masterJobId, Long workerJobId, String sparkURI) {
-        return createSparkCluster(new SparkClusterInfo(masterJobId, workerJobId, sparkURI));
+    SparkClusterInfo createSparkCluster(Long masterJobId, Long workerJobId, String sparkURI) {
+        return new SparkClusterInfo(masterJobId, workerJobId, sparkURI);
     }
 
     SparkDriverRunner<? extends SparkApp> getLocalDriverRunner() {
@@ -236,8 +236,35 @@ public class LSFSparkClusterLauncher {
         return new LSFSparkDriverRunner(jobMgr, billingInfo);
     }
 
-    private LSFSparkCluster createSparkCluster(SparkClusterInfo sparkClusterInfo) {
-        return new LSFSparkCluster(jobMgr, sparkClusterInfo);
+    ServiceComputation<SparkClusterInfo> stopCluster(SparkClusterInfo sparkClusterInfo) {
+        /**
+         * Use service computation to chain stopping the cluster jobs
+         * so that the master job doesn't get killed until the workers are all gone.
+         */
+        return computationFactory.newCompletedComputation(sparkClusterInfo)
+                .thenApply(clusterInfo -> {
+                    try {
+                        logger.info("Kill spark worker job {}", clusterInfo.getWorkerJobId());
+                        jobMgr.killJob(clusterInfo.getWorkerJobId());
+                    } catch (Exception e) {
+                        logger.error("Error stopping spark worker job {}", clusterInfo.getWorkerJobId(), e);
+                    }
+                    return clusterInfo;
+                })
+                .thenSuspendUntil(clusterInfo -> {
+                    Collection<JobInfo> jobInfos = jobMgr.getJobInfo(clusterInfo.getWorkerJobId());
+                    boolean allWorkersDone = jobInfos.stream().allMatch(JobInfo::isComplete);
+                    return new ContinuationCond.Cond<>(clusterInfo, allWorkersDone);
+                })
+                .thenApply(clusterInfo -> {
+                    try {
+                        logger.info("Kill spark master job {}", clusterInfo.getMasterJobId());
+                        jobMgr.killJob(clusterInfo.getMasterJobId());
+                    } catch (Exception e) {
+                        logger.error("Error stopping spark master job {}", clusterInfo.getMasterJobId(), e);
+                    }
+                    return clusterInfo;
+                });
     }
 
     private ServiceComputation<Long> startSparkMasterJob(String jobName,
@@ -304,7 +331,7 @@ public class LSFSparkClusterLauncher {
                     jobArgsBuilder.build(),
                     sparkHomeDir,
                     jobWorkingPath,
-                    jobOutputPath.resolve("W" + jobName  + "_#.out"),
+                    jobOutputPath.resolve("W" + jobName + "_#.out"),
                     jobErrorPath.resolve("W" + jobName + "_#.err"),
                     createNativeSpec(nCoresPerWorker, billingInfo, sparkJobsTimeoutInMins),
                     Collections.emptyMap()
@@ -331,7 +358,7 @@ public class LSFSparkClusterLauncher {
         if (f.exists()) {
             Pattern p = Pattern.compile("Starting Spark master at (spark://([^:]+):([0-9]+))$");
             try (BufferedReader reader = new BufferedReader(new FileReader(f))) {
-                for (;;) {
+                for (; ; ) {
                     String l = reader.readLine();
                     if (l == null) break;
                     if (StringUtils.isEmpty(l)) {

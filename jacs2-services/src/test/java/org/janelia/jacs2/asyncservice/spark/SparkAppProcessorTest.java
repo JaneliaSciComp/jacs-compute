@@ -53,10 +53,8 @@ public class SparkAppProcessorTest {
     private static final String HADOOP_HOME_DIR = "hadoopHome";
 
     ServiceComputationFactory serviceComputationFactory;
-    private JacsServiceDataPersistence jacsServiceDataPersistence;
     private LSFSparkClusterLauncher clusterLauncher;
     private ComputeAccounting clusterAccounting;
-    private LSFSparkCluster sparkCluster;
     private SparkApp sparkApp;
 
     private SparkAppProcessor sparkAppProcessor;
@@ -66,10 +64,9 @@ public class SparkAppProcessorTest {
     public void setUp() {
         Logger logger = mock(Logger.class);
         serviceComputationFactory = ComputationTestHelper.createTestServiceComputationFactory(logger);
-        jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
+        JacsServiceDataPersistence jacsServiceDataPersistence = mock(JacsServiceDataPersistence.class);
         clusterLauncher = mock(LSFSparkClusterLauncher.class);
         clusterAccounting = mock(ComputeAccounting.class);
-        sparkCluster = mock(LSFSparkCluster.class);
         sparkApp = mock(SparkApp.class);
         Mockito.when(sparkApp.isDone()).thenReturn(true);
 
@@ -88,7 +85,6 @@ public class SparkAppProcessorTest {
                 logger);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void processWithLocalSparkDriver() throws Exception {
         String testAppResource = "testApp";
@@ -120,7 +116,7 @@ public class SparkAppProcessorTest {
         sparkServiceComputation
                 .thenApply(r -> {
                     successful.accept(r);
-                    Mockito.verify(sparkCluster).stopCluster();
+                    Mockito.verify(clusterLauncher).stopCluster(any(SparkClusterInfo.class));
                     return r;
                 })
                 .exceptionally(exc -> {
@@ -168,7 +164,7 @@ public class SparkAppProcessorTest {
                 })
                 .exceptionally(exc -> {
                     failure.accept(exc);
-                    Mockito.verify(sparkCluster).stopCluster();
+                    Mockito.verify(clusterLauncher).stopCluster(any(SparkClusterInfo.class));
                     return null;
                 });
     }
@@ -201,6 +197,7 @@ public class SparkAppProcessorTest {
         Mockito.when(Files.createDirectories(any(Path.class))).then((Answer<Path>) invocation -> invocation.getArgument(0));
         Mockito.when(clusterAccounting.getComputeAccount(testService)).thenReturn(billingInfo);
 
+        SparkClusterInfo testClusterInfo = new SparkClusterInfo(1L, 2L, "spark://sparkmasterhost:7077");
         Mockito.when(clusterLauncher.startCluster(
                 testApp,
                 DEFAULT_SPARK_HOME,
@@ -212,11 +209,8 @@ public class SparkAppProcessorTest {
                 serviceErrorPath,
                 billingInfo,
                 DEFAULT_SPARK_DURATION_MINS))
-                .thenReturn(serviceComputationFactory.newCompletedComputation(sparkCluster));
+                .thenReturn(serviceComputationFactory.newCompletedComputation(testClusterInfo));
 
-        SparkClusterInfo testClusterInfo = new SparkClusterInfo(1L, 2L, "spark://sparkmasterhost:7077");
-        Mockito.when(sparkCluster.getSparkClusterInfo())
-                .thenReturn(testClusterInfo);
         Map<String, String> appResources = SparkAppResourceHelper.sparkAppResourceBuilder()
                 .sparkHome(DEFAULT_SPARK_HOME)
                 .sparkDriverMemory(DEFAULT_SPARK_DRIVER_MEMORY)
@@ -227,6 +221,8 @@ public class SparkAppProcessorTest {
                 .hadoopHome(HADOOP_HOME_DIR)
                 .addAll(testService.getResources())
                 .build();
+
+        @SuppressWarnings("unchecked")
         SparkDriverRunner<? extends SparkApp> sparkDriverRunner = mock(SparkDriverRunner.class);
         Mockito.when(clusterLauncher.getLocalDriverRunner()).then(invocation -> sparkDriverRunner);
         Mockito.when(sparkDriverRunner.startSparkApp(

@@ -111,9 +111,9 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
                                     String.format("Running app %s:%s using spark job on %s (%s, %s)",
                                             args.appLocation,
                                             args.appEntryPoint,
-                                            sparkCluster.getSparkClusterInfo().getMasterURI(),
-                                            sparkCluster.getSparkClusterInfo().getMasterJobId(),
-                                            sparkCluster.getSparkClusterInfo().getWorkerJobId())));
+                                            sparkCluster.getMasterURI(),
+                                            sparkCluster.getMasterJobId(),
+                                            sparkCluster.getWorkerJobId())));
                     SparkDriverRunner<? extends SparkApp> sparkDriverRunner;
                     if (jacsServiceData.getProcessingLocation() == ProcessingLocation.LSF_JAVA) {
                         sparkDriverRunner = sparkClusterLauncher.getLSFDriverRunner(billingInfo);
@@ -124,7 +124,7 @@ public class SparkAppRunProcessor extends AbstractSparkProcessor<String> {
                     return computationFactory.newCompletedComputation(
                             sparkDriverRunner.startSparkApp(
                                     args.appName,
-                                    sparkCluster.getSparkClusterInfo(),
+                                    sparkCluster,
                                     args.appLocation,
                                     args.appEntryPoint,
                                     ServiceArgs.concatArgs(ImmutableList.of(args.appArgs, args.getRemainingArgs())),
