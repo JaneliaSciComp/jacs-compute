@@ -81,7 +81,7 @@ class LocalSparkDriverRunner implements SparkDriverRunner<LocalProcessSparkApp> 
         String sparkLogConfigFile = SparkAppResourceHelper.getSparkLogConfigFile(sparkAppResources);
         if (StringUtils.isNotBlank(sparkLogConfigFile)) {
             sparkLauncher.setConf(SparkLauncher.EXECUTOR_EXTRA_JAVA_OPTIONS, "-Dlog4j.configuration=file://" + sparkLogConfigFile);
-            sparkDriverJavaOptsBuilder.append("-Dlog4j.configuration=file://").append(SparkAppResourceHelper.getSparkLogConfigFile(sparkAppResources)).append(' ');
+            sparkDriverJavaOptsBuilder.append("-Dlog4j.configuration=file://").append(sparkLogConfigFile).append(' ');
         }
         String appStackSize = SparkAppResourceHelper.getSparkAppStackSize(sparkAppResources);
         if (StringUtils.isNotBlank(appStackSize)) {
