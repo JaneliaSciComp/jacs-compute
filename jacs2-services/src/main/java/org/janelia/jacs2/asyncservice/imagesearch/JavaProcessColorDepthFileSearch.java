@@ -151,7 +151,7 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
             externalScriptWriter.addArg("--with-grad-scores");
         }
         if (args.partitionSize != null && args.partitionSize > 0) {
-            externalScriptWriter.addArgs("--libraryPartitionSize", args.partitionSize.toString());
+            externalScriptWriter.addArgs("--processingPartitionSize", args.partitionSize.toString());
         }
         if (ncores > 0) {
             externalScriptWriter.addArgs("--cdsConcurrency", String.valueOf(2 * ncores - 1));
