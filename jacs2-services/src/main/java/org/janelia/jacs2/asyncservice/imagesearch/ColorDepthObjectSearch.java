@@ -175,7 +175,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                 ColorDepthSearch.class, args.searchId);
 
         if (search == null) {
-            throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" not found");
+            throw new ComputationException(jacsServiceData, "ColorDepthSearch#" + args.searchId + " not found");
         }
 
         jacsServiceDataPersistence.addServiceEvent(
@@ -222,7 +222,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         search.getMirrorMask(),
                         search.getPctPositivePixels(),
                         search.useGradientScores()
-                        ))
+                ))
                 .map(serviceArgList -> {
                     ServiceComputation<JacsServiceResult<List<File>>> cdsComputation;
                     Map<String, String> colorDepthProcessingResources = new LinkedHashMap<>();
@@ -256,10 +256,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     } else {
                         // Curve fitting using https://www.desmos.com/calculator
                         // This equation was found using https://mycurvefit.com
-                        int desiredNodes = (int)Math.round(0.2 * Math.pow(ntargets, 0.32));
+                        int desiredNodes = (int) Math.round(0.2 * Math.pow(ntargets, 0.32));
 
                         int numNodes = Math.max(Math.min(desiredNodes, maxNodes), minNodes);
-                        int filesPerNode = (int)Math.round(ntargets / (double)numNodes);
+                        int filesPerNode = (int) Math.round(ntargets / (double) numNodes);
                         logger.info("Using {} worker nodes, with {} files per node", numNodes, filesPerNode);
 
                         serviceArgList.add(new ServiceArg("-useSpark"));
@@ -284,7 +284,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         legacyDomainDao.addColorDepthSearchResult(jacsServiceData.getOwnerKey(), search.getId(), colorDepthResult);
                         logger.info("Updated search {} }with new result {}", search, colorDepthResult);
                         return updateServiceResult(jacsServiceData, Reference.createFor(colorDepthResult));
-                    } else  {
+                    } else {
                         return updateServiceResult(jacsServiceData, null);
                     }
                 });
@@ -312,11 +312,11 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                 })
                 .filter(CDMaskMatches::hasResults)
                 .collect(Collectors.collectingAndThen(Collectors.groupingBy(CDMaskMatches::getMaskId, Collectors.toList()), // if there are multiple results for the same mask merge them
-                            allResByMaskIds -> allResByMaskIds.entrySet().stream()
-                                    .map(e -> e.getValue().stream()
-                                            .reduce(new CDMaskMatches().setMaskId(e.getKey()), (r1, r2) -> r1.addResults(r2.getResults())))
-                                    .collect(Collectors.toList())
-                        ))
+                        allResByMaskIds -> allResByMaskIds.entrySet().stream()
+                                .map(e -> e.getValue().stream()
+                                        .reduce(new CDMaskMatches().setMaskId(e.getKey()), (r1, r2) -> r1.addResults(r2.getResults())))
+                                .collect(Collectors.toList())
+                ))
                 .stream()
                 .peek(cdMaskMatches -> {
                     Boolean useGradientScores = searchParameters.getUseGradientScores();
@@ -332,14 +332,15 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 .max(Integer::compare)
                                 .orElse(0);
                         logger.info("Values used for normalizing scores: maxNegativeScore:{}, maxMatchingPixels:{}", maxNegativeScore, maxMatchingPixels);
-                        cdMaskMatches.getResults().forEach(cdsMatchResult -> {
-                            cdsMatchResult.setNormalizedScore(CDScoreUtils.calculateNormalizedScore(
-                                    cdsMatchResult.getMatchingPixels(),
-                                    cdsMatchResult.getGradientAreaGap(),
-                                    cdsMatchResult.getHighExpressionArea(),
-                                    maxMatchingPixels,
-                                    maxNegativeScore));
-                        });
+                        cdMaskMatches.getResults().stream().parallel()
+                                .forEach(cdsMatchResult -> {
+                                    cdsMatchResult.setNormalizedScore(CDScoreUtils.calculateNormalizedScore(
+                                            cdsMatchResult.getMatchingPixels(),
+                                            cdsMatchResult.getGradientAreaGap(),
+                                            cdsMatchResult.getHighExpressionArea(),
+                                            maxMatchingPixels,
+                                            maxNegativeScore));
+                                });
                     }
                 })
                 .forEach(cdMaskMatches -> {
@@ -418,7 +419,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         serviceArgList.add(new ServiceArg("-dataThreshold", targetsThreshold));
         serviceArgList.add(new ServiceArg("-targetsFiles", targetsFile));
         serviceArgList.add(new ServiceArg("-ntargets", ntargets));
-        serviceArgList.add(new ServiceArg("-cdMatchesDir",  cdMatchesDirname));
+        serviceArgList.add(new ServiceArg("-cdMatchesDir", cdMatchesDirname));
         serviceArgList.add(new ServiceArg("-negativeRadius", negativeRadius));
         serviceArgList.add(new ServiceArg("-pixColorFluctuation", pixColorFluctuation));
         serviceArgList.add(new ServiceArg("-xyShift", xyShift));
@@ -438,8 +439,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         } else {
             // each MIP requires about 2.6M so for memory per color depth search we multiply 2.6 by an empirical factor (3.5 for example)
             return (int) Math.ceil(Math.min(nQueries, JavaProcessColorDepthFileSearch.MASKS_PER_JOB)
-                            * 2.6 * 3.5 * ncores *
-                            (double) Math.min(nTargets, JavaProcessColorDepthFileSearch.TARGETS_PER_JOB) / processingPartitionSize / 1024.
+                    * 2.6 * 3.5 * ncores *
+                    (double) Math.min(nTargets, JavaProcessColorDepthFileSearch.TARGETS_PER_JOB) / processingPartitionSize / 1024.
             );
         }
     }
@@ -469,7 +470,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     private List<MaskData> getMaskData(Path masksFolder, List<ColorDepthMask> masks) {
         Map<Integer, List<CDMMetadata>> masksPerFiles = masks.stream()
                 .map(mask -> {
-                    Reference sampleRef =  mask.getSample();
+                    Reference sampleRef = mask.getSample();
                     CDMMetadata maskMetadata = new CDMMetadata();
                     maskMetadata.setId(mask.getId().toString());
                     maskMetadata.setCdmPath(mask.getFilepath());
@@ -539,7 +540,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 new ColorDepthImageQuery()
                                         .withAlignmentSpace(alignmentSpace)
                                         .withLibraryIdentifiers(otherRelatedMIPLibraries)
-                                        )
+                        )
                                 .map(Image::getFilepath)
                                 .collect(Collectors.toSet());
                     } else {
@@ -571,7 +572,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     }
                     return cdmips.stream()
                             .map(cdmi -> {
-                                Reference sampleRef =  cdmi.getSampleRef();
+                                Reference sampleRef = cdmi.getSampleRef();
                                 Reference sourceImageRef = cdmi.getSourceImageRef();
                                 ColorDepthImage sourceMIP = indexedLibraryMIPs.get(sourceImageRef);
                                 CDMMetadata targetMetadata = new CDMMetadata();
