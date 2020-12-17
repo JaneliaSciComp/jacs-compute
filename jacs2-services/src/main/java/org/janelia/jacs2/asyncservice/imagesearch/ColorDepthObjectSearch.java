@@ -502,10 +502,11 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                 .flatMap(targetLibrary -> {
                     List<ColorDepthImage> cdmips;
                     Map<Reference, ColorDepthImage> indexedLibraryMIPs;
-                    List<ColorDepthImage> libraryMIPs = colorDepthImageDao.listMatchingColorDepthMIPs(
+                    List<ColorDepthImage> libraryMIPs = colorDepthImageDao.streamColorDepthMIPs(
                             new ColorDepthImageQuery()
                                     .withAlignmentSpace(alignmentSpace)
-                                    .withLibraryIdentifiers(Collections.singleton(targetLibrary.getIdentifier())));
+                                    .withLibraryIdentifiers(Collections.singleton(targetLibrary.getIdentifier())))
+                            .collect(Collectors.toList());
                     if (useSegmentation && ColorDepthLibraryUtils.hasSearchableVariants(targetLibrary)) {
                         cdmips = colorDepthImageDao.streamColorDepthMIPs(
                                 new ColorDepthImageQuery()
