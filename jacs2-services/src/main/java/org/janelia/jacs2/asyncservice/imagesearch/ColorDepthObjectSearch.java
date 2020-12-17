@@ -495,8 +495,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                                         List<String> cdsTargets,
                                                         boolean useSegmentation,
                                                         boolean useGradientScores) {
+        logger.info("Collecting target mips from {} libraries", cdsTargets);
         return cdsTargets.stream()
                 .flatMap(targetLibraryIdentifier -> colorDepthLibraryDao.getLibraryWithVariants(targetLibraryIdentifier).stream())
+                .filter(targetLibrary -> ColorDepthLibraryUtils.isSearchableVariant(targetLibrary.getVariant()))
                 .flatMap(targetLibrary -> {
                     List<ColorDepthImage> cdmips;
                     Map<Reference, ColorDepthImage> indexedLibraryMIPs;
