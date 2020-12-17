@@ -12,8 +12,9 @@ public class CDMaskMatches {
         return maskId;
     }
 
-    public void setMaskId(String maskId) {
+    public CDMaskMatches setMaskId(String maskId) {
         this.maskId = maskId;
+        return this;
     }
 
     boolean hasResults() {
@@ -26,6 +27,15 @@ public class CDMaskMatches {
 
     public void setResults(List<CDSMatchResult> results) {
         this.results = results;
+    }
+
+    public CDMaskMatches addResults(List<CDSMatchResult> results) {
+        if (!hasResults()) {
+            this.results = results;
+        } else if (results != null && !results.isEmpty()) {
+            this.results.addAll(results);
+        }
+        return this;
     }
 
     @Override
