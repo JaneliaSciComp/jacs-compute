@@ -422,7 +422,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         serviceArgList.add(new ServiceArg("-cdMatchesDir", cdMatchesDirname));
         serviceArgList.add(new ServiceArg("-negativeRadius", negativeRadius));
         serviceArgList.add(new ServiceArg("-pixColorFluctuation", pixColorFluctuation));
-        serviceArgList.add(new ServiceArg("-xyShift", xyShift));
+        serviceArgList.add(new ServiceArg("-xyShift", xyShift != null ? xyShift / 2 : xyShift)); // the client save the actual pixel shift in the Search
         serviceArgList.add(new ServiceArg("-mirrorMask", mirrorMask));
         serviceArgList.add(new ServiceArg("-pctPositivePixels", pctPositivePixels));
         serviceArgList.add(new ServiceArg("-withGradientScores", withGradScores));
