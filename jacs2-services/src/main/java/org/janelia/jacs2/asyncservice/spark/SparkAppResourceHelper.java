@@ -115,7 +115,7 @@ public class SparkAppResourceHelper {
         if (StringUtils.isNotBlank(sparkNodes)) {
             int nSparkNodes = Integer.parseInt(sparkNodes);
             // the legacy spark app allocated 5 slots on each node per worker, therefore each node could have up to 6 spark workers
-            return String.valueOf(nSparkNodes * 6);
+            return String.valueOf(nSparkNodes);
         } else {
             return null;
         }
