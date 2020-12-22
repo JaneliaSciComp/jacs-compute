@@ -22,9 +22,9 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
@@ -80,6 +80,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     private static final String GRADIENT_VARIANT = "gradient";
     private static final String ZGAPMASK_VARIANT = "zgap";
     private static final String DISPLAY_VARIANT_SUFFIX = "gamma1_4";
+    private static final int DEFAULT_MAX_SEARCH_RESULTS = 200;
 
     private static class MaskData {
         final String filename;
@@ -174,7 +175,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                 ColorDepthSearch.class, args.searchId);
 
         if (search == null) {
-            throw new ComputationException(jacsServiceData, "ColorDepthSearch#"+args.searchId+" not found");
+            throw new ComputationException(jacsServiceData, "ColorDepthSearch#" + args.searchId + " not found");
         }
 
         jacsServiceDataPersistence.addServiceEvent(
@@ -221,7 +222,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         search.getMirrorMask(),
                         search.getPctPositivePixels(),
                         search.useGradientScores()
-                        ))
+                ))
                 .map(serviceArgList -> {
                     ServiceComputation<JacsServiceResult<List<File>>> cdsComputation;
                     Map<String, String> colorDepthProcessingResources = new LinkedHashMap<>();
@@ -283,7 +284,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                         legacyDomainDao.addColorDepthSearchResult(jacsServiceData.getOwnerKey(), search.getId(), colorDepthResult);
                         logger.info("Updated search {} }with new result {}", search, colorDepthResult);
                         return updateServiceResult(jacsServiceData, Reference.createFor(colorDepthResult));
-                    } else  {
+                    } else {
                         return updateServiceResult(jacsServiceData, null);
                     }
                 });
@@ -295,13 +296,14 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                 JacsServiceData.createServiceEvent(JacsServiceEventTypes.COLLECT_SERVICE_RESULTS, cdMatchFiles.toString()));
         ColorDepthResult colorDepthResult = new ColorDepthResult();
         colorDepthResult.setParameters(searchParameters);
-        int maxResultsPerMask = searchParameters.getMaxResultsPerMask() == null
-                ? 200
+        int maxResultsPerMask = searchParameters.getMaxResultsPerMask() == null || searchParameters.getMaxResultsPerMask() <= 0
+                ? DEFAULT_MAX_SEARCH_RESULTS
                 : searchParameters.getMaxResultsPerMask();
         cdMatchFiles.stream()
                 .filter(cdsMatchesFile -> maskIds.contains(FileUtils.getFileNameOnly(cdsMatchesFile.toPath())))
                 .map(cdsMatchesFile -> {
                     try {
+                        logger.info("Read color depth search matches from {}", cdsMatchesFile);
                         return objectMapper.readValue(cdsMatchesFile, CDMaskMatches.class);
                     } catch (IOException e) {
                         logger.error("Error reading results from {}", cdsMatchesFile, e);
@@ -309,42 +311,49 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     }
                 })
                 .filter(CDMaskMatches::hasResults)
+                .collect(Collectors.collectingAndThen(Collectors.groupingBy(CDMaskMatches::getMaskId, Collectors.toList()), // if there are multiple results for the same mask merge them
+                        allResByMaskIds -> allResByMaskIds.entrySet().stream()
+                                .map(e -> e.getValue().stream()
+                                        .reduce(new CDMaskMatches().setMaskId(e.getKey()), (r1, r2) -> r1.addResults(r2.getResults())))
+                                .collect(Collectors.toList())
+                ))
+                .stream()
                 .peek(cdMaskMatches -> {
                     Boolean useGradientScores = searchParameters.getUseGradientScores();
-                    long maxNegativeScore;
-                    int maxMatchingPixels;
+                    // if no gradient scores were computed results should have already been "normalized"
                     if (useGradientScores != null && useGradientScores) {
-                        maxNegativeScore = cdMaskMatches.getResults().stream()
+                        logger.info("Normalize results using gradient scores for mask {}", cdMaskMatches.getMaskId());
+                        long maxNegativeScore = cdMaskMatches.getResults().stream()
                                 .map(cdsMatchResult -> CDScoreUtils.calculateNegativeScore(cdsMatchResult.getGradientAreaGap(), cdsMatchResult.getHighExpressionArea()))
                                 .max(Long::compare)
                                 .orElse(-1L);
-                        maxMatchingPixels = cdMaskMatches.getResults().stream().parallel()
+                        int maxMatchingPixels = cdMaskMatches.getResults().stream().parallel()
                                 .map(CDSMatchResult::getMatchingPixels)
                                 .max(Integer::compare)
                                 .orElse(0);
                         logger.info("Values used for normalizing scores: maxNegativeScore:{}, maxMatchingPixels:{}", maxNegativeScore, maxMatchingPixels);
-                    } else {
-                        maxNegativeScore = -1;
-                        maxMatchingPixels = -1;
+                        cdMaskMatches.getResults().stream().parallel()
+                                .forEach(cdsMatchResult -> {
+                                    cdsMatchResult.setNormalizedScore(CDScoreUtils.calculateNormalizedScore(
+                                            cdsMatchResult.getMatchingPixels(),
+                                            cdsMatchResult.getGradientAreaGap(),
+                                            cdsMatchResult.getHighExpressionArea(),
+                                            maxMatchingPixels,
+                                            maxNegativeScore));
+                                });
                     }
-                    cdMaskMatches.getResults().forEach(cdsMatchResult -> {
-                        cdsMatchResult.setNormalizedScore(CDScoreUtils.calculateNormalizedScore(
-                                cdsMatchResult.getMatchingPixels(),
-                                cdsMatchResult.getGradientAreaGap(),
-                                cdsMatchResult.getHighExpressionArea(),
-                                maxMatchingPixels,
-                                maxNegativeScore));
-                    });
-                    CDScoreUtils.sortCDSResults(cdMaskMatches.getResults());
                 })
                 .forEach(cdMaskMatches -> {
                     ColorDepthMaskResult maskResult = new ColorDepthMaskResult();
                     maskResult.setMaskRef(Reference.createFor("ColorDepthMask" + "#" + cdMaskMatches.getMaskId()));
+                    // re-sort the results in case multiple results for the same mask were merged together
+                    CDScoreUtils.sortCDSResults(cdMaskMatches.getResults());
                     cdMaskMatches.getResults().stream()
                             .limit(maxResultsPerMask)
                             .map(cdsMatchResult -> {
                                 ColorDepthMatch match = new ColorDepthMatch();
-                                match.setMatchingImageRef(Reference.createFor(getColorDepthImage(cdsMatchResult.getImageName())));
+                                Reference matchingImageRef = Reference.createFor(getColorDepthImage(cdsMatchResult.getImageName()));
+                                match.setMatchingImageRef(matchingImageRef);
                                 ColorDepthImage displayVariantMIP;
                                 if (cdsMatchResult.hasVariant(DISPLAY_VARIANT)) {
                                     displayVariantMIP = getColorDepthImage(cdsMatchResult.getVariant(DISPLAY_VARIANT));
@@ -410,10 +419,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         serviceArgList.add(new ServiceArg("-dataThreshold", targetsThreshold));
         serviceArgList.add(new ServiceArg("-targetsFiles", targetsFile));
         serviceArgList.add(new ServiceArg("-ntargets", ntargets));
-        serviceArgList.add(new ServiceArg("-cdMatchesDir",  cdMatchesDirname));
+        serviceArgList.add(new ServiceArg("-cdMatchesDir", cdMatchesDirname));
         serviceArgList.add(new ServiceArg("-negativeRadius", negativeRadius));
         serviceArgList.add(new ServiceArg("-pixColorFluctuation", pixColorFluctuation));
-        serviceArgList.add(new ServiceArg("-xyShift", xyShift));
+        serviceArgList.add(new ServiceArg("-xyShift", xyShift != null ? xyShift / 2 : xyShift)); // the client save the actual pixel shift in the Search
         serviceArgList.add(new ServiceArg("-mirrorMask", mirrorMask));
         serviceArgList.add(new ServiceArg("-pctPositivePixels", pctPositivePixels));
         serviceArgList.add(new ServiceArg("-withGradientScores", withGradScores));
@@ -430,8 +439,8 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         } else {
             // each MIP requires about 2.6M so for memory per color depth search we multiply 2.6 by an empirical factor (3.5 for example)
             return (int) Math.ceil(Math.min(nQueries, JavaProcessColorDepthFileSearch.MASKS_PER_JOB)
-                            * 2.6 * 3.5 * ncores *
-                            (double) Math.min(nTargets, JavaProcessColorDepthFileSearch.TARGETS_PER_JOB) / processingPartitionSize / 1024.
+                    * 2.6 * 3.5 * ncores *
+                    (double) Math.min(nTargets, JavaProcessColorDepthFileSearch.TARGETS_PER_JOB) / processingPartitionSize / 1024.
             );
         }
     }
@@ -461,7 +470,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     private List<MaskData> getMaskData(Path masksFolder, List<ColorDepthMask> masks) {
         Map<Integer, List<CDMMetadata>> masksPerFiles = masks.stream()
                 .map(mask -> {
-                    Reference sampleRef =  mask.getSample();
+                    Reference sampleRef = mask.getSample();
                     CDMMetadata maskMetadata = new CDMMetadata();
                     maskMetadata.setId(mask.getId().toString());
                     maskMetadata.setCdmPath(mask.getFilepath());
@@ -495,8 +504,10 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                                         List<String> cdsTargets,
                                                         boolean useSegmentation,
                                                         boolean useGradientScores) {
+        logger.info("Collecting target mips from {} libraries", cdsTargets.size());
         return cdsTargets.stream()
                 .flatMap(targetLibraryIdentifier -> colorDepthLibraryDao.getLibraryWithVariants(targetLibraryIdentifier).stream())
+                .filter(targetLibrary -> ColorDepthLibraryUtils.isSearchableVariant(targetLibrary.getVariant()))
                 .flatMap(targetLibrary -> {
                     List<ColorDepthImage> cdmips;
                     Map<Reference, ColorDepthImage> indexedLibraryMIPs;
@@ -505,7 +516,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                     .withAlignmentSpace(alignmentSpace)
                                     .withLibraryIdentifiers(Collections.singleton(targetLibrary.getIdentifier())))
                             .collect(Collectors.toList());
-                    if (useSegmentation) {
+                    if (useSegmentation && ColorDepthLibraryUtils.hasSearchableVariants(targetLibrary)) {
                         cdmips = colorDepthImageDao.streamColorDepthMIPs(
                                 new ColorDepthImageQuery()
                                         .withAlignmentSpace(alignmentSpace)
@@ -529,7 +540,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 new ColorDepthImageQuery()
                                         .withAlignmentSpace(alignmentSpace)
                                         .withLibraryIdentifiers(otherRelatedMIPLibraries)
-                                        )
+                        )
                                 .map(Image::getFilepath)
                                 .collect(Collectors.toSet());
                     } else {
@@ -561,7 +572,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     }
                     return cdmips.stream()
                             .map(cdmi -> {
-                                Reference sampleRef =  cdmi.getSampleRef();
+                                Reference sampleRef = cdmi.getSampleRef();
                                 Reference sourceImageRef = cdmi.getSourceImageRef();
                                 ColorDepthImage sourceMIP = indexedLibraryMIPs.get(sourceImageRef);
                                 CDMMetadata targetMetadata = new CDMMetadata();

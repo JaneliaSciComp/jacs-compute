@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -109,6 +110,7 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
         ExternalCodeBlock externalScriptCode = new ExternalCodeBlock();
         ScriptWriter externalScriptWriter = externalScriptCode.getCodeWriter();
         externalScriptWriter
+                .read("cdsResultsDir")
                 .read("masksOffset")
                 .read("masksLength")
                 .read("targetsOffset")
@@ -118,13 +120,13 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
                 .addArg(runtimeOpts.toString())
                 .addArgs("-jar", jarPath)
                 .addArg("searchFromJSON")
-                .addArgs("-m").addArgs(args.masksFiles)
+                .addArg("-m").addArgs(args.masksFiles)
                 .addArg("--masks-index").addArg("${masksOffset}")
                 .addArg("--masks-length").addArg("${masksLength}")
                 .addArgs("-i").addArgs(args.targetsFiles)
                 .addArg("--images-index").addArg("${targetsOffset}")
                 .addArg("--images-length").addArg("${targetsLength}")
-                .addArgs("--outputDir", args.cdMatchesDir)
+                .addArg("--outputDir").addArg("${cdsResultsDir}")
                 ;
         if (args.maskThreshold != null) {
             externalScriptWriter.addArgs("--maskThreshold", args.maskThreshold.toString());
@@ -171,18 +173,21 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
     protected List<ExternalCodeBlock> prepareConfigurationFiles(JacsServiceData jacsServiceData) {
         JavaProcessColorDepthSearchArgs args = getArgs(jacsServiceData);
         List<ExternalCodeBlock> configs = new ArrayList<>();
+        int configIndex = 0;
         int maskOffset = 0;
         do {
             int  targetOffset = 0;
             do {
                 ExternalCodeBlock instanceConfig = new ExternalCodeBlock();
                 ScriptWriter configWriter = instanceConfig.getCodeWriter();
+                configWriter.add(Paths.get(args.cdMatchesDir, String.valueOf(configIndex + 1)).toString());
                 configWriter.add(String.valueOf(maskOffset));
                 configWriter.add(String.valueOf(MASKS_PER_JOB));
                 configWriter.add(String.valueOf(targetOffset));
                 configWriter.add(String.valueOf(TARGETS_PER_JOB));
                 configWriter.close();
                 configs.add(instanceConfig);
+                configIndex++;
                 targetOffset += TARGETS_PER_JOB;
             } while (targetOffset < args.ntargets);
             maskOffset += MASKS_PER_JOB;
