@@ -95,7 +95,7 @@ class LSFSparkDriverRunner implements SparkDriverRunner<LSFJobSparkApp> {
             sparkDriverJavaOptsBuilder.append("-Djava.library.path=").append(hadoopHome).append("/lib/native ");
         }
         if (sparkDriverJavaOptsBuilder.length() > 0) {
-            String driverJavaOptions = '"' + sparkDriverJavaOptsBuilder.toString() + '"';
+            String driverJavaOptions = sparkDriverJavaOptsBuilder.toString();
             driverOptionsBuilder.add("--driver-java-options", driverJavaOptions);
         }
         driverOptionsBuilder.add(appResource);
