@@ -115,9 +115,9 @@ public class SparkAppResourceHelper {
         if (StringUtils.isNotBlank(sparkNodes)) {
             int nSparkNodes = Integer.parseInt(sparkNodes);
             // the legacy spark app allocated 5 slots on each node per worker, therefore each node could have up to 6 spark workers
-            // this is still not entirely accurate because to have the same number of executor cores we would have to actually divide
-            // the number of cores per node to the number or cores per worker, i.e. 30 / coresPerWorker
-            return String.valueOf(nSparkNodes * 6);
+            // so if I wanted to be accurate here I woould've had to multiply with previous number of cores per node divided by cores per worker;
+            // However for now I will try to see if the applications work by simply increasing the number of workers 3 times
+            return String.valueOf(nSparkNodes * 3);
         } else {
             return null;
         }
