@@ -216,15 +216,15 @@ public class DeconvolutionJobsProcessor extends AbstractExeBasedServiceProcessor
                     String channelConfigFile = indexedConfig.getReference().getLeft();
                     String psfFile = indexedConfig.getReference().getRight();
                     List<Map<String, Object>> channelTileConfigs = deconvolutionHelper.loadJsonConfiguration(channelConfigFile,
-                            new TypeReference<List<Map<String, Object>>>() {}).orElseGet(() -> ImmutableList.of());
+                            new TypeReference<List<Map<String, Object>>>() {}).orElseGet(ImmutableList::of);
 
                     String flatfieldAttributesFileName = getFlatfieldAttributesFileName(channelConfigFile);
-                    Map<String, Object> flatFieldConfig = deconvolutionHelper.loadJsonConfiguration(flatfieldAttributesFileName,
-                            new TypeReference<Map<String, Object>>() {}).orElseGet(() -> ImmutableMap.of());
                     Float backgroundIntensity;
                     if (args.backgroundValue != null) {
                         backgroundIntensity = args.backgroundValue;
                     } else {
+                        Map<String, Object> flatFieldConfig = deconvolutionHelper.loadJsonConfiguration(flatfieldAttributesFileName,
+                                new TypeReference<Map<String, Object>>() {}).orElseGet(ImmutableMap::of);
                         Number pivotValue = (Number)flatFieldConfig.get("pivotValue");
                         if (pivotValue != null) {
                             backgroundIntensity = pivotValue.floatValue();
@@ -233,7 +233,7 @@ public class DeconvolutionJobsProcessor extends AbstractExeBasedServiceProcessor
                         }
                     }
                     String deconvOutputDir = deconvolutionHelper.mapToDeconvOutputDir(channelConfigFile);
-                    Integer nIterations = args.getNumIterations(channelIndex);
+                    int nIterations = args.getNumIterations(channelIndex);
                     return channelTileConfigs.stream()
                             .map(tileConfig -> {
                                 Map<String, String> taskConfig = new LinkedHashMap<>();
@@ -246,12 +246,11 @@ public class DeconvolutionJobsProcessor extends AbstractExeBasedServiceProcessor
                                 taskConfig.put("background_value", backgroundIntensity != null ? backgroundIntensity.toString() : null);
                                 taskConfig.put("data_z_resolution", pixelResolutions.get(2).toString());
                                 taskConfig.put("psf_z_step", args.psfZStep != null ? args.psfZStep.toString() : null);
-                                taskConfig.put("num_iterations", nIterations.toString());
+                                taskConfig.put("num_iterations", String.valueOf(nIterations));
                                 return taskConfig;
                             });
                 })
                 ;
     }
-
 
 }
