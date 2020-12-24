@@ -94,7 +94,7 @@ public class DeconvolutionProcessor extends AbstractServiceProcessor<List<File>>
                 .thenApply(r -> args.tileChannelConfigurationFiles.stream()
                         .map(channelConfigFile -> {
                             List<Map<String, Object>> channelTileConfigs = deconvolutionHelper.loadJsonConfiguration(channelConfigFile,
-                                    new TypeReference<List<Map<String, Object>>>() {}).orElseGet(() -> ImmutableList.of());
+                                    new TypeReference<List<Map<String, Object>>>() {}).orElseGet(ImmutableList::of);
                             String deconvOutputDir = deconvolutionHelper.mapToDeconvOutputDir(channelConfigFile);
                             List<Map<String, Object>> channelDeconvConfigs = channelTileConfigs.stream()
                                     .map(tileConfig -> {
