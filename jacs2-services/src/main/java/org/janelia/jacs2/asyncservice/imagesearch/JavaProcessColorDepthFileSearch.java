@@ -115,10 +115,18 @@ public class JavaProcessColorDepthFileSearch extends AbstractExeBasedServiceProc
                 .read("masksLength")
                 .read("targetsOffset")
                 .read("targetsLength");
+        Integer configuredCacheSize = getApplicationConfig().getIntegerPropertyValue("service.colorDepthSearch.cacheSize", -1);
+        String cacheSizeArg;
+        if (configuredCacheSize < 0) {
+            cacheSizeArg = "${targetsLength}";
+        } else {
+            cacheSizeArg = String.valueOf(configuredCacheSize);
+        }
         externalScriptWriter.addWithArgs("${JAVA_HOME}/bin/java")
                 .addArg("${CDS_OPTS}")
                 .addArg(runtimeOpts.toString())
                 .addArgs("-jar", jarPath)
+                .addArg("--cacheSize").addArg(cacheSizeArg)
                 .addArg("searchFromJSON")
                 .addArg("-m").addArgs(args.masksFiles)
                 .addArg("--masks-index").addArg("${masksOffset}")
