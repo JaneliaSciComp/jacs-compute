@@ -378,13 +378,9 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                     colorDepthResult.getMaskResults().add(maskResult);
                 });
         try {
-            if (colorDepthResult.getMaskResults().isEmpty()) {
-                return colorDepthResult;
-            } else {
-                ColorDepthResult persistedColorDepthResult = legacyDomainDao.save(jacsServiceData.getOwnerKey(), colorDepthResult);
-                logger.info("Saved {}", persistedColorDepthResult);
-                return persistedColorDepthResult;
-            }
+            ColorDepthResult persistedColorDepthResult = legacyDomainDao.save(jacsServiceData.getOwnerKey(), colorDepthResult);
+            logger.info("Saved {} with {} mask results", persistedColorDepthResult, persistedColorDepthResult.getMaskResults().size());
+            return persistedColorDepthResult;
         } catch (Exception e) {
             logger.error("Error saving {}", colorDepthResult, e);
             throw new IllegalStateException(e);
