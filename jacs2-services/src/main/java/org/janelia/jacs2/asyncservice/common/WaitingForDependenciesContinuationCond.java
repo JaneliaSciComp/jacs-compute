@@ -19,7 +19,6 @@ public class WaitingForDependenciesContinuationCond<S> implements ContinuationCo
     private final Function<S, JacsServiceData> stateToServiceDataMapper;
     private final BiFunction<S, JacsServiceData, S> serviceDataToStateMapper;
     private final JacsServiceDataPersistence jacsServiceDataPersistence;
-    private final Logger logger;
 
     WaitingForDependenciesContinuationCond(Function<S, JacsServiceData> stateToServiceDataMapper,
                                            BiFunction<S, JacsServiceData, S> serviceDataToStateMapper,
@@ -28,26 +27,23 @@ public class WaitingForDependenciesContinuationCond<S> implements ContinuationCo
         this(new ServiceDependenciesCompletedContinuationCond(jacsServiceDataPersistence, logger),
                 stateToServiceDataMapper,
                 serviceDataToStateMapper,
-                jacsServiceDataPersistence,
-                logger
+                jacsServiceDataPersistence
         );
     }
 
     WaitingForDependenciesContinuationCond(ContinuationCond<JacsServiceData> dependenciesCompletedCont,
                                            Function<S, JacsServiceData> stateToServiceDataMapper,
                                            BiFunction<S, JacsServiceData, S> serviceDataToStateMapper,
-                                           JacsServiceDataPersistence jacsServiceDataPersistence,
-                                           Logger logger) {
+                                           JacsServiceDataPersistence jacsServiceDataPersistence) {
         this.dependenciesCompletedCont = dependenciesCompletedCont;
         this.stateToServiceDataMapper = stateToServiceDataMapper;
         this.serviceDataToStateMapper = serviceDataToStateMapper;
         this.jacsServiceDataPersistence = jacsServiceDataPersistence;
-        this.logger = logger;
     }
 
     /**
      * @param state
-     * @return a condition that evaluates to true if the service argument needs to be suspended.
+     * @return a condition that evaluates to true if the service is still waiting for the dependencies to complete.
      */
     @Override
     public Cond<S> checkCond(S state) {

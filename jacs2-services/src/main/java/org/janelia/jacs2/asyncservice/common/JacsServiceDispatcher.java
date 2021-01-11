@@ -138,8 +138,7 @@ public class JacsServiceDispatcher {
 
         if (logger.isDebugEnabled()) {
             logger.debug("Processing successful {}", serviceData);
-        }
-        else {
+        } else {
             logger.info("Processing successful {}", serviceData.getShortName());
         }
 

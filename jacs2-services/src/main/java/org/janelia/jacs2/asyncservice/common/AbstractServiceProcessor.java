@@ -138,7 +138,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
     /**
      *
      * @param jacsServiceData
-     * @return
+     * @return the actual service arguments
      */
     protected String[] getJacsServiceArgsArray(JacsServiceData jacsServiceData) {
         if (jacsServiceData.getActualArgs() == null) {
@@ -167,8 +167,7 @@ public abstract class AbstractServiceProcessor<R> implements ServiceProcessor<R>
                 new ServiceDependenciesCompletedContinuationCond(dependenciesGetterFunc(), jacsServiceDataPersistence, logger),
                 (S state) -> jacsServiceData,
                 (S state, JacsServiceData tmpSd) -> state,
-                jacsServiceDataPersistence,
-                logger
+                jacsServiceDataPersistence
         ).negate();
     }
 
