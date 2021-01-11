@@ -77,7 +77,7 @@ public class GenericAsyncServiceProcessor extends AbstractServiceProcessor<Void>
         PeriodicallyCheckableState<JacsServiceData> submittedServiceStateCheck = new PeriodicallyCheckableState<>(submittedService, ProcessorHelper.getSoftJobDurationLimitInSeconds(submittedService.getResources()) / 100);
         return computationFactory.newCompletedComputation(submittedServiceStateCheck)
                 .thenSuspendUntil((PeriodicallyCheckableState<JacsServiceData> sdState) -> new ContinuationCond.Cond<>(sdState, sdState.updateCheckTime() && isDone(sdState)))
-                .thenApply((PeriodicallyCheckableState<JacsServiceData> sdState) -> getResult(sdState))
+                .thenApply(this::getResult)
                 ;
     }
 

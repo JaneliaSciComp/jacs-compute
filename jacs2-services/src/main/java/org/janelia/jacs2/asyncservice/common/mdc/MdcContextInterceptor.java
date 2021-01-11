@@ -15,25 +15,31 @@ public class MdcContextInterceptor {
     public Object setMdcContext(InvocationContext invocationContext)
             throws Exception {
         Object[] args = invocationContext.getParameters();
-        String currentServiceContext = MDC.get("serviceName");
+        String currentServiceNameContext = MDC.get("serviceName");
+        String currentServiceIdContext = MDC.get("serviceId");
         if (args != null) {
             for (Object arg : args) {
                 if (arg instanceof JacsServiceData) {
                     JacsServiceData sd = (JacsServiceData) arg;
                     MDC.put("serviceName", sd.getName());
-                    if (sd.getRootServiceId() != null) {
-                        MDC.put("rootService", sd.getRootServiceId().toString());
+                    if (sd.getServiceId() != null) {
+                        MDC.put("serviceId", sd.getServiceId());
                     } else {
-                        MDC.put("rootService", "ROOT");
+                        MDC.put("serviceId", "N/A");
                     }
                 }
             }
         }
         Object result = invocationContext.proceed();
-        if (currentServiceContext != null) {
-            MDC.put("serviceName", currentServiceContext);
+        if (currentServiceNameContext != null) {
+            MDC.put("serviceName", currentServiceNameContext);
         } else {
             MDC.remove("serviceName");
+        }
+        if (currentServiceIdContext != null) {
+            MDC.put("serviceId", currentServiceIdContext);
+        } else {
+            MDC.remove("serviceId");
         }
         return result;
     }
