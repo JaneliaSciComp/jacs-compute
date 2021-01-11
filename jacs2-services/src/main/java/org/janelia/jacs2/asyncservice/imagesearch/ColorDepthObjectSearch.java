@@ -281,7 +281,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                             masks.stream().map(AbstractDomainObject::getId).map(Object::toString).collect(Collectors.toSet()),
                             cdsMatches);
                     legacyDomainDao.addColorDepthSearchResult(jacsServiceData.getOwnerKey(), search.getId(), colorDepthResult);
-                    logger.info("Updated search {} }with new result {}", search, colorDepthResult);
+                    logger.info("Updated search {} with new result {}", search, colorDepthResult);
                     return updateServiceResult(jacsServiceData, Reference.createFor(colorDepthResult));
                 });
     }
