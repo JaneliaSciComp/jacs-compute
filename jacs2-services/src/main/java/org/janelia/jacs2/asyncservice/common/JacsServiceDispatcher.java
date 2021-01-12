@@ -20,6 +20,7 @@ import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.RegisteredJacsNotification;
 import org.slf4j.Logger;
+import org.slf4j.MDC;
 
 @MdcContext
 @ApplicationScoped
@@ -80,7 +81,7 @@ public class JacsServiceDispatcher {
     }
 
     @SuppressWarnings("unchecked")
-    void dispatchService(JacsServiceData jacsServiceData) {
+    private void dispatchService(JacsServiceData jacsServiceData) {
         logger.debug("Dispatch service {}", jacsServiceData);
 
         try {
@@ -134,7 +135,8 @@ public class JacsServiceDispatcher {
     }
 
     private void success(JacsServiceData serviceData) {
-
+        MDC.put("serviceName", serviceData.getName());
+        MDC.put("serviceId", serviceData.getServiceId());
         if (logger.isDebugEnabled()) {
             logger.debug("Processing successful {}", serviceData);
         } else {
@@ -168,6 +170,8 @@ public class JacsServiceDispatcher {
     }
 
     private JacsServiceResult<Throwable> handleException(JacsServiceData serviceData, Throwable exc) {
+        MDC.put("serviceName", serviceData.getName());
+        MDC.put("serviceId", serviceData.getServiceId());
         if (logger.isDebugEnabled()) {
             logger.error("Processing error executing {}", serviceData, exc);
         } else {
