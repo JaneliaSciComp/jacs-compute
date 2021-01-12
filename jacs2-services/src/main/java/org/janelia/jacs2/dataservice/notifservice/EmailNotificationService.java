@@ -1,13 +1,7 @@
 package org.janelia.jacs2.dataservice.notifservice;
 
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
-import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
-import org.janelia.jacs2.cdi.qualifier.PropertyValue;
-import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Collection;
+import java.util.Properties;
 
 import javax.inject.Inject;
 import javax.mail.Message;
@@ -17,9 +11,12 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
-import java.util.Collection;
-import java.util.Properties;
-import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
+import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
+import org.janelia.jacs2.cdi.qualifier.PropertyValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EmailNotificationService {
 

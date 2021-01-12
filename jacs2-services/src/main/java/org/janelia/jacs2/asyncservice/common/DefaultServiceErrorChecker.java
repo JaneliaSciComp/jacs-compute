@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+@MdcContext
 public class DefaultServiceErrorChecker implements ServiceErrorChecker {
 
     protected final Logger logger;

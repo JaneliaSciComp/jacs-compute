@@ -1,6 +1,20 @@
 package org.janelia.jacs2.dataservice.persistence;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+
 import com.google.common.collect.ImmutableMap;
+
 import org.janelia.model.access.dao.DaoUpdateResult;
 import org.janelia.model.access.dao.JacsServiceDataDao;
 import org.janelia.model.jacs2.DataInterval;
@@ -14,20 +28,6 @@ import org.janelia.model.service.JacsServiceEventTypes;
 import org.janelia.model.service.JacsServiceState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServiceDataDao, JacsServiceData, Number> {
 
