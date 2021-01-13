@@ -42,6 +42,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceResultHandler;
 import org.janelia.jacs2.asyncservice.common.WrappedServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
+import org.janelia.jacs2.cdi.qualifier.BoolPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.DoublePropertyValue;
 import org.janelia.jacs2.cdi.qualifier.IntPropertyValue;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
@@ -115,6 +116,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
     private final int minWorkers;
     private final int maxWorkers;
     private final double partitionSizePerCoreFactor;
+    private final boolean filterByPctPixels;
 
     @Inject
     ColorDepthObjectSearch(ServiceComputationFactory computationFactory,
@@ -125,6 +127,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                            @IntPropertyValue(name = "service.colorDepthSearch.minWorkers", defaultValue = 1) Integer minWorkers,
                            @IntPropertyValue(name = "service.colorDepthSearch.maxWorkers", defaultValue = -1) Integer maxWorkers,
                            @DoublePropertyValue(name = "service.colorDepthSearch.partitionSizePerCoreFactor", defaultValue = 5) Double partitionSizePerCoreFactor,
+                           @BoolPropertyValue(name = "service.colorDepthSearch.filterByPctPixels") Boolean filterByPctPixels,
                            SparkColorDepthFileSearch sparkColorDepthFileSearch,
                            JavaProcessColorDepthFileSearch javaProcessColorDepthFileSearch,
                            ColorDepthImageDao colorDepthImageDao,
@@ -137,6 +140,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         this.minWorkers = minWorkers;
         this.maxWorkers = maxWorkers;
         this.partitionSizePerCoreFactor = partitionSizePerCoreFactor;
+        this.filterByPctPixels = filterByPctPixels;
         this.sparkColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, sparkColorDepthFileSearch);
         this.javaProcessColorDepthFileSearch = new WrappedServiceProcessor<>(computationFactory, jacsServiceDataPersistence, javaProcessColorDepthFileSearch);
         this.colorDepthImageDao = colorDepthImageDao;
@@ -416,7 +420,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
         serviceArgList.add(new ServiceArg("-pixColorFluctuation", pixColorFluctuation));
         serviceArgList.add(new ServiceArg("-xyShift", xyShift != null ? xyShift / 2 : xyShift)); // the client save the actual pixel shift in the Search
         serviceArgList.add(new ServiceArg("-mirrorMask", mirrorMask));
-        serviceArgList.add(new ServiceArg("-pctPositivePixels", pctPositivePixels));
+        if (filterByPctPixels) serviceArgList.add(new ServiceArg("-pctPositivePixels", pctPositivePixels));
         serviceArgList.add(new ServiceArg("-withGradientScores", withGradScores));
         return serviceArgList;
     }
