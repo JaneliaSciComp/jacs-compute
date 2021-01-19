@@ -336,7 +336,8 @@ class LSFSparkClusterLauncher {
                     createNativeSpec(nCoresPerWorker, billingInfo, sparkJobsTimeoutInMins),
                     ImmutableMap.of(
                             // spark.worker.cleanup.enabled=true causes worker to remove SPARK_WORKER_DIR (with worker log data) before exit
-                            "SPARK_WORKER_OPTS", "-Dspark.worker.cleanup.enabled=true"
+                            "SPARK_WORKER_OPTS",
+                            "-Dspark.worker.cleanup.enabled=true -Dspark.worker.cleanup.interval=30 -Dspark.worker.cleanup.appDataTtl=1"
                     )
             );
             JobFuture workerJobsFuture = jobMgr.submitJob(workerJobTemplate, 1, nWorkers);
