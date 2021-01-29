@@ -25,21 +25,7 @@ import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.janelia.jacs2.user.UserManager;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
-import org.janelia.model.access.domain.dao.AnnotationDao;
-import org.janelia.model.access.domain.dao.ColorDepthImageDao;
-import org.janelia.model.access.domain.dao.DatasetDao;
-import org.janelia.model.access.domain.dao.LSMImageDao;
-import org.janelia.model.access.domain.dao.LineReleaseDao;
-import org.janelia.model.access.domain.dao.OntologyDao;
-import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
-import org.janelia.model.access.domain.dao.SampleDao;
-import org.janelia.model.access.domain.dao.SubjectDao;
-import org.janelia.model.access.domain.dao.SummaryDao;
-import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
-import org.janelia.model.access.domain.dao.TmReviewTaskDao;
-import org.janelia.model.access.domain.dao.TmSampleDao;
-import org.janelia.model.access.domain.dao.TmWorkspaceDao;
-import org.janelia.model.access.domain.dao.WorkspaceNodeDao;
+import org.janelia.model.access.domain.dao.*;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
@@ -77,6 +63,7 @@ public class TestResourceDependenciesProducer {
     private TmNeuronMetadataDao tmNeuronMetadataDao = mock(TmNeuronMetadataDao.class);
     private TmWorkspaceDao tmWorkspaceDao = mock(TmWorkspaceDao.class);
     private TmReviewTaskDao tmReviewTaskDao = mock(TmReviewTaskDao.class);
+    private TmAgentDao tmAgentDao = mock(TmAgentDao.class);
     private TmSampleDao tmSampleDao = mock(TmSampleDao.class);
     private WorkspaceNodeDao workspaceNodeDao = mock(WorkspaceNodeDao.class);
     private SubjectDao subjectDao = mock(SubjectDao.class);
@@ -190,6 +177,12 @@ public class TestResourceDependenciesProducer {
     @Produces
     public TmWorkspaceDao getTmWorkspaceSearchableDao() {
         return tmWorkspaceDao;
+    }
+
+    @AsyncIndex
+    @Produces
+    public TmAgentDao getTmAgentSearchableDao() {
+        return tmAgentDao;
     }
 
     @AsyncIndex
