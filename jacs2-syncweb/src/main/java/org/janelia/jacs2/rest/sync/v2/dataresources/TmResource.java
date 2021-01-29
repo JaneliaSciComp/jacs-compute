@@ -38,12 +38,10 @@ import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.access.domain.dao.mongo.TmAgentMetadataMongoDao;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.dto.DomainQuery;
-import org.janelia.model.domain.tiledMicroscope.BulkNeuronStyleUpdate;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
-import org.janelia.model.domain.tiledMicroscope.TmProtobufExchanger;
-import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
+import org.janelia.model.domain.tiledMicroscope.*;
 import org.janelia.model.domain.workspace.Workspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +76,8 @@ public class TmResource {
     private TmWorkspaceDao tmWorkspaceDao;
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
+    @Inject
+    private TmAgentMetadataMongoDao tmAgentMetadataDao;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
@@ -160,6 +160,41 @@ public class TmResource {
         LOG.trace("createTmWorkspace({})", query);
         TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
         return tmWorkspace;
+    }
+
+    @ApiOperation(value = "Gets Agent Metadata by workspace id",
+            notes = "Returns the Agent mappings, etc. identified by the given workspace id"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully fetched the agent metadata", response = TmAgentMetadata.class),
+            @ApiResponse(code = 500, message = "Error occurred while fetching the agent metadata")
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/agent/{workspaceId}")
+    public TmAgentMetadata getAgentMetadata(@ApiParam @QueryParam("subjectKey") String subjectKey,
+                                      @ApiParam @PathParam("workspaceId") Long workspaceId) {
+        LOG.debug("getAgentMetadata({}, workspaceId={})", subjectKey, workspaceId);
+        return tmAgentMetadataDao.getTmAgentMetadata(workspaceId, subjectKey);
+    }
+
+
+    @ApiOperation(value = "Creates a new TmAgentMetadata",
+            notes = "Creates a TmAgentMetadata using the DomainObject parameter of the DomainQuery"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully created a TmAgentMetadata", response = TmAgentMetadata.class),
+            @ApiResponse(code = 500, message = "Error occurred while creating a TmAgentMetadata")
+    })
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/agent")
+    public TmAgentMetadata createAgentMetadata(DomainQuery query) {
+        LOG.trace("createAgentMetadata({})", query);
+        TmAgentMetadata tmAgentMetadata = tmAgentMetadataDao.createTmAgentMetadata(
+                query.getSubjectKey(), query.getDomainObjectAs(TmAgentMetadata.class));
+        return tmAgentMetadata;
     }
 
     @ApiOperation(value = "Creates a copy of an existing TmWorkspace",
