@@ -38,7 +38,7 @@ import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
-import org.janelia.model.access.domain.dao.mongo.TmAgentMetadataMongoDao;
+import org.janelia.model.access.domain.dao.TmAgentDao;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.*;
@@ -77,7 +77,7 @@ public class TmResource {
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
     @Inject
-    private TmAgentMetadataMongoDao tmAgentMetadataDao;
+    private TmAgentDao tmAgentMetadataDao;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
