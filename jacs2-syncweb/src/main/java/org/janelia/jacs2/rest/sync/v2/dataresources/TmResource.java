@@ -403,7 +403,7 @@ public class TmResource {
         String subjectKey = query.getSubjectKey();
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(neuron.getWorkspaceId(), subjectKey);
 
-        LOG.info("updateTmNeurons({}, numNeurons={})", subjectKey, neuron);
+        LOG.info("updateTmNeurons({}, neuron id={}, neuron nodes={})", subjectKey, neuron, neuron.getAnnotationCount());
         TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron,
                 subjectKey);
         return updatedNeuron;
