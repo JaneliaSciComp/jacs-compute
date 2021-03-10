@@ -2,6 +2,7 @@ package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Optional;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -79,6 +80,11 @@ public class DataSummaryResource {
                 volumeName = defaultVolume;
             } else {
                 volumeName = volumeNameParam;
+            }
+            if (StringUtils.isBlank(volumeName)) {
+                // If there is no volume name, return a blank summary.
+                // This is for external installations which do not have Janelia's disk quota system.
+                return Response.ok(new DiskUsageSummary()).build();
             }
             return storageService.fetchQuotaForUser(volumeName, subjectKey)
                     .map(quotaUsage -> {
