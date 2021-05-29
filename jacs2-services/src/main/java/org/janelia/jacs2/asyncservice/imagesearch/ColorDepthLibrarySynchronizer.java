@@ -692,7 +692,10 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
                         // Update reference from CDM to EMBody
                         colorDepthImageDao.update(cdm.getId(), ImmutableMap.of(
-                                "emBodyRef", new SetFieldValueHandler<>(Reference.createFor(EMBody.class, emBody.getId()))
+                                "emBodyRef", new SetFieldValueHandler<>(Reference.createFor(EMBody.class, emBody.getId())),
+                                "bodyId", new SetFieldValueHandler<>(emBody.getBodyId()),
+                                "neuronType", new SetFieldValueHandler<>(emBody.getNeuronType()),
+                                "neuronInstance", new SetFieldValueHandler<>(emBody.getNeuronInstance())
                         ));
 
                         // Update files on EMBody
