@@ -32,13 +32,7 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
-import org.janelia.model.access.domain.dao.AnnotationDao;
-import org.janelia.model.access.domain.dao.ColorDepthImageDao;
-import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
-import org.janelia.model.access.domain.dao.ColorDepthLibraryDao;
-import org.janelia.model.access.domain.dao.DatasetDao;
-import org.janelia.model.access.domain.dao.LineReleaseDao;
-import org.janelia.model.access.domain.dao.SubjectDao;
+import org.janelia.model.access.domain.dao.*;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
@@ -81,6 +75,8 @@ public class ColorDepthLibrarySynchronizerTest {
     private ColorDepthLibraryDao colorDepthLibraryDao;
     private LineReleaseDao lineReleaseDao;
     private AnnotationDao annotationDao;
+    private EmDataSetDao emDataSetDao;
+    private EmBodyDao emBodyDao;
     private DatasetDao datasetDao;
     private Logger logger;
 
@@ -104,6 +100,8 @@ public class ColorDepthLibrarySynchronizerTest {
         colorDepthLibraryDao = mock(ColorDepthLibraryDao.class);
         lineReleaseDao = mock(LineReleaseDao.class);
         annotationDao = mock(AnnotationDao.class);
+        emDataSetDao = mock(EmDataSetDao.class);
+        emBodyDao = mock(EmBodyDao.class);
         datasetDao = mock(DatasetDao.class);
         jacsNotificationDao = mock(JacsNotificationDao.class);
     }
@@ -152,6 +150,8 @@ public class ColorDepthLibrarySynchronizerTest {
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
+                emDataSetDao,
+                emBodyDao,
                 datasetDao,
                 jacsNotificationDao,
                 TEST_OWNER_KEY,
@@ -228,6 +228,8 @@ public class ColorDepthLibrarySynchronizerTest {
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
+                emDataSetDao,
+                emBodyDao,
                 datasetDao,
                 jacsNotificationDao,
                 TEST_OWNER_KEY,
@@ -297,6 +299,8 @@ public class ColorDepthLibrarySynchronizerTest {
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
+                emDataSetDao,
+                emBodyDao,
                 datasetDao,
                 jacsNotificationDao,
                 TEST_OWNER_KEY,
@@ -393,6 +397,8 @@ public class ColorDepthLibrarySynchronizerTest {
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
+                emDataSetDao,
+                emBodyDao,
                 datasetDao,
                 jacsNotificationDao,
                 TEST_OWNER_KEY,
@@ -561,6 +567,8 @@ public class ColorDepthLibrarySynchronizerTest {
                 colorDepthImageDao,
                 lineReleaseDao,
                 annotationDao,
+                emDataSetDao,
+                emBodyDao,
                 datasetDao,
                 jacsNotificationDao,
                 TEST_OWNER_KEY,
