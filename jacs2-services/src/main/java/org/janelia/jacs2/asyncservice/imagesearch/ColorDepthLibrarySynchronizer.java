@@ -33,7 +33,6 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.cdi.qualifier.StrPropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
-import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.*;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
@@ -690,18 +689,24 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         Long bodyId = new Long(matcher.group(1));
                         EMBody emBody = emBodyByBodyId.get(bodyId);
 
-                        // Update reference from CDM to EMBody
-                        colorDepthImageDao.update(cdm.getId(), ImmutableMap.of(
-                                "emBodyRef", new SetFieldValueHandler<>(Reference.createFor(EMBody.class, emBody.getId())),
-                                "bodyId", new SetFieldValueHandler<>(emBody.getBodyId()),
-                                "neuronType", new SetFieldValueHandler<>(emBody.getNeuronType()),
-                                "neuronInstance", new SetFieldValueHandler<>(emBody.getNeuronInstance())
-                        ));
+                        if (emBody!=null) {
+                            // Update reference from CDM to EMBody
+                            colorDepthImageDao.update(cdm.getId(), ImmutableMap.of(
+                                    "emBodyRef", new SetFieldValueHandler<>(Reference.createFor(EMBody.class, emBody.getId())),
+                                    "bodyId", new SetFieldValueHandler<>(emBody.getBodyId()),
+                                    "neuronType", new SetFieldValueHandler<>(emBody.getNeuronType()),
+                                    "neuronInstance", new SetFieldValueHandler<>(emBody.getNeuronInstance())
+                            ));
 
-                        // Update files on EMBody
-                        emBody.getFiles().put(FileType.ColorDepthMip1, cdm.getFilepath());
-                        emBodyDao.replace(emBody);
-
+                            if (library.getParentLibraryRef() == null) {
+                                // Update CDM on EMBody for easy visualization in the Workstation
+                                emBody.getFiles().put(FileType.ColorDepthMip1, cdm.getFilepath());
+                                emBodyDao.replace(emBody);
+                            }
+                        }
+                        else {
+                            logger.warn("  Could not find body with id {} in {}", bodyId, emMetadata.getDataSetIdentifier());
+                        }
                     }
                     else {
                         logger.warn("  Could not parse EM filename: {}", file);
@@ -715,6 +720,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
      * @return pattern for matching body ids from file names
      */
     private static Pattern emSkeletonRegexPattern() {
-        return Pattern.compile("([0-9]{7,})[_-].*");
+        return Pattern.compile("^(\\d+).*");
     }
 }
