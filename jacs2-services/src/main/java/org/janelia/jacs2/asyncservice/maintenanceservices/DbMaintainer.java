@@ -117,6 +117,19 @@ public class DbMaintainer {
                         new DaoIndex("{readers:1, identifier:1}")
                 ));
 
+//        legacyDomainDao.ensureCollectionIndex("emDataSet",
+//                asList(
+//                        new DaoIndex("{identifier:1}", "{unique:true}"),
+//                        new DaoIndex("{readers:1, identifier:1}")
+//                ));
+
+        legacyDomainDao.ensureCollectionIndex("emBody",
+                asList(
+                        new DaoIndex("{dataSetIdentifier:1}"),
+                        new DaoIndex("{readers:1, dataSetIdentifier:1}"),
+                        new DaoIndex("{neuronType:1}")
+                ));
+
         // Mouse Model
 
         legacyDomainDao.ensureCollectionIndex("tmWorkspace",
