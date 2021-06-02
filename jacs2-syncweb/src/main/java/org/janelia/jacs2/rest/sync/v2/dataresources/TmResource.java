@@ -34,7 +34,6 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
@@ -79,9 +78,6 @@ public class TmResource {
     private TmWorkspaceDao tmWorkspaceDao;
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
-    @AsyncIndex
-    @Inject
-    private TmAgentDao tmAgentMetadataDao;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
@@ -105,68 +101,6 @@ public class TmResource {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             LOG.trace("Finished getAllWorkspace({})", subjectKey);
-        }
-    }
-
-    @ApiOperation(value = "Creates an TM Operation log for an operation performed during neuron tracing",
-            notes = "Stores the operation log in the TmOperation table for future analysis"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created an operation log"),
-            @ApiResponse(code = 500, message = "Error occurred while creating the operation log")
-    })
-    @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/operation/log")
-    public void createOperationLog(@ApiParam @QueryParam("username") String subjectKey,
-                                                @ApiParam @QueryParam("workspaceId") Long workspaceId,
-                                                @ApiParam @QueryParam("neuronId") Long neuronId,
-                                                @ApiParam @QueryParam("operationType") String operationType,
-                                                @ApiParam @QueryParam("timestamp") String timestamp) {
-        try {
-            DateFormat format = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
-            Date timestampDate = format.parse(timestamp);
-            tmNeuronMetadataDao.createOperationLog(workspaceId,neuronId,operationType, timestampDate, subjectKey);
-        } catch (Exception e) {
-            LOG.error("Error occurred creating operation log for {},{},{},{},{}", subjectKey,workspaceId,neuronId,
-                    operationType,timestamp);
-            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @ApiOperation(value = "queries for operations logs using filters",
-            notes = "Returns a list of TmOperation objects using the filters applied"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched the list of operations", response = TmOperation.class,
-                    responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error occurred while fetching the operations")
-    })
-    @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/operation/report")
-    public List<TmOperation> getOperationLogs(@ApiParam @QueryParam("username") String subjectKey,
-                                              @ApiParam @QueryParam("workspaceId") Long workspaceId,
-                                              @ApiParam @QueryParam("neuronId") Long neuronId,
-                                              @ApiParam @QueryParam("startDate") String startTime,
-                                              @ApiParam @QueryParam("endDate") String endTime) {
-        try {
-            DateFormat format = new SimpleDateFormat("MM-dd-yyyy hh:mm:ss");
-            TimeZone standardTime = TimeZone.getTimeZone("UTC");
-            format.setTimeZone(standardTime);
-            Date startDate=null, endDate=null;
-            if (startTime!=null) {
-                startDate = format.parse(startTime);
-            }
-            if (endTime!=null) {
-                endDate = format.parse(endTime);
-            }
-
-            return tmNeuronMetadataDao.getOperations(workspaceId, neuronId, startDate, endDate);
-        } catch (Exception e) {
-            LOG.error("Error occurred fetching operations logs for {},{},{},{},{}", subjectKey,workspaceId,neuronId,
-                    startTime,endTime);
-            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -228,7 +162,7 @@ public class TmResource {
         return tmWorkspace;
     }
 
-    @ApiOperation(value = "Gets Agent Metadata by workspace id",
+    /*@ApiOperation(value = "Gets Agent Metadata by workspace id",
             notes = "Returns the Agent mappings, etc. identified by the given workspace id"
     )
     @ApiResponses(value = {
@@ -261,7 +195,7 @@ public class TmResource {
         TmAgentMetadata tmAgentMetadata = tmAgentMetadataDao.createTmAgentMetadata(
                 query.getSubjectKey(), query.getDomainObjectAs(TmAgentMetadata.class));
         return tmAgentMetadata;
-    }
+    }*/
 
     @ApiOperation(value = "Creates a copy of an existing TmWorkspace",
             notes = "Creates a copy of the given TmWorkspace with a new name given by the parameter value of the DomainQuery"
@@ -403,7 +337,7 @@ public class TmResource {
         String subjectKey = query.getSubjectKey();
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(neuron.getWorkspaceId(), subjectKey);
 
-        LOG.info("updateTmNeurons({}, neuron id={}, neuron nodes={})", subjectKey, neuron, neuron.getAnnotationCount());
+        LOG.info("updateTmNeurons({}, numNeurons={})", subjectKey, neuron);
         TmNeuronMetadata updatedNeuron = tmNeuronMetadataDao.saveNeuronMetadata(workspace, neuron,
                 subjectKey);
         return updatedNeuron;
