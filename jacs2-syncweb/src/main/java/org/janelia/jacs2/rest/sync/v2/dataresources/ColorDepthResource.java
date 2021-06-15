@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -250,10 +251,11 @@ public class ColorDepthResource {
                             .withLength(length)
             ).collect(Collectors.toList());
             return Response
-                    .ok(new GenericEntity<List<ColorDepthImage>>(updateCDMIPSample(cdmList, referenceDao.findByReferences(cdmList.stream().map(ColorDepthImage::getSampleRef).filter(Objects::nonNull).distinct().collect(Collectors.toList()))
-                            .stream()
-                            .map(d -> (Sample) d)
-                            .collect(Collectors.toMap(Reference::createFor, s -> s)))){})
+                    .ok(new GenericEntity<List<ColorDepthImage>>(
+                            updateCDMIPSample(
+                                cdmList,
+                                retrieveSamplesByRefs(cdmList.stream().map(ColorDepthImage::getSampleRef).filter(Objects::nonNull).distinct().collect(Collectors.toList())))
+                            ){})
                     .build()
                     ;
         } finally {
@@ -261,11 +263,30 @@ public class ColorDepthResource {
         }
     }
 
+    private Map<Reference, Sample> retrieveSamplesByRefs(List<Reference> sampleRefs) {
+        long start = System.currentTimeMillis();
+        try {
+            return referenceDao.findByReferences(sampleRefs).stream()
+                    .map(d -> (Sample) d)
+                    .collect(Collectors.toMap(Reference::createFor, Function.identity()))
+                    ;
+        } finally {
+            long end = System.currentTimeMillis();
+            LOG.debug("Retrieve samples from refs in {}ms", end-start);
+        }
+
+    }
     private List<ColorDepthImage> updateCDMIPSample(List<ColorDepthImage> cdmList, Map<Reference, Sample> samplesIndexedByRef) {
-        return cdmList.stream()
-                .map(cdmip -> new ColorDepthImageWithSampleBuilder(cdmip).withSample(samplesIndexedByRef.get(cdmip.getSampleRef())).build())
-                .collect(Collectors.toList())
-                ;
+        long start = System.currentTimeMillis();
+        try {
+            return cdmList.stream()
+                    .map(cdmip -> new ColorDepthImageWithSampleBuilder(cdmip).withSample(samplesIndexedByRef.get(cdmip.getSampleRef())).build())
+                    .collect(Collectors.toList())
+                    ;
+        } finally {
+            long end = System.currentTimeMillis();
+            LOG.debug("Update CDMIP with sample ref in {}ms", end-start);
+        }
     }
 
     @ApiOperation(value = "Update public URLs for the color depth image")
