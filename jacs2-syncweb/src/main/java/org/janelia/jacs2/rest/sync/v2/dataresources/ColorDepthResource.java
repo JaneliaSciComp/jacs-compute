@@ -235,10 +235,12 @@ public class ColorDepthResource {
                                                         @ApiParam @QueryParam("offset") String offsetParam,
                                                         @ApiParam @QueryParam("length") String lengthParam) {
         LOG.trace("Start getMatchingColorDepthMipsWithSample({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
+        long start = System.currentTimeMillis();
         try {
             int offset = parseIntegerParam("offset", offsetParam, 0);
             int length = parseIntegerParam("length", lengthParam, -1);
             List<Reference> sampleRefs = retrieveSampleRefs(extractMultiValueParams(datasets), extractMultiValueParams(releases));
+            LOG.debug("Retrieved {} sample refs after {}ms", sampleRefs.size(), System.currentTimeMillis()-start);
             List<ColorDepthImage> cdmList = colorDepthImageDao.streamColorDepthMIPs(
                     new ColorDepthImageQuery()
                             .withOwner(ownerKey)
@@ -250,6 +252,7 @@ public class ColorDepthResource {
                             .withOffset(offset)
                             .withLength(length)
             ).collect(Collectors.toList());
+            LOG.debug("Retrieved {} CDMs after {}ms", cdmList.size(), System.currentTimeMillis()-start);
             return Response
                     .ok(new GenericEntity<List<ColorDepthImage>>(
                             updateCDMIPSample(
