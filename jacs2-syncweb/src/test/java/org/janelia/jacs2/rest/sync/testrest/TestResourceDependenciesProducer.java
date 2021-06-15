@@ -128,6 +128,11 @@ public class TestResourceDependenciesProducer {
     }
 
     @Produces
+    public LineReleaseDao getLineReleaseDao() {
+        return lineReleaseDao;
+    }
+
+    @Produces
     public JWTProvider getJwtProvider() {
         return jwtProvider;
     }
