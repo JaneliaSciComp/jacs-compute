@@ -695,7 +695,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                     "emBodyRef", new SetFieldValueHandler<>(Reference.createFor(EMBody.class, emBody.getId())),
                                     "bodyId", new SetFieldValueHandler<>(emBody.getBodyId()),
                                     "neuronType", new SetFieldValueHandler<>(emBody.getNeuronType()),
-                                    "neuronInstance", new SetFieldValueHandler<>(emBody.getNeuronInstance())
+                                    "neuronInstance", new SetFieldValueHandler<>(emBody.getNeuronInstance()),
+                                    "neuronStatus", new SetFieldValueHandler<>(emBody.getStatus())
                             ));
 
                             if (library.getParentLibraryRef() == null) {
