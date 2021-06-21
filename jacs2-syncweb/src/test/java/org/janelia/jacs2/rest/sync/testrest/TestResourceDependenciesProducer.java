@@ -4,6 +4,7 @@ import java.util.concurrent.ExecutorService;
 
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
+import javax.inject.Inject;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -51,6 +52,8 @@ public class TestResourceDependenciesProducer {
     private AnnotationDao annotationDao = mock(AnnotationDao.class);
     private DatasetDao datasetDao = mock(DatasetDao.class);
     private ColorDepthImageDao colorDepthImageDao = mock(ColorDepthImageDao.class);
+    private EmBodyDao emBodyDao = mock(EmBodyDao.class);
+    private EmDataSetDao emDataSetDao = mock(EmDataSetDao.class);
     private LineReleaseDao lineReleaseDao = mock(LineReleaseDao.class);
     private JWTProvider jwtProvider = mock(JWTProvider.class);
     private LegacyDomainDao legacyDomainDao = mock(LegacyDomainDao.class);
@@ -119,6 +122,16 @@ public class TestResourceDependenciesProducer {
     @Produces
     public ColorDepthImageDao getColorDepthImageDao() {
         return colorDepthImageDao;
+    }
+
+    @Produces
+    public EmBodyDao getEmBodyDao() {
+        return emBodyDao;
+    }
+
+    @Produces
+    public EmDataSetDao getEmDataSetDao() {
+        return emDataSetDao;
     }
 
     @AsyncIndex

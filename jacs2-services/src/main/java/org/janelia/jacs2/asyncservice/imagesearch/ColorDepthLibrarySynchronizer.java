@@ -656,7 +656,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private void processEmMetadata(ColorDepthLibrary library, String alignmentSpace, ColorDepthLibraryEmMetadata emMetadata) {
-
         EMDataSet dataSet = emDataSetDao.getDataSetByNameAndVersion(emMetadata.getName(), emMetadata.getVersion());
         if (dataSet==null) {
             logger.warn("Could not find data set {} specified by {}", emMetadata.getDataSetIdentifier(), emMetadata.getFile());
@@ -665,7 +664,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
         // Look up table from EM bodyId to internal id
         Map<Long, EMBody> emBodyByBodyId = new HashMap<>();
-        for (EMBody emBody : emBodyDao.getBodiesForDataSet(dataSet)) {
+        for (EMBody emBody : emBodyDao.getBodiesForDataSet(dataSet, 0, -1)) {
             emBodyByBodyId.put(emBody.getBodyId(), emBody);
         }
 
