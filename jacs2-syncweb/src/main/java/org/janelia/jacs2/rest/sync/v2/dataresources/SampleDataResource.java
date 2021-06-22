@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -17,6 +18,8 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.google.common.base.Splitter;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -26,11 +29,15 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
+import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.interfaces.HasRelativeFiles;
 import org.janelia.model.domain.sample.FileGroup;
 import org.janelia.model.domain.sample.LSMImage;
@@ -65,6 +72,45 @@ public class SampleDataResource {
 
     @Inject
     private LegacyDomainDao legacyDomainDao;
+    @Inject
+    private SampleDao sampleDao;
+
+    @ApiOperation(value = "Gets a list of matching samples by the name and/or slide code")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully got list of samples", response = Sample.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal Server Error getting list of Sample(s)")
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/samples")
+    public Response getSamples(@ApiParam @QueryParam("name") List<String> names,
+                               @ApiParam @QueryParam("slideCode") List<String> slideCodes,
+                               @ApiParam @QueryParam("offset") String offsetParam,
+                               @ApiParam @QueryParam("length") String lengthParam) {
+        LOG.trace("Start getSamples({}, {}, {}, {})", names, slideCodes, offsetParam, lengthParam);
+        try {
+            Set<String> sampleNames = extractMultiValueParams(names);
+            Set<String> sampleSlideCodes = extractMultiValueParams(slideCodes);
+            int offset = parseIntegerParam("offset", offsetParam, 0);
+            int length = parseIntegerParam("length", lengthParam, -1);
+            List<Sample> sampleList = sampleDao.findMatchingSample(null,
+                    sampleNames,
+                    sampleSlideCodes,
+                    offset,
+                    length);
+            return Response
+                    .ok(new GenericEntity<List<Sample>>(sampleList){})
+                    .build();
+        } catch (Exception e) {
+            LOG.error("Error getting samples", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error retrieving samples"))
+                    .build();
+        } finally {
+            LOG.trace("Finished getSamples({}, {}, {}, {})", names, slideCodes, offsetParam, lengthParam);
+        }
+    }
 
     @ApiOperation(value = "Gets a list of LSMImage stacks for a sample",
             notes = "Uses the sample ID"
@@ -157,10 +203,10 @@ public class SampleDataResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sample/alignment")
     public Response getAlignmentForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                              @ApiParam @QueryParam("sampleId") final Long sampleId,
-                                              @ApiParam @QueryParam("objective") final String objective,
-                                              @ApiParam @QueryParam("area") final String area,
-                                              @ApiParam @QueryParam("alignmentSpace") final String alignmentSpace) {
+                                          @ApiParam @QueryParam("sampleId") final Long sampleId,
+                                          @ApiParam @QueryParam("objective") final String objective,
+                                          @ApiParam @QueryParam("area") final String area,
+                                          @ApiParam @QueryParam("alignmentSpace") final String alignmentSpace) {
         LOG.trace("Start getAlignmentForSample({}, {}, {}, {}, {})", subjectKey, sampleId, objective, area, alignmentSpace);
         try {
             Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);
@@ -210,9 +256,9 @@ public class SampleDataResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sample/alignment/primary")
     public Response getPrimaryAlignmentForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                          @ApiParam @QueryParam("sampleId") final Long sampleId,
-                                          @ApiParam @QueryParam("objective") final String objective,
-                                          @ApiParam @QueryParam("area") final String area) {
+                                                 @ApiParam @QueryParam("sampleId") final Long sampleId,
+                                                 @ApiParam @QueryParam("objective") final String objective,
+                                                 @ApiParam @QueryParam("area") final String area) {
         LOG.trace("Start getPrimaryAlignmentForSample({}, {}, {}, {})", subjectKey, sampleId, objective, area);
         try {
             Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);
@@ -262,10 +308,10 @@ public class SampleDataResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/sample/secondary")
     public Response getSecondaryDataForSample(@ApiParam @QueryParam("subjectKey") final String subjectKey,
-                                     @ApiParam @QueryParam("sampleId") final Long sampleId,
-                                     @ApiParam @QueryParam("objective") final String objective,
-                                     @ApiParam @QueryParam("area") final String area,
-                                     @ApiParam @QueryParam("tile") final String tile) {
+                                              @ApiParam @QueryParam("sampleId") final Long sampleId,
+                                              @ApiParam @QueryParam("objective") final String objective,
+                                              @ApiParam @QueryParam("area") final String area,
+                                              @ApiParam @QueryParam("tile") final String tile) {
         LOG.trace("Start getSecondaryDataForSample({}, {}, {}, {}, {})", subjectKey, sampleId, objective, area, tile);
         try {
             Sample sample = legacyDomainDao.getDomainObject(subjectKey, Sample.class, sampleId);
@@ -338,5 +384,25 @@ public class SampleDataResource {
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity(new ErrorResponse(message))
                 .build();
+    }
+
+    private Set<String> extractMultiValueParams(List<String> params) {
+        if (CollectionUtils.isEmpty(params)) {
+            return Collections.emptySet();
+        } else {
+            return params.stream()
+                    .filter(StringUtils::isNotBlank)
+                    .flatMap(param -> Splitter.on(',').trimResults().omitEmptyStrings().splitToList(param).stream())
+                    .collect(Collectors.toSet())
+                    ;
+        }
+    }
+
+    private Integer parseIntegerParam(String paramName, String paramValue, Integer defaultValue) {
+        try {
+            return StringUtils.isNotBlank(paramValue) ? Integer.parseInt(paramValue.trim()) : defaultValue;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid int value " + paramName + "->" + paramValue, e);
+        }
     }
 }
