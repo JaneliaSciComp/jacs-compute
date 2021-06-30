@@ -1,6 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -357,11 +358,25 @@ public class ColorDepthResource {
                     .flatMap(r -> r.getChildren().stream())
                     .collect(Collectors.toList());
         } else if (CollectionUtils.isEmpty(datasets)) {
-            return sampleDao.findMatchingSample(datasets, null, null, 0, -1).stream()
+            return sampleDao.findMatchingSample(
+                        datasets,
+                    null,
+                    null,
+                    null,
+                    null,
+                    0,
+                    -1).stream()
                     .map(Reference::createFor)
                     .collect(Collectors.toList());
         } else {
-            List<Reference> sampleRefsForDatasets = sampleDao.findMatchingSample(datasets, null, null, 0, -1).stream()
+            List<Reference> sampleRefsForDatasets = sampleDao.findMatchingSample(
+                        datasets,
+                    null,
+                    null,
+                    null,
+                    null,
+                    0,
+                    -1).stream()
                     .map(Reference::createFor)
                     .collect(Collectors.toList());
             List<Reference> sampleRefsForReleases = lineReleaseDao.findReleasesByName(releases).stream()

@@ -1,5 +1,6 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -87,16 +88,38 @@ public class SampleDataResource {
     public Response getSamples(@ApiParam @QueryParam("name") List<String> names,
                                @ApiParam @QueryParam("slideCode") List<String> slideCodes,
                                @ApiParam @QueryParam("offset") String offsetParam,
-                               @ApiParam @QueryParam("length") String lengthParam) {
+                               @ApiParam @QueryParam("length") String lengthParam,
+                               @ApiParam @QueryParam("allFields") Boolean withAllFields) {
         LOG.trace("Start getSamples({}, {}, {}, {})", names, slideCodes, offsetParam, lengthParam);
         try {
             Set<String> sampleNames = extractMultiValueParams(names);
             Set<String> sampleSlideCodes = extractMultiValueParams(slideCodes);
             int offset = parseIntegerParam("offset", offsetParam, 0);
             int length = parseIntegerParam("length", lengthParam, -1);
+            List<String> returnedSampleFields = withAllFields
+                    ? null
+                    : Arrays.asList(
+                        "_id",
+                        "class",
+                        "name",
+                        "dataSet",
+                        "driver",
+                        "gender",
+                        "mountingProtocol",
+                        "organism",
+                        "genotype",
+                        "line",
+                        "vtline",
+                        "publishingName",
+                        "slideCode",
+                        "status",
+                        "releaseLabel",
+                        "publishedObjectives");
             List<Sample> sampleList = sampleDao.findMatchingSample(null,
                     sampleNames,
                     sampleSlideCodes,
+                    returnedSampleFields,
+                    null,
                     offset,
                     length);
             return Response
