@@ -89,16 +89,15 @@ public class SampleDataResource {
                                @ApiParam @QueryParam("slideCode") List<String> slideCodes,
                                @ApiParam @QueryParam("offset") String offsetParam,
                                @ApiParam @QueryParam("length") String lengthParam,
-                               @ApiParam @QueryParam("allFields") Boolean withAllFields) {
+                               @ApiParam @QueryParam("withReducedFields") boolean withReducedFields) {
         LOG.trace("Start getSamples({}, {}, {}, {})", names, slideCodes, offsetParam, lengthParam);
         try {
             Set<String> sampleNames = extractMultiValueParams(names);
             Set<String> sampleSlideCodes = extractMultiValueParams(slideCodes);
             int offset = parseIntegerParam("offset", offsetParam, 0);
             int length = parseIntegerParam("length", lengthParam, -1);
-            List<String> returnedSampleFields = withAllFields
-                    ? null
-                    : Arrays.asList(
+            List<String> returnedSampleFields = withReducedFields
+                    ? Arrays.asList(
                         "_id",
                         "class",
                         "name",
@@ -114,7 +113,8 @@ public class SampleDataResource {
                         "slideCode",
                         "status",
                         "releaseLabel",
-                        "publishedObjectives");
+                        "publishedObjectives")
+                    : null;
             List<Sample> sampleList = sampleDao.findMatchingSample(null,
                     sampleNames,
                     sampleSlideCodes,
