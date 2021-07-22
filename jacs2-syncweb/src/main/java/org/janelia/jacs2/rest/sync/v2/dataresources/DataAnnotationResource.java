@@ -35,6 +35,10 @@ import org.janelia.model.domain.ontology.Annotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @Deprecated use AnnotationResource instead
+ */
+@Deprecated
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
                 apiKeyAuthDefinitions = {
@@ -56,6 +60,7 @@ import org.slf4j.LoggerFactory;
 public class DataAnnotationResource {
     private static final Logger LOG = LoggerFactory.getLogger(DataAnnotationResource.class);
 
+    @Deprecated
     @AsyncIndex
     @Inject
     private AnnotationDao annotationDao;
@@ -85,6 +90,7 @@ public class DataAnnotationResource {
         }
     }
 
+    @Deprecated
     @ApiOperation(value = "Updates an annotation",
             notes = "updates an existing annotation using the DomainObject parameter"
     )
@@ -110,6 +116,7 @@ public class DataAnnotationResource {
         }
     }
 
+    @Deprecated
     @ApiOperation(value = "gets a list of Annotations",
             notes = "Gets a list of Annotations using the references parameter of the DomainQuery object"
     )
@@ -138,6 +145,7 @@ public class DataAnnotationResource {
         }
     }
 
+    @Deprecated
     @ApiOperation(value = "Removes an Annotation",
             notes = "Removes an annotation using the Annotation Id"
     )

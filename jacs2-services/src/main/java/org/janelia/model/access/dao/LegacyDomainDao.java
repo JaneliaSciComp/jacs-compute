@@ -218,8 +218,6 @@ public interface LegacyDomainDao {
 
     OntologyTerm getErrorOntologyCategory();
 
-    Annotation createAnnotation(String subjectKey, Reference target, OntologyTermReference ontologyTermReference, Object value) throws Exception;
-
     List<DataSet> getDataSets();
 
     List<DataSet> getDataSets(String subjectKey);

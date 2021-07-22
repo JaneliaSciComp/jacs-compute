@@ -356,13 +356,6 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
     }
 
     @Override
-    public Annotation createAnnotation(String subjectKey, Reference target, OntologyTermReference ontologyTermReference, Object value) throws Exception {
-        Annotation annotation = dao.createAnnotation(subjectKey, target, ontologyTermReference, value);
-        domainObjectIndexer.indexDocument(annotation);
-        return annotation;
-    }
-
-    @Override
     public List<DataSet> getDataSets() {
         return dao.getDataSets();
     }
