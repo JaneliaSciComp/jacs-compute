@@ -503,12 +503,20 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 }
                 logger.debug("Lookup {} in {}, alignmentSpace: {}", sourceCDMNameCandidates, variantSourceLibrary.getIdentifier(), alignmentSpace);
+                // Fly EM filenames have embedded neuron names that may contain regex characters ('+', '(', ')' especially);
+                //  therefore we need to quote the candidate names so the fuzzy match will treat them as literals;
+                //  this should not affect anything else, as we really do want the name we pass to be a literal
+                // note that Mongo requires the double-backslashes, whereas Pattern.quote() only gives you one
+                // also note that we are showing the unquoted names in the logs
+                Set<String> sourceCDMLiteralCandidates = ImmutableSet.copyOf(sourceCDMNameCandidates.stream()
+                        .map(name -> "\\Q" + name + "\\E")
+                        .collect(Collectors.toList()));
                 ColorDepthImage sourceImage = colorDepthImageDao.streamColorDepthMIPs(
                         new ColorDepthImageQuery()
                                 .withLibraryIdentifiers(Collections.singletonList(variantSourceLibrary.getIdentifier()))
                                 .withAlignmentSpace(alignmentSpace)
-                                .withFuzzyNames(sourceCDMNameCandidates)
-                                .withFuzzyFilepaths(sourceCDMNameCandidates)
+                                .withFuzzyNames(sourceCDMLiteralCandidates)
+                                .withFuzzyFilepaths(sourceCDMLiteralCandidates)
                 ).findFirst().orElse(null);
                 if (sourceImage != null) {
                     image.setSourceImageRef(Reference.createFor(sourceImage));
