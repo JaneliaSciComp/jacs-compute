@@ -64,7 +64,7 @@ public class SimpleRunSingularityContainerProcessor extends AbstractContainerPro
         scriptWriter.add("ulimit -c 0");
         scriptWriter.addWithArgs(getRuntime((args)));
         if (CollectionUtils.isNotEmpty(args.runtimeArgs)) {
-            args.appArgs.forEach(scriptWriter::addArg);
+            args.runtimeArgs.forEach(scriptWriter::addArg);
         }
         scriptWriter.addArg("run");
         if (StringUtils.isNotBlank(args.appName)) {
