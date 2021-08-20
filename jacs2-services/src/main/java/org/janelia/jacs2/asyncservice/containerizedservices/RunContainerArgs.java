@@ -21,6 +21,9 @@ class RunContainerArgs extends AbstractContainerArgs {
             "If the mount options are specified and the value does not match 'ro' or 'rw' the options will default to 'rw'",
             converter = BindPathConverter.class)
     List<BindPath> bindPaths = new ArrayList<>();
+    @Parameter(names = "-runtimeArgs", description = "Container runtime arguments, e.g. '--env' for passing the environment to the runtime",
+               splitter = ServiceArgSplitter.class)
+    List<String> runtimeArgs = new ArrayList<>();
     @Parameter(names = "-appArgs", description = "Containerized application arguments", splitter = ServiceArgSplitter.class)
     List<String> appArgs = new ArrayList<>();
     @Parameter(names = "-expandDir", description = "Name of the expanded directory")

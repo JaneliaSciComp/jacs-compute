@@ -65,6 +65,9 @@ public class SimpleRunDockerContainerProcessor extends AbstractContainerProcesso
                 .filter(BindPath::isNotEmpty)
                 .map(bindPath -> bindPath.asString(true)) // docker volume bindings always have both source and target
                 .forEach(bindPath -> scriptWriter.addArgs("-v", bindPath));
+        if (CollectionUtils.isNotEmpty(args.runtimeArgs)) {
+            args.appArgs.forEach(scriptWriter::addArg);
+        }
         scriptWriter.addArg(getContainerLocation(args));
         if (StringUtils.isNotBlank(args.appName)) {
             scriptWriter.addArg(args.appName);
