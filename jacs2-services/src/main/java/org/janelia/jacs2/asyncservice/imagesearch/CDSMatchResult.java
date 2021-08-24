@@ -7,6 +7,7 @@ public class CDSMatchResult extends AbstractCDMMetadata {
     private Long gradientAreaGap;
     private Long highExpressionArea;
     private Double normalizedScore;
+    private Boolean mirrored;
 
     public int getMatchingPixels() {
         return matchingPixels;
@@ -48,4 +49,11 @@ public class CDSMatchResult extends AbstractCDMMetadata {
         this.normalizedScore = normalizedScore;
     }
 
+    public Boolean getMirrored() {
+        return mirrored;
+    }
+
+    public void setMirrored(Boolean mirrored) {
+        this.mirrored = mirrored;
+    }
 }

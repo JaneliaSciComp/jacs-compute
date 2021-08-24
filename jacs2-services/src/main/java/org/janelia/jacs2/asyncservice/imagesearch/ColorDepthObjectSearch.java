@@ -372,6 +372,7 @@ public class ColorDepthObjectSearch extends AbstractServiceProcessor<Reference> 
                                 match.setScore(cdsMatchResult.getMatchingPixels());
                                 match.setScorePercent(cdsMatchResult.getMatchingRatio());
                                 match.setNormalizedScore(cdsMatchResult.getNormalizedScore());
+                                match.setMirrored(cdsMatchResult.getMirrored());
                                 return match;
                             })
                             .forEach(maskResult::addMatch);
