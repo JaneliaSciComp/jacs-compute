@@ -168,8 +168,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         // Walk the relevant alignment directories
         walkChildDirs(rootPath.toFile())
                 .filter(alignmentDir -> StringUtils.isBlank(args.alignmentSpace) || alignmentDir.getName().equals(args.alignmentSpace))
-                .flatMap(alignmentDir -> walkChildDirs(alignmentDir))
+                .flatMap(this::walkChildDirs)
                 .filter(libraryDir -> StringUtils.isBlank(args.library) || libraryDir.getName().equals(args.library))
+                .parallel()
                 .forEach(libraryDir -> {
 
                     // Read optional metadata
@@ -310,8 +311,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         FileUtils.lookupFiles(
                 libraryDir.toPath(), 1, "glob:**/*")
                 .parallel()
-                .filter(p -> !p.toFile().equals(libraryDir))
                 .map(Path::toFile)
+                .filter(f -> !f.equals(libraryDir))
                 .filter(File::isFile)
                 .filter(f -> {
                     if (accepted(f.getAbsolutePath())) {
