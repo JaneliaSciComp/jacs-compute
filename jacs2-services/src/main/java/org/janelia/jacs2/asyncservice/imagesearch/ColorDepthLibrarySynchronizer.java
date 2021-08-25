@@ -713,12 +713,11 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                 emBody.getFiles().put(FileType.ColorDepthMip1, cdm.getFilepath());
                                 emBodyDao.replace(emBody);
                             }
+                        } else {
+                            logger.warn("  Could not find body with id {} in {} for {}/{}",
+                                        bodyId, emMetadata.getDataSetIdentifier(), alignmentSpace, library.getIdentifier());
                         }
-                        else {
-                            logger.warn("  Could not find body with id {} in {}", bodyId, emMetadata.getDataSetIdentifier());
-                        }
-                    }
-                    else {
+                    } else {
                         logger.warn("  Could not parse EM filename: {}", file);
                     }
 
