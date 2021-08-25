@@ -305,7 +305,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 }, Collectors.toSet()));
 
         if (!existingColorDepthFiles.isEmpty()) {
-            logger.info("  Found mips for {} samples in library {}", existingColorDepthFiles.size(), library.getIdentifier());
+            logger.info("  Found mips for {} samples in {}/{}", existingColorDepthFiles.size(),
+                        alignmentSpace, library.getIdentifier());
         }
         // Walk all images within any structure
         FileUtils.lookupFiles(
