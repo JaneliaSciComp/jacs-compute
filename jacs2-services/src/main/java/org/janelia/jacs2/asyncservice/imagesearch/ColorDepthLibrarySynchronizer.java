@@ -197,15 +197,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
     private void processLibraryDir(File libraryDir, String alignmentSpace, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries, ColorDepthLibraryEmMetadata emMetadata) {
         logger.info("Discovering files in {}", libraryDir);
-        String libraryIdentifier = parentLibrary == null ? libraryDir.getName() : parentLibrary.getIdentifier() + '_' + libraryDir.getName();
-        String libraryVariant = parentLibrary == null ? null : libraryDir.getName();
 
-        ColorDepthLibrary library;
-        if (indexedLibraries.get(libraryIdentifier) == null) {
-            library = createNewLibrary(libraryIdentifier, libraryVariant, parentLibrary);
-        } else {
-            library = indexedLibraries.get(libraryIdentifier);
-        }
+        ColorDepthLibrary library = findLibraryByIndentifier(libraryDir, parentLibrary, indexedLibraries);
 
         processLibraryFiles(libraryDir, alignmentSpace, library);
         logger.info("  Verified {} existing images, created {} images", existing, created);
@@ -223,18 +216,29 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             // If the library exists already, or should be created
             library.getColorDepthCounts().put(alignmentSpace, total);
             try {
-                indexedLibraries.put(
-                        libraryIdentifier,
-                        colorDepthLibraryDao.saveBySubjectKey(library, library.getOwnerKey())
-                );
-                logger.debug("  Saved color depth library {} with count {}", libraryIdentifier, total);
+                colorDepthLibraryDao.saveBySubjectKey(library, library.getOwnerKey());
+                logger.debug("  Saved color depth library {} with count {}", library.getIdentifier(), total);
             } catch (Exception e) {
-                logger.error("Could not update library file counts for: {}", libraryIdentifier, e);
+                logger.error("Could not update library file counts for: {}", library.getIdentifier(), e);
             }
         }
 
         // Indirect recursion
         processLibraryVariants(libraryDir, alignmentSpace, library, indexedLibraries, emMetadata);
+    }
+
+    private synchronized ColorDepthLibrary findLibraryByIndentifier(File libraryDir, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries) {
+        String libraryIdentifier = parentLibrary == null ? libraryDir.getName() : parentLibrary.getIdentifier() + '_' + libraryDir.getName();
+        String libraryVariant = parentLibrary == null ? null : libraryDir.getName();
+
+        ColorDepthLibrary library;
+        if (indexedLibraries.get(libraryIdentifier) == null) {
+            library = indexedLibraries.put(libraryIdentifier, createNewLibrary(libraryIdentifier, libraryVariant, parentLibrary));
+        } else {
+            library = indexedLibraries.get(libraryIdentifier);
+        }
+
+        return library;
     }
 
     private Stream<File> walkChildDirs(File dir) {
