@@ -196,7 +196,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         logger.error("Error reading EM metadata for "+libraryDir, e);
                     }
 
-                    processLibraryDir(libraryDir, libraryDir.getParentFile().getName(), null, indexedLibraries, emMetadata);
+                    processLibraryDir(libraryDir, libraryDir.getParentFile().getName(), null, null, indexedLibraries, emMetadata);
                 });
 
         // It's necessary to recalculate all the counts here, because some color depth images may be part of constructed
@@ -210,12 +210,12 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         logger.info("Completed color depth library synchronization. Imported {} images in total - deleted {}.", totalCreated, totalDeleted);
     }
 
-    private void processLibraryDir(File libraryDir, String alignmentSpace, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries, ColorDepthLibraryEmMetadata emMetadata) {
+    private void processLibraryDir(File libraryDir, String alignmentSpace, ColorDepthLibrary rootLibrary, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries, ColorDepthLibraryEmMetadata emMetadata) {
         logger.info("Discovering files in {}", libraryDir);
 
         ColorDepthLibrary library = findOrCreateLibraryByIndentifier(libraryDir, parentLibrary, indexedLibraries);
 
-        List<File> libraryVariantDirs = processLibraryFiles(libraryDir, alignmentSpace, library);
+        List<File> libraryVariantDirs = processLibraryFiles(libraryDir, alignmentSpace, rootLibrary, library);
         logger.info("  Verified {} existing images, created {} images", existing, created);
 
         if (emMetadata != null) {
@@ -236,7 +236,13 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         }
 
         // Indirect recursion - walk subdirs of the libraryDir
-        libraryVariantDirs.forEach(libraryVariantDir -> processLibraryDir(libraryVariantDir, alignmentSpace, library, indexedLibraries, emMetadata));
+        libraryVariantDirs.forEach(libraryVariantDir -> processLibraryDir(
+                libraryVariantDir,
+                alignmentSpace,
+                rootLibrary == null ? library : rootLibrary,
+                library,
+                indexedLibraries,
+                emMetadata));
     }
 
     private synchronized ColorDepthLibrary findOrCreateLibraryByIndentifier(File libraryDir, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries) {
@@ -302,7 +308,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return library;
     }
 
-    private List<File> processLibraryFiles(File libraryDir, String alignmentSpace, ColorDepthLibrary library) {
+    private List<File> processLibraryFiles(File libraryDir, String alignmentSpace, ColorDepthLibrary variantSourceLibrary, ColorDepthLibrary library) {
         // reset the counters
         this.existing = 0;
         this.created = 0;
@@ -426,7 +432,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 })
                 .forEach(cdf -> {
-                    if (createColorDepthImage(cdf, alignmentSpace, library)) {
+                    if (createColorDepthImage(cdf, alignmentSpace, variantSourceLibrary, library)) {
                         created++;
                     }
                 });
@@ -488,7 +494,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
      * @param colorDepthImageFileComponents color depth file components
      * @return true if the image was created successfully
      */
-    private boolean createColorDepthImage(ColorDepthFileComponents colorDepthImageFileComponents, String alignmentSpace, ColorDepthLibrary library) {
+    private boolean createColorDepthImage(ColorDepthFileComponents colorDepthImageFileComponents, String alignmentSpace,
+                                          ColorDepthLibrary variantSourceLibrary,
+                                          ColorDepthLibrary library) {
         try {
             ColorDepthImage image = new ColorDepthImage();
             image.getLibraries().add(library.getIdentifier());
@@ -508,7 +516,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 image.setAnatomicalArea(colorDepthImageFileComponents.getAnatomicalArea());
                 image.setChannelNumber(colorDepthImageFileComponents.getChannelNumber());
             }
-            ColorDepthLibrary variantSourceLibrary = findVariantSource(library);
             if (variantSourceLibrary != null) {
                 Set<String> sourceCDMNameCandidates;
                 if (colorDepthImageFileComponents.hasNameComponents()) {
@@ -583,20 +590,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     return true;
                 })
                 .orElse(false);
-    }
-
-    private ColorDepthLibrary findVariantSource(ColorDepthLibrary libraryVariant) {
-        ColorDepthLibrary sourceLibrary = null;
-        for (ColorDepthLibrary currentLibraryVariant = libraryVariant; currentLibraryVariant.isVariant(); ) {
-            ColorDepthLibrary parentLibrary = colorDepthLibraryDao.findById(currentLibraryVariant.getParentLibraryRef().getTargetId());
-            if (parentLibrary == null) {
-                logger.error("Invalid parent library reference in {} -> {}", currentLibraryVariant, currentLibraryVariant.getParentLibraryRef());
-                throw new IllegalArgumentException("Invalid parent library reference " + currentLibraryVariant.getParentLibraryRef() + " in " + currentLibraryVariant);
-            }
-            sourceLibrary = parentLibrary;
-            currentLibraryVariant = parentLibrary;
-        }
-        return sourceLibrary;
     }
 
     private boolean accepted(String filepath) {
