@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +29,7 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -196,7 +198,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         logger.error("Error reading EM metadata for "+libraryDir, e);
                     }
 
-                    processLibraryDir(libraryDir, libraryDir.getParentFile().getName(), null, null, indexedLibraries, emMetadata);
+                    processLibraryDir(libraryDir, libraryDir.getParentFile().getName(), Collections.emptyMap(), null, indexedLibraries, emMetadata);
                 });
 
         // It's necessary to recalculate all the counts here, because some color depth images may be part of constructed
@@ -210,12 +212,12 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         logger.info("Completed color depth library synchronization. Imported {} images in total - deleted {}.", totalCreated, totalDeleted);
     }
 
-    private void processLibraryDir(File libraryDir, String alignmentSpace, ColorDepthLibrary rootLibrary, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries, ColorDepthLibraryEmMetadata emMetadata) {
+    private void processLibraryDir(File libraryDir, String alignmentSpace, Map<String, Reference> sourceLibraryMIPs, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries, ColorDepthLibraryEmMetadata emMetadata) {
         logger.info("Discovering files in {}", libraryDir);
 
         ColorDepthLibrary library = findOrCreateLibraryByIndentifier(libraryDir, parentLibrary, indexedLibraries);
 
-        List<File> libraryVariantDirs = processLibraryFiles(libraryDir, alignmentSpace, rootLibrary, library);
+        Pair<Map<String, Reference>, List<File>> processLibResults = processLibraryFiles(libraryDir, alignmentSpace, sourceLibraryMIPs, library);
         logger.info("  Verified {} existing images, created {} images", existing, created);
 
         if (emMetadata != null) {
@@ -236,10 +238,16 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         }
 
         // Indirect recursion - walk subdirs of the libraryDir
-        libraryVariantDirs.forEach(libraryVariantDir -> processLibraryDir(
+        Map<String, Reference> sourceMIPs;
+        if (parentLibrary == null) {
+            sourceMIPs = processLibResults.getLeft();
+        } else {
+            sourceMIPs = sourceLibraryMIPs;
+        }
+        processLibResults.getRight().forEach(libraryVariantDir -> processLibraryDir(
                 libraryVariantDir,
                 alignmentSpace,
-                rootLibrary == null ? library : rootLibrary,
+                sourceMIPs,
                 library,
                 indexedLibraries,
                 emMetadata));
@@ -308,7 +316,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return library;
     }
 
-    private List<File> processLibraryFiles(File libraryDir, String alignmentSpace, ColorDepthLibrary variantSourceLibrary, ColorDepthLibrary library) {
+    private Pair<Map<String, Reference>, List<File>> processLibraryFiles(File libraryDir, String alignmentSpace, Map<String, Reference> sourceLibraryMIPs, ColorDepthLibrary library) {
         // reset the counters
         this.existing = 0;
         this.created = 0;
@@ -432,15 +440,19 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 })
                 .forEach(cdf -> {
-                    if (createColorDepthImage(cdf, alignmentSpace, variantSourceLibrary, library)) {
+                    if (createColorDepthImage(cdf, alignmentSpace, sourceLibraryMIPs, library)) {
                         created++;
                     }
                 });
 
+        Map<String, Reference> libraryMIPs = new LinkedHashMap<>();
         // this post phase is for the case when files are already in the library and cleanup is needed.
         colorDepthImageDao.streamColorDepthMIPs(mipsQuery)
-                .map(Image::getFilepath)
-                .map(this::parseColorDepthFileComponents)
+                .map(mip -> {
+                    ColorDepthFileComponents cdf = parseColorDepthFileComponents(mip.getFilepath());
+                    libraryMIPs.put(Pattern.compile("_CDM$", Pattern.CASE_INSENSITIVE).matcher(cdf.getFileName()).replaceFirst(StringUtils.EMPTY), Reference.createFor(mip));
+                    return cdf;
+                })
                 .filter(cdf -> cdf.getSampleRef() != null)
                 .collect(Collectors.groupingBy(cdf -> cdf.getSampleRef().getTargetId().toString(), Collectors.toSet()))
                 .entrySet()
@@ -486,7 +498,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                             });
                 });
 
-        return librarySubdirs;
+        return ImmutablePair.of(libraryMIPs, librarySubdirs);
     }
 
     /**
@@ -494,8 +506,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
      * @param colorDepthImageFileComponents color depth file components
      * @return true if the image was created successfully
      */
-    private boolean createColorDepthImage(ColorDepthFileComponents colorDepthImageFileComponents, String alignmentSpace,
-                                          ColorDepthLibrary variantSourceLibrary,
+    private boolean createColorDepthImage(ColorDepthFileComponents colorDepthImageFileComponents,
+                                          String alignmentSpace,
+                                          Map<String, Reference> sourceLibraryMIPs,
                                           ColorDepthLibrary library) {
         try {
             ColorDepthImage image = new ColorDepthImage();
@@ -516,7 +529,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 image.setAnatomicalArea(colorDepthImageFileComponents.getAnatomicalArea());
                 image.setChannelNumber(colorDepthImageFileComponents.getChannelNumber());
             }
-            if (variantSourceLibrary != null) {
+            if (!sourceLibraryMIPs.isEmpty()) {
                 Set<String> sourceCDMNameCandidates;
                 if (colorDepthImageFileComponents.hasNameComponents()) {
                     sourceCDMNameCandidates = ImmutableSet.of(
@@ -530,48 +543,33 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                     null)
                     );
                 } else {
-                    if (library.isVariant()) {
-                        // if the mip name does not follow the convention assume the variant is in the file name
-                        // remove the variant from the filename
-                        String n1 = Pattern.compile("[_-]" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE)
-                                .matcher(colorDepthImageFileComponents.getFileName())
-                                .replaceAll(StringUtils.EMPTY);
-                        String n2 = Pattern.compile("-.*CDM$", Pattern.CASE_INSENSITIVE)
-                                .matcher(n1)
-                                .replaceFirst(StringUtils.EMPTY);
-                        int lastSepIndex = n2.lastIndexOf('_');
-                        if (lastSepIndex > 0) {
-                            sourceCDMNameCandidates = ImmutableSet.of(n1, n2, n2.substring(0, lastSepIndex));
-                        } else {
-                            sourceCDMNameCandidates = ImmutableSet.of(n1, n2);
-                        }
+                    // if the mip name does not follow the convention assume the variant is in the file name
+                    // remove the variant from the filename
+                    String n1 = Pattern.compile("[_-]" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE)
+                            .matcher(colorDepthImageFileComponents.getFileName())
+                            .replaceAll(StringUtils.EMPTY);
+                    String n2 = Pattern.compile("-.*CDM$", Pattern.CASE_INSENSITIVE)
+                            .matcher(n1)
+                            .replaceFirst(StringUtils.EMPTY);
+                    int lastSepIndex = n2.lastIndexOf('_');
+                    if (lastSepIndex > 0) {
+                        sourceCDMNameCandidates = ImmutableSet.of(n1, n2, n2.substring(0, lastSepIndex));
                     } else {
-                        sourceCDMNameCandidates = ImmutableSet.of(colorDepthImageFileComponents.getFileName());
+                        sourceCDMNameCandidates = ImmutableSet.of(n1, n2);
                     }
                 }
-                logger.debug("Lookup {} in {}, alignmentSpace: {}", sourceCDMNameCandidates, variantSourceLibrary.getIdentifier(), alignmentSpace);
-                // Fly EM filenames have embedded neuron names that may contain regex characters ('+', '(', ')' especially);
-                //  therefore we need to quote the candidate names so the fuzzy match will treat them as literals;
-                //  this should not affect anything else, as we really do want the name we pass to be a literal
-                // note that Mongo requires the double-backslashes, whereas Pattern.quote() only gives you one
-                // also note that we are showing the unquoted names in the logs
-                Set<String> sourceCDMLiteralCandidates = ImmutableSet.copyOf(sourceCDMNameCandidates.stream()
-                        .map(name -> "\\Q" + name + "\\E")
-                        .collect(Collectors.toList()));
-                ColorDepthImage sourceImage = colorDepthImageDao.streamColorDepthMIPs(
-                        new ColorDepthImageQuery()
-                                .withLibraryIdentifiers(Collections.singletonList(variantSourceLibrary.getIdentifier()))
-                                .withAlignmentSpace(alignmentSpace)
-                                .withFuzzyNames(sourceCDMLiteralCandidates)
-                                .withFuzzyFilepaths(sourceCDMLiteralCandidates)
-                ).findFirst().orElse(null);
-                if (sourceImage != null) {
-                    image.setSourceImageRef(Reference.createFor(sourceImage));
+                logger.debug("Lookup {}", sourceCDMNameCandidates);
+                Reference sourceImageReference = sourceCDMNameCandidates.stream()
+                        .map(n -> sourceLibraryMIPs.get(n))
+                        .filter(ref -> ref != null)
+                        .findFirst().orElse(null);
+                if (sourceImageReference != null) {
+                    image.setSourceImageRef(sourceImageReference);
                 } else {
                     // this is the case when the file exist but the mip entity was deleted because
                     // it actually corresponds to a renamed mip
-                    logger.warn("No color depth image entity found for {} in library {}, alignment {}, so no MIP will be created",
-                            sourceCDMNameCandidates, variantSourceLibrary.getIdentifier(), alignmentSpace);
+                    logger.warn("No referenced color depth image entity found for {} from library {}, alignment {}, so no MIP will be created",
+                            sourceCDMNameCandidates, library.getIdentifier(), alignmentSpace);
                     return false;
                 }
             }
