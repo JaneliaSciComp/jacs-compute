@@ -169,7 +169,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 .filter(alignmentDir -> StringUtils.isBlank(args.alignmentSpace) || alignmentDir.getName().equals(args.alignmentSpace))
                 .flatMap(this::walkChildDirs)
                 .filter(libraryDir -> StringUtils.isBlank(args.library) || libraryDir.getName().equals(args.library))
-                .parallel()
                 .forEach(libraryDir -> {
 
                     // Read optional metadata
@@ -246,11 +245,12 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         if (!Files.isDirectory(dirPath)) {
             return Stream.of();
         }
-        logger.info("Discovering files in {}", dir);
+        logger.info("Discovering sub-directories in {}", dir);
         return FileUtils.lookupFiles(dirPath, 1, "glob:**/*")
                 .filter(Files::isDirectory)
                 .map(Path::toFile)
-                .filter(p -> !p.equals(dir));
+                .filter(p -> !p.equals(dir))
+                .parallel();
     }
 
     private ColorDepthLibrary createNewLibrary(String libraryIdentifier, String libraryVariant, ColorDepthLibrary parentLibrary) {
