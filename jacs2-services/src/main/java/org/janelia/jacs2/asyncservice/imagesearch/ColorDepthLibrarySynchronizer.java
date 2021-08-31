@@ -548,7 +548,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     String n1 = Pattern.compile("[_-]" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE)
                             .matcher(colorDepthImageFileComponents.getFileName())
                             .replaceAll(StringUtils.EMPTY);
-                    String n2 = Pattern.compile("-.*CDM$", Pattern.CASE_INSENSITIVE)
+                    String n2 = Pattern.compile("-\\d+_CDM$", Pattern.CASE_INSENSITIVE)
                             .matcher(n1)
                             .replaceFirst(StringUtils.EMPTY);
                     int lastSepIndex = n2.lastIndexOf('_');
