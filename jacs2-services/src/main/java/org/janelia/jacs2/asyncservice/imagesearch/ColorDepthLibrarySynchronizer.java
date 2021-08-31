@@ -49,6 +49,7 @@ import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.ServiceMetaData;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Synchronize the filesystem ColorDepthMIPs directory with the database. Can be restricted to only
@@ -58,6 +59,8 @@ import org.slf4j.Logger;
  */
 @Named("colorDepthLibrarySync")
 public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ColorDepthLibrarySynchronizer.class);
 
     static class SyncArgs extends ServiceArgs {
         @Parameter(names = "-alignmentSpace", description = "Alignment space")
@@ -132,7 +135,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
     @Override
     public ServiceComputation<JacsServiceResult<Void>> process(JacsServiceData jacsServiceData) {
-        logger.info("Service {} perform color depth library sync", jacsServiceData);
+        LOG.info("Service {} perform color depth library sync", jacsServiceData);
         logCDLibSyncMaintenanceEvent(jacsServiceData.getId());
 
         SyncArgs args = getArgs(jacsServiceData);
@@ -160,9 +163,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private void runFileSystemBasedDiscovery(SyncArgs args, Map<String, ColorDepthLibrary> indexedLibraries) {
-        logger.info("Running discovery with parameters:");
-        logger.info("  alignmentSpace={}", args.alignmentSpace);
-        logger.info("  library={}", args.library);
+        LOG.info("Running discovery with parameters:");
+        LOG.info("  alignmentSpace={}", args.alignmentSpace);
+        LOG.info("  library={}", args.library);
 
         // Walk the relevant alignment directories
         walkChildDirs(rootPath.toFile())
@@ -176,7 +179,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     try {
                         emMetadata = ColorDepthLibraryEmMetadata.fromLibraryPath(libraryDir);
                     } catch (Exception e) {
-                        logger.error("Error reading EM metadata for "+libraryDir, e);
+                        LOG.error("Error reading EM metadata for "+libraryDir, e);
                     }
 
                     processLibraryDir(libraryDir, libraryDir.getParentFile().getName(), null, indexedLibraries, emMetadata);
@@ -187,23 +190,23 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         try {
             colorDepthLibraryDao.updateColorDepthCounts(colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForAllLibraries());
         } catch (Exception e) {
-           logger.error("Failed to update color depth counts", e);
+            LOG.error("Failed to update color depth counts", e);
         }
 
-        logger.info("Completed color depth library synchronization. Imported {} images in total - deleted {}.", totalCreated, totalDeleted);
+        LOG.info("Completed color depth library synchronization. Imported {} images in total - deleted {}.", totalCreated, totalDeleted);
     }
 
     private void processLibraryDir(File libraryDir, String alignmentSpace, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries, ColorDepthLibraryEmMetadata emMetadata) {
-        logger.info("Discovering files in {}", libraryDir);
+        LOG.info("Discovering files in {}", libraryDir);
 
         ColorDepthLibrary library = findOrCreateLibraryByIndentifier(libraryDir, parentLibrary, indexedLibraries);
 
         processLibraryFiles(libraryDir, alignmentSpace, library);
-        logger.info("  Verified {} existing images, created {} images", existing, created);
+        LOG.info("  Verified {} existing images, created {} images", existing, created);
 
         if (emMetadata != null) {
             processEmMetadata(library, alignmentSpace, emMetadata);
-            logger.info("  Associated library with EM data set {}", emMetadata.getDataSetIdentifier());
+            LOG.info("  Associated library with EM data set {}", emMetadata.getDataSetIdentifier());
         }
 
         int total = existing + created - deleted;
@@ -213,9 +216,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         library.getColorDepthCounts().put(alignmentSpace, total);
         try {
             colorDepthLibraryDao.saveBySubjectKey(library, library.getOwnerKey());
-            logger.debug("  Saved color depth library {} with count {}", library.getIdentifier(), total);
+            LOG.debug("  Saved color depth library {} with count {}", library.getIdentifier(), total);
         } catch (Exception e) {
-            logger.error("Could not update library file counts for: {}", library.getIdentifier(), e);
+            LOG.error("Could not update library file counts for: {}", library.getIdentifier(), e);
         }
 
         // Indirect recursion
@@ -245,7 +248,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         if (!Files.isDirectory(dirPath)) {
             return Stream.of();
         }
-        logger.info("Discovering sub-directories in {}", dir);
+        LOG.info("Discovering sub-directories in {}", dir);
         return FileUtils.lookupFiles(dirPath, 1, "glob:**/*")
                 .filter(Files::isDirectory)
                 .map(Path::toFile)
@@ -254,7 +257,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private ColorDepthLibrary createNewLibrary(String libraryIdentifier, String libraryVariant, ColorDepthLibrary parentLibrary) {
-        logger.info("Create new library {} - library variant {}", libraryIdentifier, StringUtils.defaultIfBlank(libraryVariant, "<<NONE>>"));
+        LOG.info("Create new library {} - library variant {}", libraryIdentifier, StringUtils.defaultIfBlank(libraryVariant, "<<NONE>>"));
         ColorDepthLibrary library = new ColorDepthLibrary();
         library.setIdentifier(libraryIdentifier);
         library.setName(libraryIdentifier);
@@ -273,12 +276,12 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             Subject subject = subjectDao.findSubjectByName(ownerName);
             Set<String> defaultAccessors = Collections.singleton(defaultOwnerKey);
             if (subject != null) {
-                logger.warn("No corresponding data set found. Falling back on owner encoded in library identifier: {}", subject.getKey());
+                LOG.warn("No corresponding data set found. Falling back on owner encoded in library identifier: {}", subject.getKey());
                 library.setOwnerKey(subject.getKey());
                 library.addReaders(defaultAccessors);
                 library.addWriters(defaultAccessors);
             } else {
-                logger.warn("Falling back on default owner: {}", defaultOwnerKey);
+                LOG.warn("Falling back on default owner: {}", defaultOwnerKey);
                 library.setOwnerKey(defaultOwnerKey);
             }
         }
@@ -306,7 +309,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 }, Collectors.toSet()));
 
         if (!existingColorDepthFiles.isEmpty()) {
-            logger.info("  Found mips for {} samples in {}/{}", existingColorDepthFiles.size(),
+            LOG.info("  Found mips for {} samples in {}/{}", existingColorDepthFiles.size(),
                         alignmentSpace, library.getIdentifier());
         }
         // Walk all images within any structure
@@ -322,7 +325,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     } else {
                         // Ignore JSON files, which could be added metadata
                         if (!f.getName().endsWith(".json")) {
-                            logger.warn("  File not accepted as color depth MIP: {}", f);
+                            LOG.warn("  File not accepted as color depth MIP: {}", f);
                         }
                         return false;
                     }
@@ -371,7 +374,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                                 // the current file is older than one of the existing files
                                                 // for the same objective, area and channel so simply skip this
                                                 // without incrementing the existing counter
-                                                logger.debug("Skipping {} because I found {} created for the same sample {} more recently",
+                                                LOG.debug("Skipping {} because I found {} created for the same sample {} more recently",
                                                         cdf.getFile(), existingCdf.getFile(), existingCdf.getSampleRef());
                                                 return false;
                                             }
@@ -422,7 +425,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                 for (ColorDepthFileComponents cdc : eByOAC.getValue()) {
                                     if (cdc != latestCDF) {
                                         // if this is not SAME as the max - remove it from the color depth mips collection
-                                        logger.info("Delete color depth image {} created for sample {} - keeping {} for sample {} instead because the sample {} may have been renamed to {}",
+                                        LOG.info("Delete color depth image {} created for sample {} - keeping {} for sample {} instead because the sample {} may have been renamed to {}",
                                                 cdc.getFile(), cdc.getSampleRef(), latestCDF.getFile(), latestCDF.getSampleRef(),
                                                 cdc.getSampleName(), latestCDF.getSampleName());
                                         if (deleteColorDepthImage(cdc)) {
@@ -505,7 +508,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         sourceCDMNameCandidates = ImmutableSet.of(colorDepthImageFileComponents.getFileName());
                     }
                 }
-                logger.debug("Lookup {} in {}, alignmentSpace: {}", sourceCDMNameCandidates, variantSourceLibrary.getIdentifier(), alignmentSpace);
+                LOG.debug("Lookup {} in {}, alignmentSpace: {}", sourceCDMNameCandidates, variantSourceLibrary.getIdentifier(), alignmentSpace);
                 // Fly EM filenames have embedded neuron names that may contain regex characters ('+', '(', ')' especially);
                 //  therefore we need to quote the candidate names so the fuzzy match will treat them as literals;
                 //  this should not affect anything else, as we really do want the name we pass to be a literal
@@ -526,7 +529,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 } else {
                     // this is the case when the file exist but the mip entity was deleted because
                     // it actually corresponds to a renamed mip
-                    logger.warn("No color depth image entity found for {} in library {}, alignment {}, so no MIP will be created",
+                    LOG.warn("No color depth image entity found for {} in library {}, alignment {}, so no MIP will be created",
                             sourceCDMNameCandidates, variantSourceLibrary.getIdentifier(), alignmentSpace);
                     return false;
                 }
@@ -534,7 +537,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             colorDepthImageDao.saveBySubjectKey(image, library.getOwnerKey());
             return true;
         } catch (Exception e) {
-            logger.warn("  Could not create image for: {}", colorDepthImageFileComponents.getFile(), e);
+            LOG.warn("  Could not create image for: {}", colorDepthImageFileComponents.getFile(), e);
         }
         return false;
     }
@@ -553,7 +556,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         for (ColorDepthLibrary currentLibraryVariant = libraryVariant; currentLibraryVariant.isVariant(); ) {
             ColorDepthLibrary parentLibrary = colorDepthLibraryDao.findById(currentLibraryVariant.getParentLibraryRef().getTargetId());
             if (parentLibrary == null) {
-                logger.error("Invalid parent library reference in {} -> {}", currentLibraryVariant, currentLibraryVariant.getParentLibraryRef());
+                LOG.error("Invalid parent library reference in {} -> {}", currentLibraryVariant, currentLibraryVariant.getParentLibraryRef());
                 throw new IllegalArgumentException("Invalid parent library reference " + currentLibraryVariant.getParentLibraryRef() + " in " + currentLibraryVariant);
             }
             sourceLibrary = parentLibrary;
@@ -575,7 +578,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         releasesByWebsite
                 .forEach((site, releases) -> {
                     String libraryIdentifier = "flylight_" + site.toLowerCase().replace(' ', '_') + "_published";
-                    logger.info("Processing release library {} for {}", libraryIdentifier, site);
+                    LOG.info("Processing release library {} for {}", libraryIdentifier, site);
                     ColorDepthLibrary library;
                     boolean libraryCreated;
                     if (indexedLibraries.get(libraryIdentifier) == null) {
@@ -601,7 +604,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                             ;
                     if (updatedMips > 0 || !libraryCreated && updatedMips == 0) {
                         if (updatedMips > 0) {
-                            logger.info("Updated {} mips from library {} for {}", updatedMips, libraryIdentifier, site);
+                            LOG.info("Updated {} mips from library {} for {}", updatedMips, libraryIdentifier, site);
                             library.setColorDepthCounts(
                                     colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForLibrary(libraryIdentifier)
                             );
@@ -609,10 +612,10 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         try {
                             colorDepthLibraryDao.saveBySubjectKey(library, library.getOwnerKey());
                         } catch (Exception e) {
-                            logger.error("Could not update library file counts for: {}", libraryIdentifier, e);
+                            LOG.error("Could not update library file counts for: {}", libraryIdentifier, e);
                         }
                     } else {
-                        logger.info("Nothing was updated for library {}", libraryIdentifier);
+                        LOG.info("Nothing was updated for library {}", libraryIdentifier);
                     }
                 });
     }
@@ -644,7 +647,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private ColorDepthLibrary createLibraryForPublishedRelease(String libraryIdentifier) {
-        logger.info("Create library {}", libraryIdentifier);
+        LOG.info("Create library {}", libraryIdentifier);
         ColorDepthLibrary library = new ColorDepthLibrary();
         library.setIdentifier(libraryIdentifier);
         library.setName(libraryIdentifier);
@@ -669,7 +672,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private void processEmMetadata(ColorDepthLibrary library, String alignmentSpace, ColorDepthLibraryEmMetadata emMetadata) {
         EMDataSet dataSet = emDataSetDao.getDataSetByNameAndVersion(emMetadata.getName(), emMetadata.getVersion());
         if (dataSet==null) {
-            logger.warn("Could not find data set {} specified by {}", emMetadata.getDataSetIdentifier(), emMetadata.getFile());
+            LOG.warn("Could not find data set {} specified by {}", emMetadata.getDataSetIdentifier(), emMetadata.getFile());
             return;
         }
 
@@ -715,11 +718,11 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                 emBodyDao.replace(emBody);
                             }
                         } else {
-                            logger.warn("  Could not find body with id {} in {} for {}/{}",
+                            LOG.warn("  Could not find body with id {} in {} for {}/{}",
                                         bodyId, emMetadata.getDataSetIdentifier(), alignmentSpace, library.getIdentifier());
                         }
                     } else {
-                        logger.warn("  Could not parse EM filename: {}", file);
+                        LOG.warn("  Could not parse EM filename: {}", file);
                     }
 
                 });
