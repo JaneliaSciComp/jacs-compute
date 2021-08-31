@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -214,7 +215,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
         ColorDepthLibrary library = findOrCreateLibraryByIndentifier(libraryDir, parentLibrary, indexedLibraries);
 
-        processLibraryFiles(libraryDir, alignmentSpace, library);
+        List<File> libraryVariantDirs = processLibraryFiles(libraryDir, alignmentSpace, library);
         logger.info("  Verified {} existing images, created {} images", existing, created);
 
         if (emMetadata != null) {
@@ -234,8 +235,8 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             logger.error("Could not update library file counts for: {}", library.getIdentifier(), e);
         }
 
-        // Indirect recursion
-        processLibraryVariants(libraryDir, alignmentSpace, library, indexedLibraries, emMetadata);
+        // Indirect recursion - walk subdirs of the libraryDir
+        libraryVariantDirs.forEach(libraryVariantDir -> processLibraryDir(libraryVariantDir, alignmentSpace, library, indexedLibraries, emMetadata));
     }
 
     private synchronized ColorDepthLibrary findOrCreateLibraryByIndentifier(File libraryDir, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries) {
@@ -301,7 +302,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return library;
     }
 
-    private void processLibraryFiles(File libraryDir, String alignmentSpace, ColorDepthLibrary library) {
+    private List<File> processLibraryFiles(File libraryDir, String alignmentSpace, ColorDepthLibrary library) {
         // reset the counters
         this.existing = 0;
         this.created = 0;
@@ -341,13 +342,21 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             logger.info("  Found mips for {} samples in {}/{}", existingColorDepthFiles.size(),
                         alignmentSpace, library.getIdentifier());
         }
+
+        List<File> librarySubdirs = new ArrayList<>();
+
         // Walk all images within any structure
         FileUtils.lookupFiles(
                 libraryDir.toPath(), 1, "glob:**/*")
-                .parallel()
                 .map(Path::toFile)
                 .filter(f -> !f.equals(libraryDir))
+                .peek(f -> {
+                    if (f.isDirectory()) {
+                        librarySubdirs.add(f);
+                    }
+                })
                 .filter(File::isFile)
+                .parallel()
                 .filter(f -> {
                     if (accepted(f.getAbsolutePath())) {
                         return true;
@@ -471,12 +480,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                             });
                 });
 
-    }
-
-    private void processLibraryVariants(File libraryDir, String alignmentSpace, ColorDepthLibrary library, Map<String, ColorDepthLibrary> indexedLibraries, ColorDepthLibraryEmMetadata emMetadata) {
-        // Walk subdirs of the libraryDir
-        walkChildDirs(libraryDir)
-                .forEach(libraryVariantDir -> processLibraryDir(libraryVariantDir, alignmentSpace, library, indexedLibraries, emMetadata));
+        return librarySubdirs;
     }
 
     /**
