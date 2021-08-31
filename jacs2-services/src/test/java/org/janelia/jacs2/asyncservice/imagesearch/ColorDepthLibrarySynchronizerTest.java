@@ -411,7 +411,7 @@ public class ColorDepthLibrarySynchronizerTest {
         colorDepthLibrarySynchronizer.process(testService)
                 .thenApply(r -> {
                     successful.accept(r);
-                    Mockito.verify(colorDepthLibraryDao, Mockito.times(testLibsWithFiles.size())).saveBySubjectKey(any(ColorDepthLibrary.class), ArgumentMatchers.argThat(arg -> true));
+                    Mockito.verify(colorDepthLibraryDao, Mockito.times(testLibsWithFiles.size()*2-1)).saveBySubjectKey(any(ColorDepthLibrary.class), ArgumentMatchers.argThat(arg -> true));
                     Mockito.verify(colorDepthImageDao, Mockito.times((int) testLibsWithFiles.entrySet().stream().flatMap(e -> Arrays.stream(e.getValue())).count())).saveBySubjectKey(any(ColorDepthImage.class), ArgumentMatchers.argThat(arg -> true));
                     // 2 existing samples had the same sample id but different name so they should have been deleted
                     Mockito.verify(colorDepthImageDao, Mockito.never()).delete(any(ColorDepthImage.class));

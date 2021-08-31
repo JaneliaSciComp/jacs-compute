@@ -1,7 +1,6 @@
 package org.janelia.jacs2.asyncservice.imagesearch;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -198,7 +197,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private void processLibraryDir(File libraryDir, String alignmentSpace, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries, ColorDepthLibraryEmMetadata emMetadata) {
         logger.info("Discovering files in {}", libraryDir);
 
-        ColorDepthLibrary library = findLibraryByIndentifier(libraryDir, parentLibrary, indexedLibraries);
+        ColorDepthLibrary library = findOrCreateLibraryByIndentifier(libraryDir, parentLibrary, indexedLibraries);
 
         processLibraryFiles(libraryDir, alignmentSpace, library);
         logger.info("  Verified {} existing images, created {} images", existing, created);
@@ -212,28 +211,26 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         totalCreated += created;
         totalDeleted += deleted;
 
-        if (library.getId() != null || total > 0) {
-            // If the library exists already, or should be created
-            library.getColorDepthCounts().put(alignmentSpace, total);
-            try {
-                colorDepthLibraryDao.saveBySubjectKey(library, library.getOwnerKey());
-                logger.debug("  Saved color depth library {} with count {}", library.getIdentifier(), total);
-            } catch (Exception e) {
-                logger.error("Could not update library file counts for: {}", library.getIdentifier(), e);
-            }
+        library.getColorDepthCounts().put(alignmentSpace, total);
+        try {
+            colorDepthLibraryDao.saveBySubjectKey(library, library.getOwnerKey());
+            logger.debug("  Saved color depth library {} with count {}", library.getIdentifier(), total);
+        } catch (Exception e) {
+            logger.error("Could not update library file counts for: {}", library.getIdentifier(), e);
         }
 
         // Indirect recursion
         processLibraryVariants(libraryDir, alignmentSpace, library, indexedLibraries, emMetadata);
     }
 
-    private synchronized ColorDepthLibrary findLibraryByIndentifier(File libraryDir, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries) {
+    private synchronized ColorDepthLibrary findOrCreateLibraryByIndentifier(File libraryDir, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries) {
         String libraryIdentifier = parentLibrary == null ? libraryDir.getName() : parentLibrary.getIdentifier() + '_' + libraryDir.getName();
         String libraryVariant = parentLibrary == null ? null : libraryDir.getName();
 
         ColorDepthLibrary library;
         if (indexedLibraries.get(libraryIdentifier) == null) {
-            library = indexedLibraries.put(libraryIdentifier, createNewLibrary(libraryIdentifier, libraryVariant, parentLibrary));
+            library = createNewLibrary(libraryIdentifier, libraryVariant, parentLibrary);
+            indexedLibraries.put(libraryIdentifier, colorDepthLibraryDao.saveBySubjectKey(library, library.getOwnerKey()));
         } else {
             library = indexedLibraries.get(libraryIdentifier);
         }
