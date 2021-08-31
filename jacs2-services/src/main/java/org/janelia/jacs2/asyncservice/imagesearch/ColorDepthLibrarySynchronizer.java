@@ -450,7 +450,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         colorDepthImageDao.streamColorDepthMIPs(mipsQuery)
                 .map(mip -> {
                     ColorDepthFileComponents cdf = parseColorDepthFileComponents(mip.getFilepath());
-                    libraryMIPs.put(Pattern.compile("_CDM$", Pattern.CASE_INSENSITIVE).matcher(cdf.getFileName()).replaceFirst(StringUtils.EMPTY), Reference.createFor(mip));
+                    libraryMIPs.put(Pattern.compile("(-\\d+)?_CDM$", Pattern.CASE_INSENSITIVE).matcher(cdf.getFileName()).replaceFirst(StringUtils.EMPTY), Reference.createFor(mip));
                     return cdf;
                 })
                 .filter(cdf -> cdf.getSampleRef() != null)
