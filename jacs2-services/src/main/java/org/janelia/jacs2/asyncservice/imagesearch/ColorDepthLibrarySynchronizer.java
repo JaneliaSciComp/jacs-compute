@@ -388,6 +388,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 })
                 .forEach(cdf -> {
+                    if (cdf.getFile().exists()) {
+                        logger.warn("!!!!!!!!!!!File not found {}", cdf.getFile());
+                    }
                     if (createColorDepthImage(cdf, alignmentSpace, library)) {
                         created++;
                     }
