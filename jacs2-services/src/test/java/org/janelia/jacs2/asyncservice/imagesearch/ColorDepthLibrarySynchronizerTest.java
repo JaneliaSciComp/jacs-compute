@@ -32,7 +32,15 @@ import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
-import org.janelia.model.access.domain.dao.*;
+import org.janelia.model.access.domain.dao.AnnotationDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageDao;
+import org.janelia.model.access.domain.dao.ColorDepthImageQuery;
+import org.janelia.model.access.domain.dao.ColorDepthLibraryDao;
+import org.janelia.model.access.domain.dao.DatasetDao;
+import org.janelia.model.access.domain.dao.EmBodyDao;
+import org.janelia.model.access.domain.dao.EmDataSetDao;
+import org.janelia.model.access.domain.dao.LineReleaseDao;
+import org.janelia.model.access.domain.dao.SubjectDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
 import org.janelia.model.domain.gui.cdmip.ColorDepthLibrary;
@@ -330,10 +338,10 @@ public class ColorDepthLibrarySynchronizerTest {
     }
 
     @Test
-    public void createColorDepthLibraryVersion() {
-        String testContext = "createColorDepthLibraryVersion";
+    public void createColorDepthLMLibraryVersion() {
+        String testContext = "createColorDepthLMLibraryVersion";
         String testAlignmentSpace = "JRC2018_Unisex_20x_HR";
-        String testLib = "testLib";
+        String testLib = "testLMLib";
         JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
 
         Mockito.when(colorDepthLibraryDao.findAll(0, -1))
@@ -364,6 +372,120 @@ public class ColorDepthLibrarySynchronizerTest {
                     new ColorDepthImageQuery()
                             .withLibraryIdentifiers(Collections.singleton(libId.replace('/', '_')))
                             .withAlignmentSpace(testAlignmentSpace)))
+                    .thenReturn(Stream.of())
+                    .thenReturn(libFiles.stream().map(f -> {
+                        ColorDepthImage mip = new ColorDepthImage();
+                        mip.setFilepath(f);
+                        return mip;
+                    }));
+        });
+
+        Map<Long, ColorDepthLibrary> createdCDLibraries = new HashMap<>();
+
+        try {
+            Mockito.when(colorDepthLibraryDao.saveBySubjectKey(any(ColorDepthLibrary.class), ArgumentMatchers.argThat(argument -> true)))
+                    .then(invocation -> {
+                        ColorDepthLibrary cdl = invocation.getArgument(0);
+                        cdl.setId(createdCDLibraries.size() + 1L);
+                        createdCDLibraries.put(cdl.getId(), cdl);
+                        return cdl;
+                    });
+            Mockito.when(colorDepthLibraryDao.findById(anyLong()))
+                    .then(invocation -> createdCDLibraries.get(invocation.getArgument(0)));
+        } catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+
+        ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
+                jacsServiceDataPersistence,
+                TEST_WORKING_DIR,
+                testDirectory.resolve(testContext).toString(),
+                subjectDao,
+                colorDepthLibraryDao,
+                colorDepthImageDao,
+                lineReleaseDao,
+                annotationDao,
+                emDataSetDao,
+                emBodyDao,
+                datasetDao,
+                jacsNotificationDao,
+                TEST_OWNER_KEY,
+                logger);
+
+        @SuppressWarnings("unchecked")
+        Consumer<JacsServiceResult<Void>> successful = mock(Consumer.class);
+        @SuppressWarnings("unchecked")
+        Consumer<Throwable> failure = mock(Consumer.class);
+        colorDepthLibrarySynchronizer.process(testService)
+                .thenApply(r -> {
+                    successful.accept(r);
+                    Mockito.verify(colorDepthLibraryDao, Mockito.times(testLibsWithFiles.size()*2-1)).saveBySubjectKey(any(ColorDepthLibrary.class), ArgumentMatchers.argThat(arg -> true));
+                    Mockito.verify(colorDepthImageDao, Mockito.times((int) testLibsWithFiles.entrySet().stream().flatMap(e -> Arrays.stream(e.getValue())).count())).saveBySubjectKey(any(ColorDepthImage.class), ArgumentMatchers.argThat(arg -> true));
+                    // 2 existing samples had the same sample id but different name so they should have been deleted
+                    Mockito.verify(colorDepthImageDao, Mockito.never()).delete(any(ColorDepthImage.class));
+                    return r;
+                })
+                .exceptionally(exc -> {
+                    failure.accept(exc);
+                    Assert.fail(exc.toString());
+                    return null;
+                });
+    }
+
+    @Test
+    public void createColorDepthEMLibraryVersion() {
+        String testContext = "createColorDepthEMLibraryVersion";
+        String testAlignmentSpace = "JRC2018_Unisex_20x_HR";
+        String testLib = "testEMLib";
+        JacsServiceData testService = createFSSyncOnlyServiceData(testAlignmentSpace, testLib);
+
+        Mockito.when(colorDepthLibraryDao.findAll(0, -1))
+                .thenReturn(ImmutableList.of(createTestCDMIPLibrary(testLib)));
+
+        // cover some naming use cases that we currently have for flyem libraries
+        Map<String, String[]> testLibsWithFiles = ImmutableMap.of(
+                testLib, new String[] {
+                        "987877232-FB4K-RT_18U.tif",
+                        "987273073--RT_18U.tif",
+                        "985818067.tif"
+                },
+                testLib + "/fl", new String[] {
+                        "987877232-FB4K-RT_18U_FL.tif",
+                        "987273073--RT_18U_FL.tif",
+                        "985818067_FL.tif"
+                },
+                testLib + "/cdm", new String[] {
+                        "987877232-FB4K-RT_18U-01_CDM.tif",
+                        "987877232-FB4K-RT_18U_FL-02_CDM.tif",
+                        "987273073--RT_18U-01_CDM.tif",
+                        "987273073--RT_18U_FL-02_CDM.tif",
+                        "985818067-01_CDM.tif",
+                        "985818067_FL-02_CDM.tif"
+                },
+                testLib + "/grad", new String[] {
+                        "987877232-FB4K-RT_18U-01_CDM.tif",
+                        "987877232-FB4K-RT_18U_FL-02_CDM.tif",
+                        "987273073--RT_18U-01_CDM.tif",
+                        "987273073--RT_18U_FL-02_CDM.tif",
+                        "985818067-01_CDM.tif",
+                        "985818067_FL-02_CDM.tif"
+                },
+                testLib + "/zgap", new String[] {
+                        "987877232-FB4K-RT_18U-01_CDM.tif",
+                        "987877232-FB4K-RT_18U_FL-02_CDM.tif",
+                        "987273073--RT_18U-01_CDM.tif",
+                        "987273073--RT_18U_FL-02_CDM.tif",
+                        "985818067-01_CDM.tif",
+                        "985818067_FL-02_CDM.tif"
+                }
+        );
+        Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testLibsWithFiles);
+
+        testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
+            Mockito.when(colorDepthImageDao.streamColorDepthMIPs(
+                            new ColorDepthImageQuery()
+                                    .withLibraryIdentifiers(Collections.singleton(libId.replace('/', '_')))
+                                    .withAlignmentSpace(testAlignmentSpace)))
                     .thenReturn(Stream.of())
                     .thenReturn(libFiles.stream().map(f -> {
                         ColorDepthImage mip = new ColorDepthImage();

@@ -566,18 +566,11 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 } else {
                     // if the mip name does not follow the convention assume the variant is in the file name
                     // remove the variant from the filename
-                    String n1 = Pattern.compile("[_-]" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE)
-                            .matcher(colorDepthImageFileComponents.getFileName())
-                            .replaceAll(StringUtils.EMPTY);
-                    String n2 = Pattern.compile("-\\d+_CDM$", Pattern.CASE_INSENSITIVE)
-                            .matcher(n1)
-                            .replaceFirst(StringUtils.EMPTY);
-                    int lastSepIndex = n2.lastIndexOf('_');
-                    if (lastSepIndex > 0) {
-                        sourceCDMNameCandidates = ImmutableSet.of(n1, n2, n2.substring(0, lastSepIndex));
-                    } else {
-                        sourceCDMNameCandidates = ImmutableSet.of(n1, n2);
-                    }
+                    final Pattern cdmSuffixMatcher = Pattern.compile("-\\d+_CDM$", Pattern.CASE_INSENSITIVE);
+                    final Pattern variantSuffixMatcher = Pattern.compile("[_-](\\d*)" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE);
+                    String n1 = cdmSuffixMatcher.matcher(colorDepthImageFileComponents.getFileName()).replaceFirst(StringUtils.EMPTY);
+                    String n2 = variantSuffixMatcher.matcher(n1).replaceAll(StringUtils.EMPTY);
+                    sourceCDMNameCandidates = ImmutableSet.of(n1, n2, removeLastNameComp(n1), removeLastNameComp(n2));
                 }
                 logger.debug("Lookup {}", sourceCDMNameCandidates);
                 Reference sourceImageReference = sourceCDMNameCandidates.stream()
@@ -600,6 +593,15 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             logger.warn("  Could not create image for: {}", colorDepthImageFileComponents.getFile(), e);
         }
         return false;
+    }
+
+    private String removeLastNameComp(String name) {
+        int lastSepIndex = name.lastIndexOf('_');
+        if (lastSepIndex > 0) {
+            return name.substring(0, lastSepIndex);
+        } else {
+            return name;
+        }
     }
 
     private boolean deleteColorDepthImage(ColorDepthFileComponents cdc) {
