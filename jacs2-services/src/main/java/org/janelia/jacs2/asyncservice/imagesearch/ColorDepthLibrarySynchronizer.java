@@ -217,7 +217,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
         ColorDepthLibrary library = findOrCreateLibraryByIndentifier(libraryDir, parentLibrary, indexedLibraries);
 
-        Pair<Map<String, Reference>, List<File>> processLibResults = processLibraryFiles(libraryDir, alignmentSpace, sourceLibraryMIPs, library);
+        Pair<Map<String, Reference>, List<File>> processLibResults = processLibraryFiles(libraryDir, alignmentSpace, parentLibrary, sourceLibraryMIPs, library);
         logger.info("  Verified {} existing images, created {} images", existing, created);
 
         if (emMetadata != null) {
@@ -319,7 +319,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return library;
     }
 
-    private Pair<Map<String, Reference>, List<File>> processLibraryFiles(File libraryDir, String alignmentSpace, Map<String, Reference> sourceLibraryMIPs, ColorDepthLibrary library) {
+    private Pair<Map<String, Reference>, List<File>> processLibraryFiles(File libraryDir, String alignmentSpace, ColorDepthLibrary parentLibrary, Map<String, Reference> sourceLibraryMIPs, ColorDepthLibrary library) {
         // reset the counters
         this.existing = 0;
         this.created = 0;
@@ -443,7 +443,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 })
                 .forEach(cdf -> {
-                    if (createColorDepthImage(cdf, alignmentSpace, sourceLibraryMIPs, library)) {
+                    if (createColorDepthImage(cdf, alignmentSpace, parentLibrary, sourceLibraryMIPs, library)) {
                         created++;
                     }
                 });
@@ -528,6 +528,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
      */
     private boolean createColorDepthImage(ColorDepthFileComponents colorDepthImageFileComponents,
                                           String alignmentSpace,
+                                          ColorDepthLibrary parentLibrary,
                                           Map<String, Reference> sourceLibraryMIPs,
                                           ColorDepthLibrary library) {
         try {
@@ -549,7 +550,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 image.setAnatomicalArea(colorDepthImageFileComponents.getAnatomicalArea());
                 image.setChannelNumber(colorDepthImageFileComponents.getChannelNumber());
             }
-            if (!sourceLibraryMIPs.isEmpty()) {
+            if (parentLibrary != null) {
                 Set<String> sourceCDMNameCandidates;
                 if (colorDepthImageFileComponents.hasNameComponents()) {
                     sourceCDMNameCandidates = ImmutableSet.of(
