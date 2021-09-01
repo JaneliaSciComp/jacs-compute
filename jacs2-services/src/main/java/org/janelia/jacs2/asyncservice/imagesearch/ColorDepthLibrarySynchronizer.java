@@ -319,6 +319,17 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return library;
     }
 
+    /**
+     *
+     * @param libraryDir
+     * @param alignmentSpace
+     * @param parentLibrary
+     * @param sourceLibraryMIPs
+     * @param library
+     * @return all mips created from libraryDir as well as the possible variant sub-directories. If the mips are created for a non-variant libraries
+     * they will be passed in to subsequent variant sub-libraries in order to avoid database querying for the source MIP which slows down the system
+     * too much.
+     */
     private Pair<Map<String, Reference>, List<File>> processLibraryFiles(File libraryDir, String alignmentSpace, ColorDepthLibrary parentLibrary, Map<String, Reference> sourceLibraryMIPs, ColorDepthLibrary library) {
         // reset the counters
         this.existing = 0;
