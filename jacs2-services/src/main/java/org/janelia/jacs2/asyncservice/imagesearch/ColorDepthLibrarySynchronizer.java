@@ -240,17 +240,20 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         // Indirect recursion - walk subdirs of the libraryDir
         Map<String, Reference> sourceMIPs;
         if (parentLibrary == null) {
+            // this is a root library so pass this library's mips to be referenced by the variants
             sourceMIPs = processLibResults.getLeft();
         } else {
+            // pass in the source library MIPs to be reference by the variants
             sourceMIPs = sourceLibraryMIPs;
         }
-        processLibResults.getRight().forEach(libraryVariantDir -> processLibraryDir(
-                libraryVariantDir,
-                alignmentSpace,
-                sourceMIPs,
-                library,
-                indexedLibraries,
-                emMetadata));
+        processLibResults.getRight().stream().parallel()
+                .forEach(libraryVariantDir -> processLibraryDir(
+                        libraryVariantDir,
+                        alignmentSpace,
+                        sourceMIPs,
+                        library,
+                        indexedLibraries,
+                        emMetadata));
     }
 
     private synchronized ColorDepthLibrary findOrCreateLibraryByIndentifier(File libraryDir, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries) {
@@ -450,7 +453,24 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         colorDepthImageDao.streamColorDepthMIPs(mipsQuery)
                 .map(mip -> {
                     ColorDepthFileComponents cdf = parseColorDepthFileComponents(mip.getFilepath());
-                    libraryMIPs.put(Pattern.compile("(-\\d+)?_CDM$", Pattern.CASE_INSENSITIVE).matcher(cdf.getFileName()).replaceFirst(StringUtils.EMPTY), Reference.createFor(mip));
+                    if (cdf.getSampleRef() == null) {
+                        libraryMIPs.put(
+                                Pattern.compile("(-\\d+)?_CDM$", Pattern.CASE_INSENSITIVE)
+                                        .matcher(cdf.getFileName())
+                                        .replaceFirst(StringUtils.EMPTY),
+                                Reference.createFor(mip));
+                    } else {
+                        libraryMIPs.put(
+                                ColorDepthFileComponents.createCDMNameFromNameComponents(
+                                        cdf.getSampleName(),
+                                        cdf.getObjective(),
+                                        cdf.getAnatomicalArea(),
+                                        cdf.getAlignmentSpace(),
+                                        cdf.getSampleRef(),
+                                        cdf.getChannelNumber(),
+                                        null),
+                                Reference.createFor(mip));
+                    }
                     return cdf;
                 })
                 .filter(cdf -> cdf.getSampleRef() != null)
