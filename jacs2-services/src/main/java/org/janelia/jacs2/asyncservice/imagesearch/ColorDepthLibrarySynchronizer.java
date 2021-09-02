@@ -184,9 +184,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         logger.info("  library={}", args.library);
 
         // Walk the relevant alignment directories
-        walkChildDirs(rootPath.toFile())
+        listChildDirs(rootPath.toFile()).stream()
                 .filter(alignmentDir -> StringUtils.isBlank(args.alignmentSpace) || alignmentDir.getName().equals(args.alignmentSpace))
-                .flatMap(this::walkChildDirs)
+                .flatMap(alignmentDir -> listChildDirs(alignmentDir).stream())
                 .filter(libraryDir -> StringUtils.isBlank(args.library) || libraryDir.getName().equals(args.library))
                 .forEach(libraryDir -> {
 
@@ -271,20 +271,20 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return library;
     }
 
-    private Stream<File> walkChildDirs(File dir) {
+    private List<File> listChildDirs(File dir) {
         if (dir == null) {
-            return Stream.of();
+            return Collections.emptyList();
         }
         Path dirPath = dir.toPath();
         if (!Files.isDirectory(dirPath)) {
-            return Stream.of();
+            return Collections.emptyList();
         }
         logger.info("Discovering sub-directories in {}", dir);
         return FileUtils.lookupFiles(dirPath, 1, "glob:**/*")
                 .filter(Files::isDirectory)
                 .map(Path::toFile)
                 .filter(p -> !p.equals(dir))
-                .parallel();
+                .collect(Collectors.toList());
     }
 
     private ColorDepthLibrary createNewLibrary(String libraryIdentifier, String libraryVariant, ColorDepthLibrary parentLibrary) {
@@ -360,7 +360,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             // remove mips that no longer have an existing file
             existingColorDepthFiles.get(MISSING_FILES_KEY).forEach(cdc -> {
                 if (deleteColorDepthImage(cdc)) {
-                    logger.info("Deleted coplor depth image for {}", cdc.getFile());
+                    logger.info("Deleted color depth image for {} because file does not exist", cdc.getFile());
                     deleted++;
                 }
             });
