@@ -15,16 +15,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -78,6 +77,7 @@ import org.slf4j.Logger;
 @Named("colorDepthLibrarySync")
 public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void> {
 
+    private static final int DEFAULT_PARTITION_SIZE = 15;
     private static final String MISSING_FILES_KEY = "$$false$$";
 
     static class SyncArgs extends ServiceArgs {
@@ -94,7 +94,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         @Parameter(names = "-publishingSites", description = "list of publishing web sites", variableArity = true)
         List<String> publishingSites;
         @Parameter(names = "-processingPartitionSize", description = "Processing partition size")
-        Integer processingPartitionSize=25;
+        Integer processingPartitionSize=DEFAULT_PARTITION_SIZE;
 
         SyncArgs() {
             super("Color depth library synchronization");
@@ -165,14 +165,25 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         SyncArgs args = getArgs(jacsServiceData);
 
         return syncPublishedLibraries(args, existingLibraries)
-                .thenCompose(ignored -> syncSystemLibraries(args, existingLibraries))
-                .thenApply(r -> updateServiceResult(jacsServiceData, r));
+                .thenCompose(ignore -> syncSystemLibraries(args, existingLibraries))
+                .thenApply(ignore -> {
+                    // It's necessary to recalculate all the counts here, because some color depth images may be part of constructed
+                    // libraries which are not represented explicitly on disk.
+                    try {
+                        colorDepthLibraryDao.updateColorDepthCounts(colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForAllLibraries());
+                    } catch (Exception e) {
+                        logger.error("Failed to update color depth counts", e);
+                    }
+                    return (Void)null;
+                })
+                .thenApply(r -> updateServiceResult(jacsServiceData, r))
+                ;
     }
 
     private ServiceComputation<Void> syncPublishedLibraries(SyncArgs args, Map<String, ColorDepthLibrary> existingLibraries) {
         if (args.includePublishedDiscovery) {
             return computationFactory.<Void>newComputation().supply(() -> {
-                runPublishedLinesBasedDiscovery(args, existingLibraries);
+                processPublishedLines(args, existingLibraries);
                 return null;
             });
         } else {
@@ -209,16 +220,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }))
                     .collect(Collectors.toList());
             return computationFactory.newCompletedComputation(null)
-                    .thenCombineAll(systemLibrariesComputations, (r, systemLibrariesResults) -> {
-                        // It's necessary to recalculate all the counts here, because some color depth images may be part of constructed
-                        // libraries which are not represented explicitly on disk.
-                        try {
-                            colorDepthLibraryDao.updateColorDepthCounts(colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForAllLibraries());
-                        } catch (Exception e) {
-                            logger.error("Failed to update color depth counts", e);
-                        }
-                        return null;
-                    });
+                    .thenCombineAll(systemLibrariesComputations, (r, systemLibrariesResults) -> null);
         }
     }
 
@@ -234,40 +236,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return ServiceArgs.parse(getJacsServiceArgsArray(jacsServiceData), new SyncArgs());
     }
 
-//    private void runFileSystemBasedDiscovery(SyncArgs args, Map<String, ColorDepthLibrary> indexedLibraries) {
-//        logger.info("Running discovery with parameters:");
-//        logger.info("  alignmentSpace={}", args.alignmentSpace);
-//        logger.info("  library={}", args.library);
-//
-//        // Walk the relevant alignment directories
-//        listChildDirs(rootPath.toFile()).stream()
-//                .filter(alignmentDir -> StringUtils.isBlank(args.alignmentSpace) || alignmentDir.getName().equals(args.alignmentSpace))
-//                .flatMap(alignmentDir -> listChildDirs(alignmentDir).stream())
-//                .filter(libraryDir -> StringUtils.isBlank(args.library) || libraryDir.getName().equals(args.library))
-//                .forEach(libraryDir -> {
-//
-//                    // Read optional metadata
-//                    ColorDepthLibraryEmMetadata emMetadata = null;
-//                    try {
-//                        emMetadata = ColorDepthLibraryEmMetadata.fromLibraryPath(libraryDir);
-//                    } catch (Exception e) {
-//                        logger.error("Error reading EM metadata for "+libraryDir, e);
-//                    }
-//
-//                    processLibraryDir(libraryDir, libraryDir.getParentFile().getName(), Collections.emptyMap(), null, indexedLibraries, emMetadata);
-//                });
-//
-//        // It's necessary to recalculate all the counts here, because some color depth images may be part of constructed
-//        // libraries which are not represented explicitly on disk.
-//        try {
-//            colorDepthLibraryDao.updateColorDepthCounts(colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForAllLibraries());
-//        } catch (Exception e) {
-//            logger.error("Failed to update color depth counts", e);
-//        }
-//
-//        logger.info("Completed color depth library synchronization. Imported {} images in total - deleted {}.", totalCreated, totalDeleted);
-//    }
-
     private Collection<List<File>> partitionSystemLibraryDirs(File rootDir, String alignmentSpace, String selectedLibrary, int partitionSizeArg) {
         final AtomicInteger index = new AtomicInteger();
         int partitionSize = partitionSizeArg > 0 ? partitionSizeArg : 1;
@@ -280,10 +248,10 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 ;
     }
 
-    private void processLibraryDir(File libraryDir, String alignmentSpace, Map<String, Reference> sourceLibraryMIPs, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries, ColorDepthLibraryEmMetadata emMetadata) {
+    private void processLibraryDir(File libraryDir, String alignmentSpace, Map<String, Reference> sourceLibraryMIPs, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> existingLibraries, ColorDepthLibraryEmMetadata emMetadata) {
         logger.info("Discovering files in {}", libraryDir);
 
-        ColorDepthLibrary library = findOrCreateLibraryByIndentifier(libraryDir, parentLibrary, indexedLibraries);
+        ColorDepthLibrary library = findOrCreateLibraryByIndentifier(libraryDir, parentLibrary, existingLibraries);
 
         Pair<Map<String, Reference>, List<File>> processLibResults = processLibraryFiles(libraryDir, alignmentSpace, parentLibrary, sourceLibraryMIPs, library);
         logger.info("  Verified {} existing images, created {} images", existing, created);
@@ -320,23 +288,35 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                         alignmentSpace,
                         sourceMIPs,
                         library,
-                        indexedLibraries,
+                        existingLibraries,
                         emMetadata));
     }
 
-    private synchronized ColorDepthLibrary findOrCreateLibraryByIndentifier(File libraryDir, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> indexedLibraries) {
+    private ColorDepthLibrary findOrCreateLibraryByIndentifier(File libraryDir, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> existingLibraries) {
         String libraryIdentifier = parentLibrary == null ? libraryDir.getName() : parentLibrary.getIdentifier() + '_' + libraryDir.getName();
         String libraryVariant = parentLibrary == null ? null : libraryDir.getName();
 
-        ColorDepthLibrary library;
-        if (indexedLibraries.get(libraryIdentifier) == null) {
-            library = createNewLibrary(libraryIdentifier, libraryVariant, parentLibrary);
-            indexedLibraries.put(libraryIdentifier, colorDepthLibraryDao.saveBySubjectKey(library, library.getOwnerKey()));
-        } else {
-            library = indexedLibraries.get(libraryIdentifier);
-        }
+        ColorDepthLibrary library = findOrCreateLibrary(
+                libraryIdentifier,
+                existingLibraries,
+                () -> {
+                    ColorDepthLibrary newLibrary = createNewLibrary(libraryIdentifier, libraryVariant, parentLibrary);
+                    return colorDepthLibraryDao.saveBySubjectKey(newLibrary, newLibrary.getOwnerKey());
+                });
 
         return library;
+    }
+
+    private ColorDepthLibrary findOrCreateLibrary(String libraryIdentifier, Map<String, ColorDepthLibrary> existingLibraries, Supplier<ColorDepthLibrary> librarySupplier) {
+        synchronized (existingLibraries) {
+            if (existingLibraries.containsKey(libraryIdentifier)) {
+                return existingLibraries.get(libraryIdentifier);
+            } else {
+                ColorDepthLibrary newLibrary = librarySupplier.get();
+                existingLibraries.put(libraryIdentifier, newLibrary);
+                return newLibrary;
+            }
+        }
     }
 
     private List<File> listChildDirs(File dir) {
@@ -699,51 +679,52 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         return ColorDepthFileComponents.fromFilepath(filepath);
     }
 
-    private void runPublishedLinesBasedDiscovery(SyncArgs args, Map<String, ColorDepthLibrary> indexedLibraries) {
+    private void processPublishedLines(SyncArgs args, Map<String, ColorDepthLibrary> existingLibraries) {
         Map<String, List<LineRelease>> releasesByWebsite = retrieveLineReleases(args.publishedCollections, args.publishingSites);
-        releasesByWebsite
-                .forEach((site, releases) -> {
-                    String libraryIdentifier = "flylight_" + site.toLowerCase().replace(' ', '_') + "_published";
-                    logger.info("Processing release library {} for {}", libraryIdentifier, site);
-                    ColorDepthLibrary library;
-                    boolean libraryCreated;
-                    if (indexedLibraries.get(libraryIdentifier) == null) {
-                        library = createLibraryForPublishedRelease(libraryIdentifier);
-                        library.addReaders(releases.stream().flatMap(r -> r.getReaders().stream()).collect(Collectors.toSet()));
-                        libraryCreated = true;
-                    } else {
-                        library = indexedLibraries.get(libraryIdentifier);
-                        libraryCreated = false;
-                    }
-                    // dereference the library first from all mips
-                    colorDepthImageDao.removeAllMipsFromLibrary(libraryIdentifier);
-                    AtomicInteger counter = new AtomicInteger();
-                    long updatedMips = releases.stream()
-                            .flatMap(lr -> lr.getChildren().stream())
-                            .collect(Collectors.groupingBy(
-                                    ref -> counter.getAndIncrement() / 10000,
-                                    Collectors.collectingAndThen(
-                                            Collectors.toSet(),
-                                            sampleRefs -> addLibraryToMipsBySampleRefs(libraryIdentifier, sampleRefs))))
-                            .values().stream()
-                            .reduce(0L, Long::sum)
-                            ;
-                    if (updatedMips > 0 || !libraryCreated && updatedMips == 0) {
-                        if (updatedMips > 0) {
-                            logger.info("Updated {} mips from library {} for {}", updatedMips, libraryIdentifier, site);
-                            library.setColorDepthCounts(
-                                    colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForLibrary(libraryIdentifier)
-                            );
-                        }
-                        try {
-                            colorDepthLibraryDao.saveBySubjectKey(library, library.getOwnerKey());
-                        } catch (Exception e) {
-                            logger.error("Could not update library file counts for: {}", libraryIdentifier, e);
-                        }
-                    } else {
-                        logger.info("Nothing was updated for library {}", libraryIdentifier);
-                    }
-                });
+        releasesByWebsite.forEach((site, releases) -> processPublishedLibrary(site, releases, existingLibraries));
+    }
+
+    private void processPublishedLibrary(String publishingSite, List<LineRelease> publishedLines, Map<String, ColorDepthLibrary> existingLibraries) {
+        String libraryIdentifier = "flylight_" + publishingSite.toLowerCase().replace(' ', '_') + "_published";
+        logger.info("Processing release library {} for {}", libraryIdentifier, publishingSite);
+        ColorDepthLibrary library = findOrCreateLibrary(
+                libraryIdentifier,
+                existingLibraries,
+                () -> {
+                    ColorDepthLibrary newLibrary = createLibraryForPublishedRelease(libraryIdentifier);
+                    newLibrary.addReaders(publishedLines.stream().flatMap(r -> r.getReaders().stream()).collect(Collectors.toSet()));
+                    return newLibrary;
+                }
+        );
+        boolean isANewLibrary = library.getId() == null;
+        // dereference the library first from all mips
+        colorDepthImageDao.removeAllMipsFromLibrary(libraryIdentifier);
+        AtomicInteger counter = new AtomicInteger();
+        long updatedMips = publishedLines.stream()
+                .flatMap(lr -> lr.getChildren().stream())
+                .collect(Collectors.groupingBy(
+                        ref -> counter.getAndIncrement() / 10000,
+                        Collectors.collectingAndThen(
+                                Collectors.toSet(),
+                                sampleRefs -> addLibraryToMipsBySampleRefs(libraryIdentifier, sampleRefs))))
+                .values().stream()
+                .reduce(0L, Long::sum)
+                ;
+        if (updatedMips > 0 || !isANewLibrary && updatedMips == 0) {
+            if (updatedMips > 0) {
+                logger.info("Updated {} mips from library {} for {}", updatedMips, libraryIdentifier, publishingSite);
+                library.setColorDepthCounts(
+                        colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForLibrary(libraryIdentifier)
+                );
+            }
+            try {
+                colorDepthLibraryDao.saveBySubjectKey(library, library.getOwnerKey());
+            } catch (Exception e) {
+                logger.error("Could not update library file counts for: {}", libraryIdentifier, e);
+            }
+        } else {
+            logger.info("Nothing was updated for library {}", libraryIdentifier);
+        }
     }
 
     private long addLibraryToMipsBySampleRefs(String libraryIdentifier, Set<Reference> sampleRefs) {
