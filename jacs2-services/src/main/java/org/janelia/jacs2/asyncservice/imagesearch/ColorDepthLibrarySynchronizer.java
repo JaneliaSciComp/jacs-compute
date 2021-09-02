@@ -77,7 +77,7 @@ import org.slf4j.Logger;
 @Named("colorDepthLibrarySync")
 public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void> {
 
-    private static final int DEFAULT_PARTITION_SIZE = 40;
+    private static final int DEFAULT_PARTITION_SIZE = 20;
     private static final String MISSING_FILES_KEY = "$$false$$";
 
     static class SyncArgs extends ServiceArgs {
