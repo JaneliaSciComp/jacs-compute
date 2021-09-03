@@ -387,7 +387,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         ColorDepthImageQuery mipsQuery = new ColorDepthImageQuery()
                 .withLibraryIdentifiers(Collections.singleton(library.getIdentifier()))
                 .withAlignmentSpace(alignmentSpace);
-        Map<String, Set<ColorDepthFileComponents>> existingColorDepthFiles = colorDepthImageDao.streamColorDepthMIPs(mipsQuery)
+        Map<String, Set<ColorDepthFileComponents>> existingColorDepthFiles = colorDepthImageDao.findColorDepthMIPs(mipsQuery).stream()
                 .map(Image::getFilepath)
                 .map(this::parseColorDepthFileComponents)
                 .collect(Collectors.groupingBy(cdf -> {
@@ -508,7 +508,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
         Map<String, Reference> libraryMIPs = new LinkedHashMap<>();
         // this post phase is for the case when files are already in the library and cleanup is needed.
-        colorDepthImageDao.streamColorDepthMIPs(mipsQuery)
+        colorDepthImageDao.findColorDepthMIPs(mipsQuery).stream()
                 .map(mip -> {
                     ColorDepthFileComponents cdf = parseColorDepthFileComponents(mip.getFilepath());
                     if (cdf.getSampleRef() == null) {
@@ -799,7 +799,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 .withAlignmentSpace(alignmentSpace);
 
         // Update all color depth MIPs with their respective body references
-        colorDepthImageDao.streamColorDepthMIPs(mipsQuery)
+        colorDepthImageDao.findColorDepthMIPs(mipsQuery).stream()
                 .forEach(cdm -> {
 
                     File file = new File(cdm.getFilepath());

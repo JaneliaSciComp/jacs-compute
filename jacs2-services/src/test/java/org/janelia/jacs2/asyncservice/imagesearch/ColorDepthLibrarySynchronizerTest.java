@@ -137,7 +137,7 @@ public class ColorDepthLibrarySynchronizerTest {
         Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testFileNames);
 
         testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
-            Mockito.when(colorDepthImageDao.streamColorDepthMIPs(
+            Mockito.when(colorDepthImageDao.findColorDepthMIPs(
                     new ColorDepthImageQuery()
                             .withLibraryIdentifiers(Collections.singleton(libId.replace('/', '_')))
                             .withAlignmentSpace(testAlignmentSpace)))
@@ -146,7 +146,7 @@ public class ColorDepthLibrarySynchronizerTest {
                                 ColorDepthImage mip = new ColorDepthImage();
                                 mip.setFilepath(f);
                                 return mip;
-                            }));
+                            }).collect(Collectors.toList()));
         });
 
         ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
@@ -210,7 +210,7 @@ public class ColorDepthLibrarySynchronizerTest {
         Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testFileNames);
 
         testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
-            Mockito.when(colorDepthImageDao.streamColorDepthMIPs(
+            Mockito.when(colorDepthImageDao.findColorDepthMIPs(
                     new ColorDepthImageQuery()
                             .withLibraryIdentifiers(Collections.singleton(libId.replace('/', '_')))
                             .withAlignmentSpace(testAlignmentSpace)))
@@ -218,12 +218,12 @@ public class ColorDepthLibrarySynchronizerTest {
                         ColorDepthImage mip = new ColorDepthImage();
                         mip.setFilepath(f);
                         return mip;
-                    }))
+                    }).collect(Collectors.toList()))
                     .thenReturn(libFiles.stream().map(f -> {
                         ColorDepthImage mip = new ColorDepthImage();
                         mip.setFilepath(f);
                         return mip;
-                    }))
+                    }).collect(Collectors.toList()))
                     ;
         });
 
@@ -285,7 +285,7 @@ public class ColorDepthLibrarySynchronizerTest {
         Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testFileNames);
 
         testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
-            Mockito.when(colorDepthImageDao.streamColorDepthMIPs(
+            Mockito.when(colorDepthImageDao.findColorDepthMIPs(
                     new ColorDepthImageQuery()
                             .withLibraryIdentifiers(Collections.singleton(libId.replace('/', '_')))
                             .withAlignmentSpace(testAlignmentSpace)))
@@ -295,7 +295,7 @@ public class ColorDepthLibrarySynchronizerTest {
                                 ColorDepthImage mip = new ColorDepthImage();
                                 mip.setFilepath(f);
                                 return mip;
-                            }));
+                            }).collect(Collectors.toList()));
         });
 
         ColorDepthLibrarySynchronizer colorDepthLibrarySynchronizer = new ColorDepthLibrarySynchronizer(serviceComputationFactory,
@@ -368,16 +368,16 @@ public class ColorDepthLibrarySynchronizerTest {
         Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testLibsWithFiles);
 
         testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
-            Mockito.when(colorDepthImageDao.streamColorDepthMIPs(
+            Mockito.when(colorDepthImageDao.findColorDepthMIPs(
                     new ColorDepthImageQuery()
                             .withLibraryIdentifiers(Collections.singleton(libId.replace('/', '_')))
                             .withAlignmentSpace(testAlignmentSpace)))
-                    .thenReturn(Stream.of())
+                    .thenReturn(Collections.emptyList())
                     .thenReturn(libFiles.stream().map(f -> {
                         ColorDepthImage mip = new ColorDepthImage();
                         mip.setFilepath(f);
                         return mip;
-                    }));
+                    }).collect(Collectors.toList()));
         });
 
         Map<Long, ColorDepthLibrary> createdCDLibraries = new HashMap<>();
@@ -482,16 +482,16 @@ public class ColorDepthLibrarySynchronizerTest {
         Map<String, List<String>> testFilesByLibraryIdentifier = prepareColorDepthMIPsFiles(testContext, testAlignmentSpace, testLibsWithFiles);
 
         testFilesByLibraryIdentifier.forEach((libId, libFiles) -> {
-            Mockito.when(colorDepthImageDao.streamColorDepthMIPs(
+            Mockito.when(colorDepthImageDao.findColorDepthMIPs(
                             new ColorDepthImageQuery()
                                     .withLibraryIdentifiers(Collections.singleton(libId.replace('/', '_')))
                                     .withAlignmentSpace(testAlignmentSpace)))
-                    .thenReturn(Stream.of())
+                    .thenReturn(Collections.emptyList())
                     .thenReturn(libFiles.stream().map(f -> {
                         ColorDepthImage mip = new ColorDepthImage();
                         mip.setFilepath(f);
                         return mip;
-                    }));
+                    }).collect(Collectors.toList()));
         });
 
         Map<Long, ColorDepthLibrary> createdCDLibraries = new HashMap<>();
@@ -593,11 +593,11 @@ public class ColorDepthLibrarySynchronizerTest {
                     }
                     File testCDFile = indexedTestFilePath.getRight().toFile();
                     testCDFile.setLastModified(System.currentTimeMillis() - (filenames.length - indexedTestFilePath.getLeft()) * 1000);
-                    Mockito.when(colorDepthImageDao.streamColorDepthMIPs(any(ColorDepthImageQuery.class))).then(invocation -> {
+                    Mockito.when(colorDepthImageDao.findColorDepthMIPs(any(ColorDepthImageQuery.class))).then(invocation -> {
                         ColorDepthImage cdi = new ColorDepthImage();
                         cdi.setId(testCDFile.lastModified());
                         cdi.setFilepath(testCDFile.getAbsolutePath());
-                        return Stream.of(cdi);
+                        return Collections.singletonList(cdi);
                     });
                     Mockito.when(colorDepthImageDao.findColorDepthImageByPath(testCDFile.getAbsolutePath())).then(invocation -> {
                         String cdfile = invocation.getArgument(0);
