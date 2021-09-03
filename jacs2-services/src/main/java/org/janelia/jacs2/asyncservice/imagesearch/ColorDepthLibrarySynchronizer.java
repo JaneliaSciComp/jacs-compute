@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -51,6 +52,7 @@ import org.janelia.model.access.domain.dao.EmDataSetDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SubjectDao;
+import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.flyem.EMBody;
@@ -387,7 +389,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         ColorDepthImageQuery mipsQuery = new ColorDepthImageQuery()
                 .withLibraryIdentifiers(Collections.singleton(library.getIdentifier()))
                 .withAlignmentSpace(alignmentSpace);
-        Map<String, Set<ColorDepthFileComponents>> existingColorDepthFiles = colorDepthImageDao.findColorDepthMIPs(mipsQuery).stream()
+        List<ColorDepthImage> existingMIPs = colorDepthImageDao.findColorDepthMIPs(mipsQuery);
+        List<ColorDepthImage> newMIPs = new ArrayList<>();
+        Map<String, Set<ColorDepthFileComponents>> existingColorDepthFiles = existingMIPs.stream()
                 .map(Image::getFilepath)
                 .map(this::parseColorDepthFileComponents)
                 .collect(Collectors.groupingBy(cdf -> {
@@ -501,14 +505,16 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 })
                 .forEach(cdf -> {
-                    if (createColorDepthImage(cdf, alignmentSpace, parentLibrary, sourceLibraryMIPs, library)) {
+                    ColorDepthImage newMIP = createColorDepthImage(cdf, alignmentSpace, parentLibrary, sourceLibraryMIPs, library);
+                    if (newMIP != null) {
+                        newMIPs.add( newMIP);
                         created++;
                     }
                 });
 
         Map<String, Reference> libraryMIPs = new LinkedHashMap<>();
         // this post phase is for the case when files are already in the library and cleanup is needed.
-        colorDepthImageDao.findColorDepthMIPs(mipsQuery).stream()
+        Stream.concat(newMIPs.stream(), existingMIPs.stream())
                 .map(mip -> {
                     ColorDepthFileComponents cdf = parseColorDepthFileComponents(mip.getFilepath());
                     if (cdf.getSampleRef() == null) {
@@ -584,11 +590,11 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
      * @param colorDepthImageFileComponents color depth file components
      * @return true if the image was created successfully
      */
-    private boolean createColorDepthImage(ColorDepthFileComponents colorDepthImageFileComponents,
-                                          String alignmentSpace,
-                                          ColorDepthLibrary parentLibrary,
-                                          Map<String, Reference> sourceLibraryMIPs,
-                                          ColorDepthLibrary library) {
+    private ColorDepthImage createColorDepthImage(ColorDepthFileComponents colorDepthImageFileComponents,
+                                                  String alignmentSpace,
+                                                  ColorDepthLibrary parentLibrary,
+                                                  Map<String, Reference> sourceLibraryMIPs,
+                                                  ColorDepthLibrary library) {
         try {
             ColorDepthImage image = new ColorDepthImage();
             image.getLibraries().add(library.getIdentifier());
@@ -642,15 +648,14 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     // it actually corresponds to a renamed mip
                     logger.warn("No referenced color depth image entity found for {} from library {}, alignment {}, so no MIP will be created",
                             sourceCDMNameCandidates, library.getIdentifier(), alignmentSpace);
-                    return false;
+                    return null;
                 }
             }
-            colorDepthImageDao.saveBySubjectKey(image, library.getOwnerKey());
-            return true;
+            return colorDepthImageDao.saveBySubjectKey(image, library.getOwnerKey());
         } catch (Exception e) {
             logger.warn("  Could not create image for: {}", colorDepthImageFileComponents.getFile(), e);
         }
-        return false;
+        return null;
     }
 
     private String removeLastNameComp(String name) {

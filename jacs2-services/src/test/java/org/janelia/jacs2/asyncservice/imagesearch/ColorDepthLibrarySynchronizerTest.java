@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -112,6 +113,13 @@ public class ColorDepthLibrarySynchronizerTest {
         emBodyDao = mock(EmBodyDao.class);
         datasetDao = mock(DatasetDao.class);
         jacsNotificationDao = mock(JacsNotificationDao.class);
+        Random mipIdGen = new Random();
+        Mockito.when(colorDepthImageDao.saveBySubjectKey(any(ColorDepthImage.class), ArgumentMatchers.argThat(argument -> true)))
+                .then(invocation -> {
+                    ColorDepthImage cdi = invocation.getArgument(0);
+                    cdi.setId(mipIdGen.nextLong());
+                    return cdi;
+                });
     }
 
     @Test
