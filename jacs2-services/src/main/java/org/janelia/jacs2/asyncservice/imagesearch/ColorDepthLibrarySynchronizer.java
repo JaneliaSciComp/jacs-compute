@@ -448,6 +448,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 })
                 .map(f -> parseColorDepthFileComponents(f.getPath()))
                 .filter(cdf -> {
+                    if (cdf.getFile().toString().contains("20181121_65_I1")) {
+                        logger.info("!!!!!!!!!!!!!! GOT IT: {}", cdf);
+                    }
                     if (cdf.getSampleRef() == null) {
                         if (existingColorDepthFiles.containsKey(cdf.getFile().getAbsolutePath())) {
                             // this file is already a MIP of this library so no need to do anything else for it
