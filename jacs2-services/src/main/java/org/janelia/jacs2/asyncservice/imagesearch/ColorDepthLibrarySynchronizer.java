@@ -52,7 +52,6 @@ import org.janelia.model.access.domain.dao.EmDataSetDao;
 import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SubjectDao;
-import org.janelia.model.domain.AbstractDomainObject;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.flyem.EMBody;
@@ -389,7 +388,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         ColorDepthImageQuery mipsQuery = new ColorDepthImageQuery()
                 .withLibraryIdentifiers(Collections.singleton(library.getIdentifier()))
                 .withAlignmentSpace(alignmentSpace);
-        List<ColorDepthImage> existingMIPs = colorDepthImageDao.findColorDepthMIPs(mipsQuery);
+        List<ColorDepthImage> existingMIPs = colorDepthImageDao.streamColorDepthMIPs(mipsQuery).collect(Collectors.toList());
         List<ColorDepthImage> newMIPs = new ArrayList<>();
         Map<String, Set<ColorDepthFileComponents>> existingColorDepthFiles = existingMIPs.stream()
                 .map(Image::getFilepath)
@@ -505,6 +504,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 })
                 .forEach(cdf -> {
+                    if (cdf.getFile().equals(new File("/nrs/jacs/jacsData/filestore/system/ColorDepthMIPs/JRC2018_VNC_Unisex_40x_DS/flylight_gen1_mcfo_published/segmentation/GMR_13E12_AE_01-20181121_65_I1-40x-VNC-JRC2018_VNC_Unisex_40x_DS-2616002570216276066-CH1-01_CDM.tif"))) {
+                        logger.info("!!!!!!!!!!!!!! GOT IT: {}", cdf);
+                    }
                     ColorDepthImage newMIP = createColorDepthImage(cdf, alignmentSpace, parentLibrary, sourceLibraryMIPs, library);
                     if (newMIP != null) {
                         newMIPs.add( newMIP);
@@ -804,7 +806,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 .withAlignmentSpace(alignmentSpace);
 
         // Update all color depth MIPs with their respective body references
-        colorDepthImageDao.findColorDepthMIPs(mipsQuery).stream()
+        colorDepthImageDao.streamColorDepthMIPs(mipsQuery)
                 .forEach(cdm -> {
 
                     File file = new File(cdm.getFilepath());
