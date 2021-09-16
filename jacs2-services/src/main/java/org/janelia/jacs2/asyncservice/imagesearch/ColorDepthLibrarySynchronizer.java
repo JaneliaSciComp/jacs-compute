@@ -30,6 +30,8 @@ import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
@@ -99,6 +101,58 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
         SyncArgs() {
             super("Color depth library synchronization");
+        }
+    }
+
+    private static class MipID {
+        final String name;
+        final String sampleRefId;
+        final String objective;
+        final String area;
+        final String alignmentSpace;
+        final Integer channel;
+
+        MipID(String name,
+              String sampleRefId,
+              String objective,
+              String area,
+              String alignmentSpace,
+              Integer channel) {
+            this.name = name;
+            this.sampleRefId = sampleRefId;
+            this.objective = objective;
+            this.area = area;
+            this.alignmentSpace = alignmentSpace;
+            this.channel = channel;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+
+            if (o == null || getClass() != o.getClass()) return false;
+
+            MipID that = (MipID) o;
+
+            return new EqualsBuilder()
+                    .append(name, that.name)
+                    .append(sampleRefId, that.sampleRefId)
+                    .append(objective, that.objective)
+                    .append(area, that.area)
+                    .append(alignmentSpace, that.alignmentSpace)
+                    .append(channel, that.channel)
+                    .isEquals();
+        }
+
+        @Override
+        public int hashCode() {
+            return new HashCodeBuilder(17, 37)
+                    .append(name)
+                    .append(sampleRefId)
+                    .append(objective)
+                    .append(area)
+                    .append(alignmentSpace)
+                    .append(channel).toHashCode();
         }
     }
 
@@ -249,12 +303,12 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 ;
     }
 
-    private void processLibraryDir(File libraryDir, String alignmentSpace, Map<String, Reference> sourceLibraryMIPs, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> existingLibraries, ColorDepthLibraryEmMetadata emMetadata) {
+    private void processLibraryDir(File libraryDir, String alignmentSpace, Map<MipID, Reference> sourceLibraryMIPs, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> existingLibraries, ColorDepthLibraryEmMetadata emMetadata) {
         logger.info("Discovering files in {}", libraryDir);
 
         ColorDepthLibrary library = findOrCreateLibraryByIndentifier(libraryDir, parentLibrary, existingLibraries);
 
-        Pair<Map<String, Reference>, List<File>> processLibResults = processLibraryFiles(libraryDir, alignmentSpace, parentLibrary, sourceLibraryMIPs, library);
+        Pair<Map<MipID, Reference>, List<File>> processLibResults = processLibraryFiles(libraryDir, alignmentSpace, parentLibrary, sourceLibraryMIPs, library);
         logger.info("  Verified {} existing images, created {} images", existing, created);
 
         if (emMetadata != null) {
@@ -275,7 +329,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         }
 
         // Indirect recursion - walk subdirs of the libraryDir
-        Map<String, Reference> sourceMIPs;
+        Map<MipID, Reference> sourceMIPs;
         if (parentLibrary == null) {
             // this is a root library so pass this library's mips to be referenced by the variants
             sourceMIPs = processLibResults.getLeft();
@@ -379,7 +433,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
      * they will be passed in to subsequent variant sub-libraries in order to avoid database querying for the source MIP which slows down the system
      * too much.
      */
-    private Pair<Map<String, Reference>, List<File>> processLibraryFiles(File libraryDir, String alignmentSpace, ColorDepthLibrary parentLibrary, Map<String, Reference> sourceLibraryMIPs, ColorDepthLibrary library) {
+    private Pair<Map<MipID, Reference>, List<File>> processLibraryFiles(File libraryDir, String alignmentSpace, ColorDepthLibrary parentLibrary, Map<MipID, Reference> sourceLibraryMIPs, ColorDepthLibrary library) {
         // reset the counters
         this.existing = 0;
         this.created = 0;
@@ -514,30 +568,38 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 });
 
-        Map<String, Reference> libraryMIPs = new LinkedHashMap<>();
+        Map<MipID, Reference> libraryMIPs = new LinkedHashMap<>();
         // this post phase is for the case when files are already in the library and cleanup is needed.
         Stream.concat(newMIPs.stream(), existingMIPs.stream())
                 .map(mip -> {
                     ColorDepthFileComponents cdf = parseColorDepthFileComponents(mip.getFilepath());
                     if (cdf.getSampleRef() == null) {
+                        String mipName = Pattern.compile("(-\\d+)?_CDM$", Pattern.CASE_INSENSITIVE)
+                                .matcher(cdf.getFileName())
+                                .replaceFirst(StringUtils.EMPTY);
                         libraryMIPs.put(
-                                Pattern.compile("(-\\d+)?_CDM$", Pattern.CASE_INSENSITIVE)
-                                        .matcher(cdf.getFileName())
-                                        .replaceFirst(StringUtils.EMPTY),
+                                new MipID(
+                                        mipName,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null
+                                ),
                                 Reference.createFor(mip));
                     } else {
                         if (cdf.getSampleRef().equals(Reference.createFor("Sample#2616002570216276066"))) {
                             logger.info("!!!!! GOT 1 {}", cdf);
                         }
                         libraryMIPs.put(
-                                ColorDepthFileComponents.createCDMNameFromNameComponents(
-                                        cdf.getSampleName(),
+                                new MipID(
+                                        null,
+                                        cdf.getSampleRef().getTargetId().toString(),
                                         cdf.getObjective(),
                                         cdf.getAnatomicalArea(),
                                         cdf.getAlignmentSpace(),
-                                        cdf.getSampleRef(),
-                                        cdf.getChannelNumber(),
-                                        null),
+                                        cdf.getChannelNumber()
+                                ),
                                 Reference.createFor(mip));
                     }
                     return cdf;
@@ -598,7 +660,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     private ColorDepthImage createColorDepthImage(ColorDepthFileComponents colorDepthImageFileComponents,
                                                   String alignmentSpace,
                                                   ColorDepthLibrary parentLibrary,
-                                                  Map<String, Reference> sourceLibraryMIPs,
+                                                  Map<MipID, Reference> sourceLibraryMIPs,
                                                   ColorDepthLibrary library) {
         try {
             if (colorDepthImageFileComponents.getFile().toString().contains("20181121_65_I1")) {
@@ -623,17 +685,16 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 image.setChannelNumber(colorDepthImageFileComponents.getChannelNumber());
             }
             if (parentLibrary != null) {
-                Set<String> sourceCDMNameCandidates;
+                Set<MipID> sourceCDMCandidates;
                 if (colorDepthImageFileComponents.hasNameComponents()) {
-                    sourceCDMNameCandidates = ImmutableSet.of(
-                            ColorDepthFileComponents.createCDMNameFromNameComponents(
-                                    colorDepthImageFileComponents.getSampleName(),
+                    sourceCDMCandidates = ImmutableSet.of(
+                            new MipID(
+                                    null,
+                                    colorDepthImageFileComponents.getSampleRef().getTargetId().toString(),
                                     colorDepthImageFileComponents.getObjective(),
                                     colorDepthImageFileComponents.getAnatomicalArea(),
                                     colorDepthImageFileComponents.getAlignmentSpace(),
-                                    colorDepthImageFileComponents.getSampleRef(),
-                                    colorDepthImageFileComponents.getChannelNumber(),
-                                    null)
+                                    colorDepthImageFileComponents.getChannelNumber())
                     );
                 } else {
                     // if the mip name does not follow the convention assume the variant is in the file name
@@ -642,10 +703,15 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     final Pattern variantSuffixMatcher = Pattern.compile("[_-](\\d*)" + library.getVariant() + "$", Pattern.CASE_INSENSITIVE);
                     String n1 = cdmSuffixMatcher.matcher(colorDepthImageFileComponents.getFileName()).replaceFirst(StringUtils.EMPTY);
                     String n2 = variantSuffixMatcher.matcher(n1).replaceAll(StringUtils.EMPTY);
-                    sourceCDMNameCandidates = ImmutableSet.of(n1, n2, removeLastNameComp(n1), removeLastNameComp(n2));
+                    sourceCDMCandidates = ImmutableSet.of(
+                            new MipID(n1, null, null, null, null, null),
+                            new MipID(n2, null, null, null, null, null),
+                            new MipID(removeLastNameComp(n1), null, null, null, null, null),
+                            new MipID(removeLastNameComp(n2), null, null, null, null, null)
+                    );
                 }
-                logger.debug("Lookup {}", sourceCDMNameCandidates);
-                Reference sourceImageReference = sourceCDMNameCandidates.stream()
+                logger.debug("Lookup {}", sourceCDMCandidates);
+                Reference sourceImageReference = sourceCDMCandidates.stream()
                         .map(n -> sourceLibraryMIPs.get(n))
                         .filter(ref -> ref != null)
                         .findFirst().orElse(null);
@@ -655,7 +721,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     // this is the case when the file exist but the mip entity was deleted because
                     // it actually corresponds to a renamed mip
                     logger.warn("No referenced color depth image entity found for {} from library {}, alignment {}, so no MIP will be created",
-                            sourceCDMNameCandidates, library.getIdentifier(), alignmentSpace);
+                            sourceCDMCandidates, library.getIdentifier(), alignmentSpace);
                     return null;
                 }
             }
