@@ -526,6 +526,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                         .replaceFirst(StringUtils.EMPTY),
                                 Reference.createFor(mip));
                     } else {
+                        if (cdf.getSampleRef().equals(Reference.createFor("Sample#2616002570216276066"))) {
+                            logger.info("!!!!! GOT 1 {}", cdf);
+                        }
                         libraryMIPs.put(
                                 ColorDepthFileComponents.createCDMNameFromNameComponents(
                                         cdf.getSampleName(),
