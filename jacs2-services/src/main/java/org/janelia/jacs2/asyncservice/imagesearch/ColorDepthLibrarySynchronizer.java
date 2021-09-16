@@ -504,7 +504,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 })
                 .forEach(cdf -> {
-                    if (cdf.getFile().equals(new File("/nrs/jacs/jacsData/filestore/system/ColorDepthMIPs/JRC2018_VNC_Unisex_40x_DS/flylight_gen1_mcfo_published/segmentation/GMR_13E12_AE_01-20181121_65_I1-40x-VNC-JRC2018_VNC_Unisex_40x_DS-2616002570216276066-CH1-01_CDM.tif"))) {
+                    if (cdf.getFile().toString().contains("20181121_65_I1")) {
                         logger.info("!!!!!!!!!!!!!! GOT IT: {}", cdf);
                     }
                     ColorDepthImage newMIP = createColorDepthImage(cdf, alignmentSpace, parentLibrary, sourceLibraryMIPs, library);
