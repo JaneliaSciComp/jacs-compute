@@ -507,9 +507,6 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     }
                 })
                 .forEach(cdf -> {
-                    if (cdf.getFile().toString().contains("20181121_65_I1")) {
-                        logger.info("!!!!!!!!!!!!!! GOT IT: {}", cdf);
-                    }
                     ColorDepthImage newMIP = createColorDepthImage(cdf, alignmentSpace, parentLibrary, sourceLibraryMIPs, library);
                     if (newMIP != null) {
                         newMIPs.add( newMIP);
@@ -601,6 +598,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                                                   Map<String, Reference> sourceLibraryMIPs,
                                                   ColorDepthLibrary library) {
         try {
+            if (colorDepthImageFileComponents.getFile().toString().contains("20181121_65_I1")) {
+                logger.info("!!!!!!!!!!!!!! GOT IT: {}", colorDepthImageFileComponents);
+            }
             ColorDepthImage image = new ColorDepthImage();
             image.getLibraries().add(library.getIdentifier());
             image.setName(colorDepthImageFileComponents.getFile().getName());
