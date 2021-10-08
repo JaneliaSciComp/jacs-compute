@@ -257,9 +257,9 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                     .map(libraryDirs -> computationFactory.<Void>newComputation().supply(() -> {
                         libraryDirs.forEach(libraryDir -> {
                             // Read optional metadata
-                            ColorDepthLibraryEmMetadata emMetadata = null;
+                            EMDatasetMetadata emMetadata = null;
                             try {
-                                emMetadata = ColorDepthLibraryEmMetadata.fromLibraryPath(libraryDir);
+                                emMetadata = EMDatasetMetadata.fromLibraryPath(libraryDir);
                             } catch (Exception e) {
                                 logger.error("Error reading EM metadata for "+libraryDir, e);
                             }
@@ -303,7 +303,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 ;
     }
 
-    private void processLibraryDir(File libraryDir, String alignmentSpace, Map<MipID, Reference> sourceLibraryMIPs, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> existingLibraries, ColorDepthLibraryEmMetadata emMetadata) {
+    private void processLibraryDir(File libraryDir, String alignmentSpace, Map<MipID, Reference> sourceLibraryMIPs, ColorDepthLibrary parentLibrary, Map<String, ColorDepthLibrary> existingLibraries, EMDatasetMetadata emMetadata) {
         logger.info("Discovering files in {}", libraryDir);
 
         ColorDepthLibrary library = findOrCreateLibraryByIndentifier(libraryDir, parentLibrary, existingLibraries);
@@ -846,7 +846,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 .collect(Collectors.groupingBy(LineRelease::getTargetWebsite, Collectors.toList()));
     }
 
-    private void processEmMetadata(ColorDepthLibrary library, String alignmentSpace, ColorDepthLibraryEmMetadata emMetadata) {
+    private void processEmMetadata(ColorDepthLibrary library, String alignmentSpace, EMDatasetMetadata emMetadata) {
         EMDataSet dataSet = emDataSetDao.getDataSetByNameAndVersion(emMetadata.getName(), emMetadata.getVersion());
         if (dataSet==null) {
             logger.warn("Could not find data set {} specified by {}", emMetadata.getDataSetIdentifier(), emMetadata.getFile());

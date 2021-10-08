@@ -9,12 +9,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 /**
- * Optional user-provided metadata for a color depth library.
+ * Optional user-provided metadata for a file library (e.g. color depth library or EM skeleton library).
  *
  * This represents a emdataset.json that can optionally live in the root library and associate the files with
  * EMDataSet objects.
  */
-public class ColorDepthLibraryEmMetadata {
+public class EMDatasetMetadata {
 
     private static final String METADATA_FILENAME = "emdataset.json";
 
@@ -66,13 +66,13 @@ public class ColorDepthLibraryEmMetadata {
      * @return parsed metadata or null if no file exists
      * @throws IOException if the file cannot be read
      */
-    public static ColorDepthLibraryEmMetadata fromLibraryPath(File path) throws IOException {
+    public static EMDatasetMetadata fromLibraryPath(File path) throws IOException {
         File file = new File(path, METADATA_FILENAME);
         if (!file.exists()) {
             return null;
         }
         ObjectMapper objectMapper = ObjectMapperFactory.instance().getDefaultObjectMapper();
-        ColorDepthLibraryEmMetadata m = objectMapper.readValue(Files.readAllBytes(file.toPath()), ColorDepthLibraryEmMetadata.class);
+        EMDatasetMetadata m = objectMapper.readValue(Files.readAllBytes(file.toPath()), EMDatasetMetadata.class);
         m.setFile(file);
         return m;
     }
