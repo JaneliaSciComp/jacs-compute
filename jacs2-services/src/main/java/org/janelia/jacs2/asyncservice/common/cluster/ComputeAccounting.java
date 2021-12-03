@@ -15,6 +15,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheLoader.InvalidCacheLoadException;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.ProcessorHelper;
@@ -35,6 +36,7 @@ public class ComputeAccounting {
 
     private static final String DEFAULT_GROUP_NAME = "jacs";
     private static final String LSF_GROUP_COMMAND = "lsfgroup";
+    private static final String LSF_POWER_GROUP_KEY = "group:lsf_power";
 
     private final SubjectDao subjectDao;
     private final Logger log;
@@ -162,11 +164,13 @@ public class ComputeAccounting {
             } else {
                 // no match - check if the user has admin privileges
                 Subject authenticatedUser = subjectDao.findSubjectByNameOrKey(serviceContext.getAuthKey());
-                if (SubjectUtils.isAdmin(authenticatedUser)) {
-                    log.info("Admin user {} can use the provided billing account {}", serviceContext.getAuthKey(), serviceBillingAccount);
+                if (SubjectUtils.subjectIsInAnyGroup(
+                        authenticatedUser,
+                        ImmutableSet.of(Subject.ADMIN_KEY, LSF_POWER_GROUP_KEY))) {
+                    log.info("User {} has roles that can use the provided billing account {}", serviceContext.getAuthKey(), serviceBillingAccount);
                     billingAccount = serviceBillingAccount;
                 } else {
-                    log.warn("User {} attempted to use billing account {} on behalf of {} without admin privileges",
+                    log.warn("User {} attempted to use billing account {} on behalf of {} without such privileges",
                             serviceContext.getAuthKey(), serviceBillingAccount, serviceContext.getOwnerKey());
                     throw new SecurityException("Admin access is required to override compute account");
                 }
