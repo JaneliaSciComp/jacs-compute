@@ -57,6 +57,7 @@ public class SimpleRunDockerContainerProcessor extends AbstractContainerProcesso
             scriptWriter.add("read EXPANDED_ARG");
         }
         scriptWriter.add("ulimit -c 0");
+        scriptWriter.add("umask 0002");
         scriptWriter
                 .addWithArgs(getRuntime((args)))
                 .addArg("run");
@@ -64,6 +65,7 @@ public class SimpleRunDockerContainerProcessor extends AbstractContainerProcesso
         Stream.concat(args.bindPaths.stream(), Stream.of(new BindPath().setSrcPath(scratchDir)))
                 .filter(BindPath::isNotEmpty)
                 .map(bindPath -> bindPath.asString(true)) // docker volume bindings always have both source and target
+                .collect(Collectors.toSet())
                 .forEach(bindPath -> scriptWriter.addArgs("-v", bindPath));
         if (CollectionUtils.isNotEmpty(args.runtimeArgs)) {
             args.runtimeArgs.forEach(scriptWriter::addArg);

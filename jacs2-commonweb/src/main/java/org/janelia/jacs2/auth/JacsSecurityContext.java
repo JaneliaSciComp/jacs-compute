@@ -34,7 +34,7 @@ public class JacsSecurityContext implements SecurityContext {
 
     @Override
     public Principal getUserPrincipal() {
-        return () -> authorizedSubject.getKey();
+        return authorizedSubject::getKey;
     }
 
     @Override

@@ -80,12 +80,18 @@ class SingularityContainerHelper {
             return new ContainerImage("file",
                     containerImagePath.getParent(),
                     containerImagePath.getFileName().toString());
-        } else {
+        } else if (StringUtils.startsWithIgnoreCase(containerLocation, "/")) {
             // assume a path
             Path containerImagePath = Paths.get(containerLocation);
             return new ContainerImage("file",
                     containerImagePath.getParent(),
                     containerImagePath.getFileName().toString());
+        } else {
+            // assume a docker registry name
+            return new ContainerImage("docker",
+                    null,
+                    parseDockerHubOrSHubName(containerLocation));
+
         }
     }
 

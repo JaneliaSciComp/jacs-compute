@@ -62,6 +62,7 @@ public class SimpleRunSingularityContainerProcessor extends AbstractContainerPro
             scriptWriter.add("read EXPANDED_ARG");
         }
         scriptWriter.add("ulimit -c 0");
+        scriptWriter.add("umask 0002");
         scriptWriter.addWithArgs(getRuntime((args)));
         scriptWriter.addArg("run");
         if (CollectionUtils.isNotEmpty(args.runtimeArgs)) {
