@@ -57,6 +57,7 @@ abstract class AbstractLVTProcessor<A extends LVTArgs, R> extends AbstractServic
                         .description("Pull container image " + containerLocation)
                         .build(),
                 new ServiceArg("-containerProcessor", args.containerProcessor),
+                new ServiceArg("-runtimeArgs", args.containerRuntimeArgs),
                 new ServiceArg("-containerLocation", containerLocation),
                 new ServiceArg("-appArgs", getAppArgs(args)),
                 new ServiceArg("-bindPaths", args.inputDir),
