@@ -41,6 +41,8 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
     static class LVDataImportArgs extends LVArgs {
         @Parameter(names = "-containerProcessor", description = "Container processor: docker or singularity")
         String containerProcessor;
+        @Parameter(names = "-containerRuntimeArgs", description = "Processor specific runtime arguments")
+        String containerRuntimeArgs;
         @Parameter(names = "-tiffOctreeOutputDir", description = "Output directory for octree")
         String tiffOctreeOutputDir;
         @Parameter(names = "-ktxOctreeOutputDir", description = "Output directory for octree")
@@ -119,6 +121,7 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
                                 .description("Create octree")
                                 .build(),
                         new ServiceArg("-containerProcessor", args.containerProcessor),
+                        new ServiceArg("-containerRuntimeArgs", args.containerRuntimeArgs),
                         new ServiceArg("-inputDir", inputTiffDir),
                         new ServiceArg("-outputDir", octreeDir),
                         new ServiceArg("-levels", levels),
@@ -135,6 +138,7 @@ public class LVDataImport extends AbstractServiceProcessor<LVResult> {
                                     .waitFor(octreeResults.stream().map(r -> r.getJacsServiceData()).collect(Collectors.toList()))
                                     .build(),
                             new ServiceArg("-containerProcessor", args.containerProcessor),
+                            new ServiceArg("-containerRuntimeArgs", args.containerRuntimeArgs),
                             new ServiceArg("-inputDir", octreeDir),
                             new ServiceArg("-outputDir", ktxDir),
                             new ServiceArg("-levels", levels),
