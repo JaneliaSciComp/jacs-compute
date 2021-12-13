@@ -751,12 +751,12 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
     private void processPublishedLines(SyncArgs args, Map<String, ColorDepthLibrary> existingLibraries) {
         Map<String, List<LineRelease>> releasesByWebsite = retrieveLineReleases(args.publishedCollections, args.publishingSites);
-        releasesByWebsite.forEach((site, releases) -> processPublishedLibrary(site, releases, existingLibraries));
+        releasesByWebsite.forEach((libName, releases) -> processPublishedLibrary(libName, releases, existingLibraries));
     }
 
-    private void processPublishedLibrary(String publishingSite, List<LineRelease> publishedLines, Map<String, ColorDepthLibrary> existingLibraries) {
-        String libraryIdentifier = "flylight_" + publishingSite.toLowerCase().replace(' ', '_') + "_published";
-        logger.info("Processing release library {} for {}", libraryIdentifier, publishingSite);
+    private void processPublishedLibrary(String publishedLibraryName, List<LineRelease> publishedLines, Map<String, ColorDepthLibrary> existingLibraries) {
+        String libraryIdentifier = "flylight_" + publishedLibraryName.toLowerCase().replace(' ', '_') + "_published";
+        logger.info("Processing release library {} for {}", libraryIdentifier, publishedLibraryName);
         ColorDepthLibrary library = findOrCreateLibrary(
                 libraryIdentifier,
                 existingLibraries,
@@ -782,7 +782,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
                 ;
         if (updatedMips > 0 || !isANewLibrary && updatedMips == 0) {
             if (updatedMips > 0) {
-                logger.info("Updated {} mips from library {} for {}", updatedMips, libraryIdentifier, publishingSite);
+                logger.info("Updated {} mips from library {} for {}", updatedMips, libraryIdentifier, publishedLibraryName);
                 library.setColorDepthCounts(
                         colorDepthImageDao.countColorDepthMIPsByAlignmentSpaceForLibrary(libraryIdentifier)
                 );
@@ -834,16 +834,20 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
 
     private Map<String, List<LineRelease>> retrieveLineReleases(List<String> releaseNames, List<String> publishingSites) {
         List<LineRelease> lineReleases;
+        Function<LineRelease, String> groupBy;
         if (CollectionUtils.isEmpty(releaseNames) && CollectionUtils.isEmpty(publishingSites)) {
             lineReleases = lineReleaseDao.findAll(0, -1);
+            groupBy = LineRelease::getTargetWebsite;
         } else if (CollectionUtils.isNotEmpty(releaseNames)) {
             lineReleases = lineReleaseDao.findReleasesByName(releaseNames);
+            groupBy = lr -> lr.getTargetWebsite() + "_" + lr.getName();
         } else {
             lineReleases = lineReleaseDao.findReleasesByPublishingSites(publishingSites);
+            groupBy = LineRelease::getTargetWebsite;
         }
         return lineReleases.stream()
                 .filter(lr -> StringUtils.isNotBlank(lr.getTargetWebsite()))
-                .collect(Collectors.groupingBy(LineRelease::getTargetWebsite, Collectors.toList()));
+                .collect(Collectors.groupingBy(groupBy, Collectors.toList()));
     }
 
     private void processEmMetadata(ColorDepthLibrary library, String alignmentSpace, EMDatasetMetadata emMetadata) {
