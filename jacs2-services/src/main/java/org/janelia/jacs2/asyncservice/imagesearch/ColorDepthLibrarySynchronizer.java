@@ -840,7 +840,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             groupBy = LineRelease::getTargetWebsite;
         } else if (CollectionUtils.isNotEmpty(releaseNames)) {
             lineReleases = lineReleaseDao.findReleasesByName(releaseNames);
-            groupBy = lr -> lr.getTargetWebsite() + "_" + lr.getName();
+            groupBy = LineRelease::getName;
         } else {
             lineReleases = lineReleaseDao.findReleasesByPublishingSites(publishingSites);
             groupBy = LineRelease::getTargetWebsite;
