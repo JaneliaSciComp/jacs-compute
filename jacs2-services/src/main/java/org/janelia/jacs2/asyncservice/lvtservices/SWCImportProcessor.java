@@ -1,4 +1,4 @@
-package org.janelia.jacs2.asyncservice.neuronservices;
+package org.janelia.jacs2.asyncservice.lvtservices;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
