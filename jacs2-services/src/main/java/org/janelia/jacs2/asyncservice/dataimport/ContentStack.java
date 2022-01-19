@@ -7,7 +7,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-class ContentStack {
+public class ContentStack {
     private Number dataNodeId;
     private final StorageContentInfo mainRep; // main content representation
     private List<StorageContentInfo> additionalReps = new ArrayList<>(); // additional representations

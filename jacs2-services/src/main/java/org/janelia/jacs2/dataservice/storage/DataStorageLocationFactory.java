@@ -18,6 +18,7 @@ import org.janelia.rendering.FileBasedRenderedVolumeLocation;
 import org.janelia.rendering.JADEBasedDataLocation;
 import org.janelia.rendering.JADEBasedRenderedVolumeLocation;
 import org.janelia.rendering.RenderedVolumeLocation;
+import org.janelia.rendering.utils.ClientProxy;
 import org.janelia.rendering.utils.HttpClientProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +64,7 @@ public class DataStorageLocationFactory {
                                 } else {
                                     renderedVolumePath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(dataPath)).toString();
                                 }
-                                LOG.info("Create JADE volume location with URLs {}, {} and volume path {}", vsInfo.getStorageServiceURL(), vsInfo.getVolumeStorageURI(), renderedVolumePath);
+                                LOG.debug("Create JADE volume location with URLs {}, {} and volume path {}", vsInfo.getStorageServiceURL(), vsInfo.getVolumeStorageURI(), renderedVolumePath);
                                 return new JADEBasedDataLocation(
                                         vsInfo.getStorageServiceURL(),
                                         vsInfo.getVolumeStorageURI(),

@@ -34,17 +34,17 @@ import java.util.stream.Stream;
 /**
  * Helper class for downloading/uploading content to JADE.
  */
-class StorageContentHelper {
+public class StorageContentHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageContentHelper.class);
 
     private final StorageService storageService;
 
-    StorageContentHelper(StorageService storageService) {
+    public StorageContentHelper(StorageService storageService) {
         this.storageService = storageService;
     }
 
-    Optional<StorageEntryInfo> lookupStorage(String storagePath, String ownerKey, String authToken) {
+    public Optional<StorageEntryInfo> lookupStorage(String storagePath, String ownerKey, String authToken) {
         LOG.info("Lookup storage for {}", storagePath);
         return storageService.lookupStorageVolumes(null, null, storagePath, ownerKey, authToken)
                 .map(jadeStorageVolume -> {
@@ -68,7 +68,7 @@ class StorageContentHelper {
                 });
     }
 
-    List<ContentStack> listContent(String storageURL, String storagePath, String ownerKey, String authToken) {
+    public List<ContentStack> listContent(String storageURL, String storagePath, String ownerKey, String authToken) {
         LOG.info("List content of {} from {}", storagePath, storageURL);
         return storageService.listStorageContent(storageURL, storagePath, ownerKey, authToken, -1, 0, -1).stream()
                 .map(entry -> {
