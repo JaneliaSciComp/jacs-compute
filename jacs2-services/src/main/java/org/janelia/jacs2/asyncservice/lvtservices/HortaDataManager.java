@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class HortaDataManager {
 
@@ -36,13 +37,24 @@ public class HortaDataManager {
         this.dataStorageLocationFactory = dataStorageLocationFactory;
     }
 
+    public TmSample getTmSampleByName(String ownerKey, String sampleName) {
+        List<TmSample> samples = tmSampleDao.findEntitiesByExactName(sampleName).stream().filter(s -> s.getOwnerKey().equals(ownerKey)).collect(Collectors.toList());
+        if (samples.isEmpty()) {
+            return null;
+        }
+        if (samples.size()>1) {
+            log.warn("More than one sample exists with name {}. Choosing the first.", sampleName);
+        }
+        return samples.get(0);
+    }
+
     public TmSample createTmSample(String subjectKey, TmSample sample) throws UserException {
 
         String sampleName = sample.getName();
         String samplePath = sample.getLargeVolumeOctreeFilepath();
 
         RenderedVolumeLocation rvl = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null)
-                .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
+                .map(dataStorageLocationFactory::asRenderedVolumeLocation)
                 .orElse(null);
         if (rvl == null) {
             throw new UserException("Error accessing sample path "+samplePath+" while trying to create sample "+sampleName+" for user "+subjectKey);

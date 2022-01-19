@@ -1,15 +1,13 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
-import java.nio.file.Paths;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 
-class StorageContentInfo {
+import java.nio.file.Paths;
+
+public class StorageContentInfo {
     @JsonProperty
     private StorageEntryInfo remoteInfo;
     @JsonProperty
@@ -20,51 +18,51 @@ class StorageContentInfo {
     private Long size;
     private boolean locallyReachable;
 
-    StorageEntryInfo getRemoteInfo() {
+    public StorageEntryInfo getRemoteInfo() {
         return remoteInfo;
     }
 
-    void setRemoteInfo(StorageEntryInfo remoteInfo) {
+    public void setRemoteInfo(StorageEntryInfo remoteInfo) {
         this.remoteInfo = remoteInfo;
     }
 
-    String getLocalBasePath() {
+    public String getLocalBasePath() {
         return localBasePath;
     }
 
-    void setLocalBasePath(String localBasePath) {
+    public void setLocalBasePath(String localBasePath) {
         this.localBasePath = localBasePath;
     }
 
-    String getLocalRelativePath() {
+    public String getLocalRelativePath() {
         return localRelativePath;
     }
 
-    void setLocalRelativePath(String localRelativePath) {
+    public void setLocalRelativePath(String localRelativePath) {
         this.localRelativePath = localRelativePath;
     }
 
-    String getLocalFullPath() {
+    public String getLocalFullPath() {
         return buildFullPath(localBasePath, localRelativePath);
     }
 
-    String getRemoteFullPath() {
+    public String getRemoteFullPath() {
         return buildFullPath(remoteInfo.getStorageRootLocation(), remoteInfo.getEntryRelativePath());
     }
 
-    Long getSize() {
+    public Long getSize() {
         return size;
     }
 
-    void setSize(Long size) {
+    public void setSize(Long size) {
         this.size = size;
     }
 
-    boolean isLocallyReachable() {
+    public boolean isLocallyReachable() {
         return locallyReachable;
     }
 
-    void setLocallyReachable(boolean locallyReachable) {
+    public void setLocallyReachable(boolean locallyReachable) {
         this.locallyReachable = locallyReachable;
     }
 

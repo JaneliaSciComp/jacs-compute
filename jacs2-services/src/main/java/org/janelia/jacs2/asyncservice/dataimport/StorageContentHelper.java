@@ -1,32 +1,19 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
-import org.janelia.jacs2.asyncservice.common.ResourceHelper;
-import org.janelia.jacs2.asyncservice.common.ServiceComputation;
-import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
-import org.janelia.jacs2.dataservice.storage.DataStorageInfo;
-import org.janelia.jacs2.dataservice.storage.JadeStorageVolume;
 import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StoragePathURI;
 import org.janelia.jacs2.dataservice.storage.StorageService;
-import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -72,8 +59,12 @@ public class StorageContentHelper {
     }
 
     public List<ContentStack> listContent(String storageURL, String storagePath, String ownerKey, String authToken) {
-        LOG.info("List content of {} from {}", storagePath, storageURL);
-        return storageService.listStorageContent(storageURL, storagePath, ownerKey, authToken, -1, 0, -1).stream()
+        return listContent(storageURL, storagePath, -1, ownerKey, authToken);
+    }
+
+    public List<ContentStack> listContent(String storageURL, String storagePath, int depth, String ownerKey, String authToken) {
+        LOG.debug("List content of {} from {}", storagePath, storageURL);
+        return storageService.listStorageContent(storageURL, storagePath, ownerKey, authToken, depth, 0, -1).stream()
                 .map(entry -> {
                     StorageContentInfo storageContentInfo = new StorageContentInfo();
                     storageContentInfo.setRemoteInfo(entry);

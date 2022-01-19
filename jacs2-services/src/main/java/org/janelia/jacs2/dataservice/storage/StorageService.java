@@ -280,7 +280,7 @@ public class StorageService {
                                                      String storagePath,
                                                      String subject,
                                                      String authToken,
-                                                     int level,
+                                                     int depth,
                                                      long offset,
                                                      int length) {
         Client httpclient = HttpUtils.createHttpClient();
@@ -289,8 +289,8 @@ public class StorageService {
             if (StringUtils.isNotBlank(storagePath)) {
                 target = target.path(storagePath);
             }
-            if (level > 0) {
-                target = target.queryParam("depth", level);
+            if (depth > 0) {
+                target = target.queryParam("depth", depth);
             }
             if (offset > 0) {
                 target = target.queryParam("offset", offset);
