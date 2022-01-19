@@ -11,6 +11,7 @@ import org.glassfish.hk2.api.InjectionResolver;
 import org.glassfish.hk2.api.ServiceHandle;
 import org.glassfish.hk2.api.TypeLiteral;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
 import org.janelia.jacs2.asyncservice.maintenanceservices.DbMaintainer;
 import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.auth.PasswordProvider;
@@ -114,6 +115,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(PropertyResolver.class)
                 .to(new TypeLiteral<InjectionResolver<PropertyValue>>() {})
                 .in(Singleton.class);
+        bind(dependenciesProducer.getHortaDataManager()).to(HortaDataManager.class);
     }
 
     private <A extends Annotation> A getAnnotation(Class<A> annotationClass, String exampleMethodName, Class<?>... exampleMethodParameterTypes) {

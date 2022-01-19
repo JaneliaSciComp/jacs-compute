@@ -46,13 +46,16 @@ public class StorageContentHelper {
 
     public Optional<StorageEntryInfo> lookupStorage(String storagePath, String ownerKey, String authToken) {
         LOG.info("Lookup storage for {}", storagePath);
-        return storageService.lookupStorageVolumes(null, null, storagePath, ownerKey, authToken)
+        return storageService.findStorageVolumes(storagePath, ownerKey, authToken)
+                .stream().findFirst()
                 .map(jadeStorageVolume -> {
                     String relativeStoragePath;
-                    if (StringUtils.startsWith(storagePath, jadeStorageVolume.getStorageVirtualPath())) {
+                    if (StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(jadeStorageVolume.getStorageVirtualPath(), "/"))) {
                         relativeStoragePath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(storagePath)).toString();
-                    } else {
+                    } else if (StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(jadeStorageVolume.getBaseStorageRootDir(), "/"))) {
                         relativeStoragePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(storagePath)).toString();
+                    } else {
+                        relativeStoragePath = "";
                     }
                     LOG.info("Found {} for {}; the new path relative to the volume's root is {}", jadeStorageVolume, storagePath, relativeStoragePath);
                     return new StorageEntryInfo(

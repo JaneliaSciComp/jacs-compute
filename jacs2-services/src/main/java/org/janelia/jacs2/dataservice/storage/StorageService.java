@@ -21,6 +21,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -66,7 +67,7 @@ public class StorageService {
         }
     }
 
-    public Optional<DataStorageInfo> lookupDataStorage(String storageURI, String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
+    public List<DataStorageInfo> lookupDataStorage(String storageURI, String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target;
@@ -117,12 +118,7 @@ public class StorageService {
                 throw new IllegalStateException(messageBuilder.toString());
             } else {
                 PageResult<DataStorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<DataStorageInfo>>(){});
-                if (storageInfoResult.getResultList().size() > 1) {
-                    LOG.warn("Request {} returned more than one result {} please refine the query", target, storageInfoResult);
-                    return storageInfoResult.getResultList().stream().findFirst();
-                } else {
-                    return storageInfoResult.getResultList().stream().findFirst();
-                }
+                return storageInfoResult.getResultList();
             }
         } catch (IllegalStateException e) {
             throw e;
@@ -133,7 +129,16 @@ public class StorageService {
         }
     }
 
-    public Optional<JadeStorageVolume> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
+    public List<JadeStorageVolume> findStorageVolumes(String storagePath, String subjectKey, String authToken) {
+        return lookupStorageVolumes(null, null, storagePath, subjectKey, authToken).stream()
+                .filter(vsInfo -> storagePath.equals(vsInfo.getStorageVirtualPath())
+                        || storagePath.equals(vsInfo.getBaseStorageRootDir())
+                        || storagePath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))
+                        || storagePath.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/")))
+                .collect(Collectors.toList());
+    }
+
+    public List<JadeStorageVolume> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(masterStorageServiceURL)
@@ -155,15 +160,10 @@ public class StorageService {
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
                 LOG.error("Lookup storage volume request {} returned status {} while trying to get the storage for storageId = {}, storageName={}, storagePath={}", target, responseStatus, storageId, storageName, storagePath);
-                return Optional.empty();
+                return Collections.emptyList();
             } else {
                 PageResult<JadeStorageVolume> storageInfoResult = response.readEntity(new GenericType<PageResult<JadeStorageVolume>>(){});
-                if (storageInfoResult.getResultList().size() > 1) {
-                    LOG.warn("Request {} returned more than one result {} please refine the query", target, storageInfoResult);
-                    return storageInfoResult.getResultList().stream().findFirst();
-                } else {
-                    return storageInfoResult.getResultList().stream().findFirst();
-                }
+                return storageInfoResult.getResultList();
             }
         } catch (IllegalStateException e) {
             throw e;

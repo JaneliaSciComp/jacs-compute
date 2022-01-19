@@ -8,6 +8,7 @@ import javax.inject.Inject;
 
 import com.google.common.collect.ImmutableMap;
 
+import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
 import org.janelia.jacs2.asyncservice.maintenanceservices.DbMaintainer;
 import org.janelia.jacs2.auth.JWTProvider;
 import org.janelia.jacs2.auth.PasswordProvider;
@@ -83,6 +84,7 @@ public class TestResourceDependenciesProducer {
     private ExecutorService indexingExecutorService = mock(ExecutorService.class);
     private DbMaintainer dbMaintainer = mock(DbMaintainer.class);
     private UserManager userManager = mock(UserManager.class);
+    private HortaDataManager hortaDataManager = mock(HortaDataManager.class);
 
     @Produces
     public Logger getLogger() {
@@ -295,5 +297,10 @@ public class TestResourceDependenciesProducer {
     @Produces
     public ReferenceDomainObjectReadDao getReferenceDao() {
         return referenceDao;
+    }
+
+    @Produces
+    public HortaDataManager getHortaDataManager() {
+        return hortaDataManager;
     }
 }

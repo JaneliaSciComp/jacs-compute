@@ -52,27 +52,52 @@ public class DataStorageLocationFactory {
         }
     }
 
-    public Optional<DataLocation> lookupJadeDataLocation(String dataPath, String subjectKey, String authToken) {
+    public Optional<? extends DataLocation> lookupJadeDataLocation(String dataPath, String subjectKey, String authToken) {
         Preconditions.checkArgument(StringUtils.isNotBlank(dataPath));
-        return storageService.lookupDataStorage(null, null, null, dataPath, subjectKey, authToken)
-                .map(dsInfo -> Optional.<DataLocation>of(new JADEBasedDataLocation(dsInfo.getConnectionURL(), dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, httpClientProvider)))
-                .orElseGet(() -> storageService.lookupStorageVolumes(null, null, dataPath, subjectKey, authToken)
-                            .map(vsInfo -> {
-                                String renderedVolumePath;
-                                if (dataPath.startsWith(vsInfo.getStorageVirtualPath())) {
-                                    renderedVolumePath = Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(dataPath)).toString();
-                                } else {
-                                    renderedVolumePath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(dataPath)).toString();
-                                }
-                                LOG.debug("Create JADE volume location with URLs {}, {} and volume path {}", vsInfo.getStorageServiceURL(), vsInfo.getVolumeStorageURI(), renderedVolumePath);
-                                return new JADEBasedDataLocation(
-                                        vsInfo.getStorageServiceURL(),
-                                        vsInfo.getVolumeStorageURI(),
-                                        renderedVolumePath,
-                                        authToken,
-                                        storageServiceApiKey,
-                                        httpClientProvider);
-                            }))
+        return storageService.lookupDataStorage(null, null, null, dataPath, subjectKey, authToken).stream()
+                .map(dsInfo -> new JADEBasedDataLocation(dsInfo.getConnectionURL(), dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, httpClientProvider))
+                .filter(dataLocation -> {
+                    if (dataPath.startsWith("/")) {
+                        return dataLocation.checkContentAtAbsolutePath(dataPath);
+                    } else {
+                        return dataLocation.checkContentAtRelativePath(dataPath);
+                    }
+                })
+                .findFirst()
+                .map(Optional::of)
+                .orElseGet(() -> searchStorageVolumes(dataPath, subjectKey, authToken))
+                ;
+    }
+
+    /**
+     * Search JADE volumes.
+     * @param dataPath
+     * @param subjectKey
+     * @param authToken
+     * @return
+     */
+    private Optional<JADEBasedDataLocation> searchStorageVolumes(String dataPath, String subjectKey, String authToken) {
+        return storageService.findStorageVolumes(dataPath, subjectKey, authToken).stream()
+                .map(vsInfo -> {
+                    String renderedVolumePath;
+                    if (dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))) {
+                        renderedVolumePath = Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(dataPath)).toString();
+                    } else if (dataPath.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))) {
+                        renderedVolumePath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(dataPath)).toString();
+                    } else {
+                        // the only other option is that the dataPath is actually the root volume path
+                        renderedVolumePath = "";
+                    }
+                    LOG.debug("Create JADE volume location with URLs {}, {} and volume path {}", vsInfo.getStorageServiceURL(), vsInfo.getVolumeStorageURI(), renderedVolumePath);
+                    return new JADEBasedDataLocation(
+                            vsInfo.getStorageServiceURL(),
+                            vsInfo.getVolumeStorageURI(),
+                            renderedVolumePath,
+                            authToken,
+                            storageServiceApiKey,
+                            httpClientProvider);
+                })
+                .findFirst()
                 ;
     }
 
