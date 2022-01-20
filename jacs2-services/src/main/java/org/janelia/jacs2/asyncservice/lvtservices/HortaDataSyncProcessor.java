@@ -21,6 +21,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.List;
 
+/**
+ * This service searches the given path for TM sample folders and synchronizes them to the database. If a sample with
+ * the name already exists, it is updated based on the information on disk. If no sample exists, it is created.
+ */
 @Named("hortaDataSync")
 public class HortaDataSyncProcessor extends AbstractServiceProcessor<Long> {
 
@@ -36,7 +40,6 @@ public class HortaDataSyncProcessor extends AbstractServiceProcessor<Long> {
         }
     }
 
-    private final DataStorageLocationFactory dataStorageLocationFactory;
     private final StorageService storageService;
     private final StorageContentHelper storageContentHelper;
     private final HortaDataManager hortaDataManager;
@@ -51,7 +54,6 @@ public class HortaDataSyncProcessor extends AbstractServiceProcessor<Long> {
                                   Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
         this.hortaDataManager = hortaDataManager;
-        this.dataStorageLocationFactory = dataStorageLocationFactory;
         this.storageService = storageService;
         this.storageContentHelper = new StorageContentHelper(storageService);
     }

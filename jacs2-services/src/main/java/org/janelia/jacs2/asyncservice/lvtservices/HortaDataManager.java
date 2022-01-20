@@ -140,11 +140,8 @@ public class HortaDataManager {
         log.info("Verifying sample path {} for sample {}", samplePath, tmSample);
 
         boolean samplePathFound = dataStorageLocationFactory.lookupJadeDataLocation(samplePath, subjectKey, null)
-                .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
-                .flatMap(rvl -> getConstants(rvl))
-                .map(constants -> true)
-                .orElse(false)
-                ;
+                .map(dataStorageLocationFactory::asRenderedVolumeLocation)
+                .flatMap(this::getConstants).isPresent();
         if (!samplePathFound) {
             tmSample.setFilesystemSync(false);
         }
