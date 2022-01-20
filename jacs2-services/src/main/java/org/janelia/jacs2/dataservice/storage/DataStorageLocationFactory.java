@@ -97,6 +97,7 @@ public class DataStorageLocationFactory {
                             storageServiceApiKey,
                             httpClientProvider);
                 })
+                .filter(dl -> dl.checkContentAtAbsolutePath(dataPath))
                 .findFirst()
                 ;
     }
