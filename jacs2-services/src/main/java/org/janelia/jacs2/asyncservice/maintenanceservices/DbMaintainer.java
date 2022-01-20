@@ -181,26 +181,36 @@ public class DbMaintainer {
 
         LOG.info("Checking {} (filesystemSync={})", sample, sample.isFilesystemSync());
 
-        boolean sync = sample.isFilesystemSync();
+        boolean sync = true;
+        boolean anyExists = false;
         Set<FileType> emptyPaths = new HashSet<>();
         for (FileType fileType : sample.getFiles().keySet()) {
             String filepath = sample.getFiles().get(fileType);
             if (StringUtils.isBlank(filepath)) {
                 emptyPaths.add(fileType);
             }
-            else {
+            else if (fileType==FileType.LargeVolumeOctree || fileType==FileType.LargeVolumeKTX) {
+                // For the purposes of setting filesystemSync, we only care about these two paths which drive Horta
                 try {
-                    // TODO: this is not correct and needs to be fixed
+                    // Check JADE to see if the directory is accessible
                     boolean filepathExists = dataStorageLocationFactory.lookupJadeDataLocation(
                             filepath, sample.getOwnerKey(), null).isPresent();
                     LOG.info("  {} {}", filepath, filepathExists ? "exists" : "does not exist");
                     if (!filepathExists) {
                         sync = false;
                     }
+                    else {
+                        anyExists = true;
+                    }
                 } catch (Exception e) {
                     LOG.info("  Error encountered while checking the sample volume path {}", filepath, e);
                 }
             }
+        }
+
+        if (!anyExists) {
+            LOG.info("  No paths exist on disk for this sample");
+            sync = false;
         }
 
         boolean dirty = false;
