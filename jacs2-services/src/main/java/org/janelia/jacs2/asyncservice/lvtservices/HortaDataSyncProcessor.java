@@ -9,9 +9,9 @@ import org.janelia.jacs2.asyncservice.dataimport.ContentStack;
 import org.janelia.jacs2.asyncservice.dataimport.StorageContentHelper;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.ServiceMetaData;
@@ -49,7 +49,6 @@ public class HortaDataSyncProcessor extends AbstractServiceProcessor<Long> {
                                   JacsServiceDataPersistence jacsServiceDataPersistence,
                                   @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                   HortaDataManager hortaDataManager,
-                                  DataStorageLocationFactory dataStorageLocationFactory,
                                   StorageService storageService,
                                   Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
@@ -114,8 +113,11 @@ public class HortaDataSyncProcessor extends AbstractServiceProcessor<Long> {
                             logger.info("  Found KTX imagery");
                             sample.setLargeVolumeKTXFilepath(samplePath + "/ktx");
                         }
+                        else {
+                            sample.getFiles().remove(FileType.LargeVolumeKTX);
+                        }
 
-                        TmSample existingSample = hortaDataManager.getTmSampleByName(objectOwnerKey, sampleName);
+                        TmSample existingSample = hortaDataManager.getOwnedTmSampleByName(objectOwnerKey, sampleName);
                         if (!args.dryRun) {
                             if (existingSample == null) {
                                 try {
@@ -128,9 +130,12 @@ public class HortaDataSyncProcessor extends AbstractServiceProcessor<Long> {
                             }
                             else {
                                 try {
-                                    existingSample.setFilesystemSync(true);
-                                    sample.setLargeVolumeOctreeFilepath(samplePath);
-                                    sample.setLargeVolumeKTXFilepath(samplePath + "/ktx");
+                                    // Copy discovered properties to existing sample
+                                    existingSample.setFilesystemSync(sample.isFilesystemSync());
+                                    for(FileType fileType : sample.getFiles().keySet()) {
+                                        existingSample.getFiles().put(fileType, sample.getFiles().get(fileType));
+                                    }
+                                    // Update database
                                     hortaDataManager.updateSample(objectOwnerKey, existingSample);
                                     logger.info("  Updated TM sample: {}", existingSample);
                                 }

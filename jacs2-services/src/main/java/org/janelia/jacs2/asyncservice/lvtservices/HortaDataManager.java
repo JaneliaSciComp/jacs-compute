@@ -28,8 +28,7 @@ public class HortaDataManager {
     private final DataStorageLocationFactory dataStorageLocationFactory;
 
     @Inject
-    @AsyncIndex
-    public HortaDataManager(TmSampleDao tmSampleDao,
+    public HortaDataManager(@AsyncIndex TmSampleDao tmSampleDao,
                             RenderedVolumeLoader renderedVolumeLoader,
                             DataStorageLocationFactory dataStorageLocationFactory) {
         this.tmSampleDao = tmSampleDao;
@@ -37,8 +36,11 @@ public class HortaDataManager {
         this.dataStorageLocationFactory = dataStorageLocationFactory;
     }
 
-    public TmSample getTmSampleByName(String ownerKey, String sampleName) {
-        List<TmSample> samples = tmSampleDao.findEntitiesByExactName(sampleName).stream().filter(s -> s.getOwnerKey().equals(ownerKey)).collect(Collectors.toList());
+    public TmSample getOwnedTmSampleByName(String ownerKey, String sampleName) {
+        List<TmSample> samples = tmSampleDao.findEntitiesByExactName(sampleName)
+                .stream()
+                .filter(s -> s.getOwnerKey().equals(ownerKey))
+                .collect(Collectors.toList());
         if (samples.isEmpty()) {
             return null;
         }
