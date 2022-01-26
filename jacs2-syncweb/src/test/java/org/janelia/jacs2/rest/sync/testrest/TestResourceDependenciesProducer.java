@@ -54,6 +54,7 @@ public class TestResourceDependenciesProducer {
     private ColorDepthImageDao colorDepthImageDao = mock(ColorDepthImageDao.class);
     private EmBodyDao emBodyDao = mock(EmBodyDao.class);
     private EmDataSetDao emDataSetDao = mock(EmDataSetDao.class);
+    private PublishedImageDao publishedImageDao = mock(PublishedImageDao.class);
     private LineReleaseDao lineReleaseDao = mock(LineReleaseDao.class);
     private JWTProvider jwtProvider = mock(JWTProvider.class);
     private LegacyDomainDao legacyDomainDao = mock(LegacyDomainDao.class);
@@ -132,6 +133,11 @@ public class TestResourceDependenciesProducer {
     @Produces
     public EmDataSetDao getEmDataSetDao() {
         return emDataSetDao;
+    }
+
+    @Produces
+    public PublishedImageDao getPublishedImageDao() {
+        return publishedImageDao;
     }
 
     @AsyncIndex
