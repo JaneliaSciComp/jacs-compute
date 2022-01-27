@@ -64,8 +64,8 @@ public class PublishedImageResource {
             if (image == null) {
                 LOG.warn("Could not find image for {}, {}, {}", slideCode, alignmentSpace, objective);
                 return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(new ErrorResponse("No image found for " + alignmentSpace + ", "
-                                + alignmentSpace + ", " + "objective"))
+                        .entity(new ErrorResponse("No image found for " + slideCode + ", "
+                                + alignmentSpace + ", " + objective))
                         .build();
             }
 
