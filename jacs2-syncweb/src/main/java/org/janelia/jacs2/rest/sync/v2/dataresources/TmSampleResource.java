@@ -59,6 +59,10 @@ public class TmSampleResource {
     @Inject
     private HortaDataManager hortaDataManager;
 
+    /**
+     * @deprecated this feature is no longer used by the client
+     */
+    @Deprecated
     @ApiOperation(value = "Gets a list of sample root paths",
             notes = "Returns a list of all the sample root paths used for LVV sample discovery"
     )
@@ -87,6 +91,10 @@ public class TmSampleResource {
         }
     }
 
+    /**
+     * @deprecated this feature is no longer used by the client
+     */
+    @Deprecated
     @ApiOperation(value = "Updates the sample root paths",
             notes = "Updates the sample root paths used for LVV sample discovery"
     )
