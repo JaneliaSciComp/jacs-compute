@@ -367,6 +367,7 @@ public class StorageService {
         JsonNode nodeAccessURLNode = jsonNode.get("nodeAccessURL");
         JsonNode nodeRelativePathNode = jsonNode.get("nodeRelativePath");
         JsonNode collectionFlagNode = jsonNode.get("collectionFlag");
+        JsonNode mimeTypeNode = jsonNode.get("mimeType");
         JsonNode sizeNode = jsonNode.get("size");
         String storageId = null;
         if (storageIdNode != null && !storageIdNode.isNull()) {
@@ -392,6 +393,7 @@ public class StorageService {
                 new StoragePathURI(storageRootPathURINode.asText()),
                 nodeRelativePathNode.asText(),
                 sizeNode.asLong(),
-                collectionFlagNode.asBoolean());
+                collectionFlagNode.asBoolean(),
+                mimeTypeNode.asText());
     }
 }

@@ -59,7 +59,7 @@ public class HortaDataManager {
                 .map(dataStorageLocationFactory::asRenderedVolumeLocation)
                 .orElse(null);
         if (rvl == null) {
-            throw new UserException("Error accessing sample path "+samplePath+" while trying to create sample "+sampleName+" for user "+subjectKey);
+            throw new UserException("Error accessing sample path "+samplePath+" while trying to create sample "+sampleName+" for "+subjectKey);
         }
 
         boolean transformFound = getConstants(rvl)
