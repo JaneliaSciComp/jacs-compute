@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.dataimport.BetterStorageHelper;
+import org.janelia.jacs2.asyncservice.dataimport.StorageObject;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
@@ -89,7 +90,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         String objectOwnerKey = StringUtils.isBlank(args.ownerKey) ? jacsServiceData.getOwnerKey() : args.ownerKey.trim();
 
         BetterStorageHelper storageContentHelper = new BetterStorageHelper(storageService, jacsServiceData.getOwnerKey(), authToken);
-        BetterStorageHelper.StorageLocation storageLocation = storageContentHelper
+        StorageObject storageLocation = storageContentHelper
                 .lookupPath(args.path)
                 .orElseThrow(() -> new ComputationException(jacsServiceData, "Could not find any storage for path " + args.path));
 
@@ -103,23 +104,22 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
             }
         }
 
-        walkStorage(storageLocation, agents,args.levels, "");
+        walkStorage(objectOwnerKey, storageLocation, agents,args.levels, "");
 
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
     }
 
-    private void walkStorage(BetterStorageHelper.StorageLocation location, List<FileDiscoveryAgent> agents, int levels, String indent) {
+    private void walkStorage(String objectOwnerKey, StorageObject location, List<FileDiscoveryAgent> agents, int levels, String indent) {
         location.getHelper().listContent(location)
-                .forEach(storageObject -> {
-                    logger.info(indent+"{} -> {}", storageObject.getName(), storageObject.getAbsolutePath());
-                    if (storageObject.isDirectory()) {
-                        BetterStorageHelper.StorageLocation childLocation = storageObject.toStorageLocation();
+                .forEach(child -> {
+                    logger.info(indent+"{} -> {}", child.getName(), child.getAbsolutePath());
+                    if (child.isCollection()) {
                         if (levels > 1) {
-                            walkStorage(childLocation, agents, levels - 1, indent+"  ");
+                            walkStorage(objectOwnerKey, child, agents, levels - 1, indent+"  ");
                         }
                     }
                     for (FileDiscoveryAgent agent : agents) {
-                        //agent.discover();
+                        agent.discover(objectOwnerKey, child);
                     }
                 });
     }
