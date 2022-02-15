@@ -102,7 +102,7 @@ dependencies {
 
         // Janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.1.0"
-        JACS_MODEL_VERSION = "2.50.0"
+        JACS_MODEL_VERSION = "2.51.0"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
         JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
