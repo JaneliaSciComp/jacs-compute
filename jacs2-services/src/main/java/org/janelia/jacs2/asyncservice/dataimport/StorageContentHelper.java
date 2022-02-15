@@ -1,32 +1,19 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
-import org.janelia.jacs2.asyncservice.common.ResourceHelper;
-import org.janelia.jacs2.asyncservice.common.ServiceComputation;
-import org.janelia.jacs2.asyncservice.common.ServiceComputationFactory;
-import org.janelia.jacs2.asyncservice.imageservices.MIPsAndMoviesResult;
 import org.janelia.jacs2.asyncservice.utils.FileUtils;
-import org.janelia.jacs2.dataservice.storage.DataStorageInfo;
-import org.janelia.jacs2.dataservice.storage.JadeStorageVolume;
 import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StoragePathURI;
 import org.janelia.jacs2.dataservice.storage.StorageService;
-import org.janelia.model.service.JacsServiceData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,25 +21,28 @@ import java.util.stream.Stream;
 /**
  * Helper class for downloading/uploading content to JADE.
  */
-class StorageContentHelper {
+public class StorageContentHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageContentHelper.class);
 
     private final StorageService storageService;
 
-    StorageContentHelper(StorageService storageService) {
+    public StorageContentHelper(StorageService storageService) {
         this.storageService = storageService;
     }
 
-    Optional<StorageEntryInfo> lookupStorage(String storagePath, String ownerKey, String authToken) {
+    public Optional<StorageEntryInfo> lookupStorage(String storagePath, String ownerKey, String authToken) {
         LOG.info("Lookup storage for {}", storagePath);
-        return storageService.lookupStorageVolumes(null, null, storagePath, ownerKey, authToken)
+        return storageService.findStorageVolumes(storagePath, ownerKey, authToken)
+                .stream().findFirst()
                 .map(jadeStorageVolume -> {
                     String relativeStoragePath;
-                    if (StringUtils.startsWith(storagePath, jadeStorageVolume.getStorageVirtualPath())) {
+                    if (StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(jadeStorageVolume.getStorageVirtualPath(), "/"))) {
                         relativeStoragePath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(storagePath)).toString();
-                    } else {
+                    } else if (StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(jadeStorageVolume.getBaseStorageRootDir(), "/"))) {
                         relativeStoragePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(storagePath)).toString();
+                    } else {
+                        relativeStoragePath = "";
                     }
                     LOG.info("Found {} for {}; the new path relative to the volume's root is {}", jadeStorageVolume, storagePath, relativeStoragePath);
                     return new StorageEntryInfo(
@@ -68,9 +58,13 @@ class StorageContentHelper {
                 });
     }
 
-    List<ContentStack> listContent(String storageURL, String storagePath, String ownerKey, String authToken) {
-        LOG.info("List content of {} from {}", storagePath, storageURL);
-        return storageService.listStorageContent(storageURL, storagePath, ownerKey, authToken, -1, 0, -1).stream()
+    public List<ContentStack> listContent(String storageURL, String storagePath, String ownerKey, String authToken) {
+        return listContent(storageURL, storagePath, -1, ownerKey, authToken);
+    }
+
+    public List<ContentStack> listContent(String storageURL, String storagePath, int depth, String ownerKey, String authToken) {
+        LOG.debug("List content of {} from {}", storagePath, storageURL);
+        return storageService.listStorageContent(storageURL, storagePath, ownerKey, authToken, depth, 0, -1).stream()
                 .map(entry -> {
                     StorageContentInfo storageContentInfo = new StorageContentInfo();
                     storageContentInfo.setRemoteInfo(entry);

@@ -124,6 +124,19 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
             this.area = area;
             this.alignmentSpace = alignmentSpace;
             this.channel = channel;
+
+        }
+
+        @Override
+        public String toString() {
+            return "MipID(" +
+                    "name='" + name + '\'' +
+                    ", sampleRefId='" + sampleRefId + '\'' +
+                    ", objective='" + objective + '\'' +
+                    ", area='" + area + '\'' +
+                    ", alignmentSpace='" + alignmentSpace + '\'' +
+                    ", channel=" + channel +
+                    ')';
         }
 
         @Override

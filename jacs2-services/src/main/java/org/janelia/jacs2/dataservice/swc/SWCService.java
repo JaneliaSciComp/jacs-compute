@@ -131,14 +131,19 @@ public class SWCService {
                 MatrixUtilities.buildMicronToVox(renderedVolumeMetadata.getMicromsPerVoxel(), renderedVolumeMetadata.getOriginVoxel()));
 
         LOG.info("Lookup SWC folder {}", swcFolderName);
-        storageService.lookupStorageVolumes(null, null, swcFolderName, null, null)
+        storageService.findStorageVolumes(swcFolderName, null, null)
+                .stream().findFirst()
                 .map(vsInfo -> {
                     LOG.info("Found {} for SWC folder {}", vsInfo, swcFolderName);
                     String swcPath;
-                    if (swcFolderName.startsWith(vsInfo.getStorageVirtualPath())) {
+                    if (swcFolderName.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))) {
                         swcPath = Paths.get(vsInfo.getStorageVirtualPath()).relativize(Paths.get(swcFolderName)).toString();
-                    } else {
+                    } else if (swcFolderName.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))) {
                         swcPath = Paths.get(vsInfo.getBaseStorageRootDir()).relativize(Paths.get(swcFolderName)).toString();
+                    } else {
+                        // the only other option is that the dataPath is actually the root volume path
+                        // this may actually be an anomaly
+                        swcPath = "";
                     }
                     String swcStorageFolderURL = storageService.getEntryURI(vsInfo.getVolumeStorageURI(), swcPath);
                     LOG.info("Retrieve swc content from {} : {}", vsInfo, swcPath);

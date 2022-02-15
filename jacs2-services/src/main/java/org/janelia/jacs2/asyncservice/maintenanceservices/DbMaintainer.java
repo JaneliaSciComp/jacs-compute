@@ -1,7 +1,5 @@
 package org.janelia.jacs2.asyncservice.maintenanceservices;
 
-import javax.inject.Inject;
-
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -9,12 +7,13 @@ import org.janelia.model.access.dao.LegacyDomainDao.DaoIndex;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
-import org.janelia.rendering.RenderedVolumeLoader;
-import org.janelia.rendering.RenderedVolumeLoaderImpl;
-import org.janelia.rendering.RenderedVolumeLocation;
-import org.janelia.rendering.ymlrepr.RawVolData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static java.util.Arrays.asList;
 
@@ -158,15 +157,13 @@ public class DbMaintainer {
     /**
      * Refresh the filesystemSync flag for all TmSamples in the system. This should be called periodically to
      * keep the flags updated with the state of the filesystem.
-     * TODO: this also performs surreptitious migration to the new schema. Can be removed later once all TmSamples
-     * are migrated.
      *
      * @throws Exception
      */
     void refreshTmSampleSync() throws Exception {
         // Walk all TmSamples in the database
         for (TmSample sample : legacyDomainDao.getDomainObjects(null, TmSample.class)) {
-            boolean dirty = migrateTmSample(sample);
+            boolean dirty = refreshTmSampleSync(sample);
             if (dirty) {
                 // Persist the sample if anything changed
                 legacyDomainDao.save(sample.getOwnerKey(), sample);
@@ -175,106 +172,62 @@ public class DbMaintainer {
     }
 
     /**
-     * Migrates the given TmSample from the deprecated filepath attribute to the 3-way filepaths.
+     * Refresh the filesystemSync parameter for the given TmSample.
      * Returns true if the TmSample has changed and should be persisted.
-     *
      * @param sample
      * @return true if changes were made
      */
-    @SuppressWarnings("deprecation")
-    private boolean migrateTmSample(TmSample sample) {
-        String sampleFilepath;
-        if (StringUtils.startsWith(sample.getFilepath(), "//")) {
-            sampleFilepath = sample.getFilepath().substring(1);
-        } else {
-            sampleFilepath = sample.getFilepath();
-        }
-        boolean prevSyncFlag = sample.isFilesystemSync();
-        sample.setFilesystemSync(true); // assume everything is OK until it's not
-        if (sample.getFiles().isEmpty() && StringUtils.isNotBlank(sampleFilepath)) {
-            // Forward migration
-            LOG.info("Performing migration on {}", sample);
-            LOG.info("  Setting Octree data path to {}", sampleFilepath);
-            RenderedVolumeLocation rvl;
-            try {
-                rvl = dataStorageLocationFactory.lookupJadeDataLocation(sampleFilepath, sample.getOwnerKey(), null)
-                        .map(dl -> dataStorageLocationFactory.asRenderedVolumeLocation(dl))
-                        .orElseGet(() -> {
-                            LOG.info("No storage location could be found for {}", sampleFilepath);
-                            return null;
-                        });
-                if (rvl != null) {
-                    sample.setLargeVolumeOctreeFilepath(sampleFilepath);
-                } else {
-                    sample.setFilesystemSync(false);
-                }
-            } catch (Exception e) {
-                // no rendered volume location could be obtained so stop here
-                sample.setFilesystemSync(false);
-                LOG.info("  Error encountered while checking the sample volume path {}", sampleFilepath, e);
-                return prevSyncFlag != sample.isFilesystemSync(); // return true only if sync flag changed
-            }
+    public boolean refreshTmSampleSync(TmSample sample) {
 
-            // Check KTX octree at relative location
-            String ktxFullPath;
-            if (StringUtils.isNotBlank(sample.getLargeVolumeKTXFilepath())) {
-                ktxFullPath = sample.getLargeVolumeKTXFilepath();
-            } else {
-                ktxFullPath = StringUtils.appendIfMissing(sampleFilepath, "/") + "ktx";
-                LOG.info("  Setting KTX data path to {}", ktxFullPath);
-                DomainUtils.setFilepath(sample, FileType.LargeVolumeKTX, ktxFullPath);
-            }
-            try {
-                boolean ktxNotFound = dataStorageLocationFactory.lookupJadeDataLocation(ktxFullPath, sample.getOwnerKey(), null)
-                        .map(dl -> false)
-                        .orElse(true);
-                if (ktxNotFound) {
-                    LOG.warn("  Could not find KTX directory for sample {} at {}", sample, ktxFullPath);
-                    sample.setFilesystemSync(false);
-                }
-            } catch (Exception e) {
-                sample.setFilesystemSync(false);
-                LOG.info("  Error encountered while checking the sample KTX path {}", ktxFullPath, e);
-            }
+        LOG.info("Checking {} (filesystemSync={})", sample, sample.isFilesystemSync());
 
-            try {
-                // Check raw data
-                String acquisionPath;
-                if (StringUtils.isNotBlank(sample.getAcquisitionFilepath())) {
-                    acquisionPath = sample.getAcquisitionFilepath();
-                } else {
-                    RenderedVolumeLoader loader = new RenderedVolumeLoaderImpl();
-                    RawVolData rawVolData = loader.loadRawVolumeData(rvl);
-                    if (rawVolData != null && !StringUtils.isBlank(rawVolData.getPath())) {
-                        acquisionPath = rawVolData.getPath();
-                        LOG.info("  Setting RAW data path to {}", rawVolData.getPath());
-                        DomainUtils.setFilepath(sample, FileType.TwoPhotonAcquisition, rawVolData.getPath());
-                    } else {
-                        acquisionPath = null;
-                    }
-                }
-                if (StringUtils.isNotBlank(acquisionPath)) {
-                    boolean acquisitionPathNotFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisionPath, sample.getOwnerKey(), null)
-                            .map(dl -> false)
-                            .orElse(true);
-                    if (acquisitionPathNotFound) {
-                        LOG.info("  Could not find the storage for tile acquisition path {}", acquisionPath);
-                        sample.setFilesystemSync(false);
-                    }
-                }
-            } catch (Exception e) {
-                LOG.info("  Error encountered while looking for raw data at {}", sampleFilepath, e);
-                sample.setFilesystemSync(false);
+        boolean sync = true;
+        boolean anyExists = false;
+        Set<FileType> emptyPaths = new HashSet<>();
+        for (FileType fileType : sample.getFiles().keySet()) {
+            String filepath = sample.getFiles().get(fileType);
+            if (StringUtils.isBlank(filepath)) {
+                emptyPaths.add(fileType);
             }
-            return true;
-        } else if (StringUtils.isBlank(sample.getFilepath())) {
-            LOG.warn("  There is no information where the sample rendered volume is located in order to perform the migration of sample {}", sample);
-            return false;
-        } else {
-            // most likely the sample has been migrated
-            LOG.info("  Sample {} has already been migrated - currently set files are {}", sample, sample.getFiles());
-            return true;
+            else if (fileType==FileType.LargeVolumeOctree || fileType==FileType.LargeVolumeKTX) {
+                // For the purposes of setting filesystemSync, we only care about these two paths which drive Horta
+                try {
+                    // Check JADE to see if the directory is accessible
+                    boolean filepathExists = dataStorageLocationFactory.lookupJadeDataLocation(
+                            filepath, sample.getOwnerKey(), null).isPresent();
+                    LOG.info("  {} {}", filepath, filepathExists ? "exists" : "does not exist");
+                    if (!filepathExists) {
+                        sync = false;
+                    }
+                    else {
+                        anyExists = true;
+                    }
+                } catch (Exception e) {
+                    LOG.info("  Error encountered while checking the sample volume path {}", filepath, e);
+                }
+            }
         }
+
+        if (!anyExists) {
+            LOG.info("  No paths exist on disk for this sample");
+            sync = false;
+        }
+
+        boolean dirty = false;
+
+        if (!emptyPaths.isEmpty()) {
+            // Remove all the paths that were empty
+            LOG.info("  Updating {} to remove empty file paths: {}", sample, emptyPaths);
+            emptyPaths.forEach(t -> sample.getFiles().remove(t));
+            dirty = true;
+        }
+
+        if (sample.isFilesystemSync()!=sync) {
+            LOG.info("  Updating {} with filesystemSync={}", sample, sync);
+            sample.setFilesystemSync(sync);
+            dirty = true;
+        }
+
+        return dirty;
     }
-
 }

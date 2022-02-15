@@ -3,14 +3,11 @@ package org.janelia.jacs2.dataservice.storage;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 
 /**
@@ -25,7 +22,9 @@ public class StorageEntryInfo {
     private final String entryRelativePath;
     private final Long size;
     private final boolean collectionFlag;
+    private final String mimeType;
 
+    @Deprecated
     @JsonCreator
     public StorageEntryInfo(@JsonProperty("storageId") String storageId,
                             @JsonProperty("storageURL") String storageURL,
@@ -43,6 +42,28 @@ public class StorageEntryInfo {
         this.entryRelativePath = entryRelativePath;
         this.size = size;
         this.collectionFlag = collectionFlag;
+        this.mimeType = null;
+    }
+
+    @JsonCreator
+    public StorageEntryInfo(@JsonProperty("storageId") String storageId,
+                            @JsonProperty("storageURL") String storageURL,
+                            @JsonProperty("nodeAccessURL") String entryURL,
+                            @JsonProperty("storageRootLocation") String storageRootLocation,
+                            @JsonProperty("storageRootPathURI") StoragePathURI storageRootPathURI,
+                            @JsonProperty("nodeRelativePath") String entryRelativePath,
+                            @JsonProperty("size") Long size,
+                            @JsonProperty("collectionFlag") boolean collectionFlag,
+                            @JsonProperty("mimeType") String mimeType) {
+        this.storageId = storageId;
+        this.storageURL = storageURL;
+        this.entryURL = entryURL;
+        this.storageRootLocation = storageRootLocation;
+        this.storageRootPathURI = storageRootPathURI;
+        this.entryRelativePath = entryRelativePath;
+        this.size = size;
+        this.collectionFlag = collectionFlag;
+        this.mimeType = mimeType;
     }
 
     public String getStorageId() {
@@ -102,6 +123,10 @@ public class StorageEntryInfo {
     @JsonIgnore
     public boolean isNotCollection() {
         return !isCollectionFlag();
+    }
+
+    public String getMimeType() {
+        return mimeType;
     }
 
     @Override

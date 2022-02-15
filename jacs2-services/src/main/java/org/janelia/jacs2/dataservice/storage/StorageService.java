@@ -2,13 +2,11 @@ package org.janelia.jacs2.dataservice.storage;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.glassfish.jersey.client.ClientProperties;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
 import org.janelia.model.domain.report.QuotaUsage;
 import org.janelia.model.jacs2.page.PageResult;
-import org.janelia.rendering.Streamable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +19,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -66,7 +65,7 @@ public class StorageService {
         }
     }
 
-    public Optional<DataStorageInfo> lookupDataStorage(String storageURI, String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
+    public List<DataStorageInfo> lookupDataStorage(String storageURI, String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target;
@@ -117,12 +116,7 @@ public class StorageService {
                 throw new IllegalStateException(messageBuilder.toString());
             } else {
                 PageResult<DataStorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<DataStorageInfo>>(){});
-                if (storageInfoResult.getResultList().size() > 1) {
-                    LOG.warn("Request {} returned more than one result {} please refine the query", target, storageInfoResult);
-                    return storageInfoResult.getResultList().stream().findFirst();
-                } else {
-                    return storageInfoResult.getResultList().stream().findFirst();
-                }
+                return storageInfoResult.getResultList();
             }
         } catch (IllegalStateException e) {
             throw e;
@@ -133,7 +127,16 @@ public class StorageService {
         }
     }
 
-    public Optional<JadeStorageVolume> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
+    public List<JadeStorageVolume> findStorageVolumes(String storagePath, String subjectKey, String authToken) {
+        return lookupStorageVolumes(null, null, storagePath, subjectKey, authToken).stream()
+                .filter(vsInfo -> storagePath.equals(vsInfo.getStorageVirtualPath())
+                        || storagePath.equals(vsInfo.getBaseStorageRootDir())
+                        || storagePath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))
+                        || storagePath.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/")))
+                .collect(Collectors.toList());
+    }
+
+    public List<JadeStorageVolume> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(masterStorageServiceURL)
@@ -155,15 +158,10 @@ public class StorageService {
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
                 LOG.error("Lookup storage volume request {} returned status {} while trying to get the storage for storageId = {}, storageName={}, storagePath={}", target, responseStatus, storageId, storageName, storagePath);
-                return Optional.empty();
+                return Collections.emptyList();
             } else {
                 PageResult<JadeStorageVolume> storageInfoResult = response.readEntity(new GenericType<PageResult<JadeStorageVolume>>(){});
-                if (storageInfoResult.getResultList().size() > 1) {
-                    LOG.warn("Request {} returned more than one result {} please refine the query", target, storageInfoResult);
-                    return storageInfoResult.getResultList().stream().findFirst();
-                } else {
-                    return storageInfoResult.getResultList().stream().findFirst();
-                }
+                return storageInfoResult.getResultList();
             }
         } catch (IllegalStateException e) {
             throw e;
@@ -280,7 +278,7 @@ public class StorageService {
                                                      String storagePath,
                                                      String subject,
                                                      String authToken,
-                                                     int level,
+                                                     int depth,
                                                      long offset,
                                                      int length) {
         Client httpclient = HttpUtils.createHttpClient();
@@ -289,8 +287,8 @@ public class StorageService {
             if (StringUtils.isNotBlank(storagePath)) {
                 target = target.path(storagePath);
             }
-            if (level > 0) {
-                target = target.queryParam("depth", level);
+            if (depth > 0) {
+                target = target.queryParam("depth", depth);
             }
             if (offset > 0) {
                 target = target.queryParam("offset", offset);
@@ -369,6 +367,7 @@ public class StorageService {
         JsonNode nodeAccessURLNode = jsonNode.get("nodeAccessURL");
         JsonNode nodeRelativePathNode = jsonNode.get("nodeRelativePath");
         JsonNode collectionFlagNode = jsonNode.get("collectionFlag");
+        JsonNode mimeTypeNode = jsonNode.get("mimeType");
         JsonNode sizeNode = jsonNode.get("size");
         String storageId = null;
         if (storageIdNode != null && !storageIdNode.isNull()) {
@@ -394,6 +393,7 @@ public class StorageService {
                 new StoragePathURI(storageRootPathURINode.asText()),
                 nodeRelativePathNode.asText(),
                 sizeNode.asLong(),
-                collectionFlagNode.asBoolean());
+                collectionFlagNode.asBoolean(),
+                mimeTypeNode.asText());
     }
 }

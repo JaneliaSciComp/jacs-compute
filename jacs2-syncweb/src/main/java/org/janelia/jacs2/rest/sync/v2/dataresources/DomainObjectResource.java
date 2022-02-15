@@ -218,6 +218,29 @@ public class DomainObjectResource {
         }
     }
 
+    @ApiOperation(value = "Gets DomainObjects by Property Value")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully got a list of DomainObjects", response = DomainObject.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal Server Error getting list of DomainObjects")
+    })
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/domainobject/withproperty")
+    public Response getObjectsWithProperty(@ApiParam DomainQuery query) {
+        LOG.trace("Start getObjectsByProperty({})", query);
+        Class<? extends DomainObject> clazz = DomainUtils.getObjectClassByName(query.getObjectType());
+        try {
+            List<? extends DomainObject> domainObjects = legacyDomainDao.getDomainObjectsWithProperty(query.getSubjectKey(), clazz, query.getPropertyName(), query.getPropertyValue());
+            return Response.ok()
+                    .entity(new GenericEntity<List<? extends DomainObject>>(domainObjects){})
+                    .build();
+        } finally {
+            LOG.trace("Finished getObjectsByProperty({})", query);
+        }
+    }
+
     @ApiOperation(
             value = "Gets Folder References to a DomainObject ",
             notes = "uses the DomainObject parameter of the DomainQuery"
