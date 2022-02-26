@@ -25,7 +25,7 @@ public class StorageContentHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageContentHelper.class);
 
-    private final StorageService storageService;
+    protected final StorageService storageService;
 
     public StorageContentHelper(StorageService storageService) {
         this.storageService = storageService;

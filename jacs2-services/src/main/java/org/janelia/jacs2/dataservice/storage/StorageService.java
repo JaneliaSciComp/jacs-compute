@@ -3,6 +3,7 @@ package org.janelia.jacs2.dataservice.storage;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.client.ClientProperties;
+import org.janelia.jacs2.asyncservice.dataimport.StorageObject;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
 import org.janelia.model.domain.report.QuotaUsage;
@@ -341,7 +342,54 @@ public class StorageService {
         return StringUtils.appendIfMissing(storageURI, "/") + "data_content/" + entryName;
     }
 
-    private Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, String jacsPrincipal, String authToken) {
+    public boolean exists(String storageURI, String subjectKey, String authToken) {
+        Client httpclient = HttpUtils.createHttpClient();
+        try {
+            WebTarget target = httpclient.target(storageURI);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(
+                    target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
+            Response response = requestBuilder.head();
+            if (response.getStatus() != Response.Status.NOT_FOUND.getStatusCode()) {
+                return false;
+            }
+            else if (response.getStatus() >= 200 && response.getStatus() < 300) {
+                return true;
+            }
+            else {
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
+            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            httpclient.close();
+        }
+    }
+
+    public long getContentLength(String storageURI, String subjectKey, String authToken) {
+        Client httpclient = HttpUtils.createHttpClient();
+        try {
+            WebTarget target = httpclient.target(storageURI);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(
+                    target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
+            Response response = requestBuilder.head();
+            if (response.getStatus() >= 200 && response.getStatus() < 300) {
+                return response.getLength();
+            }
+            else {
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
+            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            httpclient.close();
+        }
+    }
+
+    protected Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, String jacsPrincipal, String authToken) {
         Invocation.Builder requestWithCredentialsBuilder = requestBuilder;
         if (StringUtils.isNotBlank(authToken)) {
             requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(

@@ -5,7 +5,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
 import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
-import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -13,7 +12,6 @@ import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.domain.DomainConstants;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
-import org.janelia.rendering.RenderedVolumeLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

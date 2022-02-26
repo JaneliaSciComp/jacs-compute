@@ -1,5 +1,7 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.nio.file.Path;
 
 /**
@@ -10,21 +12,25 @@ public class StorageObject {
     private BetterStorageHelper helper;
     private StorageLocation location;
     private StorageObject parent;
-    private StorageContentInfo mainRep;
+    private String name;
 
-    public StorageObject(BetterStorageHelper helper, StorageLocation location, StorageObject parent, ContentStack contentStack) {
+    public StorageObject(BetterStorageHelper helper, StorageLocation location, StorageObject parent, String name) {
+        super();
         this.helper = helper;
         this.location = location;
         this.parent = parent;
-        this.mainRep = contentStack.getMainRep();
+        this.name = name;
     }
 
     /**
-     * Does this object represent a directory which has contents that can be listed?
-     * @return true if the object is a directory and can be listed
+     * Convenience function to get the containing class.
      */
-    public boolean isCollection() {
-        return mainRep.getRemoteInfo().isCollection();
+    public BetterStorageHelper getHelper() {
+        return helper;
+    }
+
+    StorageLocation getLocation() {
+        return location;
     }
 
     /**
@@ -32,7 +38,7 @@ public class StorageObject {
      * @return name of the object
      */
     public String getName() {
-        return mainRep.getRemoteInfo().getEntryRelativePath();
+        return name;
     }
 
     /**
@@ -51,19 +57,19 @@ public class StorageObject {
         return parent == null ? location.getRelativePath().resolve(getName()) : parent.getRelativePath().resolve(getName());
     }
 
-    StorageLocation getLocation() {
-        return location;
-    }
-
-    /**
-     * Convenience function to get the containing class.
-     */
-    public BetterStorageHelper getHelper() {
-        return helper;
+    public StorageObject resolve(String name) {
+        return new StorageObject(helper, location, this, name);
     }
 
     @Override
     public String toString() {
-        return getAbsolutePath().toString();
+        return new ToStringBuilder(this)
+                .append("location", location)
+                .append("parentName", parent.name)
+                .append("name", name)
+                .append("absolutePath", getAbsolutePath())
+                .append("relativePath", getRelativePath())
+                .toString();
     }
+
 }
