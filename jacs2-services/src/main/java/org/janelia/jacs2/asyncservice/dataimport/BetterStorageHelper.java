@@ -1,12 +1,15 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 import org.janelia.jacs2.dataservice.storage.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -88,9 +91,7 @@ public class BetterStorageHelper extends StorageContentHelper {
      * @return true if the path exists
      */
     public boolean exists(StorageObject storageObject) {
-        StorageEntryInfo storageInfo = storageObject.getLocation().getStorageInfo();
-        String storageURI = storageInfo.getEntryURL();
-        return storageService.exists(storageURI, subjectKey, authToken);
+        return storageService.exists(storageObject.getContentURI(), subjectKey, authToken);
     }
 
     /**
@@ -99,10 +100,17 @@ public class BetterStorageHelper extends StorageContentHelper {
      * @return stream of the content in the given object
      */
     public InputStream getContent(StorageObject storageObject) {
-        StorageLocation location = storageObject.getLocation();
-        StorageEntryInfo storageInfo = location.getStorageInfo();
-        String storageURI = storageInfo.getStorageURL()+"/data_content/"+storageInfo.getEntryRelativePath();
-        return  storageService.getStorageContent(storageURI, subjectKey, authToken);
+        return storageService.getStorageContent(storageObject.getContentURI(), subjectKey, authToken);
+    }
+
+    /**
+     * Returns the content of the given object as a UTF-8 string. The object should be a file, not a collection.
+     * @param storageObject storage object to query
+     * @return stream of the content in the given object
+     */
+    public String getContentAsString(StorageObject storageObject) throws IOException {
+        InputStream stream = storageService.getStorageContent(storageObject.getContentURI(), subjectKey, authToken);
+        return IOUtils.toString(stream, StandardCharsets.UTF_8);
     }
 
     /**
@@ -111,9 +119,6 @@ public class BetterStorageHelper extends StorageContentHelper {
      * @return stream of the content in the given object
      */
     public long getContentLength(StorageObject storageObject) {
-        StorageLocation location = storageObject.getLocation();
-        StorageEntryInfo storageInfo = location.getStorageInfo();
-        String storageURI = storageInfo.getStorageURL()+"/data_content/"+storageInfo.getEntryRelativePath();
-        return  storageService.getContentLength(storageURI, subjectKey, authToken);
+        return  storageService.getContentLength(storageObject.getContentURI(), subjectKey, authToken);
     }
 }

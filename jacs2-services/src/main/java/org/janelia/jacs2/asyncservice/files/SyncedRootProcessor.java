@@ -2,6 +2,7 @@ package org.janelia.jacs2.asyncservice.files;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
 import org.janelia.jacs2.asyncservice.dataimport.BetterStorageHelper;
@@ -9,6 +10,7 @@ import org.janelia.jacs2.asyncservice.dataimport.StorageContentObject;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.storage.StorageService;
+import org.janelia.model.access.domain.dao.SetFieldValueHandler;
 import org.janelia.model.access.domain.dao.SyncedPathDao;
 import org.janelia.model.domain.files.DiscoveryAgentType;
 import org.janelia.model.domain.files.SyncedPath;
@@ -24,6 +26,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * This service searches the given path using a set of discovery agents which synchronize paths to the database.
@@ -88,16 +93,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
     public ServiceComputation<JacsServiceResult<Long>> process(JacsServiceData jacsServiceData) {
         SyncedRootArgs args = getArgs(jacsServiceData);
         String authToken = ResourceHelper.getAuthToken(jacsServiceData.getResources());
-
-        SyncedPath syncedPath = syncedPathDao.findById(args.syncedRootId);
-        if (syncedPath==null) {
-            throw new IllegalArgumentException("Cannot find SyncedRoot#"+args.syncedRootId);
-        }
-        if (!(syncedPath instanceof SyncedRoot)) {
-            throw new IllegalArgumentException("SyncedPath#"+args.syncedRootId+" is not a SyncedRoot");
-        }
-
-        SyncedRoot syncedRoot = (SyncedRoot)syncedPath;
+        SyncedRoot syncedRoot = getSyncedRoot(args.syncedRootId);
 
         BetterStorageHelper storageContentHelper = new BetterStorageHelper(
                 storageService, jacsServiceData.getOwnerKey(), authToken);
@@ -123,26 +119,58 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
             logger.info("Service running in dry run mode. No discovery agents will be called.");
         }
 
-        walkStorage(syncedRoot, storageLocation, agents, syncedRoot.getDepth(), "");
+        Map<String, SyncedPath> currentPaths = syncedPathDao.getChildren(
+                syncedRoot.getOwnerKey(), syncedRoot, 0, -1)
+                .stream().collect(Collectors.toMap(SyncedPath::getName, Function.identity()));
+
+        // Initialize all database paths to existsInStorage=false
+        for (String name : currentPaths.keySet()) {
+            currentPaths.get(name).setExistsInStorage(false);
+        }
+
+        // Process all paths in storage
+        walkStorage(syncedRoot, currentPaths, storageLocation, agents, syncedRoot.getDepth(), "");
+
+        // Any database paths that are still existsInStorage=false should have that persisted since they were not found
+        for (String name : currentPaths.keySet()) {
+            SyncedPath syncedPath = currentPaths.get(name);
+            if (!syncedPath.isExistsInStorage()) {
+                LOG.info("Path no longer exists in storage: {}", syncedPath.getFilepath());
+                syncedPathDao.update(syncedPath.getId(), ImmutableMap.of(
+                        "existsInStorage", new SetFieldValueHandler<>(false)));
+            }
+        }
 
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
     }
 
-    private void walkStorage(SyncedRoot syncedRoot, StorageContentObject location,
+    private void walkStorage(SyncedRoot syncedRoot, Map<String, SyncedPath> currentPaths, StorageContentObject location,
                              List<FileDiscoveryAgent> agents, int levels, String indent) {
         location.getHelper().listContent(location)
                 .forEach(child -> {
                     logger.info(indent+"{} -> {}", child.getName(), child.getAbsolutePath());
-                    logger.info(indent+"      {}", child);
+                    logger.debug(indent+"      {}", child);
                     if (child.isCollection()) {
                         if (levels > 1) {
-                            walkStorage(syncedRoot, child, agents, levels - 1, indent+"  ");
+                            walkStorage(syncedRoot, currentPaths, child, agents, levels - 1, indent+"  ");
                         }
                     }
                     for (FileDiscoveryAgent agent : agents) {
-                        agent.discover(syncedRoot, child);
+                        agent.discover(syncedRoot, currentPaths, child);
                     }
                 });
+    }
+
+    private SyncedRoot getSyncedRoot(Long syncedRootId) {
+        SyncedPath syncedPath = syncedPathDao.findById(syncedRootId);
+        if (syncedPath==null) {
+            throw new IllegalArgumentException("Cannot find SyncedRoot#"+syncedRootId);
+        }
+        if (!(syncedPath instanceof SyncedRoot)) {
+            throw new IllegalArgumentException("SyncedPath#"+syncedRootId+" is not a SyncedRoot");
+        }
+
+        return (SyncedRoot)syncedPath;
     }
 
     private SyncedRootArgs getArgs(JacsServiceData jacsServiceData) {

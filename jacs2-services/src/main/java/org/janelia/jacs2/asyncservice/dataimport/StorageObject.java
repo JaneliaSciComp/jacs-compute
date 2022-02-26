@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.dataimport;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacs2.dataservice.storage.StorageEntryInfo;
 
 import java.nio.file.Path;
 
@@ -59,6 +60,16 @@ public class StorageObject {
 
     public StorageObject resolve(String name) {
         return new StorageObject(helper, location, this, name);
+    }
+
+    /**
+     * Returns the URI for accessing the storage content.
+     * @return URI as a string
+     */
+    public String getContentURI() {
+        StorageLocation location = getLocation();
+        StorageEntryInfo storageInfo = location.getStorageInfo();
+        return storageInfo.getStorageURL()+"/data_content/"+getRelativePath();
     }
 
     @Override

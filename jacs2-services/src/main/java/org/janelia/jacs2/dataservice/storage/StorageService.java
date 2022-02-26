@@ -349,11 +349,11 @@ public class StorageService {
             Invocation.Builder requestBuilder = createRequestWithCredentials(
                     target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
             Response response = requestBuilder.head();
-            if (response.getStatus() != Response.Status.NOT_FOUND.getStatusCode()) {
-                return false;
-            }
-            else if (response.getStatus() >= 200 && response.getStatus() < 300) {
+            if (response.getStatus() >= 200 && response.getStatus() < 300) {
                 return true;
+            }
+            else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                return false;
             }
             else {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());

@@ -140,9 +140,9 @@ public class SyncedPathResource {
                                      @ApiParam @QueryParam("syncedRootId") final Long syncedRootId) {
         LOG.trace("Start removeSyncedRoot({}, SyncedRootId={})", subjectKey, syncedRootId);
         try {
-            syncedPathDao.deleteByIdAndSubjectKey(syncedRootId, subjectKey);
-            return Response.noContent()
-                    .build();
+            SyncedRoot syncedRoot = (SyncedRoot)syncedPathDao.findById(syncedRootId);
+            syncedPathDao.removeSyncedRoot(subjectKey, syncedRoot);
+            return Response.noContent().build();
         } finally {
             LOG.trace("Finished removeSyncedRoot({}, syncedRootId={})", subjectKey, syncedRootId);
         }
