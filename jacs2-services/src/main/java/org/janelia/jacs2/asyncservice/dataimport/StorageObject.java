@@ -76,7 +76,7 @@ public class StorageObject {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("location", location)
-                .append("parentName", parent.name)
+                .append("parent", parent==null?"null":parent.name)
                 .append("name", name)
                 .append("absolutePath", getAbsolutePath())
                 .append("relativePath", getRelativePath())
