@@ -51,6 +51,7 @@ public class TestResourceDependenciesProducer {
             )
             .build();
     private AnnotationDao annotationDao = mock(AnnotationDao.class);
+    private SyncedPathDao syncedPathDao = mock(SyncedPathDao.class);
     private DatasetDao datasetDao = mock(DatasetDao.class);
     private ColorDepthImageDao colorDepthImageDao = mock(ColorDepthImageDao.class);
     private EmBodyDao emBodyDao = mock(EmBodyDao.class);
@@ -109,6 +110,12 @@ public class TestResourceDependenciesProducer {
     @Produces
     public AnnotationDao getAnnotationSearchableDao() {
         return annotationDao;
+    }
+
+    @AsyncIndex
+    @Produces
+    public SyncedPathDao getSyncedPathDao() {
+        return syncedPathDao;
     }
 
     @AsyncIndex

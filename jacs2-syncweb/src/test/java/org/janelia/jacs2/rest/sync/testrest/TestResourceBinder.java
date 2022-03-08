@@ -78,6 +78,7 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getLogger()).to(Logger.class);
         bind(dependenciesProducer.getApplicationConfig()).to(ApplicationConfig.class).qualifiedBy(applicationPropertiesAnnotation);
         bind(dependenciesProducer.getAnnotationSearchableDao()).to(AnnotationDao.class).qualifiedBy(asyncIndexAnnotation);
+        bind(dependenciesProducer.getSyncedPathDao()).to(SyncedPathDao.class).qualifiedBy(asyncIndexAnnotation);
         bind(dependenciesProducer.getDatasetDao()).to(DatasetDao.class);
         bind(dependenciesProducer.getColorDepthImageDao()).to(ColorDepthImageDao.class);
         bind(dependenciesProducer.getEmBodyDao()).to(EmBodyDao.class);
