@@ -48,7 +48,6 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
     @Inject
     DbMaintenanceProcessor(ServiceComputationFactory computationFactory,
                            JacsServiceDataPersistence jacsServiceDataPersistence,
-                           @Any Instance<ExternalProcessRunner> serviceRunners,
                            @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                            DbMaintainer dbMainainer,
                            JacsNotificationDao jacsNotificationDao,

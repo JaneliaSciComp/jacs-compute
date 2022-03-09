@@ -1,5 +1,6 @@
 package org.janelia.jacs2.user;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.asyncservice.common.cluster.ComputeAccounting;
 import org.janelia.jacs2.auth.impl.AuthProvider;
@@ -109,7 +110,7 @@ public class UserManager {
         }
 
         if (userMetadata.getUserGroupRoles()!=null) {
-            log.trace("Overriding group roles ({}) with {}", user.getUserGroupRoles().size(), userMetadata.getUserGroupRoles().size());
+            log.trace("Overriding group roles ({}) with {} roles", user.getUserGroupRoles().size(), userMetadata.getUserGroupRoles().size());
             user.setUserGroupRoles(userMetadata.getUserGroupRoles());
         }
 
@@ -127,12 +128,15 @@ public class UserManager {
             // Create default workspace
             defaultWorkspace = workspaceNodeDao.createDefaultWorkspace(user.getKey());
 
-            // Add to default groups
-            Set<UserGroupRole> defaultRoles = Stream.of(defaultReadGroups.split(","))
-                    .map(groupKey -> new UserGroupRole(groupKey, GroupRole.Reader))
-                    .collect(Collectors.toSet());
-            subjectDao.updateUserGroupRoles(user, defaultRoles);
-            log.info("Added {} to default groups: {}", username, defaultReadGroups);
+            if (CollectionUtils.isEmpty(user.getUserGroupRoles())) {
+                // Add to default groups
+                Set<UserGroupRole> defaultUserGroupRoles = Stream.of(defaultReadGroups.split(","))
+                        .map(groupKey -> new UserGroupRole(groupKey, GroupRole.Reader))
+                        .collect(Collectors.toSet());
+                subjectDao.updateUserGroupRoles(user, defaultUserGroupRoles);
+                log.info("Added {} to default groups: {}", username, defaultUserGroupRoles);
+                user.setUserGroupRoles(defaultUserGroupRoles);
+            }
 
             if (newUserFileStoreCreation) {
                 // Create filestore paths
