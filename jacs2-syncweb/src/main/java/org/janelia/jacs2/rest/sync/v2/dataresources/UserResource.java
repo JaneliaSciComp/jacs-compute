@@ -116,6 +116,11 @@ public class UserResource {
         String userName = user.getName();
         LOG.trace("Start createUser({})", user.getName());
         try {
+            String inputPassword = user.getPassword();
+            if (inputPassword != null) {
+                // set the password hash
+                user.setPassword(pwProvider.generatePBKDF2Hash(inputPassword));
+            }
             User newUser = userManager.createUser(user);
             return Response.ok(newUser).build();
         }
