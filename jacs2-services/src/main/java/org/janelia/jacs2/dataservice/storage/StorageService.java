@@ -3,7 +3,6 @@ package org.janelia.jacs2.dataservice.storage;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.client.ClientProperties;
-import org.janelia.jacs2.asyncservice.dataimport.StorageObject;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.utils.HttpUtils;
 import org.janelia.model.domain.report.QuotaUsage;

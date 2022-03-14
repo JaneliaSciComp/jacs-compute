@@ -34,7 +34,7 @@ public class HttpUtils {
 
     private static SSLContext createSSLContext() {
         try {
-            SSLContext sslContext = SSLContext.getInstance("TLSv1");
+            SSLContext sslContext = SSLContext.getInstance("TLS");
             TrustManager[] trustManagers = {
                     new X509TrustManager() {
                         @Override
