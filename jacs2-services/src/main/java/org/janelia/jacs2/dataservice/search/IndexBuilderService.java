@@ -1,5 +1,6 @@
 package org.janelia.jacs2.dataservice.search;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -53,12 +54,13 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
             domainObjectIndexer.removeIndex();
         }
         Set<Class<?>> searcheableClasses = DomainUtils.getDomainClassesAnnotatedWith(SearchType.class);
+        Map<String, String> mdcContext = MDC.getCopyOfContextMap();
         int result = searcheableClasses.stream()
-                .parallel()
                 .filter(DomainObject.class::isAssignableFrom)
                 .filter(domainObjectClassFilter)
+                .parallel()
                 .map(clazz -> (Class<? extends DomainObject>) clazz)
-                .map(domainClass -> indexDocumentsOfType(domainObjectIndexer, domainClass))
+                .map(domainClass -> indexDocumentsOfType(domainObjectIndexer, domainClass, mdcContext))
                 .reduce(0, (r1, r2) -> r1 + r2);
         LOG.info("Completed indexing {} objects after {}s", result, stopwatch.elapsed(TimeUnit.SECONDS));
         optimize(solrServer);
@@ -67,7 +69,8 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         return result;
     }
 
-    private int indexDocumentsOfType(DomainObjectIndexer domainObjectIndexer, Class<? extends DomainObject> domainClass) {
+    private int indexDocumentsOfType(DomainObjectIndexer domainObjectIndexer, Class<? extends DomainObject> domainClass, Map<String, String> mdcContextMap) {
+        MDC.setContextMap(mdcContextMap);
         MDC.put("serviceName", domainClass.getSimpleName());
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
