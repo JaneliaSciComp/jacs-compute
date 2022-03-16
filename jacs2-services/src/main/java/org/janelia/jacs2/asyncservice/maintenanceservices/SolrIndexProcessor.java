@@ -96,7 +96,7 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
     public ServiceComputation<JacsServiceResult<Integer>> process(JacsServiceData jacsServiceData) {
         SolrIndexArgs args = getArgs(jacsServiceData);
         logMaintenanceEvent("RefreshSolrIndex", jacsServiceData.getId());
-        Predicate<Class> indexedClassesPredicate;
+        Predicate<Class<?>> indexedClassesPredicate;
         if (CollectionUtils.isEmpty(args.indexedClassnamesFilter)) {
             indexedClassesPredicate = clazz -> true;
         } else {
@@ -105,7 +105,7 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
                     .collect(Collectors.toSet());
             indexedClassesPredicate = clazz -> indexedClassnames.contains(clazz.getName()) || indexedClassnames.contains(clazz.getSimpleName());
         }
-        Predicate<Class> indexedClassesFilter;
+        Predicate<Class<?>> indexedClassesFilter;
         if (CollectionUtils.isNotEmpty(args.excludedClassnamesFilter)) {
             Set<String> excludedClassnames = args.excludedClassnamesFilter.stream()
                     .flatMap(cn -> Splitter.on(',').omitEmptyStrings().trimResults().splitToList(cn).stream())

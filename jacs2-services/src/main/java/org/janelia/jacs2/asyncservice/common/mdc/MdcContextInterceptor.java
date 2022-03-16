@@ -17,6 +17,7 @@ public class MdcContextInterceptor {
         Object[] args = invocationContext.getParameters();
         String currentServiceNameContext = MDC.get("serviceName");
         String currentServiceIdContext = MDC.get("serviceId");
+        // find an arg of type JacsServiceData and put the service name and ID into the MDC
         if (args != null) {
             for (Object arg : args) {
                 if (arg instanceof JacsServiceData) {

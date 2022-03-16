@@ -211,12 +211,11 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
 
             @Override
             public long estimateSize() {
-                int estimateSize = dao.getCollectionByClass(domainClass).find(
+                return dao.getCollectionByClass(domainClass).find(
                         "{$or:[{class:{$exists:0}},{class:#}]}", domainClass.getName())
                         .with((DBCursor cursor) -> cursor.noCursorTimeout(true))
                         .as(domainClass)
                         .count();
-                return estimateSize;
             }
 
             @Override

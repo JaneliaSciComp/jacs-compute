@@ -42,8 +42,7 @@ public class IndexingProducer {
             Instance<NodeDao<? extends Node>> nodeDaosProvider,
             DomainAnnotationGetter nodeAnnotationGetter,
             DomainObjectGetter objectGetter,
-            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
-            @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
+            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize) {
         return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,
                 nodeDaosProvider.stream()
                         .map(nodeDao -> new AllNodeAncestorsGetterImpl<>(new DirectNodeAncestorsGetterImpl<>(nodeDao)))

@@ -36,12 +36,12 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         super(legacyDomainDao, solrConfig, domainObjectIndexerProvider);
     }
 
-    public int indexAllDocuments(boolean clearIndex, Predicate<Class> domainObjectClassFilter) {
+    public int indexAllDocuments(boolean clearIndex, Predicate<Class<?>> domainObjectClassFilter) {
         return execIndexAllDocuments(clearIndex, domainObjectClassFilter);
     }
 
     @SuppressWarnings("unchecked")
-    private int execIndexAllDocuments(boolean clearIndex, Predicate<Class> domainObjectClassFilter) {
+    private int execIndexAllDocuments(boolean clearIndex, Predicate<Class<?>> domainObjectClassFilter) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         String solrRebuildCore = solrConfig.getSolrBuildCore();
         SolrServer solrServer = createSolrBuilder()
@@ -55,8 +55,8 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         Set<Class<?>> searcheableClasses = DomainUtils.getDomainClassesAnnotatedWith(SearchType.class);
         int result = searcheableClasses.stream()
                 .parallel()
-                .filter(domainObjectClassFilter)
                 .filter(DomainObject.class::isAssignableFrom)
+                .filter(domainObjectClassFilter)
                 .map(clazz -> (Class<? extends DomainObject>) clazz)
                 .map(domainClass -> indexDocumentsOfType(domainObjectIndexer, domainClass))
                 .reduce(0, (r1, r2) -> r1 + r2);
@@ -71,7 +71,7 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
         MDC.put("serviceName", domainClass.getSimpleName());
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
-            LOG.info("Indexing objects of type {}", domainClass.getName());
+            LOG.info("Begin indexing objects of type {}", domainClass.getName());
             return domainObjectIndexer.indexDocumentStream(legacyDomainDao.iterateDomainObjects(domainClass));
         } finally {
             LOG.info("Completed indexing objects of type {} in {}s", domainClass.getName(), stopwatch.elapsed(TimeUnit.SECONDS));

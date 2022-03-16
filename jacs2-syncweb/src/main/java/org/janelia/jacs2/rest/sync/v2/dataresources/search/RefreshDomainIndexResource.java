@@ -78,7 +78,7 @@ public class RefreshDomainIndexResource {
                     asyncResponse.resume(new WebApplicationException(Response.Status.FORBIDDEN));
                     return;
                 }
-                Predicate<Class> indexedClassesFilter;
+                Predicate<Class<?>> indexedClassesFilter;
                 if (CollectionUtils.isEmpty(indexedClassnamesParam)) {
                     indexedClassesFilter = clazz -> true;
                 } else {
