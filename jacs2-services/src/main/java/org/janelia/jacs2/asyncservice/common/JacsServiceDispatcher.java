@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -36,6 +37,7 @@ public class JacsServiceDispatcher {
     private EmailNotificationService emailNotificationService;
     private Logger logger;
 
+    @SuppressWarnings("unused")
     JacsServiceDispatcher() {
         // CDI required ctor
     }
@@ -83,15 +85,18 @@ public class JacsServiceDispatcher {
     @SuppressWarnings("unchecked")
     private void dispatchService(JacsServiceData jacsServiceData) {
         logger.debug("Dispatch service {}", jacsServiceData);
-
+        AtomicReference<JacsServiceData> jacsServiceDataRef = new AtomicReference<>(jacsServiceData);
         try {
-            ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceData);
-            JacsServiceState initialServiceState = jacsServiceData.getState();
-            jacsServiceDataPersistence.updateServiceState(jacsServiceData, JacsServiceState.DISPATCHED, JacsServiceEvent.NO_EVENT);
-            serviceComputationFactory.newCompletedComputation(jacsServiceData)
+            ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceDataRef.get());
+            JacsServiceState initialServiceState = jacsServiceDataRef.get().getState();
+            jacsServiceDataPersistence.updateServiceState(jacsServiceDataRef.get(), JacsServiceState.DISPATCHED, JacsServiceEvent.NO_EVENT);
+            serviceComputationFactory.newCompletedComputation(jacsServiceDataRef.get())
                     .thenSuspendUntil(new WaitingForDependenciesContinuationCond<>(
                             Function.identity(),
-                            (JacsServiceData sd, JacsServiceData tmpSd) -> tmpSd,
+                            (JacsServiceData sd, JacsServiceData tmpSd) -> {
+                                jacsServiceDataRef.set(tmpSd);
+                                return tmpSd;
+                            },
                             jacsServiceDataPersistence,
                             logger).negate())
                     .thenApply((JacsServiceData sd) -> {
@@ -109,20 +114,20 @@ public class JacsServiceDispatcher {
                         }
                         logger.debug("Update service args for {} to {}", sd, sdUpdates);
                         jacsServiceDataPersistence.update(sd, sdUpdates);
+                        jacsServiceDataRef.set(sd);
                         return sd;
                     })
-                    .thenCompose((JacsServiceData sd) -> serviceProcessor.process(sd))
+                    .thenCompose(serviceProcessor::process)
                     .thenApply(r -> {
+                        jacsServiceDataRef.set(r.getJacsServiceData());
                         success(r.getJacsServiceData());
                         return r;
                     })
-                    .exceptionally((Throwable exc) -> JacsServiceResult.class.cast(handleException(jacsServiceData, exc)))
-                    .whenComplete((r, exc) -> {
-                        serviceFinally(jacsServiceData);
-                    });
+                    .exceptionally((Throwable exc) -> JacsServiceResult.class.cast(handleException(jacsServiceDataRef.get(), exc)))
+                    .whenComplete((r, exc) -> serviceFinally(jacsServiceDataRef.get()));
         } catch (Throwable e) {
-            handleException(jacsServiceData, e);
-            serviceFinally(jacsServiceData);
+            handleException(jacsServiceDataRef.get(), e);
+            serviceFinally(jacsServiceDataRef.get());
         }
     }
 
@@ -159,8 +164,8 @@ public class JacsServiceDispatcher {
         }
         sendNotification(latestServiceData, JacsServiceLifecycleStage.SUCCESSFUL_PROCESSING);
         emailNotificationService.sendNotification(
-                String.format("Service %s#%d completed successfully", serviceData.getName(), serviceData.getId()),
-                String.format("Service %s#%d - %s completed successfully", serviceData.getName(), serviceData.getId(), serviceData.getArgs()),
+                String.format("Service %s#%s completed successfully", serviceData.getName(), serviceData.getId()),
+                String.format("Service %s#%s - %s completed successfully", serviceData.getName(), serviceData.getId(), serviceData.getArgs()),
                 serviceData.getSuccessEmailNotifications()
         );
 
@@ -191,8 +196,8 @@ public class JacsServiceDispatcher {
                 jacsServiceDataPersistence.updateServiceState(latestServiceData, JacsServiceState.SUSPENDED, JacsServiceEvent.NO_EVENT);
                 sendNotification(latestServiceData, JacsServiceLifecycleStage.SUSPEND_PROCESSING);
                 emailNotificationService.sendNotification(
-                        String.format("Service %s#%d processing has been suspended %s", serviceData.getName(), serviceData.getId(), serviceData.getState()),
-                        String.format("Service %s#%d - %s has been suspended %s", serviceData.getName(), serviceData.getId(), serviceData.getArgs(), serviceData.getState()),
+                        String.format("Service %s#%s processing has been suspended %s", serviceData.getName(), serviceData.getId(), serviceData.getState()),
+                        String.format("Service %s#%s - %s has been suspended %s", serviceData.getName(), serviceData.getId(), serviceData.getArgs(), serviceData.getState()),
                         serviceData.getFailureEmailNotifications()
                 );
             }
@@ -208,8 +213,8 @@ public class JacsServiceDispatcher {
             }
             sendNotification(latestServiceData, JacsServiceLifecycleStage.FAILED_PROCESSING);
             emailNotificationService.sendNotification(
-                    String.format("Service %s#%d processing %s", serviceData.getName(), serviceData.getId(), serviceData.getState()),
-                    String.format("Service %s#%d - %s has failed: %s", serviceData.getName(), serviceData.getId(), serviceData.getArgs(), serviceData.getState()),
+                    String.format("Service %s#%s processing %s", serviceData.getName(), serviceData.getId(), serviceData.getState()),
+                    String.format("Service %s#%s - %s has failed: %s", serviceData.getName(), serviceData.getId(), serviceData.getArgs(), serviceData.getState()),
                     serviceData.getFailureEmailNotifications()
             );
         }
