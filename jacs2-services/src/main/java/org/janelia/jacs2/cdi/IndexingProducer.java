@@ -50,8 +50,7 @@ public class IndexingProducer {
                         .collect(Collectors.toList()),
                 nodeAnnotationGetter,
                 objectGetter,
-                solrBatchSize,
-                solrCommitSize)
+                solrBatchSize)
                 ;
     }
 
@@ -59,12 +58,11 @@ public class IndexingProducer {
      * For rebuilding the index we use an object indexer that uses temporary cached ancestors and annotation in order
      * to minimize the trips to the database.
      *
-     * @param allNodeAncestorsGetterProvider
+     * @param nodeDaosProvider
      * @param nodeAnnotationGetterProvider
      * @param objectGetter
      * @param solrBatchSize
-     * @param solrCommitSize
-     * @return
+     * @return an indexer provider for DomainObject
      */
     @WithCache
     @Produces
@@ -72,16 +70,14 @@ public class IndexingProducer {
             Instance<NodeDao<? extends Node>> nodeDaosProvider,
             @WithCache Instance<DomainAnnotationGetter> nodeAnnotationGetterProvider,
             DomainObjectGetter objectGetter,
-            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize,
-            @IntPropertyValue(name = "Solr.CommitSize", defaultValue = 200000) int solrCommitSize) {
+            @IntPropertyValue(name = "Solr.BatchSize", defaultValue = 20000) int solrBatchSize) {
         return (SolrServer solrServer) -> new SolrBasedDomainObjectIndexer(solrServer,
                 nodeDaosProvider.stream()
                         .map(CachedAllNodeAncestorsGetterImpl::new)
                         .collect(Collectors.toList()),
                 nodeAnnotationGetterProvider.get(),
                 objectGetter,
-                solrBatchSize,
-                solrCommitSize)
+                solrBatchSize)
                 ;
     }
 

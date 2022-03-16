@@ -53,7 +53,8 @@ public class StorageContentHelper {
                             new StoragePathURI(relativeStoragePath),
                             relativeStoragePath,
                             null, // size is not known
-                            true // this really does not matter but assume the path is a directory
+                            true, // this really does not matter but assume the path is a directory
+                            null // unspecified mime
                     );
                 });
     }
@@ -294,7 +295,8 @@ public class StorageContentHelper {
                     mainRep.getRemoteInfo().getStorageRootPathURI(),
                     constructStorageEntryPath(newContentRepInfo, remotePathPrefix),
                     size,
-                    false
+                    false,
+                    null // unspecified mimetype
             ));
         }
         contentStack.addRepresentation(newContentRepInfo);

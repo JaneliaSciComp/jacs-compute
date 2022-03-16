@@ -128,7 +128,8 @@ public class DataTreeLoadProcessor extends AbstractServiceProcessor<List<Content
                     null,
                     args.storagePath,
                     null, // size is not known
-                    true // this really does not matter but assume the path is a directory
+                    true, // this really does not matter but assume the path is a directory
+                    null // unknown mime
             );
         } else {
             throw new IllegalArgumentException("Either storage path or the storage URL must be provided");
