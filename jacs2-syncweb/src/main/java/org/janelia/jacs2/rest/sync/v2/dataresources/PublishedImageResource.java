@@ -38,7 +38,6 @@ import java.util.List;
 @RequireAuthentication
 @ApplicationScoped
 @Path("/publishedImage")
-
 public class PublishedImageResource {
     private static final Logger LOG = LoggerFactory.getLogger(PublishedImageResource.class);
 
@@ -54,7 +53,6 @@ public class PublishedImageResource {
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    //@Path("/image/{slideCode}/{alignmentSpace}/{objective}")
     @Path("/image/{alignmentSpace}/{objective}/{slideCode}")
     public Response getImage(@ApiParam @PathParam("alignmentSpace") String alignmentSpace,
                              @ApiParam @PathParam("objective") String objective,
