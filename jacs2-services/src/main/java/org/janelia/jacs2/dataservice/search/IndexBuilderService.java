@@ -109,7 +109,8 @@ public class IndexBuilderService extends AbstractIndexingServiceSupport {
                             mr1.putAll(mr2);
                             return mr1;
                         });
-        LOG.info("Completed indexing {} objects after {}s", result, stopwatch.elapsed(TimeUnit.SECONDS));
+        int nDocs = result.values().stream().reduce(0, Integer::sum);
+        LOG.info("Completed indexing {} objects after {}s", nDocs, stopwatch.elapsed(TimeUnit.SECONDS));
         optimize(solrServer);
         swapCores(solrRebuildCore, solrConfig.getSolrMainCore());
         LOG.info("The new SOLR index is now live (after {}s)", stopwatch.elapsed(TimeUnit.SECONDS));

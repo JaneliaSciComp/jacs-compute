@@ -44,8 +44,8 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
         List<String> indexedClassnamesFilter;
         @Parameter(names = "-excludedClassnames", description = "Classes that will not be indexed. If not defined then it indexes all searchable types.")
         List<String> excludedClassnamesFilter;
-        @Parameter(names = "-verify", arity = 0, description = "Verify indexing operation")
-        boolean verifyIndexingOperation = false;
+        @Parameter(names = "-skip-verify", arity = 0, description = "Verify indexing operation")
+        boolean skipVerifyIndexingOperation = false;
 
         SolrIndexArgs() {
             super("Solr index rebuild service.");
@@ -124,7 +124,10 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
         int nDocs = indexedResults.values().stream().reduce(0, Integer::sum);
         logger.info("Completed indexing {} documents", nDocs);
         boolean indexingErrorsFound;
-        if (args.verifyIndexingOperation) {
+        if (args.skipVerifyIndexingOperation) {
+            logger.info("Skip verification");
+            indexingErrorsFound = false;
+        } else {
             logger.info("Verify indexed documents");
             Map<Class<? extends DomainObject>, Integer> indexCounts = indexBuilderService.countIndexedDocuments(indexedClassesFilter);
             indexingErrorsFound = indexedResults.entrySet().stream()
@@ -142,8 +145,6 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
             logger.info("Verified {} indexed documents - {} found.",
                     nDocs,
                     indexingErrorsFound ? "count mismatches" : "no count mismatches");
-        } else {
-            indexingErrorsFound = false;
         }
         if (indexingErrorsFound) {
             throw new ComputationException(jacsServiceData,
