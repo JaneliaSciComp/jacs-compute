@@ -125,6 +125,7 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
         logger.info("Completed indexing {} documents", nDocs);
         boolean indexingErrorsFound;
         if (args.verifyIndexingOperation) {
+            logger.info("Verify indexed documents");
             Map<Class<? extends DomainObject>, Integer> indexCounts = indexBuilderService.countIndexedDocuments(indexedClassesFilter);
             indexingErrorsFound = indexedResults.entrySet().stream()
                     .map(e -> {
@@ -138,6 +139,9 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
                         }
                     })
                     .reduce(false, (v1, v2) -> v1 || v2);
+            logger.info("Verified {} indexed documents - {} found.",
+                    nDocs,
+                    indexingErrorsFound ? "count mismatches" : "no count mismatches");
         } else {
             indexingErrorsFound = false;
         }
