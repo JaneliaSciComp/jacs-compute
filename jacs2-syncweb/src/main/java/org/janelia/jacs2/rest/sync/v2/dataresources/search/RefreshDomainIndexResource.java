@@ -1,6 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources.search;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
@@ -32,6 +33,7 @@ import org.janelia.jacs2.auth.JacsSecurityContextHelper;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.dataservice.search.IndexBuilderService;
 import org.janelia.model.access.cdi.AsyncIndex;
+import org.janelia.model.domain.DomainObject;
 import org.janelia.model.security.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,8 +89,8 @@ public class RefreshDomainIndexResource {
                             .collect(Collectors.toSet());
                     indexedClassesFilter = clazz -> indexedClassnames.contains(clazz.getName()) || indexedClassnames.contains(clazz.getSimpleName());
                 }
-                int nDocs = indexBuilderService.indexAllDocuments(clearIndex != null && clearIndex, indexedClassesFilter);
-                asyncResponse.resume(nDocs);
+                Map<Class<? extends DomainObject>, Integer>  indexedDocs = indexBuilderService.indexAllDocuments(clearIndex != null && clearIndex, indexedClassesFilter);
+                asyncResponse.resume(indexedDocs);
             } catch (Exception e) {
                 LOG.error("Error occurred while deleting document index", e);
                 asyncResponse.resume(e);

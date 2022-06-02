@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.maintenanceservices;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ import com.google.common.base.Splitter;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacs2.asyncservice.common.AbstractServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.ComputationException;
 import org.janelia.jacs2.asyncservice.common.ExternalProcessRunner;
 import org.janelia.jacs2.asyncservice.common.JacsServiceResult;
 import org.janelia.jacs2.asyncservice.common.ServiceArgs;
@@ -25,6 +27,7 @@ import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacs2.dataservice.search.IndexBuilderService;
 import org.janelia.model.access.dao.JacsNotificationDao;
+import org.janelia.model.domain.DomainObject;
 import org.janelia.model.service.JacsNotification;
 import org.janelia.model.service.JacsServiceData;
 import org.janelia.model.service.JacsServiceLifecycleStage;
@@ -41,6 +44,9 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
         List<String> indexedClassnamesFilter;
         @Parameter(names = "-excludedClassnames", description = "Classes that will not be indexed. If not defined then it indexes all searchable types.")
         List<String> excludedClassnamesFilter;
+        @Parameter(names = "-verify", arity = 0, description = "Verify indexing operation")
+        boolean verifyIndexingOperation = false;
+
         SolrIndexArgs() {
             super("Solr index rebuild service.");
         }
@@ -114,8 +120,31 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
         } else {
             indexedClassesFilter = indexedClassesPredicate;
         }
-        int nDocs = indexBuilderService.indexAllDocuments(args.clearIndex, indexedClassesFilter);
-        logger.info("Indexed {} documents", nDocs);
+        Map<Class<? extends DomainObject>, Integer> indexedResults = indexBuilderService.indexAllDocuments(args.clearIndex, indexedClassesFilter);
+        int nDocs = indexedResults.values().stream().reduce(0, Integer::sum);
+        logger.info("Completed indexing {} documents", nDocs);
+        boolean indexingErrorsFound;
+        if (args.verifyIndexingOperation) {
+            Map<Class<? extends DomainObject>, Integer> indexCounts = indexBuilderService.countIndexedDocuments(indexedClassesFilter);
+            indexingErrorsFound = indexedResults.entrySet().stream()
+                    .map(e -> {
+                        Integer c = indexCounts.get(e.getKey());
+                        if (c == null || c.intValue() != e.getValue().intValue()) {
+                            logger.error("Class {} was not indexed properly expected {} documents but only {} documents were found ",
+                                    e.getKey(), e.getValue(), c == null ? "no" : c.toString());
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    })
+                    .reduce(false, (v1, v2) -> v1 || v2);
+        } else {
+            indexingErrorsFound = false;
+        }
+        if (indexingErrorsFound) {
+            throw new ComputationException(jacsServiceData,
+                    "Indexing errors were found - not all documents that should have been indexed are in the final index");
+        }
         return computationFactory.newCompletedComputation(updateServiceResult(jacsServiceData, nDocs));
     }
 
