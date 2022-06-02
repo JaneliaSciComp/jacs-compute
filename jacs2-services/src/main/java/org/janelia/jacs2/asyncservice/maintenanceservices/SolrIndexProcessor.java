@@ -133,12 +133,20 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
             indexingErrorsFound = indexedResults.entrySet().stream()
                     .map(e -> {
                         Integer c = indexCounts.get(e.getKey());
-                        if (c == null || c.intValue() != e.getValue().intValue()) {
-                            logger.error("Class {} was not indexed properly expected {} documents but only {} documents were found ",
-                                    e.getKey(), e.getValue(), c == null ? "no" : c.toString());
+                        if (c == null) {
+                            logger.error("Class {} was not indexed properly expected {} documents but none found ",
+                                    e.getKey(), e.getValue());
+                            return true;
+                        } else if (c < e.getValue()) {
+                            logger.error("Class {} was not indexed properly expected {} documents but only {} were found ",
+                                    e.getKey(), e.getValue(), c);
+                            return true;
+                        } else if (c > e.getValue()) {
+                            logger.info("Document count for {} does not match found {} which is more than expected {}. This may happen if the previous index was not cleaned",
+                                    e.getKey(), c, e.getValue());
                             return false;
                         } else {
-                            return true;
+                            return false;
                         }
                     })
                     .reduce(false, (v1, v2) -> v1 || v2);
