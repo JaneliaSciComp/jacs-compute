@@ -46,9 +46,10 @@ public class PublishedImageResource {
 
     @ApiOperation(value="Gets a Fly Light published image with S3 URLs")
     @ApiResponses(value={
-            @ApiResponse(code=200, message="Successfully got published image",
-                response=PublishedImage.class,
-                responseContainer="List"),
+            @ApiResponse(code=200,
+                         message="Successfully got published image",
+                         response=PublishedImage.class),
+            @ApiResponse(code=400, message="No published image found"),
             @ApiResponse(code=500, message="Internal Server Error getting published image")
     })
     @GET
@@ -69,13 +70,8 @@ public class PublishedImageResource {
                                 + alignmentSpace + ", " + objective + ", " + slideCode))
                         .build();
             }
-
-            // returning a list even though it's a single image; I can imagine changing the API in
-            //  the future to allow multiple images to be returned, so allow for that
-            List<PublishedImage> publishedImages = new ArrayList<>();
-            publishedImages.add(image);
             return Response
-                    .ok(new GenericEntity<List<PublishedImage>>(publishedImages){})
+                    .ok(image)
                     .build();
         } catch (Exception e) {
             LOG.error("Error occurred getting published image for {}, {}, {}", alignmentSpace, objective, slideCode, e);
@@ -91,8 +87,8 @@ public class PublishedImageResource {
     @ApiOperation(value="Gets a Fly Light published image with S3 URLs")
     @ApiResponses(value={
             @ApiResponse(code=200, message="Successfully got published image",
-                    response=PublishedImage.class,
-                    responseContainer="List"),
+                         response=PublishedImage.class),
+            @ApiResponse(code=400, message="No Gen1 GAL4 LexA image found"),
             @ApiResponse(code=500, message="Internal Server Error getting published image")
     })
     @GET
@@ -110,13 +106,8 @@ public class PublishedImageResource {
                                 + originalLine + ", " + area))
                         .build();
             }
-
-            // returning a list even though it's a single image; I can imagine changing the API in
-            //  the future to allow multiple images to be returned, so allow for that
-            List<PublishedImage> publishedImages = new ArrayList<>();
-            publishedImages.add(image);
             return Response
-                    .ok(new GenericEntity<List<PublishedImage>>(publishedImages){})
+                    .ok(image)
                     .build();
         } catch (Exception e) {
             LOG.error("Error occurred getting published image for {}, {}", originalLine, area, e);
@@ -139,11 +130,11 @@ public class PublishedImageResource {
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/imageWithGen1Image/{alignmentSpace}/{objective}/{slideCode}")
+    @Path("/imageWithGen1Image/{alignmentSpace}/{slideCode}/{objective}")
     public Response getImageWithGen1Image(@ApiParam @PathParam("alignmentSpace") String alignmentSpace,
-                             @ApiParam @PathParam("objective") String objective,
-                             @ApiParam @PathParam("slideCode") String slideCode) {
-        LOG.trace("Start getImageWithGen1Image({}, {}, {})", alignmentSpace, objective, slideCode);
+                                          @ApiParam @PathParam("slideCode") String slideCode,
+                                          @ApiParam @PathParam("objective") String objective) {
+        LOG.trace("Start getImageWithGen1Image({}, {}, {})", alignmentSpace, slideCode, objective);
         // this is a combination of the two other endpoints, basically; we will always (?) use
         //  them together, so save one http call
         try {
@@ -171,13 +162,13 @@ public class PublishedImageResource {
                     .ok(new GenericEntity<List<PublishedImage>>(publishedImages){})
                     .build();
         } catch (Exception e) {
-            LOG.error("Error occurred getting published images for {}, {}, {}", alignmentSpace, objective, slideCode, e);
+            LOG.error("Error occurred getting published images for {}, {}, {}", alignmentSpace, slideCode, objective, e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Error retrieving published images for "
-                            + alignmentSpace + ", " + objective+ ", " + slideCode))
+                            + alignmentSpace + ", " + slideCode+ ", " + objective))
                     .build();
         } finally {
-            LOG.trace("Finished getImageWithGen1Image({}, {}, {})", alignmentSpace, objective, slideCode);
+            LOG.trace("Finished getImageWithGen1Image({}, {}, {})", alignmentSpace, slideCode, objective);
         }
     }
 }
