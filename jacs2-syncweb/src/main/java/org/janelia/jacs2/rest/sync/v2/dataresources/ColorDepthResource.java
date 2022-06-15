@@ -45,8 +45,9 @@ import org.janelia.model.access.domain.dao.LineReleaseDao;
 import org.janelia.model.access.domain.dao.ReferenceDomainObjectReadDao;
 import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.gui.cdmip.ColorDepthImage;
-import org.janelia.model.domain.gui.cdmip.ColorDepthImageWithSampleBuilder;
+import org.janelia.model.domain.gui.cdmip.ColorDepthImageBuilder;
 import org.janelia.model.domain.sample.Sample;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -253,7 +254,8 @@ public class ColorDepthResource {
                     .ok(new GenericEntity<List<ColorDepthImage>>(
                             updateCDMIPSample(
                                     cdmList,
-                                    retrieveLMSamplesByRefs(cdmList.stream().map(ColorDepthImage::getSampleRef).filter(Objects::nonNull).distinct().collect(Collectors.toList()))
+                                    retrieveLMSamplesByRefs(cdmList.stream().map(ColorDepthImage::getSampleRef).filter(Objects::nonNull).distinct().collect(Collectors.toList())),
+                                    retrieveEMBodiesByRefs(cdmList.stream().map(ColorDepthImage::getEmBodyRef).filter(Objects::nonNull).distinct().collect(Collectors.toList()))
                             )){})
                     .build()
                     ;
@@ -263,16 +265,20 @@ public class ColorDepthResource {
     }
 
     private List<ColorDepthImage> updateCDMIPSample(List<ColorDepthImage> cdmList,
-                                                    Map<Reference, Sample> samplesIndexedByRef) {
+                                                    Map<Reference, Sample> samplesIndexedByRef,
+                                                    Map<Reference, EMBody> emBodiesIndexedByRef) {
         long start = System.currentTimeMillis();
         try {
             return cdmList.stream()
-                    .map(cdmip -> new ColorDepthImageWithSampleBuilder(cdmip).withSample(samplesIndexedByRef.get(cdmip.getSampleRef())).build())
+                    .map(cdmip -> new ColorDepthImageBuilder(cdmip)
+                                        .withLMSample(samplesIndexedByRef.get(cdmip.getSampleRef()))
+                                        .withEMBody(emBodiesIndexedByRef.get(cdmip.getEmBodyRef()))
+                                        .build())
                     .collect(Collectors.toList())
                     ;
         } finally {
             long end = System.currentTimeMillis();
-            LOG.debug("Update CDMIP with sample ref in {}ms", end-start);
+            LOG.debug("Update CDMIP with sample and body ref in {}ms", end-start);
         }
     }
 
@@ -286,6 +292,19 @@ public class ColorDepthResource {
         } finally {
             long end = System.currentTimeMillis();
             LOG.debug("Retrieve samples from refs in {}ms", end-start);
+        }
+    }
+
+    private Map<Reference, EMBody> retrieveEMBodiesByRefs(List<Reference> emBodyRefs) {
+        long start = System.currentTimeMillis();
+        try {
+            return referenceDao.findByReferences(emBodyRefs).stream()
+                    .map(d -> (EMBody) d)
+                    .collect(Collectors.toMap(Reference::createFor, Function.identity()))
+                    ;
+        } finally {
+            long end = System.currentTimeMillis();
+            LOG.debug("Retrieve bodies from refs in {}ms", end-start);
         }
     }
 

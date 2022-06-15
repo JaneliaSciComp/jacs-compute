@@ -66,7 +66,7 @@ public class PublishedImageResource {
         try {
             // minor note: the argument order is different in the DAO than in the REST API, because
             //  I was (still am?) uncertain as to what's best and have been changing my mind
-            PublishedImage image = publishedImageDao.getImage(slideCode, alignmentSpace, objective);
+            PublishedImage image = publishedImageDao.getImage(alignmentSpace, slideCode, objective);
             if (image == null) {
                 LOG.warn("Could not find image for {}, {}, {}", alignmentSpace, objective, slideCode);
                 return Response.status(Response.Status.BAD_REQUEST)
@@ -108,7 +108,7 @@ public class PublishedImageResource {
         try {
             // minor note: the argument order is different in the DAO than in the REST API, because
             //  I was (still am?) uncertain as to what's best and have been changing my mind
-            PublishedImage image = publishedImageDao.getImage(slideCode, alignmentSpace, objective);
+            PublishedImage image = publishedImageDao.getImage(alignmentSpace, slideCode, objective);
             if (image == null) {
                 LOG.warn("Could not find primary image for {}, {}, {}", alignmentSpace, objective, slideCode);
                 return Response.status(Response.Status.BAD_REQUEST)
