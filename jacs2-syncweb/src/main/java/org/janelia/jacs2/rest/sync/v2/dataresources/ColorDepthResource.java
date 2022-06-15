@@ -252,9 +252,9 @@ public class ColorDepthResource {
             return Response
                     .ok(new GenericEntity<List<ColorDepthImage>>(
                             updateCDMIPSample(
-                                cdmList,
-                                retrieveSamplesByRefs(cdmList.stream().map(ColorDepthImage::getSampleRef).filter(Objects::nonNull).distinct().collect(Collectors.toList())))
-                            ){})
+                                    cdmList,
+                                    retrieveLMSamplesByRefs(cdmList.stream().map(ColorDepthImage::getSampleRef).filter(Objects::nonNull).distinct().collect(Collectors.toList()))
+                            )){})
                     .build()
                     ;
         } finally {
@@ -262,20 +262,8 @@ public class ColorDepthResource {
         }
     }
 
-    private Map<Reference, Sample> retrieveSamplesByRefs(List<Reference> sampleRefs) {
-        long start = System.currentTimeMillis();
-        try {
-            return referenceDao.findByReferences(sampleRefs).stream()
-                    .map(d -> (Sample) d)
-                    .collect(Collectors.toMap(Reference::createFor, Function.identity()))
-                    ;
-        } finally {
-            long end = System.currentTimeMillis();
-            LOG.debug("Retrieve samples from refs in {}ms", end-start);
-        }
-
-    }
-    private List<ColorDepthImage> updateCDMIPSample(List<ColorDepthImage> cdmList, Map<Reference, Sample> samplesIndexedByRef) {
+    private List<ColorDepthImage> updateCDMIPSample(List<ColorDepthImage> cdmList,
+                                                    Map<Reference, Sample> samplesIndexedByRef) {
         long start = System.currentTimeMillis();
         try {
             return cdmList.stream()
@@ -285,6 +273,19 @@ public class ColorDepthResource {
         } finally {
             long end = System.currentTimeMillis();
             LOG.debug("Update CDMIP with sample ref in {}ms", end-start);
+        }
+    }
+
+    private Map<Reference, Sample> retrieveLMSamplesByRefs(List<Reference> sampleRefs) {
+        long start = System.currentTimeMillis();
+        try {
+            return referenceDao.findByReferences(sampleRefs).stream()
+                    .map(d -> (Sample) d)
+                    .collect(Collectors.toMap(Reference::createFor, Function.identity()))
+                    ;
+        } finally {
+            long end = System.currentTimeMillis();
+            LOG.debug("Retrieve samples from refs in {}ms", end-start);
         }
     }
 
