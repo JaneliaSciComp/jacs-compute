@@ -65,7 +65,8 @@ public class FolderService {
                 }
             }
             if (parentFolder == null) {
-                throw new IllegalArgumentException("Parent folder not found");
+                throw new IllegalArgumentException("No parent folder" +
+                        (parentFolderId != null ? " found for " + parentFolderId : " created"));
             }
             List<String> folderPathComponents = Splitter.on('/').trimResults().omitEmptyStrings().splitToList(folderName);
             TreeNode newFolder = null;
