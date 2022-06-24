@@ -415,6 +415,7 @@ public class StorageService {
         JsonNode nodeRelativePathNode = jsonNode.get("nodeRelativePath");
         JsonNode collectionFlagNode = jsonNode.get("collectionFlag");
         JsonNode mimeTypeNode = jsonNode.get("mimeType");
+        String mimeType = mimeTypeNode != null ? mimeTypeNode.asText() : null;
         JsonNode sizeNode = jsonNode.get("size");
         String storageId = null;
         if (storageIdNode != null && !storageIdNode.isNull()) {
@@ -441,6 +442,6 @@ public class StorageService {
                 nodeRelativePathNode.asText(),
                 sizeNode.asLong(),
                 collectionFlagNode.asBoolean(),
-                mimeTypeNode.asText());
+                mimeType);
     }
 }
