@@ -33,7 +33,9 @@ project(":jacs2-services") {
                        MONGODB_DRIVER_LIB,
                        REFLECTIONS_LIB,
                        SOLR_SEARCH_LIB,
-                       SPARK_LAUNCHER
+                       SPARK_LAUNCHER,
+                       JACS_STORAGE_CLIENTS_LIB
+
 
         implementation (JONGO_LIB) {
             exclude group: 'com.fasterxml.jackson.core'

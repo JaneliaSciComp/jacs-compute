@@ -16,6 +16,7 @@ public interface FileDiscoveryAgent {
     /**
      * The agent should implement this to process the given storage object, and create or update the corresponding
      * database object, if necessary.
+     *
      * @param syncedRoot the synchronized root where this storage object was found
      * @param currentPaths The currently persisted paths of the root
      * @param storageObject the object in storage

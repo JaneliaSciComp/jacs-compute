@@ -121,19 +121,19 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
 
         Map<String, SyncedPath> currentPaths = syncedPathDao.getChildren(
                 syncedRoot.getOwnerKey(), syncedRoot, 0, -1)
-                .stream().collect(Collectors.toMap(SyncedPath::getName, Function.identity()));
+                .stream().collect(Collectors.toMap(SyncedPath::getFilepath, Function.identity()));
 
         // Initialize all database paths to existsInStorage=false
-        for (String name : currentPaths.keySet()) {
-            currentPaths.get(name).setExistsInStorage(false);
+        for (String filepath : currentPaths.keySet()) {
+            currentPaths.get(filepath).setExistsInStorage(false);
         }
 
         // Process all paths in storage
         walkStorage(syncedRoot, currentPaths, storageLocation, agents, syncedRoot.getDepth(), "");
 
         // Any database paths that are still existsInStorage=false should have that persisted since they were not found
-        for (String name : currentPaths.keySet()) {
-            SyncedPath syncedPath = currentPaths.get(name);
+        for (String filepath : currentPaths.keySet()) {
+            SyncedPath syncedPath = currentPaths.get(filepath);
             if (!syncedPath.isExistsInStorage()) {
                 LOG.info("Path no longer exists in storage: {}", syncedPath.getFilepath());
                 syncedPathDao.update(syncedPath.getId(), ImmutableMap.of(

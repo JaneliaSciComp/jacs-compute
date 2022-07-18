@@ -18,12 +18,12 @@ import javax.inject.Named;
 import java.util.Map;
 
 /**
- * A file discovery agent which finds N5 containers and creates corresponding N5Container objects.
+ * A file discovery agent which finds Zarr containers and creates corresponding ZarrContainer objects.
  *
  * @author <a href="mailto:rokickik@janelia.hhmi.org">Konrad Rokicki</a>
  */
-@Named("n5DiscoveryAgent")
-public class N5DiscoveryAgent implements FileDiscoveryAgent {
+@Named("zarrDiscoveryAgent")
+public class ZarrDiscoveryAgent implements FileDiscoveryAgent {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageContentHelper.class);
 
@@ -31,7 +31,7 @@ public class N5DiscoveryAgent implements FileDiscoveryAgent {
     private SyncedPathDao syncedPathDao;
 
     public void discover(SyncedRoot syncedRoot, Map<String, SyncedPath> currentPaths, StorageContentObject storageObject) {
-        if (storageObject.isCollection() && storageObject.getName().endsWith(".n5")) {
+        if (storageObject.isCollection() && storageObject.getName().endsWith(".zarr")) {
             StorageObject attributes = storageObject.resolve("attributes.json");
             if (storageObject.getHelper().exists(attributes)) {
 

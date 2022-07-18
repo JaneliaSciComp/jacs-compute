@@ -102,12 +102,14 @@ dependencies {
 
         // Janelia libraries
         JAVA_LSF_LIB = "org.janelia:java-lsf:1.1.0"
-        JACS_MODEL_VERSION = "2.57.0"
+        JACS_MODEL_VERSION = "2.59.0"
         JACS_MODEL_CORE_LIB = "org.janelia.jacs-model:jacs-model-core:${JACS_MODEL_VERSION}"
         JACS_MODEL_ACCESS_LIB = "org.janelia.jacs-model:jacs-model-access:${JACS_MODEL_VERSION}"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
         JACS_MESSAGING_VERSION = "2.5.0"
         JACS_MESSAGING_CORE_LIB = "org.janelia.jacs-messaging:jacs-messaging-core:${JACS_MESSAGING_VERSION}"
+        JACS_STORAGE_VERSION = "1.17.7.SNAPSHOT"
+        JACS_STORAGE_CLIENTS_LIB = "org.janelia.jacs-storage:jacsstorage-clients:${JACS_STORAGE_VERSION}"
 
         // scientific computing
         JAMA_LIB = "gov.nist.math:jama:1.0.3"

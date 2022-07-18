@@ -179,7 +179,12 @@ public class DbMaintainer {
      */
     public boolean refreshTmSampleSync(TmSample sample) {
 
-        LOG.info("Checking {} (filesystemSync={})", sample, sample.isFilesystemSync());
+        if (sample.getRootRef() != null) {
+            // This sample is managed by the SyncedRootProcessor
+            return false;
+        }
+
+        LOG.info("Checking {} (existsInStorage={})", sample, sample.isExistsInStorage());
 
         boolean sync = true;
         boolean anyExists = false;
@@ -222,9 +227,9 @@ public class DbMaintainer {
             dirty = true;
         }
 
-        if (sample.isFilesystemSync()!=sync) {
-            LOG.info("  Updating {} with filesystemSync={}", sample, sync);
-            sample.setFilesystemSync(sync);
+        if (sample.isExistsInStorage()!=sync) {
+            LOG.info("  Updating {} with existsInStorage={}", sample, sync);
+            sample.setExistsInStorage(sync);
             dirty = true;
         }
 
