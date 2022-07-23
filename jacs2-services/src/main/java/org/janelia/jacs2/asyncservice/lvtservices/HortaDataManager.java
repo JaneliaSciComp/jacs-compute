@@ -96,7 +96,7 @@ public class HortaDataManager {
             }
         } else {
             if (StringUtils.isNotBlank(sample.getLargeVolumeKTXFilepath())) {
-                sample.setFilesystemSync(false); // set file system sync to false because ktx directory does not exist
+                sample.setExistsInStorage(false); // set file system sync to false because ktx directory does not exist
             }
         }
 
@@ -128,7 +128,7 @@ public class HortaDataManager {
                 }
             } else {
                 if (StringUtils.isNotBlank(sample.getAcquisitionFilepath())) {
-                    sample.setFilesystemSync(false); // set file system sync to false because the acquisition directory is not accessible
+                    sample.setExistsInStorage(false); // set file system sync to false because the acquisition directory is not accessible
                 }
             }
         }
@@ -145,7 +145,7 @@ public class HortaDataManager {
                 .map(dataStorageLocationFactory::asRenderedVolumeLocation)
                 .flatMap(this::getConstants).isPresent();
         if (!samplePathFound) {
-            tmSample.setFilesystemSync(false);
+            tmSample.setExistsInStorage(false);
         }
 
         String ktxFullPath;
@@ -163,7 +163,7 @@ public class HortaDataManager {
                 })
                 ;
         if (!ktxFound) {
-            tmSample.setFilesystemSync(false);
+            tmSample.setExistsInStorage(false);
         }
 
         String acquisitionPath = tmSample.getAcquisitionFilepath();
@@ -177,7 +177,7 @@ public class HortaDataManager {
                     })
                     ;
             if (!acquisitionPathFound) {
-                tmSample.setFilesystemSync(false);
+                tmSample.setExistsInStorage(false);
             }
         }
         return tmSampleDao.updateTmSample(subjectKey, tmSample);

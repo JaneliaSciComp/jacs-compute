@@ -2,16 +2,15 @@ package org.janelia.jacs2.asyncservice.files;
 
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.ImmutableMap;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
-import org.janelia.jacs2.asyncservice.dataimport.BetterStorageHelper;
-import org.janelia.jacs2.asyncservice.dataimport.StorageContentObject;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
-import org.janelia.jacs2.dataservice.storage.StorageService;
-import org.janelia.model.access.domain.dao.SetFieldValueHandler;
-import org.janelia.model.access.domain.dao.SyncedPathDao;
+import org.janelia.jacsstorage.newclient.*;
+import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.SyncedRootDao;
+import org.janelia.model.domain.DomainObject;
+import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.files.DiscoveryAgentType;
 import org.janelia.model.domain.files.SyncedPath;
 import org.janelia.model.domain.files.SyncedRoot;
@@ -51,21 +50,25 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
     }
 
     private final StorageService storageService;
-    private final Instance<FileDiscoveryAgent> agentSource;
-    private final SyncedPathDao syncedPathDao;
+    private final Instance<FileDiscoveryAgent<?>> agentSource;
+    private final SyncedRootDao syncedRootDao;
+    private final LegacyDomainDao legacyDomainDao;
 
     @Inject
     public SyncedRootProcessor(ServiceComputationFactory computationFactory,
                                JacsServiceDataPersistence jacsServiceDataPersistence,
                                @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
-                               @Any Instance<FileDiscoveryAgent> agentSource,
-                               StorageService storageService,
-                               SyncedPathDao syncedPathDao,
+                               @PropertyValue(name = "StorageService.URL") String masterStorageServiceURL,
+                               @PropertyValue(name = "StorageService.ApiKey") String storageServiceApiKey,
+                               @Any Instance<FileDiscoveryAgent<?>> agentSource,
+                               SyncedRootDao syncedRootDao,
+                               LegacyDomainDao legacyDomainDao,
                                Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
+        this.storageService = new StorageService(masterStorageServiceURL, storageServiceApiKey);
         this.agentSource = agentSource;
-        this.storageService = storageService;
-        this.syncedPathDao = syncedPathDao;
+        this.syncedRootDao = syncedRootDao;
+        this.legacyDomainDao = legacyDomainDao;
     }
 
     @Override
@@ -95,17 +98,29 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         String authToken = ResourceHelper.getAuthToken(jacsServiceData.getResources());
         SyncedRoot syncedRoot = getSyncedRoot(args.syncedRootId);
 
-        BetterStorageHelper storageContentHelper = new BetterStorageHelper(
-                storageService, jacsServiceData.getOwnerKey(), authToken);
+        JadeStorageService jadeStorage = new JadeStorageService(
+                storageService, syncedRoot.getOwnerKey(), authToken);
 
-        StorageContentObject storageLocation = storageContentHelper
-                .getStorageObjectByPath(syncedRoot.getFilepath())
-                .orElseThrow(() -> new ComputationException(jacsServiceData, "Could not find any storage for "+syncedRoot+" path " + syncedRoot.getFilepath()));
+        StorageLocation storageLocation = jadeStorage.getStorageLocationByPath(syncedRoot.getFilepath());
+        if (storageLocation == null) {
+            throw new ComputationException(jacsServiceData, "Could not find storage location for path " + syncedRoot.getFilepath());
+        }
+
+        StorageObject rootMetadata;
+        try {
+            rootMetadata = jadeStorage.getMetadata(storageLocation, syncedRoot.getFilepath());
+        }
+        catch (StorageObjectNotFoundException e) {
+            throw new ComputationException(jacsServiceData, "Could not find metadata for " + storageLocation.getStorageURL() + " path " + syncedRoot.getFilepath());
+        }
+
         LOG.info("Found {} in {}", syncedRoot, storageLocation);
+        JadeObject rootObject = new JadeObject(jadeStorage, rootMetadata);
 
-        List<FileDiscoveryAgent> agents = new ArrayList<>();
+        List<DomainObject> syncedPaths = new ArrayList<>();
+        List<FileDiscoveryAgent<?>> agents = new ArrayList<>();
         if (!args.dryRun) {
-            for (FileDiscoveryAgent agent : agentSource) {
+            for (FileDiscoveryAgent<?> agent : agentSource) {
                 Named namedAnnotation = agent.getClass().getAnnotation(Named.class);
                 String serviceName = namedAnnotation.value();
                 DiscoveryAgentType agentType = DiscoveryAgentType.valueOf(serviceName);
@@ -113,64 +128,87 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                     logger.info("Using discovery service: {}", serviceName);
                     agents.add(agent);
                 }
+                syncedPaths.addAll(legacyDomainDao.getUserDomainObjects(syncedRoot.getOwnerKey(), agentType.getDomainObjectClass()));
             }
         }
         else {
             logger.info("Service running in dry run mode. No discovery agents will be called.");
         }
 
-        Map<String, SyncedPath> currentPaths = syncedPathDao.getChildren(
-                syncedRoot.getOwnerKey(), syncedRoot, 0, -1)
-                .stream().collect(Collectors.toMap(SyncedPath::getFilepath, Function.identity()));
+        // Build of map of current paths that can be reused
+        Map<String, SyncedPath> currentPaths = syncedPaths
+                .stream().map(d -> (SyncedPath)d) // all SyncedRoot children must extend SyncedPath
+                .collect(Collectors.toMap(SyncedPath::getFilepath, Function.identity()));
 
         // Initialize all database paths to existsInStorage=false
         for (String filepath : currentPaths.keySet()) {
-            currentPaths.get(filepath).setExistsInStorage(false);
+            SyncedPath syncedPath = currentPaths.get(filepath);
+            syncedPath.setExistsInStorage(false);
         }
 
         // Process all paths in storage
-        walkStorage(syncedRoot, currentPaths, storageLocation, agents, syncedRoot.getDepth(), "");
+        List<DomainObject> newChildren = walkStorage(syncedRoot, currentPaths, rootObject, agents, syncedRoot.getDepth(), "");
 
-        // Any database paths that are still existsInStorage=false should have that persisted since they were not found
+        // Update the root's children
+        if (!args.dryRun) {
+            syncedRootDao.updateChildren(syncedRoot.getOwnerKey(), syncedRoot, DomainUtils.getReferences(newChildren));
+        }
+
+        // Any database paths in this directory that are still existsInStorage=false should have that status persisted
         for (String filepath : currentPaths.keySet()) {
             SyncedPath syncedPath = currentPaths.get(filepath);
-            if (!syncedPath.isExistsInStorage()) {
-                LOG.info("Path no longer exists in storage: {}", syncedPath.getFilepath());
-                syncedPathDao.update(syncedPath.getId(), ImmutableMap.of(
-                        "existsInStorage", new SetFieldValueHandler<>(false)));
+            if (filepath.startsWith(syncedRoot.getFilepath())) {
+                if (!syncedPath.isExistsInStorage()) {
+                    LOG.info("Path no longer exists in storage: {}", syncedPath.getFilepath());
+                    if (!args.dryRun) {
+                        try {
+                            legacyDomainDao.updateProperty(syncedRoot.getOwnerKey(), syncedPath.getClass(),
+                                    syncedPath.getId(), "existsInStorage", false);
+                        } catch (Exception e) {
+                            throw new ComputationException(jacsServiceData, "Could not update " + syncedPath);
+                        }
+                    }
+                }
             }
         }
 
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
     }
 
-    private void walkStorage(SyncedRoot syncedRoot, Map<String, SyncedPath> currentPaths, StorageContentObject location,
-                             List<FileDiscoveryAgent> agents, int levels, String indent) {
-        location.getHelper().listContent(location)
-                .forEach(child -> {
-                    logger.info(indent+"{} -> {}", child.getName(), child.getAbsolutePath());
-                    logger.debug(indent+"      {}", child);
-                    if (child.isCollection()) {
-                        if (levels > 1) {
-                            walkStorage(syncedRoot, currentPaths, child, agents, levels - 1, indent+"  ");
-                        }
+    private List<DomainObject> walkStorage(SyncedRoot syncedRoot, Map<String, SyncedPath> currentPaths, JadeObject jadeObject,
+                             List<FileDiscoveryAgent<?>> agents, int levels, String indent) {
+        try {
+            List<DomainObject> discovered = new ArrayList<>();
+            for (JadeObject child : jadeObject.getChildren()) {
+                StorageObject storageObject = child.getStorageObject();
+                logger.info(indent+"{} -> {}", storageObject.getObjectName(), storageObject.getAbsolutePath());
+                logger.debug(indent+"      {}", child);
+                for (FileDiscoveryAgent<? extends DomainObject> agent : agents) {
+                    DomainObject discoveredObject = agent.discover(syncedRoot, currentPaths, child);
+                    if (discoveredObject != null) {
+                        discovered.add(discoveredObject);
+                        break; // a given path can only map to a single discovered object
                     }
-                    for (FileDiscoveryAgent agent : agents) {
-                        agent.discover(syncedRoot, currentPaths, child);
-                    }
-                });
+                }
+                if (levels > 1 && storageObject.isCollection()) {
+                    // Recurse into the folder hierarchy
+                    discovered.addAll(walkStorage(syncedRoot, currentPaths, child, agents, levels - 1, indent+"  "));
+                }
+            }
+            return discovered;
+        }
+        catch (StorageObjectNotFoundException e) {
+            throw new IllegalStateException("Storage object disappeared mysteriously: "
+                    + jadeObject.getStorageObject().getAbsolutePath());
+        }
     }
 
     private SyncedRoot getSyncedRoot(Long syncedRootId) {
-        SyncedPath syncedPath = syncedPathDao.findById(syncedRootId);
-        if (syncedPath==null) {
+        SyncedRoot syncedRoot = syncedRootDao.findById(syncedRootId);
+        if (syncedRoot==null) {
             throw new IllegalArgumentException("Cannot find SyncedRoot#"+syncedRootId);
         }
-        if (!(syncedPath instanceof SyncedRoot)) {
-            throw new IllegalArgumentException("SyncedPath#"+syncedRootId+" is not a SyncedRoot");
-        }
-
-        return (SyncedRoot)syncedPath;
+        return syncedRoot;
     }
 
     private SyncedRootArgs getArgs(JacsServiceData jacsServiceData) {

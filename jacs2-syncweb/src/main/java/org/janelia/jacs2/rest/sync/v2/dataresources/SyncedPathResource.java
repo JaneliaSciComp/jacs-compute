@@ -4,7 +4,8 @@ import io.swagger.annotations.*;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
-import org.janelia.model.access.domain.dao.SyncedPathDao;
+import org.janelia.model.access.dao.LegacyDomainDao;
+import org.janelia.model.access.domain.dao.SyncedRootDao;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.files.SyncedPath;
 import org.janelia.model.domain.files.SyncedRoot;
@@ -19,6 +20,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Web service for CRUD operations for synced paths.
@@ -48,7 +50,10 @@ public class SyncedPathResource {
 
     @AsyncIndex
     @Inject
-    private SyncedPathDao syncedPathDao;
+    private SyncedRootDao syncedRootDao;
+
+    @Inject
+    private LegacyDomainDao legacyDomainDao;
 
     @ApiOperation(value = "Gets a List of SyncedRoots for the User",
             notes = "Uses the subject key to return a list of SyncedRoots for the user"
@@ -64,7 +69,7 @@ public class SyncedPathResource {
     public Response getSyncedRoots(@ApiParam @QueryParam("subjectKey") String subjectKey) {
         LOG.trace("Start getSyncedRoots({})", subjectKey);
         try {
-            List<SyncedRoot> syncedRoots = syncedPathDao.getSyncedRoots(subjectKey);
+            List<SyncedRoot> syncedRoots = syncedRootDao.getSyncedRoots(subjectKey);
             return Response
                     .ok(new GenericEntity<List<SyncedRoot>>(syncedRoots){})
                     .build();
@@ -85,7 +90,7 @@ public class SyncedPathResource {
     public Response createSyncedRoot(DomainQuery query) {
         LOG.trace("Start createSyncedRoot({})", query);
         try {
-            SyncedRoot SyncedRoot = syncedPathDao.createSyncedRoot(query.getSubjectKey(), query.getDomainObjectAs(SyncedRoot.class));
+            SyncedRoot SyncedRoot = syncedRootDao.createSyncedRoot(query.getSubjectKey(), query.getDomainObjectAs(SyncedRoot.class));
             return Response
                     .created(UriBuilder.fromMethod(this.getClass(), "createSyncedRoot").build(SyncedRoot.getId()))
                     .entity(SyncedRoot)
@@ -113,7 +118,7 @@ public class SyncedPathResource {
     public Response updateSyncedRoot(DomainQuery query) {
         LOG.trace("Start updateSyncedRoot({})", query);
         try {
-            SyncedRoot SyncedRoot = (SyncedRoot)syncedPathDao.saveBySubjectKey(query.getDomainObjectAs(SyncedRoot.class), query.getSubjectKey());
+            SyncedRoot SyncedRoot = syncedRootDao.saveBySubjectKey(query.getDomainObjectAs(SyncedRoot.class), query.getSubjectKey());
             return Response
                     .ok(SyncedRoot)
                     .contentLocation(UriBuilder.fromMethod(SyncedPathResource.class, "updateSyncedRoot").build(SyncedRoot.getId()))
@@ -140,8 +145,8 @@ public class SyncedPathResource {
                                      @ApiParam @QueryParam("syncedRootId") final Long syncedRootId) {
         LOG.trace("Start removeSyncedRoot({}, SyncedRootId={})", subjectKey, syncedRootId);
         try {
-            SyncedRoot syncedRoot = (SyncedRoot)syncedPathDao.findById(syncedRootId);
-            syncedPathDao.removeSyncedRoot(subjectKey, syncedRoot);
+            SyncedRoot syncedRoot = syncedRootDao.findById(syncedRootId);
+            syncedRootDao.removeSyncedRoot(subjectKey, syncedRoot);
             return Response.noContent().build();
         } finally {
             LOG.trace("Finished removeSyncedRoot({}, syncedRootId={})", subjectKey, syncedRootId);
@@ -164,8 +169,9 @@ public class SyncedPathResource {
                                           @ApiParam @QueryParam("syncedRootId") final Long syncedRootId) {
         LOG.trace("Start getSyncedRootChildren()");
         try {
-            SyncedRoot root = (SyncedRoot)syncedPathDao.findById(syncedRootId);
-            List<SyncedPath> children = syncedPathDao.getChildren(subjectKey, root, 0, -1);
+            SyncedRoot syncedRoot = syncedRootDao.findById(syncedRootId);
+            List<SyncedPath> children = legacyDomainDao.getDomainObjects(subjectKey, syncedRoot.getChildren())
+                    .stream().map(d -> (SyncedPath) d).collect(Collectors.toList());
             return Response
                     .ok(new GenericEntity<List<SyncedPath>>(children){})
                     .build();

@@ -116,11 +116,10 @@ public class DbMaintainer {
                         new DaoIndex("{readers:1, identifier:1}")
                 ));
 
-//        legacyDomainDao.ensureCollectionIndex("emDataSet",
-//                asList(
-//                        new DaoIndex("{identifier:1}", "{unique:true}"),
-//                        new DaoIndex("{readers:1, identifier:1}")
-//                ));
+        legacyDomainDao.ensureCollectionIndex("emDataSet",
+                asList(
+                        new DaoIndex("{name:1,version:1}", "{unique:true}")
+                ));
 
         legacyDomainDao.ensureCollectionIndex("emBody",
                 asList(
@@ -178,11 +177,6 @@ public class DbMaintainer {
      * @return true if changes were made
      */
     public boolean refreshTmSampleSync(TmSample sample) {
-
-        if (sample.getRootRef() != null) {
-            // This sample is managed by the SyncedRootProcessor
-            return false;
-        }
 
         LOG.info("Checking {} (existsInStorage={})", sample, sample.isExistsInStorage());
 

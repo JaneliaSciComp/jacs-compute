@@ -1,56 +1,28 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.GenericEntity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 import com.google.common.base.Splitter;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.annotations.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
-import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.EmBodyDao;
 import org.janelia.model.access.domain.dao.EmDataSetDao;
-import org.janelia.model.domain.DomainUtils;
-import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.flyem.EMDataSet;
-import org.janelia.model.domain.interfaces.HasRelativeFiles;
-import org.janelia.model.domain.sample.FileGroup;
-import org.janelia.model.domain.sample.LSMImage;
-import org.janelia.model.domain.sample.ObjectiveSample;
-import org.janelia.model.domain.sample.Sample;
-import org.janelia.model.domain.sample.SamplePipelineRun;
-import org.janelia.model.domain.sample.SamplePostProcessingResult;
-import org.janelia.model.domain.sample.SampleProcessingResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.*;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(

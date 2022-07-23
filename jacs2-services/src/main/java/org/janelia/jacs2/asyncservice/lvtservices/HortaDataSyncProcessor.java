@@ -22,9 +22,12 @@ import javax.inject.Named;
 import java.util.List;
 
 /**
+ * @deprecated use SyncedRootProcessor instead
+ *
  * This service searches the given path for TM sample folders and synchronizes them to the database. If a sample with
  * the name already exists, it is updated based on the information on disk. If no sample exists, it is created.
  */
+@Deprecated
 @Named("hortaDataSync")
 public class HortaDataSyncProcessor extends AbstractServiceProcessor<Long> {
 

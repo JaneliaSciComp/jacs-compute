@@ -13,6 +13,7 @@ import javax.inject.Inject;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ public class ExecutorProducer {
 
     @ApplicationScoped
     @Produces
+    @JacsDefault
     public ExecutorService createExecutorService() {
         if (threadPoolSize == null || threadPoolSize == 0) {
             threadPoolSize = DEFAULT_THREAD_POOL_SIZE;
@@ -42,7 +44,7 @@ public class ExecutorProducer {
         return Executors.newFixedThreadPool(threadPoolSize, threadFactory);
     }
 
-    public void shutdownExecutor(@Disposes @Default ExecutorService executorService) throws InterruptedException {
+    public void shutdownExecutor(@Disposes @JacsDefault ExecutorService executorService) throws InterruptedException {
         logger.info("Shutting down {}", executorService);
         executorService.shutdown();
         executorService.awaitTermination(10, TimeUnit.MINUTES);

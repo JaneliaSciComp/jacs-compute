@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import com.google.common.io.ByteStreams;
@@ -28,6 +29,7 @@ import com.google.common.io.ByteStreams;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.data.NamedData;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
@@ -76,6 +78,7 @@ public class SWCService {
                       RenderedVolumeLoader renderedVolumeLoader,
                       SWCReader swcReader,
                       IdGenerator<Long> neuronIdGenerator,
+                      @JacsDefault
                       ExecutorService executorService,
                       @PropertyValue(name = "service.swcImport.DefaultLocation") String defaultSWCLocation) {
         this.storageService = storageService;
