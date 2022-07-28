@@ -50,8 +50,9 @@ public class ZarrDiscoveryAgent implements FileDiscoveryAgent<ZarrContainer> {
             else {
                 LOG.info("Found new Zarr: "+storageObject.getObjectName());
                 ZarrContainer zarr = new ZarrContainer();
-                zarr.setName(storageObject.getObjectName());
+                zarr.setAutoSynchronized(true);
                 zarr.setExistsInStorage(true);
+                zarr.setName(storageObject.getObjectName());
                 zarr.setFilepath(storageObject.getAbsolutePath());
                 return zarr;
             }

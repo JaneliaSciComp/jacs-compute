@@ -54,6 +54,7 @@ public class DataStorageLocationFactory {
 
     public Optional<? extends DataLocation> lookupJadeDataLocation(String dataPath, String subjectKey, String authToken) {
         Preconditions.checkArgument(StringUtils.isNotBlank(dataPath));
+        LOG.debug("lookupJadeDataLocation {}", dataPath);
         return storageService.lookupDataStorage(null, null, null, dataPath, subjectKey, authToken).stream()
                 .map(dsInfo -> new JADEBasedDataLocation(dsInfo.getConnectionURL(), dsInfo.getDataStorageURI(), "", authToken, storageServiceApiKey, httpClientProvider))
                 .filter(dataLocation -> {
@@ -77,6 +78,7 @@ public class DataStorageLocationFactory {
      * @return
      */
     private Optional<JADEBasedDataLocation> searchStorageVolumes(String dataPath, String subjectKey, String authToken) {
+        LOG.debug("searchStorageVolumes {}", dataPath);
         return storageService.findStorageVolumes(dataPath, subjectKey, authToken).stream()
                 .map(vsInfo -> {
                     String renderedVolumePath;

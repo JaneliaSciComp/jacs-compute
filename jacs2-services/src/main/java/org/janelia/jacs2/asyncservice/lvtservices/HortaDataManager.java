@@ -4,8 +4,14 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacs2.dataservice.storage.DataStorageLocationFactory;
 import org.janelia.model.access.cdi.AsyncIndex;
+import org.janelia.model.access.domain.dao.TmMappedNeuronDao;
+import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
+import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
+import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.rendering.DataLocation;
 import org.janelia.rendering.RenderedVolumeLoader;
 import org.janelia.rendering.RenderedVolumeLocation;
@@ -24,14 +30,23 @@ public class HortaDataManager {
     private static final Logger log = LoggerFactory.getLogger(HortaDataManager.class);
 
     private final TmSampleDao tmSampleDao;
+    private final TmWorkspaceDao tmWorkspaceDao;
+    private final TmNeuronMetadataDao tmNeuronMetadataDao;
+    private final TmMappedNeuronDao tmMappedNeuronDao;
     private final RenderedVolumeLoader renderedVolumeLoader;
     private final DataStorageLocationFactory dataStorageLocationFactory;
 
     @Inject
     public HortaDataManager(@AsyncIndex TmSampleDao tmSampleDao,
+                            @AsyncIndex TmWorkspaceDao tmWorkspaceDao,
+                            @AsyncIndex TmNeuronMetadataDao tmNeuronMetadataDao,
+                            @AsyncIndex TmMappedNeuronDao tmMappedNeuronDao,
                             RenderedVolumeLoader renderedVolumeLoader,
                             DataStorageLocationFactory dataStorageLocationFactory) {
         this.tmSampleDao = tmSampleDao;
+        this.tmWorkspaceDao = tmWorkspaceDao;
+        this.tmNeuronMetadataDao = tmNeuronMetadataDao;
+        this.tmMappedNeuronDao = tmMappedNeuronDao;
         this.renderedVolumeLoader = renderedVolumeLoader;
         this.dataStorageLocationFactory = dataStorageLocationFactory;
     }
@@ -266,6 +281,36 @@ public class HortaDataManager {
         else {
             throw new IllegalStateException("Could not parse numberLevels: "+numberLevels);
         }
+    }
+
+    public List<TmWorkspace> getWorkspaces(String subjectKey, TmSample sample) {
+        return tmWorkspaceDao.getTmWorkspacesForSample(subjectKey, sample.getId());
+    }
+
+    public TmWorkspace createWorkspace(String subjectKey, TmSample sample, String workspaceName) {
+        TmWorkspace tmWorkspace = new TmWorkspace(workspaceName.trim(), sample.getId());
+        return tmWorkspaceDao.createTmWorkspace(subjectKey, tmWorkspace);
+    }
+
+    public void removeWorkspace(String subjectKey, TmWorkspace workspace) {
+        try {
+            tmMappedNeuronDao.deleteNeuronsForWorkspace(workspace, subjectKey);
+        }
+        catch (Exception e) {
+            log.error("Problem deleting mapped neurons for workspace "+workspace, e);
+        }
+        try {
+            tmNeuronMetadataDao.deleteNeuronsForWorkspace(workspace, subjectKey);
+        }
+        catch (Exception e) {
+            log.error("Problem deleting neuron metadata for workspace "+workspace, e);
+        }
+        tmWorkspaceDao.deleteByIdAndSubjectKey(workspace.getId(), subjectKey);
+        log.error("Deleted {}", workspace);
+    }
+
+    public TmMappedNeuron createMappedNeuron(String subjectKey, TmMappedNeuron tmMappedNeuron) {
+        return tmMappedNeuronDao.saveBySubjectKey(tmMappedNeuron, subjectKey);
     }
 
     public static class UserException extends Exception {

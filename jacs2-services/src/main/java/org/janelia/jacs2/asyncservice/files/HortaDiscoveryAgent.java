@@ -1,22 +1,35 @@
 package org.janelia.jacs2.asyncservice.files;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.jacs2.asyncservice.dataimport.StorageContentHelper;
 import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
+import org.janelia.jacs2.dataservice.swc.SWCService;
+import org.janelia.jacs2.dataservice.swc.VectorOperator;
 import org.janelia.jacsstorage.newclient.JadeStorageService;
 import org.janelia.jacsstorage.newclient.StorageObject;
 import org.janelia.jacsstorage.newclient.StorageObjectNotFoundException;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.files.SyncedPath;
 import org.janelia.model.domain.files.SyncedRoot;
+import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
+import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
+import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * A file discovery agent which finds Horta samples and creates corresponding TmSample objects.
@@ -30,6 +43,10 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
 
     @Inject
     private HortaDataManager hortaDataManager;
+
+    @Inject
+    private SWCService swcService;
+
 
     public TmSample discover(SyncedRoot syncedRoot, Map<String, SyncedPath> currentPaths, JadeObject jadeObject) {
 
@@ -48,6 +65,7 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                 String sampleName = storageObject.getObjectName();
 
                 TmSample sample = new TmSample();
+                sample.setAutoSynchronized(true);
                 sample.setExistsInStorage(true);
                 sample.setName(sampleName);
                 sample.setFilepath(filepath);
@@ -73,7 +91,7 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                         // Update database
                         hortaDataManager.updateSample(syncedRoot.getOwnerKey(), existingSample);
                         LOG.info("  Updated TM sample: {}", existingSample);
-                        return existingSample;
+                        sample = existingSample;
                     }
                     catch (Exception e) {
                         LOG.error("  Could not update TM sample "+existingSample, e);
@@ -84,12 +102,25 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                     try {
                         TmSample savedSample = hortaDataManager.createTmSample(syncedRoot.getOwnerKey(), sample);
                         LOG.info("  Created TM sample: {}", savedSample);
-                        return savedSample;
+                        sample = savedSample;
                     }
                     catch (Exception e) {
                         LOG.error("  Could not create TM sample for " + sampleName, e);
                     }
                 }
+
+                // Load neurons into workspaces
+
+                Path neuronsPath = Paths.get(storageObject.getAbsolutePath(), "neurons.json");
+                if (jadeStorage.exists(storageObject.getLocation(), neuronsPath.toString())) {
+                    try {
+                        loadNeurons(syncedRoot.getOwnerKey(), jadeObject, neuronsPath, sample);
+                    } catch (Exception e) {
+                        LOG.error("Error loading neurons from "+neuronsPath, e);
+                    }
+                }
+
+                return sample;
             }
         }
 
@@ -109,5 +140,99 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
         catch (StorageObjectNotFoundException e) {
             return false;
         }
+    }
+
+    /**
+     * Loads the neurons in the given path into a new workspace on the given sample. If a workspace already
+     * exists with the correct name then this method returns without making any changes, even if the
+     * content of the file has changed since the neurons were originally imported.
+     * @param subjectKey owner of the workspace and neurons
+     * @param jadeObject jade object representing the folder containing the neurons
+     * @param neuronsPath path to the neurons metadata json
+     * @param sample sample containing the related imagery
+     */
+    private void loadNeurons(String subjectKey, JadeObject jadeObject, Path neuronsPath, TmSample sample) throws IOException {
+
+        LOG.info("  Loading {} as a workspace", neuronsPath);
+
+        // Get existing workspaces owned by the SyncedRoot owner
+        Map<String, TmWorkspace> workspacesByName = hortaDataManager.getWorkspaces(subjectKey, sample)
+                .stream().filter(s -> s.getOwnerKey().equals(subjectKey))
+                .collect(Collectors.toMap(TmWorkspace::getName, Function.identity()));
+
+        LOG.info("Found {} existing workspaces owned by {} for {}", workspacesByName.size(), subjectKey, sample);
+
+        JadeStorageService jadeStorage = jadeObject.getJadeStorage();
+        StorageObject storageObject = jadeObject.getStorageObject();
+
+        InputStream content = jadeStorage.getContent(storageObject.getLocation(), neuronsPath.toString());
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        JsonNode root = objectMapper.readTree(content);
+        String title = root.get("title").asText();
+
+        TmWorkspace existingWorkspace = workspacesByName.get(title);
+        if (existingWorkspace != null) {
+            LOG.info("    Workspace already exists: {}", existingWorkspace);
+            return;
+        }
+
+        VectorOperator externalToInternalConverter = swcService.getExternalToInternalConverter(sample);
+        TmWorkspace tmWorkspace = hortaDataManager.createWorkspace(subjectKey, sample, title);
+        LOG.info("Created workspace {} for sample {} to load neurons from {}", tmWorkspace, sample, neuronsPath);
+
+        try {
+            for (Iterator<Map.Entry<String, JsonNode>> fields = root.get("neurons").fields(); fields.hasNext(); ) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                String neuronBrowserName = entry.getKey();
+
+                JsonNode value = entry.getValue();
+                String originalName = value.get("originalName").asText();
+                String somaLocation = value.get("somaLocation").asText();
+                String consensus = value.get("consensus").asText();
+                String dendrite = value.get("dendrite").asText();
+
+                // Resolve relative paths
+                Path folderPath = Paths.get(storageObject.getAbsolutePath());
+                String consensusUrl = getPath(folderPath, consensus);
+                String dendriteUrl = getPath(folderPath, dendrite);
+
+                TmNeuronMetadata consensusNeuron = swcService.importSWC(consensusUrl, tmWorkspace,
+                        neuronBrowserName+" consensus", tmWorkspace.getOwnerKey(), externalToInternalConverter);
+                LOG.debug("  Loaded consensus SWC as {}", consensusNeuron);
+
+                TmNeuronMetadata dendriteNeuron = swcService.importSWC(dendriteUrl, tmWorkspace,
+                        neuronBrowserName+" dendrite", tmWorkspace.getOwnerKey(), externalToInternalConverter);
+                LOG.debug("  Loaded dendrite SWC as {}", dendriteNeuron);
+
+                TmMappedNeuron mappedNeuron = new TmMappedNeuron();
+                mappedNeuron.setName(neuronBrowserName);
+                mappedNeuron.setWorkspaceRef(Reference.createFor(tmWorkspace));
+                mappedNeuron.addNeuronRef(Reference.createFor(consensusNeuron));
+                mappedNeuron.addNeuronRef(Reference.createFor(dendriteNeuron));
+                mappedNeuron.setSomaLocation(somaLocation);
+                mappedNeuron.setCrossRefInternal(originalName);
+                mappedNeuron.setCrossRefNeuronBrowser(neuronBrowserName);
+                TmMappedNeuron savedNeuron = hortaDataManager.createMappedNeuron(subjectKey, mappedNeuron);
+                LOG.info("  Loaded neuron {} as {}", neuronBrowserName, savedNeuron);
+            }
+        }
+        catch (Exception e) {
+            LOG.error("Error importing "+neuronsPath+". Attempting rollback.", e);
+            hortaDataManager.removeWorkspace(subjectKey, tmWorkspace);
+        }
+    }
+
+    /**
+     * Returns the full absolute path to the SWC, given a current working directory. If the given swcPath is
+     * absolute, just return it. If it's relative, resolve it relative to the cwd.
+     * @param cwd current working directory
+     * @param swcPath path to swc (absolute or relative to cwd)
+     * @return absolute path to swc
+     */
+    private String getPath(Path cwd, String swcPath) {
+        return swcPath.startsWith("/")
+                ? swcPath
+                : cwd.resolve(swcPath).normalize().toString();
     }
 }

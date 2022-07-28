@@ -45,7 +45,7 @@ public class SWCData {
     private static final String NAME_HEADER_PREFIX = "NAME";
     private static final String COLOR_HEADER_PREFIX = "COLOR";
 
-    private String swcName;
+    private String swcFilepath;
     private List<SWCNode> nodeList = new ArrayList<>();
     private List<String> headerList = new ArrayList<>();
 
@@ -53,8 +53,8 @@ public class SWCData {
     // some routines want it in original form
     private double[] neuronCenter = {0.0, 0.0, 0.0};
 
-    SWCData(String swcName) {
-        this.swcName = swcName;
+    SWCData(String swcFilepath) {
+        this.swcFilepath = swcFilepath;
     }
 
     void addHeader(String header) {
@@ -148,8 +148,8 @@ public class SWCData {
                     return nameHeader.substring(hdrPos + NAME_HEADER_PREFIX.length()).trim();
                 })
                 .orElseGet(() -> {
-                    if (StringUtils.isBlank(swcName)) {
-                        String swcFileName = Paths.get(swcName).getFileName().toString();
+                    if (StringUtils.isNotBlank(swcFilepath)) {
+                        String swcFileName = Paths.get(swcFilepath).getFileName().toString();
                         if (swcFileName.endsWith(STD_SWC_EXTENSION)) {
                             return swcFileName.substring(0, swcFileName.length() - STD_SWC_EXTENSION.length());
                         } else {

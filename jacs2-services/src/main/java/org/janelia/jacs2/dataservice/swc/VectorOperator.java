@@ -11,6 +11,6 @@ package org.janelia.jacs2.dataservice.swc;
  * 
  * @author fosterl
  */
-interface VectorOperator {
+public interface VectorOperator {
     double[] apply(double[] v);
 }

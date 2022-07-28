@@ -24,10 +24,9 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * This service searches the given path using a set of discovery agents which synchronize paths to the database.
@@ -98,6 +97,8 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         String authToken = ResourceHelper.getAuthToken(jacsServiceData.getResources());
         SyncedRoot syncedRoot = getSyncedRoot(args.syncedRootId);
 
+        logger.info("Starting refresh for {}", syncedRoot);
+
         JadeStorageService jadeStorage = new JadeStorageService(
                 storageService, syncedRoot.getOwnerKey(), authToken);
 
@@ -117,7 +118,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         LOG.info("Found {} in {}", syncedRoot, storageLocation);
         JadeObject rootObject = new JadeObject(jadeStorage, rootMetadata);
 
-        List<DomainObject> syncedPaths = new ArrayList<>();
+        Map<String, SyncedPath> currentPaths = new HashMap<>();
         List<FileDiscoveryAgent<?>> agents = new ArrayList<>();
         if (!args.dryRun) {
             for (FileDiscoveryAgent<?> agent : agentSource) {
@@ -128,17 +129,23 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                     logger.info("Using discovery service: {}", serviceName);
                     agents.add(agent);
                 }
-                syncedPaths.addAll(legacyDomainDao.getUserDomainObjects(syncedRoot.getOwnerKey(), agentType.getDomainObjectClass()));
+                for (DomainObject domainObject : legacyDomainDao.getUserDomainObjects(syncedRoot.getOwnerKey(), agentType.getDomainObjectClass())) {
+                    SyncedPath syncedPath = (SyncedPath)domainObject;
+                    // We only touch auto-synchronized paths
+                    if (syncedPath.isAutoSynchronized()) {
+                        if (currentPaths.containsKey(syncedPath.getFilepath())) {
+                            SyncedPath firstSyncedPath = currentPaths.get(syncedPath.getFilepath());
+                            logger.info("  Another object already implements {}: {} and {}", syncedPath.getFilepath(), firstSyncedPath, syncedPath);
+                        } else {
+                            currentPaths.put(syncedPath.getFilepath(), syncedPath);
+                        }
+                    }
+                }
             }
         }
         else {
             logger.info("Service running in dry run mode. No discovery agents will be called.");
         }
-
-        // Build of map of current paths that can be reused
-        Map<String, SyncedPath> currentPaths = syncedPaths
-                .stream().map(d -> (SyncedPath)d) // all SyncedRoot children must extend SyncedPath
-                .collect(Collectors.toMap(SyncedPath::getFilepath, Function.identity()));
 
         // Initialize all database paths to existsInStorage=false
         for (String filepath : currentPaths.keySet()) {
@@ -172,16 +179,22 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
             }
         }
 
+        logger.info("Completed refresh for {}", syncedRoot);
+
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
     }
 
-    private List<DomainObject> walkStorage(SyncedRoot syncedRoot, Map<String, SyncedPath> currentPaths, JadeObject jadeObject,
-                             List<FileDiscoveryAgent<?>> agents, int levels, String indent) {
+    private List<DomainObject> walkStorage(SyncedRoot syncedRoot,
+                                           Map<String, SyncedPath> currentPaths,
+                                           JadeObject jadeObject,
+                                           List<FileDiscoveryAgent<?>> agents,
+                                           int levels,
+                                           String indent) {
         try {
             List<DomainObject> discovered = new ArrayList<>();
             for (JadeObject child : jadeObject.getChildren()) {
                 StorageObject storageObject = child.getStorageObject();
-                logger.info(indent+"{} -> {}", storageObject.getObjectName(), storageObject.getAbsolutePath());
+                logger.debug(indent+"{} -> {}", storageObject.getObjectName(), storageObject.getAbsolutePath());
                 logger.debug(indent+"      {}", child);
                 for (FileDiscoveryAgent<? extends DomainObject> agent : agents) {
                     DomainObject discoveredObject = agent.discover(syncedRoot, currentPaths, child);

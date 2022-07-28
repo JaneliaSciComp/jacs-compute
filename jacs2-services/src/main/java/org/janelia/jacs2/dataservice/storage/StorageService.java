@@ -99,6 +99,7 @@ public class StorageService {
             if (StringUtils.isNotBlank(subjectKey)) {
                 target = target.queryParam("ownerKey", subjectKey);
             }
+            LOG.debug("Requesting {}", target.getUri());
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
@@ -153,6 +154,7 @@ public class StorageService {
             if (StringUtils.isNotBlank(subjectKey)) {
                 target = target.queryParam("ownerKey", subjectKey);
             }
+            LOG.debug("Requesting {}", target.getUri());
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
@@ -220,6 +222,17 @@ public class StorageService {
         }
     }
 
+    /**
+     * Tar the given files paginated with the offset/size, and then stream the tar file.
+     * @param storageURI must point to data_content URL of a folder containing files
+     * @param offset index of first file to stream
+     * @param size number of files to stream
+     * @param sortedContent sort files before streaming
+     * @param filter regex filename filter
+     * @param subject subject key (or null)
+     * @param authToken authentication token (or null)
+     * @return stream of tar
+     */
     public InputStream getStorageFolderContent(String storageURI, long offset, long size, boolean sortedContent, String filter, String subject, String authToken) {
         Client httpclient = HttpUtils.createHttpClient();
         try {

@@ -52,8 +52,9 @@ public class N5DiscoveryAgent implements FileDiscoveryAgent<N5Container> {
                 else {
                     LOG.info("Found new N5: "+storageObject.getObjectName());
                     N5Container n5 = new N5Container();
-                    n5.setName(storageObject.getObjectName());
+                    n5.setAutoSynchronized(true);
                     n5.setExistsInStorage(true);
+                    n5.setName(storageObject.getObjectName());
                     n5.setFilepath(storageObject.getAbsolutePath());
                     return n5;
                 }
