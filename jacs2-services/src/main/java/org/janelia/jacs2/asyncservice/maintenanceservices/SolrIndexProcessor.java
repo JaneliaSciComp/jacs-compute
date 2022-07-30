@@ -134,11 +134,11 @@ public class SolrIndexProcessor extends AbstractServiceProcessor<Integer> {
                     .map(e -> {
                         Integer c = indexCounts.get(e.getKey());
                         if (c == null) {
-                            logger.error("Class {} was not indexed properly expected {} documents but none found ",
+                            logger.error("Class {} was not indexed properly. Expected {} documents but none found.",
                                     e.getKey(), e.getValue());
                             return true;
                         } else if (c < e.getValue()) {
-                            logger.error("Class {} was not indexed properly expected {} documents but only {} were found ",
+                            logger.error("Class {} was not indexed properly. Expected {} documents but only {} were found.",
                                     e.getKey(), e.getValue(), c);
                             return true;
                         } else if (c > e.getValue()) {
