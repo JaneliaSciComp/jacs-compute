@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.janelia.jacs2.asyncservice.common.*;
 import org.janelia.jacs2.asyncservice.common.resulthandlers.AbstractAnyServiceResultHandler;
+import org.janelia.jacs2.cdi.qualifier.JacsDefault;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.jacsstorage.newclient.*;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.*;
 
 /**
  * This service searches the given path using a set of discovery agents which synchronize paths to the database.
@@ -48,6 +50,7 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         }
     }
 
+    private final ExecutorService executorService;
     private final StorageService storageService;
     private final Instance<FileDiscoveryAgent<?>> agentSource;
     private final SyncedRootDao syncedRootDao;
@@ -59,11 +62,13 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
                                @PropertyValue(name = "service.DefaultWorkingDir") String defaultWorkingDir,
                                @PropertyValue(name = "StorageService.URL") String masterStorageServiceURL,
                                @PropertyValue(name = "StorageService.ApiKey") String storageServiceApiKey,
+                               @JacsDefault ExecutorService executorService,
                                @Any Instance<FileDiscoveryAgent<?>> agentSource,
                                SyncedRootDao syncedRootDao,
                                LegacyDomainDao legacyDomainDao,
                                Logger logger) {
         super(computationFactory, jacsServiceDataPersistence, defaultWorkingDir, logger);
+        this.executorService = executorService;
         this.storageService = new StorageService(masterStorageServiceURL, storageServiceApiKey);
         this.agentSource = agentSource;
         this.syncedRootDao = syncedRootDao;
@@ -153,8 +158,26 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
             syncedPath.setExistsInStorage(false);
         }
 
-        // Process all paths in storage
-        List<DomainObject> newChildren = walkStorage(syncedRoot, currentPaths, rootObject, agents, syncedRoot.getDepth(), "");
+        // Walk all paths in storage and spin off agents to process them
+        List<Future<DomainObject>> futures =
+                walkStorage(syncedRoot, currentPaths, rootObject, agents, syncedRoot.getDepth(), "");
+
+        // Wait for all agents to finish
+        List<DomainObject> newChildren = new ArrayList<>();
+        for (Future<DomainObject> future : futures) {
+            try {
+                newChildren.add(future.get(1, TimeUnit.HOURS));
+            }
+            catch (InterruptedException e) {
+                logger.info("Discovery agent was interrupted", e);
+            }
+            catch (ExecutionException e) {
+                logger.info("Discovery agent threw an exception", e);
+            }
+            catch (TimeoutException e) {
+                logger.info("Discovery agent timed out after 1 hour", e);
+            }
+        }
 
         // Update the root's children
         if (!args.dryRun) {
@@ -184,31 +207,36 @@ public class SyncedRootProcessor extends AbstractServiceProcessor<Long> {
         return computationFactory.newCompletedComputation(new JacsServiceResult<>(jacsServiceData));
     }
 
-    private List<DomainObject> walkStorage(SyncedRoot syncedRoot,
+    private List<Future<DomainObject>> walkStorage(SyncedRoot syncedRoot,
                                            Map<String, SyncedPath> currentPaths,
                                            JadeObject jadeObject,
                                            List<FileDiscoveryAgent<?>> agents,
                                            int levels,
                                            String indent) {
+        List<Future<DomainObject>> futures = new ArrayList<>();
         try {
-            List<DomainObject> discovered = new ArrayList<>();
             for (JadeObject child : jadeObject.getChildren()) {
                 StorageObject storageObject = child.getStorageObject();
                 logger.debug(indent+"{} -> {}", storageObject.getObjectName(), storageObject.getAbsolutePath());
                 logger.debug(indent+"      {}", child);
-                for (FileDiscoveryAgent<? extends DomainObject> agent : agents) {
-                    DomainObject discoveredObject = agent.discover(syncedRoot, currentPaths, child);
-                    if (discoveredObject != null) {
-                        discovered.add(discoveredObject);
-                        break; // a given path can only map to a single discovered object
+
+                futures.add(executorService.submit(() -> {
+                    DomainObject discoveredObject = null;
+                    for (FileDiscoveryAgent<? extends DomainObject> agent : agents) {
+                        discoveredObject = agent.discover(syncedRoot, currentPaths, child);
+                        if (discoveredObject != null) {
+                            break; // a given path can only map to a single discovered object
+                        }
                     }
-                }
+                    return discoveredObject;
+                }));
+
                 if (levels > 1 && storageObject.isCollection()) {
                     // Recurse into the folder hierarchy
-                    discovered.addAll(walkStorage(syncedRoot, currentPaths, child, agents, levels - 1, indent+"  "));
+                    futures.addAll(walkStorage(syncedRoot, currentPaths, child, agents, levels - 1, indent+"  "));
                 }
             }
-            return discovered;
+            return futures;
         }
         catch (StorageObjectNotFoundException e) {
             throw new IllegalStateException("Storage object disappeared mysteriously: "

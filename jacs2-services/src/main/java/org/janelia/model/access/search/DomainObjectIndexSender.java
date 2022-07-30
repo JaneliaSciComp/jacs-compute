@@ -11,7 +11,6 @@ import org.janelia.model.access.domain.search.DocumentSearchResults;
 import org.janelia.model.access.domain.search.DomainObjectIndexer;
 import org.janelia.model.domain.DomainObject;
 import org.janelia.model.domain.DomainUtils;
-import org.janelia.model.domain.sample.NeuronFragment;
 
 class DomainObjectIndexSender implements DomainObjectIndexer {
 

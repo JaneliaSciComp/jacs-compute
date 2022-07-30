@@ -189,32 +189,42 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                 JsonNode value = entry.getValue();
                 String originalName = value.get("originalName").asText();
                 String somaLocation = value.get("somaLocation").asText();
-                String consensus = value.get("consensus").asText();
-                String dendrite = value.get("dendrite").asText();
 
                 // Resolve relative paths
                 Path folderPath = Paths.get(storageObject.getAbsolutePath());
-                String consensusUrl = getPath(folderPath, consensus);
-                String dendriteUrl = getPath(folderPath, dendrite);
-
-                TmNeuronMetadata consensusNeuron = swcService.importSWC(consensusUrl, tmWorkspace,
-                        neuronBrowserName+" consensus", tmWorkspace.getOwnerKey(), externalToInternalConverter);
-                LOG.debug("  Loaded consensus SWC as {}", consensusNeuron);
-
-                TmNeuronMetadata dendriteNeuron = swcService.importSWC(dendriteUrl, tmWorkspace,
-                        neuronBrowserName+" dendrite", tmWorkspace.getOwnerKey(), externalToInternalConverter);
-                LOG.debug("  Loaded dendrite SWC as {}", dendriteNeuron);
 
                 TmMappedNeuron mappedNeuron = new TmMappedNeuron();
                 mappedNeuron.setName(neuronBrowserName);
                 mappedNeuron.setWorkspaceRef(Reference.createFor(tmWorkspace));
-                mappedNeuron.addNeuronRef(Reference.createFor(consensusNeuron));
-                mappedNeuron.addNeuronRef(Reference.createFor(dendriteNeuron));
                 mappedNeuron.setSomaLocation(somaLocation);
                 mappedNeuron.setCrossRefInternal(originalName);
                 mappedNeuron.setCrossRefNeuronBrowser(neuronBrowserName);
-                TmMappedNeuron savedNeuron = hortaDataManager.createMappedNeuron(subjectKey, mappedNeuron);
-                LOG.info("  Loaded neuron {} as {}", neuronBrowserName, savedNeuron);
+
+                if (value.has("consensus")) {
+                    String consensus = value.get("consensus").asText();
+                    String consensusUrl = getPath(folderPath, consensus);
+                    TmNeuronMetadata consensusNeuron = swcService.importSWC(consensusUrl, tmWorkspace,
+                            neuronBrowserName+" consensus", subjectKey, externalToInternalConverter);
+                    LOG.debug("  Loaded consensus SWC as {}", consensusNeuron);
+                    mappedNeuron.addNeuronRef(Reference.createFor(consensusNeuron));
+                }
+
+                if (value.has("dendrite")) {
+                    String dendrite = value.get("dendrite").asText();
+                    String dendriteUrl = getPath(folderPath, dendrite);
+                    TmNeuronMetadata dendriteNeuron = swcService.importSWC(dendriteUrl, tmWorkspace,
+                            neuronBrowserName+" dendrite", subjectKey, externalToInternalConverter);
+                    LOG.debug("  Loaded dendrite SWC as {}", dendriteNeuron);
+                    mappedNeuron.addNeuronRef(Reference.createFor(dendriteNeuron));
+                }
+
+                if (mappedNeuron.getNeuronRefs().isEmpty()) {
+                    LOG.warn("  Could not find SWC files to load for neuron {}", neuronBrowserName);
+                }
+                else {
+                    TmMappedNeuron savedNeuron = hortaDataManager.createMappedNeuron(subjectKey, mappedNeuron);
+                    LOG.info("  Loaded neuron {} as {}", neuronBrowserName, savedNeuron);
+                }
             }
         }
         catch (Exception e) {

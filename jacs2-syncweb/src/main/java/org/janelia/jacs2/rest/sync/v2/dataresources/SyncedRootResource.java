@@ -44,9 +44,9 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/data")
-public class SyncedPathResource {
+public class SyncedRootResource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SyncedPathResource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SyncedRootResource.class);
 
     @AsyncIndex
     @Inject
@@ -90,7 +90,15 @@ public class SyncedPathResource {
     public Response createSyncedRoot(DomainQuery query) {
         LOG.trace("Start createSyncedRoot({})", query);
         try {
-            SyncedRoot SyncedRoot = syncedRootDao.createSyncedRoot(query.getSubjectKey(), query.getDomainObjectAs(SyncedRoot.class));
+            SyncedRoot syncedRoot = query.getDomainObjectAs(SyncedRoot.class);
+            SyncedRoot SyncedRoot = syncedRootDao.createSyncedRoot(syncedRoot.getOwnerKey(), syncedRoot);
+            if (!query.getSubjectKey().equals(syncedRoot.getOwnerKey())) {
+                // Share the object back to the creating user
+                syncedRoot.getReaders().add(query.getSubjectKey());
+                syncedRoot.getWriters().add(query.getSubjectKey());
+                legacyDomainDao.addPermissions(syncedRoot.getOwnerKey(), SyncedRoot.class.getName(),
+                        syncedRoot.getId(), syncedRoot, false);
+            }
             return Response
                     .created(UriBuilder.fromMethod(this.getClass(), "createSyncedRoot").build(SyncedRoot.getId()))
                     .entity(SyncedRoot)
@@ -121,7 +129,7 @@ public class SyncedPathResource {
             SyncedRoot SyncedRoot = syncedRootDao.saveBySubjectKey(query.getDomainObjectAs(SyncedRoot.class), query.getSubjectKey());
             return Response
                     .ok(SyncedRoot)
-                    .contentLocation(UriBuilder.fromMethod(SyncedPathResource.class, "updateSyncedRoot").build(SyncedRoot.getId()))
+                    .contentLocation(UriBuilder.fromMethod(SyncedRootResource.class, "updateSyncedRoot").build(SyncedRoot.getId()))
                     .build();
         } catch (Exception e) {
             LOG.error("Error occurred updating the SyncedRoot {}", query, e);
@@ -145,7 +153,7 @@ public class SyncedPathResource {
                                      @ApiParam @QueryParam("syncedRootId") final Long syncedRootId) {
         LOG.trace("Start removeSyncedRoot({}, SyncedRootId={})", subjectKey, syncedRootId);
         try {
-            SyncedRoot syncedRoot = syncedRootDao.findById(syncedRootId);
+            SyncedRoot syncedRoot = syncedRootDao.findEntityByIdReadableBySubjectKey(syncedRootId, subjectKey);
             syncedRootDao.removeSyncedRoot(subjectKey, syncedRoot);
             return Response.noContent().build();
         } finally {
