@@ -224,6 +224,7 @@ public class ColorDepthResource {
     public Response getMatchingColorDepthMipsWithSample(@ApiParam @QueryParam("ownerKey") String ownerKey,
                                                         @ApiParam @QueryParam("alignmentSpace") String alignmentSpace,
                                                         @ApiParam @QueryParam("libraryName") List<String> libraryNames,
+                                                        @ApiParam @QueryParam("id") List<String> ids,
                                                         @ApiParam @QueryParam("name") List<String> names,
                                                         @ApiParam @QueryParam("filepath") List<String> filepaths,
                                                         @ApiParam @QueryParam("dataset") List<String> datasets,
@@ -236,12 +237,14 @@ public class ColorDepthResource {
             int offset = parseIntegerParam("offset", offsetParam, 0);
             int length = parseIntegerParam("length", lengthParam, -1);
             List<Reference> sampleRefs = retrieveSampleRefs(extractMultiValueParams(datasets), extractMultiValueParams(releases));
+            List<Long> mipIds = extractMultiValueParams(ids).stream().map(Long::valueOf).collect(Collectors.toList());
             LOG.debug("Retrieved {} sample refs after {}ms", sampleRefs.size(), System.currentTimeMillis()-start);
             List<ColorDepthImage> cdmList = colorDepthImageDao.streamColorDepthMIPs(
                     new ColorDepthImageQuery()
                             .withOwner(ownerKey)
                             .withAlignmentSpace(alignmentSpace)
                             .withLibraryIdentifiers(extractMultiValueParams(libraryNames))
+                            .withIds(mipIds)
                             .withExactNames(extractMultiValueParams(names))
                             .withExactFilepaths(extractMultiValueParams(filepaths))
                             .withSampleRefs(sampleRefs.stream().map(Reference::toString).collect(Collectors.toSet()))
