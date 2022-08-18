@@ -36,6 +36,7 @@ import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.SampleDao;
 import org.janelia.model.domain.DomainUtils;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.interfaces.HasRelativeFiles;
@@ -84,17 +85,24 @@ public class SampleDataResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/samples")
-    public Response getSamples(@ApiParam @QueryParam("name") List<String> names,
+    public Response getSamples(@ApiParam @QueryParam("refs") List<String> refs,
+                               @ApiParam @QueryParam("name") List<String> names,
                                @ApiParam @QueryParam("slideCode") List<String> slideCodes,
                                @ApiParam @QueryParam("offset") String offsetParam,
                                @ApiParam @QueryParam("length") String lengthParam) {
         LOG.trace("Start getSamples({}, {}, {}, {})", names, slideCodes, offsetParam, lengthParam);
         try {
+            Set<Long> sampleIds = extractMultiValueParams(refs).stream()
+                    .map(Reference::createFor)
+                    .map(Reference::getTargetId)
+                    .collect(Collectors.toSet());
             Set<String> sampleNames = extractMultiValueParams(names);
             Set<String> sampleSlideCodes = extractMultiValueParams(slideCodes);
             int offset = parseIntegerParam("offset", offsetParam, 0);
             int length = parseIntegerParam("length", lengthParam, -1);
-            List<Sample> sampleList = sampleDao.findMatchingSample(null,
+            List<Sample> sampleList = sampleDao.findMatchingSample(
+                    sampleIds,
+                    null,
                     sampleNames,
                     sampleSlideCodes,
                     offset,

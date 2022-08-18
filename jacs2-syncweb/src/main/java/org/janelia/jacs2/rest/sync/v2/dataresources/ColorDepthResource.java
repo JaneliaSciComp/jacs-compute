@@ -353,11 +353,11 @@ public class ColorDepthResource {
                     .flatMap(r -> r.getChildren().stream())
                     .collect(Collectors.toList());
         } else if (CollectionUtils.isEmpty(datasets)) {
-            return sampleDao.findMatchingSample(datasets, null, null, 0, -1).stream()
+            return sampleDao.findMatchingSample(null, datasets, null, null, 0, -1).stream()
                     .map(Reference::createFor)
                     .collect(Collectors.toList());
         } else {
-            List<Reference> sampleRefsForDatasets = sampleDao.findMatchingSample(datasets, null, null, 0, -1).stream()
+            List<Reference> sampleRefsForDatasets = sampleDao.findMatchingSample(null, datasets, null, null, 0, -1).stream()
                     .map(Reference::createFor)
                     .collect(Collectors.toList());
             List<Reference> sampleRefsForReleases = lineReleaseDao.findReleasesByName(releases).stream()

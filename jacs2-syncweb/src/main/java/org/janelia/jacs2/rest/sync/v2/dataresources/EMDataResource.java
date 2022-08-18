@@ -8,6 +8,7 @@ import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.domain.dao.EmBodyDao;
 import org.janelia.model.access.domain.dao.EmDataSetDao;
+import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.flyem.EMDataSet;
 import org.slf4j.Logger;
@@ -89,6 +90,37 @@ public class EMDataResource {
                     .build();
         } finally {
             LOG.trace("Finished getEmBodiesForDataset({}, {}, {}, {})", emDatasetName, emDatasetVersion, offsetParam, lengthParam);
+        }
+    }
+
+    @ApiOperation(value = "Gets a list of EM bodies")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully got list of EM bodies",
+                    response = EMBody.class,
+                    responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Internal Server Error getting list of EM Bodies")
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/emBodies")
+    public Response getEmBodies(@ApiParam @QueryParam("refs") List<String> refs) {
+        LOG.trace("Start getEmBodies({})", refs);
+        try {
+            Set<Long> emBodyIds = extractMultiValueParams(refs).stream()
+                    .map(Reference::createFor)
+                    .map(Reference::getTargetId)
+                    .collect(Collectors.toSet());
+            List<EMBody> emBodyList = emBodyDao.findByIds(emBodyIds);
+            return Response
+                    .ok(new GenericEntity<List<EMBody>>(emBodyList){})
+                    .build();
+        } catch (Exception e) {
+            LOG.error("Error occurred getting EM bodies for {}", refs, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error retrieving EM bodies for the provided " + refs.size() + " references"))
+                    .build();
+        } finally {
+            LOG.trace("Finished getEmBodies({})", refs);
         }
     }
 
