@@ -60,8 +60,10 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
     private final EmDataSetDao emDataSetDao;
     private final EmBodyDao emBodyDao;
     private final JacsNotificationDao jacsNotificationDao;
-    private int found = 0;
-    private int updated = 0;
+    private int foundObj = 0;
+    private int foundSwc = 0;
+    private int updatedObj = 0;
+    private int updatedSwc = 0;
 
     @Inject
     EMSkeletonSynchronizer(ServiceComputationFactory computationFactory,
@@ -97,7 +99,8 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
 
         return syncSystemLibraries(args, existingEMDataSets)
                 .thenApply(r -> {
-                    logger.info("Found {} SWC files and updated {} bodies", found, updated);
+                    logger.info("Found {} SWC files and updated {} bodies", foundSwc, updatedSwc);
+                    logger.info("Found {} OBJ files and updated {} bodies", foundObj, updatedObj);
                     return r;
                 })
                 .thenApply(r -> updateServiceResult(jacsServiceData, r))
@@ -174,6 +177,7 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
 
     private void processLibraryDir(File libraryDir, String alignmentSpace, EMDataSet emDataSet) {
         logger.info("Discovering files in {}", libraryDir);
+        String libraryIdentifier = libraryDir.getName();
 
         // Look up table from EM bodyId to internal id
         Map<Long, EMBody> emBodyByBodyId = new HashMap<>();
@@ -181,7 +185,6 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
             emBodyByBodyId.put(emBody.getBodyId(), emBody);
         }
 
-        String libraryIdentifier = libraryDir.getName();
         Path swcDir = libraryDir.toPath().resolve("swc");
         logger.info("Checking for SWC files in {}", swcDir);
 
@@ -190,7 +193,7 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
                 .map(Path::toFile)
                 .filter(File::isFile)
                 .forEach(file -> {
-                    found++;
+                    foundSwc++;
                     Pattern pattern = emSkeletonRegexPattern();
                     Matcher matcher = pattern.matcher(file.getName());
                     if (matcher.matches()) {
@@ -201,7 +204,38 @@ public class EMSkeletonSynchronizer extends AbstractServiceProcessor<Void> {
                             // Update CDM on EMBody for easy visualization in the Workstation
                             emBody.getFiles().put(FileType.SkeletonSWC, file.getAbsolutePath());
                             emBodyDao.replace(emBody);
-                            updated++;
+                            updatedSwc++;
+                        } else {
+                            logger.warn("  Could not find body with id {} in {} for {}/{}",
+                                    bodyId, emDataSet.getDataSetIdentifier(), alignmentSpace, libraryIdentifier);
+                        }
+                    }
+                    else {
+                        logger.warn("  Could not extract body id from filename: {}", file.getName());
+                    }
+                });
+
+
+        Path objDir = libraryDir.toPath().resolve("obj");
+        logger.info("Checking for OBJ files in {}", objDir);
+
+        FileUtils.lookupFiles(
+                objDir, 1, "glob:**/*.obj")
+                .map(Path::toFile)
+                .filter(File::isFile)
+                .forEach(file -> {
+                    foundObj++;
+                    Pattern pattern = emSkeletonRegexPattern();
+                    Matcher matcher = pattern.matcher(file.getName());
+                    if (matcher.matches()) {
+                        Long bodyId = Long.valueOf(matcher.group(1));
+                        EMBody emBody = emBodyByBodyId.get(bodyId);
+
+                        if (emBody != null) {
+                            // Update CDM on EMBody for easy visualization in the Workstation
+                            emBody.getFiles().put(FileType.SkeletonOBJ, file.getAbsolutePath());
+                            emBodyDao.replace(emBody);
+                            updatedObj++;
                         } else {
                             logger.warn("  Could not find body with id {} in {} for {}/{}",
                                     bodyId, emDataSet.getDataSetIdentifier(), alignmentSpace, libraryIdentifier);
