@@ -9,7 +9,6 @@ import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
 import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.rendering.DataLocation;

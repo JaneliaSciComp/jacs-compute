@@ -1,9 +1,6 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
 import java.io.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.ZoneId;
 import java.util.*;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -34,13 +31,11 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacs2.auth.annotations.RequireAuthentication;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
-import org.janelia.model.access.domain.dao.TmAgentDao;
 import org.janelia.model.domain.DomainUtils;
 import org.janelia.model.domain.dto.DomainQuery;
 import org.janelia.model.domain.tiledMicroscope.*;
@@ -67,9 +62,9 @@ import org.slf4j.LoggerFactory;
 @ApplicationScoped
 @Produces("application/json")
 @Path("/mouselight/data")
-public class TmResource {
+public class TmWorkspaceResource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TmResource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TmWorkspaceResource.class);
 
     @Inject
     private LegacyDomainDao legacyWorkspaceDao;
