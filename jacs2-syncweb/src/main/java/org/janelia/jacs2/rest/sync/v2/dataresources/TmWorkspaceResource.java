@@ -31,6 +31,7 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacs2.asyncservice.lvtservices.HortaDataManager;
 import org.janelia.jacs2.rest.ErrorResponse;
 import org.janelia.model.access.cdi.AsyncIndex;
 import org.janelia.model.access.dao.LegacyDomainDao;
@@ -73,6 +74,8 @@ public class TmWorkspaceResource {
     private TmWorkspaceDao tmWorkspaceDao;
     @Inject
     private TmNeuronMetadataDao tmNeuronMetadataDao;
+    @Inject
+    private HortaDataManager hortaDataManager;
 
     @ApiOperation(value = "Gets all the Workspaces a user can read",
             notes = "Returns all the Workspaces which are visible to the current user."
@@ -153,44 +156,8 @@ public class TmWorkspaceResource {
     @Path("/workspace")
     public TmWorkspace createTmWorkspace(DomainQuery query) {
         LOG.trace("createTmWorkspace({})", query);
-        TmWorkspace tmWorkspace = tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        return tmWorkspace;
+        return tmWorkspaceDao.createTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
     }
-
-    /*@ApiOperation(value = "Gets Agent Metadata by workspace id",
-            notes = "Returns the Agent mappings, etc. identified by the given workspace id"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully fetched the agent metadata", response = TmAgentMetadata.class),
-            @ApiResponse(code = 500, message = "Error occurred while fetching the agent metadata")
-    })
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/agent/{workspaceId}")
-    public TmAgentMetadata getAgentMetadata(@ApiParam @QueryParam("subjectKey") String subjectKey,
-                                      @ApiParam @PathParam("workspaceId") Long workspaceId) {
-        LOG.debug("getAgentMetadata({}, workspaceId={})", subjectKey, workspaceId);
-        return tmAgentMetadataDao.getTmAgentMetadata(workspaceId, subjectKey);
-    }
-
-
-    @ApiOperation(value = "Creates a new TmAgentMetadata",
-            notes = "Creates a TmAgentMetadata using the DomainObject parameter of the DomainQuery"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully created a TmAgentMetadata", response = TmAgentMetadata.class),
-            @ApiResponse(code = 500, message = "Error occurred while creating a TmAgentMetadata")
-    })
-    @PUT
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/agent")
-    public TmAgentMetadata createAgentMetadata(DomainQuery query) {
-        LOG.trace("createAgentMetadata({})", query);
-        TmAgentMetadata tmAgentMetadata = tmAgentMetadataDao.createTmAgentMetadata(
-                query.getSubjectKey(), query.getDomainObjectAs(TmAgentMetadata.class));
-        return tmAgentMetadata;
-    }*/
 
     @ApiOperation(value = "Creates a copy of an existing TmWorkspace",
             notes = "Creates a copy of the given TmWorkspace with a new name given by the parameter value of the DomainQuery"
@@ -205,8 +172,7 @@ public class TmWorkspaceResource {
     @Path("/workspace/copy")
     public TmWorkspace copyTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("copyTmWorkspace({})", query);
-        TmWorkspace tmWorkspace = tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), query.getObjectType());
-        return tmWorkspace;
+        return tmWorkspaceDao.copyTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class), query.getPropertyValue(), query.getObjectType());
     }
 
     @ApiOperation(value = "Updates an existing TmWorkspace",
@@ -222,8 +188,7 @@ public class TmWorkspaceResource {
     @Path("/workspace")
     public TmWorkspace updateTmWorkspace(@ApiParam DomainQuery query) {
         LOG.debug("updateTmWorkspace({})", query);
-        TmWorkspace tmWorkspace = tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
-        return tmWorkspace;
+        return tmWorkspaceDao.updateTmWorkspace(query.getSubjectKey(), query.getDomainObjectAs(TmWorkspace.class));
     }
 
     @ApiOperation(value = "Removes a TmWorkspace",
@@ -238,7 +203,8 @@ public class TmWorkspaceResource {
     public void removeTmWorkspace(@ApiParam @QueryParam("subjectKey") final String subjectKey,
                                   @ApiParam @QueryParam("workspaceId") final Long workspaceId) {
         LOG.debug("removeTmWorkspace({}, workspaceId={})", subjectKey, workspaceId);
-        tmWorkspaceDao.deleteByIdAndSubjectKey(workspaceId, subjectKey);
+        TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
+        hortaDataManager.removeWorkspace(subjectKey, workspace);
     }
 
     @ApiOperation(value = "Gets the neurons for a workspace",
@@ -256,7 +222,7 @@ public class TmWorkspaceResource {
                                                              @ApiParam @QueryParam("workspaceId") final Long workspaceId,
                                                              @ApiParam @QueryParam("offset") final Long offsetParam,
                                                              @ApiParam @QueryParam("length") final Integer lengthParam) {
-        LOG.info("getWorkspaceNeuronMetadata({}, {}, {})", workspaceId, offsetParam, lengthParam);
+        LOG.debug("getWorkspaceNeurons({}, {}, {})", workspaceId, offsetParam, lengthParam);
         TmWorkspace workspace = tmWorkspaceDao.findEntityByIdReadableBySubjectKey(workspaceId, subjectKey);
         if (workspace==null)
             return null;
