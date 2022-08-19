@@ -38,7 +38,7 @@ public class HortaDataManager {
     @Inject
     public HortaDataManager(@AsyncIndex TmSampleDao tmSampleDao,
                             @AsyncIndex TmWorkspaceDao tmWorkspaceDao,
-                            @AsyncIndex TmNeuronMetadataDao tmNeuronMetadataDao,
+                            TmNeuronMetadataDao tmNeuronMetadataDao,
                             @AsyncIndex TmMappedNeuronDao tmMappedNeuronDao,
                             RenderedVolumeLoader renderedVolumeLoader,
                             DataStorageLocationFactory dataStorageLocationFactory) {
@@ -182,7 +182,7 @@ public class HortaDataManager {
 
         String acquisitionPath = tmSample.getAcquisitionFilepath();
         if (StringUtils.isNotBlank(acquisitionPath)) {
-            // for update only check the acquision path if set - don't try to read the tile yaml file
+            // for update only check the acquisition path if set - don't try to read the tile yaml file
             boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
                     .map(dl -> true)
                     .orElseGet(() -> {
@@ -305,7 +305,7 @@ public class HortaDataManager {
             log.error("Problem deleting neuron metadata for workspace "+workspace, e);
         }
         tmWorkspaceDao.deleteByIdAndSubjectKey(workspace.getId(), subjectKey);
-        log.error("Deleted {}", workspace);
+        log.info("Deleted {}", workspace);
     }
 
     public TmMappedNeuron createMappedNeuron(String subjectKey, TmMappedNeuron tmMappedNeuron) {
