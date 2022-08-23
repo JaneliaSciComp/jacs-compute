@@ -231,7 +231,7 @@ public class ColorDepthResource {
                                                         @ApiParam @QueryParam("release") List<String> releases,
                                                         @ApiParam @QueryParam("offset") String offsetParam,
                                                         @ApiParam @QueryParam("length") String lengthParam) {
-        LOG.trace("Start getMatchingColorDepthMipsWithSample({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
+        LOG.trace("Start getMatchingColorDepthMipsWithSample({}, {}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, ids, names, filepaths, offsetParam, lengthParam);
         long start = System.currentTimeMillis();
         try {
             int offset = parseIntegerParam("offset", offsetParam, 0);
@@ -261,7 +261,7 @@ public class ColorDepthResource {
                     .build()
                     ;
         } finally {
-            LOG.trace("Finished getMatchingColorDepthMipsWithSample({}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, names, filepaths, offsetParam, lengthParam);
+            LOG.trace("Finished getMatchingColorDepthMipsWithSample({}, {}, {}, {}, {}, {}, {}, {})", ownerKey, alignmentSpace, libraryNames, ids, names, filepaths, offsetParam, lengthParam);
         }
     }
 

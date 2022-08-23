@@ -614,7 +614,7 @@ public class LegacyDomainMongoDao implements LegacyDomainDao {
                             mongoCollection.update("{_id:#}", domainObject.getId()).with("{$addToSet:{readers:#,writers:#}}", ownerKey, ownerKey);
                             domainObject.getReaders().add(ownerKey);
                             domainObject.getWriters().add(ownerKey);
-                            domainObjectIndexer.indexDocument(domainObject);
+                            // this method is invoked from a batch service so we do not queue any indexing requests
                             numberOfIndexedObjects.incrementAndGet();
                         }
                     });
