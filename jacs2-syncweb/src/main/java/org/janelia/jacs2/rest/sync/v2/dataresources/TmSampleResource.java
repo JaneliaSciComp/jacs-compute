@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.*;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -213,8 +214,8 @@ public class TmSampleResource {
                     .entity(savedSample)
                     .build();
         }
-        catch (HortaDataManager.UserException e) {
-            LOG.error(e.getMessage());
+        catch (IOException e) {
+            LOG.error("Error saving TmSample for path "+samplePath, e);
             // if transform.txt cannot be located at the sample path then don't even create the sample
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(new ErrorResponse(e.getMessage()))

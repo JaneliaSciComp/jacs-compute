@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -65,7 +66,7 @@ public class HortaDataManager {
         return samples.get(0);
     }
 
-    public TmSample createTmSample(String subjectKey, TmSample sample) throws UserException {
+    public TmSample createTmSample(String subjectKey, TmSample sample) throws IOException {
 
         String sampleName = sample.getName();
         String samplePath = sample.getLargeVolumeOctreeFilepath();
@@ -74,7 +75,7 @@ public class HortaDataManager {
                 .map(dataStorageLocationFactory::asRenderedVolumeLocation)
                 .orElse(null);
         if (rvl == null) {
-            throw new UserException("Error accessing sample path "+samplePath+" while trying to create sample "+sampleName+" for "+subjectKey);
+            throw new IOException("Error accessing sample path "+samplePath+" while trying to create sample "+sampleName+" for "+subjectKey);
         }
 
         boolean transformFound = getConstants(rvl)
@@ -85,7 +86,7 @@ public class HortaDataManager {
                 })
                 .orElse(false);
         if (!transformFound) {
-            throw new UserException("Error reading transform constants for "+subjectKey+" from "+samplePath);
+            throw new IOException("Error reading transform constants for "+subjectKey+" from "+samplePath);
         }
 
         final String ktxFullPath;
@@ -307,11 +308,5 @@ public class HortaDataManager {
         TmWorkspace updatedWorkspace = tmWorkspaceDao.updateTmWorkspace(subjectKey, tmWorkspace);
         log.info("Updated workspace '{}' as {}", tmWorkspace.getName(), tmWorkspace);
         return updatedWorkspace;
-    }
-
-    public static class UserException extends Exception {
-        public UserException(String message) {
-            super(message);
-        }
     }
 }
