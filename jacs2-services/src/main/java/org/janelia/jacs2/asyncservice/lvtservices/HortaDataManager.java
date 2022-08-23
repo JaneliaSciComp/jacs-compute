@@ -8,6 +8,7 @@ import org.janelia.model.access.domain.dao.TmMappedNeuronDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
@@ -288,28 +289,24 @@ public class HortaDataManager {
 
     public TmWorkspace createWorkspace(String subjectKey, TmSample sample, String workspaceName) {
         TmWorkspace tmWorkspace = new TmWorkspace(workspaceName.trim(), sample.getId());
-        return tmWorkspaceDao.createTmWorkspace(subjectKey, tmWorkspace);
+        TmWorkspace createdWorkspace = tmWorkspaceDao.createTmWorkspace(subjectKey, tmWorkspace);
+        log.info("Created workspace '{}' as {}", createdWorkspace.getName(), createdWorkspace);
+        return createdWorkspace;
     }
 
     public void removeWorkspace(String subjectKey, TmWorkspace workspace) {
-        try {
-            tmMappedNeuronDao.deleteNeuronsForWorkspace(workspace, subjectKey);
-        }
-        catch (Exception e) {
-            log.error("Problem deleting mapped neurons for workspace "+workspace, e);
-        }
-        try {
-            tmNeuronMetadataDao.deleteNeuronsForWorkspace(workspace, subjectKey);
-        }
-        catch (Exception e) {
-            log.error("Problem deleting neuron metadata for workspace "+workspace, e);
-        }
         tmWorkspaceDao.deleteByIdAndSubjectKey(workspace.getId(), subjectKey);
-        log.info("Deleted {}", workspace);
+        log.info("Deleted {} and all of its neurons", workspace);
     }
 
     public TmMappedNeuron createMappedNeuron(String subjectKey, TmMappedNeuron tmMappedNeuron) {
         return tmMappedNeuronDao.saveBySubjectKey(tmMappedNeuron, subjectKey);
+    }
+
+    public TmWorkspace updateWorkspace(String subjectKey, TmWorkspace tmWorkspace) {
+        TmWorkspace updatedWorkspace = tmWorkspaceDao.updateTmWorkspace(subjectKey, tmWorkspace);
+        log.info("Updated workspace '{}' as {}", tmWorkspace.getName(), tmWorkspace);
+        return updatedWorkspace;
     }
 
     public static class UserException extends Exception {
