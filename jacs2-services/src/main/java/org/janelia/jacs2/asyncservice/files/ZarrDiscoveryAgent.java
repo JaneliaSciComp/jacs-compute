@@ -54,6 +54,7 @@ public class ZarrDiscoveryAgent implements FileDiscoveryAgent<ZarrContainer> {
                 zarr.setExistsInStorage(true);
                 zarr.setName(storageObject.getObjectName());
                 zarr.setFilepath(storageObject.getAbsolutePath());
+                ndContainerDao.saveBySubjectKey(zarr, syncedRoot.getOwnerKey());
                 return zarr;
             }
         }

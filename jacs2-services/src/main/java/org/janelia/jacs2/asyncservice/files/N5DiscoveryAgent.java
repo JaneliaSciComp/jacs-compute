@@ -56,6 +56,7 @@ public class N5DiscoveryAgent implements FileDiscoveryAgent<N5Container> {
                     n5.setExistsInStorage(true);
                     n5.setName(storageObject.getObjectName());
                     n5.setFilepath(storageObject.getAbsolutePath());
+                    ndContainerDao.saveBySubjectKey(n5, syncedRoot.getOwnerKey());
                     return n5;
                 }
             }

@@ -8,8 +8,8 @@ import org.janelia.model.access.domain.dao.TmMappedNeuronDao;
 import org.janelia.model.access.domain.dao.TmNeuronMetadataDao;
 import org.janelia.model.access.domain.dao.TmSampleDao;
 import org.janelia.model.access.domain.dao.TmWorkspaceDao;
+import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.tiledMicroscope.TmMappedNeuron;
-import org.janelia.model.domain.tiledMicroscope.TmNeuronMetadata;
 import org.janelia.model.domain.tiledMicroscope.TmSample;
 import org.janelia.model.domain.tiledMicroscope.TmWorkspace;
 import org.janelia.rendering.DataLocation;
@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,7 +40,7 @@ public class HortaDataManager {
     @Inject
     public HortaDataManager(@AsyncIndex TmSampleDao tmSampleDao,
                             @AsyncIndex TmWorkspaceDao tmWorkspaceDao,
-                            @AsyncIndex TmNeuronMetadataDao tmNeuronMetadataDao,
+                            TmNeuronMetadataDao tmNeuronMetadataDao,
                             @AsyncIndex TmMappedNeuronDao tmMappedNeuronDao,
                             RenderedVolumeLoader renderedVolumeLoader,
                             DataStorageLocationFactory dataStorageLocationFactory) {
@@ -65,7 +66,7 @@ public class HortaDataManager {
         return samples.get(0);
     }
 
-    public TmSample createTmSample(String subjectKey, TmSample sample) throws UserException {
+    public TmSample createTmSample(String subjectKey, TmSample sample) throws IOException {
 
         String sampleName = sample.getName();
         String samplePath = sample.getLargeVolumeOctreeFilepath();
@@ -74,7 +75,7 @@ public class HortaDataManager {
                 .map(dataStorageLocationFactory::asRenderedVolumeLocation)
                 .orElse(null);
         if (rvl == null) {
-            throw new UserException("Error accessing sample path "+samplePath+" while trying to create sample "+sampleName+" for "+subjectKey);
+            throw new IOException("Error accessing sample path "+samplePath+" while trying to create sample "+sampleName+" for "+subjectKey);
         }
 
         boolean transformFound = getConstants(rvl)
@@ -85,7 +86,7 @@ public class HortaDataManager {
                 })
                 .orElse(false);
         if (!transformFound) {
-            throw new UserException("Error reading transform constants for "+subjectKey+" from "+samplePath);
+            throw new IOException("Error reading transform constants for "+subjectKey+" from "+samplePath);
         }
 
         final String ktxFullPath;
@@ -183,7 +184,7 @@ public class HortaDataManager {
 
         String acquisitionPath = tmSample.getAcquisitionFilepath();
         if (StringUtils.isNotBlank(acquisitionPath)) {
-            // for update only check the acquision path if set - don't try to read the tile yaml file
+            // for update only check the acquisition path if set - don't try to read the tile yaml file
             boolean acquisitionPathFound = dataStorageLocationFactory.lookupJadeDataLocation(acquisitionPath, subjectKey, null)
                     .map(dl -> true)
                     .orElseGet(() -> {
@@ -289,33 +290,23 @@ public class HortaDataManager {
 
     public TmWorkspace createWorkspace(String subjectKey, TmSample sample, String workspaceName) {
         TmWorkspace tmWorkspace = new TmWorkspace(workspaceName.trim(), sample.getId());
-        return tmWorkspaceDao.createTmWorkspace(subjectKey, tmWorkspace);
+        TmWorkspace createdWorkspace = tmWorkspaceDao.createTmWorkspace(subjectKey, tmWorkspace);
+        log.info("Created workspace '{}' as {}", createdWorkspace.getName(), createdWorkspace);
+        return createdWorkspace;
     }
 
     public void removeWorkspace(String subjectKey, TmWorkspace workspace) {
-        try {
-            tmMappedNeuronDao.deleteNeuronsForWorkspace(workspace, subjectKey);
-        }
-        catch (Exception e) {
-            log.error("Problem deleting mapped neurons for workspace "+workspace, e);
-        }
-        try {
-            tmNeuronMetadataDao.deleteNeuronsForWorkspace(workspace, subjectKey);
-        }
-        catch (Exception e) {
-            log.error("Problem deleting neuron metadata for workspace "+workspace, e);
-        }
         tmWorkspaceDao.deleteByIdAndSubjectKey(workspace.getId(), subjectKey);
-        log.error("Deleted {}", workspace);
+        log.info("Deleted {} and all of its neurons", workspace);
     }
 
     public TmMappedNeuron createMappedNeuron(String subjectKey, TmMappedNeuron tmMappedNeuron) {
         return tmMappedNeuronDao.saveBySubjectKey(tmMappedNeuron, subjectKey);
     }
 
-    public static class UserException extends Exception {
-        public UserException(String message) {
-            super(message);
-        }
+    public TmWorkspace updateWorkspace(String subjectKey, TmWorkspace tmWorkspace) {
+        TmWorkspace updatedWorkspace = tmWorkspaceDao.updateTmWorkspace(subjectKey, tmWorkspace);
+        log.info("Updated workspace '{}' as {}", tmWorkspace.getName(), tmWorkspace);
+        return updatedWorkspace;
     }
 }

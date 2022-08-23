@@ -73,6 +73,11 @@ public class SyncedRootResource {
             return Response
                     .ok(new GenericEntity<List<SyncedRoot>>(syncedRoots){})
                     .build();
+        } catch (Exception e) {
+            LOG.error("Error occurred getting SyncedRoots for {}", subjectKey, e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Error getting SyncedRoots for " + subjectKey))
+                    .build();
         } finally {
             LOG.trace("Finished getSyncedRoots({})", subjectKey);
         }

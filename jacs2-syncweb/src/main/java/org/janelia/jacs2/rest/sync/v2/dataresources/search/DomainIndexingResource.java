@@ -79,7 +79,7 @@ public class DomainIndexingResource {
         });
     }
 
-    @ApiOperation(value = "Update the ancestor ids for the list of childrens specified in the body of the request")
+    @ApiOperation(value = "Update the ancestor ids for the list of children specified in the body of the request")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully performed SOLR index update"),
             @ApiResponse(code = 500, message = "Internal Server Error performing SOLR index update")
@@ -107,8 +107,8 @@ public class DomainIndexingResource {
     @RequireAuthentication
     @ApiOperation(value = "Delete documents from index.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully performed SOLR index clear"),
-            @ApiResponse(code = 500, message = "Internal Server Error performing SOLR index clear")
+            @ApiResponse(code = 200, message = "Successfully removed document from index"),
+            @ApiResponse(code = 500, message = "Internal Server Error performing document removal from index")
     })
     @POST
     @Path("searchIndex/docsToRemove")
@@ -117,7 +117,7 @@ public class DomainIndexingResource {
     public Response deleteDocumentsFromIndex(List<Long> docIds) {
         LOG.trace("Start deleteDocumentsFromIndex({})", docIds);
         try {
-            DocumentIndexingService documentIndexingService = documentIndexingServiceSourceWithCachedData.get();
+            DocumentIndexingService documentIndexingService = documentIndexingServiceSource.get();
             documentIndexingService.removeDocuments(docIds);
             return Response.noContent().build();
         } catch (Exception e) {

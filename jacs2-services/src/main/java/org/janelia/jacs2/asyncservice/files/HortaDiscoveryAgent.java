@@ -10,6 +10,7 @@ import org.janelia.jacsstorage.newclient.JadeStorageService;
 import org.janelia.jacsstorage.newclient.StorageObject;
 import org.janelia.jacsstorage.newclient.StorageObjectNotFoundException;
 import org.janelia.model.domain.Reference;
+import org.janelia.model.domain.ReverseReference;
 import org.janelia.model.domain.enums.FileType;
 import org.janelia.model.domain.files.SyncedPath;
 import org.janelia.model.domain.files.SyncedRoot;
@@ -127,6 +128,12 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
         return null;
     }
 
+    /**
+     * Returns true if the given Storage Object has a subdirectory called "ktx" containing at least one
+     * file ending in a ".ktx" extension.
+     * @param jadeObject path to search
+     * @return true if the path contains ktx files
+     */
     private boolean hasKTX(JadeObject jadeObject) {
 
         JadeStorageService jadeStorage = jadeObject.getJadeStorage();
@@ -182,6 +189,8 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
         LOG.info("Created workspace {} for sample {} to load neurons from {}", tmWorkspace, sample, neuronsPath);
 
         try {
+            long neuronCount = 0;
+
             for (Iterator<Map.Entry<String, JsonNode>> fields = root.get("neurons").fields(); fields.hasNext(); ) {
                 Map.Entry<String, JsonNode> entry = fields.next();
                 String neuronBrowserName = entry.getKey();
@@ -195,11 +204,16 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
 
                 TmMappedNeuron mappedNeuron = new TmMappedNeuron();
                 mappedNeuron.setName(neuronBrowserName);
-                mappedNeuron.setWorkspaceRef(Reference.createFor(tmWorkspace));
                 mappedNeuron.setSomaLocation(somaLocation);
                 mappedNeuron.setCrossRefInternal(originalName);
                 mappedNeuron.setCrossRefNeuronBrowser(neuronBrowserName);
 
+                // Denormalize workspace information, to allow searching of neurons by workspace
+                mappedNeuron.setWorkspaceId(tmWorkspace.getId());
+                mappedNeuron.setWorkspaceName(tmWorkspace.getName());
+                mappedNeuron.setWorkspaceRef(Reference.createFor(tmWorkspace));
+
+                // Load trace of axon, if available
                 if (value.has("consensus")) {
                     String consensus = value.get("consensus").asText();
                     String consensusUrl = getPath(folderPath, consensus);
@@ -209,6 +223,7 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                     mappedNeuron.addNeuronRef(Reference.createFor(consensusNeuron));
                 }
 
+                // Load dendrites, if available
                 if (value.has("dendrite")) {
                     String dendrite = value.get("dendrite").asText();
                     String dendriteUrl = getPath(folderPath, dendrite);
@@ -224,8 +239,19 @@ public class HortaDiscoveryAgent implements FileDiscoveryAgent<TmSample> {
                 else {
                     TmMappedNeuron savedNeuron = hortaDataManager.createMappedNeuron(subjectKey, mappedNeuron);
                     LOG.info("  Loaded neuron {} as {}", neuronBrowserName, savedNeuron);
+                    neuronCount++;
                 }
             }
+
+            // Denormalize information so that it can be traversed during indexing,
+            // to allow searching of workspaces by neuron name
+            ReverseReference mappedNeuronsRef = new ReverseReference();
+            mappedNeuronsRef.setReferringClassName(TmMappedNeuron.class.getName());
+            mappedNeuronsRef.setReferenceAttr("workspaceId");
+            mappedNeuronsRef.setReferenceId(tmWorkspace.getId());
+            mappedNeuronsRef.setCount(neuronCount);
+            tmWorkspace.setMappedNeurons(mappedNeuronsRef);
+            hortaDataManager.updateWorkspace(subjectKey, tmWorkspace);
         }
         catch (Exception e) {
             LOG.error("Error importing "+neuronsPath+". Attempting rollback.", e);
