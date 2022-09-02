@@ -263,9 +263,9 @@ public class ColorDepthResource {
                     .ok(new GenericEntity<List<ColorDepthImage>>(
                             updateCDMIPSample(
                                     cdmList,
-                                    retrieveSamplesByRefs(cdmList.stream().map(ColorDepthImage::getSampleRef).filter(Objects::nonNull).distinct().collect(Collectors.toList())))
-                    ) {
-                    })
+                                    retrieveSamplesByRefs(cdmList.stream()
+                                            .map(ColorDepthImage::getSampleRef)
+                                            .filter(Objects::nonNull).distinct().collect(Collectors.toList())))) {})
                     .build()
                     ;
         } finally {
