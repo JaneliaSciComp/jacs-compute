@@ -245,7 +245,7 @@ public class ColorDepthResource {
             int length = parseIntegerParam("length", lengthParam, -1);
             List<Reference> sampleRefs = retrieveSampleRefs(extractMultiValueParams(datasets), extractMultiValueParams(releases));
             List<Long> mipIds = extractMultiValueParams(ids).stream().map(Long::valueOf).collect(Collectors.toList());
-            LOG.debug("Retrieved {} sample refs after {}ms", sampleRefs.size(), System.currentTimeMillis() - start);
+            LOG.info("Retrieved {} sample refs after {}ms", sampleRefs.size(), System.currentTimeMillis() - start);
             List<ColorDepthImage> cdmList = colorDepthImageDao.streamColorDepthMIPs(
                     new ColorDepthImageQuery()
                             .withOwner(ownerKey)
@@ -258,7 +258,7 @@ public class ColorDepthResource {
                             .withOffset(offset)
                             .withLength(length)
             ).collect(Collectors.toList());
-            LOG.debug("Retrieved {} CDMs after {}ms", cdmList.size(), System.currentTimeMillis() - start);
+            LOG.info("Retrieved {} CDMs after {}ms", cdmList.size(), System.currentTimeMillis() - start);
             return Response
                     .ok(new GenericEntity<List<ColorDepthImage>>(
                             updateCDMIPSample(
@@ -278,6 +278,7 @@ public class ColorDepthResource {
         try {
             return referenceDao.findByReferences(sampleRefs).stream()
                     .map(d -> (Sample) d)
+                    .peek(s -> s.setObjectiveSamples(Collections.emptyList())) // clean up objective samples to reduce the bandwidth
                     .collect(Collectors.toMap(Reference::createFor, Function.identity()))
                     ;
         } finally {
