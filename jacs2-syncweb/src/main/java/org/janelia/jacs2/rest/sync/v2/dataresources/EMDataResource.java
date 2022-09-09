@@ -1,5 +1,7 @@
 package org.janelia.jacs2.rest.sync.v2.dataresources;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.google.common.base.Splitter;
 import io.swagger.annotations.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -11,6 +13,7 @@ import org.janelia.model.access.domain.dao.EmDataSetDao;
 import org.janelia.model.domain.Reference;
 import org.janelia.model.domain.flyem.EMBody;
 import org.janelia.model.domain.flyem.EMDataSet;
+import org.janelia.model.domain.sample.PublishedImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +25,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,6 +49,19 @@ import java.util.stream.Collectors;
 @Path("/emdata")
 public class EMDataResource {
     private static final Logger LOG = LoggerFactory.getLogger(EMDataResource.class);
+
+    public static class EmBodyWithDataSet {
+        @JsonProperty @JsonUnwrapped
+        final EMDataSet emDataSet;
+
+        @JsonProperty  @JsonUnwrapped
+        final EMBody emBody;
+
+        EmBodyWithDataSet(EMDataSet emDataSet, EMBody emBody) {
+            this.emDataSet = emDataSet;
+            this.emBody = emBody;
+        }
+    }
 
     @Inject
     private EmBodyDao emBodyDao;
@@ -111,8 +128,16 @@ public class EMDataResource {
                     .map(Reference::getTargetId)
                     .collect(Collectors.toSet());
             List<EMBody> emBodyList = emBodyDao.findByIds(emBodyIds);
+            Set<Long> emDataSetIds = emBodyList.stream().map(emBody -> emBody.getDataSetRef().getTargetId()).collect(Collectors.toSet());
+            Map<Reference, EMDataSet> indexedDataSets = emDataSetDao.findByIds(emDataSetIds).stream()
+                    .collect(Collectors.toMap(Reference::createFor, emds -> emds));
+
+            List<EmBodyWithDataSet> emBodyListResult = emBodyList.stream()
+                    .map(emb -> new EmBodyWithDataSet(indexedDataSets.get(emb.getDataSetRef()), emb))
+                    .collect(Collectors.toList());
+
             return Response
-                    .ok(new GenericEntity<List<EMBody>>(emBodyList){})
+                    .ok(new GenericEntity<List<EmBodyWithDataSet>>(emBodyListResult){})
                     .build();
         } catch (Exception e) {
             LOG.error("Error occurred getting EM bodies for {}", refs, e);
