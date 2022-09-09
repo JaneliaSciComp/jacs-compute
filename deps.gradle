@@ -91,7 +91,7 @@ dependencies {
         JWT_RUNTIME_JACKSON = 'io.jsonwebtoken:jjwt-jackson:0.10.5'
 
         // cron utils
-        CRON_UTILS_LIB = "com.cronutils:cron-utils:7.0.1"
+        CRON_UTILS_LIB = "com.cronutils:cron-utils:9.2.0"
 
         // search
         SOLR_VERSION = "3.6.2"
