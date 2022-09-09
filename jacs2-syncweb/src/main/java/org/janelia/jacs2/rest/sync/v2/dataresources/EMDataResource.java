@@ -51,7 +51,7 @@ public class EMDataResource {
     private static final Logger LOG = LoggerFactory.getLogger(EMDataResource.class);
 
     public static class EmBodyWithDataSet {
-        @JsonProperty @JsonUnwrapped
+        @JsonProperty
         final EMDataSet emDataSet;
 
         @JsonProperty  @JsonUnwrapped
