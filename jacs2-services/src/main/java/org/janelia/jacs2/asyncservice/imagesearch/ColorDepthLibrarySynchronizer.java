@@ -230,6 +230,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
         Map<String, ColorDepthLibrary> existingLibraries = colorDepthLibraryDao.findAll(0, -1).stream()
                 .collect(Collectors.toMap(ColorDepthLibrary::getIdentifier, Function.identity()));
 
+        logger.info("Invoke color depth library sync process with {} currently existing libraries", existingLibraries.size());
         SyncArgs args = getArgs(jacsServiceData);
 
         return syncPublishedLibraries(args, existingLibraries)
@@ -763,6 +764,7 @@ public class ColorDepthLibrarySynchronizer extends AbstractServiceProcessor<Void
     }
 
     private void processPublishedLines(SyncArgs args, Map<String, ColorDepthLibrary> existingLibraries) {
+        logger.info("Synchronized libraries for published lines");
         Map<String, List<LineRelease>> releasesByWebsite = retrieveLineReleases(args.publishedCollections, args.publishingSites);
         releasesByWebsite.forEach((libName, releases) -> processPublishedLibrary(libName, releases, existingLibraries));
     }

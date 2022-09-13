@@ -3,14 +3,14 @@
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>%d{yyyy-MM-dd_HH:mm:ss.SSS} [%thread] %-5level %logger{36} [service=%X{serviceName}] [serviceId=%X{serviceId}] - %msg%n</Pattern>
+            <Pattern>%d{yyyy-MM-dd_HH:mm:ss.SSS} [%thread] %-5level %logger{36} [service=%X{serviceName}] [rootService=%X{rootService}] - %msg%n</Pattern>
         </encoder>
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/jacs.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>%d{yyyy-MM-dd_HH:mm:ss.SSS} [%thread] %-5level %logger{36} [service=%X{serviceName}] [serviceId=%X{serviceId}] - %msg%n</Pattern>
+            <Pattern>%d{yyyy-MM-dd_HH:mm:ss.SSS} [%thread] %-5level %logger{36} [service=%X{serviceName}] [rootService=%X{rootService}] - %msg%n</Pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <FileNamePattern>logs/jacs.%i.log.zip</FileNamePattern>

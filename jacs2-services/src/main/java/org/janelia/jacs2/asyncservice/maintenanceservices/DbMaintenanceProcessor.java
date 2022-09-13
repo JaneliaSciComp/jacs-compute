@@ -72,6 +72,7 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
             try {
                 dbMainainer.ensureIndexes();
                 jacsServiceDataPersistence.addServiceEvent(jacsServiceData, JacsServiceData.createServiceEvent(JacsServiceEventTypes.STEP_COMPLETED, "Completed database re-indexing refresh"));
+                logger.info("Database re-indexing completed for {}", jacsServiceData.getShortName());
             } catch (Exception e) {
                 processingFailureMessage.append("database re-indexing failed - ").append(e.getMessage()).append(';');
                 logger.error("Database re-indexing failed", e);
@@ -87,6 +88,7 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
             try {
                 dbMainainer.refreshPermissions(args.refreshPermissionsForFragments, args.refreshPermissionsForNeurons);
                 jacsServiceDataPersistence.addServiceEvent(jacsServiceData, JacsServiceData.createServiceEvent(JacsServiceEventTypes.STEP_COMPLETED, "Completed permissions refresh"));
+                logger.info("Permission refresh completed for {}", jacsServiceData.getShortName());
             } catch (Exception e) {
                 processingFailureMessage.append("permissions refresh failed - ").append(e.getMessage()).append(';');
                 logger.error("Permissions refresh failed", e);
@@ -102,6 +104,7 @@ public class DbMaintenanceProcessor extends AbstractServiceProcessor<Void> {
             try {
                 dbMainainer.refreshTmSampleSync();
                 jacsServiceDataPersistence.addServiceEvent(jacsServiceData, JacsServiceData.createServiceEvent(JacsServiceEventTypes.STEP_COMPLETED, "Completed TM sample sync"));
+                logger.info("TmSample sync completed for {}", jacsServiceData.getShortName());
             } catch (Exception e) {
                 processingFailureMessage.append("TM sample sync failed - ").append(e.getMessage()).append(';');
                 logger.error("TM sample sync failed", e);

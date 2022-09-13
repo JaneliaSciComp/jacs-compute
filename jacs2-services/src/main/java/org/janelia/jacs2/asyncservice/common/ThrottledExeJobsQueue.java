@@ -41,6 +41,8 @@ public class ThrottledExeJobsQueue {
 
     @PostConstruct
     public void initialize() {
+        logger.info("Initialize throttled jobs executor to run every {}ms with an initial delay of {}ms",
+                periodInMillis, initialDelayInMillis);
         waitingJobs = new ConcurrentHashMap<>();;
         runningJobs = new ConcurrentHashMap<>();;
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
@@ -48,11 +50,12 @@ public class ThrottledExeJobsQueue {
                 .setDaemon(true)
                 .build();
         scheduler = Executors.newScheduledThreadPool(1, threadFactory);
-        scheduler.scheduleAtFixedRate(() -> checkWaitingQueue(), initialDelayInMillis, periodInMillis, TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(this::checkWaitingQueue, initialDelayInMillis, periodInMillis, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
     public void destroy() {
+        logger.info("Shutdown throttled jobs executor");
         scheduler.shutdownNow();
     }
 

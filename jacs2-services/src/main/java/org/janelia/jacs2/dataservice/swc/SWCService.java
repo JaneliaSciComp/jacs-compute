@@ -69,8 +69,7 @@ public class SWCService {
                       RenderedVolumeLoader renderedVolumeLoader,
                       SWCReader swcReader,
                       IdGenerator<Long> neuronIdGenerator,
-                      @JacsDefault
-                      ExecutorService executorService,
+                      @JacsDefault ExecutorService executorService,
                       @PropertyValue(name = "service.swcImport.DefaultLocation") String defaultSWCLocation,
                       @PropertyValue(name = "StorageService.URL") String masterStorageServiceURL,
                       @PropertyValue(name = "StorageService.ApiKey") String storageServiceApiKey) {

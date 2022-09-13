@@ -49,7 +49,7 @@ public class JacsServiceDispatchRunner {
     @PostConstruct
     public void initialize() {
         logger.info("Initialize service dispatcher to run every {}s with an initial delay of {}s", period, initialDelay);
-        scheduler.scheduleAtFixedRate(() -> doWork(), initialDelay, period, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(this::doWork, initialDelay, period, TimeUnit.SECONDS);
     }
 
     @PreDestroy

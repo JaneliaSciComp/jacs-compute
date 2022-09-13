@@ -8,6 +8,7 @@ import org.janelia.jacs2.asyncservice.ServerStats;
 import org.janelia.jacs2.asyncservice.ServiceRegistry;
 import org.janelia.jacs2.asyncservice.common.JacsServiceQueue;
 import org.janelia.jacs2.asyncservice.common.ServiceProcessor;
+import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.service.JacsServiceData;
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
+@MdcContext
 @ApplicationScoped
 public class JacsServiceEngineImpl implements JacsServiceEngine {
     private static final int DEFAULT_MAX_RUNNING_SLOTS = 1000;

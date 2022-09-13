@@ -333,6 +333,10 @@ public class JacsServiceData implements BaseEntity, HasIdentifier {
         this.rootServiceId = rootServiceId;
     }
 
+    public boolean hasRootServiceId() {
+        return rootServiceId != null;
+    }
+
     public int getAccessId() {
         return accessId;
     }

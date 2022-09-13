@@ -8,7 +8,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import org.janelia.jacs2.asyncservice.JacsServiceEngine;
-import org.janelia.jacs2.asyncservice.common.mdc.MdcContext;
 import org.janelia.jacs2.dataservice.notifservice.EmailNotificationService;
 import org.janelia.jacs2.dataservice.persistence.JacsServiceDataPersistence;
 import org.janelia.model.access.dao.JacsNotificationDao;
@@ -21,9 +20,7 @@ import org.janelia.model.service.JacsServiceLifecycleStage;
 import org.janelia.model.service.JacsServiceState;
 import org.janelia.model.service.RegisteredJacsNotification;
 import org.slf4j.Logger;
-import org.slf4j.MDC;
 
-@MdcContext
 @ApplicationScoped
 public class JacsServiceDispatcher {
 
@@ -84,7 +81,7 @@ public class JacsServiceDispatcher {
 
     @SuppressWarnings("unchecked")
     private void dispatchService(JacsServiceData jacsServiceData) {
-        logger.debug("Dispatch service {}", jacsServiceData);
+        logger.info("Dispatch service {}", jacsServiceData);
         AtomicReference<JacsServiceData> jacsServiceDataRef = new AtomicReference<>(jacsServiceData);
         try {
             ServiceProcessor<?> serviceProcessor = jacsServiceEngine.getServiceProcessor(jacsServiceDataRef.get());
@@ -140,8 +137,6 @@ public class JacsServiceDispatcher {
     }
 
     private void success(JacsServiceData serviceData) {
-        MDC.put("serviceName", serviceData.getName());
-        MDC.put("serviceId", serviceData.getServiceId());
         if (logger.isDebugEnabled()) {
             logger.debug("Processing successful {}", serviceData);
         } else {
@@ -175,14 +170,11 @@ public class JacsServiceDispatcher {
     }
 
     private JacsServiceResult<Throwable> handleException(JacsServiceData serviceData, Throwable exc) {
-        MDC.put("serviceName", serviceData.getName());
-        MDC.put("serviceId", serviceData.getServiceId());
         if (logger.isDebugEnabled()) {
             logger.error("Processing error executing {}", serviceData, exc);
         } else {
             logger.error("Processing error executing {}", serviceData.getShortName(), exc);
         }
-
         JacsServiceData latestServiceData = jacsServiceDataPersistence.findById(serviceData.getId());
         if (latestServiceData == null) {
             logger.warn("No Service not found for {}", serviceData.getId());

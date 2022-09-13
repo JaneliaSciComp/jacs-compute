@@ -1,6 +1,7 @@
 package org.janelia.jacs2.asyncservice.common;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.janelia.jacs2.cdi.qualifier.JacsTask;
 import org.janelia.jacs2.cdi.qualifier.PropertyValue;
 import org.slf4j.Logger;
 
@@ -37,7 +38,7 @@ public class ServiceComputationQueue {
     }
 
     @Inject
-    public ServiceComputationQueue(ExecutorService taskExecutor,
+    public ServiceComputationQueue(@JacsTask ExecutorService taskExecutor,
                                    @PropertyValue(name = "service.taskQueue.InitialDelayInMillis") int initialDelay,
                                    @PropertyValue(name = "service.taskQueue.PeriodInMillis") int period,
                                    @PropertyValue(name = "service.taskQueue.ThreadPoolSize") int taskQueuePoolSize,
@@ -64,11 +65,13 @@ public class ServiceComputationQueue {
 
     @PostConstruct
     public void initialize() {
-        taskQueueScheduler.scheduleAtFixedRate(() -> doWork(), initialDelay, period, TimeUnit.MILLISECONDS);
+        logger.info("Initialize task queue scheduler to run every {}ms with an initial delay of {}ms", period, initialDelay);
+        taskQueueScheduler.scheduleAtFixedRate(this::doWork, initialDelay, period, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
     public void destroy() {
+        logger.info("Shutdown task queue scheduler");
         taskQueueScheduler.shutdownNow();
     }
 

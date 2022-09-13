@@ -153,12 +153,13 @@ public class JacsServiceDataPersistence extends AbstractDataPersistence<JacsServ
 
     public Optional<Boolean> updateServiceState(JacsServiceData jacsServiceData, JacsServiceState newServiceState, JacsServiceEvent serviceEvent) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Update service state for {} to {} with event {}", jacsServiceData, newServiceState, serviceEvent);
+            LOG.debug("Update service state for {} to {} with {}", jacsServiceData, newServiceState,
+                    (serviceEvent != JacsServiceEvent.NO_EVENT ? "event " + serviceEvent : "no event"));
         } else {
-            LOG.info("Update service state for {} to {} with event {}", jacsServiceData.getId(), newServiceState, serviceEvent);
+            LOG.info("Update service state for {} to {} with {}", jacsServiceData.getShortName(), newServiceState,
+                    (serviceEvent != JacsServiceEvent.NO_EVENT ? "event " + serviceEvent : "no event"));
         }
-        Map<String, EntityFieldValueHandler<?>> serviceUpdates = new LinkedHashMap<>();
-        serviceUpdates.putAll(jacsServiceData.updateState(newServiceState));
+        Map<String, EntityFieldValueHandler<?>> serviceUpdates = new LinkedHashMap<>(jacsServiceData.updateState(newServiceState));
         if (serviceEvent != JacsServiceEvent.NO_EVENT) {
             serviceUpdates.putAll(jacsServiceData.addNewEvent(serviceEvent));
         }
