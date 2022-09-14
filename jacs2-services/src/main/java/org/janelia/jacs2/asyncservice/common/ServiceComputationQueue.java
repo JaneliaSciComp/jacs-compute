@@ -87,7 +87,7 @@ public class ServiceComputationQueue {
                             try {
                                 taskQueue.put(task);
                             } catch (InterruptedException e) {
-                                throw new IllegalStateException(e);
+                                logger.error("Interrupted task {} in the executor thread", task, e);
                             }
                         }
                     });
