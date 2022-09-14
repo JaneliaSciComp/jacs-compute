@@ -2,9 +2,8 @@ dependencies {
     project.ext {
         // logging
         SLF4J_VERSION = "1.7.36"
-        LOGBACK_VERSION = "1.3.0"
+        LOGBACK_VERSION = "1.2.11"
         SLF4J_LIB = "org.slf4j:slf4j-api:${SLF4J_VERSION}"
-        LOGBACK_CORE_LIB = "ch.qos.logback:logback-core:${LOGBACK_VERSION}"
         LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
 
         // dependency injection
@@ -134,7 +133,6 @@ dependencies {
                    COMMONS_LANG_LIB,
                    GUAVA_LIB,
                    LOGBACK_CLASSIC_LIB,
-                   LOGBACK_CORE_LIB,
                    SLF4J_LIB
 
     testImplementation ASSERTJ_LIB,
